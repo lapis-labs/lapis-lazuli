@@ -224,7 +224,7 @@ FAKE_HARNESS = textwrap.dedent('''\
         print("Logged in using test"); sys.exit(0)
     if args[:2] == ["debug", "prompt-input"]:
         project = os.path.join(os.getcwd(), ".agents", "skills")
-        names = [] if os.environ.get("FAKE_HIDE") else sorted(os.listdir(project)) if os.path.isdir(project) else []
+        names = [] if os.path.exists(os.path.join(here, "hide")) else sorted(os.listdir(project)) if os.path.isdir(project) else []
         body = "<skills_instructions>\\n### Skill roots\\n### Available skills\\n" + "".join(
             f"- {{n}}: d. (file: {{project}}/{{n}}/SKILL.md)\\n" for n in names) + "</skills_instructions>"
         print(json.dumps([{{"role": "developer", "content": [{{"type": "input_text", "text": body}}]}}]))
@@ -235,7 +235,7 @@ FAKE_HARNESS = textwrap.dedent('''\
         prompt = sys.stdin.read()
         with open(os.path.join(here, "prompts.txt"), "a") as log:
             log.write(json.dumps(prompt) + "\\n")
-        if os.environ.get("FAKE_EXEC") == "hang":
+        if os.path.exists(os.path.join(here, "hang")):
             time.sleep(60)
         project = args[args.index("-C") + 1]
         open(os.path.join(project, "index.html"), "w").write("<p>hi</p>")
@@ -258,8 +258,6 @@ def harness(tmp_path, monkeypatch):
     path.write_text(FAKE_HARNESS.format(python=sys.executable))
     path.chmod(path.stat().st_mode | stat.S_IEXEC)
     monkeypatch.setenv("CODEX_HOME", str(tmp_path / "codex-home"))
-    monkeypatch.delenv("FAKE_EXEC", raising=False)
-    monkeypatch.delenv("FAKE_HIDE", raising=False)
     return path
 
 
@@ -302,15 +300,15 @@ def test_a_dry_run_prepares_folders_and_never_starts_the_agent(harness, tmp_path
     assert not (out / "runs" / "kiln-landing-ko.r1.with" / "events.jsonl").exists()
 
 
-def test_nothing_starts_when_an_arm_would_see_the_wrong_skills(harness, tmp_path, monkeypatch, capsys):
-    monkeypatch.setenv("FAKE_HIDE", "1")
+def test_nothing_starts_when_an_arm_would_see_the_wrong_skills(harness, tmp_path, capsys):
+    (harness.parent / "hide").touch()          # the agent's environment is an allow-list, so the fake reads marker files
     assert start(harness, tmp_path / "out") == 2
     assert calls(harness) == []
     assert "isolation not verified" in capsys.readouterr().err
 
 
-def test_a_session_past_its_timeout_is_stopped_and_recorded(harness, tmp_path, monkeypatch):
-    monkeypatch.setenv("FAKE_EXEC", "hang")
+def test_a_session_past_its_timeout_is_stopped_and_recorded(harness, tmp_path):
+    (harness.parent / "hang").touch()
     out = tmp_path / "out"
     assert start(harness, out, "--timeout", "1") == 1        # results are recorded, but not every run completed
     for arm in evalkit.ARMS:

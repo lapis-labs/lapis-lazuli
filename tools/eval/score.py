@@ -15,6 +15,9 @@ digit, over the viewport with the most text, `code` and `data` runs excluded).
 Outputs, next to each run's run.json: `score.json` and `score/` (render extract and screenshots,
 behavior session, lint report, checker logs). In OUT: `summary.csv` and `summary.md`. A run is
 scored whatever its status, so a folder from `run.py --dry-run` can be filled by hand and scored.
+
+The server answers a link inside the site only when its target is inside the run's project; any other
+link gets a 403 and is listed under `site.refused_links` in `score.json`.
 """
 from __future__ import annotations
 
@@ -31,6 +34,7 @@ import time
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from functools import partial
+from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -65,14 +69,30 @@ def find_plan(project: Path, task: str) -> tuple[Path | None, list[str]]:
 
 
 class _QuietHandler(SimpleHTTPRequestHandler):
+    def __init__(self, *args, base: str, **kwargs) -> None:
+        self.base = base          # links are followed only while they stay inside this folder
+        super().__init__(*args, **kwargs)
+
     def log_message(self, *args) -> None:  # the checkers' own output is the record
         pass
 
+    def send_head(self):
+        path = self.translate_path(self.path)
+        names = [path, *(os.path.join(path, n) for n in ("index.html", "index.htm"))] if os.path.isdir(path) \
+            else [path]
+        if not all(kit.within(name, self.base) for name in names):
+            self.send_error(HTTPStatus.FORBIDDEN, "a link points outside the project")
+            return None
+        return super().send_head()
+
 
 @contextlib.contextmanager
-def serve(root: Path):
-    """Serve a folder on a free loopback port for the length of the block; yields its URL."""
-    server = ThreadingHTTPServer(("127.0.0.1", 0), partial(_QuietHandler, directory=str(root)))
+def serve(root: Path, project: Path | None = None):
+    """Serve a folder on a free loopback port for the length of the block; yields its URL. A link
+    inside the folder is answered only when its target is inside `project` (default: the folder), so
+    the agent's output cannot hand a checker a file from elsewhere on the machine."""
+    handler = partial(_QuietHandler, directory=str(root), base=str(project or root))
+    server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:
@@ -299,11 +319,12 @@ def score_run(run_dir: Path, tasks: dict, *, python: str = sys.executable, timeo
         "replicate": run["replicate"], "scored_at": kit.utc_now(), "run_status": run.get("status"),
         "plan": {"status": "found" if plan else "no plan", "path": ".lapis/plans/" + plan.name if plan else None,
                  "other_plans": other_plans},
-        "site": {"root": root.relative_to(run_dir).as_posix() if root else None},
+        "site": {"root": root.relative_to(run_dir).as_posix() if root else None,
+                 "refused_links": kit.links_outside(root, project) if root else []},
         "checkers": {},
     }
     with contextlib.ExitStack() as stack:
-        url = stack.enter_context(serve(root)) if root else None
+        url = stack.enter_context(serve(root, project)) if root else None
         if task["checks"]["render"]:
             render = render_step(ctx, url, plan) if url else _not_scored("no site", "the project has no index.html")
         else:

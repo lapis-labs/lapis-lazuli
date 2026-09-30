@@ -5,10 +5,13 @@
 
 Writes OUT/review/: `sheet.md` (candidates per task with screenshot and site paths, the task's
 acceptance notes as a rubric, and a critic prompt), `scores.csv` (a blank score table to fill in), and
-`key.json` (label -> run and arm; keep it closed until every candidate is judged). Screenshots and a
-copy of each site (without hidden folders) are copied under anonymous names, so no path, file name,
-score, plan, or agent message in the sheet says which arm produced a candidate. The page's own
-source can still show habits of one arm; judge the screenshots first.
+anonymous `<task>/<label>/{shots,site}` folders. The answer key (label -> run and arm) goes to
+OUT/review.key.json, next to the review folder and never in it, so the folder can be handed to a
+reviewer as is; keep the key closed until every candidate is judged. Screenshots and a copy of each
+site (without hidden folders) are copied under anonymous names, so no path, file name, score, plan,
+or agent message in the sheet says which arm produced a candidate. A link in a site that points
+outside the run's project stops the build. The page's own source can still show habits of one arm;
+judge the screenshots first.
 """
 from __future__ import annotations
 
@@ -57,10 +60,28 @@ def screenshot_plan(extract: dict | None) -> list[tuple[str, str]]:
     return plan
 
 
-def _copy_site(root: Path, target: Path) -> None:
-    def ignore(_folder: str, names: list[str]) -> list[str]:
-        return [n for n in names if n.startswith(".") or n == "node_modules"]
-    shutil.copytree(root, target, ignore=ignore)
+def key_path(out: Path) -> Path:
+    """Where the answer key goes: beside the review folder, so handing over `review/` never hands it over."""
+    return out / "review.key.json"
+
+
+def _hidden(name: str) -> bool:
+    return name.startswith(".") or name == "node_modules"
+
+
+def _refuse_outside_links(root: Path, project: Path | None) -> None:
+    outside = kit.links_outside(root, project, skip=_hidden)
+    if outside:
+        raise KitError(f"{root} holds links that point outside its project: {', '.join(outside)}; "
+                       "remove them, then build the review again")
+
+
+def _copy_site(root: Path, target: Path, project: Path | None = None) -> None:
+    """Copy a site folder without hidden entries or node_modules. Links are copied as links, never
+    followed, and a link whose target is outside `project` (default: the folder) refuses the copy."""
+    _refuse_outside_links(root, project)
+    shutil.copytree(root, target, symlinks=True,
+                    ignore=lambda _folder, names: [n for n in names if _hidden(n)])
 
 
 def build(out: Path, seed: int, tasks: dict) -> dict:
@@ -68,6 +89,11 @@ def build(out: Path, seed: int, tasks: dict) -> dict:
     by_task = _candidates(out)
     if not by_task:
         raise KitError(f"no scored runs under {out}; run score.py first")
+    for members in by_task.values():        # refuse before anything is written
+        for member in members:
+            if member["score"]["site"]["root"]:
+                _refuse_outside_links(member["dir"] / member["score"]["site"]["root"],
+                                      member["dir"] / member["run"]["project"])
     review = out / "review"
     if review.exists():
         shutil.rmtree(review)
@@ -75,7 +101,7 @@ def build(out: Path, seed: int, tasks: dict) -> dict:
     key: dict = {"seed": seed, "candidates": {}}
     sheet = ["# Blind review sheet", "",
              "Judge each candidate from its screenshots first, then its site folder. Labels carry no meaning. "
-             "Do not open `key.json` until every candidate is scored.", "",
+             "The answer key is not in this folder; do not ask for it until every candidate is scored.", "",
              f"Score every acceptance note per candidate ({SCALE}), then rank the candidates of the task.", ""]
     rows = []
     for task_id, members in sorted(by_task.items()):
@@ -98,7 +124,7 @@ def build(out: Path, seed: int, tasks: dict) -> dict:
             site = member["score"]["site"]["root"]
             site_path = None
             if site:
-                _copy_site(member["dir"] / site, folder / "site")
+                _copy_site(member["dir"] / site, folder / "site", member["dir"] / member["run"]["project"])
                 site_path = f"{task_id}/{label}/site/index.html"
             key["candidates"][f"{task_id}/{label}"] = {
                 "run": member["run"]["id"], "arm": member["run"]["arm"], "replicate": member["run"]["replicate"]}
@@ -122,14 +148,14 @@ def build(out: Path, seed: int, tasks: dict) -> dict:
         writer = csv.DictWriter(handle, fieldnames=columns, restval="")
         writer.writeheader()
         writer.writerows(rows)
-    kit.write_json(review / "key.json", key)
+    kit.write_json(key_path(out), key)
     return key
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="review.py", description=__doc__.split("\n\n")[0])
     ap.add_argument("out", type=Path, help="the folder run.py wrote; score it first with score.py")
-    ap.add_argument("--seed", type=int, help="seed for the candidate labels (default: random, kept in key.json)")
+    ap.add_argument("--seed", type=int, help="seed for the candidate labels (default: random, kept in review.key.json)")
     args = ap.parse_args(argv)
     try:
         out = args.out.expanduser().resolve()
@@ -139,7 +165,8 @@ def main(argv: list[str] | None = None) -> int:
     except KitError as exc:
         print(f"review.py: {exc}", file=sys.stderr)
         return 2
-    print(f"{len(key['candidates'])} candidates -> {out / 'review' / 'sheet.md'}")
+    print(f"{len(key['candidates'])} candidates -> {out / 'review' / 'sheet.md'}\n"
+          f"answer key (keep closed, never hand out with review/): {key_path(out)}")
     return 0
 
 

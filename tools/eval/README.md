@@ -16,7 +16,10 @@ With two replicates per task the result is an anecdote with numbers, not a bench
    replicate the order of the tasks and, per task, of the two arms is shuffled from a recorded seed.
 2. **Harness.** `codex exec --ignore-user-config --ignore-rules --sandbox workspace-write --ephemeral
    --json -o last-message.txt -C <project> -m <model> -` with the prompt on stdin. Auth stays the
-   user's own login: nothing is copied, and the runner stops when `codex login status` fails.
+   user's own login: nothing is copied, and the runner stops when `codex login status` fails. The agent
+   gets an allow-listed environment, not the operator's: `PATH`, `LANG`, `LC_*`, `TERM`, a scratch `HOME`
+   and `TMPDIR`, and `CODEX_HOME` (where the login is; `--ignore-user-config` still reads `auth.json`
+   there). API keys, tokens, proxy settings, and the user name are not passed on.
 3. **Isolated project.** Every run gets its own empty folder (`project/`, a git repository so Codex
    takes it as the project root) under the out folder, never inside this repository.
 4. **Skills.** The with arm receives copies of the task's `dist/skills/<skill>/` trees in
@@ -25,8 +28,8 @@ With two replicates per task the result is an anecdote with numbers, not a bench
    and each copy is compared with `dist/`.
 5. **Nothing else teaches the agent.** Codex would also load skills from the user's own folders
    (`~/.agents/skills`, `$CODEX_HOME/skills`, bundled system and plugin skills). The runner gives each
-   agent a scratch `HOME` (the real `CODEX_HOME` is kept for the login), switches off every skill
-   outside the project with `skills.config`, and reads the list back from the model-free
+   agent a scratch `HOME` and `TMPDIR` (the real `CODEX_HOME` is kept for the login), switches off
+   every skill outside the project with `skills.config`, and reads the list back from the model-free
    `codex debug prompt-input`. If any run's skill list is not exactly its arm's (with: the task's
    skills; without: none), the runner stops before the first session. The same probe records whether
    Codex injects a global `AGENTS.md`.
@@ -97,20 +100,31 @@ uv run --no-sync python tools/eval/run.py --model MODEL --effort LEVEL --replica
 # 3. Score every run, then build the blind sheet.
 uv run --no-sync python tools/eval/score.py ~/.cache/lapis-eval/NAME
 uv run --no-sync python tools/eval/review.py ~/.cache/lapis-eval/NAME
+
+# 4. To hand results to someone: the records without paths, user names, or skill names (see below).
+uv run --no-sync python tools/eval/share.py ~/.cache/lapis-eval/NAME /tmp/lapis-eval-share
 ```
 
 - `run.py --dry-run` still runs the model-free `codex debug prompt-input` probe, so the skill isolation
   is verified; it never runs `codex exec`.
 - `--resume` (with the same `--out`) skips runs that completed, failed, or timed out and prepares the
-  rest again, so a run recorded as `interrupted` is repeated. `--timeout` (default 2400 s) stops a
-  session and records `timed_out`. The runner exits 1 when any session did not complete; the
-  records are kept and still scorable.
+  rest again, so a run recorded as `interrupted` is repeated. An option left out takes the manifest's
+  value; a `--model`, `--effort`, `--sandbox`, or `--network` that is given and differs from the
+  manifest is refused, because every run of a comparison shares one setting. `--resume` also refuses,
+  changing nothing, while a run recorded as `running` has a Codex process (`pid` in `run.json`) that is
+  still alive: wait for it or stop it. `--timeout` (default 2400 s) stops a session and records
+  `timed_out`. The runner exits 1 when any session did not complete; the records are kept and still
+  scorable.
+- Ctrl-C, SIGTERM, and SIGHUP stop a session the same way: Codex's whole process group is stopped, the
+  run is recorded `interrupted`, and the runner exits with 128 plus the signal number (130, 143, 129).
+  SIGKILL cannot be caught; Codex then keeps running and `--resume` refuses until it ends.
 - `--tasks ID[,ID]` and `--replicates N` narrow a run; a first real run of one task with one replicate
   shows whether the event stream parses (token usage, skills read) before the full set.
 - `score.py` skips runs that already have a `score.json` (`--rescore` redoes them, `--run ID` picks
   one, `--summary-only` rebuilds the tables). A run is scored whatever its status, so a folder from
   `--dry-run` can be filled by hand (copy a site into `runs/<id>/project/`) to try the whole pipeline.
-- `review.py --seed N` makes the candidate labels reproducible.
+- `review.py --seed N` makes the candidate labels reproducible. The answer key goes to
+  `OUT/review.key.json`, beside `review/` and never in it.
 
 ### Sandbox
 
@@ -122,6 +136,32 @@ the with arm is measured without that step. `--sandbox danger-full-access` gives
 machine (the scratch `HOME` and the empty font roots are conventions, not a boundary); use it only when
 you accept that and want the skills' full loop.
 
+`--sandbox danger-full-access` and `--network` are for an **evaluation-only account**: a separate macOS
+user or a virtual machine with its own Codex login and nothing else on it. The agent runs with the login
+in `CODEX_HOME` readable, and with either option it can send what it reads anywhere. The allow-listed
+environment keeps the operator's other credentials out; it does not hide what the account's files hold.
+Do not use either option in the account that holds your own keys, mail, or repositories.
+
+## Run records and sharing
+
+Run records never go into the repository or a bundle. A run folder holds the agent's whole conversation
+(`events.jsonl`), its projects, and, in folders from older versions, paths and skill names that identify
+the user. `run.json` and `isolation.json` count the user's own skills (`outside_before`,
+`disabled_count`) and never name them, and `command.txt` shows paths relative to the run folder with the
+`skills.config` list reduced to a count. What leaves the machine goes through the export:
+
+```bash
+uv run --no-sync python tools/eval/share.py OUT DEST
+```
+
+`DEST` is a new or empty folder outside this repository and outside `OUT`. The export writes
+`manifest.json`, `summary.md`, `summary.csv`, and per run `run.json`, `score.json`, `isolation.json`,
+`command.txt`, and `prompt.txt`: paths under `OUT` become `<out>`, home directories `~`, user names
+`<user>`, skill names that are not this kit's own `<other-skill>`, and the name and path lists of older
+records counts. Project trees, scratch homes, transcripts, stderr logs, last messages, `score/`, and the
+review folder with its key are not copied. The export reads its own output again and writes nothing if
+a home directory, run path, or user name would remain.
+
 ## Layout of an out folder
 
 ```text
@@ -130,23 +170,26 @@ OUT/
   bin/                     lapis-design and lazuli links on the agents' PATH
   runs/<task>.r<n>.<arm>/
     project/               the agent's folder (.git, and .agents/skills/ in the with arm)
-    home/                  the scratch HOME (with an empty fonts/ folder)
+    home/                  the scratch HOME (with an empty fonts/ folder and tmp/, the agent's TMPDIR)
     prompt.txt  command.txt  isolation.json      what was sent, run, and verified
     events.jsonl  stderr.log  last-message.txt   Codex output (after a real run)
-    run.json               arm, digests, isolation, model, harness, start/end, exit, usage, skills read
+    run.json               arm, digests, isolation, model, harness, Codex pid, start/end, exit, usage, skills read
     score.json  score/     checker results; render.json + render.shots/, behavior.json, lint.json, logs/
   summary.md  summary.csv  per-run rows, arm means, and with-minus-without
-  review/                  sheet.md, scores.csv, key.json, and anonymous <task>/<A|B|...>/{shots,site}
+  review/                  sheet.md, scores.csv, and anonymous <task>/<A|B|...>/{shots,site}
+  review.key.json          label -> run and arm; beside review/ so that handing over review/ never hands over the key
   .sig.key                 the signature key scoring uses, so scoring never touches the user cache
 ```
 
 ## Reading the results
 
 - **`run.json`**: `status` (`completed`, `failed`, `timed_out`, `interrupted`), `exit_code`,
-  `duration_s`, `usage` (Codex's summed `turn.completed` counts, null when Codex reports none), and
-  `session`: `skills_read` (skills the agent opened; a with-arm run that never opened a skill was not
-  really treated), `tools_run` (`lapis-design plan check`, ... counts), `commands`, `errors`.
-  `isolation` says which skills the run saw and whether that was verified.
+  `duration_s`, `pid` (Codex's process id; `--resume` checks it while the status is `running`), `usage`
+  (Codex's summed `turn.completed` counts, null when Codex reports none), and `session`: `skills_read`
+  (skills the agent opened; a with-arm run that never opened a skill was not really treated),
+  `tools_run` (`lapis-design plan check`, ... counts), `commands`, `errors`. `isolation` says how many
+  skills of the user's own Codex saw and switched off, which project skills the run saw, and whether
+  that was verified.
 - **`summary.md`**: one table per task. Each run row shows the render step, the four lint layers as
   `blocking/total (open)`, copy findings per 1,000 words (`n in W w`), tokens, and the skills read. The
   arm-means table follows, with a with-minus-without row. Read `blocking` first: requirement and
@@ -157,8 +200,8 @@ OUT/
   scored, and the `*_status` columns say why.
 - **Blind review**: give `review/sheet.md` and the candidate folders to a person or a critic that has
   seen neither the arms nor the scores. They fill `scores.csv` (each acceptance note 0-2, plus a rank
-  per task). Only then open `key.json` (label to run and arm). A page's own source can still show an
-  arm's habits (naming, comments); judge screenshots first.
+  per task). Only then open `review.key.json` (beside `review/`; label to run and arm). A page's own
+  source can still show an arm's habits (naming, comments); judge screenshots first.
 
 ## Known limits
 
@@ -176,5 +219,9 @@ OUT/
   nothing about other models or harnesses.
 - Behavior checks depend on the page calling `POST /api/signup`; a page that renders the form but posts
   elsewhere gets probe coverage `partial` or `skipped`, which the table shows.
+- **Links.** A link in the produced site whose target is outside the project is answered with 403 by
+  the scoring server and listed under `site.refused_links` in `score.json`; `review.py` refuses to copy
+  a site that holds one. The lint step (`slop lint --source`) reads project files as they are, links
+  included, so it still reads a file behind such a link.
 - The prompts are English with Korean names and copy; a fully Korean prompt may behave differently.
 - Ranking and counts from two runs per arm are anecdotal; add replicates before believing a difference.

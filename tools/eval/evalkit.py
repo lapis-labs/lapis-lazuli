@@ -112,6 +112,58 @@ def ensure_outside_repo(path: Path) -> Path:
     return resolved
 
 
+def within(path: str | Path, base: str | Path) -> bool:
+    """Whether `path`, with every link resolved, is `base` or lies below it."""
+    real, root = os.path.realpath(path), os.path.realpath(base)
+    return real == root or real.startswith(root.rstrip(os.sep) + os.sep)
+
+
+def links_outside(root: Path, base: Path | None = None, skip=lambda name: False) -> list[str]:
+    """Symlinks under `root` (paths relative to it) whose target resolves outside `base`, which is
+    `root` unless given. `skip(name)` leaves out entries by name, directories with their contents;
+    links are never followed while walking."""
+    root = Path(root)
+    found = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = sorted(d for d in dirnames if not skip(d))
+        for name in (*dirnames, *sorted(filenames)):
+            path = os.path.join(dirpath, name)
+            if not skip(name) and os.path.islink(path) and not within(path, base or root):
+                found.append(Path(path).relative_to(root).as_posix())
+    return sorted(found)
+
+
+def redact_home(text: str) -> str:
+    """`text` with the user's home directory, as named and as resolved, replaced by `~`."""
+    homes = {str(Path.home()), os.path.realpath(Path.home())} - {"", os.sep}
+    for home in sorted(homes, key=len, reverse=True):
+        text = text.replace(home, "~")
+    return text
+
+
+def public_isolation(isolation: dict) -> dict:
+    """`isolation` as it may be written to disk: counts, never the names or paths of the user's own
+    skills (`outside_before` is a count, `disabled` becomes `disabled_count`), and no home directory
+    in a reason. The full result stays in memory: the command needs the paths and the console names
+    the skills that leaked. Applying it to its own result changes nothing, so it also cleans records
+    written before it existed."""
+    expected = set(isolation.get("expected", []))
+    seen = list(isolation.get("visible", []))
+    outside = isolation.get("outside_before")
+    names = outside if isinstance(outside, list) else []
+    record = {k: v for k, v in isolation.items() if k not in ("disabled", "visible", "outside_before", "reason")}
+    record["visible"] = [n for n in seen if n in expected]
+    record["visible_other"] = isolation.get("visible_other", 0) + len(seen) - len(record["visible"])
+    record["outside_before"] = len(outside) if isinstance(outside, list) else outside
+    record["disabled_count"] = (len(isolation["disabled"]) if "disabled" in isolation
+                                else isolation.get("disabled_count", 0))
+    reason = redact_home(isolation.get("reason") or "")
+    for name in sorted({*names, *seen} - expected, key=len, reverse=True):
+        reason = re.sub(r"(?<![\w.-])" + re.escape(name) + r"(?![\w.-])", "<skill>", reason)
+    record["reason"] = reason or None
+    return record
+
+
 def run_id(task: str, replicate: int, arm: str) -> str:
     return f"{task}.r{replicate}.{arm}"
 
