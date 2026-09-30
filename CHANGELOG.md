@@ -5,6 +5,16 @@ All notable changes are recorded here. The format follows
 [Semantic Versioning](https://semver.org/) once 1.0 is released. Before then, contracts are
 `version: 0` drafts and may change between minor versions.
 
+## Unreleased
+
+- `lazuli local fonts` stores and shows, for every face, supported languages (by character
+  repertoire, the same rule on every platform), variation axes, OpenType feature tags and vertical
+  writing support, version, x-height, cap height, units per em, and the OS/2 family class. Adobe
+  Fonts faces get these through Core Text only. Existing databases fill them on the next scan.
+- `lazuli local fonts --origin system|user|adobe-sync` lists only the faces from one origin.
+- The `lzl-fonts` reference `adobe-fonts.md` tells agents how to add Adobe Fonts metadata through the
+  host's official Adobe integration, for display only; lazuli itself sends nothing.
+
 ## 0.1.0 (2026-09-30)
 
 The first release. This entry sums up what 0.1.0 can do.
