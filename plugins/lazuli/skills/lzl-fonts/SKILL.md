@@ -28,6 +28,24 @@ plan. It locks only a family already chosen.
   read through the operating system's font API on macOS and measured from glyphs the system draws,
   never from its files; not listed on Windows). Installed means usable here for authoring and local
   tests; no origin is a license to ship.
+- `--origin system|user|adobe-sync` keeps only the faces from that origin. `--json` gives every face
+  its `postscript_name` and `subfamily`, plus the fields below, `null` or empty where the font does not
+  say; a family entry holds the union of its listed faces' `languages` and `vertical`, so read the
+  face before relying on them. For Adobe's own record of an `adobe-sync` face beyond these (designers,
+  foundry, supported languages, weight and style names, variable or not), read
+  `references/adobe-fonts.md`.
+- Face fields: `version`, `manufacturer`, `designer`; `languages`, the tags whose whole character set
+  the face maps, one rule for every origin (conservative repertoire hints, not shaping proof; `en`
+  means plain A-Z); `axes` (`tag`, `min`, `default`, `max`; empty means not variable); `features`
+  (OpenType tags) and `vertical` (`vert`, `vrt2`, `vhal`, `vkna`); `x_height`, `cap_height`,
+  `units_per_em` in font units; and the font's own class as declared (`family_class`, `class_id`,
+  `class_name`, `class_source`; 0 is unclassified and common), and `os2_ranges`, its declared Unicode
+  and code-page bits, which are declarations, not support. Declared classes and ranges never replace
+  the measured classes, a user class, or coverage.
+- For an `adobe-sync` face these come from the operating system, and some are partial: `features`
+  (`features_source: coretext`) lists only the tags it maps, `vertical` can show `vert` and `vkna` but
+  never `vhal`, `os2_ranges` is null, and heights are the system's own numbers. An absent tag is
+  unknown, not missing from the font.
 - Groups count coverage, not language: Hangul is the 2,350 common syllables or more, Han 6,000
   ideographs or more. Korean and Chinese sets carry kana, so kana alone does not make a face
   Japanese.

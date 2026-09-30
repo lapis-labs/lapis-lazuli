@@ -190,6 +190,7 @@ def test_lookup_view_takes_its_fields_from_the_index(tmp_path):
 def test_skill_copies_are_byte_identical_and_carry_build_metadata(tmp_path):
     root = make_root(tmp_path)
     shutil.rmtree(root / "src/skills/lzl-color", ignore_errors=True)   # stands for a skill with no source yet
+    shutil.rmtree(root / "src/skills/lzl-fonts")                       # replaced by a synthetic skill and reference
     write_skill(root, "lzl-fonts", f"name: lzl-fonts\ndescription: 'Use for fonts: local ones first.'\n{LICENSE_LINE}")
     (root / "src/skills/lzl-fonts/references").mkdir()
     (root / "src/skills/lzl-fonts/references/pairing.md").write_text("Pairing notes.\n")

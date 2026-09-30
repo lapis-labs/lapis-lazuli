@@ -132,6 +132,20 @@ def test_korean_support_needs_the_required_syllables_not_just_their_count(env, c
     assert families["Incomplete Korean"]["languages"] == ["en"]
 
 
+def test_family_language_unions_follow_the_origin_filter(env, tmp_path, monkeypatch, capsys):
+    rich_font(env / "file.ttf", family="Shared Metadata", extra_letters="")
+    fake = FakeAdobe(tmp_path / "synthetic-os-fonts")
+    identity = fake.add("Shared Metadata")
+    path, _ = fake.entries[identity]
+    rich_font(path, family="Shared Metadata", extra_letters=FRENCH)
+    monkeypatch.setattr(coretext, "provider", lambda: fake)
+    assert cli.main(["local", "fonts", "--json", "--no-measure"]) == 0
+    family = json.loads(capsys.readouterr().out)[0]
+    assert family["languages"] == ["en", "fr"]
+    assert sorted(face["languages"] for face in family["faces"]) == [["en"], ["en", "fr"]]
+    assert cli.main(["local", "fonts", "--json", "--no-measure", "--origin", "user"]) == 0
+    assert json.loads(capsys.readouterr().out)[0]["languages"] == ["en"]
+
 
 def test_migration_0005_refreshes_both_origins_without_discarding_user_or_measurement_data(env, tmp_path, monkeypatch):
     path = rich_font(env / "file.ttf", family="File Metadata")

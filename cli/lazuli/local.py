@@ -190,11 +190,15 @@ def main(argv: list[str] | None = None, prog: str = "lazuli local fonts") -> int
     ap = argparse.ArgumentParser(prog=prog, description="Scan (read-only), measure, and list local fonts.")
     ap.add_argument("--family", help="only families whose name contains this text")
     ap.add_argument("--summary", action="store_true", help="short inventory summary, as printed at session start")
+    ap.add_argument("--origin", choices=("system", "user", "adobe-sync"),
+                    help="only faces that came from this origin (adobe-sync: Adobe Fonts faces the system lists)")
     ap.add_argument("--json", action="store_true", help="families with faces and measurements as JSON")
     ap.add_argument("--rescan", action="store_true",
                     help="re-read every file and Adobe Fonts face, not only changed ones")
     ap.add_argument("--no-measure", action="store_true", help="scan without measuring new faces")
     args = ap.parse_args(argv)
+    if args.origin and args.summary:
+        ap.error("--origin does not apply to --summary, which counts every origin")
     try:
         scan.roots()                                         # a bad LAZULI_FONT_ROOTS is a usage error
     except scan.RootsError as exc:
@@ -209,7 +213,7 @@ def main(argv: list[str] | None = None, prog: str = "lazuli local fonts") -> int
         if args.summary:
             print(summary(conn, changed=False))
             return 0
-        families = _families(conn, args.family)
+        families = _families(conn, args.family, args.origin)
         catalog = labels.by_family(conn)
         mine = store.user_labels(conn)
         for family in families:

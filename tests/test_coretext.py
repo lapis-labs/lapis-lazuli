@@ -371,6 +371,48 @@ def test_local_fonts_reports_the_adobe_faces_it_listed(adobe, env, tmp_path, cap
     assert "scanned 1 files and 1 Adobe Fonts faces: 2 new" in captured.err
 
 
+def test_local_fonts_origin_keeps_only_the_faces_that_came_from_it(adobe, env, tmp_path, capsys):
+    adobe.add("Sync Sans")
+    adobe.add("Sync Serif")
+    build(env["user"] / "Plain.ttf", family="Plain Sans")
+    build(env["user"] / "SyncBold.ttf", family="Sync Sans", style="Bold")          # same family, another origin
+    build(env["system"] / "Gothic.ttf", family="Plain Gothic")
+
+    def listed(origin):
+        assert cli.main(["local", "fonts", "--json", "--origin", origin]) == 0
+        out = capsys.readouterr().out
+        return {f["family"]: f for f in json.loads(out)}, out
+
+    synced, out = listed("adobe-sync")
+    assert set(synced) == {"Sync Sans", "Sync Serif"}
+    assert synced["Sync Sans"]["origins"] == ["adobe-sync"]
+    assert [face["postscript_name"] for face in synced["Sync Sans"]["faces"]] == ["SyncSans-Regular"]
+    assert "coretext:" not in out and str(tmp_path / "os-fonts") not in out            # no identity, no file path
+    mine, _ = listed("user")
+    assert set(mine) == {"Plain Sans", "Sync Sans"} and mine["Sync Sans"]["origins"] == ["user"]
+    assert [face["subfamily"] for face in mine["Sync Sans"]["faces"]] == ["Bold"]
+    assert set(listed("system")[0]) == {"Plain Gothic"}
+
+
+def test_local_fonts_origin_narrows_the_table_and_composes_with_family(adobe, env, tmp_path, capsys):
+    adobe.add("Sync Sans")
+    build(env["user"] / "Plain.ttf", family="Plain Sans")
+    assert cli.main(["local", "fonts", "--origin", "adobe-sync", "--family", "sans"]) == 0
+    table = capsys.readouterr().out
+    assert "Sync Sans  [adobe-sync]" in table and "Plain Sans" not in table
+    assert cli.main(["local", "fonts", "--json", "--origin", "user", "--family", "sync"]) == 0
+    assert json.loads(capsys.readouterr().out) == []
+
+
+def test_local_fonts_origin_is_refused_for_the_summary_and_for_an_unknown_origin(env, tmp_path, capsys):
+    for argv, message in ((["--summary", "--origin", "user"], "--origin does not apply to --summary"),
+                          (["--origin", "adobe"], "invalid choice: 'adobe'")):
+        with pytest.raises(SystemExit) as stop:
+            cli.main(["local", "fonts", *argv])
+        assert stop.value.code == 2 and message in capsys.readouterr().err
+    assert not (tmp_path / "cache" / "lazuli.db").exists()                             # refused before any scan
+
+
 def test_doctor_counts_adobe_faces_on_macos_only_and_never_lists_their_folders(adobe, env, tmp_path, monkeypatch):
     monkeypatch.setattr(doctor, "_browser", lambda: ("ok", "browser", "not started"))
     adobe.add("Sync Sans")
