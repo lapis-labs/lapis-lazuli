@@ -428,7 +428,7 @@ def test_a_named_harness_that_is_missing_stops_before_any_change(doc, machine):
 def test_a_harness_without_its_command_gets_a_to_do_list(doc, machine):
     name = next(h["name"] for h in doc["harnesses"] if h["id"] == "hermes")
     m = machine(("uv", "git", "lapis-design", "lazuli"), dirs=(".hermes",))
-    r = m.sh("--plugin", "lapis")
+    r = m.sh("--harness", "hermes", "--plugin", "lapis")
     assert r.returncode == 0, r.stdout + r.stderr
     assert f"found: {name} (folder ~/.hermes)" in r.stdout and "not on PATH: hermes" in r.stdout
     assert f"- {name}: hermes skills install lapis-labs/lapis-lazuli/dist/skills/lps-ux --yes" in r.stdout

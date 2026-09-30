@@ -45,15 +45,15 @@ LapisLazuli는 에이전트가 코드를 쓰기 전에 인터페이스를 계획
 | [Claude Code](INSTALLATION.md#claude-code) | 확인함 (2.1.274, 2026-09-27) | 플러그인, 세션 시작 훅, 계획 모드 훅, MCP 서버, 평가자 서브에이전트예요. |
 | [OpenAI Codex CLI](INSTALLATION.md#openai-codex-cli) | 확인함 (0.157.x, 2026-09-27) | 플러그인, 세션 시작 훅(`/hooks`에서 직접 신뢰해야 해요), MCP 서버, 설치 스크립트가 복사하는 에이전트 파일로 된 평가자예요. |
 | [Oh-My-Pi](INSTALLATION.md#oh-my-pi) | 확인함 (18.3.1, 2026-09-27) | 마켓플레이스로 설치하는 플러그인, 세션 시작 확장, MCP 서버, 작업 에이전트로 불러오는 평가자예요. |
-| [그 밖의 Agent Skills 하네스](INSTALLATION.md#other-agent-skills-harnesses) (Cursor, Gemini CLI, GitHub Copilot, opencode, Windsurf, Kiro CLI) | `skills` CLI로 확인함 (1.7.0, 2026-09-27) | 스킬만 들어가고, 세션 요약과 MCP 설정은 `AGENTS.md` 조각으로 안내해요. 에이전트마다 따로 시험하지는 않았어요. |
-| [pi](INSTALLATION.md#pi-experimental) | 실험적 | 스킬과 세션 시작 확장이에요. 실제 설치에서는 아직 확인하지 않았어요. |
-| [Hermes Agent](INSTALLATION.md#hermes-agent-experimental) | 실험적 | 스킬, Hermes 플러그인, MCP예요. 실제 설치에서는 아직 확인하지 않았어요. |
+| [그 밖의 Agent Skills 하네스](INSTALLATION.md#other-agent-skills-harnesses) (Cursor, Gemini CLI, GitHub Copilot, opencode, Windsurf, Kiro CLI) | `skills` CLI로 목록 확인함 (1.7.0, 2026-09-27) | 스킬만 들어가고, 세션 요약과 MCP 설정은 `AGENTS.md` 조각으로 안내해요. 에이전트마다 따로 시험하지는 않았어요. |
+| [pi](INSTALLATION.md#pi) | 실험적 | 스킬과 세션 시작 확장이에요. 실제 설치에서는 아직 확인하지 않았어요. |
+| [Hermes Agent](INSTALLATION.md#hermes-agent) | 실험적 | 스킬, Hermes 플러그인, MCP예요. 실제 설치에서는 아직 확인하지 않았어요. |
 
 상태는 `install/harnesses.yaml`에서 가져왔고, 하네스별 정확한 명령은 [INSTALLATION.md](INSTALLATION.md)에 있어요.
 
 ## 빠른 시작
 
-1. [INSTALLATION.md](INSTALLATION.md)를 따라 해요. 설치 스크립트는 `--dry-run`을 받아서 실행할 명령을 모두 보여 주고 아무것도 바꾸지 않으니, 먼저 미리 보세요. 스크립트는 `uv`나 `pipx`로 CLI를 설치하고, 찾은 하네스마다 플러그인을 등록해요.
+1. [INSTALLATION.md](INSTALLATION.md)를 따라 해요. 설치 스크립트는 `--dry-run`을 받아서 실행할 명령을 모두 보여 주고 아무것도 바꾸지 않으니, 먼저 미리 보세요. 스크립트는 `uv`나 `pipx`로 CLI를 설치하고, 찾은 하네스마다 플러그인을 등록해요(pi와 Hermes Agent는 `--harness`로 이름을 줄 때만이에요).
 2. CLI를 확인해요: `lapis-design --version`, `lazuli doctor`.
 3. 선택 사항, 렌더·동작 검사용: INSTALLATION.md의 안내대로 Chromium을 설치해요.
 4. 하네스에서 `lapis` 스킬로 디자인 작업을 시작해요(Claude Code는 `/lapis:lapis`, Codex는 `$lapis:lapis`, Oh-My-Pi는 `/skill:lapis`). 계획을 쓰고, 계획을 바꿀 질문만 물어봐요.

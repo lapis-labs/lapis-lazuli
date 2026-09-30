@@ -34,7 +34,7 @@ What the scripts do:
 
 1. Check the system, `uv` and `pipx`, and which harnesses are installed (see [Identify your harness](#identify-your-harness)).
 2. Install the CLI with the first of `uv`, `pipx` on PATH (see [CLI and optional components](#cli-and-optional-components)).
-3. For each harness found, or each `--harness`, run the steps in its section below for the selected plugins. Steps marked as asking first wait for your answer (the default is no; `--yes` answers yes). Steps they cannot run because the harness command is missing, and steps only you can do, are listed at the end.
+3. For each harness found (an experimental one only when named), or each `--harness`, run the steps in its section below for the selected plugins. Steps marked as asking first wait for your answer (the default is no; `--yes` answers yes). Steps they cannot run because the harness command is missing, and steps only you can do, are listed at the end.
 4. Check the CLI with `lapis-design --version` and `lazuli doctor`, and list each harness's checks.
 
 They never use sudo or administrator rights, never store secrets, never edit an instructions file, and print each change they made. Running them again is safe: a step that is already done is done again or reported unchanged.
@@ -42,7 +42,7 @@ They never use sudo or administrator rights, never store secrets, never edit an 
 | Option | Effect |
 |---|---|
 | `--dry-run` | Print every command it would run and change nothing. |
-| `--harness ID` | Only this harness; repeat for more. IDs: `claude-code`, `codex`, `oh-my-pi`, `pi`, `hermes`, `other`. A named harness that is not installed stops the script before any change. |
+| `--harness ID` | Only this harness; repeat for more. IDs: `claude-code`, `codex`, `oh-my-pi`, `pi`, `hermes`, `other`. A named harness that is not installed stops the script before any change. Experimental harnesses (`pi`, `hermes`) install only when named here. |
 | `--plugin NAME` | Only this plugin; repeat for more. Default: all (`lapis`, `ultramarine`, `lazuli`). |
 | `--update` | Run the update steps and reinstall the CLI from `release`. |
 | `--uninstall` | Run the removal steps (see [Update and uninstall](#update-and-uninstall)). |
@@ -53,21 +53,21 @@ Exit codes: 0 when every step succeeded, 1 when a step or check failed or a name
 
 ## Identify your harness
 
-The scripts treat a harness as installed when its command is on PATH or its folder exists.
+The scripts treat a harness as installed when its command is on PATH or its folder exists. An experimental harness (`pi`, `hermes`) that is only found is skipped when installing, with a note; name it with `--harness` to install it. Updating and removing treat it like any other harness.
 
-| Harness | Command | Folder | Section |
-|---|---|---|---|
-| Claude Code (`claude-code`) | `claude` | `~/.claude` | [Claude Code](#claude-code) |
-| OpenAI Codex CLI (`codex`) | `codex` | `~/.codex` | [OpenAI Codex CLI](#openai-codex-cli) |
-| Oh-My-Pi (`oh-my-pi`) | `omp` | `~/.omp` | [Oh-My-Pi](#oh-my-pi) |
-| pi (experimental) (`pi`) | `pi` | `~/.pi/agent` | [pi (experimental)](#pi-experimental) |
-| Hermes Agent (experimental) (`hermes`) | `hermes` | `~/.hermes` | [Hermes Agent (experimental)](#hermes-agent-experimental) |
-| cursor | - | `~/.cursor` | [Other Agent Skills harnesses](#other-agent-skills-harnesses) |
-| gemini-cli | - | `~/.gemini` | [Other Agent Skills harnesses](#other-agent-skills-harnesses) |
-| github-copilot | - | `~/.copilot` | [Other Agent Skills harnesses](#other-agent-skills-harnesses) |
-| opencode | - | `~/.config/opencode` | [Other Agent Skills harnesses](#other-agent-skills-harnesses) |
-| windsurf | - | `~/.codeium/windsurf` | [Other Agent Skills harnesses](#other-agent-skills-harnesses) |
-| kiro-cli | - | `~/.kiro` | [Other Agent Skills harnesses](#other-agent-skills-harnesses) |
+| Harness | Status | Command | Folder | Section |
+|---|---|---|---|---|
+| Claude Code (`claude-code`) | - | `claude` | `~/.claude` | [Claude Code](#claude-code) |
+| OpenAI Codex CLI (`codex`) | - | `codex` | `~/.codex` | [OpenAI Codex CLI](#openai-codex-cli) |
+| Oh-My-Pi (`oh-my-pi`) | - | `omp` | `~/.omp` | [Oh-My-Pi](#oh-my-pi) |
+| pi (`pi`) | Experimental | `pi` | `~/.pi/agent` | [pi](#pi) |
+| Hermes Agent (`hermes`) | Experimental | `hermes` | `~/.hermes` | [Hermes Agent](#hermes-agent) |
+| cursor | - | - | `~/.cursor` | [Other Agent Skills harnesses](#other-agent-skills-harnesses) |
+| gemini-cli | - | - | `~/.gemini` | [Other Agent Skills harnesses](#other-agent-skills-harnesses) |
+| github-copilot | - | - | `~/.copilot` | [Other Agent Skills harnesses](#other-agent-skills-harnesses) |
+| opencode | - | - | `~/.config/opencode` | [Other Agent Skills harnesses](#other-agent-skills-harnesses) |
+| windsurf | - | - | `~/.codeium/windsurf` | [Other Agent Skills harnesses](#other-agent-skills-harnesses) |
+| kiro-cli | - | - | `~/.kiro` | [Other Agent Skills harnesses](#other-agent-skills-harnesses) |
 
 ## Per-harness setup
 
@@ -296,7 +296,9 @@ Only when you remove every plugin.
 
 Sources (checked 2026-09-25): <https://github.com/can1357/oh-my-pi/blob/main/docs/marketplace.md>, <https://github.com/can1357/oh-my-pi/blob/main/docs/skills.md>, <https://github.com/can1357/oh-my-pi/blob/main/docs/extensions.md>.
 
-### pi (experimental)
+### pi
+
+Experimental: these commands come from pi's documentation and have not been confirmed on a real install. The install scripts install it only when you name it with `--harness pi`; finding its command or folder is not enough.
 
 Installed as: package. Skills are invoked as `/skill:<skill>` (for example `/skill:lapis`).
 
@@ -351,13 +353,11 @@ Only when you remove every plugin. One package carries every plugin's skills, so
 - a git source has no subdirectory selector, so the repository root package.json carries the pi key
 - pi also reads ~/.agents/skills; do not install flat skills there alongside the package
 
-**Not yet confirmed**
-
-- the whole row: its commands come from pi's documentation and have not been confirmed on a real pi, so the row is experimental
-
 Sources (checked 2026-09-25): <https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/packages.md>, <https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/extensions.md>, <https://pi.dev>.
 
-### Hermes Agent (experimental)
+### Hermes Agent
+
+Experimental: these commands come from Hermes Agent's documentation and have not been confirmed on a real install. The install scripts install it only when you name it with `--harness hermes`; finding its command or folder is not enough.
 
 Installed as: flat-and-plugin. Skills are invoked as `/<skill>` (for example `/lapis`).
 
@@ -458,7 +458,6 @@ Only when you remove every plugin.
 
 - that hermes skills install accepts a path inside a monorepo without a tap
 - whether hermes skills install accepts a ref; its CLI reference and skills guide (read 2026-09-30) show a ref only for plugins (--ref takes a full commit), so skills come from the default branch
-- the rest of the row: its commands come from Hermes's documentation and have not been confirmed on a real Hermes, so the row is experimental
 
 Sources (checked 2026-09-25): <https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/skills.md>, <https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/plugins.md>, <https://github.com/NousResearch/hermes-agent/blob/main/website/docs/reference/cli-commands.md>.
 
@@ -569,9 +568,9 @@ playwright install chromium-headless-shell
 - OpenAI Codex CLI: `codex plugin marketplace remove lapis-lazuli`
 - OpenAI Codex CLI: `remove folder if empty: ~/.codex/plugins/cache/lapis-lazuli/`
 - Oh-My-Pi: `omp plugin marketplace remove lapis-lazuli`
-- pi (experimental): `pi remove git:github.com/lapis-labs/lapis-lazuli`
-- Hermes Agent (experimental): `hermes plugins remove lapis-lazuli`
-- Hermes Agent (experimental): `hermes mcp remove lapis-lazuli`
+- pi: `pi remove git:github.com/lapis-labs/lapis-lazuli`
+- Hermes Agent: `hermes plugins remove lapis-lazuli`
+- Hermes Agent: `hermes mcp remove lapis-lazuli`
 
 The CLI is removed only when every plugin is removed from every harness (no `--plugin` and no `--harness`), with the first tool on PATH:
 
@@ -586,6 +585,7 @@ Each harness section above has the exact update and removal commands.
 
 - Hook errors at session start, or the MCP server does not start: the harness cannot find the CLI on its PATH. Run `lazuli doctor` in a terminal; if it is not found, see [CLI and optional components](#cli-and-optional-components).
 - A harness was not found: the scripts look for its command on PATH or its folder (see [Identify your harness](#identify-your-harness)). Start the harness once, or install it, then run the script again.
+- A harness was found but skipped because it is experimental (`pi`, `hermes`): run the script with `--harness ID` to install it.
 - A step failed because it was already done: run the script with `--update` instead.
 
 **Claude Code**
@@ -603,13 +603,13 @@ Each harness section above has the exact update and removal commands.
 - reads .omp-plugin, then .claude-plugin manifests; never .codex-plugin
 - can also load Claude Code's installed plugins; skills with the same name keep the highest-priority source
 
-**pi (experimental)**
+**pi**
 
 - Needs your approval: project packages load only after project trust
 - a git source has no subdirectory selector, so the repository root package.json carries the pi key
 - pi also reads ~/.agents/skills; do not install flat skills there alongside the package
 
-**Hermes Agent (experimental)**
+**Hermes Agent**
 
 - Needs your approval: project skills load only after hermes skills trust
 - Hermes does not read Claude or Codex plugin manifests

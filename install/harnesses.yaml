@@ -2,7 +2,10 @@
 # The build (tools/build) emits `outputs`; install.sh, install.ps1, and the per-harness sections of
 # INSTALLATION.md are generated from `cli` and `harnesses`. Output contents: install/OUTPUTS.md.
 # Harness facts were checked against each harness's documentation and source on `checked`;
-# `unverified` lists what still needs a local run before the first release.
+# `unverified` lists what still needs a local run before the first release. `status: experimental`
+# marks a harness whose commands come from its documentation and have not been confirmed on a real
+# install; the install scripts install it only when --harness names it. Remove the status, and say
+# how and when it was checked in the commit, once a real install confirms the commands.
 
 version: 0
 checked: "2026-09-25"
@@ -208,7 +211,8 @@ harnesses:
       - https://github.com/can1357/oh-my-pi/blob/main/docs/extensions.md
 
   - id: pi
-    name: pi (experimental)
+    name: pi
+    status: experimental
     detect: { commands: [pi], dirs: ["~/.pi/agent"] }
     form: package
     consumes: [pi-package, flat-skills, session-extension]
@@ -235,15 +239,14 @@ harnesses:
     conflicts:
       - "a git source has no subdirectory selector, so the repository root package.json carries the pi key"
       - "pi also reads ~/.agents/skills; do not install flat skills there alongside the package"
-    unverified:
-      - "the whole row: its commands come from pi's documentation and have not been confirmed on a real pi, so the row is experimental"
     sources:
       - https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/packages.md
       - https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/extensions.md
       - https://pi.dev
 
   - id: hermes
-    name: Hermes Agent (experimental)
+    name: Hermes Agent
+    status: experimental
     detect: { commands: [hermes], dirs: ["~/.hermes"] }
     form: flat-and-plugin
     consumes: [flat-skills, hermes-plugin]
@@ -284,7 +287,6 @@ harnesses:
     unverified:
       - "that hermes skills install accepts a path inside a monorepo without a tap"
       - "whether hermes skills install accepts a ref; its CLI reference and skills guide (read 2026-09-30) show a ref only for plugins (--ref takes a full commit), so skills come from the default branch"
-      - "the rest of the row: its commands come from Hermes's documentation and have not been confirmed on a real Hermes, so the row is experimental"
     sources:
       - https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/skills.md
       - https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/plugins.md
@@ -320,8 +322,8 @@ harnesses:
     conflicts:
       - "Codex, pi, and Hermes have their own rows; the skills CLI's Codex target ~/.codex/skills is deprecated"
     verified:
-      - "2026-09-27, skills 1.7.0: `npx skills add <local checkout>/dist/skills --list` lists exactly the six dist/skills skills and nothing else"
-      - "2026-09-27, skills 1.7.0: given the checkout root instead, it reads .claude-plugin/marketplace.json and lists the same six from plugins/*/skills (byte-identical copies today), so the install row keeps the dist/skills subpath"
+      - "2026-09-27, skills 1.7.0: `npx skills add <local checkout>/dist/skills --list` lists exactly the skills in dist/skills (six on that date) and nothing else"
+      - "2026-09-27, skills 1.7.0: given the checkout root instead, it reads .claude-plugin/marketplace.json and lists the same skills from plugins/*/skills (byte-identical copies today), so the install row keeps the dist/skills subpath"
     sources:
       - https://github.com/vercel-labs/skills
       - https://agentskills.io/specification

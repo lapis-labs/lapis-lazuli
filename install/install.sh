@@ -12,6 +12,7 @@ LL_RAW='https://raw.githubusercontent.com/lapis-labs/lapis-lazuli/release'
 LL_DOCS='https://github.com/lapis-labs/lapis-lazuli/blob/release/INSTALLATION.md'
 LL_ALL_PLUGINS='lapis ultramarine lazuli'
 LL_ALL_HARNESSES='claude-code codex oh-my-pi pi hermes other'
+LL_EXPERIMENTAL='pi hermes'
 LL_CLI_NAME='CLI (lapis-design, lazuli)'
 LL_CLI_NEEDS='uv or pipx'
 LL_NL='
@@ -53,6 +54,7 @@ harness it finds. Guide: https://github.com/lapis-labs/lapis-lazuli/blob/release
 Options:
   --dry-run        print every command it would run; change nothing
   --harness ID     only this harness (repeatable): claude-code, codex, oh-my-pi, pi, hermes, other
+                   experimental, so installed only when named here: pi, hermes
   --plugin NAME    only this plugin (repeatable; default: all): lapis, ultramarine, lazuli
   --update         run the update steps and reinstall the CLI from release
   --uninstall      run the removal steps; a catalog goes only with every plugin, and
@@ -76,6 +78,11 @@ in_list() {
   case $1 in '' | *[!a-z0-9-]*) return 1 ;; esac
   case " $2 " in *" $1 "*) return 0 ;; esac
   return 1
+}
+
+# skips_experimental ID: installing without --harness leaves out an experimental harness that was only found.
+skips_experimental() {
+  [ "$LL_MODE" = install ] && [ -z "$LL_WANT_H" ] && in_list "$1" "$LL_EXPERIMENTAL"
 }
 
 selected() { in_list "$1" "$LL_PLUGINS"; }
@@ -622,28 +629,28 @@ h_oh_my_pi() {
   esac
 }
 
-# pi (experimental)
+# pi
 h_pi() {
   case $1 in
-  name) LL_H='pi (experimental)' ;;
+  name) LL_H='pi' ;;
   detect)
     LL_WHY=
     if has_cmd pi; then LL_WHY="${LL_WHY:+$LL_WHY, }command pi"; fi
     if has_dir "$HOME"/.pi/agent; then LL_WHY="${LL_WHY:+$LL_WHY, }folder ~/.pi/agent"; fi
     [ -n "$LL_WHY" ] ;;
-  lookfor) LL_LOOK='command pi or folder ~/.pi/agent' LL_ANCHOR='#pi-experimental' ;;
+  lookfor) LL_LOOK='command pi or folder ~/.pi/agent' LL_ANCHOR='#pi' ;;
   install)
-    begin 'pi (experimental)' pi
+    begin 'pi' pi
     note_whole
     step_run 0 '' pi install git:github.com/lapis-labs/lapis-lazuli@release
     ;;
   update)
-    begin 'pi (experimental)' pi
+    begin 'pi' pi
     note_whole
     step_run 0 'pi keys git packages by repository without the ref, so installing again replaces the older install' pi install git:github.com/lapis-labs/lapis-lazuli@release
     ;;
   uninstall)
-    begin 'pi (experimental)' pi
+    begin 'pi' pi
     if all_plugins; then
       step_run 0 'one package carries every plugin'\''s skills, so it goes only when every plugin is removed' pi remove git:github.com/lapis-labs/lapis-lazuli
     else
@@ -658,18 +665,18 @@ h_pi() {
   esac
 }
 
-# Hermes Agent (experimental)
+# Hermes Agent
 h_hermes() {
   case $1 in
-  name) LL_H='Hermes Agent (experimental)' ;;
+  name) LL_H='Hermes Agent' ;;
   detect)
     LL_WHY=
     if has_cmd hermes; then LL_WHY="${LL_WHY:+$LL_WHY, }command hermes"; fi
     if has_dir "$HOME"/.hermes; then LL_WHY="${LL_WHY:+$LL_WHY, }folder ~/.hermes"; fi
     [ -n "$LL_WHY" ] ;;
-  lookfor) LL_LOOK='command hermes or folder ~/.hermes' LL_ANCHOR='#hermes-agent-experimental' ;;
+  lookfor) LL_LOOK='command hermes or folder ~/.hermes' LL_ANCHOR='#hermes-agent' ;;
   install)
-    begin 'Hermes Agent (experimental)' hermes
+    begin 'Hermes Agent' hermes
     for LL_skill in $LL_SKILLS; do
       step_run 0 '' hermes skills install lapis-labs/lapis-lazuli/dist/skills/"$LL_skill" --yes
     done
@@ -679,7 +686,7 @@ h_hermes() {
     step_run 0 '' hermes mcp add lapis-lazuli --command lapis-design --args mcp
     ;;
   update)
-    begin 'Hermes Agent (experimental)' hermes
+    begin 'Hermes Agent' hermes
     note_whole
     step_run 0 '' hermes skills update
     if need_sha; then
@@ -687,7 +694,7 @@ h_hermes() {
     fi
     ;;
   uninstall)
-    begin 'Hermes Agent (experimental)' hermes
+    begin 'Hermes Agent' hermes
     for LL_skill in $LL_SKILLS; do
       step_run 0 '' hermes skills uninstall "$LL_skill"
     done
@@ -848,7 +855,11 @@ main() {
     harness "$LL_h" name
     if harness "$LL_h" detect; then
       LL_found="${LL_found:+$LL_found }$LL_h"
-      say "  found: $LL_H ($LL_WHY)"
+      if skips_experimental "$LL_h"; then
+        say "  found: $LL_H ($LL_WHY); experimental, so not installed unless named: --harness $LL_h"
+      else
+        say "  found: $LL_H ($LL_WHY)"
+      fi
     fi
   done
   if [ -n "$LL_WANT_H" ]; then
@@ -867,10 +878,16 @@ main() {
     done
     [ "$LL_absent" = 0 ] || exit 1
   else
-    LL_TARGETS=$LL_found
+    for LL_h in $LL_found; do
+      skips_experimental "$LL_h" || LL_TARGETS="${LL_TARGETS:+$LL_TARGETS }$LL_h"
+    done
   fi
   if [ -z "$LL_TARGETS" ]; then
-    say "  no supported harness found; see $LL_DOCS#identify-your-harness"
+    if [ -n "$LL_found" ]; then
+      say "  no harness to install: the ones found are experimental; see $LL_DOCS#identify-your-harness"
+    else
+      say "  no supported harness found; see $LL_DOCS#identify-your-harness"
+    fi
   fi
 
   if [ "$LL_MODE" != uninstall ]; then

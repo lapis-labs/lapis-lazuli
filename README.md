@@ -58,9 +58,9 @@ Run either with `--help` for the commands and options.
 | [Claude Code](INSTALLATION.md#claude-code) | Verified (2.1.274, 2026-09-27) | Plugins, session-start hook, plan-mode hook, MCP server, critic subagent. |
 | [OpenAI Codex CLI](INSTALLATION.md#openai-codex-cli) | Verified (0.157.x, 2026-09-27) | Plugins, session-start hook (you trust it in `/hooks`), MCP server, critic as an agent file the installer copies. |
 | [Oh-My-Pi](INSTALLATION.md#oh-my-pi) | Verified (18.3.1, 2026-09-27) | Plugins through its marketplace, session-start extension, MCP server, critic as a task agent. |
-| [Other Agent Skills harnesses](INSTALLATION.md#other-agent-skills-harnesses) (Cursor, Gemini CLI, GitHub Copilot, opencode, Windsurf, Kiro CLI) | Verified through the `skills` CLI (1.7.0, 2026-09-27) | Skills only, plus an `AGENTS.md` snippet for the session summary and MCP setup. Each agent was not tested on its own. |
-| [pi](INSTALLATION.md#pi-experimental) | Experimental | Skills and a session-start extension; not yet confirmed on a real install. |
-| [Hermes Agent](INSTALLATION.md#hermes-agent-experimental) | Experimental | Skills, a Hermes plugin, and MCP; not yet confirmed on a real install. |
+| [Other Agent Skills harnesses](INSTALLATION.md#other-agent-skills-harnesses) (Cursor, Gemini CLI, GitHub Copilot, opencode, Windsurf, Kiro CLI) | Listing verified through the `skills` CLI (1.7.0, 2026-09-27) | Skills only, plus an `AGENTS.md` snippet for the session summary and MCP setup. Each agent was not tested on its own. |
+| [pi](INSTALLATION.md#pi) | Experimental | Skills and a session-start extension; not yet confirmed on a real install. |
+| [Hermes Agent](INSTALLATION.md#hermes-agent) | Experimental | Skills, a Hermes plugin, and MCP; not yet confirmed on a real install. |
 
 The status comes from `install/harnesses.yaml`; the exact commands for each harness are in
 [INSTALLATION.md](INSTALLATION.md).
@@ -69,7 +69,8 @@ The status comes from `install/harnesses.yaml`; the exact commands for each harn
 
 1. Follow [INSTALLATION.md](INSTALLATION.md). The install scripts take `--dry-run`, which prints
    every command and changes nothing, so preview first. They install the CLI with `uv` or `pipx`,
-   then register the plugins in each harness they find.
+   then register the plugins in each harness they find (pi and Hermes Agent only when you name them
+   with `--harness`).
 2. Check the CLI: `lapis-design --version` and `lazuli doctor`.
 3. Optional, for render and behavior checks: install Chromium as INSTALLATION.md describes.
 4. In your harness, start a design task with the `lapis` skill (`/lapis:lapis` in Claude Code,

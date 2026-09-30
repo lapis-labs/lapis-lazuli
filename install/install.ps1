@@ -11,6 +11,7 @@ $script:Raw = 'https://raw.githubusercontent.com/lapis-labs/lapis-lazuli/release
 $script:Docs = 'https://github.com/lapis-labs/lapis-lazuli/blob/release/INSTALLATION.md'
 $script:AllPlugins = @('lapis', 'ultramarine', 'lazuli')
 $script:AllHarnesses = @('claude-code', 'codex', 'oh-my-pi', 'pi', 'hermes', 'other')
+$script:Experimental = @('pi', 'hermes')
 $script:CliName = 'CLI (lapis-design, lazuli)'
 $script:CliNeeds = 'uv or pipx'
 $script:SkillsOf = @{
@@ -27,6 +28,7 @@ harness it finds. Guide: https://github.com/lapis-labs/lapis-lazuli/blob/release
 Options:
   --dry-run        print every command it would run; change nothing
   --harness ID     only this harness (repeatable): claude-code, codex, oh-my-pi, pi, hermes, other
+                   experimental, so installed only when named here: pi, hermes
   --plugin NAME    only this plugin (repeatable; default: all): lapis, ultramarine, lazuli
   --update         run the update steps and reinstall the CLI from release
   --uninstall      run the removal steps; a catalog goes only with every plugin, and
@@ -75,6 +77,9 @@ function Get-HomePath([string]$Rel) {
   return ($HOME.TrimEnd('/', '\') + $sep + $Rel.Replace('/', $sep))
 }
 function Test-Slug([string]$Word) { return ($Word -cmatch '^[a-z0-9-]+$') }
+function Test-SkipExperimental([string]$Id) {
+  return ($script:Mode -ceq 'install' -and $script:WantH.Count -eq 0 -and ($script:Experimental -ccontains $Id))
+}
 function Select-Among([string[]]$Names) { return @(@($script:Plugins) | Where-Object { $Names -ccontains $_ }) }
 function Test-Selected([string]$Name) { return (@($script:Plugins) -ccontains $Name) }
 function Test-AllPlugins { return ((@($script:Plugins) -join ' ') -ceq (@($script:AllPlugins) -join ' ')) }
@@ -566,28 +571,28 @@ function h_oh_my_pi([string]$Phase) {
   }
 }
 
-# pi (experimental)
+# pi
 function h_pi([string]$Phase) {
   switch ($Phase) {
-    'name' { $script:H = 'pi (experimental)' }
+    'name' { $script:H = 'pi' }
     'detect' {
       $script:Why = @()
       if (Test-Cmd 'pi') { $script:Why += 'command pi' }
       if (Test-Dir (Get-HomePath '.pi/agent')) { $script:Why += 'folder ~/.pi/agent' }
     }
-    'lookfor' { $script:Look = 'command pi or folder ~/.pi/agent'; $script:Anchor = '#pi-experimental' }
+    'lookfor' { $script:Look = 'command pi or folder ~/.pi/agent'; $script:Anchor = '#pi' }
     'install' {
-      Start-Phase 'pi (experimental)' @('pi')
+      Start-Phase 'pi' @('pi')
       Write-WholeNote
       Invoke-Run $false '' @('pi', 'install', 'git:github.com/lapis-labs/lapis-lazuli@release')
     }
     'update' {
-      Start-Phase 'pi (experimental)' @('pi')
+      Start-Phase 'pi' @('pi')
       Write-WholeNote
       Invoke-Run $false 'pi keys git packages by repository without the ref, so installing again replaces the older install' @('pi', 'install', 'git:github.com/lapis-labs/lapis-lazuli@release')
     }
     'uninstall' {
-      Start-Phase 'pi (experimental)' @('pi')
+      Start-Phase 'pi' @('pi')
       if (Test-AllPlugins) {
         Invoke-Run $false 'one package carries every plugin''s skills, so it goes only when every plugin is removed' @('pi', 'remove', 'git:github.com/lapis-labs/lapis-lazuli')
       } else {
@@ -602,18 +607,18 @@ function h_pi([string]$Phase) {
   }
 }
 
-# Hermes Agent (experimental)
+# Hermes Agent
 function h_hermes([string]$Phase) {
   switch ($Phase) {
-    'name' { $script:H = 'Hermes Agent (experimental)' }
+    'name' { $script:H = 'Hermes Agent' }
     'detect' {
       $script:Why = @()
       if (Test-Cmd 'hermes') { $script:Why += 'command hermes' }
       if (Test-Dir (Get-HomePath '.hermes')) { $script:Why += 'folder ~/.hermes' }
     }
-    'lookfor' { $script:Look = 'command hermes or folder ~/.hermes'; $script:Anchor = '#hermes-agent-experimental' }
+    'lookfor' { $script:Look = 'command hermes or folder ~/.hermes'; $script:Anchor = '#hermes-agent' }
     'install' {
-      Start-Phase 'Hermes Agent (experimental)' @('hermes')
+      Start-Phase 'Hermes Agent' @('hermes')
       foreach ($Skill in @($script:Skills)) {
         Invoke-Run $false '' @('hermes', 'skills', 'install', ('lapis-labs/lapis-lazuli/dist/skills/' + $Skill), '--yes')
       }
@@ -623,7 +628,7 @@ function h_hermes([string]$Phase) {
       Invoke-Run $false '' @('hermes', 'mcp', 'add', 'lapis-lazuli', '--command', 'lapis-design', '--args', 'mcp')
     }
     'update' {
-      Start-Phase 'Hermes Agent (experimental)' @('hermes')
+      Start-Phase 'Hermes Agent' @('hermes')
       Write-WholeNote
       Invoke-Run $false '' @('hermes', 'skills', 'update')
       if (Get-Sha) {
@@ -631,7 +636,7 @@ function h_hermes([string]$Phase) {
       }
     }
     'uninstall' {
-      Start-Phase 'Hermes Agent (experimental)' @('hermes')
+      Start-Phase 'Hermes Agent' @('hermes')
       foreach ($Skill in @($script:Skills)) {
         Invoke-Run $false '' @('hermes', 'skills', 'uninstall', ('' + $Skill))
       }
@@ -792,7 +797,11 @@ function Invoke-Main([object[]]$Arguments) {
     Invoke-Harness $h 'detect'
     if (@($script:Why).Count -gt 0) {
       $found += $h
-      Say ('  found: ' + $script:H + ' (' + ($script:Why -join ', ') + ')')
+      if (Test-SkipExperimental $h) {
+        Say ('  found: ' + $script:H + ' (' + ($script:Why -join ', ') + '); experimental, so not installed unless named: --harness ' + $h)
+      } else {
+        Say ('  found: ' + $script:H + ' (' + ($script:Why -join ', ') + ')')
+      }
     }
   }
   $targets = @()
@@ -812,9 +821,12 @@ function Invoke-Main([object[]]$Arguments) {
     }
     if ($absent) { return 1 }
   } else {
-    $targets = $found
+    $targets = @($found | Where-Object { -not (Test-SkipExperimental $_) })
   }
-  if ($targets.Count -eq 0) { Say ('  no supported harness found; see ' + $script:Docs + '#identify-your-harness') }
+  if ($targets.Count -eq 0) {
+    if ($found.Count -gt 0) { Say ('  no harness to install: the ones found are experimental; see ' + $script:Docs + '#identify-your-harness') }
+    else { Say ('  no supported harness found; see ' + $script:Docs + '#identify-your-harness') }
+  }
 
   if ($script:Mode -ne 'uninstall') {
     $script:Tool = Get-CliTool 'install'
