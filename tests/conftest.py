@@ -1,6 +1,7 @@
 """Shared test fixtures: isolated user cache, browser loopback server, and browser/CJK markers."""
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import os
 import re
@@ -58,6 +59,40 @@ def pytest_collection_modifyitems(items):
             importlib.util.find_spec(name) is None for name in ("kiwipiepy", "sudachipy", "sudachidict_core", "rjieba")
         ):
             item.add_marker(pytest.mark.skip(reason="requires the cjk optional extra"))
+
+
+def pytest_addoption(parser):
+    parser.addoption("--shard", metavar="K/N", help="run only the Kth of N disjoint parts of the selected tests "
+                     "(CI splits the browser tests across runners); parts are fixed by each test's id")
+
+
+def shard_of(nodeid: str, count: int) -> int:
+    """The part (1..count) a test belongs to: stable across runs, machines, and Python versions."""
+    return int.from_bytes(hashlib.sha256(nodeid.encode()).digest()[:8], "big") % count + 1
+
+
+class _Shard:
+    """Keeps only this shard's tests. A plugin of its own, registered after the built-in `-m` filter,
+    so `trylast` puts it after markers and `-m` have chosen the tests."""
+
+    def __init__(self, part: int, count: int):
+        self.part, self.count = part, count
+
+    @pytest.hookimpl(trylast=True)
+    def pytest_collection_modifyitems(self, config, items):
+        keep = [item for item in items if shard_of(item.nodeid, self.count) == self.part]
+        config.hook.pytest_deselected(items=[item for item in items if shard_of(item.nodeid, self.count) != self.part])
+        items[:] = keep
+
+
+def pytest_configure(config):
+    spec = config.getoption("--shard")
+    if not spec:
+        return
+    match = re.fullmatch(r"([1-9]\d*)/([1-9]\d*)", spec)
+    if not match or int(match[1]) > int(match[2]):
+        raise pytest.UsageError(f"--shard wants K/N with 1 <= K <= N, not {spec!r}")
+    config.pluginmanager.register(_Shard(int(match[1]), int(match[2])), "lapis-shard")
 
 
 @pytest.fixture(scope="session")

@@ -11,6 +11,11 @@ on:
 permissions:
   contents: read
 
+# A newer push to the same branch or pull request supersedes a running check; tag runs always finish.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
 jobs:
   contracts:
     runs-on: ubuntu-latest
@@ -20,12 +25,18 @@ jobs:
       - name: Install the CLI and test dependencies from the lock
         run: uv sync --locked
       - name: Contracts, plan and rights checks, derived values
-        run: uv run pytest -q -m "not browser and not cjk"
+        run: uv run pytest -q -m "not browser and not cjk" -n auto
       - name: Generated outputs match src/ and install/harnesses.yaml
         run: uv run python tools/build/build.py --check
 
   browser:
+    # Four runners, each with its fixed part of the browser tests (--shard, tests/conftest.py).
+    name: browser (${{ matrix.shard }}/4)
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.2.0
@@ -34,7 +45,7 @@ jobs:
       - name: Install Chromium headless shell
         run: uv run playwright install --with-deps chromium-headless-shell
       - name: Render and behavior checks in Chromium
-        run: uv run pytest -q -m browser -n auto
+        run: uv run pytest -q -m browser -n auto --shard ${{ matrix.shard }}/4
 
   cjk:
     runs-on: ubuntu-latest

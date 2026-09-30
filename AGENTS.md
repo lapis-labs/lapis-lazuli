@@ -67,8 +67,10 @@ uv build --out-dir build/wheels          # wheel carries src/shared as lapis_des
 ```
 
 Run them from this folder. CI runs `uv sync --locked`, then the two test commands above as separate
-jobs (the contracts job excludes `cjk`), plus a third job that installs the `cjk` extra and runs
-`-m cjk`, on Python 3.12 (`.python-version`), the lowest version `requires-python` allows. Tests
+jobs (the contracts job excludes `cjk`; the browser job runs on four runners, each with
+`--shard K/4`, a fixed part of the tests chosen by test id), plus a third job that installs the
+`cjk` extra and runs `-m cjk`, and a light docs workflow when only documents change, on Python 3.12
+(`.python-version`), the lowest version `requires-python` allows. Tests
 that drive Chromium carry the `browser` marker (`tests/conftest.py` sets it by file and
 by the `browser` fixture); keep new browser tests parallel-safe (port 0, no shared files). Tests
 that need the analyzers carry `cjk` and are skipped without the extra; `lint/morph.py` returns
