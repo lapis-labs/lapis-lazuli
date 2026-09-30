@@ -17,6 +17,9 @@ All notable changes are recorded here. The format follows
   language; before, only the system language was stored.
 - The `lzl-fonts` reference `adobe-fonts.md` tells agents how to add Adobe Fonts metadata through the
   host's official Adobe integration, for display only; lazuli itself sends nothing.
+- Adobe Fonts faces with an optical size (`opsz`) axis are no longer measured through Core Text, which
+  sets that axis from the point size; they stay unmeasured ("optical size not pinned"), and
+  `lazuli local fonts` says so in one line with their count. Files are unaffected.
 
 ## 0.1.0 (2026-09-30)
 

@@ -17,6 +17,11 @@ Two ways to reach a face, recorded as metrics.method:
              metrics from Core Text traits (weight_class is the class nearest the weight trait, italic
              the italic trait), and `variable` and width_class are not recorded. See
              tests/test_coretext.py for the parity with the file method on the same synthetic faces.
+             A face whose stored variation axes include `opsz` is not measured this way: Core Text sizes that
+             axis by the point size and the two Core Text fonts of one face are made at different sizes, so
+             nothing pins one optical size. It is recorded as unmeasured (`unmeasurable`: "optical size not
+             pinned"), never with numbers, and counted in one line of `measure_pending`'s failures. Files are
+             unaffected: FreeType draws the font's default instance.
 
 Latin (vocab `panose_latin_text`):
   weight       WeightRat = CapH (H) / vertical stem of E. The stem is the leftmost ink run on rows
@@ -426,11 +431,27 @@ def _name_hints(vocab: dict, names: list[str]) -> list[str]:
                    for hint in hints)]
 
 
+OPTICAL_SIZE_REASON = "optical size not pinned"
+
+
+class OpticalSizeNotPinned(Exception):
+    """An Adobe Fonts face has an `opsz` axis. Core Text sets that axis from the point size, and a Core Text face
+    is made at two sizes (font units, RASTER_PX), so no single optical size stands behind its numbers."""
+
+
+def has_optical_size_axis(metadata_json: str | None) -> bool:
+    """Whether the stored design metadata (`local_font.metadata_json`) lists an `opsz` variation axis."""
+    return any(axis.get("tag") == "opsz" for axis in json.loads(metadata_json or "{}").get("axes") or ())
+
+
 def open_face(path: str, index: int, row: dict, provider: coretext.Provider | None = None):
     """The face a row describes. An `adobe-sync` row is an identity, not a path: it is opened only through the
-    operating system's font list, never as a file."""
+    operating system's font list, never as a file, and never when its stored axes include `opsz`
+    (`OpticalSizeNotPinned`; files are unaffected, since FreeType draws the default instance)."""
     if row.get("origin") != "adobe-sync":
         return Face(path, index)
+    if has_optical_size_axis(row.get("metadata_json")):
+        raise OpticalSizeNotPinned(OPTICAL_SIZE_REASON)
     if provider is None:
         raise LookupError("Adobe Fonts are measured only through the operating system's font list")
     return provider.open(path, RASTER_PX)
@@ -467,19 +488,33 @@ def measure_face(path: str, index: int, row: dict, vocab: dict, *, provider: cor
             "metrics_json": json.dumps(metrics, ensure_ascii=False)}
 
 
+def _unmeasurable(reason: str) -> dict:
+    """A measurement row for a face that has no numbers: the reason is all it stores."""
+    return {"family_kind": None, "panose_json": None, "cjk_json": None,
+            "metrics_json": json.dumps({"unmeasurable": reason})}
+
+
 def measure_pending(conn: sqlite3.Connection, *, limit: int | None = None) -> tuple[int, list[str]]:
     """Measure faces without a measurement from this measurer version. Returns (measured, failures). Adobe
     Fonts faces (origin `adobe-sync`) go through Core Text and wait, unmeasured, while it is not available
-    (another platform, or `LAZULI_FONT_ROOTS` set)."""
+    (another platform, or `LAZULI_FONT_ROOTS` set). An Adobe Fonts face whose stored axes include `opsz` is
+    never measured: it is recorded as unmeasurable ("optical size not pinned", once per measurer version, like
+    any failure), also when it was measured before its axes were stored, and `failures` gets one line with
+    the count of such faces."""
     vocab = _vocab()
     rows = conn.execute(
         """SELECT lf.* FROM local_font lf
            WHERE NOT EXISTS (SELECT 1 FROM measurement m WHERE m.local_font_id = lf.id
                              AND m.measurer_version = ?) ORDER BY lf.id""", (MEASURER_VERSION,)).fetchall()
+    rows += [row for row in conn.execute(      # measured before the face's axes were stored: decided again
+        """SELECT lf.* FROM local_font lf JOIN measurement m ON m.local_font_id = lf.id
+           WHERE lf.origin = 'adobe-sync' AND m.measurer_version = ? AND m.family_kind IS NOT NULL""",
+        (MEASURER_VERSION,)) if has_optical_size_axis(row["metadata_json"])]
+    rows.sort(key=lambda row: row["id"])
     if limit is not None:
         rows = rows[:limit]
     failures = []
-    measured = 0
+    measured = unpinned = 0
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     provider = None
     if any(row["origin"] == "adobe-sync" for row in rows):
@@ -497,11 +532,13 @@ def measure_pending(conn: sqlite3.Connection, *, limit: int | None = None) -> tu
             arguments = {}
         try:
             values = measure_face(data["path"], data["face_index"], data, vocab, **arguments)
+        except OpticalSizeNotPinned as exc:       # counted in one line below, not one per face
+            unpinned += 1
+            values = _unmeasurable(str(exc))
         except Exception as exc:                  # one unreadable face must not stop the rest
             # recorded once per measurer version, so it is not retried on every run
             failures.append(f"{Path(data['path']).name}#{data['face_index']}: {type(exc).__name__}")
-            values = {"family_kind": None, "panose_json": None, "cjk_json": None,
-                      "metrics_json": json.dumps({"unmeasurable": type(exc).__name__})}
+            values = _unmeasurable(type(exc).__name__)
         conn.execute("DELETE FROM measurement WHERE local_font_id = ?", (data["id"],))
         conn.execute("""INSERT INTO measurement (local_font_id, measurer_version, family_kind, panose_json,
                           cjk_json, metrics_json, measured_at) VALUES (?, ?, ?, ?, ?, ?, ?)""",
@@ -511,4 +548,7 @@ def measure_pending(conn: sqlite3.Connection, *, limit: int | None = None) -> tu
         if measured % 100 == 0:
             conn.commit()
     conn.commit()
+    if unpinned:
+        failures.append(f"Adobe Fonts: {unpinned} {'face' if unpinned == 1 else 'faces'} with an opsz axis "
+                        f"not measured ({OPTICAL_SIZE_REASON})")
     return measured, failures

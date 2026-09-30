@@ -42,6 +42,11 @@ Core Text instead:
   file data, and `ALLOWED_CALLS` is the whole list of symbols this module binds: `_Library.bind` refuses any
   other, so outlines (`CTFontCreatePathForGlyph`) and table bytes (`CTFontCopyTable`) cannot be added
   by accident.
+- Optical size: Core Text sets an `opsz` axis from the point size, and `CTFace` makes its fonts at two sizes (one
+  point per font unit for metrics, RASTER_PX for the raster), so its numbers would describe different optical
+  sizes, and nothing here pins one. `ALLOWED_CALLS` is not widened to pin it. A face whose stored axes include
+  `opsz` is therefore never opened as a `CTFace`: `measure.open_face` raises `OpticalSizeNotPinned`, and the
+  face is recorded as unmeasured ("optical size not pinned"), never with numbers.
 
 `LAZULI_FONT_ROOTS` (tests, evaluations) turns the listing off (`provider()` returns None), and starts no
 helper (`run_names_helper`), so no Adobe data reaches a test or an evaluation. Adobe Fonts terms allow using
