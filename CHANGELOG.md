@@ -5,6 +5,11 @@ All notable changes are recorded here. The format follows
 [Semantic Versioning](https://semver.org/) once 1.0 is released. Before then, contracts are
 `version: 0` drafts and may change between minor versions.
 
+## Unreleased
+
+- `render check` no longer stops on a page with a scroll-driven animation (`animation-timeline`);
+  such an animation is recorded without `duration_ms`, since its computed duration is `auto`.
+
 ## 0.1.1 (2026-09-30)
 
 Font metadata for every local font, Adobe Fonts handled through the operating system only, and

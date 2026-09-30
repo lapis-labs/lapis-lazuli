@@ -114,3 +114,19 @@ def test_reduced_motion_uses_the_page_computed_state(browser, render_server: str
     marquee = next(box for box in vp["boxes"] if box["id"] == marquee_id)
     assert "animations" not in marquee.get("motion", {})
     assert marquee.get("motion", {}).get("moves_at_rest") is not True
+
+
+def test_scroll_driven_animation_is_recorded_without_a_time_duration(browser, render_server: str,
+                                                                     tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    # animation-timeline: view() computes animation-duration as `auto`; the capture used to stop on it.
+    monkeypatch.setattr(fields, "FIELD_MODULES", (interaction,))
+    url = f"{render_server}/scroll-driven.html"
+    key = bytes(range(32))
+    vp = capture(browser, url, _configs(False, [390])[0], tmp_path / "scroll.png", key=key)
+    assert not validate(assemble(url, "scroll", [vp], key, dark_theme=False))
+    from lapis_design.render.ids import box_id
+    settle_id = box_id([("html", 0, None), ("body", 0, None), ("main", 0, "page"), ("section", 0, "settle")])
+    settle = next(box for box in vp["boxes"] if box["id"] == settle_id)
+    (animation,) = settle["motion"]["animations"]
+    assert animation["name"] == "settle" and "duration_ms" not in animation
+    assert {"opacity", "transform"} <= set(animation["properties"])

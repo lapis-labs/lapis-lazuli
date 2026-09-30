@@ -171,7 +171,11 @@ def after_scroll(view: RawView) -> None:
     view.page.evaluate(_CLS_END)
 
 
-def _time(value: str) -> float:
+def _time(value: str) -> float | None:
+    """A computed CSS time in milliseconds, or None for `auto`: a scroll- or view-driven animation
+    (`animation-timeline`) has no duration in time."""
+    if value == 'auto':
+        return None
     return round(float(value[:-2]) if value.endswith('ms') else float(value[:-1])*1000, 4)
 
 
@@ -293,10 +297,13 @@ def _motion(data: dict, rest: dict | None) -> dict:
         animation = next((a for a in data['animations'] if a['name']==name), None)
         iteration = data['animationIterations'][i % len(data['animationIterations'])]
         easing = data['animationEasing'][i % len(data['animationEasing'])]
-        animations.append({'name':name, 'properties':animation['properties'] if animation else [],
-          'duration_ms':_time(data['animationDurations'][i % len(data['animationDurations'])]),
-          'iterations': 'infinite' if iteration == 'infinite' else round(float(iteration),4),
+        entry = {'name':name, 'properties':animation['properties'] if animation else []}
+        duration = _time(data['animationDurations'][i % len(data['animationDurations'])])
+        if duration is not None:                     # no duration_ms for a scroll-driven animation
+            entry['duration_ms'] = duration
+        entry.update({'iterations': 'infinite' if iteration == 'infinite' else round(float(iteration),4),
           'easing':easing, 'stepped':'steps(' in easing or bool(animation and animation['stepped'])})
+        animations.append(entry)
     if animations:
         result['animations']=animations
     if rest is not None:
