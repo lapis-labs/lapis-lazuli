@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import io
+import json
 from datetime import datetime, timezone
 from time import monotonic, sleep
 from urllib.parse import urljoin, urlsplit
@@ -21,7 +22,16 @@ class MissingSyntheticValues(ValueError):
 ATTRS = ("aria-expanded", "aria-pressed", "aria-selected", "aria-checked", "aria-current",
          "aria-invalid", "aria-busy", "aria-disabled", "aria-hidden", "aria-label", "disabled",
          "open", "value", "paused")
-OBSERVE = """() => {
+# WAI-ARIA 1.2 roles an author can give, plus the graphics roles: `role="status note"` means its first token in this list.
+_ARIA_ROLES = ("alert alertdialog application article banner blockquote button caption cell checkbox code columnheader "
+               "combobox complementary contentinfo definition deletion dialog directory document emphasis feed figure "
+               "form generic grid gridcell group heading img insertion link list listbox listitem log main marquee math "
+               "menu menubar menuitem menuitemcheckbox menuitemradio meter navigation none note option paragraph "
+               "presentation progressbar radio radiogroup region row rowgroup rowheader scrollbar search searchbox "
+               "separator slider spinbutton status strong subscript superscript switch tab table tablist tabpanel term "
+               "textbox time timer toolbar tooltip tree treegrid treeitem "
+               "graphics-document graphics-object graphics-symbol").split()
+OBSERVE = r"""() => {
   const attrs=['aria-expanded','aria-pressed','aria-selected','aria-checked','aria-current',
    'aria-invalid','aria-busy','aria-disabled','aria-hidden','aria-label','disabled','open'];
   const result={}, dialogs=[], live=[];
@@ -40,19 +50,64 @@ OBSERVE = """() => {
     if (el.localName==='dialog' || role==='dialog' || role==='alertdialog' ||
         el.hasAttribute('aria-modal') || (area>=.3 && getComputedStyle(el).position==='fixed' &&
         Number(getComputedStyle(el).zIndex)>0 && !el.closest('main'))) dialogs.push(id);
-    // Live-region politeness as WAI-ARIA gives it: an explicit aria-live wins (off included); without one
-    // role=alert is assertive, role=status and role=log are polite, and every other role is off.
+  }
+  const o=window.__lapisObserve||{mutations:0,shifts:[]};
+  // Live regions, as the contract's Announcements sentence reads them. A region is an element whose aria-live
+  // is polite or assertive, or that has no aria-live and a role with a live default: status and log polite,
+  // alert assertive (`output` has the role status). The nearest enclosing element with aria-live or such a
+  // role owns the text inside it, so text added to a child counts for that region, and an inner region that
+  // is off (aria-live=off, timer, marquee) silences it. Nothing inside an aria-hidden subtree or an element
+  // that is not rendered is announced.
+  const roles=new Set(__ARIA_ROLES__), LIVE_ROLE={status:'polite',log:'polite',alert:'assertive',timer:'off',marquee:'off'};
+  const roleOf=el=>{
+    for (const token of (el.getAttribute('role')||'').toLowerCase().split(/\s+/)) if (roles.has(token)) return token;
+    return el.localName==='output'?'status':'';
+  };
+  const liveOf=el=>{
     const explicit=(el.getAttribute('aria-live')||'').trim().toLowerCase();
-    const politeness=['polite','assertive','off'].includes(explicit)?explicit:
-      role==='alert'?'assertive':role==='status'||role==='log'?'polite':'off';
-    if(politeness!=='off') live.push({id,text,channel:politeness==='polite'?'live-polite':
-       role==='alert'?'alert':'live-assertive'});
+    return ['polite','assertive','off'].includes(explicit)?explicit:LIVE_ROLE[roleOf(el)]||null;
+  };
+  const textOf=root=>{
+    const parts=[];
+    const walk=(node,shown)=>{
+      if (node.nodeType===3) {if (shown) parts.push(node.data); return;}
+      if (node.nodeType!==1) return;
+      const s=getComputedStyle(node);
+      if (node!==root && (node.getAttribute('aria-hidden')==='true' || s.display==='none' || liveOf(node))) return;
+      const block=!s.display.startsWith('inline');
+      if (block) parts.push(' ');
+      for (const child of node.childNodes) walk(child, s.visibility==='visible');
+      if (block || node.localName==='br') parts.push(' ');
+    };
+    walk(root,true);
+    return parts.join('').replace(/\s+/g,' ').trim();
+  };
+  // A region is matched across the two observations by the element itself, else by its place in the document.
+  const known=(window.__lapisLive ||= {ids:new WeakMap(), count:0});
+  const identity=el=>{
+    if (!known.ids.has(el)) known.ids.set(el, ++known.count);
+    return o.documentToken+':'+known.ids.get(el);
+  };
+  const place=el=>{
+    const steps=[];
+    for (let x=el; x; x=x.parentElement) {
+      let index=0;
+      for (let sib=x.previousElementSibling; sib; sib=sib.previousElementSibling) if (sib.localName===x.localName) index++;
+      steps.unshift(x.id?'#'+x.id:x.localName+':'+index);
+    }
+    return steps.join('/');
+  };
+  for (const el of document.querySelectorAll('[aria-live],[role],output')) {
+    const politeness=liveOf(el);
+    if (!politeness || politeness==='off' || !el.getClientRects().length || el.closest('[aria-hidden="true"]')) continue;
+    live.push({key:identity(el), place:place(el), text:textOf(el),
+      box:el.closest('[data-lapis-box]')?.getAttribute('data-lapis-box')||null,
+      channel:politeness==='polite'?'live-polite':roleOf(el)==='alert'?'alert':'live-assertive'});
   }
   const focus=document.activeElement?.closest('[data-lapis-box]')?.getAttribute('data-lapis-box')||null;
-  const o=window.__lapisObserve||{mutations:0,shifts:[]};
   return {boxes:result,dialogs,live,focus,scroll:scrollY,mutations:o.mutations,shifts:o.shifts.length,
      href:location.href,documentToken:o.documentToken};
-}"""
+}""".replace("__ARIA_ROLES__", json.dumps(_ARIA_ROLES))
 
 
 class Driver:
@@ -336,11 +391,13 @@ class Driver:
                     aria.append({"box": bid, "attr": attr, "from": self.clean(str(old[attr])) if old.get(attr) is not None else None,
                                  "to": self.clean(str(value)) if value is not None else None})
         announcement = []
+        by_element = {live["key"]: live["text"] for live in before["live"]}
+        by_place = {live["place"]: live["text"] for live in before["live"]}
         for live in after["live"]:
-            old = next((item["text"] for item in before["live"] if item["id"] == live["id"]), "")
+            old = by_element[live["key"]] if live["key"] in by_element else by_place.get(live["place"], "")
             if live["text"] and live["text"] != old:
-                announcement.append({"box": live["id"], "channel": live["channel"],
-                                     "text": self.clean(live["text"]), "t_ms": self.t_ms()})
+                entry = {"channel": live["channel"], "text": self.clean(live["text"]), "t_ms": self.t_ms()}
+                announcement.append({"box": live["box"], **entry} if live["box"] else entry)
         if after["focus"] and after["focus"] != before["focus"] and after["focus"] in changed:
             announcement.append({"channel": "focus", "box": after["focus"],
                                  "text": self.clean(after["boxes"][after["focus"]]["text"]), "t_ms": self.t_ms()})

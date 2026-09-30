@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Announcements</title></head>
+<body><main><h1>Result messages</h1>
+<!-- Each button writes "Saved <name>" into the leaf with the id "<name>-text". The cases differ only in the
+     markup around that leaf, which decides whether assistive technology reads the message aloud. -->
+<section>
+  <!-- Text added to a child of a live region counts for the region. -->
+  <button data-write="child-polite" type="button">Save into polite region child</button>
+  <div aria-live="polite"><p id="child-polite-text"></p></div>
+  <button data-write="deep-status" type="button">Save deep in a status</button>
+  <div role="status"><p><em id="deep-status-text"></em></p></div>
+  <button data-write="child-alert" type="button">Save into alert child</button>
+  <div role="alert"><p id="child-alert-text"></p></div>
+  <button data-write="child-assertive" type="button">Save into assertive child</button>
+  <div aria-live="assertive"><p id="child-assertive-text"></p></div>
+  <!-- <output> has the role status. -->
+  <button data-write="output" type="button">Save into output</button>
+  <output id="output-text"></output>
+  <button data-write="output-off" type="button">Save into output switched off</button>
+  <output aria-live="off" id="output-off-text"></output>
+  <button data-write="output-note" type="button">Save into output made a note</button>
+  <output role="note" id="output-note-text"></output>
+  <!-- A role list means its first known role. -->
+  <button data-write="list-first" type="button">Save into status note</button>
+  <div role="status note" id="list-first-text"></div>
+  <button data-write="list-second" type="button">Save into note status</button>
+  <div role="note status" id="list-second-text"></div>
+  <button data-write="list-unknown" type="button">Save into banana status</button>
+  <div role="banana status" id="list-unknown-text"></div>
+  <!-- Inner regions that are off, and roles that are off by default, silence what is inside them. -->
+  <button data-write="inner-off" type="button">Save into off inside polite</button>
+  <div aria-live="polite"><div aria-live="off"><p id="inner-off-text"></p></div></div>
+  <button data-write="inner-timer" type="button">Save into timer inside polite</button>
+  <div aria-live="polite"><div role="timer"><span id="inner-timer-text"></span></div></div>
+  <button data-write="marquee" type="button">Save into marquee</button>
+  <div role="marquee" id="marquee-text"></div>
+  <button data-write="inner-marquee" type="button">Save into marquee inside polite</button>
+  <div aria-live="polite"><div role="marquee"><span id="inner-marquee-text"></span></div></div>
+  <button data-write="inner-polite" type="button">Save into polite inside off</button>
+  <div aria-live="off"><p aria-live="polite" id="inner-polite-text"></p></div>
+  <!-- Nothing inside an aria-hidden subtree is announced. -->
+  <button data-write="hidden-region" type="button">Save into hidden status</button>
+  <div role="status" aria-hidden="true"><span id="hidden-region-text"></span></div>
+  <button data-write="hidden-ancestor" type="button">Save into status inside hidden</button>
+  <div aria-hidden="true"><div role="status"><span id="hidden-ancestor-text"></span></div></div>
+  <button data-write="hidden-child" type="button">Save into hidden child of status</button>
+  <div role="status"><span aria-hidden="true" id="hidden-child-text"></span></div>
+  <button data-write="hidden-false" type="button">Save into aria-hidden false status</button>
+  <div role="status" aria-hidden="false"><span id="hidden-false-text"></span></div>
+  <button data-write="plain-child" type="button">Save into plain container</button>
+  <div><p id="plain-child-text"></p></div>
+  <!-- A region whose text does not change is not announced when an element is inserted before it. -->
+  <button data-insert="shift" type="button">Insert before a status</button>
+  <div id="insert-point"></div>
+  <div role="status">Ready</div>
+</section></main>
+<script>
+  document.addEventListener('click', event => {
+    const name = event.target.dataset.write;
+    if (name) document.getElementById(name + '-text').textContent = 'Saved ' + name;
+    if (event.target.dataset.insert) {
+      const point = document.getElementById('insert-point');
+      point.insertAdjacentHTML('beforebegin', '<div>Inserted</div>');
+    }
+  });
+</script></body></html>

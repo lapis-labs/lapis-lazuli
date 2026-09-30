@@ -10,11 +10,14 @@ from lapis_design.behavior_check.redact import path as safe_path
 # regex fragments for `re.I` searches (and JS `RegExp`), joined with `|`. English words that could sit
 # inside another word ("sent" in "consent") carry word boundaries; Korean has none, because a Hangul
 # word runs into its ending.
-CANCEL = "cancel|취소"
-CLOSE = "close|닫기"
+CANCEL = "cancel|취소|해지"
+CLOSE = r"\bclose\b|닫기|✕|✖"
 DECLINE = "decline|no thanks|not now|거절|아니요|아니오|괜찮아요|괜찮습니다"    # turns an offer down
-REFUSE = "reject|don't allow|거부|허용 ?안|허용하지 않"                  # refuses a request or consent
-LATER = "later|나중에|다음에"                                          # puts an offer off
+REFUSE = ("reject|don't allow|거부|허용 ?안|허용하지 않|"
+          "동의 ?안(?!내)|동의하지 않|비동의|미동의")                     # refuses a request or consent
+# Puts an offer off: a phrase, or the word alone as a whole label. A word inside another action ("Pay
+# later", "Save for later") does not put anything off.
+LATER = (r"\bmaybe later\b|\bremind me later\b|^\W*later\W*$|^\W*다음에\W*$|나중에|다음에 ?(?:할게요|하기)")
 REMIND = "remind|다시 ?알려|알림 ?받"                                   # asks for a future reminder
 DISMISS = "dismiss|숨기|×|^x$"                                         # hides without choosing an offer
 _TRY_AGAIN_KO = "다시 ?시도|다시 ?해 ?보|재시도"
@@ -23,28 +26,53 @@ RESUBMIT = f"retry|try again|resubmit|{_TRY_AGAIN_KO}|다시 ?(?:제출|전송|�
 PROBLEM = ("error|fail|offline|unavailable|not found|forbidden|denied|timed out|오류|에러|실패|못했|못해|수 없|"
            "되지 않|존재하지 않|오프라인|연결이 끊|권한이 없|거부|시간이? ?초과|문제가 (?:생|발생)")   # says what went wrong
 CUSTOMIZE = "manage|settings|preferences|customi[sz]e|설정|관리"       # opens finer choices
-WAITING = r"\b(?:pending|saving|processing|please wait)\b|(?:처리|저장|전송|요청|제출|결제|등록|삭제) ?중|잠시만|기다려"   # a commit is under way
+WAITING = (r"\b(?:pending|saving|processing|please wait)\b|(?:처리|저장|전송|요청|제출|결제|등록|삭제) ?중(?![단지])|잠시만|"
+           r"기다려 ?(?:주세요|주십시오|주시기|주시겠|줘)")                  # a commit is under way
 # A dialog offering not to be shown again: group 1 is the English "for N days", group 2 the Korean "N일";
-# "오늘 하루" is one day. Korean names the span before the verb, English after it.
-_NOT_SEEN_KO = r"(?:(?:보|표시하|열|묻)지 ?(?:않|마)|안 ?보)"
-AGAIN = (r"(?:don't|do not|never) (?:show|ask)(?: me)? again(?: for (\d+) days)?"
-         rf"|(?:(\d+) ?일|오늘 ?하루|하루)(?: ?동안| ?간)? ?(?:다시 ?)?{_NOT_SEEN_KO}"
+# "오늘 하루" is one day and "일주일" seven. Korean names the span before the verb, English after it.
+_NOT_SEEN_KO = r"(?:(?:보|표시하|열|묻|알리)지 ?(?:않|마)|안 ?보)"
+AGAIN = (r"(?:don't|do not|never) (?:show|ask)(?: me)?(?: this)? again(?: for (\d+) days)?"
+         rf"|(?:(\d+) ?일|일주일|오늘 ?하루|하루)(?: ?동안| ?간)? ?(?:다시 ?)?{_NOT_SEEN_KO}"
+         r"|(?:오늘|하루|일주일) ?(?:동안|간)? ?그만 ?보"
          rf"|(?:다시|더 이상) ?{_NOT_SEEN_KO}")
 
 # What a commit's result message claims, in the order they are tried: the first list that matches wins.
-# A Korean "할 수 없어요" or "문제가 생기면" in a fixed note is not a failure, so failure reads only the
-# past tense of a Korean problem, as English reads "could not".
+# What the page cannot confirm comes first, then a negated or stopped result (a failure), then what was
+# kept on the device, then success, then "in progress". A conditional or future mention of a result
+# ("once saved", "완료 후") and a state that was there already ("still subscribed") report nothing: NOT_A_RESULT
+# blanks them before the lists are read. Korean "할 수 없어요" or "문제가 생기면" in a fixed note is not a
+# failure, so failure reads only the past tense of a Korean problem, as English reads "could not".
+_DONE_EN = (r"(?:sav(?:e|ed)|confirm(?:ed)?|complet(?:e|ed)|delet(?:e|ed)|reserv(?:e|ed)|sen[dt]|submit(?:ted)?|"
+            r"subscrib(?:e|ed)|regist(?:er|ered)|sign(?:ed)? up|pa(?:y|id)|book(?:ed)?|plac(?:e|ed)|"
+            r"process(?:ed)?|deliver(?:ed)?|go(?:ne)? through)")           # what a commit does, base form or participle
+_DONE_PARTICIPLE = (r"(?:saved|confirmed|completed|deleted|reserved|sent|submitted|subscribed|registered|signed up|"
+                    r"paid|booked|placed|processed|delivered|gone through)")
+_ASIDE = r"(?:(?:yet|been|be|being|successfully|properly|fully|really)\s+){0,3}"
+_STOPPED_KO = r"중[단지](?:됐|되었|됨|되어|돼|됩니다|했|하였|함)"           # "중단됐어요", "중지됨"; a bare 중지 is a button
+_PAST_KO = r"(?:했|하였|됐|되었)"                                        # done, in the past tense
 CLAIMS = (
-    ("saved-locally", r"\b(?:saved (?:on|to) (?:this )?device|saved locally|offline copy)\b"
-                      r"|기기에(?:만)? ?(?:임시 ?)?저장|로컬에 ?저장|오프라인 ?사본"),
-    ("unknown", r"\b(?:cannot confirm|checking|unknown|not sure)\b|확인할 수 없|확인 ?중|확인하고 있|확실하지 않"),
-    ("failure", r"\b(?:failed|failure|not saved|error|try again|could not|unable to)\b"
-                rf"|실패|오류|에러|{_TRY_AGAIN_KO}|못 ?했|수 없었|되지 않았|문제가 (?:생겼|발생했)"),
-    ("success", r"\b(?:saved|confirmed|completed|deleted|reserved|sent|success|done)\b"
-                r"|완료(?!하기|하려면|하면|되면|되기|시)|성공(?!하면|하기)"
-                r"|(?:저장|확정|삭제|예약|전송|발송|접수|등록|가입|신청|제출|구독|결제)(?:했|됐|되었)|보냈"),
-    ("pending", rf"{WAITING}|\bin progress\b|진행 ?중"),
+    ("unknown", r"\b(?:cannot confirm|can['’]t confirm|could not confirm|couldn['’]t confirm|unable to confirm|"
+                r"checking|unknown|not sure)\b|확인할 수 없|확인하지 못했|확인 ?중|확인하고 있|확실하지 않"),
+    ("failure", r"\b(?:failed|failure|error|try again|could not|unable to)\b|couldn['’]t\b"
+                rf"|\b(?:not|never)\s+{_ASIDE}{_DONE_PARTICIPLE}\b|n['’]t\s+{_ASIDE}{_DONE_PARTICIPLE}\b"
+                rf"|\b(?:did|was|were)(?:n['’]t| not)(?:\s+able to)?\s+{_DONE_EN}\b"
+                rf"|실패|오류|에러|{_TRY_AGAIN_KO}|지 ?않았(?!다면|으면|을 경우)|못 ?했|수 없었|"
+                rf"문제가 (?:생겼|발생했)|{_STOPPED_KO}"),
+    ("saved-locally", r"\b(?:saved (?:on|to) (?:this |your |the )?device|saved locally|(?:saved|created|kept) (?:an )?offline copy)\b"
+                      rf"|(?:기기에(?:만)? ?(?:임시 ?)?|로컬에 ?)저장{_PAST_KO}"
+                      rf"|오프라인 ?사본.{{0,8}}?(?:만들었|만들어졌|저장{_PAST_KO})"),
+    ("success", r"\b(?:saved|confirmed|completed|deleted|reserved|sent|success|done|subscribed|signed up|registered|"
+                r"submitted|paid|booked|placed)\b"
+                r"|(?<!미)완료(?!하기|하려면|하면|되면|되기|되지|하지|될|할| ?예정| ?후| ?시(?![각간]))|성공(?!하면|하기|하지|할|될)"
+                rf"|(?:저장|확정|삭제|예약|전송|발송|접수|등록|가입|신청|제출|구독|결제){_PAST_KO}|보냈"),
+    ("pending", rf"{WAITING}|\bin progress\b|진행 ?중(?![단지])"),
 )
+# Phrases that name a result without reporting one: after a condition ("once saved"), in the future
+# ("will be sent"), or as a state that was there already ("still subscribed").
+NOT_A_RESULT = re.compile(
+    rf"\b(?:once|when|whenever|if|after|until|unless|as soon as)\b(?:\s+[\w'’]+){{0,3}}?\s+{_DONE_EN}\b"
+    rf"|(?:\b(?:will|shall|going to|gonna)|['’]ll)\b(?:\s+[\w'’]+){{0,2}}?\s+{_DONE_EN}\b"
+    rf"|\b(?:still|already|currently|remain(?:s|ed)?)\b(?:\s+(?:be|been|is|are))?\s+{_DONE_EN}\b")
 
 
 def advance(driver, ms):
@@ -108,15 +136,25 @@ DIALOGS = """(words) => [...document.querySelectorAll('[data-lapis-box]')].filte
       (getComputedStyle(body).overflow==='hidden'&&s.position==='fixed'),
     controls:[...el.querySelectorAll('button,a,[role="button"],input[type=button],input[type=submit]')]
       .filter(c => {let q=c.getBoundingClientRect(),t=getComputedStyle(c);return q.width&&q.height&&t.visibility!=='hidden'&&t.display!=='none'})
-      .map(c => ({id:c.getAttribute('data-lapis-box'),text:(c.innerText||c.getAttribute('aria-label')||c.value||'').trim()})),
-    again:(m=>m?(m[1]||m[2]||(/하루/.test(m[0])?'1':null)):null)((el.innerText||'').match(new RegExp(words.again,'i'))),
+      .map(c => ({id:c.getAttribute('data-lapis-box'),text:(c.getAttribute('aria-label')||c.innerText||c.value||'').trim()})),
+    again:(m=>m?(m[1]||m[2]||(/일주일/.test(m[0])?'7':/하루|오늘/.test(m[0])?'1':null)):null)((el.innerText||'').match(new RegExp(words.again,'i'))),
     again_offered:new RegExp(words.again,'i').test(el.innerText||'')};
 })"""
 
 
+def names(driver):
+    """Accessible name by box id, from a fresh snapshot: a control's wording is read from it, not from
+    its text (`<button aria-label="닫기">✕</button>` is a close button)."""
+    return {box["id"]: box["name"] for box in driver.boxes() if box["name"]}
+
+
 def dialogs(driver):
-    driver.boxes()
-    return driver.page.evaluate(DIALOGS, {"again": AGAIN})
+    named = names(driver)
+    found = driver.page.evaluate(DIALOGS, {"again": AGAIN})
+    for dialog in found:
+        for control in dialog["controls"]:
+            control["text"] = named.get(control["id"], control["text"])
+    return found
 
 
 def route(driver):
@@ -134,14 +172,15 @@ def purpose(text, plan):
                      "unsubscribe": "marketing", "cancel-subscription": "retention", "purchase": "upsell"}.get(kind)
             if value:
                 return value, "plan", flow.get("id")
-    cases = ((r"cookie|privacy|consent|tracking|personal data|쿠키|개인 ?정보|추적|트래킹|동의", "consent"),
+    cases = ((r"cookie|privacy|consent|tracking|personal data|쿠키|개인 ?정보|추적|트래킹", "consent"),
              (r"notif(?:ication)? permission|allow notifications|enable notifications|알림 ?권한|알림(?:을)? ?(?:허용|켜|켤)",
               "permission-preprompt"),
-             (r"newsletter|subscribe|email updates|뉴스레터|구독(?:하|해)|구독 ?신청|이메일 ?(?:소식|업데이트)|소식(?:을)? ?받", "marketing"),
+             (r"newsletter|subscribe|email updates|marketing|뉴스레터|구독(?:하|해)(?! ?주셔서)|구독 ?신청|"
+              r"이메일 ?(?:소식|업데이트)|소식(?:을)? ?받|마케팅|광고성", "marketing"),
              (r"stay|don't leave|exit offer|keep your plan|머물|떠나|가지 ?마|계속 ?이용|(?:요금제|플랜)(?:를|을)? ?유지", "retention"),
              (r"upgrade|special offer|add to (?:order|cart)|업그레이드|특별 ?(?:제안|혜택|할인)|장바구니에 ?(?:담|추가)|주문에 ?추가", "upsell"),
-             (r"confirm|are you sure|delete|cancel order|정말[^.?!]{0,30}(?:까요|시겠|건가요)|삭제|주문 ?(?:을 )?취소|확인하시겠",
-              "confirm"),
+             (r"confirm|are you sure|delete|cancel order|정말[^.?!]{0,30}(?:까요|시겠|건가요)|삭제|주문 ?(?:을 )?취소|"
+              r"확인하시겠|확정(?:할까요|하시겠)", "confirm"),
              (r"error|failed|couldn't|오류|에러|실패|못했", "error"))
     for expression, value in cases:
         if re.search(expression, content):

@@ -1,0 +1,17 @@
+version: 0
+clock: {start: '2026-09-30T00:00:00Z'}
+collections:
+  signups: []
+  cancellations: []
+  orders: []
+  actions: []
+variants:
+  empty: {signups: [], cancellations: [], orders: [], actions: []}
+  partial: {signups: [], cancellations: [], orders: [], actions: []}
+routes:
+  - {method: POST, path: /api/signups, collection: signups, operation: create}
+  - {method: POST, path: /api/cancellations, collection: cancellations, operation: create}
+  - {method: POST, path: /api/orders, collection: orders, operation: create}
+  - {method: POST, path: /api/actions, collection: actions, operation: create}
+values:
+  v1: {kind: text, valid: Visitor, invalid: x, alternate: Guest}

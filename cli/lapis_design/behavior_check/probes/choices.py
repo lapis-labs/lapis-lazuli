@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 
 from lapis_design.behavior_check.probes._decision import (
-    CANCEL, CLOSE, CUSTOMIZE, DECLINE, DISMISS, REFUSE, advance, dialogs, purpose, reopen_with, route)
+    CANCEL, CLOSE, CUSTOMIZE, DECLINE, DISMISS, LATER, REFUSE, advance, dialogs, names, purpose, reopen_with, route)
 from lapis_design.behavior_check.probes.permissions import INIT as DENY_DEVICES
 
 NAMES = ("choices",)
@@ -42,12 +42,17 @@ GROUPS = """() => [...document.querySelectorAll('fieldset,[role="group"]')]
  .filter(group=>group.id && /plan|add-on|optional|gift wrap|요금제|추가 ?상품|선택 ?사항|선물 ?포장/i.test(group.text))"""
 
 
+# A Korean "옵션 추가하기" adds an option (an upsell's accept); the word alone opens option choices.
+_ADDS_OPTION = re.compile(r"추가|담기|담아|담을|장바구니|\badd\b|\bcart\b", re.I)
+
+
 def _kind(text, input_type, purpose_name):
-    if re.search(rf"{CUSTOMIZE}|options|옵션|선택 ?사항", text, re.I):
+    adds_option = "옵션" in text and _ADDS_OPTION.search(text) and not re.search(CUSTOMIZE, text, re.I)
+    if not adds_option and re.search(rf"{CUSTOMIZE}|options|옵션|선택 ?사항", text, re.I):
         return "customize"
     if re.search(rf"{REFUSE}|{DECLINE}|opt out|unsubscribe|수신 ?거부|구독 ?(?:해지|취소)|{CANCEL}", text, re.I):
         return "decline" if purpose_name != "confirm" else "neutral"
-    if re.search(rf"{CLOSE}|{DISMISS}", text, re.I):
+    if re.search(rf"{CLOSE}|{DISMISS}|{LATER}", text, re.I):
         return "dismiss"
     if input_type == "radio" and purpose_name != "plan":
         return "neutral"
@@ -56,12 +61,23 @@ def _kind(text, input_type, purpose_name):
     return "accept"
 
 
+def _options(driver, root):
+    """The controls under `root`: `label` is the accessible name, `text` what the control shows."""
+    named = names(driver)
+    items = driver.page.evaluate(OPTIONS, root)
+    for item in items:
+        item["text"] = item["label"]
+        item["label"] = named.get(item["id"], item["label"])
+    return items
+
+
 def _option(driver, item, purpose_name, layer=1, interactions=1):
     kind = _kind(item["label"], item["type"], purpose_name)
     name = driver.clean(item["label"])
+    shown = driver.clean(item["text"])                        # an icon button keeps its glyph and its name
     option = {"kind": kind, "control": "checkbox" if item["type"] == "checkbox" else
               "radio" if item["type"] == "radio" else "link" if item["tag"] == "a" else
-              "icon" if not name or name in ("×", "✕") else "button",
+              "icon" if not shown or shown in ("×", "✕", "✖") else "button",
               "label": name, "layer": layer, "interactions": interactions,
               "visual": item["visual"]}
     if item["id"]:
@@ -104,14 +120,14 @@ def run(session, open_driver):
                             break
                 for dialog in dialogs(driver):
                     value, basis, flow = purpose(dialog["text"], session.plan)
-                    choices = driver.page.evaluate(OPTIONS, dialog["id"])
+                    choices = _options(driver, dialog["id"])
                     options = [_option(driver, item, value) for item in choices]
                     for opener in (item for item in choices if _kind(item["label"], item["type"], value) == "customize"):
                         if session.meta["backend"] != "stub":
                             partial.append("layer-two choices not opened on local-dev backend")
                             continue
                         driver.act({"kind": "click", "target": opener["id"]})
-                        for nested in driver.page.evaluate(OPTIONS, dialog["id"]):
+                        for nested in _options(driver, dialog["id"]):
                             if nested["id"] == opener["id"] or nested["id"] in {item["id"] for item in choices}:
                                 continue
                             options.append(_option(driver, nested, value, layer=2, interactions=2))
@@ -142,7 +158,7 @@ def run(session, open_driver):
                 driver.boxes()
                 for group in driver.page.evaluate(GROUPS):
                     value = "plan" if re.search(r"plan|요금제", group["text"], re.I) else "add-on"
-                    options = [_option(driver, item, value) for item in driver.page.evaluate(OPTIONS, group["id"])]
+                    options = [_option(driver, item, value) for item in _options(driver, group["id"])]
                     if value == "add-on" and any(opt["control"] == "checkbox" and not opt.get("preselected") for opt in options):
                         options.append({"kind": "decline", "control": "checkbox", "layer": 1, "interactions": 0})
                     if not options or (ctx_id, group["id"], value) in found:

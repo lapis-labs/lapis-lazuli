@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Booking</title></head>
+<body><main><h1 id="title"></h1>
+<!-- One booking button. The page path picks the case: a fixed note that is already on the page when the
+     button is pressed, and the message a failed request puts up. -->
+<section>
+  <p id="note"></p>
+  <button id="book" type="button"></button>
+  <p id="message" role="status"></p>
+</section></main>
+<script>
+  const cases = {
+    'notice':     {say: 'ko', note: '예약 완료 후 문자를 보내 드려요', failure: '잠시 문제가 있어요'},
+    'negated':    {say: 'ko', note: '예약 완료 후 문자를 보내 드려요', failure: '결제를 완료하지 않았어요'},
+    'standing':   {say: 'ko', note: '지난 예약이 확정됐어요', failure: '잠시 후 다시 확인해 주세요'},
+    'notice-en':  {say: 'en', note: "We'll email you once your booking is confirmed.", failure: 'Something went wrong.'},
+    'negated-en': {say: 'en', note: "We'll email you once your booking is confirmed.", failure: 'Payment not completed'},
+  };
+  const words = {ko: {title: '좌석 예약', book: '예약 확정하기', done: '예약이 완료됐어요'},
+                 en: {title: 'Reserve a seat', book: 'Confirm booking', done: 'Reservation completed'}};
+  const page = cases[location.pathname.slice(1)] || cases.notice, say = words[page.say];
+  document.documentElement.lang = page.say;
+  document.getElementById('title').textContent = say.title;
+  document.getElementById('note').textContent = page.note;
+  document.getElementById('book').textContent = say.book;
+  document.getElementById('book').onclick = async () => {
+    const message = document.getElementById('message');
+    try {
+      const response = await fetch('/api/reservations', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'});
+      message.textContent = response.ok ? say.done : page.failure;
+    } catch (error) {
+      message.textContent = page.failure;
+    }
+  };
+</script></body></html>

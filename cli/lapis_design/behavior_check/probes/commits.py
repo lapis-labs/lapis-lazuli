@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 import re
+from collections import Counter
 from time import sleep
 
 from lapis_design.behavior_check import settle
-from lapis_design.behavior_check.probes._decision import CLAIMS, RESUBMIT, WAITING
+from lapis_design.behavior_check.probes._decision import CLAIMS, NOT_A_RESULT, RESUBMIT, WAITING
 from lapis_design.behavior_check.probes.controls import element, fresh
 
 NAMES = ("commits",)
@@ -83,16 +84,37 @@ def _reach(driver, target):
 
 
 def _region(driver, target):
+    """The texts of the control's region and of any toast, status, or dialog, one per element."""
     return element(driver, target).evaluate("""el => {
       const region=el.closest('form,section,[role=region],dialog')||el.parentElement;
       const visible=e=>e && e.getClientRects().length && getComputedStyle(e).visibility!=='hidden';
       return [region,...document.querySelectorAll('[role=status],[role=alert],.toast,.snackbar,dialog')]
-        .filter(visible).map(e=>e.innerText||'').join(' ');
+        .filter(visible).map(e=>e.innerText||'');
     }""")
 
 
+_SEGMENT = re.compile(r"\n+|(?<=[.!?。！？])\s+")
+
+
+def _segments(texts):
+    return [" ".join(part.split()) for text in texts for part in _SEGMENT.split(text) if part.strip()]
+
+
+def _new_text(before, after):
+    """What `after` says that `before` did not, a line or sentence at a time, so a note that was already
+    there ("this cannot be undone", "예약 완료 후 문자를 보내 드려요") is not read as the commit's result."""
+    seen = Counter(_segments(before))
+    fresh = []
+    for segment in _segments(after):
+        if seen[segment]:
+            seen[segment] -= 1
+        else:
+            fresh.append(segment)
+    return " ".join(fresh)
+
+
 def _claimed(text):
-    text = text.lower()
+    text = NOT_A_RESULT.sub(" ", text.lower())
     return next((claim for claim, words in CLAIMS if re.search(words, text)), "none")
 
 
@@ -204,7 +226,7 @@ def _outcome(driver, target, request, mode):
     if mode != "none":
         driver.session.engine.inject(mode, method=request["method"], path=request["path"])
     initial = _inputs(driver, target)
-    before_text = _region(driver, target)
+    text_before = _region(driver, target)
     start = len(driver.network.entries)
     before_effects = driver.session.engine.effects_total if driver.session.engine else None
     effect = driver.act({"kind": "tap" if driver.ctx["pointer"] == "coarse" else "click",
@@ -212,10 +234,10 @@ def _outcome(driver, target, request, mode):
     requests = [r for r in driver.network.entries[start:] if r["method"] in _METHODS and not r.get("blocked")]
     request = request or next((r for r in requests if r.get("effects", 0) > 0), requests[-1] if requests else {})
     actual = ("applied" if driver.session.engine.effects_total > before_effects else "not-applied") if before_effects is not None else "unknown"
-    after_text = (_region(driver, target) if element(driver, target).is_visible() else
+    text_after = (_region(driver, target) if element(driver, target).is_visible() else
                   driver.page.evaluate("[...document.querySelectorAll('[role=status],[role=alert],dialog,.toast')]"
-                                       ".filter(e=>e.getClientRects().length).map(e=>e.innerText).join(' ')"))
-    claim = _claimed(after_text) if after_text != before_text else "none"
+                                       ".filter(e=>e.getClientRects().length).map(e=>e.innerText||'')"))
+    claim = _claimed(_new_text(text_before, text_after))
     item = {"injected": mode, "claimed": claim, "actual": actual,
             "auto_resent": len([r for r in requests if r["method"] == request.get("method") and
                 r["path"] == request.get("path") and not r.get("idempotency_key")]) > 1,

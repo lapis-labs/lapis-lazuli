@@ -41,15 +41,17 @@ kind on the step, no offer wording), the hint's kind is kept and listed as a mis
 
 Action choice is deterministic: required empty fields first (fixture values only), then controls
 ranked by overlap with the goal and the flow kind's vocabulary, forward wording, and the main
-region; in an optional-offer dialog the decline control wins. Cancel and close wording is not
-forward on a screen that offers a confirm control. An action that changed nothing is not repeated
-on that screen. Runs stop as completed, blocked, dead-end, or abandoned after 40 actions. Flows run
-only against the stub backend, since any control may commit.
+region; in an optional-offer dialog the decline control wins. On a screen that offers a confirm
+control, a control whose whole name is cancel, close, or put-off wording gets neither forward nor
+goal-word points; cancel wording is forward only in an exit flow. An action that changed nothing is
+not repeated on that screen. Runs stop as completed, blocked, dead-end, or abandoned after 40 actions.
+Flows run only against the stub backend, since any control may commit.
 """
 from __future__ import annotations
 
 import hashlib
 import re
+import unicodedata
 from difflib import SequenceMatcher
 
 from lapis_design.behavior_check.probes._decision import CANCEL, CLOSE, DECLINE, LATER
@@ -71,19 +73,24 @@ KIND_WORDS = {
     "signup": "sign up register join continue",
     "recover": "recover reset password continue",
 }
-# CONFIRM finishes a step; WITHDRAW backs out of it. "다음에" is "next time" and would otherwise pass as
-# the forward word "다음". Cancel wording stays forward (cancelling is the point of an exit flow) except
-# on a screen that offers to confirm, where it loses the forward bonus (see _choose).
-CONFIRM = re.compile(r"confirm|submit|save|done|finish|확인|제출|저장|완료", re.I)
-WITHDRAW = re.compile(rf"{CANCEL}|{CLOSE}|{LATER}", re.I)
+# CONFIRM finishes a step; WITHDRAW backs out of it, and is read only as a control's whole name ("Cancel
+# subscription" is not "Cancel"). Cancel wording is forward only in an exit flow, where cancelling is the
+# point; "다음에" is "next time", not the forward word "다음".
+CONFIRM = re.compile(r"confirm|submit|save|done|finish|\bok\b|확인|제출|저장|완료", re.I)
+WITHDRAW = re.compile(rf"{CANCEL}|{CLOSE}|{LATER}|not now", re.I)
 # The answer that wins an optional dialog: the shared decline and later wording, and these.
-TURN_DOWN = re.compile(rf"{DECLINE}|{LATER}|skip|건너뛰|leave|continue cancel|계속 취소", re.I)
-# A dialog whose text speaks of an offer, retention, upsell, marketing, cookies, consent, a discount, or
-# staying is optional; the Korean words are the counterparts of the English ones, in that order.
-OPTIONAL_DIALOG = re.compile(r"offer|retention|upsell|marketing|cookie|consent|discount|stay|"
-                             r"혜택|제안|특가|해지하기 전|떠나기 전|업그레이드|마케팅|광고성|쿠키|동의|할인|유지|계속 이용", re.I)
+TURN_DOWN = re.compile(rf"{DECLINE}|{LATER}|skip|건너뛰|leave|continue cancel|계속 (?:취소|해지)", re.I)
+# A dialog whose text speaks of an offer, retention, upsell, marketing, advertising, cookies, optional
+# consent, a discount, or staying is optional; the Korean words are the counterparts of the English ones,
+# in that order. Consent alone is not an offer, and neither is a dialog that asks for what the flow needs:
+# terms or a required item ("Terms apply" on an offer and "필수 쿠키" are not that).
+OPTIONAL_DIALOG = re.compile(r"offer|retention|upsell|marketing|advertis|cookie|optional consent|discount|stay|"
+                             r"혜택|제안|특가|해지하기 전|떠나기 전|업그레이드|마케팅|광고성|쿠키|선택 ?동의|할인|유지|계속 이용", re.I)
+REQUIRED_DIALOG = re.compile(r"\bterms\b(?! (?:and conditions |& conditions )?apply)|\brequired\b(?! cookies?)|"
+                             r"약관|필수(?! ?쿠키)", re.I)
 FORWARD = re.compile(rf"{CONFIRM.pattern}|continue|next|checkout|reserve|subscribe|join|stop|call|review|manage|pay|"
-                     rf"{CANCEL}|신청|예약|계속|다음|결제|가입|구독하", re.I)
+                     r"신청|예약|계속|다음(?!에)|결제|가입|구독하", re.I)
+HANGUL_WORD = re.compile(r"[가-힣]{2,}")
 BACK = re.compile(r"back|previous|return|edit|change|뒤로|이전|변경", re.I)
 ADD = re.compile(r"\badd\b|\bbuy\b|reserve|\bchoose\b|\bselect\b|\bbook\b|담기|구매|예약|선택", re.I)
 FIELD_TYPES = ("text", "email", "password", "tel", "search", "number", "select", "textarea", "date", "url")
@@ -140,7 +147,8 @@ SCREEN = r"""(args) => {
  const id=el=>el?.closest('[data-lapis-box]')?.getAttribute('data-lapis-box')||null;
  const rect=el=>{const r=el.getBoundingClientRect();return {y:r.y+scrollY,h:r.height}};
  const flat=t=>(t||'').replace(/\s+/g,' ').trim();
- const labelOf=el=>flat(el.getAttribute('aria-label')||el.labels?.[0]?.innerText||el.innerText||
+ const labelledBy=el=>(el.getAttribute('aria-labelledby')||'').split(/\s+/).map(i=>document.getElementById(i)?.textContent||'').join(' ');
+ const labelOf=el=>flat(labelledBy(el)||el.getAttribute('aria-label')||el.labels?.[0]?.innerText||el.innerText||
    el.getAttribute('title')||el.getAttribute('placeholder')||'');
  const bodyPx=parseFloat(getComputedStyle(document.body).fontSize)||16;
  const main=document.querySelector('main,[role=main]');
@@ -235,6 +243,34 @@ def _slug(text):
 
 def _words(text):
     return {w for w in WORDS.findall(text.lower()) if len(w) >= 3 and w not in STOP}
+
+
+def _bare(name):
+    """A control's name without its punctuation: "Cancel." and "취소…" are the word alone."""
+    return " ".join("".join(" " if unicodedata.category(ch).startswith("P") else ch for ch in name).split())
+
+
+def _backs_out(name):
+    """The whole name is cancel, close, or put-off wording ("Cancel", "취소", "Not now"); "Cancel
+    subscription" and "구독 취소" are not."""
+    return bool(WITHDRAW.fullmatch(_bare(name)))
+
+
+def _forward(name, exit_flow):
+    """Forward wording. Cancel wording is forward only in an exit flow, where cancelling is the point."""
+    return bool(FORWARD.search(name)) or (exit_flow and bool(re.search(CANCEL, name, re.I)))
+
+
+def _optional(text):
+    """A dialog's text speaks of an offer and asks for nothing the flow needs (terms, a required item)."""
+    return bool(OPTIONAL_DIALOG.search(text)) and not REQUIRED_DIALOG.search(text)
+
+
+def _shared(tokens, vocab):
+    """The vocabulary words a name shares: a whole word, or, for a Korean word of two or more syllables,
+    a word (eojeol) of the name that begins with it (해지하기 shares 해지)."""
+    return {word for word in vocab
+            if word in tokens or (HANGUL_WORD.fullmatch(word) and any(token.startswith(word) for token in tokens))}
 
 
 def _route_matches(pattern, actual):
@@ -554,13 +590,22 @@ def _choose(screen, flow, tried, session):
     dialog = bool(screen["dialog"])
     controls = [c for c in screen["controls"] if c["id"] and not c["disabled"] and
                 (c["in_dialog"] if dialog else not c["in_dialog"])]
+    actionable = [c for c in controls if c["type"] not in FIELD_TYPES + ("checkbox", "radio", "switch")
+                  and not c["href"].startswith(("tel:", "mailto:"))]
+    confirming = any(CONFIRM.search(c["name"]) for c in actionable)
+    exit_flow = flow["kind"] in EXIT_KINDS
+
+    def forward(name):
+        """Forward wording, except that beside a confirm control a name that only backs out is not."""
+        return _forward(name, exit_flow) and not (confirming and _backs_out(name))
+
     for c in controls:
         kind = c["type"].lower()
         if c["id"] in tried or kind not in FIELD_TYPES or c["filled"]:
             continue
         field = _field_kind(c)
         if c["required"] or (field in ("address", "postal-code", "card", "email", "phone", "name", "password") and
-                             not any(FORWARD.search(item["name"]) and item["id"] not in tried for item in controls)):
+                             not any(forward(item["name"]) and item["id"] not in tried for item in controls)):
             values = session.values_engine
             if values is None:
                 return None, "no synthetic values (--values)"
@@ -570,23 +615,17 @@ def _choose(screen, flow, tried, session):
                 return None, f"no synthetic {field} fixture value"
             return ({"kind": "select" if kind == "select" else "type", "target": c["id"],
                      "value": "valid", "value_id": value_id}, None)
-    actionable = [c for c in controls if c["type"] not in FIELD_TYPES + ("checkbox", "radio", "switch")
-                  and not c["href"].startswith(("tel:", "mailto:"))]
     candidates = [c for c in actionable if c["id"] not in tried]
-    confirming = any(CONFIRM.search(c["name"]) for c in actionable)
     vocab = set(WORDS.findall(flow["goal"].lower())) | set(WORDS.findall(KIND_WORDS.get(flow["kind"], "")))
-    optional = bool(OPTIONAL_DIALOG.search(screen["dialog_text"]))
-
-    def forward(name):
-        """Forward wording, except that a cancel or close label is not forward beside a confirm control."""
-        return bool(FORWARD.search(name)) and not (confirming and WITHDRAW.search(name) and not CONFIRM.search(name))
+    optional = _optional(screen["dialog_text"])
 
     def score(c):
         name = c["name"].lower()
         tokens = set(WORDS.findall(name))
+        shared = set() if confirming and _backs_out(name) else _shared(tokens, vocab)
         decline = bool(TURN_DOWN.search(name))
         return (100 if dialog and decline and optional else 0) + (
-            30 if tokens & vocab else 0) + len(tokens & vocab) * 5 + (14 if forward(name) else 0) + (
+            30 if shared else 0) + len(shared) * 5 + (14 if forward(name) else 0) + (
             20 if dialog and re.search(rf"confirm|continue|accept|yes|okay|{CLOSE}|dismiss|확인|계속|수락", name) else 0) + (
             4 if c["in_main"] else 0) - (30 if BACK.search(name) else 0) - (
             25 if re.search(r"login|sign in|support|help", name) and not dialog else 0)
@@ -602,8 +641,10 @@ def _main_replaced(before, after):
     return bool(before and after and SequenceMatcher(None, before, after, autojunk=False).ratio() < .5)
 
 
-def _read(driver):
-    return driver.page.evaluate(SCREEN, {"forward": FORWARD.pattern})
+def _read(driver, flow):
+    """One DOM read of the screen; cancel wording counts as forward outside an offer only in an exit flow."""
+    forward = FORWARD.pattern + (f"|{CANCEL}" if flow["kind"] in EXIT_KINDS else "")
+    return driver.page.evaluate(SCREEN, {"forward": forward})
 
 
 def _run_one(session, open_driver, flow, ctx_id, start):
@@ -620,7 +661,7 @@ def _run_one(session, open_driver, flow, ctx_id, start):
         tried = set()
         prev = None
         for _ in range(41):
-            screen = _read(driver)
+            screen = _read(driver, flow)
             screen["_context"] = ctx_id
             path = safe_path(screen["path"], session.fixture_values)
             if re.search(r"\bfree trial\b|\bdiscounted (?:first|introductory) (?:month|week|year)\b|무료 체험", screen["text"], re.I):
@@ -653,7 +694,7 @@ def _run_one(session, open_driver, flow, ctx_id, start):
                     run["note"] = name
                 else:
                     available = bool(tried) or any(c["id"] and not c["disabled"] and
-                        (FORWARD.search(c["name"]) or BACK.search(c["name"]) or c["href"].startswith("/"))
+                        (_forward(c["name"], flow["kind"] in EXIT_KINDS) or BACK.search(c["name"]) or c["href"].startswith("/"))
                         for c in screen["controls"])
                     run["status"] = "blocked" if available else "dead-end"
                     if run["status"] == "dead-end":
@@ -685,7 +726,7 @@ def _run_one(session, open_driver, flow, ctx_id, start):
                     for p in run.get("prices", [])) and any(
                     BACK.search(c["name"]) or re.search(r"remove|edit|change|삭제", c["name"], re.I)
                     for c in screen["controls"] if not c["disabled"])
-            fresh = _read(driver)
+            fresh = _read(driver, flow)
             if (safe_path(fresh["path"], session.fixture_values), fresh["main_text"], fresh["dialog"]) == old_signature:
                 tried.add(action["target"])
         else:
