@@ -122,7 +122,8 @@ The status comes from `install/harnesses.yaml`; the exact commands for each harn
 
 ## Status
 
-Version 0.1.0, early: the contracts are `version: 0` drafts and may change between releases.
+Early releases: the contracts are `version: 0` drafts and may change between releases; see
+[CHANGELOG.md](CHANGELOG.md) for the current version.
 `lazuli setup` installs an optional font-style embedding model, and no model is published yet, so it
 exits 1 for now. CI runs the contract tests, the Chromium tests, and the optional CJK tests on
 Linux.
