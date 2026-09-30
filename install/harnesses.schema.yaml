@@ -141,6 +141,11 @@ $defs:
     properties:
       id: { $ref: "#/$defs/slug" }
       name: { type: string }
+      # experimental: the commands come from the harness's documentation and have not been confirmed
+      # on a real harness. INSTALLATION.md marks it in the harness table and under the harness's
+      # heading, and the install scripts install an experimental harness only when --harness names
+      # it, never because it was detected.
+      status: { enum: [experimental] }
       detect:
         type: object
         additionalProperties: false

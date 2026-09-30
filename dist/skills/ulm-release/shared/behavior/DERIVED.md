@@ -185,7 +185,22 @@ order). The **effect** records what changed in that window:
 
 **Announcements** are the ways assistive technology would learn of a change: text added to a polite
 or assertive live region (`live-polite`, `live-assertive`), an element with `role=alert` inserted
-(`alert`), or focus moved to the changed content (`focus`).
+(`alert`), or focus moved to the changed content (`focus`). A live region is an element whose
+`aria-live` is `polite` or `assertive`, or that has no `aria-live` and an explicit or implicit role
+that implies one (`status` and `log` polite, `alert` assertive; `<output>` has the role `status`).
+Text added anywhere inside counts for the nearest enclosing element that has `aria-live` or a role
+with a live default, so an inner `aria-live="off"`, `timer`, or `marquee` silences it. Text inside
+an `aria-hidden` subtree is not announced.
+
+**Wording.** The dialog, choice, flow, state, and commit-result probes read labels, dialog text, and
+messages in English and Korean; the other probes (control kinds, forms, permissions) read English
+only. Each kind of wording (confirm, cancel, close, decline, refuse, put off, retry, a problem, and
+each commit result) has one shared list holding both languages, which every probe judging that kind
+reads, so a language added for one probe is not missing from another. Where this document names
+words, the English ones stand for the kind, and the Korean examples show counterparts (확인, 취소,
+닫기, 거절, 나중에, 다시 시도, and so on). A control's wording is read from its accessible name.
+Other languages are not read, so a page in another language gets fewer matches, not different
+ones.
 
 ## Controls
 
@@ -246,10 +261,16 @@ and `commits` coverage is `partial`. For each commit control:
   `name_kept`: the control's accessible name was not empty while pending.
 - **Outcomes.** The commit is repeated with each injection. `claimed` is what the page says within
   the settle window, from the text and state of the control's region and any toast or dialog:
-  `success` (done, saved, confirmed), `failure` (failed, not saved, try again), `pending` (in
-  progress), `unknown` (the page says it is checking or cannot confirm), `saved-locally` (the page
-  says the change is kept on this device), `none` (nothing said). `actual` follows the stub
-  contract: applied for `none` and `hang`, not applied for the rest; `unknown` only with `local-dev`.
+  `success` (done, saved, confirmed, and the completed forms of subscribe, sign up, register,
+  submit, pay, book, and place), `failure` (failed, not saved, try again), `pending` (in progress),
+  `unknown` (the page says it is checking or cannot confirm), `saved-locally` (the page says the
+  change is kept on this device), `none` (nothing said). Only text the region did not show before
+  the commit is read, so a standing note ("this cannot be undone") is not a claim. A negated result
+  reads as a failure (not saved, 저장하지 않았어요, 결제를 완료하지 않았어요), unless it says the
+  result cannot be confirmed (could not confirm, 확인하지 못했어요), which is `unknown`; a
+  conditional or future one (once saved, 완료되면, 완료 후) is no claim. `actual` follows the stub
+  contract: applied for `none` and `hang`, not applied for the rest; `unknown` only with
+  `local-dev`.
   `retry_offered`: a retry or resubmit control appeared. `retry_effects`: effects added by
   activating it once. `auto_resent`: the client sent the same state-changing request again without
   user action and without an idempotency key. `input_kept`: entered values survived. `announced`:
@@ -396,9 +417,10 @@ field as one). Leaving an optional add-on unchecked is a `decline` route with 0 
 full interaction count, and the "manage settings" control is a `customize` option on layer 1.
 
 - **Kinds**: `accept` gives the business what it asks for (consent, subscribe, add, upgrade, stay);
-  `decline` refuses it; `dismiss` closes while leaving the question open; `customize` opens finer
-  choices; `neutral` when the choice has no business-favored side (a confirmation of the user's own
-  action, a size picker).
+  `decline` refuses it (including a refusal of consent, such as do not agree); `dismiss` closes or
+  puts the question off while leaving it open (maybe later, remind me later); `customize` opens
+  finer choices; `neutral` when the choice has no business-favored side (a confirmation of the
+  user's own action, a size picker).
 - **`visual`**: `area_px` is the painted area: the background or border box when the control is
   `filled` (a background differing from its surroundings by at least 0.05 OKLCH L) or `bordered` (an
   outline without a fill), otherwise the bounding box of its label text or icon. `contrast` is the
@@ -609,13 +631,22 @@ card, or password field, with the fixture's `valid` value of that kind; without 
 stops as `blocked` with a `note`. Otherwise it ranks the enabled controls not yet tried on this
 screen, leaving out fields, checkboxes, radios, switches, and `tel:` and `mailto:` links: 30 points
 when the accessible name shares a word with the goal or the flow kind's vocabulary (for `purchase`:
-buy, checkout, continue, pay, place, order) and 5 more per shared word; 14 for forward wording
-(continue, next, checkout, confirm, submit, pay, and the like); 4 inside `main`; 30 fewer for back
-wording and, outside a dialog, 25 fewer for sign-in, support, or help. In a dialog, confirm,
-continue, accept, yes, okay, close, or dismiss wording adds 20, and a decline (no thanks, decline,
-not now, skip, leave) adds 100 when the dialog is an optional offer (its text speaks of an offer,
-retention, upsell, marketing, cookies, consent, a discount, or staying). The highest score wins,
-earlier in document order on a tie; when no control scores above zero the run stops. An action after
+buy, checkout, continue, pay, place, order) and 5 more per shared word, where a Korean word shares
+a goal word of two or more syllables when it begins with it (해지하기 shares 해지); 14 for forward
+wording (continue, next, checkout, confirm, submit, pay, and the like; cancel wording is forward
+only in an exit flow); 4 inside `main`; 30 fewer for back wording and, outside a dialog, 25 fewer
+for sign-in, support, or help. On a screen that offers a confirm control (confirm, submit, save,
+done, OK, and the like), a control whose whole name, punctuation aside, is cancel, close, or put-off
+wording (Cancel, 취소, Not now) gets neither the forward points nor the goal-word points; a name
+with more words (Cancel subscription, 구독 취소) keeps them. In a dialog, confirm, continue, accept,
+yes, okay, close, or dismiss wording adds 20, and a decline (no thanks, decline, not now, maybe
+later, skip, leave) adds 100 when the dialog is an optional offer (its text speaks of an offer,
+retention, upsell, marketing, cookies, a discount, or staying). A dialog that asks for consent the
+flow needs, such as agreeing to terms or a required item, is not an offer, even when it also offers
+optional consent such as marketing; the word consent alone does not make a dialog an offer.
+Put-off wording is a phrase that puts the offer off (maybe later, remind me later), not a word
+inside another action (pay later, save for later). The highest score wins, earlier in document
+order on a tie; when no control scores above zero the run stops. An action after
 which the path, the main region's text, and the open dialog are all unchanged is not tried again on
 that screen.
 
