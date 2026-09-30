@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Signup and results</title>
+  <style>
+    body { font-family: system-ui; margin: 20px }
+    form, section { padding: 14px; border: 1px solid #ddd; margin: 12px }
+    input, button { margin: 4px }
+    .spinner { display: none }
+    .spinner.active { display: block }
+    .error { color: #ad1420 }
+    label { display: block }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Signup</h1>
+    <form id="signup" novalidate>
+      <h2>Create account</h2>
+      <label for="email">Email</label><input id="email" type="email"><span class="error" id="email-error"></span>
+      <input id="display" placeholder="Display name">
+      <label for="password">Password</label><input id="password" type="password"><span class="error" id="password-error"></span>
+      <label for="marketing"><input id="marketing" type="checkbox" checked>Marketing updates</label>
+      <label for="terms"><input id="terms" type="checkbox">Accept terms</label>
+      <button type="submit">Create account</button><p role="status" id="signup-status"></p>
+    </form>
+    <form id="instant" novalidate>
+      <h2>Change profile</h2>
+      <label for="alias">Alias</label><input id="alias" type="text">
+      <span id="alias-error" class="error" aria-live="polite"></span>
+      <button type="submit">Save profile</button>
+    </form>
+    <section id="results-section" data-state-surface="results">
+      <h2>Results</h2>
+      <div class="spinner" role="progressbar">Loading results</div>
+      <p id="results-status" role="status"></p>
+      <ul id="results"></ul>
+      <button id="retry" type="button">Retry</button>
+      <button id="add-result" type="button">Add result</button>
+    </section>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>

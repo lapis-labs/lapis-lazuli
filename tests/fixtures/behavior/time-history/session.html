@@ -1,0 +1,12 @@
+<!doctype html><html><meta charset="utf-8"><title>Session form</title><main>
+<label>Draft <input id="draft" type="search"></label>
+<p id="status" role="status">Signed in</p><button id="extend" hidden type="button">Extend session</button>
+<script>
+let end=Date.now()+900000;
+const status=document.getElementById('status'),extend=document.getElementById('extend');
+setInterval(()=>{
+  if(Date.now()>=end){status.textContent='Session expired';extend.hidden=true;document.getElementById('draft').value='';}
+  else if(Date.now()>=end-60000){status.textContent='Warning: session ending soon';extend.hidden=false;}
+},60000);
+extend.onclick=()=>{end=Date.now()+900000;status.textContent='Signed in';extend.hidden=true};
+</script></main></html>

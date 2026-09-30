@@ -1,0 +1,32 @@
+# Python (anchored: tools/build/ is source and must stay tracked)
+__pycache__/
+*.py[cod]
+/.venv/
+.pytest_cache/
+*.egg-info/
+/build/
+# Python sdists and wheels; dist/ itself holds committed skill outputs
+/dist/*.whl
+/dist/*.tar.gz
+# Node (extension type checks)
+node_modules/
+# Local state: dogfooding plans and the lazuli database
+.lapis/
+*.db
+*.sqlite
+*.sqlite3
+# Font files never enter the repository. A deliberate OFL test fixture goes in with
+# `git add -f`, next to its license file.
+*.ttf
+*.otf
+*.ttc
+*.otc
+*.dfont
+*.woff
+*.woff2
+# Secrets and OS files
+.env
+.env.*
+.DS_Store
+# Personal agent rules (workspace language, handoff); never committed
+CLAUDE.local.md

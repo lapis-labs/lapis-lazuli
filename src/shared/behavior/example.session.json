@@ -1,0 +1,2349 @@
+{
+ "version": 0,
+ "meta": {
+  "driver": {
+   "name": "behavior_check",
+   "version": "0.1.0"
+  },
+  "generated_at": "2026-09-25T08:10:00Z",
+  "backend": "stub",
+  "build": "kiln-shop@4f2c9e1",
+  "extract": ".lapis/renders/kiln-shop-landing.extract.json",
+  "stub": ".lapis/stub.yaml"
+ },
+ "source": {
+  "kind": "render",
+  "url": "http://localhost:4173/",
+  "task": "kiln-shop-landing",
+  "plan": ".lapis/plans/kiln-shop-landing.yaml"
+ },
+ "contexts": [
+  {
+   "id": "m",
+   "width": 390,
+   "height": 844,
+   "dpr": 2,
+   "theme": "light",
+   "reduced_motion": false,
+   "pointer": "coarse",
+   "network": "normal",
+   "locale": "ko-KR",
+   "dir": "ltr",
+   "clock": "controlled",
+   "storage": "fresh",
+   "timezone": "Asia/Seoul"
+  },
+  {
+   "id": "m-rm",
+   "width": 390,
+   "height": 844,
+   "dpr": 2,
+   "theme": "light",
+   "reduced_motion": true,
+   "pointer": "coarse",
+   "network": "normal",
+   "locale": "ko-KR",
+   "dir": "ltr",
+   "clock": "controlled",
+   "storage": "fresh",
+   "timezone": "Asia/Seoul"
+  },
+  {
+   "id": "m-slow",
+   "width": 390,
+   "height": 844,
+   "dpr": 2,
+   "theme": "light",
+   "reduced_motion": false,
+   "pointer": "coarse",
+   "network": "slow",
+   "locale": "ko-KR",
+   "dir": "ltr",
+   "clock": "controlled",
+   "storage": "fresh",
+   "timezone": "Asia/Seoul"
+  },
+  {
+   "id": "d",
+   "width": 1440,
+   "height": 900,
+   "dpr": 2,
+   "theme": "light",
+   "reduced_motion": false,
+   "pointer": "fine",
+   "network": "normal",
+   "locale": "ko-KR",
+   "dir": "ltr",
+   "clock": "controlled",
+   "storage": "fresh",
+   "timezone": "Asia/Seoul"
+  }
+ ],
+ "nodes": {
+  "b391b79c6862c": {
+   "role": "section",
+   "rect": {
+    "x": 0,
+    "y": 0,
+    "w": 390,
+    "h": 620
+   },
+   "context": "m",
+   "in_extract": true,
+   "appears": "load"
+  },
+  "b4b622a4c513c": {
+   "role": "link",
+   "name": "예약하기",
+   "rect": {
+    "x": 20,
+    "y": 480,
+    "w": 350,
+    "h": 52
+   },
+   "context": "m",
+   "in_extract": true,
+   "appears": "load"
+  },
+  "bf86c3b5c186a": {
+   "role": "button",
+   "name": "메뉴 열기",
+   "rect": {
+    "x": 338,
+    "y": 16,
+    "w": 36,
+    "h": 36
+   },
+   "context": "m",
+   "in_extract": true,
+   "appears": "load"
+  },
+  "b6ba54c41d174": {
+   "role": "list",
+   "rect": {
+    "x": 0,
+    "y": 640,
+    "w": 390,
+    "h": 300
+   },
+   "context": "m",
+   "in_extract": true,
+   "appears": "load"
+  },
+  "b668a22598483": {
+   "role": "link",
+   "name": "본문으로 건너뛰기",
+   "rect": {
+    "x": 16,
+    "y": 8,
+    "w": 140,
+    "h": 32
+   },
+   "context": "d",
+   "in_extract": false,
+   "appears": "load"
+  },
+  "b43ba02d96592": {
+   "role": "nav",
+   "name": "주 메뉴",
+   "rect": {
+    "x": 0,
+    "y": 56,
+    "w": 390,
+    "h": 220
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "b7b53698b5391": {
+   "role": "link",
+   "name": "이번 소성분",
+   "rect": {
+    "x": 980,
+    "y": 20,
+    "w": 96,
+    "h": 32
+   },
+   "context": "d",
+   "in_extract": false,
+   "appears": "load"
+  },
+  "b9c9824659b39": {
+   "role": "link",
+   "name": "소성 기록",
+   "rect": {
+    "x": 1092,
+    "y": 20,
+    "w": 84,
+    "h": 32
+   },
+   "context": "d",
+   "in_extract": false,
+   "appears": "load"
+  },
+  "b11fd4bef7dd4": {
+   "role": "link",
+   "name": "예약 안내",
+   "rect": {
+    "x": 1192,
+    "y": 20,
+    "w": 84,
+    "h": 32
+   },
+   "context": "d",
+   "in_extract": false,
+   "appears": "load"
+  },
+  "b49e7e57709c7": {
+   "role": "link",
+   "name": "청자 사발 12",
+   "rect": {
+    "x": 20,
+    "y": 1480,
+    "w": 170,
+    "h": 230
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "load"
+  },
+  "bc7f38b1fee20": {
+   "role": "text",
+   "name": "유약 C-14, 1,250℃",
+   "rect": {
+    "x": 740,
+    "y": 1210,
+    "w": 220,
+    "h": 24
+   },
+   "context": "d",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "b6c6dd4b27460": {
+   "role": "text",
+   "name": "예약은 9월 30일 18시에 마감돼요",
+   "rect": {
+    "x": 20,
+    "y": 540,
+    "w": 350,
+    "h": 24
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "load"
+  },
+  "b04e6918156bb": {
+   "role": "dialog",
+   "name": "소성 알림 받기",
+   "rect": {
+    "x": 20,
+    "y": 160,
+    "w": 350,
+    "h": 520
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "b2773825b4096": {
+   "role": "input",
+   "name": "이메일",
+   "rect": {
+    "x": 32,
+    "y": 520,
+    "w": 326,
+    "h": 48
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "b3129a6cdc805": {
+   "role": "button",
+   "name": "소성 알림 받기",
+   "rect": {
+    "x": 32,
+    "y": 580,
+    "w": 326,
+    "h": 52
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "bb700c8cf5f29": {
+   "role": "link",
+   "name": "괜찮아요",
+   "rect": {
+    "x": 163,
+    "y": 644,
+    "w": 64,
+    "h": 20
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "bb4a9c993d466": {
+   "role": "section",
+   "rect": {
+    "x": 0,
+    "y": 56,
+    "w": 390,
+    "h": 1200
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "b60ce4bdef6ff": {
+   "role": "button",
+   "name": "이 작품 예약하기",
+   "rect": {
+    "x": 20,
+    "y": 900,
+    "w": 350,
+    "h": 52
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "b6722c0ce0e09": {
+   "role": "text",
+   "name": "배송비는 주소를 넣으면 계산돼요",
+   "rect": {
+    "x": 20,
+    "y": 860,
+    "w": 350,
+    "h": 22
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "b4a62390cf6d8": {
+   "role": "section",
+   "name": "예약 정보",
+   "rect": {
+    "x": 0,
+    "y": 56,
+    "w": 390,
+    "h": 760
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "b24cfb1832432": {
+   "role": "input",
+   "name": "이름",
+   "rect": {
+    "x": 20,
+    "y": 160,
+    "w": 350,
+    "h": 48
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "b4efc4c9eda72": {
+   "role": "input",
+   "name": "연락처",
+   "rect": {
+    "x": 20,
+    "y": 240,
+    "w": 350,
+    "h": 48
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "b8601150fec61": {
+   "role": "input",
+   "name": "받을 주소",
+   "rect": {
+    "x": 20,
+    "y": 320,
+    "w": 350,
+    "h": 48
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "ba80be7487bf6": {
+   "role": "input",
+   "name": "다음 소성 알림도 받을게요 (선택)",
+   "rect": {
+    "x": 20,
+    "y": 400,
+    "w": 350,
+    "h": 32
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "b38d0b4dbc453": {
+   "role": "button",
+   "name": "다음",
+   "rect": {
+    "x": 20,
+    "y": 700,
+    "w": 350,
+    "h": 52
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "bf3d43753ad58": {
+   "role": "section",
+   "name": "예약 확인",
+   "rect": {
+    "x": 0,
+    "y": 56,
+    "w": 390,
+    "h": 700
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "b332413a0501a": {
+   "role": "button",
+   "name": "예약 확정",
+   "rect": {
+    "x": 20,
+    "y": 640,
+    "w": 350,
+    "h": 52
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "b0c312725f154": {
+   "role": "input",
+   "name": "소성 알림 받을 이메일",
+   "rect": {
+    "x": 20,
+    "y": 2400,
+    "w": 350,
+    "h": 48
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "load"
+  },
+  "bd7d398309b3b": {
+   "role": "button",
+   "name": "알림 받기",
+   "rect": {
+    "x": 20,
+    "y": 2460,
+    "w": 350,
+    "h": 48
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "load"
+  },
+  "be3990e40807d": {
+   "role": "section",
+   "name": "알림 설정",
+   "rect": {
+    "x": 0,
+    "y": 56,
+    "w": 390,
+    "h": 600
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "b873f6f0cee7f": {
+   "role": "button",
+   "name": "소성 알림",
+   "rect": {
+    "x": 310,
+    "y": 160,
+    "w": 60,
+    "h": 32
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "b9390913d737c": {
+   "role": "button",
+   "name": "한 달에 한 번만 받기",
+   "rect": {
+    "x": 20,
+    "y": 220,
+    "w": 200,
+    "h": 44
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "b4302efa733e0": {
+   "role": "button",
+   "name": "저장",
+   "rect": {
+    "x": 32,
+    "y": 540,
+    "w": 326,
+    "h": 48
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "bd0276a8213b2": {
+   "role": "dialog",
+   "name": "알림을 끌까요?",
+   "rect": {
+    "x": 20,
+    "y": 300,
+    "w": 350,
+    "h": 220
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "bbb54a26e7bae": {
+   "role": "button",
+   "name": "끄기",
+   "rect": {
+    "x": 32,
+    "y": 440,
+    "w": 157,
+    "h": 48
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "b78bfe8c7f5f7": {
+   "role": "button",
+   "name": "유지하기",
+   "rect": {
+    "x": 201,
+    "y": 440,
+    "w": 157,
+    "h": 48
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "b3c234791ba02": {
+   "role": "section",
+   "name": "이번 소성분은 모두 예약됐어요",
+   "rect": {
+    "x": 0,
+    "y": 640,
+    "w": 390,
+    "h": 300
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "b1ada5a2f7f35": {
+   "role": "section",
+   "name": "작품 목록을 불러오지 못했어요",
+   "rect": {
+    "x": 0,
+    "y": 640,
+    "w": 390,
+    "h": 300
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "b4cf07d95afca": {
+   "role": "link",
+   "name": "알림 설정",
+   "rect": {
+    "x": 20,
+    "y": 236,
+    "w": 350,
+    "h": 44
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "b59cef174d38c": {
+   "role": "section",
+   "rect": {
+    "x": 0,
+    "y": 0,
+    "w": 390,
+    "h": 56
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "load"
+  },
+  "b03740b3800a7": {
+   "role": "section",
+   "rect": {
+    "x": 0,
+    "y": 56,
+    "w": 390,
+    "h": 2300
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "load"
+  },
+  "bd5bfd5e4122a": {
+   "role": "card",
+   "rect": {
+    "x": 20,
+    "y": 1480,
+    "w": 170,
+    "h": 230
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "load"
+  },
+  "b430feb8b3ed2": {
+   "role": "section",
+   "rect": {
+    "x": 0,
+    "y": 2356,
+    "w": 390,
+    "h": 300
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "load"
+  },
+  "b938a6b33223c": {
+   "role": "section",
+   "name": "소성 알림 받기",
+   "rect": {
+    "x": 0,
+    "y": 2380,
+    "w": 390,
+    "h": 140
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "load"
+  },
+  "ba4cc2edaad77": {
+   "role": "heading",
+   "name": "9월 소성분, 스물네 점이 나왔어요",
+   "rect": {
+    "x": 20,
+    "y": 96,
+    "w": 350,
+    "h": 88
+   },
+   "context": "m",
+   "in_extract": true,
+   "appears": "load"
+  },
+  "b73906fd38e05": {
+   "role": "heading",
+   "name": "이번 소성분",
+   "rect": {
+    "x": 20,
+    "y": 660,
+    "w": 350,
+    "h": 32
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "load"
+  },
+  "b8fe18a84c5a2": {
+   "role": "heading",
+   "name": "청자 사발 12",
+   "rect": {
+    "x": 20,
+    "y": 80,
+    "w": 350,
+    "h": 40
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  },
+  "b96f50f65d020": {
+   "role": "text",
+   "name": "연결이 끊겼어요. 다시 연결되면 목록을 새로 불러올게요.",
+   "rect": {
+    "x": 0,
+    "y": 56,
+    "w": 390,
+    "h": 48
+   },
+   "context": "m",
+   "in_extract": false,
+   "appears": "action"
+  }
+ },
+ "probes": {
+  "controls": [
+   {
+    "box": "bf86c3b5c186a",
+    "context": "m",
+    "promise": "expand",
+    "action": {
+     "kind": "tap",
+     "target": "bf86c3b5c186a",
+     "t_ms": 2000
+    },
+    "effect": {
+     "settle_ms": 540,
+     "navigation": "none",
+     "dom_mutations": 14,
+     "text_changed": [],
+     "aria_changes": [
+      {
+       "box": "bf86c3b5c186a",
+       "attr": "aria-expanded",
+       "from": "false",
+       "to": "true"
+      }
+     ],
+     "focus_to": "bf86c3b5c186a",
+     "requests": [],
+     "announcements": [],
+     "layout_shift": 0,
+     "resized": [
+      "b59cef174d38c"
+     ],
+     "console_errors": 0,
+     "outcome": "state-changed"
+    },
+    "keyboard": {
+     "focusable": true,
+     "activation": "same"
+    },
+    "derived": {
+     "matches_promise": true
+    }
+   },
+   {
+    "box": "b4b622a4c513c",
+    "context": "m",
+    "promise": "navigate",
+    "action": {
+     "kind": "tap",
+     "target": "b4b622a4c513c",
+     "t_ms": 3400
+    },
+    "effect": {
+     "settle_ms": 610,
+     "navigation": "same-document",
+     "path": "/",
+     "dom_mutations": 0,
+     "focus_to": "b6ba54c41d174",
+     "requests": [],
+     "layout_shift": 0,
+     "console_errors": 0,
+     "scroll_y_delta": 640,
+     "outcome": "navigated"
+    },
+    "keyboard": {
+     "focusable": true,
+     "activation": "same"
+    },
+    "derived": {
+     "matches_promise": true
+    }
+   }
+  ],
+  "commits": [
+   {
+    "box": "b332413a0501a",
+    "context": "m",
+    "flow": "reserve-piece",
+    "kind": "reserve",
+    "destructive": false,
+    "double_activation": {
+     "requests": 1,
+     "effects": 1,
+     "pending_shown": true,
+     "name_kept": true
+    },
+    "outcomes": [
+     {
+      "injected": "none",
+      "claimed": "success",
+      "actual": "applied",
+      "input_kept": true,
+      "announced": true
+     },
+     {
+      "injected": "fail-5xx",
+      "claimed": "failure",
+      "actual": "not-applied",
+      "retry_offered": true,
+      "retry_effects": 1,
+      "auto_resent": false,
+      "input_kept": true,
+      "announced": true
+     },
+     {
+      "injected": "hang",
+      "claimed": "unknown",
+      "actual": "applied",
+      "retry_offered": false,
+      "auto_resent": false,
+      "input_kept": true,
+      "announced": true
+     }
+    ]
+   }
+  ],
+  "keyboard": [
+   {
+    "context": "d",
+    "path": "/",
+    "presses": 7,
+    "completed": true,
+    "reverse_matches": true,
+    "stops": [
+     {
+      "box": "b668a22598483",
+      "index": 0,
+      "name": "본문으로 건너뛰기",
+      "landmark": "none",
+      "in_main": false,
+      "rect": {
+       "x": 16,
+       "y": 8,
+       "w": 140,
+       "h": 32
+      },
+      "indicator": {
+       "area_px": 420,
+       "contrast": 5.2,
+       "contrast_area_px": 420
+      },
+      "obscured_share": 0,
+      "context_change": "none",
+      "focus_visible": true
+     },
+     {
+      "box": "b7b53698b5391",
+      "index": 1,
+      "name": "이번 소성분",
+      "landmark": "navigation",
+      "in_main": false,
+      "rect": {
+       "x": 980,
+       "y": 20,
+       "w": 96,
+       "h": 32
+      },
+      "container": "b43ba02d96592",
+      "indicator": {
+       "area_px": 300,
+       "contrast": 5.2,
+       "contrast_area_px": 300
+      },
+      "obscured_share": 0,
+      "context_change": "none",
+      "focus_visible": true
+     },
+     {
+      "box": "b9c9824659b39",
+      "index": 2,
+      "name": "소성 기록",
+      "landmark": "navigation",
+      "in_main": false,
+      "rect": {
+       "x": 1092,
+       "y": 20,
+       "w": 84,
+       "h": 32
+      },
+      "container": "b43ba02d96592",
+      "indicator": {
+       "area_px": 276,
+       "contrast": 5.2,
+       "contrast_area_px": 276
+      },
+      "obscured_share": 0,
+      "context_change": "none",
+      "focus_visible": true
+     },
+     {
+      "box": "b11fd4bef7dd4",
+      "index": 3,
+      "name": "예약 안내",
+      "landmark": "navigation",
+      "in_main": false,
+      "rect": {
+       "x": 1192,
+       "y": 20,
+       "w": 84,
+       "h": 32
+      },
+      "container": "b43ba02d96592",
+      "indicator": {
+       "area_px": 276,
+       "contrast": 5.2,
+       "contrast_area_px": 276
+      },
+      "obscured_share": 0,
+      "context_change": "none",
+      "focus_visible": true
+     },
+     {
+      "box": "b4b622a4c513c",
+      "index": 4,
+      "name": "예약하기",
+      "landmark": "main",
+      "in_main": true,
+      "rect": {
+       "x": 120,
+       "y": 620,
+       "w": 280,
+       "h": 56
+      },
+      "container": "b391b79c6862c",
+      "indicator": {
+       "area_px": 740,
+       "contrast": 5.2,
+       "contrast_area_px": 740
+      },
+      "obscured_share": 0,
+      "context_change": "none",
+      "focus_visible": true
+     },
+     {
+      "box": "b49e7e57709c7",
+      "index": 5,
+      "name": "청자 사발 12",
+      "landmark": "main",
+      "in_main": true,
+      "rect": {
+       "x": 740,
+       "y": 980,
+       "w": 220,
+       "h": 300
+      },
+      "container": "bd5bfd5e4122a",
+      "indicator": {
+       "area_px": 1100,
+       "contrast": 5.2,
+       "contrast_area_px": 1100
+      },
+      "obscured_share": 0,
+      "context_change": "none",
+      "focus_visible": true
+     },
+     {
+      "box": "b0c312725f154",
+      "index": 6,
+      "name": "소성 알림 받을 이메일",
+      "landmark": "contentinfo",
+      "in_main": false,
+      "rect": {
+       "x": 120,
+       "y": 2400,
+       "w": 420,
+       "h": 48
+      },
+      "container": "b938a6b33223c",
+      "indicator": {
+       "area_px": 960,
+       "contrast": 5.2,
+       "contrast_area_px": 960
+      },
+      "obscured_share": 0,
+      "context_change": "none",
+      "focus_visible": true
+     }
+    ],
+    "traps": [],
+    "unreachable": [],
+    "skip_link": {
+     "present": true,
+     "box": "b668a22598483",
+     "index": 0,
+     "lands_at": 4
+    },
+    "presses_to_main": 5,
+    "landmarks": {
+     "main": true,
+     "roles": [
+      "banner",
+      "navigation",
+      "main",
+      "contentinfo"
+     ]
+    },
+    "headings": [
+     {
+      "box": "ba4cc2edaad77",
+      "level": 1,
+      "landmark": "main",
+      "in_main": true,
+      "next_stop": 4
+     },
+     {
+      "box": "b73906fd38e05",
+      "level": 2,
+      "landmark": "main",
+      "in_main": true,
+      "next_stop": 5
+     }
+    ],
+    "containers": {
+     "b59cef174d38c": {
+      "parent": null,
+      "rect": {
+       "x": 0,
+       "y": 0,
+       "w": 1440,
+       "h": 72
+      }
+     },
+     "b43ba02d96592": {
+      "parent": "b59cef174d38c",
+      "rect": {
+       "x": 960,
+       "y": 16,
+       "w": 340,
+       "h": 40
+      }
+     },
+     "b03740b3800a7": {
+      "parent": null,
+      "rect": {
+       "x": 0,
+       "y": 72,
+       "w": 1440,
+       "h": 2300
+      }
+     },
+     "b391b79c6862c": {
+      "parent": "b03740b3800a7",
+      "rect": {
+       "x": 0,
+       "y": 72,
+       "w": 1440,
+       "h": 700
+      }
+     },
+     "b6ba54c41d174": {
+      "parent": "b03740b3800a7",
+      "rect": {
+       "x": 0,
+       "y": 800,
+       "w": 1440,
+       "h": 1500
+      }
+     },
+     "bd5bfd5e4122a": {
+      "parent": "b6ba54c41d174",
+      "rect": {
+       "x": 740,
+       "y": 980,
+       "w": 220,
+       "h": 300
+      }
+     },
+     "b430feb8b3ed2": {
+      "parent": null,
+      "rect": {
+       "x": 0,
+       "y": 2372,
+       "w": 1440,
+       "h": 300
+      }
+     },
+     "b938a6b33223c": {
+      "parent": "b430feb8b3ed2",
+      "rect": {
+       "x": 100,
+       "y": 2380,
+       "w": 460,
+       "h": 140
+      }
+     }
+    },
+    "derived": {
+     "order_inversions": 0,
+     "inversion_pairs": [],
+     "repeated_stops": 4,
+     "bypass": [
+      "skip-link",
+      "main-landmark",
+      "heading"
+     ]
+    }
+   },
+   {
+    "context": "d",
+    "path": "/works/12",
+    "presses": 6,
+    "completed": true,
+    "reverse_matches": true,
+    "stops": [
+     {
+      "box": "b668a22598483",
+      "index": 0,
+      "name": "본문으로 건너뛰기",
+      "landmark": "none",
+      "in_main": false,
+      "rect": {
+       "x": 16,
+       "y": 8,
+       "w": 140,
+       "h": 32
+      },
+      "indicator": {
+       "area_px": 420,
+       "contrast": 5.2,
+       "contrast_area_px": 420
+      },
+      "obscured_share": 0,
+      "context_change": "none",
+      "focus_visible": true
+     },
+     {
+      "box": "b7b53698b5391",
+      "index": 1,
+      "name": "이번 소성분",
+      "landmark": "navigation",
+      "in_main": false,
+      "rect": {
+       "x": 980,
+       "y": 20,
+       "w": 96,
+       "h": 32
+      },
+      "container": "b43ba02d96592",
+      "indicator": {
+       "area_px": 300,
+       "contrast": 5.2,
+       "contrast_area_px": 300
+      },
+      "obscured_share": 0,
+      "context_change": "none",
+      "focus_visible": true
+     },
+     {
+      "box": "b9c9824659b39",
+      "index": 2,
+      "name": "소성 기록",
+      "landmark": "navigation",
+      "in_main": false,
+      "rect": {
+       "x": 1092,
+       "y": 20,
+       "w": 84,
+       "h": 32
+      },
+      "container": "b43ba02d96592",
+      "indicator": {
+       "area_px": 276,
+       "contrast": 5.2,
+       "contrast_area_px": 276
+      },
+      "obscured_share": 0,
+      "context_change": "none",
+      "focus_visible": true
+     },
+     {
+      "box": "b11fd4bef7dd4",
+      "index": 3,
+      "name": "예약 안내",
+      "landmark": "navigation",
+      "in_main": false,
+      "rect": {
+       "x": 1192,
+       "y": 20,
+       "w": 84,
+       "h": 32
+      },
+      "container": "b43ba02d96592",
+      "indicator": {
+       "area_px": 276,
+       "contrast": 5.2,
+       "contrast_area_px": 276
+      },
+      "obscured_share": 0,
+      "context_change": "none",
+      "focus_visible": true
+     },
+     {
+      "box": "b60ce4bdef6ff",
+      "index": 4,
+      "name": "이 작품 예약하기",
+      "landmark": "main",
+      "in_main": true,
+      "rect": {
+       "x": 760,
+       "y": 620,
+       "w": 360,
+       "h": 56
+      },
+      "container": "bb4a9c993d466",
+      "indicator": {
+       "area_px": 760,
+       "contrast": 5.2,
+       "contrast_area_px": 760
+      },
+      "obscured_share": 0,
+      "context_change": "none",
+      "focus_visible": true
+     },
+     {
+      "box": "b0c312725f154",
+      "index": 5,
+      "name": "소성 알림 받을 이메일",
+      "landmark": "contentinfo",
+      "in_main": false,
+      "rect": {
+       "x": 120,
+       "y": 1640,
+       "w": 420,
+       "h": 48
+      },
+      "container": "b938a6b33223c",
+      "indicator": {
+       "area_px": 960,
+       "contrast": 5.2,
+       "contrast_area_px": 960
+      },
+      "obscured_share": 0,
+      "context_change": "none",
+      "focus_visible": true
+     }
+    ],
+    "traps": [],
+    "unreachable": [],
+    "skip_link": {
+     "present": true,
+     "box": "b668a22598483",
+     "index": 0,
+     "lands_at": 4
+    },
+    "presses_to_main": 5,
+    "landmarks": {
+     "main": true,
+     "roles": [
+      "banner",
+      "navigation",
+      "main",
+      "contentinfo"
+     ]
+    },
+    "headings": [
+     {
+      "box": "b8fe18a84c5a2",
+      "level": 1,
+      "landmark": "main",
+      "in_main": true,
+      "next_stop": 4
+     }
+    ],
+    "containers": {
+     "b59cef174d38c": {
+      "parent": null,
+      "rect": {
+       "x": 0,
+       "y": 0,
+       "w": 1440,
+       "h": 72
+      }
+     },
+     "b43ba02d96592": {
+      "parent": "b59cef174d38c",
+      "rect": {
+       "x": 960,
+       "y": 16,
+       "w": 340,
+       "h": 40
+      }
+     },
+     "bb4a9c993d466": {
+      "parent": null,
+      "rect": {
+       "x": 0,
+       "y": 72,
+       "w": 1440,
+       "h": 1540
+      }
+     },
+     "b430feb8b3ed2": {
+      "parent": null,
+      "rect": {
+       "x": 0,
+       "y": 1612,
+       "w": 1440,
+       "h": 300
+      }
+     },
+     "b938a6b33223c": {
+      "parent": "b430feb8b3ed2",
+      "rect": {
+       "x": 100,
+       "y": 1620,
+       "w": 460,
+       "h": 140
+      }
+     }
+    },
+    "derived": {
+     "order_inversions": 0,
+     "inversion_pairs": [],
+     "repeated_stops": 4,
+     "bypass": [
+      "skip-link",
+      "main-landmark",
+      "heading"
+     ]
+    }
+   }
+  ],
+  "dialogs": [
+   {
+    "box": "b04e6918156bb",
+    "context": "m",
+    "path": "/",
+    "kind": "modal",
+    "trigger": "timer",
+    "trigger_after_ms": 15000,
+    "blocks_content": true,
+    "area_share": 0.62,
+    "purpose": "marketing",
+    "purpose_basis": "text",
+    "choice_set": "c1",
+    "focus": {
+     "moved_in": true,
+     "initial": "b2773825b4096",
+     "contained": true,
+     "escape_closes": true,
+     "close_control": true,
+     "returns_to": "body",
+     "background_inert": true
+    },
+    "appearances": [
+     {
+      "preceded_by": "none",
+      "response": "decline",
+      "path": "/",
+      "t_ms": 15000
+     },
+     {
+      "preceded_by": "navigation",
+      "response": "dismiss",
+      "path": "/works/12",
+      "t_ms": 41000
+     }
+    ],
+    "dont_show_again": {
+     "offered": false
+    },
+    "derived": {
+     "reasks_after_decline": 1
+    }
+   },
+   {
+    "box": "bd0276a8213b2",
+    "context": "m",
+    "flow": "stop-firing-notices",
+    "path": "/settings/notifications",
+    "kind": "modal",
+    "trigger": "control",
+    "trigger_box": "b4302efa733e0",
+    "blocks_content": true,
+    "area_share": 0.26,
+    "purpose": "confirm",
+    "purpose_basis": "plan",
+    "choice_set": "c3",
+    "focus": {
+     "moved_in": true,
+     "initial": "b78bfe8c7f5f7",
+     "contained": true,
+     "escape_closes": true,
+     "close_control": true,
+     "returns_to": "invoker",
+     "background_inert": true
+    },
+    "appearances": [
+     {
+      "preceded_by": "control",
+      "response": "accept",
+      "path": "/settings/notifications",
+      "t_ms": 6500
+     }
+    ],
+    "derived": {
+     "reasks_after_decline": 0
+    }
+   }
+  ],
+  "choices": [
+   {
+    "id": "c1",
+    "context": "m",
+    "container": "b04e6918156bb",
+    "path": "/",
+    "purpose": "marketing",
+    "purpose_basis": "text",
+    "options": [
+     {
+      "box": "b3129a6cdc805",
+      "label": "소성 알림 받기",
+      "lang": "ko-KR",
+      "kind": "accept",
+      "control": "button",
+      "preselected": false,
+      "layer": 1,
+      "interactions": 2,
+      "visual": {
+       "area_px": 16952,
+       "filled": true,
+       "contrast": 8.1,
+       "size_px": 17,
+       "weight": 600,
+       "in_first_viewport": true
+      }
+     },
+     {
+      "box": "bb700c8cf5f29",
+      "label": "괜찮아요",
+      "lang": "ko-KR",
+      "kind": "decline",
+      "control": "link",
+      "preselected": false,
+      "layer": 1,
+      "interactions": 1,
+      "visual": {
+       "area_px": 1280,
+       "filled": false,
+       "contrast": 3.2,
+       "size_px": 13,
+       "weight": 400,
+       "in_first_viewport": true
+      }
+     }
+    ],
+    "derived": {
+     "decline_found": true,
+     "decline_extra_interactions": -1,
+     "prominence_ratio": 57.94
+    }
+   },
+   {
+    "id": "c2",
+    "context": "m",
+    "container": "be3990e40807d",
+    "flow": "stop-firing-notices",
+    "path": "/settings/notifications",
+    "purpose": "retention",
+    "purpose_basis": "plan",
+    "options": [
+     {
+      "box": "b9390913d737c",
+      "label": "한 달에 한 번만 받기",
+      "lang": "ko-KR",
+      "kind": "accept",
+      "control": "button",
+      "preselected": false,
+      "layer": 1,
+      "interactions": 1,
+      "visual": {
+       "area_px": 8800,
+       "filled": false,
+       "bordered": true,
+       "contrast": 7.5,
+       "size_px": 15,
+       "weight": 500,
+       "in_first_viewport": true
+      }
+     },
+     {
+      "box": "b4302efa733e0",
+      "label": "저장",
+      "lang": "ko-KR",
+      "kind": "decline",
+      "control": "button",
+      "preselected": false,
+      "layer": 1,
+      "interactions": 2,
+      "visual": {
+       "area_px": 15648,
+       "filled": true,
+       "contrast": 7.9,
+       "size_px": 16,
+       "weight": 600,
+       "in_first_viewport": true
+      }
+     }
+    ],
+    "derived": {
+     "decline_found": true,
+     "decline_extra_interactions": 1,
+     "prominence_ratio": 0.42
+    }
+   },
+   {
+    "id": "c3",
+    "context": "m",
+    "container": "bd0276a8213b2",
+    "flow": "stop-firing-notices",
+    "path": "/settings/notifications",
+    "purpose": "confirm",
+    "purpose_basis": "plan",
+    "options": [
+     {
+      "box": "bbb54a26e7bae",
+      "label": "끄기",
+      "lang": "ko-KR",
+      "kind": "neutral",
+      "control": "button",
+      "preselected": false,
+      "layer": 1,
+      "interactions": 1,
+      "visual": {
+       "area_px": 7536,
+       "filled": true,
+       "contrast": 7.9,
+       "size_px": 16,
+       "weight": 600,
+       "in_first_viewport": true
+      }
+     },
+     {
+      "box": "b78bfe8c7f5f7",
+      "label": "유지하기",
+      "lang": "ko-KR",
+      "kind": "neutral",
+      "control": "button",
+      "preselected": false,
+      "layer": 1,
+      "interactions": 1,
+      "visual": {
+       "area_px": 7536,
+       "filled": false,
+       "bordered": true,
+       "contrast": 7.9,
+       "size_px": 16,
+       "weight": 500,
+       "in_first_viewport": true
+      }
+     }
+    ]
+   }
+  ],
+  "forms": [
+   {
+    "box": "b4a62390cf6d8",
+    "context": "m",
+    "flow": "reserve-piece",
+    "purpose": "reservation",
+    "fields": [
+     {
+      "box": "b24cfb1832432",
+      "kind": "text",
+      "purpose": "data",
+      "required": true,
+      "sensitive": false,
+      "label": {
+       "visible": true,
+       "persists_after_input": true,
+       "programmatic": true
+      },
+      "paste_blocked": false,
+      "value_id": "v1",
+      "prefilled": false
+     },
+     {
+      "box": "b4efc4c9eda72",
+      "kind": "tel",
+      "purpose": "data",
+      "required": true,
+      "sensitive": false,
+      "label": {
+       "visible": true,
+       "persists_after_input": true,
+       "programmatic": true
+      },
+      "paste_blocked": false,
+      "value_id": "v2",
+      "prefilled": false
+     },
+     {
+      "box": "b8601150fec61",
+      "kind": "text",
+      "purpose": "data",
+      "required": true,
+      "sensitive": false,
+      "label": {
+       "visible": true,
+       "persists_after_input": true,
+       "programmatic": true
+      },
+      "paste_blocked": false,
+      "value_id": "v3",
+      "prefilled": false
+     },
+     {
+      "box": "ba80be7487bf6",
+      "kind": "checkbox",
+      "purpose": "marketing",
+      "required": false,
+      "sensitive": false,
+      "checked_on_load": false,
+      "label": {
+       "visible": true,
+       "persists_after_input": true,
+       "programmatic": true
+      }
+     }
+    ],
+    "validation": {
+     "first_error": "blur",
+     "untouched_invalid_on_load": false
+    },
+    "invalid_submit": {
+     "errors": 1,
+     "described_in_text": true,
+     "associated": true,
+     "color_only": false,
+     "focus_to": "first-error",
+     "announced": true,
+     "new_requirement": false
+    },
+    "preservation": [
+     {
+      "after": "invalid-submit",
+      "kept": 3,
+      "cleared": 0,
+      "cleared_sensitive": 0
+     },
+     {
+      "after": "server-error",
+      "kept": 3,
+      "cleared": 0,
+      "cleared_sensitive": 0
+     }
+    ],
+    "submit": {
+     "box": "b38d0b4dbc453",
+     "disabled_until_valid": false,
+     "disabled_sends": false
+    }
+   }
+  ],
+  "states": [
+   {
+    "context": "m",
+    "surface": "b6ba54c41d174",
+    "path": "/",
+    "state": "empty",
+    "induced_by": "fixture",
+    "on_action": false,
+    "shown": true,
+    "same_as": [],
+    "blank": false,
+    "indicator": "none",
+    "scope": "region",
+    "problem_text": true,
+    "recovery_action": true,
+    "recovery_works": true,
+    "announced": false
+   },
+   {
+    "context": "m-slow",
+    "surface": "b6ba54c41d174",
+    "path": "/",
+    "state": "loading",
+    "induced_by": "delay",
+    "on_action": false,
+    "shown": true,
+    "same_as": [],
+    "blank": false,
+    "indicator": "skeleton",
+    "indicator_delay_ms": 300,
+    "indicator_shown_ms": 2400,
+    "scope": "region"
+   },
+   {
+    "context": "m",
+    "surface": "b6ba54c41d174",
+    "path": "/",
+    "state": "error",
+    "induced_by": "fail-5xx",
+    "on_action": false,
+    "shown": true,
+    "same_as": [],
+    "blank": false,
+    "indicator": "text",
+    "scope": "region",
+    "problem_text": true,
+    "recovery_action": true,
+    "recovery_works": true,
+    "announced": true
+   },
+   {
+    "context": "m",
+    "surface": "b96f50f65d020",
+    "path": "/",
+    "state": "offline",
+    "induced_by": "offline",
+    "on_action": false,
+    "shown": true,
+    "same_as": [],
+    "blank": false,
+    "indicator": "text",
+    "scope": "page",
+    "problem_text": true,
+    "recovery_action": true,
+    "recovery_works": true,
+    "announced": true
+   },
+   {
+    "context": "m",
+    "surface": "bf3d43753ad58",
+    "path": "/reserve/12/review",
+    "state": "success",
+    "induced_by": "action",
+    "on_action": true,
+    "shown": true,
+    "same_as": [],
+    "blank": false,
+    "indicator": "text",
+    "scope": "page",
+    "announced": true
+   }
+  ],
+  "urgency": [
+   {
+    "box": "b6c6dd4b27460",
+    "context": "m",
+    "path": "/",
+    "kind": "deadline",
+    "backed": true,
+    "readings": [
+     {
+      "when": "load",
+      "value": 450000,
+      "unit": "seconds",
+      "resolution_s": 3600,
+      "elapsed_ms": 0
+     },
+     {
+      "when": "reload",
+      "value": 449940,
+      "unit": "seconds",
+      "resolution_s": 3600,
+      "elapsed_ms": 60000
+     },
+     {
+      "when": "fresh-profile",
+      "value": 449880,
+      "unit": "seconds",
+      "resolution_s": 3600,
+      "elapsed_ms": 120000
+     }
+    ],
+    "at_expiry": "not-reached",
+    "derived": {
+     "resets": false,
+     "drifts": false
+    }
+   }
+  ],
+  "history": [
+   {
+    "context": "m",
+    "action": "back",
+    "from": "/works/12",
+    "to": "/",
+    "presses": 1,
+    "left_page": true,
+    "pushed_entries": 0,
+    "restored": {
+     "scroll": true
+    },
+    "resubmit_prompt": false
+   },
+   {
+    "context": "m",
+    "action": "back",
+    "from": "/",
+    "presses": 1,
+    "left_page": true,
+    "pushed_entries": 0,
+    "overlay_closed_first": false
+   }
+  ],
+  "pointer": [
+   {
+    "box": "b49e7e57709c7",
+    "context": "d",
+    "kind": "hover-reveal",
+    "revealed": [
+     "bc7f38b1fee20"
+    ],
+    "on_focus_too": true,
+    "obscures": false,
+    "dismissible": true,
+    "hoverable": true,
+    "persistent": true
+   }
+  ],
+  "motion": [
+   {
+    "context": "m-rm",
+    "compare_to": "m",
+    "window_ms": 5000,
+    "moving": [],
+    "auto_moving": [],
+    "scroll_reveal": [],
+    "input_blocked_ms": 0
+   },
+   {
+    "context": "d",
+    "window_ms": 5000,
+    "moving": [],
+    "auto_moving": [],
+    "hover_media": {
+     "total": 24,
+     "transforming": 0
+    },
+    "scroll_reveal": [],
+    "input_blocked_ms": 0
+   }
+  ],
+  "scroll": [
+   {
+    "context": "d",
+    "input": "wheel",
+    "expected_px": 300,
+    "actual_px": 300,
+    "snapped": false,
+    "blocked": false,
+    "derived": {
+     "ratio": 1.0
+    }
+   }
+  ],
+  "permissions": [],
+  "media": []
+ },
+ "flows": [
+  {
+   "id": "reserve-piece",
+   "context": "m",
+   "kind": "primary",
+   "status": "completed",
+   "commit_step": 3,
+   "review_before_commit": true,
+   "steps": [
+    {
+     "index": 0,
+     "path": "/",
+     "main": "b391b79c6862c",
+     "back_available": false,
+     "dead_end": false,
+     "actions": [
+      {
+       "kind": "tap",
+       "target": "b49e7e57709c7",
+       "t_ms": 5000
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "path": "/works/12",
+     "main": "bb4a9c993d466",
+     "back_available": true,
+     "dead_end": false,
+     "actions": [
+      {
+       "kind": "tap",
+       "target": "b60ce4bdef6ff",
+       "t_ms": 9000
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "path": "/reserve/12",
+     "main": "b4a62390cf6d8",
+     "back_available": true,
+     "dead_end": false,
+     "actions": [
+      {
+       "kind": "type",
+       "target": "b24cfb1832432",
+       "value": "valid",
+       "value_id": "v1",
+       "t_ms": 11000
+      },
+      {
+       "kind": "type",
+       "target": "b4efc4c9eda72",
+       "value": "valid",
+       "value_id": "v2",
+       "t_ms": 13000
+      },
+      {
+       "kind": "type",
+       "target": "b8601150fec61",
+       "value": "valid",
+       "value_id": "v3",
+       "t_ms": 16000
+      },
+      {
+       "kind": "tap",
+       "target": "b38d0b4dbc453",
+       "t_ms": 17500
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "path": "/reserve/12/review",
+     "main": "bf3d43753ad58",
+     "back_available": true,
+     "dead_end": false,
+     "actions": [
+      {
+       "kind": "tap",
+       "target": "b332413a0501a",
+       "t_ms": 21000
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "path": "/reservations/:id",
+     "back_available": true,
+     "dead_end": false,
+     "actions": []
+    }
+   ],
+   "effort": {
+    "steps": 4,
+    "interactions": 7,
+    "fields": 3,
+    "single_field_steps": 0,
+    "offers": 0,
+    "blocking_offers": 0,
+    "reauth": false,
+    "channel": "self-serve"
+   },
+   "prices": [
+    {
+     "step": 1,
+     "currency": "KRW",
+     "components": [
+      {
+       "key": "piece-12",
+       "kind": "item",
+       "amount": 180000,
+       "state": "known",
+       "mandatory": true,
+       "user_caused": false,
+       "placement": "primary",
+       "cadence": "once"
+      },
+      {
+       "key": "shipping",
+       "kind": "shipping",
+       "state": "pending",
+       "mandatory": true,
+       "user_caused": false,
+       "placement": "primary",
+       "box": "b6722c0ce0e09"
+      }
+     ]
+    },
+    {
+     "step": 2,
+     "currency": "KRW",
+     "components": [
+      {
+       "key": "piece-12",
+       "kind": "item",
+       "amount": 180000,
+       "state": "known",
+       "mandatory": true,
+       "user_caused": false,
+       "placement": "primary",
+       "cadence": "once"
+      },
+      {
+       "key": "shipping",
+       "kind": "shipping",
+       "amount": 5000,
+       "state": "known",
+       "mandatory": true,
+       "user_caused": true,
+       "placement": "primary"
+      }
+     ]
+    },
+    {
+     "step": 3,
+     "currency": "KRW",
+     "components": [
+      {
+       "key": "piece-12",
+       "kind": "item",
+       "amount": 180000,
+       "state": "known",
+       "mandatory": true,
+       "user_caused": false,
+       "placement": "primary",
+       "cadence": "once"
+      },
+      {
+       "key": "shipping",
+       "kind": "shipping",
+       "amount": 5000,
+       "state": "known",
+       "mandatory": true,
+       "user_caused": false,
+       "placement": "primary"
+      },
+      {
+       "key": "total",
+       "kind": "total",
+       "amount": 185000,
+       "state": "known",
+       "mandatory": true,
+       "user_caused": false,
+       "placement": "primary"
+      }
+     ]
+    }
+   ],
+   "disclosures": [
+    {
+     "kind": "cancellation-terms",
+     "step": 3,
+     "placement": "near-commit",
+     "at_commit": true
+    }
+   ],
+   "gates": [
+    {
+     "step": 2,
+     "kind": "address",
+     "skippable": false,
+     "declared": true,
+     "box": "b8601150fec61"
+    }
+   ],
+   "derived": {
+    "drip": [],
+    "sneaked": [],
+    "hidden_terms": []
+   }
+  },
+  {
+   "id": "firing-notices",
+   "context": "m",
+   "kind": "grant-consent",
+   "status": "completed",
+   "commit_step": 0,
+   "steps": [
+    {
+     "index": 0,
+     "path": "/",
+     "main": "b391b79c6862c",
+     "back_available": false,
+     "dead_end": false,
+     "actions": [
+      {
+       "kind": "type",
+       "target": "b0c312725f154",
+       "value": "valid",
+       "value_id": "v4",
+       "t_ms": 2000
+      },
+      {
+       "kind": "tap",
+       "target": "bd7d398309b3b",
+       "t_ms": 4000
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "path": "/",
+     "main": "b391b79c6862c",
+     "back_available": false,
+     "dead_end": false,
+     "actions": []
+    }
+   ],
+   "effort": {
+    "steps": 1,
+    "interactions": 2,
+    "fields": 1,
+    "single_field_steps": 1,
+    "offers": 0,
+    "blocking_offers": 0,
+    "reauth": false,
+    "channel": "self-serve"
+   },
+   "derived": {
+    "drip": [],
+    "sneaked": [],
+    "hidden_terms": []
+   }
+  },
+  {
+   "id": "stop-firing-notices",
+   "context": "m",
+   "kind": "withdraw-consent",
+   "status": "completed",
+   "commit_step": 2,
+   "steps": [
+    {
+     "index": 0,
+     "path": "/",
+     "main": "b391b79c6862c",
+     "back_available": false,
+     "dead_end": false,
+     "actions": [
+      {
+       "kind": "tap",
+       "target": "bf86c3b5c186a",
+       "t_ms": 1000
+      },
+      {
+       "kind": "tap",
+       "target": "b4cf07d95afca",
+       "t_ms": 2000
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "path": "/settings/notifications",
+     "main": "be3990e40807d",
+     "back_available": true,
+     "dead_end": false,
+     "actions": [
+      {
+       "kind": "tap",
+       "target": "b873f6f0cee7f",
+       "t_ms": 4000
+      },
+      {
+       "kind": "tap",
+       "target": "b4302efa733e0",
+       "t_ms": 6000
+      }
+     ],
+     "offers": [
+      {
+       "box": "b9390913d737c",
+       "kind": "retention",
+       "blocks": false,
+       "hint_mismatch": [
+        "blocks"
+       ]
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "path": "/settings/notifications",
+     "dialog": "bd0276a8213b2",
+     "back_available": true,
+     "dead_end": false,
+     "actions": [
+      {
+       "kind": "tap",
+       "target": "bbb54a26e7bae",
+       "t_ms": 8000
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "path": "/settings/notifications",
+     "main": "be3990e40807d",
+     "back_available": true,
+     "dead_end": false,
+     "actions": []
+    }
+   ],
+   "effort": {
+    "steps": 3,
+    "interactions": 5,
+    "fields": 0,
+    "single_field_steps": 0,
+    "offers": 1,
+    "blocking_offers": 0,
+    "reauth": false,
+    "channel": "self-serve"
+   },
+   "derived": {
+    "drip": [],
+    "sneaked": [],
+    "hidden_terms": [],
+    "exit": {
+     "pair": "firing-notices",
+     "extra_steps": 2,
+     "extra_interactions": 3,
+     "added_reauth": false
+    }
+   }
+  }
+ ],
+ "console": [],
+ "coverage": [
+  {
+   "probe": "controls",
+   "status": "ran",
+   "contexts": [
+    "m",
+    "d"
+   ]
+  },
+  {
+   "probe": "commits",
+   "status": "ran",
+   "contexts": [
+    "m"
+   ]
+  },
+  {
+   "probe": "keyboard",
+   "status": "ran",
+   "contexts": [
+    "d"
+   ]
+  },
+  {
+   "probe": "dialogs",
+   "status": "ran",
+   "contexts": [
+    "m",
+    "d"
+   ]
+  },
+  {
+   "probe": "choices",
+   "status": "ran",
+   "contexts": [
+    "m",
+    "d"
+   ]
+  },
+  {
+   "probe": "forms",
+   "status": "ran",
+   "contexts": [
+    "m"
+   ]
+  },
+  {
+   "probe": "states",
+   "status": "ran",
+   "contexts": [
+    "m",
+    "m-slow"
+   ]
+  },
+  {
+   "probe": "urgency",
+   "status": "ran",
+   "contexts": [
+    "m"
+   ]
+  },
+  {
+   "probe": "time_limits",
+   "status": "ran",
+   "contexts": [
+    "m"
+   ],
+   "reason": "clock advanced 20 hours during each flow; no limit found"
+  },
+  {
+   "probe": "history",
+   "status": "ran",
+   "contexts": [
+    "m"
+   ]
+  },
+  {
+   "probe": "pointer",
+   "status": "ran",
+   "contexts": [
+    "d"
+   ]
+  },
+  {
+   "probe": "motion",
+   "status": "ran",
+   "contexts": [
+    "m-rm",
+    "m",
+    "d"
+   ]
+  },
+  {
+   "probe": "scroll",
+   "status": "ran",
+   "contexts": [
+    "d"
+   ]
+  },
+  {
+   "probe": "permissions",
+   "status": "ran",
+   "contexts": [
+    "m",
+    "d"
+   ]
+  },
+  {
+   "probe": "media",
+   "status": "not-applicable",
+   "reason": "no audio or video elements"
+  },
+  {
+   "probe": "flows",
+   "status": "ran",
+   "contexts": [
+    "m"
+   ]
+  },
+  {
+   "probe": "console",
+   "status": "ran",
+   "contexts": [
+    "m",
+    "m-rm",
+    "m-slow",
+    "d"
+   ]
+  }
+ ]
+}

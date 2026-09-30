@@ -1,0 +1,54 @@
+# Synthetic pottery shop backing plan/example.plan.yaml; no actual customers or payments.
+version: 0
+clock: { start: '2026-09-26T00:00:00Z' }
+collections:
+  pieces:
+    - { id: p1, name: Celadon cup, stock: 3, glaze: celadon }
+    - { id: p2, name: Ash-glazed bowl, stock: 1, glaze: ash }
+  reservations: []
+  firing-notices: []
+  consent: []
+variants:
+  empty:
+    pieces: []
+    reservations: []
+    firing-notices: []
+    consent: []
+  partial:
+    pieces: [{ id: p1, name: Celadon cup, stock: 3, glaze: celadon }]
+    reservations: []
+    firing-notices: []
+    consent: []
+routes:
+  - { method: GET, path: /api/pieces, collection: pieces, operation: list }
+  - { method: GET, path: '/api/pieces/:id', collection: pieces, operation: get }
+  - { method: POST, path: /api/reservations, collection: reservations, operation: create }
+  - { method: GET, path: /api/reservations, collection: reservations, operation: list }
+  - { method: GET, path: '/api/reservations/:id', collection: reservations, operation: get }
+  - { method: PATCH, path: '/api/reservations/:id', collection: reservations, operation: update }
+  - { method: DELETE, path: '/api/reservations/:id', collection: reservations, operation: delete }
+  - { method: POST, path: /api/firing-notices, collection: firing-notices, operation: create }
+  - { method: DELETE, path: '/api/firing-notices/:id', collection: firing-notices, operation: delete }
+  - { method: POST, path: /api/consent, collection: consent, operation: create }
+  - { method: DELETE, path: '/api/consent/:id', collection: consent, operation: delete }
+  - { method: POST, path: /api/sign-in, response: { status: 200, json: { signed_in: true } } }
+  - { method: GET, path: /api/account, response: { status: 200, json: { signed_in: true } }, require_session: true }
+values:
+  v1: { kind: name, valid: Sample Potter, invalid: '!', alternate: Sample Collector }
+  v2: { kind: email, valid: potter@example.com, invalid: not-an-email, alternate: collector@example.org }
+  v3: { kind: password, valid: ceramic-test-only, invalid: x, alternate: different-test-only }
+  v4: { kind: address, valid: 10 Fictional Street, invalid: '', alternate: 12 Fictional Street }
+  v5: { kind: card, valid: '4242 4242 4242 4242', invalid: '0000', alternate: '4000 0000 0000 0002' }
+accounts: { username: v2, password: v3 }
+auth:
+  sign_in: { method: POST, path: /api/sign-in }
+  cookie: lapis_session
+urgency:
+  countdown: { at: '2026-09-26T01:00:00Z' }
+  deadline: { at: '2026-09-26T01:00:00Z' }
+  hold: { hold_s: 300 }
+  stock: { p1: 3, p2: 1 }
+  demand: { p1: 2 }
+  activity: [{ event: piece-purchased, count: 1 }]
+outside:
+  - { host: delivery.example.com, method: GET, path: /rates, response: { status: 200, json: { available: true } } }

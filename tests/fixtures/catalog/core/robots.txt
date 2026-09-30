@@ -1,0 +1,12 @@
+# Hand-written, shaped like a font catalog site's robots.txt
+User-agent: SomeCrawler
+Disallow: /
+
+User-agent: *
+Crawl-delay: 2
+Disallow: /
+
+# lazuli's own group replaces the `*` group
+User-agent: lazuli
+Crawl-delay: 7.5
+Disallow: /admin/

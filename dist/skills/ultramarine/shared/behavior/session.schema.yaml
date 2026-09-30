@@ -1,0 +1,1067 @@
+# LapisLazuli behavior session log schema — v0 draft
+# Written by: ultramarine behavior_check, which drives our own render in a browser
+# Read by: behavior-layer detectors (slop/detectors.yaml, `reads_session`)
+# How each value is observed or derived: behavior/DERIVED.md
+#
+# What this file records
+#   Observations, not verdicts. The driver exercises controls, walks the page with the keyboard,
+#   answers dialogs, submits forms, injects network failures, moves the clock, uses history, and
+#   runs the plan's flows. Rules decide what counts as a problem. Derived values - the `derived`
+#   blocks plus `effect.outcome` and `stop.focus_visible` - are computed as DERIVED.md fixes them
+#   (cli/lapis_design/behavior.py is the reference).
+#   Optional data-lapis-* hints on the page only locate and group elements; `hint_mismatch` names the
+#   fields where a hint disagreed with the page reading, and detectors report those as not verified.
+#
+# Scope and safety
+#   - Our own output only (`source.kind: render`) served from a host that is ours as
+#     render/DERIVED.md Target hosts defines it. Requests to other hosts are blocked
+#     and recorded; destructive probes never drive reference or third-party sites.
+#   - The backend is a stub or an isolated local development instance with synthetic data and
+#     outbound mail and messaging disabled (`meta.backend`). Destructive probes run only on the stub.
+#     The driver never uses real accounts, credentials, or payment methods.
+#   - Typed values are not stored; `value_id` says which fixture value was used, and stored text that
+#     echoes a fixture value has it replaced by the id. Requests keep method, host, and a templated
+#     path, never query strings, headers, or bodies. Console messages are redacted (DERIVED.md).
+#
+# Box ids are the render extract's ids (a hash of the DOM path, render/DERIVED.md), so the session
+# can point at boxes in the extract of the same build. Elements created by an action get ids the same
+# way. Every id used anywhere in this file is described in `nodes`.
+#
+# A probe the driver did not run is not a pass: `coverage` says what ran. Detectors report every hit
+# they observe, and add a skipped finding when a probe they read was partial or skipped.
+
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/session.v0.json
+title: LapisLazuli behavior session
+type: object
+additionalProperties: false
+required: [version, meta, source, contexts, nodes, probes, coverage]
+
+properties:
+  version: { const: 0 }
+
+  meta:
+    type: object
+    additionalProperties: false
+    required: [driver, generated_at, backend]
+    properties:
+      driver:
+        type: object
+        additionalProperties: false
+        required: [name, version]
+        properties:
+          name: { const: behavior_check }
+          version: { type: string }
+      generated_at: { type: string, format: date-time }
+      backend: { enum: [stub, local-dev] }            # stub: scripted responses and failure injection
+      outbound: { enum: [none, restricted] }          # local-dev: none = the backend cannot reach any outside network
+      build: { type: string }                         # build or commit id shared with the render extract
+      extract: { type: string }                       # path to the render extract of the same build
+      stub: { type: string }                          # local --stub fixture, relative to the directory the check ran in (POSIX)
+
+  source:
+    type: object
+    additionalProperties: false
+    required: [kind, url, task]
+    properties:
+      kind: { const: render }                         # behavior sessions drive our own output only
+      url:                                            # entry URL on a host that is ours, without query or fragment
+        type: string
+        pattern: "^https?://(localhost|127(\\.[0-9]{1,3}){3}|0\\.0\\.0\\.0|\\[::1\\]|\\[f[cd][0-9a-f:]+\\]|([a-z0-9]([a-z0-9-]*[a-z0-9])?\\.)+localhost|([a-z0-9]([a-z0-9-]*[a-z0-9])?\\.)+test|10(\\.[0-9]{1,3}){3}|192\\.168(\\.[0-9]{1,3}){2}|172\\.(1[6-9]|2[0-9]|3[01])(\\.[0-9]{1,3}){2})(:[0-9]{1,5})?(/[^?#]*)?$"
+      task: { type: string }                          # the plan's task.id
+      plan: { type: string }                          # path to the plan file
+      addresses:                                      # required for .test, absent for every other host
+        type: array
+        minItems: 1
+        items: { type: string, anyOf: [{ format: ipv4 }, { format: ipv6 }] }
+  contexts:
+    type: array
+    minItems: 1
+    items: { $ref: "#/$defs/context" }
+
+  nodes:                                              # every box id used in this file
+    type: object
+    propertyNames: { $ref: "#/$defs/box_id" }
+    additionalProperties: { $ref: "#/$defs/node" }
+
+  probes:
+    type: object
+    additionalProperties: false
+    properties:
+      controls: { type: array, items: { $ref: "#/$defs/control_probe" } }
+      commits: { type: array, items: { $ref: "#/$defs/commit_probe" } }
+      keyboard: { type: array, items: { $ref: "#/$defs/keyboard_probe" } }
+      dialogs: { type: array, items: { $ref: "#/$defs/dialog_probe" } }
+      choices: { type: array, items: { $ref: "#/$defs/choice_set" } }
+      forms: { type: array, items: { $ref: "#/$defs/form_probe" } }
+      states: { type: array, items: { $ref: "#/$defs/state_probe" } }
+      urgency: { type: array, items: { $ref: "#/$defs/urgency_probe" } }
+      time_limits: { type: array, items: { $ref: "#/$defs/time_limit" } }
+      history: { type: array, items: { $ref: "#/$defs/history_probe" } }
+      pointer: { type: array, items: { $ref: "#/$defs/pointer_probe" } }
+      motion: { type: array, items: { $ref: "#/$defs/motion_probe" } }
+      scroll: { type: array, items: { $ref: "#/$defs/scroll_probe" } }
+      permissions: { type: array, items: { $ref: "#/$defs/permission_request" } }
+      media: { type: array, items: { $ref: "#/$defs/media_probe" } }
+
+  flows:                                              # runs of the plan's flows
+    type: array
+    items: { $ref: "#/$defs/flow_run" }
+
+  console:
+    type: array
+    items: { $ref: "#/$defs/console_entry" }
+
+  coverage:
+    type: array
+    items: { $ref: "#/$defs/coverage_entry" }
+
+
+$defs:
+  box_id: { type: string, pattern: "^b[0-9a-f]{12}$" }
+  context_id: { type: string, pattern: "^[a-z][a-z0-9-]{0,15}$" }
+  flow_id: { type: string, pattern: "^[a-z0-9][a-z0-9-]{0,63}$" }
+  url_path: { type: string, pattern: "^/[^?#]*$" }    # templated path: id-like segments become :id; no query or fragment
+  box_list: { type: array, items: { $ref: "#/$defs/box_id" } }
+  share: { type: number, minimum: 0, maximum: 1 }
+  count: { type: integer, minimum: 0 }
+  landmark: { enum: [banner, navigation, main, complementary, contentinfo, search, form, region, none] }
+  ms: { type: number, minimum: 0 }
+  hint_mismatch:                                      # fields where a data-lapis-* hint disagrees with the page reading
+    type: array
+    minItems: 1
+    uniqueItems: true
+    items: { enum: [kind, state, mandatory, cadence, placement, added_by, skippable, blocks] }
+
+  purpose:                                            # what a dialog or choice asks the user to decide
+    enum: [consent, marketing, permission-preprompt, upsell, retention, add-on, plan, announcement,
+           confirm, task, error, other]
+  purpose_basis: { enum: [plan, text, heuristic] }
+
+  rect:
+    type: object
+    additionalProperties: false
+    required: [x, y, w, h]
+    properties:
+      x: { type: number }
+      y: { type: number }
+      w: { type: number, minimum: 0 }
+      h: { type: number, minimum: 0 }
+
+  context:
+    type: object
+    additionalProperties: false
+    required: [id, width, height, theme, pointer, network]
+    properties:
+      id: { $ref: "#/$defs/context_id" }
+      width: { enum: [320, 390, 768, 1440] }          # the render extract's viewport widths
+      height: { type: number, exclusiveMinimum: 0 }
+      dpr: { type: number, exclusiveMinimum: 0 }
+      theme: { enum: [light, dark] }
+      reduced_motion: { type: boolean }
+      pointer: { enum: [fine, coarse] }
+      network: { enum: [normal, slow, offline] }      # profiles in DERIVED.md
+      locale: { type: string, pattern: "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$" }
+      dir: { enum: [ltr, rtl] }                       # the document's writing direction
+      clock: { enum: [real, controlled] }             # controlled: timers advanced by the driver
+      storage: { enum: [fresh, persisted] }           # fresh profile, or storage kept from earlier probes
+      timezone:                                       # IANA zone of the profile (default UTC); absolute times without a zone are read in it
+        type: string
+        pattern: "^[A-Za-z][A-Za-z0-9_+-]*(/[A-Za-z0-9_+-]+)*$"
+
+  node:
+    type: object
+    additionalProperties: false
+    required: [role]
+    properties:
+      role: { enum: [section, card, heading, text, media, button, link, input, nav, list, icon, dialog, other] }
+      name: { type: string }                          # accessible name
+      rect: { $ref: "#/$defs/rect" }                  # CSS px, page coordinates, at first observation
+      context: { $ref: "#/$defs/context_id" }         # context of that observation
+      in_extract: { type: boolean }                   # the id also appears in the render extract
+      appears: { enum: [load, action] }               # present after load, or created by an action
+
+  # ---------------------------------------------------------------- actions and effects
+
+  action:
+    type: object
+    additionalProperties: false
+    required: [kind]
+    properties:
+      kind: { enum: [click, tap, key, type, paste, select, check, uncheck, hover, focus, drag, scroll,
+                     back, forward, reload, navigate, wait, clock-advance, pointer-leave] }
+      target: { $ref: "#/$defs/box_id" }
+      key: { type: string }                           # e.g. Tab, Shift+Tab, Enter, Space, Escape, ArrowDown
+      value: { enum: [valid, invalid, empty, alternate] }   # which kind of fixture value was entered
+      value_id: { type: string, pattern: "^v[0-9]+$" }      # same id, same fixture value
+      ms: { $ref: "#/$defs/ms" }                      # duration for wait and clock-advance
+      t_ms: { $ref: "#/$defs/ms" }                    # time since the context started
+
+  effect:                                             # what changed within the settle window
+    type: object
+    additionalProperties: false
+    required: [outcome]
+    properties:
+      settle_ms: { $ref: "#/$defs/ms" }
+      navigation: { enum: [none, same-document, document, new-window, download] }
+      external: { type: boolean }                     # the navigation went to another host; the driver stopped it there
+      path: { $ref: "#/$defs/url_path" }              # path after the action
+      dom_mutations: { $ref: "#/$defs/count" }
+      text_changed: { $ref: "#/$defs/box_list" }
+      status_changed: { $ref: "#/$defs/box_list" }    # changed or new text that reports a result (DERIVED.md)
+      aria_changes:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [box, attr]
+          properties:
+            box: { $ref: "#/$defs/box_id" }
+            attr: { enum: [aria-expanded, aria-pressed, aria-selected, aria-checked, aria-current,
+                           aria-invalid, aria-busy, aria-disabled, aria-hidden, aria-label, disabled, open,
+                           value, paused] }                  # paused: a media element's playback state
+            from: { type: [string, "null"] }
+            to: { type: [string, "null"] }
+      focus_to: { oneOf: [ { $ref: "#/$defs/box_id" }, { type: "null" } ] }   # null: the document body
+      dialog_opened: { $ref: "#/$defs/box_id" }
+      dialog_closed: { $ref: "#/$defs/box_id" }
+      requests: { type: array, items: { $ref: "#/$defs/request" } }
+      announcements: { type: array, items: { $ref: "#/$defs/announcement" } }
+      layout_shift: { type: number, minimum: 0 }      # shift score including shifts right after input
+      shift_sources: { $ref: "#/$defs/box_list" }
+      layout_animated: { $ref: "#/$defs/box_list" }   # boxes whose geometry changed through a layout-property animation of 50 ms or longer
+      resized: { $ref: "#/$defs/box_list" }           # boxes whose size changed without such an animation
+      console_errors: { $ref: "#/$defs/count" }
+      scroll_y_delta: { type: number }
+      outcome: { enum: [navigated, state-changed, moved, data-requested, dialog, download, no-effect, error] }   # derived
+
+  request:
+    type: object
+    additionalProperties: false
+    required: [method, host, path]
+    properties:
+      method: { enum: [GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS] }
+      host: { type: string, pattern: "^[a-z0-9.-]+(:[0-9]+)?$" }   # hostname (and port) only
+      path: { $ref: "#/$defs/url_path" }
+      kind: { enum: [document, fetch, xhr, beacon, websocket, other] }
+      status: { type: integer, minimum: 0, maximum: 599 }   # 0: network failure; absent: still pending
+      injected: { enum: [none, delay, fail-5xx, fail-network, hang, forbidden, not-found] }
+      idempotency_key: { type: boolean }              # an Idempotency-Key header was sent
+      blocked: { type: boolean }                      # not a local host: the driver blocked it
+      effects: { $ref: "#/$defs/count" }              # state changes the backend applied for it
+      t_ms: { $ref: "#/$defs/ms" }
+      duration_ms: { $ref: "#/$defs/ms" }
+
+  announcement:                                       # how assistive technology would learn of a change
+    type: object
+    additionalProperties: false
+    required: [channel]
+    properties:
+      channel: { enum: [live-polite, live-assertive, alert, focus] }
+      box: { $ref: "#/$defs/box_id" }
+      text: { type: string }
+      t_ms: { $ref: "#/$defs/ms" }
+
+  # ---------------------------------------------------------------- controls and commits
+
+  control_probe:
+    type: object
+    additionalProperties: false
+    required: [box, context, action, effect]
+    properties:
+      box: { $ref: "#/$defs/box_id" }
+      context: { $ref: "#/$defs/context_id" }
+      promise: { enum: [navigate, submit, toggle, open, expand, select, play, download, destructive, other] }
+      action: { $ref: "#/$defs/action" }
+      effect: { $ref: "#/$defs/effect" }
+      keyboard:
+        type: object
+        additionalProperties: false
+        properties:
+          focusable: { type: boolean }
+          activation: { enum: [same, different, none, not-tried] }   # Enter or Space vs the pointer effect
+      derived:
+        type: object
+        additionalProperties: false
+        properties:
+          matches_promise: { type: boolean }
+
+  commit_probe:                                       # actions that change state on the backend
+    type: object
+    additionalProperties: false
+    required: [box, context, kind]
+    properties:
+      box: { $ref: "#/$defs/box_id" }
+      context: { $ref: "#/$defs/context_id" }
+      flow: { $ref: "#/$defs/flow_id" }
+      kind: { enum: [submit, purchase, subscribe, reserve, cancel, delete, publish, send, save, toggle, other] }
+      destructive: { type: boolean }
+      double_activation:
+        type: object
+        additionalProperties: false
+        required: [requests, effects]
+        properties:
+          requests: { $ref: "#/$defs/count" }         # commit requests sent for two quick activations
+          effects: { $ref: "#/$defs/count" }          # state changes the backend applied
+          pending_shown: { type: boolean }
+          name_kept: { type: boolean }                # accessible name kept while pending
+      outcomes: { type: array, items: { $ref: "#/$defs/commit_outcome" } }
+      confirm:
+        type: object
+        additionalProperties: false
+        required: [shown]
+        properties:
+          shown: { type: boolean }
+          names_object: { type: boolean }
+          initial_focus: { enum: [safe, destructive, none] }
+      undo:
+        type: object
+        additionalProperties: false
+        required: [offered]
+        properties:
+          offered: { type: boolean }
+          restores: { type: boolean }
+          survives_reload: { type: boolean }
+          keyboard_reachable: { type: boolean }
+          dismissed_while_focused: { type: boolean }
+
+  commit_outcome:
+    type: object
+    additionalProperties: false
+    required: [injected, claimed, actual]
+    properties:
+      injected: { enum: [none, fail-5xx, fail-network, hang, forbidden] }
+      claimed: { enum: [success, failure, pending, unknown, saved-locally, none] }   # what the UI said
+      actual: { enum: [applied, not-applied, unknown] }   # what the backend did
+      retry_offered: { type: boolean }
+      retry_effects: { $ref: "#/$defs/count" }        # state changes after one use of the offered retry
+      auto_resent: { type: boolean }                  # a non-idempotent request resent without user action
+      input_kept: { type: boolean }
+      announced: { type: boolean }
+
+  # ---------------------------------------------------------------- keyboard
+
+  keyboard_probe:
+    type: object
+    additionalProperties: false
+    required: [context, path, stops, completed]
+    properties:
+      context: { $ref: "#/$defs/context_id" }
+      path: { $ref: "#/$defs/url_path" }              # the route walked
+      presses: { $ref: "#/$defs/count" }
+      completed: { type: boolean }                    # the traversal passed the last stop
+      stops: { type: array, items: { $ref: "#/$defs/stop" } }
+      reverse_matches: { type: boolean }              # Shift+Tab visits the same stops in reverse
+      traps: { type: array, items: { $ref: "#/$defs/trap" } }
+      unreachable:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [box, semantic]
+          properties:
+            box: { $ref: "#/$defs/box_id" }
+            semantic: { type: boolean }               # native control or ARIA widget role; false: a clickable non-interactive element
+      skip_link:
+        type: object
+        additionalProperties: false
+        required: [present]
+        properties:
+          present: { type: boolean }
+          box: { $ref: "#/$defs/box_id" }
+          index: { $ref: "#/$defs/count" }            # its stop index
+          # the stop the first Tab reaches after activating it; null when activation moved neither
+          # focus nor the sequential focus starting point
+          lands_at: { oneOf: [ { $ref: "#/$defs/count" }, { type: "null" } ] }
+        if: { properties: { present: { const: true } } }
+        then: { required: [box, index, lands_at] }
+      presses_to_main: { $ref: "#/$defs/count" }      # plain Tab presses, without activating the skip link
+      landmarks:
+        type: object
+        additionalProperties: false
+        required: [main]
+        properties:
+          main: { type: boolean }                     # a visible main landmark (main element or role main)
+          roles:
+            type: array
+            uniqueItems: true
+            items: { enum: [banner, navigation, main, complementary, contentinfo, search, form, region] }
+      headings:                                       # visible headings in the accessibility tree, in document order
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [box, level, landmark, next_stop]
+          properties:
+            box: { $ref: "#/$defs/box_id" }
+            level: { type: integer, minimum: 1, maximum: 6 }
+            landmark: { $ref: "#/$defs/landmark" }    # nearest landmark ancestor
+            in_main: { type: boolean }
+            next_stop: { oneOf: [ { $ref: "#/$defs/count" }, { type: "null" } ] }   # index of the first stop after it in document order
+      containers:                                     # grouping boxes of the stops, with geometry in this context
+        type: object
+        propertyNames: { $ref: "#/$defs/box_id" }
+        additionalProperties:
+          type: object
+          additionalProperties: false
+          required: [parent, rect]
+          properties:
+            parent: { oneOf: [ { $ref: "#/$defs/box_id" }, { type: "null" } ] }
+            rect: { $ref: "#/$defs/rect" }
+      derived:
+        type: object
+        additionalProperties: false
+        properties:
+          order_inversions: { $ref: "#/$defs/count" }
+          inversion_pairs:
+            type: array
+            items: { type: array, minItems: 2, maxItems: 2, items: { $ref: "#/$defs/box_id" } }
+          repeated_stops: { $ref: "#/$defs/count" }   # leading stops repeated on another route; absent with one route
+          bypass:                                     # mechanisms that skip the repeated stops
+            type: array
+            uniqueItems: true
+            items: { enum: [skip-link, main-landmark, heading] }
+        dependentRequired:
+          bypass: [repeated_stops]
+          repeated_stops: [bypass]
+
+  stop:
+    type: object
+    additionalProperties: false
+    required: [box, index]
+    properties:
+      box: { $ref: "#/$defs/box_id" }
+      index: { $ref: "#/$defs/count" }
+      name: { type: string }                          # accessible name when focused
+      landmark: { $ref: "#/$defs/landmark" }          # nearest landmark ancestor
+      in_main: { type: boolean }                      # inside the main landmark at any depth
+      rect: { $ref: "#/$defs/rect" }                  # CSS px, page coordinates, in this probe's context
+      container: { $ref: "#/$defs/box_id" }           # nearest grouping ancestor, a key of `containers`
+      indicator:
+        type: object
+        additionalProperties: false
+        required: [area_px, contrast, contrast_area_px]
+        properties:
+          area_px: { type: number, minimum: 0 }       # CSS px² that change between unfocused and focused
+          contrast: { type: number, minimum: 1 }      # median contrast ratio of the changed pixels, before vs after
+          contrast_area_px: { type: number, minimum: 0 }   # CSS px² of changed pixels that reach 3:1 on their own
+      focus_visible: { type: boolean }                # derived from indicator and the node's rect
+      obscured_share: { $ref: "#/$defs/share" }       # share of the focused box covered by content painted above it
+      obscured_by: { $ref: "#/$defs/box_id" }
+      context_change: { enum: [none, navigated, new-window, dialog-opened, submitted, focus-moved] }
+      in_dialog: { $ref: "#/$defs/box_id" }
+
+  trap:
+    type: object
+    additionalProperties: false
+    required: [boxes, escape_leaves]
+    properties:
+      boxes: { $ref: "#/$defs/box_list" }             # the cycle focus could not leave
+      escape_leaves: { type: boolean }
+      presses: { $ref: "#/$defs/count" }
+
+  # ---------------------------------------------------------------- dialogs and choices
+
+  dialog_probe:
+    type: object
+    additionalProperties: false
+    required: [box, context, kind, trigger, purpose, appearances]
+    properties:
+      box: { $ref: "#/$defs/box_id" }
+      context: { $ref: "#/$defs/context_id" }
+      flow: { $ref: "#/$defs/flow_id" }               # when seen during a flow run
+      path: { $ref: "#/$defs/url_path" }              # where it first appeared
+      kind: { enum: [modal, sheet, popover, banner, interstitial] }
+      trigger: { enum: [load, timer, scroll, exit-intent, control, navigation, idle] }
+      trigger_box: { $ref: "#/$defs/box_id" }
+      trigger_after_ms: { $ref: "#/$defs/ms" }
+      trigger_scroll_share: { $ref: "#/$defs/share" }
+      blocks_content: { type: boolean }
+      area_share: { $ref: "#/$defs/share" }           # of the viewport
+      purpose: { $ref: "#/$defs/purpose" }
+      purpose_basis: { $ref: "#/$defs/purpose_basis" }
+      choice_set: { type: string, pattern: "^c[0-9]+$" }
+      focus:
+        type: object
+        additionalProperties: false
+        properties:
+          moved_in: { type: boolean }
+          initial: { $ref: "#/$defs/box_id" }
+          contained: { type: boolean }                # modal only: Tab and Shift+Tab stay inside
+          escape_closes: { type: boolean }
+          close_control: { type: boolean }            # a visible close or cancel control
+          returns_to: { enum: [invoker, logical, body, other] }
+          background_inert: { type: boolean }
+      appearances: { type: array, minItems: 1, items: { $ref: "#/$defs/appearance" } }
+      dont_show_again:
+        type: object
+        additionalProperties: false
+        required: [offered]
+        properties:
+          offered: { type: boolean }
+          days: { type: number, minimum: 0 }
+      derived:
+        type: object
+        additionalProperties: false
+        properties:
+          reasks_after_decline: { $ref: "#/$defs/count" }
+
+  appearance:
+    type: object
+    additionalProperties: false
+    required: [preceded_by, response]
+    properties:
+      preceded_by: { enum: [none, navigation, reload, idle, scroll, control] }   # what happened just before it appeared
+      response: { enum: [accept, decline, dismiss, later, none] }   # how the driver answered it
+      path: { $ref: "#/$defs/url_path" }
+      t_ms: { $ref: "#/$defs/ms" }
+
+  choice_set:
+    type: object
+    additionalProperties: false
+    required: [id, context, purpose, options]
+    properties:
+      id: { type: string, pattern: "^c[0-9]+$" }
+      context: { $ref: "#/$defs/context_id" }
+      container: { $ref: "#/$defs/box_id" }
+      flow: { $ref: "#/$defs/flow_id" }
+      path: { $ref: "#/$defs/url_path" }
+      purpose: { $ref: "#/$defs/purpose" }
+      purpose_basis: { $ref: "#/$defs/purpose_basis" }
+      options: { type: array, minItems: 1, items: { $ref: "#/$defs/option" } }
+      derived:
+        type: object
+        additionalProperties: false
+        required: [decline_found]
+        properties:
+          decline_found: { type: boolean }
+          prominence_ratio: { type: number, minimum: 0 }
+          decline_extra_interactions: { type: integer }
+        if: { properties: { decline_found: { const: true } } }
+        then: { required: [decline_extra_interactions] }
+
+  option:                                             # one route to a choice, including multi-step routes
+    type: object
+    additionalProperties: false
+    required: [kind, control, layer, interactions]
+    if: { properties: { interactions: { minimum: 1 } }, required: [interactions] }
+    then: { required: [visual] }
+    properties:
+      box: { $ref: "#/$defs/box_id" }
+      label: { type: string }
+      lang: { type: string, pattern: "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$" }
+      kind: { enum: [accept, decline, dismiss, customize, neutral] }
+      control: { enum: [button, link, checkbox, radio, switch, text, icon] }
+      preselected: { type: boolean }
+      price: { type: number, minimum: 0 }             # what choosing it adds, in `currency`
+      currency: { type: string, pattern: "^[A-Z]{3}$" }
+      cadence: { enum: [once, day, week, month, year, other] }   # for recurring prices
+      layer: { type: integer, minimum: 1 }            # 1: visible without opening anything else
+      interactions: { type: integer, minimum: 0 }     # fewest interactions that complete this choice; 0: leaving it as is
+      visual:                                         # absent for a choice completed by leaving it as is
+        type: object
+        additionalProperties: false
+        required: [area_px, filled, contrast]
+        properties:
+          area_px: { type: number, minimum: 0 }       # painted area in CSS px², see DERIVED.md
+          filled: { type: boolean }                   # a background that differs from its surroundings
+          bordered: { type: boolean }                 # an outline without a fill
+          contrast: { type: number, minimum: 1 }      # label text against its backdrop
+          size_px: { type: number, minimum: 0 }
+          weight: { type: number, minimum: 1, maximum: 1000 }
+          in_first_viewport: { type: boolean }
+
+  # ---------------------------------------------------------------- forms
+
+  form_probe:
+    type: object
+    additionalProperties: false
+    required: [box, context, purpose, fields]
+    properties:
+      box: { $ref: "#/$defs/box_id" }
+      context: { $ref: "#/$defs/context_id" }
+      flow: { $ref: "#/$defs/flow_id" }
+      purpose: { enum: [signup, sign-in, checkout, reservation, contact, search, settings, consent, other] }
+      fields: { type: array, items: { $ref: "#/$defs/field" } }
+      validation:
+        type: object
+        additionalProperties: false
+        properties:
+          first_error: { enum: [load, keystroke, blur, submit, never] }
+          untouched_invalid_on_load: { type: boolean }
+      invalid_submit:
+        type: object
+        additionalProperties: false
+        properties:
+          errors: { $ref: "#/$defs/count" }
+          described_in_text: { type: boolean }
+          associated: { type: boolean }               # each message is programmatically tied to its field
+          color_only: { type: boolean }
+          focus_to: { enum: [first-error, summary, submit, body, other] }
+          announced: { type: boolean }
+          new_requirement: { type: boolean }          # an error states a constraint not shown before entry
+      preservation:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [after, kept, cleared]
+          properties:
+            after: { enum: [invalid-submit, server-error, reload, back, reauth] }
+            kept: { $ref: "#/$defs/count" }
+            cleared: { $ref: "#/$defs/count" }        # non-sensitive fields emptied
+            cleared_sensitive: { $ref: "#/$defs/count" }
+            explained: { type: boolean }              # the page says why sensitive fields were cleared
+            cleared_boxes: { $ref: "#/$defs/box_list" }
+      submit:
+        type: object
+        additionalProperties: false
+        properties:
+          box: { $ref: "#/$defs/box_id" }
+          disabled_until_valid: { type: boolean }
+          reason_visible: { type: boolean }
+          disabled_sends: { type: boolean }           # looks disabled yet still sends a request
+      auth:
+        type: object
+        additionalProperties: false
+        properties:
+          cognitive_test: { enum: [none, puzzle, transcription, memory, object-recognition, personal-content] }
+          alternative: { type: boolean }              # another sign-in method without such a test
+
+  field:
+    type: object
+    additionalProperties: false
+    required: [box, kind]
+    properties:
+      box: { $ref: "#/$defs/box_id" }
+      kind: { enum: [text, email, tel, password, otp, number, date, select, checkbox, radio, switch, textarea, file, other] }
+      purpose: { enum: [data, consent, marketing, add-on, terms, other] }
+      required: { type: boolean }
+      sensitive: { type: boolean }                    # passwords, codes, payment data
+      checked_on_load: { type: boolean }
+      label:
+        type: object
+        additionalProperties: false
+        properties:
+          visible: { type: boolean }
+          persists_after_input: { type: boolean }
+          programmatic: { type: boolean }
+      paste_blocked: { type: boolean }
+      on_change: { enum: [none, navigated, new-window, submitted, dialog-opened, focus-moved] }   # what changing the value did before any submit
+      value_id: { type: string, pattern: "^v[0-9]+$" }
+      prefilled: { type: boolean }
+      repeats: { $ref: "#/$defs/box_id" }             # an earlier field in the flow that asked for the same value
+      same_as_offered: { type: boolean }
+
+  # ---------------------------------------------------------------- states, time, history, input
+
+  state_probe:
+    type: object
+    additionalProperties: false
+    required: [context, state, induced_by, shown]
+    properties:
+      context: { $ref: "#/$defs/context_id" }
+      surface: { $ref: "#/$defs/box_id" }
+      path: { $ref: "#/$defs/url_path" }
+      state: { enum: [empty, loading, error, offline, timeout, success, partial, forbidden, not-found] }
+      induced_by: { enum: [fixture, action, delay, fail-5xx, fail-network, offline, hang, forbidden, not-found] }
+      on_action: { type: boolean }                    # appeared in response to a user action, not at load
+      shown: { type: boolean }                        # a state the user can tell apart was rendered
+      same_as: { type: array, items: { enum: [empty, loading, error, offline, timeout, success, partial, forbidden, not-found] } }
+      blank: { type: boolean }
+      indicator: { enum: [none, spinner, skeleton, progress, inline-status, text] }
+      indicator_delay_ms: { $ref: "#/$defs/ms" }
+      indicator_shown_ms: { $ref: "#/$defs/ms" }
+      scope: { enum: [object, region, page] }
+      problem_text: { type: boolean }
+      recovery_action: { type: boolean }
+      recovery_works: { type: boolean }
+      announced: { type: boolean }
+      input_kept: { type: boolean }
+
+  urgency_probe:                                      # countdowns and stock or demand claims
+    type: object
+    additionalProperties: false
+    required: [box, context, kind, readings]
+    properties:
+      box: { $ref: "#/$defs/box_id" }
+      context: { $ref: "#/$defs/context_id" }
+      path: { $ref: "#/$defs/url_path" }
+      kind: { enum: [countdown, deadline, hold, stock, demand, activity] }   # hold: a per-visit reservation the page names as a hold
+      backed: { type: boolean }                       # the value or event matches the backend's fixture data
+      readings:
+        type: array
+        minItems: 1
+        contains: { properties: { when: { const: load } }, required: [when] }
+        items:
+          type: object
+          additionalProperties: false
+          required: [when, value, elapsed_ms]
+          properties:
+            when: { enum: [load, later, reload, fresh-profile, after-expiry] }
+            value: { type: number }
+            unit: { enum: [seconds, items, people, events] }
+            resolution_s: { type: number, minimum: 0 }   # the display's granularity: 1 for mm:ss, 60 for minutes, 86400 for days
+            elapsed_ms: { $ref: "#/$defs/ms" }        # since the load reading, on the shared controlled clock
+      at_expiry: { enum: [offer-ends, restarts, unchanged, not-reached] }
+      derived:
+        type: object
+        additionalProperties: false
+        properties:
+          resets: { type: boolean }
+          drifts: { type: boolean }
+
+  time_limit:
+    type: object
+    additionalProperties: false
+    required: [context, kind, limit_s, warned, extendable]
+    properties:
+      context: { $ref: "#/$defs/context_id" }
+      flow: { $ref: "#/$defs/flow_id" }
+      kind: { enum: [session, hold, form, quiz, other] }
+      limit_s: { type: number, minimum: 0 }
+      warned: { type: boolean }
+      warn_lead_s: { type: number, minimum: 0 }
+      extendable: { type: boolean }
+      extensions: { $ref: "#/$defs/count" }
+      turn_off: { type: boolean }                     # the user can switch the limit off before meeting it
+      adjustable: { type: boolean }                   # the user can lengthen it at least tenfold before meeting it
+      input_after_expiry: { enum: [kept, lost, none] }
+
+  history_probe:
+    type: object
+    additionalProperties: false
+    required: [context, action, from]
+    properties:
+      context: { $ref: "#/$defs/context_id" }
+      action: { enum: [back, reload, deep-link-after-sign-in] }
+      from: { $ref: "#/$defs/url_path" }
+      to: { $ref: "#/$defs/url_path" }
+      presses: { $ref: "#/$defs/count" }              # Back presses tried
+      left_page: { type: boolean }
+      overlay_closed_first: { type: boolean }
+      overlay_opened_by: { enum: [user, page] }       # who opened the overlay the first Back closed
+      pushed_entries: { $ref: "#/$defs/count" }       # history entries added without a navigation by the user
+      restored:
+        type: object
+        additionalProperties: false
+        properties:
+          filters: { type: boolean }
+          page: { type: boolean }
+          scroll: { type: boolean }
+          input: { type: boolean }
+          selection: { type: boolean }
+      resubmit_prompt: { type: boolean }
+      landed: { enum: [target, home, other] }
+
+  pointer_probe:
+    type: object
+    additionalProperties: false
+    required: [box, context, kind]
+    properties:
+      box: { $ref: "#/$defs/box_id" }
+      context: { $ref: "#/$defs/context_id" }
+      kind: { enum: [drag, path-gesture, multipoint, hover-reveal] }
+      alternative: { enum: [none, buttons, menu, input, keyboard-only] }   # single-pointer route without dragging; keyboard-only is not one
+      revealed: { $ref: "#/$defs/box_list" }
+      obscures: { type: boolean }                     # the revealed content covers other content
+      on_focus_too: { type: boolean }
+      dismissible: { type: boolean }
+      hoverable: { type: boolean }
+      persistent: { type: boolean }
+
+  motion_probe:
+    type: object
+    additionalProperties: false
+    required: [context, window_ms, moving]
+    properties:
+      context: { $ref: "#/$defs/context_id" }
+      compare_to: { $ref: "#/$defs/context_id" }     # the same page without reduced motion
+      window_ms: { $ref: "#/$defs/ms" }
+      moving:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [box, kind]
+          properties:
+            box: { $ref: "#/$defs/box_id" }
+            kind: { enum: [transform, opacity, scroll-linked, video, canvas, other] }
+            travel_px: { type: number, minimum: 0 }
+            infinite: { type: boolean }
+            essential: { type: boolean }
+      auto_moving:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [box, seconds, pause_control]
+          properties:
+            box: { $ref: "#/$defs/box_id" }
+            seconds: { type: number, minimum: 0 }     # how long it keeps moving on its own
+            pause_control: { type: boolean }
+      hover_media:
+        type: object
+        additionalProperties: false
+        required: [total, transforming]
+        properties:
+          total: { $ref: "#/$defs/count" }
+          transforming: { $ref: "#/$defs/count" }
+      scroll_reveal:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [box, hidden_at_rest]
+          properties:
+            box: { $ref: "#/$defs/box_id" }
+            hidden_at_rest: { type: boolean }
+            reveal_delay_ms: { $ref: "#/$defs/ms" }
+      input_blocked_ms: { $ref: "#/$defs/ms" }
+
+  scroll_probe:
+    type: object
+    additionalProperties: false
+    required: [context, input, expected_px, actual_px]
+    properties:
+      context: { $ref: "#/$defs/context_id" }
+      input: { enum: [wheel, space, arrow, touch] }
+      expected_px: { type: number, minimum: 0 }
+      actual_px: { type: number, minimum: 0 }
+      snapped: { type: boolean }
+      blocked: { type: boolean }
+      animated_ms: { $ref: "#/$defs/ms" }
+      derived:
+        type: object
+        additionalProperties: false
+        properties:
+          ratio: { type: number, minimum: 0 }
+
+  permission_request:
+    type: object
+    additionalProperties: false
+    required: [context, api, user_gesture]
+    properties:
+      context: { $ref: "#/$defs/context_id" }
+      api: { enum: [notifications, geolocation, camera, microphone, clipboard-read, persistent-storage, other] }
+      user_gesture: { type: boolean }                 # a user activation was active at the call
+      after_denial: { type: boolean }
+      preprompt: { $ref: "#/$defs/box_id" }           # a custom dialog shown before the browser prompt
+      t_ms: { $ref: "#/$defs/ms" }
+
+  media_probe:
+    type: object
+    additionalProperties: false
+    required: [box, context, autoplay, audible]
+    properties:
+      box: { $ref: "#/$defs/box_id" }
+      context: { $ref: "#/$defs/context_id" }
+      autoplay: { type: boolean }
+      audible: { type: boolean }
+      audible_s: { type: number, minimum: 0 }         # seconds of audible playback observed, up to 10
+      controls: { type: boolean }                     # a reachable pause, stop, or volume control
+      user_gesture: { type: boolean }
+
+  # ---------------------------------------------------------------- flows
+
+  flow_kind:
+    enum: [primary, purchase, subscribe, cancel-subscription, signup, delete-account, grant-consent,
+           withdraw-consent, unsubscribe, recover]
+
+  flow_run:
+    type: object
+    additionalProperties: false
+    required: [id, context, kind, status, steps, effort]
+    properties:
+      id: { $ref: "#/$defs/flow_id" }                 # the plan's flow id
+      context: { $ref: "#/$defs/context_id" }
+      kind: { $ref: "#/$defs/flow_kind" }
+      status: { enum: [completed, blocked, dead-end, abandoned, skipped] }
+      note: { type: string }
+      steps: { type: array, items: { $ref: "#/$defs/step" } }
+      commit_step: { $ref: "#/$defs/count" }          # the step whose action charges, subscribes, reserves, cancels, or deletes
+      trial: { type: boolean }                        # the offer starts with a free or discounted period
+      review_before_commit: { type: boolean }         # a step at or before the commit shows the total and choices with a way to change them
+      effort: { $ref: "#/$defs/effort" }
+      prices: { type: array, items: { $ref: "#/$defs/price_observation" } }
+      cart: { type: array, items: { $ref: "#/$defs/cart_observation" } }
+      disclosures: { type: array, items: { $ref: "#/$defs/disclosure" } }
+      gates: { type: array, items: { $ref: "#/$defs/gate" } }
+      derived:
+        type: object
+        additionalProperties: false
+        properties:
+          drip: { type: array, items: { type: string } }            # price component keys
+          sneaked: { type: array, items: { type: string } }         # cart line keys
+          hidden_terms: { type: array, items: { $ref: "#/$defs/disclosure_kind" } }
+          exit:
+            type: object
+            additionalProperties: false
+            properties:
+              pair: { $ref: "#/$defs/flow_id" }
+              extra_steps: { type: integer }
+              extra_interactions: { type: integer }
+              added_reauth: { type: boolean }
+
+  step:
+    type: object
+    additionalProperties: false
+    required: [index, path]
+    properties:
+      index: { $ref: "#/$defs/count" }
+      path: { $ref: "#/$defs/url_path" }
+      main: { $ref: "#/$defs/box_id" }
+      dialog: { $ref: "#/$defs/box_id" }              # the step is a dialog that must be answered
+      actions: { type: array, items: { $ref: "#/$defs/action" } }
+      offers:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [box, kind, blocks]
+          properties:
+            box: { $ref: "#/$defs/box_id" }
+            kind: { enum: [retention, upsell, cross-sell, survey] }
+            blocks: { type: boolean }                 # the way forward stays hidden or disabled until it is answered
+            hint_mismatch: { $ref: "#/$defs/hint_mismatch" }
+      dead_end: { type: boolean }
+      back_available: { type: boolean }
+
+  effort:
+    type: object
+    additionalProperties: false
+    required: [steps, interactions]
+    properties:
+      steps: { $ref: "#/$defs/count" }
+      interactions: { $ref: "#/$defs/count" }
+      fields: { $ref: "#/$defs/count" }
+      single_field_steps: { $ref: "#/$defs/count" }   # longest run of consecutive steps with one field each
+      offers: { $ref: "#/$defs/count" }
+      blocking_offers: { $ref: "#/$defs/count" }
+      reauth: { type: boolean }
+      channel: { enum: [self-serve, phone, chat, email, request-form] }   # how the flow could be finished
+
+  price_observation:
+    type: object
+    additionalProperties: false
+    required: [step, currency, components]
+    properties:
+      step: { $ref: "#/$defs/count" }
+      currency: { type: string, pattern: "^[A-Z]{3}$" }
+      components:                                     # a shown total is a component of kind total
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [key, kind, state, mandatory]
+          properties:
+            key: { type: string, pattern: "^[a-z0-9-]+$" }   # stable across steps
+            kind: { enum: [item, subtotal, total, fee, shipping, tax, discount, deposit, recurring, add-on] }
+            amount: { type: number }
+            state: { enum: [known, pending, estimated] }   # pending: shown as to be calculated
+            mandatory: { type: boolean }
+            user_caused: { type: boolean }            # added or changed by user input since its last observation
+            placement: { enum: [primary, secondary, collapsed, tooltip] }
+            cadence: { enum: [once, day, week, month, year, other] }
+            box: { $ref: "#/$defs/box_id" }
+            hint_mismatch: { $ref: "#/$defs/hint_mismatch" }
+
+  cart_observation:
+    type: object
+    additionalProperties: false
+    required: [step, lines]
+    properties:
+      step: { $ref: "#/$defs/count" }
+      lines:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [key, added_by, amount]
+          properties:
+            key: { type: string, pattern: "^[a-z0-9-]+$" }
+            added_by: { enum: [user, preselected, system] }
+            removable: { type: boolean }
+            amount: { type: number }
+            box: { $ref: "#/$defs/box_id" }
+            hint_mismatch: { $ref: "#/$defs/hint_mismatch" }
+
+  disclosure_kind:
+    enum: [renewal-price, cadence, trial-end, trial-conversion, cancellation-method, cancellation-terms, fee, total]
+
+  disclosure:
+    type: object
+    additionalProperties: false
+    required: [kind, placement]
+    properties:
+      kind: { $ref: "#/$defs/disclosure_kind" }
+      step: { $ref: "#/$defs/count" }                 # first step with that placement; absent when never shown
+      placement: { enum: [primary, near-commit, secondary, collapsed, tooltip, after-commit, absent] }   # best placement at or before the commit step; one entry per kind
+      at_commit: { type: boolean }                    # readable on the commit step without expanding anything
+      box: { $ref: "#/$defs/box_id" }
+      hint_mismatch: { $ref: "#/$defs/hint_mismatch" }
+
+  gate:                                               # something required before the flow can continue
+    type: object
+    additionalProperties: false
+    required: [step, kind, skippable, declared]
+    properties:
+      step: { $ref: "#/$defs/count" }
+      kind: { enum: [account, sign-in, identity, payment, address, age, reauth, optional-consent,
+                     permission, share, install, survey, contact] }
+      skippable: { type: boolean }
+      declared: { type: boolean }                     # listed in the plan flow's `requires`
+      box: { $ref: "#/$defs/box_id" }
+      hint_mismatch: { $ref: "#/$defs/hint_mismatch" }
+
+  # ---------------------------------------------------------------- console and coverage
+
+  console_entry:
+    type: object
+    additionalProperties: false
+    required: [level, kind]
+    properties:
+      context: { $ref: "#/$defs/context_id" }
+      t_ms: { $ref: "#/$defs/ms" }
+      level: { enum: [error, warning] }
+      kind: { enum: [exception, unhandled-rejection, hydration-mismatch, network, csp, other] }
+      message: { type: string }
+
+  coverage_entry:
+    type: object
+    additionalProperties: false
+    required: [probe, status]
+    properties:
+      probe: { enum: [controls, commits, keyboard, dialogs, choices, forms, states, urgency, time_limits,
+                      history, pointer, motion, scroll, permissions, media, flows, console] }
+      status: { enum: [ran, partial, skipped, not-applicable] }
+      contexts: { type: array, items: { $ref: "#/$defs/context_id" } }
+      reason: { type: string }
+
+allOf:
+  - if:
+      properties:
+        source:
+          properties:
+            url: { pattern: "^https?://([a-z0-9]([a-z0-9-]*[a-z0-9])?\\.)+test(:[0-9]+)?(/|$)" }
+    then: { properties: { source: { required: [addresses] } } }
+    else: { properties: { source: { not: { required: [addresses] } } } }
+  # A local development backend needs its outbound network stated; destructive probes and failure
+  # injection need the stub, and commits need a backend that cannot reach the outside world.
+  - if: { properties: { meta: { properties: { backend: { const: local-dev } } } } }
+    then:
+      properties:
+        meta: { required: [outbound] }
+        probes:
+          properties:
+            commits:
+              items:
+                properties:
+                  destructive: { const: false }
+                  outcomes: { items: { properties: { injected: { const: none } } } }
+  - if:
+      properties: { meta: { properties: { backend: { const: local-dev }, outbound: { const: restricted } } } }
+    then:
+      properties:
+        probes: { properties: { commits: { maxItems: 0 } } }
+        flows: { items: { not: { required: [commit_step] } } }

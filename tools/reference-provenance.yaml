@@ -1,0 +1,1262 @@
+# LapisLazuli reference provenance - maintainer only (not built)
+# One entry per skill reference: the frozen-snapshot files it distills, what was kept and dropped,
+# and the external works whose ideas survive in it. Skill text never names them.
+version: 0
+note: Maintainer-only provenance for skill references. Never built into skills; agent-facing text names
+  no external source.
+references:
+- reference: lapis/references/type.md
+  sources:
+  - path: references/fonts/pairing-and-role-systems.md
+    taken: Roles before families, the four system shapes, same-content comparison of distinct candidates,
+      the optical matching steps (apparent size, baseline and line box, stroke weight, width, punctuation
+      and figures), synthesis caution, per-locale stacks through :lang().
+    dropped: 'Loaded-versus-rendered evidence bookkeeping, math, emoji, and brand-mark roles, variable-axis
+      token examples, the delivery budget chain, the QA matrix, and every named family: outside the plan''s
+      seven roles, owned by checks or lzl-fonts, or product names.'
+  - path: references/fonts/display-and-expressive-type.md
+    taken: Display as a role, not a style; writing the display job before naming a face; text versus display
+      drawings; optical size and pinned variable instances; one family versus a companion; the per-locale
+      display boundary; CJK class terms not mapping to Latin genres.
+    dropped: 'Classification history, the category table of named specimen families, the verified open-release
+      table, and the cookware worked directions: history, product names, and license mechanics that belong
+      to lazuli lock.'
+  - path: references/fonts/multilingual-font-selection.md
+    taken: Start from locale, not 'CJK'; lang does not guarantee forms or glyphs; per-script fit questions;
+      regional Han forms; the fit-across-scripts list; system faces only after observing the target platforms;
+      no shared CJK fallback order.
+    dropped: 'The candidate source-leads table with repository links, the SUIT note, the evidence-layer
+      table, the failure diagnosis table, and the Windows inventory: product names and links, and diagnosis
+      owned by lzl-fonts and ultramarine.'
+  - path: references/fonts/monospace-and-numeric-typography.md
+    taken: Tabular versus proportional versus monospaced as different mechanisms, tnum use and rendered
+      verification, numeric test content, mono scope, the CJK two-cell caution, width axis is not monospace,
+      an explicit ligature policy.
+    dropped: 'East Asian Width detail, the full CJK width feature list, grapheme-cluster exposition, the
+      terminal acceptance checklist, and named mono families: too deep for planning; terminal QA belongs
+      to implementation and checks.'
+  - path: references/typography/multiscript-typesetting.md
+    taken: Language tagging and :lang(), Korean keep-all scoped to Korean with overflow-wrap, Japanese
+      line-edge prohibitions with line-break strict, ruby, emphasis marks, Chinese region and punctuation,
+      autospace and spacing-trim as enhancements, CJK measure in ic or em, per-script line-height checks,
+      where mixed-script spacing comes from.
+    dropped: The stance that keep-all is optional for Korean (the contract requires it), the worked HTML
+      and CSS article, the diagnostic flow, QA specimen strings, and rendered-font inspection steps.
+  - path: references/typography/paragraphs-and-reading.md
+    taken: Setting measure by reading (narrow, widen, choose), leading depending on size, x-height, measure,
+      and script, paragraph versus section spacing, more space above headings than below, indent or gap,
+      no manual line breaks.
+    dropped: 'The meaning-versus-typesetting passes, frontloaded headings, lists, quotations, links, footnotes,
+      tables, long-form navigation, and the policy worked example: content design and layout topics owned
+      by lps-copy and the layout step.'
+  - path: references/typography/responsive-typesetting.md
+    taken: Role-to-scale-step indirection, sizes in rem (bounded clamp() dropped on 2026-09-29 because the render
+      check reports sizes between steps), never shrinking the root size,
+      unitless leading, shrinking display first on narrow widths, resize and reflow requirements, no fixed
+      heights, overflow-wrap anywhere instead of break-all, hyphens and text-wrap as enhancements, no
+      truncation of material text, no images of text.
+    dropped: 'Container and grid CSS, URL and identifier handling detail, translation expansion, line
+      clamp, DOM order, selection and copy behavior, and the full HTML specimen: layout, implementation,
+      and accessibility topics owned elsewhere.'
+  - path: assets/display-type-selection-card.md
+    taken: The display job fields (condensed to one sentence), conditions for one family versus a companion,
+      descriptive lanes as vocabulary rather than a ranking, keeping the contract face unless a named
+      requirement fails.
+    dropped: 'The artifact and rights gate, the acceptance specimen, the decision-output template, and
+      the lane table: rights go to lazuli lock, and the templates repeat the reference.'
+  - path: assets/type-scale-cheatsheet.md
+    taken: Ratio range 1.125 to 1.333 by density, the scale as a vocabulary, Latin measure 45 to 75, Latin
+      body leading 1.4 to 1.6, Latin display leading about 1.0 to 1.15, body tracking at the face default,
+      slight tracking on short capitals, tabular figures for data, optical sizing.
+    dropped: 'Ready scales with pixel sizes and tracking values, platform role tables, and the pixel step
+      list: taste-level numbers and platform-specific values.'
+  - path: references/fundamentals/typography.md
+    taken: Context only; confirmed the leading ranges, two or three weights per surface, and tabular figures
+      for data already taken from the files above.
+    dropped: Basics that merge into SKILL.md (engine principles), the pairing table of named families,
+      the dashboard worked example, and author citations.
+  external:
+  - kind: standard
+    name: OpenType specification (feature tags tnum, pnum, lnum, onum, locl, vert, titl; registered axes
+      opsz, wdth, wght)
+    used_for: Numerals table, text and display drawings, vertical text, 'a width axis is still proportional'
+  - kind: standard
+    name: CSS Text Module Level 3 and 4 (word-break, line-break, overflow-wrap, hyphens, text-wrap, text-autospace,
+      text-spacing-trim)
+    used_for: Setting Korean, Japanese, and Chinese; rag, justification, hyphenation
+  - kind: standard
+    name: CSS Fonts Module Level 4 (font-variant-numeric, font-optical-sizing, font-synthesis, size-adjust,
+      ascent-override, descent-override, unicode-range)
+    used_for: Numerals, optical sizes, matching companions, delivery
+  - kind: standard
+    name: CSS Values and Units (ch, ic, rem), CSS Writing Modes, CSS Ruby
+    used_for: Measure, vertical text, ruby
+  - kind: method
+    name: W3C Requirements for Hangul Text Layout and Typography (KLREQ)
+    used_for: Korean word-unit breaking with keep-all
+  - kind: method
+    name: W3C Requirements for Japanese Text Layout (JLREQ)
+    used_for: Japanese line-edge prohibitions, ruby, emphasis marks
+  - kind: method
+    name: W3C Requirements for Chinese Text Layout (CLREQ)
+    used_for: Chinese line-edge prohibitions and regional punctuation
+  - kind: standard
+    name: WCAG 2.2 SC 1.4.4 Resize Text, SC 1.4.10 Reflow, SC 1.4.5 Images of Text
+    used_for: Scale and responsive type, Requirements list
+  - kind: standard
+    name: WCAG 2.2 SC 1.4.12 Text Spacing
+    used_for: Requirements list (text-spacing override). Added while drafting; the sources do not cite
+      it.
+  - kind: measurement
+    name: Bringhurst, The Elements of Typographic Style (45-75 characters, about 66 ideal)
+    used_for: Latin measure
+  - kind: standard
+    name: 'Unicode Standard Annex #11, East Asian Width'
+    used_for: 'Code: CJK two-cell caution for column alignment'
+  - kind: taxonomy
+    name: ATypI statement de-adopting Vox-ATypI (2021) and Monotype's type classification guide
+    used_for: Latin genres as search vocabulary, not a ranking
+  - kind: standard
+    name: BCP 47 language tags
+    used_for: Language tagging (type.md says only 'language tags')
+  - kind: method
+    name: Apple Human Interface Guidelines text styles and Material Design 3 type scale
+    used_for: 'Base size: native apps use the platform''s scalable text styles and units'
+  - kind: standard
+    name: KS X 1001 (2,350 Hangul syllables) and the Unicode Hangul Syllables block (11,172)
+    used_for: Coverage bullet in Roles per script. Taken from vocab/type.yaml and the Unicode Standard,
+      not from the sources.
+  skill_body_pointer: For roles per script, pairing Latin with Hangul, kana, or Han, CJK line breaking,
+    measure and leading, scale, numerals, and display type, read `references/type.md`.
+  resolved_2026_09_27:
+  - 'keep-all: type.md follows the contract (keep-all on Korean text blocks, layout fixes for narrow controls).
+    No keep_when added (cloud decision 2026-09-27).'
+  - SKILL.md step 7 now says Korean text blocks, matching the rule and type.md.
+  - Per-locale size and leading stay in claims.proposed and implementation tokens; no new tokens.type
+    fields for now.
+  - 'Numbers stated as established practice (scale 1.125-1.333, leading, measure) are acceptable under
+    generator/checker separation: they are not detector bounds or lexicons.'
+  - Verify Japanese and Chinese body leading and Chinese punctuation facts with proficient readers before the first
+    release candidate. Korean body leading (1.6 to 1.8) was confirmed on 2026-09-30 by the maintainer, a native Korean reader.
+  - search --category, --similar-to, and lock --fallback may appear in lapis references; they exist.
+  - 'Backlog (lzl-fonts): an evidence line or filter for full 11,172-syllable Hangul coverage.'
+  - 'Backlog (rules): whether premium-serif should name high-contrast bu-ri display explicitly.'
+  - 'Backlog (rules): a render-layer requirement rule for text spacing overrides.'
+- reference: lapis/references/color.md
+  sources:
+  - path: references/color/palette-art-direction.md
+    taken: six axes and what each answer must cover; tone translated into lightness, chroma, relation,
+      dominance, hierarchy, and edge variables; role buckets; relation names; content stances; build candidates
+      from roles, one variable at a time; four separate judgments (harmony, preference, figure-ground,
+      discrimination); visual weight from area, repetition, edges, type, and isolation; concrete rejection
+      reasons
+    dropped: 'snapshot note, when-to-consult, research citations and their caveats, the evidence-class
+      table (replaced by decision statuses and vocab value_source_classes), worked checks and expressive
+      counterexamples, the validation-view list, the decision-record template (replaced by schema tokens.color),
+      pitfalls, and cross-references: background, boilerplate, or superseded by contracts'
+  - path: references/color/perceptual-authoring-and-tokens.md
+    taken: notation alone changes nothing; OKLCH pays off when editing; HSL lightness is uneven; taper
+      chroma near the gamut edge; hold hue with small art-directed moves; Oklab through neutrals, OKLCH
+      with a stated hue path; clipping is not mapping; OKLCH L is not contrast; approved sources stay
+      exact; the OKLCH master is never replaced by its hex fallback
+    dropped: layer model, token file layout, DTCG and DESIGN.md serialization, fallback-first CSS, per-target
+      gamut records, the regression checklist, and the worked hex-master repair (all for lps-system);
+      CSS Lab D50 versus Oklab D65 and linear-light compositing (docs); the bundled-tool boundary (that
+      script does not exist in the new repo)
+  - path: references/color/semantic-and-data-palettes.md
+    taken: status families (foreground, container, solid only when justified); status meaning survives
+      without hue; domain semantics over universal red and green; choosing the scale from data meaning;
+      per-scale build rules; missing is not zero or midpoint; midpoint must mean something; dark-theme
+      re-evaluation of scales; chart selection by outline; redundant encodings and simulation as diagnostic
+      only
+    dropped: 'token namespaces and the property/role/variant/state model, gradient token families, class
+      and interpolation records, legends, bivariate color, the handoff YAML, and worked examples: token
+      mechanics for lps-system and chart construction for the data-viz merge group'
+  - path: references/color/color-systems-and-standards.md
+    taken: code, physical sample, numeric value, and digital encoding are different records; a nearest
+      match is never an identity; no universal crosswalk between systems; two masters (physical and screen)
+      kept side by side; finish, substrate, lighting, and effect finishes limit any flat value; source
+      classes mapped onto vocab value_source_classes
+    dropped: 'per-system notation details (RAL collections, NCS nuance and hue, Munsell H V/C), the ICC
+      handoff chain, the full handoff record, and provider links: they belong to lzl-color and docs per
+      tools/migration-map.yaml, and color.md reaches them only through lazuli color lookup'
+  - path: references/fundamentals/color.md
+    taken: 'requirement facts only: text and non-text contrast minimums, the large-text definition, unrounded
+      ratios; the dark-theme checklist agrees with color.md'
+    dropped: 'role table with a platform-system analogy, palette-building order, the advisory contrast-model
+      note, gradient policy (kept as one line on gradients needing a job), and the ownership table: SKILL.md
+      basics or boundary material'
+  - path: assets/color-and-contrast-cheatsheet.md
+    taken: the enhanced-level values (7:1, 4.5:1 large); everything else duplicated the files above
+    dropped: calculator commands and computed example pairs (the script is not in the new repo), lookup
+      routes, the decision-record template, failure list
+  - path: references/design-systems/theming-and-dark-mode.md
+    taken: order of re-decisions for a dark theme; high contrast is not a saturated dark theme; never
+      opt out of forced colors globally; boundaries must not rely on background images
+    dropped: 'preference precedence, first-paint handling, color-scheme and native controls, multi-brand
+      architecture, mode delivery across formats: theming mechanics for lps-system'
+  - path: references/color/color-spaces-and-management.md
+    taken: clip versus gamut-map distinction; translucent colors are measured after compositing on every
+      backdrop
+    dropped: 'CSS color forms, light-dark(), color-mix(), encoded versus linear RGB, sampling ladder,
+      canvas: implementation and docs material, nothing further belongs in color.md'
+  - path: references/color/profiles-and-output-conditions.md
+    taken: do not guess a print profile; ask the printer; keep the master and let the print workflow convert;
+      fill output_condition
+    dropped: 'profile tables, rendering intents, soft proofing, embedding policy, worked print decisions:
+      docs material; only the output_condition hook belongs in color.md'
+  - path: references/color/pantone-lookup-and-digital-color.md
+    taken: a code is incomplete without its library suffix; a published screen value is not the physical
+      definition
+    dropped: 'system and library details, lookup routes, numeric-input branches, OKLCH derivation, measurement
+      conditions, proof and tolerance, access terms: lzl-color material, none of it belongs in color.md'
+  - path: references/color/palette-discovery-and-resources.md
+    taken: nothing new; 'transfer relationships, not whole palettes' is already in palette-art-direction
+    dropped: resource tables (now src/shared/sources/registry.yaml), reference annotation template and
+      search axes (lzl-research), reading list
+  left_for_lps_system:
+  - 'master and derived-rendition layer model: approved source, perceptual master, semantic alias, target
+    rendition, captured sample'
+  - token file layout separating master primitives, role aliases, and generated target files
+  - DTCG color token representation with named colorSpace, components, alpha, and an optional derived
+    hex fallback
+  - DESIGN.md colors as CSS color strings (oklch() allowed), with provenance prose per value and no forced
+    conversion to hex
+  - 'fallback-first CSS: sRGB declaration first, OKLCH override gated by @supports, wide-gamut override
+    gated by color-gamut'
+  - 'per-target gamut-mapping record: source value, destination, method, clipping, tool and version, review'
+  - 'ramp workflow steps: map per target keeping source precision, compare steps after conversion, pin
+    reviewed outputs'
+  - 'semantic aliases: components consume role tokens, never ramp steps'
+  - RGB-regression checklist and the repair procedure when an edited hex export replaced the master
+  - contrast-check workflow on resolved target values as a token-pipeline gate (color.md keeps only the
+    requirement)
+  external:
+  - kind: method
+    name: Oklab and OKLCH (Björn Ottosson, 2020), as adopted in CSS Color Module Level 4
+    used_for: Author in OKLCH
+  - kind: standard
+    name: CSS Color Module Level 4 (oklab()/oklch(), HSL non-uniformity, gamut mapping versus clipping,
+      interpolation)
+    used_for: 'Author in OKLCH: lightness versus HSL, chroma near the gamut edge, interpolation'
+  - kind: standard
+    name: WCAG 2.2 SC 1.4.3 Contrast (Minimum), 1.4.6 Contrast (Enhanced), 1.4.11 Non-text Contrast, 1.4.1
+      Use of Color
+    used_for: Contrast and color vision; focus indicator; enhanced level for the high-contrast theme
+  - kind: standard
+    name: Media Queries Level 5 (forced-colors, prefers-contrast, prefers-reduced-transparency)
+    used_for: 'Themes: forced colors, increased contrast, reduced transparency'
+  - kind: measurement
+    name: Schloss and Palmer figure-ground color harmony and preference experiments
+    used_for: 'Relations: judging harmony, preference, figure-ground, and discrimination separately'
+  - kind: method
+    name: Gramazio, Laidlaw, and Schloss categorical palette optimization (discrimination, name difference,
+      preference)
+    used_for: 'Data scales: categorical discrimination judged apart from preference'
+  - kind: measurement
+    name: controlled proofreading and glance-reading display polarity studies (not named in the source)
+    used_for: 'Six axes: neither polarity wins everywhere'
+  - kind: measurement
+    name: lightness-anchoring experiments and layered-image illusions (not named in the source)
+    used_for: 'Relations: judge the densest real view, not a swatch board'
+  - kind: measurement
+    name: Helmholtz-Kohlrausch effect (described, not named, in the source)
+    used_for: 'Contrast: saturated colors look brighter than their luminance'
+  - kind: taxonomy
+    name: qualitative, sequential, and diverging scheme types (Brewer, ColorBrewer)
+    used_for: Data scales
+  - kind: taxonomy
+    name: cyclic colour maps (Scientific colour maps)
+    used_for: 'Data scales: cyclic'
+  - kind: taxonomy
+    name: on-* foreground roles paired with surfaces (Material Design 3)
+    used_for: 'Roles: an on-color per filled surface'
+  - kind: standard
+    name: RAL DESIGN SYSTEM plus H/L/C notation; NCS+ 'closest matching NCS code' wording
+    used_for: 'Physical color standards: coordinate codes, nearest match is not identity'
+  - kind: standard
+    name: ICC profile workflow and named print output conditions (Fogra, ECI)
+    used_for: 'Physical color standards and print: output_condition, never guess a profile'
+  skill_body_pointer: For what counts as an answer on each axis, how many colors each role needs, building
+    from world materials, OKLCH ramps, themes, data scales, and physical standards, read `references/color.md`.
+  resolved_2026_09_27:
+  - system_code.system now takes the vocabulary ids (ral-classic, ral-design-plus, freetone added; ral
+    kept for older plans).
+  - Role entries gain optional source_class (vocab value_source_classes).
+  - Role entries gain optional theme (light, dark, high-contrast); absent means every theme.
+  - brand-approved, authored, and published values reach the plan through DESIGN.md refs or authored oklch;
+    lazuli color record stays for provider, measured, and screen-sample values.
+  - SKILL.md step 6 now says a computed approximation can seed an authored value, labeled as the agent's
+    own.
+  - content role entries are the one place detection-only values appear; lps-system never turns them into
+    interface tokens.
+  - Data-scale construction belongs to the future data-viz reference; color.md keeps scale choice and
+    checks.
+  - System ids in code spans are vocabulary ids, not product names in prose; acceptable.
+  - The enhanced contrast level for a high-contrast theme is a decision rule; kept.
+  - Verify forced-colors, increased-contrast, and reduced-transparency wording against platform support
+    before release.
+- reference: lapis/references/layout.md
+  sources:
+  - path: references/layout/layout-decision-procedure.md
+    taken: 'The nine steps in order and what each decides: inventory of real items with length ranges and states;
+      priority by task and consequence, with an unresolved tie sent back to the brief; surface mode per screen with
+      its layout emphasis and first question; reading order written before columns, with source, focus, and visual
+      order agreeing; relation before container, the relation-structure-boundary table, and boundaries as alternatives
+      rather than a ladder; the simplest archetype, combined only at a clear boundary; grid as coordination with
+      shared alignment lines and a narrower reading measure; per-region responsive transformations with no content
+      removed at a width; density set from the dial, then verification. Also: change composition only when the relation
+      changes; modules only for real modules; repeated structure for repeated data.'
+    dropped: 'The task-shape archetype table, the pricing worked example, the hero rules of thumb, and the quick
+      decision matrix: archetype and section material for references/archetypes.md. The named government and vendor
+      design-system conventions (product names), the deliverable template (replaced by the plan fields), and the
+      pitfalls and cross-references (boilerplate).'
+  - path: references/fundamentals/spacing-and-grids.md
+    taken: A 4 or 8 px base as convention; a typical step list; relation levels (inside a component < siblings <
+      groups < sections) with roughly doubling as a start; padding, gap, and margin ownership; rem in CSS and px
+      in the plan; column counts as convention and a grid spec naming columns, gutters, margins, and maximum width;
+      grid choice by content; span by priority and minimum width; baseline grids optional and never a reason to
+      clip; viewport versus container by ownership; breakpoints where content fails; safe-area insets measured from
+      the live boundary; density modes that remap a few tokens; bounded optical correction; visible bounds versus
+      hit areas.
+    dropped: 'The named published spacing systems, the per-width pixel grid example, the pricing worked example,
+      the container-query code sample, the platform safe-area API names, and the matrix and pitfalls: product names,
+      example values, platform specifics for the later platforms reference, and boilerplate.'
+  - path: assets/spacing-and-grid-cheatsheet.md
+    taken: The 4 px step table as a typical scale; more space above a heading than below; 4, 8, and 12 columns by
+      width; the 1,200 to 1,440 CSS px content band; the 24 CSS px target floor with larger touch minimums on native
+      platforms; per-section stack, wrap, reorder, and overflow behavior.
+    dropped: 'Framework breakpoint values, platform window-size classes and units, the target table with named platform
+      guidelines, and the quick layout check: framework and platform specifics for the later platforms reference,
+      and a checklist that repeats the text.'
+  - path: assets/shape-line-and-layout-cheatsheet.md
+    taken: Start from the relationship, not the rectangle; candidate structures per task relation; grouping cues
+      and how they conflict (equal gaps, narrow widths, nested enclosure, accidental alignment); line roles (rule,
+      border, connector, emphasis, focus) with their checks; non-text contrast only for lines that identify controls
+      or states; compare only the unresolved decision on the same content.
+    dropped: 'Form reading beyond radius, corner construction and the nested-radius formula, capsule geometry, corner
+      runtime checks, industrial-design transfer, and the compact decision record: radius, contour, and elevation
+      are surface decisions (tokens.shape, tokens.surface) for a later shape and surface reference, and the record
+      repeats the plan fields.'
+  - path: references/fundamentals/visual-hierarchy-and-composition.md
+    taken: 'Rewritten as relation constraints, as its map note asks: proximity order; more space above a heading
+      than below; one alignment line per role and no false alignment; importance following area, weight, and contrast,
+      with identical treatment only for true peers; one focal point per screen state; enclosure only for true groups;
+      symmetry only where content is balanced; rank surviving without color. Also the four levers with one-lever-at-a-time
+      diagnosis, visual weight across channels, sections ordered by the reader''s questions, per-region responsive
+      composition, and geometry scores as leads rather than verdicts.'
+    dropped: 'The composition archetypes table: shapes, not task structures; split and centered survive as opening
+      forms in references/archetypes.md, master-detail as list-detail, the rest as grid kinds and the symmetry relation
+      in layout.md. Also the hero rebuild with type values (type.md), the dashboard hierarchy example (the dashboard
+      entry of archetypes.md covers its order), the title, eyebrow, and numbering test (served by the label-above-heading
+      card), the contour and internal-line study (a later visual-assets reference), the squint procedure, research
+      citations, and the matrix and pitfalls (boilerplate).'
+  - path: references/layout/responsive-and-adaptive.md
+    taken: Responsive, adaptive, and intrinsic together; content order first, with no positive tabindex and no reordering
+      that contradicts focus; the content-driven breakpoint method; container versus viewport by ownership; per-region
+      transformations and what must stay true; the three compact strategies for tables; min-block-size with dynamic
+      viewport units; safe areas at the edge that can be covered; reflow at 320 CSS px and 200% text as requirements
+      with their practical consequences; one document instead of duplicated markup; density moving either way per
+      width.
+    dropped: 'Framework breakpoint and platform window-class tables with their units, navigation transformations,
+      hover and pointer capability detail, the input and orientation table, the probe-width table, and the list-detail
+      worked example: platform specifics for the later platforms reference, navigation and interaction for lps-ux,
+      and capture widths owned by render/DERIVED.md and ulm-release.'
+  - path: references/layout/density-and-data-heavy-ui.md
+    taken: Density as fewer steps rather than smaller type, set by frequency, expertise, consequence, data shape,
+      and input; density preferences only where repeated work earns them; collection choice (table, interactive
+      grid, list, gallery, list plus detail, modules) and when rows beat cards; identifying field first; place-value
+      alignment, units, stable formats, finite status; wrap before truncating; comfortable and compact row heights;
+      sticky headers and columns with their focus and zoom limits; a selection bar that reserves its space; compact-width
+      strategies; every measure with label, unit, scope, and comparison.
+    dropped: 'Work-definition prompts, table anatomy, row interaction patterns, filter architecture and states,
+      saved views, selection and bulk-action state models, paging and virtualization, empty, error, stale, and permission
+      causes, the dashboard hierarchy list, chart selection, the named product study, and the fraud-review example:
+      interaction and state design for lps-ux, the dashboard order kept only in the dashboard entry of archetypes.md, chart choice for
+      the later data visualization reference, and product names.'
+  external:
+  - kind: method
+    name: Intrinsic layout primitives (stack, box, center, cluster, sidebar, switcher, cover, grid, frame, reel,
+      imposter, icon) from Heydon Pickering and Andy Bell, Every Layout
+    used_for: Intrinsic primitives table. Added while drafting; the sources do not cite it.
+      Box, imposter, and icon are left out.
+  - kind: practice
+    name: Print grid tradition (manuscript, column, modular, and hierarchical grids as in Timothy Samara, Making
+      and Breaking the Grid; modular grids after Josef Muller-Brockmann, Grid Systems in Graphic Design); baseline
+      grids from editorial practice
+    used_for: Grid kinds. Manuscript and modular grids were added while drafting; the sources name only
+      column and baseline grids.
+  - kind: practice
+    name: 4 and 8 px spacing bases and published spacing scales (Atlassian space tokens, IBM Carbon spacing)
+    used_for: tokens.space base and the typical scale
+  - kind: practice
+    name: 12, 8, and 4 column responsive web grids and the 1,200 to 1,440 CSS px content band (Material Design layout
+      grid and common framework containers)
+    used_for: Grid kinds bullets and the pottery grid example
+  - kind: measurement
+    name: Gestalt grouping principles (proximity, similarity, continuation after Wertheimer; common region and uniform
+      connectedness after Palmer, and Palmer and Rock)
+    used_for: Proximity order, grouping cues, true enclosure
+  - kind: measurement
+    name: F- and Z-pattern eyetracking descriptions of web reading (Nielsen Norman Group)
+    used_for: 'Reading order: reading-pattern studies describe tendencies, not laws'
+  - kind: standard
+    name: WCAG 2.2 SC 1.4.10 Reflow, SC 1.4.4 Resize Text, SC 1.4.12 Text Spacing
+    used_for: Responsive requirements
+  - kind: standard
+    name: WCAG 2.2 SC 2.5.8 Target Size (Minimum)
+    used_for: 'Requirements: 24 by 24 CSS px or equivalent spacing'
+  - kind: standard
+    name: WCAG 2.2 SC 1.3.2 Meaningful Sequence, SC 2.4.3 Focus Order, SC 2.4.11 Focus Not Obscured (Minimum)
+    used_for: Reading order step; focus order and sticky regions in Requirements and Sticky context
+  - kind: standard
+    name: WCAG 2.2 SC 1.4.11 Non-text Contrast and SC 1.3.1 Info and Relationships
+    used_for: Lines (contrast only for lines that identify controls or states); semantic tables
+  - kind: practice
+    name: Platform touch-target minimums (Apple Human Interface Guidelines 44 pt, Material Design 48 dp)
+    used_for: 'Requirements: touch-first surfaces follow the platform''s larger minimum'
+  - kind: method
+    name: Android window size classes (classify the available window, which changes at run time)
+    used_for: 'Where a width change goes: device names are test categories'
+  - kind: standard
+    name: CSS Containment Module Level 3 (container-type, @container)
+    used_for: Viewport or container
+  - kind: standard
+    name: CSS Grid Layout (minmax(), fit-content, auto-fit tracks) and CSS Flexible Box Layout (wrapping)
+    used_for: Intrinsic primitives, grid sizing
+  - kind: standard
+    name: CSS Logical Properties and Values, CSS Writing Modes, CSS Values and Units Level 4 (dvh, rem, min()),
+      CSS Environment Variables (safe-area-inset-*), CSS Positioned Layout (sticky), CSS Text (keep-all, overflow-wrap)
+    used_for: Grids, margins and safe areas, requirements, sticky context, Korean, Japanese, and Chinese in layout
+  - kind: standard
+    name: WAI-ARIA 1.2 grid role and the Authoring Practices grid pattern
+    used_for: 'Choose the collection: an interactive grid with managed focus versus a semantic table'
+  - kind: practice
+    name: Comfortable and compact density modes (Material Design density, IBM Carbon) with editorial row heights
+      of 48 and 36 to 40 px
+    used_for: Density; row height tiers
+  - kind: practice
+    name: Tabular typesetting (numbers end-aligned by place value, shared units in headers, one format per value
+      type)
+    used_for: Columns, rows, and alignment
+  skill_body_pointer: For the nine fields with worked examples, the spacing scale (`tokens.space`), grids,
+    responsive primitives, density, and what to check after rendering, read `references/layout.md`.
+  left_for_later:
+  - 'lps-ux: navigation transformations; hover, pointer, keyboard, and orientation behavior; table anatomy and row
+    interaction; filter architecture and states; saved views; selection and bulk-action states; paging and virtualization;
+    empty, error, stale, and permission causes.'
+  - 'platforms reference: framework breakpoint defaults, window-size classes, platform units, native safe-area APIs,
+    native target-size tables.'
+  - 'shape and surface reference: corner construction and nested radii, capsule geometry, contour reading, industrial-design
+    transfer, elevation (shape-line-and-layout-cheatsheet has no map destination for these yet).'
+  - 'data-viz reference: chart selection, legends, annotation placement per width.'
+  - 'lps-system: spacing token files, density-mode token sets, component spacing as a system.'
+  verify_before_release:
+  - Safe-area insets that need viewport-fit=cover, on a real phone; and the sticky-header and containment findings
+    below in Firefox and Safari, which are not installed here.
+  - 'Checker behavior quoted in the text: tokens.space.scale read as px steps (else multiples of base_px); ranked
+    siblings found by matching priority entries against visible text. Keep layout.md in step if the detectors change.'
+  verified_2026_09_30:
+  - 'Target size wording against WCAG 2.2 SC 2.5.8 as published at w3.org/TR/WCAG22: the criterion has five exceptions
+    (spacing, equivalent control, inline, user agent control, essential). The text named two and narrowed inline to
+    links, so it now says a target inside a sentence and names the other three. Touch minimums: the accessibility page of
+    Apple''s HIG gives 44x44 pt as the default iOS control size and 28x28 pt as the minimum, so the text now says the
+    platform''s recommended control size instead of its larger minimum. Material''s 48 dp is not stated in the text, and
+    its page needs JavaScript, so it was not read.'
+  - 'Sticky headers, Chromium 153.0.8010.12 headless shell (Playwright): in a region that only scrolls sideways the header
+    scrolled away with the page (viewport top -498 after scrolling 600 px); with a bounded height it stayed at the top of
+    the region while the region scrolled. This matches the text.'
+  - 'Inline-size containment, same browser: a container-type: inline-size element collapsed to zero width as a flex item,
+    an inline-block, and a float, and was not the containing block of a fixed-position child. The text claims neither.'
+  - 'Safe-area insets: the DevTools inset override sets env(safe-area-inset-*) with or without viewport-fit=cover, so the
+    part of the claim about opting in with viewport-fit=cover cannot be seen in the headless shell. It stays as platform
+    documentation and is listed above for a real phone.'
+  - Korean keep-all advice for narrow columns confirmed on 2026-09-30 by the maintainer, a native Korean reader.
+- reference: lapis/references/archetypes.md
+  sources:
+  - path: references/layout/page-and-screen-archetypes.md
+    taken: An archetype is a task structure, not a theme; selection by primary task, content relationship, and state;
+      the sixteen archetypes' purpose, skeleton, key decisions, compact transformation, and common failures (condensed
+      into Job, Regions, Decide, Needs, Question); the neighboring-archetype table (now the last column of the selection
+      table); combining only at task seams with one named primary archetype and reduced secondary regions; the archetype
+      sets the frame, the collection inside it comes from the content; visibility is not hierarchy; collision of
+      fixed surfaces on one edge.
+    dropped: ASCII skeletons (replaced by one-line region sequences), the when-to-consult list, the full action-and-temporary-surface
+      table, loading, skeleton, placeholder, and scroll-fog guidance, the reputation and engagement paragraph, pitfalls,
+      the quick matrix (merged into the selection table), and cross-references. Interaction detail (focus after
+      selection, unsaved work, deep links, autosave, shortcuts, validation timing, account-enumeration safety, password
+      managers, live-update behavior) belongs to lps-ux; divider and boundary guidance belongs to references/layout.md.
+  - path: assets/layout-archetype-cards.md
+    taken: The selection key (content relationship, primary task, archetype), the compact skeleton notation turned
+      into region sequences, choosing the simplest archetype that serves the task, naming one primary archetype,
+      and recording the rejected neighbor (now in claims.proposed).
+    dropped: The layout deliverable checklist (checks belong to ultramarine; order, grid, and density items belong
+      to references/layout.md), per-card text that repeats the archetype reference, and cross-references.
+  - path: references/layout/marketing-sections-and-rhythm.md
+    taken: Write the argument before sections; order by content and consequence, not a fixed funnel (now the method
+      of ranking the reader's questions); the content-to-section map (now the two section tables keyed by render
+      ids plus own ids); rhythm as changes in reading demand (compression, expansion, pause, acceleration, decision);
+      spacing that follows the argument; a background change marks a narrative turn; the opening holds proposition
+      and action with proof right after; a split opening only when the second region is evidence; the opening-pattern
+      table; a logo strip proves only a relation; peer trios, alternating rows, and bento only when the content
+      has that shape; never reverse source order for a zigzag; evidence next to its claim; FAQ from evidence and
+      blocking objections in the main sequence; per-section compact transformations; growth at text zoom is acceptable.
+    dropped: The example argument block and the worked observability page, the real-page study examples (named products),
+      the editorial hero numbers (heading line count, support word count, element count, navigation height, zigzag
+      cap), which sit too close to detector bounds, the pixel spacing example and alignment-line list (references/layout.md),
+      copy and label discipline and CTA label stability (lps-copy), demonstration and logo asset handling (the future
+      visual-assets reference), the default marquee advice (the future motion reference), pitfalls, and the quick
+      matrix.
+  - path: references/product-types/marketing-and-landing.md
+    taken: Proof inventory before composition; technical audiences get an artifact right after the proposition;
+      complex or regulated offers put method and evidence before price; redesigns keep routes, heading meaning,
+      and indexed copy as constraints.
+    dropped: The question map (merged into the argument step), hero heuristics with numbers, the evidence list,
+      copy hierarchy and examples (lps-copy), search and URL detail beyond the constraint line and first-view performance
+      budgets (the future implementation reference), metrics, dials baseline (already in SKILL.md step 3), the worked
+      example, pitfalls, and the matrix.
+  - path: references/product-types/saas-dashboard-and-admin.md
+    taken: Scope in the page title rather than a sidebar highlight; an overview answers a bounded set of questions;
+      each metric names period, unit, comparison, freshness, and destination (moved into the dashboard entry); tables
+      versus lists (moved into the selection table); distinct empty states (moved into empty-error); keep learned
+      navigation in a redesign.
+    dropped: The object-and-state model and shared vocabulary (lps-ux information architecture), the shell sketch,
+      row-action, sorting, filter-in-URL, keyboard, and mutation-feedback detail (lps-ux), operational copy and
+      the empty-state copy table (lps-copy), metrics, dials, the worked example, and named look references.
+  - path: references/product-types/consumer-mobile-app.md
+    taken: Platform conventions for chrome with shared concepts and tokens; one home model (resume, status, explore,
+      act); one vertical flow without nested scrolling; carousels never hide essential content; reach for frequent
+      actions, deliberate destructive actions, no gesture-only essentials; keyboard and large text reduce usable
+      height; the connectivity mode decides where freshness and pending status sit.
+    dropped: The return loop prompts, navigation pattern table, onboarding, permission timing, offline-state behavior,
+      notifications and badges (lps-ux), copy (lps-copy), platform target units and store distribution inputs (the
+      future platforms reference), metrics, dials, the worked example, pitfalls, and the matrix.
+  - path: references/product-types/e-commerce.md
+    taken: Price, variant, availability, delivery estimate, and commit action grouped on the product page with recalculation
+      beside the selector; policy near the decision and related products after it; media ordered by purchase questions;
+      no truncation of name, price, or availability for grid uniformity; sponsored and seller marking; the cart
+      as an editable preview handing off to checkout; post-purchase status as an entity detail.
+    dropped: The five-truths consistency model and catalog and variant data modeling, filter control types by attribute
+      shape, search behavior, and fake-urgency and discount honesty (lps-ux and its behavior rules), commerce copy
+      (lps-copy), imagery production and color fidelity (the future visual-assets reference), metrics, dials, pitfalls,
+      and the matrix.
+  - path: references/product-types/content-editorial-and-docs.md
+    taken: Reading task chooses the structure; flow, fixed frame, or hybrid by the content contract; authoring in
+      the receiving editor's native structures; a reading column that tables and code do not widen; version and
+      applicability in the article header without covering the title; prerequisites before steps and examples after
+      concepts; the three-region shell as a hypothesis.
+    dropped: The content model, search result anatomy, navigation roles, code example rules, versioning and redirect
+      governance (lps-ux and lps-copy), typography details (references/type.md), dark mode (references/color.md),
+      headings and copy guidance (lps-copy), metrics, dials, pitfalls, and the matrix.
+  - path: references/product-types/developer-tools.md
+    taken: Context visible at the point of action and not carried by color alone; a workbench sized to the task
+      with purposeful panels that keep their errors when collapsed; an output region that separates failure, partial,
+      empty, truncated, stale, and complete results with request context; logs with fixed columns that can pause
+      following; code samples placed with language, environment, and version; documentation links pinned to the
+      version.
+    dropped: The neighboring-frame table (the rule of classifying by surface task is kept in the frames intro),
+      editor feature list, terminal behavior, keyboard and command design, in-tool help, secrets and irreversible-work
+      safety (lps-ux), technical copy (lps-copy), metrics, dials, pitfalls, and the matrix.
+  - path: references/product-types/fintech-and-regulated.md
+    taken: Separate labeled balances; transaction row anatomy with aligned signs; the review region that shows every
+      material value before commitment; disclosures beside the decision; a durable receipt region with room for
+      a status timeline; carrying the frame as a constraint on other frames; owner-supplied disclosure and eligibility
+      text as slots and unresolved claims.
+    dropped: The authority-subject-amount model, number and time formatting (partly in references/type.md), identity
+      and permission handling, and financial copy (lps-ux, lps-copy), financial chart basis (the future data-viz
+      reference), the ecosystem-specific distribution rules for one super-app platform (a platform or DESIGN.md
+      contract matter, never general guidance), accessibility list, metrics, dials, pitfalls, and the matrix.
+  - path: references/product-types/internal-tools.md
+    taken: Scan-then-decide work as list-detail with a queue beside a case; drafts and position survive switching
+      and new arrivals do not reorder under the pointer; case evidence separated by source with visible conflicts;
+      one action region beside the evidence with the audit timeline; exceptions structured before decorative empty
+      states; density from alignment and grouping.
+    dropped: The work-model prompts, queue semantics, bulk-action procedure (its selection-scope point is in the
+      table entry), permissions and audit rules, integration boundaries (lps-ux), operational copy (lps-copy), metrics,
+      dials, pitfalls, and the matrix.
+  - path: references/product-types/portfolio-and-personal.md
+    taken: The first view names identity, practice, and a route to the work; the proof model depends on the practice;
+      the work index as grid, list, or hybrid with scale by importance; a contact route that needs no social account;
+      a way back from immersive pages.
+    dropped: The editorial thesis prompts, case-study step list, direction-from-subject examples, motion moments
+      (the future motion reference), professional voice and contact copy (lps-copy), media rights and performance
+      (the future visual-assets and implementation references), accessibility list, metrics, dials, pitfalls, and
+      the matrix.
+  - path: references/product-types/games-and-entertainment.md
+    taken: Classifying each surface by mode, with operate surfaces taking operate archetypes; the heads-up display
+      holding only what is useful now in stable regions by consequence and away from cut-off edges; critical text
+      on a treatment that survives busy scenes; the pause menu stating whether the world is paused; directional
+      focus following the layout and type sized for viewing distance; inventory as grid or list by what drives the
+      decision; store price, recurrence, and scope beside the purchase action.
+    dropped: The play-context prompts, map and lobby detail, the input table (the future platforms reference), motion,
+      feedback, and reduced-motion treatment (the future motion reference), onboarding and difficulty, copy voices
+      (lps-copy), monetization ethics (lps-ux and its behavior rules), accessibility settings, metrics, dials, pitfalls,
+      and the matrix.
+  external:
+  - kind: practice
+    name: Widely used interface patterns (master-detail, data grid, wizard, dashboard, feed, settings index, docs
+      three-pane layout), as described in platform and pattern-library guidance
+    used_for: Screen archetypes and their region sequences
+  - kind: practice
+    name: GOV.UK Design System 'Start using a service' pattern (named in the source)
+    used_for: The content-first opening for services with consequential prerequisites; the public-service reader
+      in the ordering method
+  - kind: practice
+    name: Apple Human Interface Guidelines and Material Design navigation guidance (tab bars for peer destinations,
+      navigation stacks, sheets, safe areas)
+    used_for: consumer-mobile-app frame (said as 'the platform's guidelines')
+  - kind: measurement
+    name: Observational studies of one-handed phone grip and reach (the 'thumb zone'), treated in the source as
+      tendencies
+    used_for: 'consumer-mobile-app: frequent actions within comfortable reach'
+  - kind: practice
+    name: Television title-safe and action-safe areas and legacy overscan
+    used_for: 'games-entertainment: heads-up display away from edges the display may cut off'
+  - kind: standard
+    name: WCAG 2.2 SC 1.3.2 Meaningful Sequence, SC 2.4.3 Focus Order, SC 2.4.11 Focus Not Obscured (Minimum)
+    used_for: 'Requirements at every width: fixed regions never cover focus (the other width requirements point
+      to references/layout.md)'
+  - kind: practice
+    name: W3C Internationalization guidance on text size in translation
+    used_for: Real content in every locale (labels expand and contract)
+  - kind: standard
+    name: CSS Text Module Level 3 word-break keep-all
+    used_for: Korean narrow columns (via references/type.md)
+  - kind: practice
+    name: Bento-grid modular composition trend
+    used_for: The modules section id and its condition (unequal, independent capabilities only)
+  skill_body_pointer: For choosing the screen archetype, section kinds and their order, and what each product frame
+    adds, read `references/archetypes.md`.
+  left_for_later:
+  - 'lps-ux: selection, focus, deep links, validation timing, auth method order and recovery, onboarding permission
+    timing, feed live updates, editor undo and autosave, checkout failure handling, queue semantics, bulk actions,
+    offline and sync states, the action and temporary-surface table.'
+  - 'lps-copy: label and heading discipline, empty-state and error copy, domain system copy.'
+  - 'platforms reference: native navigation components, per-platform target sizes, television, console, and handheld
+    input, the super-app ecosystem rules from the fintech source.'
+  - 'data-viz reference: financial chart basis and the data-visualization product type.'
+  - 'motion, visual-assets, and implementation references: marquees and motion moments; demonstration and product
+    imagery evidence; first-view performance and media dimensions.'
+  verify_before_release:
+  - Heading length across locales (Japanese and Chinese often shorter than English, Korean similar or longer) with
+    translators.
+  - Plan section ids that reuse render ids can still be classified differently by the render; no check compares them
+    today (see verified_2026_09_30), so confirm before adding one.
+  verified_2026_09_30:
+  - 'Frame entries checked against the frozen product-types/forms-onboarding-and-checkout.md and data-visualization.md.
+    data-visualization matches the source''s analytical view (question title, scope line, primary view, annotation,
+    controls beside what they change, details on demand) and its rule that each chart names period, unit, comparison,
+    and freshness and keeps its values reachable. forms-onboarding-checkout matches (one column by default, steps only
+    where they are meaningful, never a step per field); the source states the single-column default at every width and
+    the entry states it for compact and zoomed layouts, which is a subset rather than a conflict.'
+  - 'Television edges: the sentence about edges a display may cut off agrees with Android''s TV layout page (a 5 percent
+    margin for overscan) and Apple''s Layout page (system safe areas), read on 2026-09-30. The text states no numbers.'
+  - 'Plan section ids: every lint detector that reads sections uses derived.sections, the render''s box ids; none reads
+    plan section ids against them (grep of cli/lapis_design/lint, 2026-09-30).'
+- reference: lps-system/references/tokens.md
+  sources:
+  - path: references/design-systems/design-tokens.md
+    taken: Tokens as named decisions that earn their cost (reuse, theming, audit, coordinated change);
+      tiers with references running downward only; the token set as a dependency graph and the impact
+      list before changing a shared step; equal values do not merge meanings; a component layer that
+      copies literals; naming by purpose and state with a category.role.variant.state grammar (aligned
+      here with the plan's color roles); keeping an established vocabulary; conceptual path versus
+      serializer spelling with a reversible name table; component tokens with restraint (the good and
+      questionable examples); typography composites with unitless line height; layered shadows not
+      flattened; a gradient needs a named job; DESIGN.md as the record with per-family authority and
+      generated outputs never hand-edited; import boundary versus release source; the literal-to-token
+      migration steps and not deduplicating distinct roles; the worked change-impact decision (remap the
+      semantic token, not the shared step), condensed; the validation checklist, folded into the check
+      section.
+    dropped: 'Snapshot note, when-to-consult, the dated format-version remarks and the dotted-name JSON
+      example, the example token JSON listings, the utility-framework namespace section and its theme-block
+      example (product name; only "a framework theme block" survives, as a place the source check treats
+      as token definitions), the design-tool variables mention, the alternative contrast-metric remark,
+      the modes and adaptive-scale sections (moved to theming.md), pitfalls, the quick decision matrix,
+      and cross-references: history, product names, material owned by theming.md, or boilerplate.'
+  - path: references/interop/design-tokens-dtcg.md
+    taken: Token and group structure (a node is never both), name restrictions, type resolution order
+      and never inferring a type from a value, token and group properties including $extends, brace aliases
+      for whole tokens and $ref pointers for parts, keeping aliases until a consumer needs resolved values,
+      producer-owned reverse-domain extension keys and preserving unknown extension data, the primitive
+      type table with value shapes and unit limits (px or rem, never em, zero with a unit, unitless values
+      as number, cubicBezier x range), composites as structured objects, the five typography fields with
+      features and variations as reported losses, structured colors with a named space and an optional
+      derived six-digit hex, collision stop on normalized names, the per-token conversion report.
+    dropped: 'Status, media type, and file-extension details, the named report, its version, and its
+      standards-body status, the bundled CLI workflow with every import and export behavior of the old
+      script (the script does not exist in this repository), the DESIGN.md-to-format mapping table
+      (reduced to the DESIGN.md rules), the design-tool variable mapping table (product name), the worked
+      loss report (reduced to one sentence), the mode strategies (moved to theming.md), pitfalls, matrix,
+      and cross-references.'
+  - path: references/color/perceptual-authoring-and-tokens.md
+    taken: 'The token-making procedure: establish roles and constraints, propose steps in OKLCH around
+      fixed anchors, map per target, record semantic aliases, review themes; ramp-to-token mapping; the
+      master and derived-rendition layer model with its rules (never replace a master with hex, never
+      derive a master from a sample or export, no hand-edited generated files, art-directed renditions
+      as named siblings); the file layout separating masters, aliases, and generated targets; the transform
+      record (mapped versus clipped, tool and version, reviewer); pinning reviewed outputs; keeping precision
+      until serialization; fallback-first CSS with @supports-gated custom properties and color-gamut-gated
+      wide-gamut renditions; DESIGN.md colors as CSS strings with provenance prose and no forced hex; contrast
+      on resolved target values after compositing; the hex-regression repair, condensed.'
+    dropped: 'Perceptual-authoring principles already in lapis/references/color.md (notation versus editing,
+      uneven HSL, chroma taper, hue drift, interpolation spaces, lightness is not contrast), which tokens.md
+      only applies; CSS Lab D50 versus Oklab D65 and linear-light compositing (docs); print gamut and
+      profile workflow (lapis color.md output_condition and docs); the bundled-tool boundary (script
+      absent); the RGB-regression checklist (folded into the master rules and repair paragraph); illustrative
+      values (replaced by computed pottery values); pitfalls, matrix, and cross-references.'
+  external:
+  - kind: standard
+    name: Design Tokens Format Module and Color Module 2025.10 (Design Tokens Community Group final reports)
+    used_for: The interchange file section (structure, names, types, aliases, extensions, composites,
+      colors); names; per-token loss report
+  - kind: method
+    name: Oklab and OKLCH (Bjorn Ottosson, 2020), as adopted in CSS Color Module Level 4
+    used_for: Ramps, anchors, chroma taper, and the reserve gamut example
+  - kind: standard
+    name: CSS Color Module Level 4 (oklch(), sRGB conversion), Media Queries Level 4 (color-gamut), CSS
+      Conditional Rules (@supports)
+    used_for: Masters and renditions; fallback first
+  - kind: standard
+    name: CSS Custom Properties for Cascading Variables Level 1 (invalid at computed-value time)
+    used_for: 'Fallback first: why an unsupported value in a custom property defeats the earlier fallback'
+  - kind: standard
+    name: CSS Fonts Module Level 4 (size-adjust, ascent-override, descent-override, font-variant-numeric)
+    used_for: Stacks; type.body.figures
+  - kind: standard
+    name: CSS Text Module Level 3 (word-break keep-all, overflow-wrap anywhere) and Selectors (:lang())
+    used_for: Per-locale type values and the Korean base style
+  - kind: standard
+    name: Media Queries Level 5 (prefers-reduced-motion)
+    used_for: Motion tokens
+  - kind: standard
+    name: WCAG 2.2 SC 1.4.3 Contrast (Minimum) and SC 1.4.11 Non-text Contrast
+    used_for: Pair ratios in the mapping table and the check section (minimums stay in lapis)
+  - kind: practice
+    name: Utility-framework theme blocks (Tailwind v4 @theme), recognized by the source detector as token
+      definitions
+    used_for: '"a framework theme block" in the Code check'
+  - kind: practice
+    name: Step names from target lightness (OKLCH L x 100) or sparse numbering
+    used_for: Names. Added while drafting; the sources do not propose it.
+  - kind: practice
+    name: Separate motion distance tokens from duration tokens
+    used_for: Motion tokens (reduced-motion branch zeroes movement, keeps fades). Added while drafting.
+  skill_body_pointer: For names, the token graph, turning each `tokens` field into ramps, aliases, and
+    token files, the interchange format, `DESIGN.md` entries, and what the checks read, read
+    `references/tokens.md`.
+  left_for_later:
+  - 'lps-system card or references: component-architecture.md (component token APIs), design-system-anatomy.md,
+    design-md.md and opendesign.md (dialect details for conversions).'
+  - 'platforms reference: native token outputs (platform color assets, text styles, units).'
+  - 'data-viz reference: construction of data-scale tokens (color.md keeps scale choice).'
+  - 'motion reference: duration and easing values by purpose.'
+  - 'shape and surface reference: nested radii and the elevation model beyond token naming.'
+  verify_before_release:
+  - 'Checker behavior quoted in the text (render color diff against plan role oklch values,
+    font-family contract and locked fallbacks, off-scale font sizes and spacing, radius scale from token
+    definitions only, token-file names, plan-check contract findings). Keep tokens.md in step if the
+    detectors change.'
+  verified_2026_09_30:
+  - 'Interchange facts against the DTCG 2025.10 reports, still the newest stable report on designtokens.org on
+    2026-09-30: name restrictions ($ prefix; { } and . forbidden), type resolution (own type, aliased token, nearest group;
+    never guessed from a value), $extends only between groups, JSON Pointer $ref, $extensions with reverse-domain keys
+    kept, and the type table (dimension px or rem, duration ms or s, cubicBezier x from 0 to 1, fontWeight 1 to 1000 or a
+    name, color object with colorSpace, components, optional alpha, optional 6-digit hex) all match. The composite types
+    were checked by name only.'
+  - 'Chromium 153 headless shell: oklch() and light-dark() are supported, and a declaration whose var() is invalid at
+    computed-value time falls to the inherited value rather than to an earlier declaration. Other engines were not run.'
+  - 'Example numbers recomputed with color.py and an 8-bit hex round trip: all five sRGB renditions match; at chroma 0.09 and
+    hue 250 the ramp stays inside sRGB from lightness 0.317 to 0.826 (the text says 0.32 and 0.83); the contrast ratios
+    14.6, 14.1, 7.0, 6.1, 5.5, and 6.4 hold when truncated; the action fill on the canvas is 6.80, so the text now says
+    6.8 where it said 6.7 (two cells). The text does not list every neutral, so 5.5, 6.4, and 6.1 were checked with
+    chroma 0.01 and hue 60 to 85.'
+  - Korean body line height 1.7, heading 1.3 to 1.35, and keep-all with overflow-wrap anywhere under :lang(ko)
+    confirmed on 2026-09-30 by the maintainer, a native Korean reader.
+- reference: lps-system/references/theming.md
+  sources:
+  - path: references/design-systems/theming-and-dark-mode.md
+    taken: 'A theme as a coherent reassignment of semantic roles; mode, brand, and preference kept apart;
+      no dark flags, media queries, or literals inside components; the role-pair contract before values
+      and no pairing inferred from names; only the roles the product uses; fixed primitives versus adaptive
+      scales, never combined without deterministic tooling and never called primitives; the precedence
+      contract; storing the setting, following system changes, never overriding an explicit choice; first-paint
+      strategies, no palette animation on first resolution, no silenced hydration warnings; color-scheme
+      for native controls; theme-color, selection, caret, autofill, native controls, and embedded content;
+      the asset table, condensed; never inverting rasters; forced colors (boundaries not carried by background
+      images, currentColor icons, no global opt-out, a product high-contrast theme supplements forced colors);
+      what varies by brand and what stays shared; a brand needing different anatomy is an extension; named
+      supported combinations instead of every combination; modes across DESIGN.md and the interchange
+      format; keeping collection and mode identity across imports; the mode-safe component contract; the
+      dark action retune worked example.'
+    dropped: 'Snapshot note, when-to-consult, the dark-palette order of re-decisions (already in lapis/references/color.md),
+      the example surface ladder CSS with a named brand and hex values, the utility-framework bridge row and
+      the bundled export commands (product name; script absent), the two-brand account console worked example
+      (framework name; its supported-pairs idea kept in one paragraph), the design-tool mode capability row,
+      pitfalls, matrix, and cross-references.'
+  - path: references/design-systems/design-tokens.md
+    taken: The modes and themes section (semantic reassignment per mode, never exporting the default mode as
+      the whole system), adaptive scale tokens as a system choice, keeping a user-selected theme separate
+      from the system preference.
+    dropped: Everything else; it is in tokens.md.
+  - path: references/interop/design-tokens-dtcg.md
+    taken: 'The four theme export strategies (one file per mode, named flattened default, extensions for a
+      known consumer, modes kept in the source) and never inferring one mode from absent mode data.'
+    dropped: Everything else; it is in tokens.md.
+  external:
+  - kind: standard
+    name: CSS Color Adjustment Module Level 1 (color-scheme, forced-color-adjust, forced colors mode effects)
+    used_for: Native parts; forced colors (shadows compute to none, non-url background images dropped, background
+      alpha kept); checked against the TR on 2026-09-29
+  - kind: standard
+    name: CSS Color Module Level 5 light-dark()
+    used_for: Selecting a theme. Added while drafting; the source uses a media query plus data-theme selectors.
+  - kind: standard
+    name: CSS Color Module Level 4 system colors (CanvasText, LinkText, Highlight, GrayText)
+    used_for: Forced colors adjustments
+  - kind: standard
+    name: Media Queries Level 5 (prefers-color-scheme, prefers-contrast, forced-colors, prefers-reduced-transparency,
+      prefers-reduced-motion)
+    used_for: Selecting a theme; high contrast, forced colors, and other preferences
+  - kind: standard
+    name: HTML theme-color meta element with media, and picture source media
+    used_for: Native parts; media per theme
+  - kind: practice
+    name: Transparent borders and outlines that forced colors paint (Microsoft Edge team guidance on forced
+      colors)
+    used_for: 'Forced colors: focus rings made only of box-shadow disappear'
+  - kind: practice
+    name: Variable-font grade axis (GRAD in the variable-font axis registry)
+    used_for: 'Korean text: stroke change without reflow. Added while drafting.'
+  - kind: measurement
+    name: Irradiation (light text on a dark ground looks heavier)
+    used_for: 'Korean text: dense syllables closing up in bold on dark. Added while drafting.'
+  - kind: standard
+    name: WCAG 2.2 SC 1.4.3 and SC 1.4.11
+    used_for: Check a theme (via color.text-contrast and the pair records)
+  skill_body_pointer: For theme architecture, selecting a theme and the first paint, native controls and media
+    per theme, high contrast and forced colors, brand combinations, and exporting themes, read
+    `references/theming.md`.
+  left_for_later:
+  - 'platforms reference: native appearance APIs (platform dark mode, dynamic colors, increased contrast settings).'
+  - 'lps-ux: the theme setting control itself (placement, labels, persistence across devices); lps-copy its labels.'
+  verify_before_release:
+  - Whether a theme-color meta element with a media attribute follows only the system preference; the headless shell has
+    no browser chrome to observe it in.
+  - 'Checker behavior quoted in the text: dark detected only through prefers-color-scheme at 390 px and captured
+    at 390, 768, and 1440; only color scheme and reduced motion emulated; text contrast on light and dark at rest,
+    hover, and focus; inversion check by element with raised-surface flips. Keep theming.md in step if capture
+    or detectors change.'
+  verified_2026_09_30:
+  - 'Chromium 153.0.8010.12 headless shell (Playwright), macOS 27: light-dark() and @supports (color: light-dark(#000, #fff))
+    are supported, including oklch() arguments. With color-scheme: light dark on the root the value follows the emulated
+    system scheme; :root[data-theme] setting color-scheme: light or dark overrides it in both directions; a child with its own
+    color-scheme reads a root token as its own scheme (the value is chosen where the token is read). A picture source with
+    media (prefers-color-scheme: dark) follows the system preference, not a color-scheme set on the root. All match the text.'
+  - 'Forced colors (forced_colors: active), same browser: box-shadow computes to none; a gradient background-image computes to
+    none while a url() image stays; a translucent background keeps only its alpha; a transparent border and a transparent
+    outline paint in the system color (pixel read black on a white page); a box-shadow ring alone disappears; a shadow ring plus
+    a transparent outline stays visible; forced-color-adjust: none keeps author colors. All match the text.'
+  - 'Preference media features, same browser: prefers-contrast and prefers-reduced-transparency are recognized, report
+    no-preference by default, and can be emulated (Playwright contrast: more; DevTools setEmulatedMedia for reduced
+    transparency), so where the browser reports it is accurate for this build. Other browsers were not run.'
+  - Korean text in dark themes (dense syllables at bold weights, the grade-axis advice) confirmed on 2026-09-30 by the
+    maintainer, a native Korean reader.
+- reference: lps-ux/references/navigation.md
+  sources:
+  - path: references/ux-methodology/information-architecture.md
+    taken: 'Organization, labels, navigation, and search as four systems that must agree, and navigation
+      exposing a structure it cannot repair; an inventory of everything reachable with its states, where
+      duplicate and overloaded labels surface; top tasks with circumstance and outcome, and the nouns that
+      persist across them as the object model (not the schema or the org chart); the organization schemes
+      (exact, topical, task, audience, object, faceted) mixed per level, facets as filters; one canonical home
+      with cross-links; labels as promises (nouns for destinations, outcomes for actions), siblings at one
+      conceptual level, one preferred term with synonyms kept for search, words tested without icons; the
+      navigation levels (global, local, contextual, utility, wayfinding); search needing scope, permissions,
+      synonyms, result anatomy, and zero-result recovery, and never replacing organization; information scent
+      with a weak and a strong path (rewritten in Korean); no three-click or depth rule; a redesign keeps learned
+      structure, labels, and URLs without evidence or authorization, and redirects what moves.'
+    dropped: 'The user-content-context triad table and its evidence column, open, closed, and hybrid card
+      sorting, tree testing and its measures, search-log and analytics research, the healthcare and help-center
+      examples, the apps-sites-hybrids table, the workspace-administration worked example (its path survives
+      as the information-scent example), the IA deliverables list (replaced by plan fields), and the
+      when-to-consult, pitfalls, matrix, and cross-reference sections: research method for docs or a later
+      research reference, surface-type notes the lapis archetypes and product frames already carry, and
+      boilerplate.'
+  - path: references/layout/navigation-patterns.md
+    taken: 'Pattern choice after the structure, from hierarchy, frequency, platform, and space; the selection
+      matrix and quick matrix merged into one table with companion and avoid columns; per-pattern decisions:
+      tabs for peer views with the tab-set keyboard model versus route links, and no two-row wrapping; bottom
+      tab bar with visible labels, a stack per tab, the safe area, the on-screen keyboard, and no commands;
+      menu sheet with a named trigger, focus entry and return, Escape, and a flat list; sidebar and rail
+      collapse only with learned icons and one activation result per parent; breadcrumbs as hierarchy, not
+      history; a command palette as an accelerator only; pagination, load more, and infinite scroll with their
+      state duties; navigation told apart from tabs, segmented controls, form choices, commands, and
+      disclosures by outcome, with current, selected, focused, and expanded kept apart; the lookalike-control
+      scenario (rewritten on the pottery piece page); Back, Up, and Close as separate contracts; the
+      navigation-and-history checklist (URL per state, Back after filters, sheets, dialogs, and deep links,
+      per-tab stacks, unsaved work, focus, announcement, permissions, redirects); responsive change keeps
+      destinations, location, history, names, and targets, and never adds destinations because width grew.'
+    dropped: 'ASCII sketches of each pattern, top-navigation dropdown, mega-menu, and CTA detail, the
+      documentation and operational-app level combinations (kept as one line on levels), the vendor tab-bar
+      minimizing behavior and a host platform''s tab count (named products; kept only as "the platform or host
+      sets the count"), segmented-control wrapping and page-size detail, the smoke-check procedure (replaced by
+      the behavior probes and the by-hand column), and the pitfalls, matrix, and cross-reference sections:
+      sketches, product names, implementation detail, and boilerplate.'
+  external:
+  - kind: method
+    name: Information architecture as organization, labeling, navigation, and search systems, and the
+      users-content-context triad (Rosenfeld, Morville, and Arango, Information Architecture for the Web
+      and Beyond; named in the source)
+    used_for: Structure before chrome; the scheme table
+  - kind: method
+    name: Information scent and information foraging (Pirolli and Card; not named in the source)
+    used_for: The weak and strong path; ambiguous steps rather than step counts
+  - kind: practice
+    name: The rejected 'three-click rule' (named in the source, no study cited)
+    used_for: No depth limit or click count replaces the text walk
+  - kind: taxonomy
+    name: Faceted classification (after Ranganathan), as used for catalog facets
+    used_for: 'Scheme table: facets are filters, not destinations'
+  - kind: standard
+    name: WAI-ARIA 1.2 states (aria-current, aria-selected, aria-expanded) and the ARIA Authoring
+      Practices tabs pattern (arrow keys, Tab leaves the set) and disclosure navigation pattern
+    used_for: Navigation or not; tabs; menu sheet
+  - kind: standard
+    name: WCAG 2.2 SC 2.4.1 Bypass Blocks, 2.4.2 Page Titled, 2.4.3 Focus Order, 2.4.8 Location, 3.2.3
+      Consistent Navigation, 3.2.4 Consistent Identification, 2.5.3 Label in Name, 4.1.2 Name, Role, Value,
+      1.4.4 Resize Text, 2.4.11 Focus Not Obscured (Minimum)
+    used_for: Skip link and landmarks, title and current item, one term per concept, icon-only names, the
+      200% text state of a tab bar, fixed edges
+  - kind: standard
+    name: HTML nav and main elements and session history; the lang attribute (language of parts)
+    used_for: Landmarks, a sheet adding one history entry, English labels on Korean pages
+  - kind: standard
+    name: UI Events composition events and InputEvent.isComposing; engine differences in the order of
+      compositionend and the Enter keydown (keyCode 229)
+    used_for: Korean input. Added while drafting; the sources do not mention composition.
+  - kind: standard
+    name: 'Unicode Standard Annex #15 normalization forms, through String.prototype.normalize'
+    used_for: Compose queries and the index. Added while drafting.
+  - kind: practice
+    name: Hangul initial-consonant (choseong) search in Korean contact lists and shopping search
+    used_for: Initial-consonant matching. Added while drafting.
+  - kind: practice
+    name: Hangul Orthography spacing provisions that allow compound nouns and technical terms to be written
+      together
+    used_for: Space each compound noun one way. Added while drafting.
+  - kind: practice
+    name: Apple Human Interface Guidelines tab bars, Material Design navigation bar, drawer, and system back,
+      and the Apps in Toss floating tab bar policy (all named in the source)
+    used_for: Bottom tab bar and menu sheet (said as 'the platform or host sets the count')
+  - kind: practice
+    name: Korean messenger in-app browsers opening shared links without history (not named in the source)
+    used_for: Every route works as a first page. Added while drafting.
+  - kind: practice
+    name: Korean web and app navigation label habits (a 전체 tab or 전체 메뉴 button, 마이페이지 as a catch-all)
+    used_for: Korean labels. Added while drafting.
+  skill_body_pointer: For grouping and labels, the navigation model at each width, current location, Back and
+    deep links, search with Korean input, and long collections, read `references/navigation.md`.
+  left_for_later:
+  - 'lps-ux: filter architecture and states, saved views, selection scope and bulk-action states, table row
+    interaction (layout.md hands these to lps-ux; navigation.md covers only filter and page state in the URL
+    and the three paging patterns).'
+  - 'lps-ux: interaction-design.md (focus, dialogs, gestures, recovery) beyond its navigation-facing parts.'
+  - 'platforms reference: native navigation stacks, system back per platform, tab bar behavior and counts per
+    platform or host.'
+  - 'motion reference: scroll restoration and route transitions (animation/scroll-navigation-and-transitions.md).'
+  - 'lps-copy: final navigation label wording; lps-copy already drafts nav key copy.'
+  verify_before_release:
+  - 'Composition on real Korean keyboards: the order of compositionend and the Enter keydown in each engine and on phone
+    keyboards, and the re-rendered-field-drops-jamo claim (softened to can drop or double). The headless shell''s IME
+    emulation does not drive an operating system input method.'
+  - lang="en" on an English label switching voice in the screen readers Korean users rely on.
+  - 'Checker behavior quoted in the text: the history probe''s preparation and Back presses, the name-swap
+    test limited to headline, subhead, and other, navigation text only inside nav or role=navigation, the
+    ux.routine-modal hit cases, stub routes matching the path alone with list returning the whole collection,
+    and no probe for arrow keys or focus after a route change. Keep navigation.md in step if these change.'
+  verified_2026_09_30:
+  - 'Hangul width, measured in Chromium 153 on this Mac with the face actually used (CSS.getPlatformFontsForNode): a syllable
+    advances 0.865 em in Apple SD Gothic Neo and Pretendard, 0.92 in Noto Sans CJK KR, 0.94 in Nanum Gothic, and 1.0 in
+    Malgun Gothic and Apple Gothic, so four syllables at 12 px take 41.5 to 48 px. The text said about 1 em and about 48 px
+    and now says about 0.85 to 1 em and about 41 to 48 px; 72 px per item is 360 CSS px divided by five. type.md carried the
+    same one-em claim and was changed the same way.'
+  - 'Spacing of compound nouns: the Hangul Orthography rules (korean.go.kr, Article 2 spaces words, Article 50 spaces technical
+    terms by word in principle and allows writing them together, dictionary compounds are written together) agree with
+    pick one way and keep it.'
+  - 'IME in Chromium through DevTools: isComposing is true on input events during a composition, and the Enter keydown
+    arrives with isComposing true before compositionend. This is one engine and an emulated IME, so the claims about
+    engines differing and about keyCode 229 stay unverified, though UI Events (w3.org/TR/uievents) does define keyCode 229 for
+    a key an IME is processing.'
+  - 'Confirmed on 2026-09-30 by the maintainer, a native Korean reader: the Korean label conventions (nouns for
+    destinations, the -하기 form for buttons, a 전체 menu or tab, 예약 내역 over 마이페이지, English labels reading as
+    foreign), two to four syllables for tab labels, initial-consonant search as a habit, and messenger in-app
+    browsers opening shared links with no history.'
+- reference: ulm-release/references/visual-regression.md
+  sources:
+  - path: references/design-feedback/comparison-and-regression.md
+    taken: 'A comparison asks what changed under held conditions and whether it was meant; the intended-difference
+      list written before looking (the frozen comparison contract, now drawn from the plan''s mode, changed part,
+      key_copy, and approved proposed_design_changes) and never widened after a result is seen; holding content,
+      state, viewport, fonts, theme, motion, data, and capture method constant, with an unmatched comparison labeled
+      apart instead of called before/after; comparing in layers, state identity first, then structure and protected
+      parts, then pixels; the visual diff as a locator and never a quality score, with every tolerance and mask
+      recording what it may hide; the classes intended, necessary consequence, noise, unexpected, regression,
+      unresolved trade-off, and not verified, an unexpected difference never accepted by default; the compact
+      comparison record.'
+    dropped: 'Choosing among rendered alternatives and naming selection criteria (direction work for lapis and the
+      critic, not the gate); the evidence labels (the findings schema''s evidence types serve); the contextual
+      anti-slop layer and reasons for retained contested choices (lint and the critic); preserving artistic meaning
+      (the critic''s counterfactual and world-materials tests); ranking coherent candidates, loop budgets, decision
+      owners, and adopt, revert, and staged states (the maker''s loop in ultramarine); the unavailable-runtime cases
+      and examples (the gate always has a render); the when-to-consult list, pitfalls, decision matrix, and
+      cross-references (boilerplate).'
+  - path: references/production/design-qa-and-visual-regression.md
+    taken: 'Screenshot comparison detects change and never decides it; a baseline is a capture of an approved build,
+      never a mockup; the deterministic capture conditions (engine, platform, viewport and pixel ratio, fonts, theme
+      and motion, data, clock and random values, readiness, animation point) split into what render check fixes and
+      what the user must hold; no universal pixel threshold, tolerances set from measured noise per region and never
+      raised until a regression disappears; scoping to the meaningful region; masking only true nondeterminism, the
+      smallest region, with its reason and what it could hide, and never the task''s risk; the volatility table
+      turned into hold-at-the-source-first; a baseline update as a design decision, never bulk-accepted; coverage by
+      width and theme starting where layout changes; Hangul fallback and line breaking as comparison hazards; a pixel
+      match proving nothing about keyboard, semantics, or behavior.'
+    dropped: 'The named visual-testing tools, their API sample, and their cross-host rendering advice (product names
+      and vendor setup); the QA contract form (the plan and GATE.md hold it); the evidence hierarchy (the findings
+      schema); the runtime-path procedure, the accessibility list, and the unstyled-card advice (behavior check
+      probes); independent review (the critic in ultramarine); the manual QA categories (lint rules and the critic);
+      pseudo-localization, RTL, and translation review (the later i18n reference and lps-copy); source-only review
+      without a runtime (the gate always has a render); the P0 to P3 finding form (finding.schema.yaml); the checkout
+      worked example; pitfalls, matrix, and cross-references (boilerplate).'
+  external:
+  - kind: practice
+    name: Screenshot-baseline visual testing with per-snapshot tolerances, masks, and reviewed baseline updates
+      (Playwright toHaveScreenshot, Chromatic, and Percy, named in the source)
+    used_for: The noise run, per-region tolerances, masks, and replacing a baseline only after acceptance
+  - kind: method
+    name: DCT perceptual image hashing (pHash family), as render check computes media.phash
+    used_for: Comparing images by differing bits; the 6-of-64 line comes from rights_check.py
+  - kind: method
+    name: MinHash similarity estimation (Broder), keyed as in cli/lapis_design/text_sig.py
+    used_for: Viewport text_sig as a copy-change estimate
+  - kind: measurement
+    name: OKLab color difference (Ottosson), as the repository's delta_e_ok computes it
+    used_for: The same-token line of 0.02 taken from system.literal-color
+  - kind: standard
+    name: WCAG 2.2 SC 1.4.10 Reflow
+    used_for: Comparing 320 first; horizontal page scroll as a requirement regression
+  - kind: standard
+    name: CSS Text Module Level 3 word-break keep-all; the HTML lang attribute and :lang() font selection
+    used_for: Korean text in comparisons
+  skill_body_pointer: The gate never compares the render with an earlier build. When the task has a baseline, a
+    `.lapis/renders/<task>-before.json` capture of the build that last shipped or was approved, compare the shipping
+    render with it once the full set has run, and report the differences the plan does not explain right after the
+    verdict; `references/visual-regression.md` says how.
+  left_for_later:
+  - 'lapis and the critic: choosing among rendered alternatives, the selection criteria, and the rejection record
+    (the "Select a direction" section of comparison-and-regression has no other destination in the map).'
+  - 'ultramarine: the bounded repair loop, decision owners, adopt and revert states, and the independent-review scope
+    (bounded-closed-loop.md and inspection-and-evidence.md, still todo).'
+  - 'i18n reference and lps-copy: pseudo-localization stress, RTL mirroring, locale formats, translation review.'
+  - 'Contracts: a baseline input, a comparison record, and the capture environment in the extract (contract
+    proposals recorded in the 2026-09-29 cloud review).'
+  verify_before_release:
+  - Late unicode-range subset loads on slower networks and for large Korean web fonts other than the one tested.
+  - 'Checker behavior quoted in the text: running-index screenshot names and a shots folder that is never emptied;
+    the browser_chrome capture laid out at 844 px and derived at 664 px; dark detection on html, body, and the first
+    four sections at 390; archetype cues scaled by viewport height; the gate blocking a missing dark capture when
+    the extract records a dark theme or the plan lists dark; render findings merging captures (location.viewport
+    the first, observed ending with the capture list); the reference rules skipping a render
+    extract given as --ref. Keep visual-regression.md in step if render check, the gate, lint, or the schemas change.'
+  verified_2026_09_30:
+  - 'Two captures of one build: tests/fixtures/render/kiln-shop served on loopback, lapis-design render check run twice on
+    this Mac (Chromium 153.0.8010.12): all nine screenshots are byte-identical and the extracts are equal apart from the task
+    name and generated_at. The page has no dynamic content, so this shows rasterization determinism only.'
+  - 'Late subset loads: a page using Google Fonts Noto Sans KR (many unicode-range files, plus a paragraph of rare syllables)
+    was captured at all six widths; every text run reports Noto Sans KR as rendered, fallback false. One run, one network.'
+  - 'Korean keep-all in Chromium 153: with word-break: keep-all and overflow-wrap normal, lines broke only at spaces, before an
+    opening bracket, and after a percent sign; Hangul next to Latin letters and numerals never broke. With overflow-wrap:
+    anywhere, a unit wider than the column broke between any characters, Hangul and Latin included.'
+  - 'The 6-of-64-bit line, calibrated on six real photographs (Wikimedia Commons) with the repository''s own phash at a
+    displayed 480x320: JPEG quality 95 to 30, WebP quality 80 and 40, and downscaling to a half, a quarter, and a tenth all
+    differ by 0 bits; JPEG quality 10 reaches 4 and a 64-color palette 2; a crop of 2 percent from each edge reaches 6, 5
+    percent reaches 8 to 12, 10 percent 18 to 24, and a mirror 24 to 34; two different photographs differ by at least 28 bits.
+    So 6 keeps resized and re-encoded copies, and a crop of about 2 percent per edge, as the same image; any larger recrop
+    reads as a different image. The text claims resized or re-encoded only.'
+  - 'A changed lang selecting other glyph forms: 直骨令海 in generic sans-serif renders differently under ja, zh-Hans, zh-Hant, and ko,
+    and :lang() font-family rules apply.'
+- reference: lps-copy/references/interface-copy.md
+  sources:
+  - path: references/readability/interface-copy-and-meta-text.md
+    taken: 'The necessity test as a role table (label, helper, error, status, consequence or policy, help, no
+      copy) with the reader''s question, placement, and test; a label is not a help article, helper text is
+      not a hidden label, and help is not where a consequence waits; redundancy settled by one owner while
+      the same consequence stays at two distinct decision moments (rewritten as the narrating-line example in
+      Korean); builder-facing text kept out unless the audience decides or recovers with it, with the operator
+      exception; sample data, simulation, and non-delivery stated once at the decision they change, never as
+      repeated chips, with reviewer instructions moved to the handoff; tooltips as supplement only (reduced to
+      the hover-content rule); persistent labels, instructions before failure, and units and optionality;
+      errors that name the problem, scope, fix, and kept work without a fabricated fix; landing copy naming
+      audience, evidenced capability, proof beside the claim, and offer conditions; onboarding steps naming
+      the action, the permission purpose, and the skip consequence.'
+    dropped: 'The documentation and long-form help section, the surface matrix, the quick decision matrix and
+      pitfalls, the when-to-consult list, the English before and after pairs (rewritten in Korean), and the
+      no-edit form and routing-number examples: documentation copy is not interface copy, the matrix repeated
+      the role table, and the rest is boilerplate or English-only.'
+  - path: references/fundamentals/ux-writing-and-microcopy.md
+    taken: 'Writing for the decision in front of the person (folded into the role table); actions naming
+      outcomes with one label per intent, and the weak and specific pairs (rewritten in Korean); sentence
+      case and punctuation as system decisions, not universal law; the state table (loading, first-use and
+      no-results and no-permission empty states, offline, error, partial success, success, destructive
+      confirmation, expired); errors as what happened, what it affects, what to do, and what was kept;
+      empty states as causes rather than one template; success without celebration inflation and no
+      completion claim before confirmation; voice against tone; complete strings with translator context and
+      no expansion budget; consent copy that is specific, voluntary, and reversible, never preselected or
+      bundled; a term record.'
+    dropped: 'The plain-language section (the skill body already says plain verbs and concrete nouns), the
+      Apps in Toss Korean section (a named product; its decisions live in the Korean register notes), the
+      bank-transfer worked example (the kiln shop replaces it), font and license lines (owned by lzl-fonts),
+      and the pitfalls, matrix, and cross-references: named product policy, a different skill, and
+      boilerplate.'
+  - path: references/ux-methodology/content-design.md
+    taken: 'Terminology governance as a small record searched across navigation, labels, help, emails, and
+      locale files; voice against tone with a restrained tone as risk rises; realistic synthetic copy instead
+      of filler; the state-specific content requirements (folded into the states section).'
+    dropped: 'The content-first user-need template, the message hierarchy ranking (the error and confirmation
+      shapes carry it), content inventory and audit, CMS content models and structured content, imagery
+      records, search and findability, localization operations, accessibility formats, lifecycle and
+      governance, and the eligibility-service example: content modeling and operations, outside an interface
+      copy reference.'
+  - path: references/readability/diagnosis-and-editing.md
+    taken: 'The preservation ledger (facts, values, force, action, consequence, recovery, uncertainty, terms,
+      links, names) as one table; the added, dropped, and changed comparison; strongest problems first; the
+      deletion guardrails and moving hierarchy instead of meaning; the visible label starting the accessible
+      name; the worked edits (partial failure with kept work, destructive action, an estimate) rewritten in
+      Korean; the no-edit cases (a real contrast, a governed term, legal scope).'
+    dropped: 'The context-capture card (the plan''s brief and content hold it), the diagnosis table, the
+      seven-step loop wording, the report template (the skill''s Reporting covers it), and the plain-data
+      audit fixture: duplicated by plan fields or the skill body, or test material.'
+  - path: references/readability/korean-editing.md
+    taken: 'The three registers with recognition cues; compact labels against sentences and label against
+      instruction; register chosen by surface and kept; formality is not a safety mechanism; the same facts in
+      each register and no suffix conversion; requests and questions decided apart; accidental mixing;
+      honorific restraint; particles and endings carrying relations, restoring only what the product
+      supplies; translationese repairs (agentless passive, noun chains, connective overload, needless
+      pronoun) with the keep-when caution; dynamic particles in order of preference, the batchim test with
+      the ㄹ exception, and the semantic particle pairs a suffix rule cannot decide; positive framing not
+      erasing a failure.'
+    dropped: 'The scope and ownership section, the walk through what the batchim formula cannot solve for
+      Latin, digits, and punctuation (kept as one sentence), the surface-specific Korean checks table (repeats
+      the states section), the review checklist (folded into the reviewer handoff), the named vetted libraries,
+      and the no-edit relation example: repeated material, product names, and boilerplate. The source''s
+      honorific edit put -시- on the staff role as the person who entered the data, which changes the
+      meaning; the example was rewritten.'
+  - path: references/readability/locale-and-surface-review.md
+    taken: 'Locale is not a personality (no register from a nationality); the review questions per language
+      (Japanese potential form and politeness level and recoverable subjects and counters, Chinese script
+      and region and measure words and termbase, English frontloaded state and action); the language
+      reviewer handoff list; unconfirmed naturalness, honorific level, and terminology reported as such.'
+    dropped: 'The confidence labels and per-language evidence boundaries (maintainer bookkeeping about source
+      access, not agent text), the review layers order, the product-scoped register comparison, review
+      disagreement, and the surface matrix across locales: provenance, and repetition of the state sections.'
+  - path: assets/brand-voice-by-locale-cheatsheet.md
+    taken: 'Only the kinds of decision the rows compare, never a company or its wording: a formal register
+      scoped to one product, the two Japanese action-label patterns (object with を, noun phrase with の),
+      address form 你 or 您 as a documented product and market choice, final punctuation per role, and a
+      plain tone in a serious state.'
+    dropped: 'Every company row and its evidence labels, the exercise sentences, the borrowing record, and the
+      reuse limits: named products and guides, which agent-facing text does not carry.'
+  - path: assets/readability-review-card.md
+    taken: 'The preservation checks, the necessity roles (folded into the role table), the locale stop signs
+      (no particle from a last code point, Japanese subject omission and politeness not defects, Chinese
+      script and region, a competent reviewer for every locale), and do not auto-delete.'
+    dropped: 'The framing card (plan fields hold it), the signal list (cards and rules hold it), the audit
+      table fixtures, and the compact report: duplicated elsewhere or test material.'
+  - path: references/ux-methodology/user-messages-and-feedback.md
+    taken: 'Only the copy-facing parts: the cause diagnosis (validation, operational failure, permission,
+      connectivity, ambiguous outcome, partial completion) as what each may say and never say; an unknown
+      outcome worded as unconfirmed with a way to check; audience and privacy in error text (a support
+      reference only when real, no raw diagnostics, no confirming a protected item exists).'
+    dropped: 'Placement and interruption tables, message surface and overlay choice, pending against
+      disabled, sticky actions, announcement mechanics, durability, deprecation notes, and the HTML specimen:
+      lps-ux material, still to migrate.'
+  - path: references/production/i18n-l10n-and-rtl.md
+    taken: 'Whole messages with named variables, translator context, hidden grammar assumptions (counters
+      and plural categories), values kept numeric and formatted by the platform, a currency code where the
+      symbol is ambiguous, no expansion budget carried between languages.'
+    dropped: 'The locale scope record, RTL structure and mirroring, bidirectional content, CJK typography,
+      forms and names and addresses and input methods, images and icons, accessibility across locales, and
+      the QA matrix: layout, type, lps-ux, or a later i18n reference.'
+  external:
+  - kind: standard
+    name: WCAG 2.2 SC 2.5.3 Label in Name, 3.3.1 Error Identification, 3.3.3 Error Suggestion, 1.4.13 Content
+      on Hover or Focus, 4.1.3 Status Messages
+    used_for: The visible label starting the accessible name, errors described in text with a fix, hover
+      content not carrying material terms. Named in the sources; the text says none of them.
+  - kind: practice
+    name: Korean speech levels 해요체, 하십시오체 (합니다체), and 해라체, and the National Institute of Korean
+      Language classification of 해라체 as a written formal low level (named in the source)
+    used_for: The Korean register table and the plan's haeyo, hapnida, and haera values
+  - kind: standard
+    name: Unicode Standard, Hangul syllable composition (U+AC00 plus 28 finals)
+    used_for: The batchim test and the ㄹ exception for 로 and 으로
+  - kind: practice
+    name: Toss product guidance (해요체 across the interface, 닫기 rather than 취소 on a dialog) and Karrot, NAVER, SmartHR,
+      Microsoft, Apple, Mailchimp, ByteDance Semi Design, and PChome writing guidance (all named in the sources)
+    used_for: The decision types only (a register scoped to one product, action label patterns, 你 or 您,
+      punctuation per role); no name or wording reaches the text. 취소 reading two ways is said generally.
+  - kind: practice
+    name: GOV.UK error messages and error summary patterns, which separate validation from eligibility and
+      service problems (named in the source)
+    used_for: The cause table (input, operation, permission, connection, unknown outcome, partial)
+  - kind: standard
+    name: Unicode CLDR and ICU message formatting with named variables and plural categories
+    used_for: Whole messages per case; Korean, Japanese, and Chinese needing counters, not plural forms
+  - kind: practice
+    name: Korean, Japanese, and Chinese counters and measure words (점, 건, 명; 点, 件; 件, 个)
+    used_for: Counters follow the noun. Added while drafting; the sources do not list them.
+  - kind: practice
+    name: Chinese quotation marks by region (curly quotes on the mainland, corner brackets in Taiwan)
+    used_for: Chinese punctuation follows the region. Added while drafting; the sources do not mention quotes.
+  skill_body_pointer: For the roles a string can have, error and empty-state wording by cause, confirmations,
+    consent and price copy, register notes for Korean, Japanese, and Chinese, messages with variables, and what
+    an edit must preserve, read `references/interface-copy.md`.
+  resolved_2026_09_29:
+  - 'Register names follow the plan enum (haeyo, hapnida, haera, desu-masu, da-dearu, zh-formal, zh-casual,
+    en-formal, en-casual, other). The source''s 하십시오체 and 합니다체 are written hapnida; zh-casual and
+    zh-formal name the address form the register check reads (你 against 您), and the text says a plain 你
+    voice is not a careless one.'
+  - Agent-facing text names no company, guide, or vendor; the brand-voice source contributes decision types only.
+  - 'copy.fabricated-proof changed on 2026-09-29 after this text was first written: a quotation mark that opens
+    a dialog, heading, display, label, or control run is no longer read as a testimonial; one that opens running
+    copy still is. The confirmation guidance was rewritten to match (re-verified with the lint copy detectors).'
+  - 'The example copy in ko, ja, zh-Hans, and zh-Hant was run through every copy detector at plan and render
+    layers on 2026-09-29 (a throwaway extract): no findings after the quotation-mark change.'
+  left_for_later:
+  - 'lps-copy: the signal-family repair examples and the cross-language caution of llm-language-patterns.md
+    (its rules are done); a Korean-focused reference for honorific and particle detail beyond the compact
+    notes here; documentation and long-form help copy.'
+  - 'lps-ux: placement, interruption, overlay choice, pending against disabled, announcement, and durability
+    of messages (user-messages-and-feedback.md).'
+  - 'lapis and a later i18n reference: RTL and bidirectional content, CJK typography, names and addresses,
+    input methods, images and icons, the localization QA matrix (i18n-l10n-and-rtl.md).'
+  - 'docs: content models, inventory, lifecycle, and search from content-design.md.'
+  verify_before_release:
+  - 'Japanese and Chinese notes and sentences with proficient readers (none has read them; the text already frames
+    the notes as decisions to confirm): the label patterns, 予約を確認 against 予約の確認, ご確認ください, the
+    subject-omission advice, the zh-Hans and zh-Hant lines and the firing terms 烧制 and 燒製 and 焼成の受付,
+    quotation marks by region, and 你 or 您 as a product decision.'
+  - 'Checker behavior quoted in the text: copy.register-mix reading sentence endings against content.voice.register
+    and skipping quoted speech and endingless labels; copy.vague-cta reading a whole control label and duplicate
+    labels (gate); copy.name-swap on headline, subhead, and other; copy.translationese counting by density;
+    copy.fabricated-proof and an opening quotation mark; the states probe inducing error, offline, empty, and
+    partial states, the forms probe reading field errors, and the commits probe reading success and failure
+    claims and confirmations. Keep interface-copy.md in step if these change.'
+  verified_2026_09_30:
+  - 'The known checker gap in the states probe is closed: probes/states.py now takes its problem and retry words from
+    probes/_decision.py, which include Korean (오류, 실패, 다시 시도, 새로고침, and others), and
+    tests/test_behavior_labels.py runs a Korean and an English error state with a retry button in a real browser; both
+    pass.'
+  - 'Korean examples confirmed on 2026-09-30 by the maintainer, a native Korean reader: the three register lines, the
+    corrected honorific example, the translationese repairs, 취소 against 닫기 and the 예약 유지 and 예약 취소 buttons,
+    the particle rewrites, and the counter 점.'

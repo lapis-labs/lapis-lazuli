@@ -1,0 +1,117 @@
+[
+ {
+  "id": "42dot-sans",
+  "family": "42dot Sans",
+  "subsets": [
+   "korean",
+   "latin"
+  ],
+  "weights": [
+   300,
+   400,
+   500,
+   600,
+   700,
+   800
+  ],
+  "styles": [
+   "normal"
+  ],
+  "defSubset": "latin",
+  "variable": true,
+  "lastModified": "2024-01-10",
+  "category": "sans-serif",
+  "license": "OFL-1.1",
+  "type": "google"
+ },
+ {
+  "id": "abeezee",
+  "family": "ABeeZee",
+  "subsets": [
+   "latin",
+   "latin-ext"
+  ],
+  "weights": [
+   400
+  ],
+  "styles": [
+   "italic",
+   "normal"
+  ],
+  "defSubset": "latin",
+  "variable": false,
+  "lastModified": "2024-02-10",
+  "category": "sans-serif",
+  "license": "OFL-1.1",
+  "type": "google"
+ },
+ {
+  "id": "comic-mono",
+  "family": "Comic Mono",
+  "subsets": [
+   "latin"
+  ],
+  "weights": [
+   400,
+   700
+  ],
+  "styles": [
+   "normal"
+  ],
+  "defSubset": "latin",
+  "variable": false,
+  "lastModified": "2024-03-10",
+  "category": "monospace",
+  "license": "mit",
+  "type": "other"
+ },
+ {
+  "id": "dseg7-classic",
+  "family": "DSEG7 Classic",
+  "subsets": [
+   "latin"
+  ],
+  "weights": [
+   300,
+   400,
+   700
+  ],
+  "styles": [
+   "normal",
+   "italic"
+  ],
+  "defSubset": "latin",
+  "variable": false,
+  "lastModified": "2024-04-10",
+  "category": "other",
+  "license": "OFL-1.1",
+  "type": "other"
+ },
+ {
+  "id": "pretendard",
+  "family": "Pretendard",
+  "subsets": [
+   "latin"
+  ],
+  "weights": [
+   100,
+   200,
+   300,
+   400,
+   500,
+   600,
+   700,
+   800,
+   900
+  ],
+  "styles": [
+   "normal"
+  ],
+  "defSubset": "latin",
+  "variable": false,
+  "lastModified": "2024-05-10",
+  "category": "sans-serif",
+  "license": "OFL-1.1",
+  "type": "other"
+ }
+]

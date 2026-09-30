@@ -1,0 +1,425 @@
+{
+ "count": 4,
+ "count_total": 4,
+ "has_more": true,
+ "fonts": [
+  {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "name": "Kihim",
+   "version": "1.0",
+   "script": "latin",
+   "category": "Display",
+   "languages": null,
+   "is_new": false,
+   "inserted_at": "2020-01-10T09:00:00Z",
+   "publisher": {
+    "id": "00000000-0000-4000-8000-000000000002",
+    "links": [
+     {
+      "name": "GitHub",
+      "url": null
+     },
+     {
+      "name": "Website",
+      "url": "https://foundry.example.test/"
+     },
+     {
+      "name": "Twitter",
+      "url": null
+     }
+    ],
+    "name": "Example Type Foundry",
+    "email": null
+   },
+   "designers": [
+    {
+     "links": [
+      {
+       "name": "Twitter",
+       "url": "https://designer.example.test/kihim"
+      }
+     ],
+     "name": "Example Designer One"
+    }
+   ],
+   "font_tags": [
+    {
+     "name": "Signage"
+    },
+    {
+     "name": "Menus"
+    },
+    {
+     "name": "Bold"
+    },
+    {
+     "name": "Labels"
+    }
+   ],
+   "native_name": null,
+   "is_hot": false,
+   "is_top": false,
+   "slug": "kihim",
+   "display_publisher_as_designer": true,
+   "license_type": "itf_ffl",
+   "axes": [],
+   "styles": [
+    {
+     "default": true,
+     "id": "00000000-0000-4000-8000-000000000003",
+     "file": "//fonts.example.test/TRIMMED",
+     "weight": {
+      "label": "Regular",
+      "name": "Regular",
+      "number": 400,
+      "weight": 400,
+      "native_name": null
+     },
+     "is_variable": false,
+     "is_italic": false
+    }
+   ]
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000004",
+   "name": "General Sans",
+   "version": "1.0",
+   "script": "latin",
+   "category": "Sans",
+   "languages": "English, French, German, Spanish",
+   "is_new": false,
+   "inserted_at": "2020-02-20T10:00:00Z",
+   "publisher": {
+    "id": "00000000-0000-4000-8000-000000000002",
+    "links": [
+     {
+      "name": "GitHub",
+      "url": null
+     },
+     {
+      "name": "Website",
+      "url": "https://foundry.example.test/"
+     },
+     {
+      "name": "Twitter",
+      "url": null
+     }
+    ],
+    "name": "Example Type Foundry",
+    "email": null
+   },
+   "designers": [
+    {
+     "links": [
+      {
+       "name": "Twitter",
+       "url": "https://designer.example.test/general-sans"
+      }
+     ],
+     "name": "Example Designer Two"
+    }
+   ],
+   "font_tags": [
+    {
+     "name": "Packaging"
+    },
+    {
+     "name": "Logos"
+    },
+    {
+     "name": "Posters"
+    },
+    {
+     "name": "Websites"
+    }
+   ],
+   "native_name": null,
+   "is_hot": false,
+   "is_top": false,
+   "slug": "general-sans",
+   "display_publisher_as_designer": true,
+   "license_type": "itf_ffl",
+   "axes": [
+    {
+     "name": "wght",
+     "property": "wght",
+     "range_left": 200.0,
+     "range_right": 700.0,
+     "range_default": 600.0
+    }
+   ],
+   "styles": [
+    {
+     "default": false,
+     "id": "00000000-0000-4000-8000-000000000005",
+     "file": "//fonts.example.test/TRIMMED",
+     "weight": {
+      "label": "Extralight",
+      "name": "Extralight",
+      "number": 200,
+      "weight": 200,
+      "native_name": null
+     },
+     "is_variable": false,
+     "is_italic": false
+    },
+    {
+     "default": false,
+     "id": "00000000-0000-4000-8000-000000000006",
+     "file": "//fonts.example.test/TRIMMED",
+     "weight": {
+      "label": "Extralight Italic",
+      "name": "ExtralightItalic",
+      "number": 201,
+      "weight": 200,
+      "native_name": null
+     },
+     "is_variable": false,
+     "is_italic": true
+    },
+    {
+     "default": false,
+     "id": "00000000-0000-4000-8000-000000000007",
+     "file": "//fonts.example.test/TRIMMED",
+     "weight": {
+      "label": "Light",
+      "name": "Light",
+      "number": 300,
+      "weight": 300,
+      "native_name": null
+     },
+     "is_variable": false,
+     "is_italic": false
+    },
+    {
+     "default": false,
+     "id": "00000000-0000-4000-8000-000000000008",
+     "file": "//fonts.example.test/TRIMMED",
+     "weight": {
+      "label": "Light Italic",
+      "name": "LightItalic",
+      "number": 301,
+      "weight": 300,
+      "native_name": null
+     },
+     "is_variable": false,
+     "is_italic": true
+    },
+    {
+     "default": false,
+     "id": "00000000-0000-4000-8000-000000000009",
+     "file": "//fonts.example.test/TRIMMED",
+     "weight": {
+      "label": "Regular",
+      "name": "Regular",
+      "number": 400,
+      "weight": 400,
+      "native_name": null
+     },
+     "is_variable": false,
+     "is_italic": false
+    },
+    {
+     "default": false,
+     "id": "00000000-0000-4000-8000-00000000000a",
+     "file": "//fonts.example.test/TRIMMED",
+     "weight": {
+      "label": "Italic",
+      "name": "Italic",
+      "number": 401,
+      "weight": 400,
+      "native_name": null
+     },
+     "is_variable": false,
+     "is_italic": true
+    },
+    {
+     "default": false,
+     "id": "00000000-0000-4000-8000-00000000000b",
+     "file": "//fonts.example.test/TRIMMED",
+     "weight": {
+      "label": "Medium",
+      "name": "Medium",
+      "number": 500,
+      "weight": 500,
+      "native_name": null
+     },
+     "is_variable": false,
+     "is_italic": false
+    },
+    {
+     "default": false,
+     "id": "00000000-0000-4000-8000-00000000000c",
+     "file": "//fonts.example.test/TRIMMED",
+     "weight": {
+      "label": "Medium Italic",
+      "name": "MediumItalic",
+      "number": 501,
+      "weight": 500,
+      "native_name": null
+     },
+     "is_variable": false,
+     "is_italic": true
+    },
+    {
+     "default": false,
+     "id": "00000000-0000-4000-8000-00000000000d",
+     "file": "//fonts.example.test/TRIMMED",
+     "weight": {
+      "label": "Semibold",
+      "name": "Semibold",
+      "number": 600,
+      "weight": 600,
+      "native_name": null
+     },
+     "is_variable": false,
+     "is_italic": false
+    },
+    {
+     "default": false,
+     "id": "00000000-0000-4000-8000-00000000000e",
+     "file": "//fonts.example.test/TRIMMED",
+     "weight": {
+      "label": "Semibold Italic",
+      "name": "SemiboldItalic",
+      "number": 601,
+      "weight": 600,
+      "native_name": null
+     },
+     "is_variable": false,
+     "is_italic": true
+    },
+    {
+     "default": false,
+     "id": "00000000-0000-4000-8000-00000000000f",
+     "file": "//fonts.example.test/TRIMMED",
+     "weight": {
+      "label": "Bold",
+      "name": "Bold",
+      "number": 700,
+      "weight": 700,
+      "native_name": null
+     },
+     "is_variable": false,
+     "is_italic": false
+    },
+    {
+     "default": false,
+     "id": "00000000-0000-4000-8000-000000000010",
+     "file": "//fonts.example.test/TRIMMED",
+     "weight": {
+      "label": "Bold Italic",
+      "name": "BoldItalic",
+      "number": 701,
+      "weight": 700,
+      "native_name": null
+     },
+     "is_variable": false,
+     "is_italic": true
+    },
+    {
+     "default": true,
+     "id": "00000000-0000-4000-8000-000000000011",
+     "file": "//fonts.example.test/TRIMMED",
+     "weight": {
+      "label": "Variable",
+      "name": "Variable",
+      "number": 1,
+      "weight": 0,
+      "native_name": null
+     },
+     "is_variable": true,
+     "is_italic": false
+    },
+    {
+     "default": false,
+     "id": "00000000-0000-4000-8000-000000000012",
+     "file": "//fonts.example.test/TRIMMED",
+     "weight": {
+      "label": "Variable Italic",
+      "name": "VariableItalic",
+      "number": 2,
+      "weight": 0,
+      "native_name": null
+     },
+     "is_variable": true,
+     "is_italic": true
+    }
+   ]
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000013",
+   "name": "Aktura",
+   "version": "1.0",
+   "script": "latin",
+   "category": "Serif,  Blackletter, Display",
+   "languages": "English, French, German, Italian, Portuguese, Spanish",
+   "is_new": false,
+   "inserted_at": "2020-03-30T11:00:00Z",
+   "publisher": {
+    "id": "00000000-0000-4000-8000-000000000002",
+    "links": [
+     {
+      "name": "GitHub",
+      "url": null
+     },
+     {
+      "name": "Website",
+      "url": "https://foundry.example.test/"
+     },
+     {
+      "name": "Twitter",
+      "url": null
+     }
+    ],
+    "name": "Example Type Foundry",
+    "email": null
+   },
+   "designers": [
+    {
+     "links": [
+      {
+       "name": "Twitter",
+       "url": "https://designer.example.test/aktura"
+      }
+     ],
+     "name": "Example Designer Three"
+    }
+   ],
+   "font_tags": [
+    {
+     "name": "Websites"
+    },
+    {
+     "name": "Posters"
+    },
+    {
+     "name": "Menus"
+    }
+   ],
+   "native_name": null,
+   "is_hot": false,
+   "is_top": false,
+   "slug": "aktura",
+   "display_publisher_as_designer": true,
+   "license_type": "itf_ffl",
+   "axes": [],
+   "styles": [
+    {
+     "default": true,
+     "id": "00000000-0000-4000-8000-000000000014",
+     "file": "//fonts.example.test/TRIMMED",
+     "weight": {
+      "label": "Regular",
+      "name": "Regular",
+      "number": 400,
+      "weight": 400,
+      "native_name": null
+     },
+     "is_variable": false,
+     "is_italic": false
+    }
+   ]
+  }
+ ]
+}

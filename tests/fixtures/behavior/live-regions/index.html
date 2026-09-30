@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Live regions</title></head>
+<body><main><h1>Result messages</h1>
+<!-- Each button writes one result message into the region next to it. The regions differ only in the
+     markup that decides whether assistive technology reads the message aloud. -->
+<section>
+  <button data-region="status" type="button">Save with status</button><div id="status" role="status"></div>
+  <button data-region="log" type="button">Save with log</button><div id="log" role="log"></div>
+  <button data-region="alert" type="button">Save with alert</button><div id="alert" role="alert"></div>
+  <button data-region="assertive" type="button">Save with assertive region</button><div id="assertive" aria-live="assertive"></div>
+  <button data-region="polite" type="button">Save with polite region</button><div id="polite" aria-live="polite"></div>
+  <button data-region="status-assertive" type="button">Save with status made assertive</button><div id="status-assertive" role="status" aria-live="assertive"></div>
+  <button data-region="alert-polite" type="button">Save with alert made polite</button><div id="alert-polite" role="alert" aria-live="polite"></div>
+  <button data-region="status-off" type="button">Save with status switched off</button><div id="status-off" role="status" aria-live="off"></div>
+  <button data-region="alert-off" type="button">Save with alert switched off</button><div id="alert-off" role="alert" aria-live="off"></div>
+  <button data-region="timer" type="button">Save with timer</button><div id="timer" role="timer"></div>
+  <button data-region="plain" type="button">Save with plain text</button><div id="plain"></div>
+</section></main>
+<script>
+  document.addEventListener('click', event => {
+    const region = event.target.dataset.region;
+    if (region) document.getElementById(region).textContent = 'Saved ' + region;
+  });
+</script></body></html>

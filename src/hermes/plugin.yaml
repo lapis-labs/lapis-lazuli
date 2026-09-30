@@ -1,0 +1,4 @@
+# Source for plugins/hermes/lapis-lazuli/plugin.yaml (install/OUTPUTS.md, Hermes). The build adds
+# name, version, and author from install/harnesses.yaml and the release version.
+description: Session summary for LapisLazuli skills
+provides_hooks: [pre_llm_call]

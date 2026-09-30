@@ -1,0 +1,592 @@
+"""Adobe Fonts through the operating system's font API, never through their files (macOS Core Text).
+
+Adobe's terms allow other software to list and use the fonts a subscription activates through the
+operating system's font stack, and forbid reaching them any other way, the folders they are installed in
+included. So lazuli never opens, stats, lists, copies, or passes to fontTools or Pillow anything under
+Adobe's folders (`~/Library/Application Support/Adobe/`, `%APPDATA%\\Adobe\\CoreSync`). On macOS it asks
+Core Text instead:
+
+- Which faces are Adobe Fonts: the descriptor's URL attribute, read as a string and matched by name only
+  (`is_adobe_path`). The URL is never opened; it classifies a face and nothing else. A face's identity in
+  the database is `coretext:<PostScript name>`, which is not a path.
+- Names, coverage, weight, and slant: descriptor attributes, `CTFontCopyName` and
+  `CTFontCopyLocalizedName` (family, style, version, manufacturer, designer), and
+  `CTFontGetGlyphsForCharacters`. The name-table language ids of file faces have no Core Text
+  counterpart: Core Text gives one localized name, in the user's preferred language, and that is the only
+  one recorded (`names_i18n_json` holds it when that language is Korean, Japanese, or Chinese).
+  `vendor_id` (OS/2) stays empty, since nothing here reads a table.
+- Measurement: `CTFace` answers the questions `measure.Face` answers, from metrics Core Text gives in font
+  units (`CTFontGetBoundingRectsForGlyphs`, `CTFontGetAdvancesForGlyphs`, `CTFontGetUnitsPerEm`) and from
+  glyphs the system draws (`CTFontDrawGlyphs`) into an 8-bit grayscale bitmap that lives for one
+  measurement and is discarded. Only derived numbers are stored. No call returns an outline, a table, or
+  file data, and `ALLOWED_CALLS` is the whole list of symbols this module binds: `_Library.bind` refuses any
+  other, so outlines (`CTFontCreatePathForGlyph`) and table bytes (`CTFontCopyTable`) cannot be added
+  by accident.
+
+`LAZULI_FONT_ROOTS` (tests, evaluations) turns the listing off (`provider()` returns None), so no Adobe data
+reaches a test or an evaluation. Adobe Fonts terms allow using this data for inference only. Windows has no
+counterpart here: Adobe Fonts are absent from the inventory there.
+"""
+from __future__ import annotations
+
+import array
+import os
+import sys
+from dataclasses import dataclass
+from functools import lru_cache
+from pathlib import PurePath
+from typing import TYPE_CHECKING, Callable
+
+if TYPE_CHECKING:
+    import numpy as np
+
+IDENTITY_PREFIX = "coretext:"
+SYMLINK_LIMIT = 40
+UNICODE_PLANES = (0, 1, 2, 3)            # planes that hold letters: BMP, SMP, SIP, TIP
+
+# The Core Text, Core Foundation, and Core Graphics symbols this module may bind, and nothing else.
+ALLOWED_CALLS = frozenset({
+    # Core Foundation: values only
+    "CFRelease", "CFArrayGetCount", "CFArrayGetValueAtIndex", "CFStringGetLength", "CFStringGetCString",
+    "CFStringGetMaximumSizeForEncoding", "CFURLCopyFileSystemPath", "CFDictionaryGetValue", "CFNumberGetValue",
+    # Core Text: enumeration, descriptor attributes, names, character mapping, metrics, drawing
+    "CTFontCollectionCreateFromAvailableFonts", "CTFontCollectionCreateMatchingFontDescriptors",
+    "CTFontDescriptorCopyAttribute", "CTFontCreateWithFontDescriptor",
+    "CTFontCopyName", "CTFontCopyLocalizedName", "CTFontCopyPostScriptName", "CTFontGetUnitsPerEm",
+    "CTFontGetGlyphsForCharacters", "CTFontGetBoundingRectsForGlyphs", "CTFontGetAdvancesForGlyphs",
+    "CTFontDrawGlyphs",
+    # Core Graphics: an in-memory grayscale bitmap
+    "CGColorSpaceCreateDeviceGray", "CGBitmapContextCreate", "CGContextSetGrayFillColor",
+    "CGContextSetShouldAntialias", "CGContextSetAllowsFontSmoothing", "CGContextSetShouldSmoothFonts",
+})
+
+
+def require_allowed(name: str) -> None:
+    """Refuse a symbol outside `ALLOWED_CALLS` (outline, table, or file-data calls among them)."""
+    if name not in ALLOWED_CALLS:
+        raise PermissionError(f"{name} is not one of the Core Text calls lazuli may use on Adobe Fonts")
+
+
+# ---------------------------------------------------------------- Adobe's folders, by name
+
+def is_adobe_path(path: str | os.PathLike) -> bool:
+    """Whether `path` is inside Adobe's font folders, decided from its name alone (nothing is touched):
+    `.../Application Support/Adobe/...` (macOS) or `.../Adobe/CoreSync/...` (Windows), any case."""
+    parts = [part.casefold() for part in PurePath(os.path.normpath(os.fspath(path))).parts]
+    pairs = set(zip(parts, parts[1:]))
+    return ("application support", "adobe") in pairs or ("adobe", "coresync") in pairs
+
+
+def reaches_adobe(path: str | os.PathLike) -> bool:
+    """Whether `path` is in Adobe's folders by name, or a symbolic link on its way leads there. Links are
+    followed one name at a time with `readlink`, and the walk stops at the first name that is Adobe's, so
+    nothing under Adobe's folders is ever looked at."""
+    target = PurePath(os.path.abspath(os.path.expanduser(os.fspath(path))))
+    current = PurePath(target.anchor)
+    pending = list(reversed(target.parts[1:]))
+    links = 0
+    while pending:
+        part = pending.pop()
+        if part in ("", "."):
+            continue
+        if part == "..":
+            current = current.parent
+            continue
+        candidate = current / part
+        if is_adobe_path(candidate):
+            return True
+        try:
+            link = os.readlink(candidate)
+        except OSError:                                  # not a link, or not there
+            current = candidate
+            continue
+        links += 1
+        if links > SYMLINK_LIMIT:
+            return False                                 # a loop is no font
+        destination = PurePath(link)
+        if destination.is_absolute():
+            current = PurePath(destination.anchor)
+            pending.extend(reversed(destination.parts[1:]))
+        else:
+            pending.extend(reversed(destination.parts))
+    return False
+
+
+class AdobeFileRefused(ValueError):
+    """A file inside Adobe's font folders was named. lazuli reads Adobe Fonts only through the operating
+    system's font API."""
+
+
+def refuse_adobe_file(path: str | os.PathLike) -> None:
+    if reaches_adobe(path):
+        raise AdobeFileRefused(f"{path}: inside Adobe's font folders, which lazuli never opens (macOS lists "
+                               "Adobe Fonts through Core Text; Windows does not list them)")
+
+
+# ---------------------------------------------------------------- what the scanner and measurer see
+
+@dataclass(frozen=True)
+class AdobeFace:
+    """One Adobe Fonts face as the operating system lists it."""
+    identity: str                                  # local_font.path: `coretext:<PostScript name>`, never a path
+    token: str                                     # local_font.mtime: changes when the face is updated
+    describe: Callable[[dict], dict]               # coverage blocks -> names, one localized name, coverage counts
+
+
+class Provider:
+    """What the scanner and the measurer need from an operating system font list."""
+
+    def identities(self) -> list[str]:
+        raise NotImplementedError
+
+    def faces(self) -> list[AdobeFace]:
+        raise NotImplementedError
+
+    def open(self, identity: str, raster_px: int):
+        """A `measure.Face`-shaped adapter for one listed face; LookupError when it is no longer listed."""
+        raise NotImplementedError
+
+
+def supported() -> bool:
+    """Whether this platform lists Adobe Fonts through an operating system API lazuli uses (macOS only)."""
+    return sys.platform == "darwin"
+
+
+def provider() -> Provider | None:
+    """The Core Text provider on macOS; None elsewhere, and None while `LAZULI_FONT_ROOTS` replaces the
+    inventory, so tests and evaluations never see Adobe Fonts data."""
+    if not supported() or os.environ.get("LAZULI_FONT_ROOTS"):
+        return None
+    return CoreText()
+
+
+# ---------------------------------------------------------------- Core Text through ctypes
+
+def _structures():
+    import ctypes as C
+
+    class Point(C.Structure):
+        _fields_ = [("x", C.c_double), ("y", C.c_double)]
+
+    class Size(C.Structure):
+        _fields_ = [("width", C.c_double), ("height", C.c_double)]
+
+    class Rect(C.Structure):
+        _fields_ = [("x", C.c_double), ("y", C.c_double), ("width", C.c_double), ("height", C.c_double)]
+
+    return Point, Size, Rect
+
+
+UTF8 = 0x08000100                                # kCFStringEncodingUTF8
+NUMBER_DOUBLE = 13                               # kCFNumberDoubleType
+NUMBER_INT = 9                                   # kCFNumberIntType
+ITALIC_TRAIT = 1                                 # kCTFontItalicTrait in the symbolic traits
+WEIGHT_ANCHORS = ((-0.8, 100), (-0.6, 200), (-0.4, 300), (0.0, 400), (0.23, 500), (0.3, 600), (0.4, 700),
+                  (0.56, 800), (0.62, 900))      # kCTFontWeightTrait of the OS/2 weight classes
+LOCALIZED_LANGUAGES = (("ko", "ko"), ("ja", "ja"), ("zh-hans", "zh-Hans"), ("zh-cn", "zh-Hans"),
+                       ("zh-sg", "zh-Hans"), ("zh-hant", "zh-Hant"), ("zh-tw", "zh-Hant"), ("zh-hk", "zh-Hant"),
+                       ("zh-mo", "zh-Hant"), ("zh", "zh-Hans"))
+
+
+def weight_class(trait: float | None) -> int | None:
+    """The OS/2 weight class nearest to a Core Text weight trait (-1 to 1)."""
+    if trait is None:
+        return None
+    return min(WEIGHT_ANCHORS, key=lambda anchor: abs(anchor[0] - trait))[1]
+
+
+def language_key(language: str | None) -> str | None:
+    """`ko`, `ja`, `zh-Hans`, or `zh-Hant` for a language tag Core Text reports, else None."""
+    tag = (language or "").casefold().replace("_", "-")
+    for prefix, key in LOCALIZED_LANGUAGES:
+        if tag == prefix or tag.startswith(prefix + "-"):
+            return key
+    return None
+
+
+@lru_cache(maxsize=8)
+def _utf16(first: int, count: int) -> array.array:
+    """`count` consecutive code points from `first` as UTF-16 code units (surrogate pairs above U+FFFF), the
+    input Core Text's character mapping takes. Read-only after it is made, so one copy serves every face."""
+    if first + count <= 0x10000:
+        return array.array("H", range(first, first + count))
+    units = array.array("H")
+    for code in range(first, first + count):
+        value = code - 0x10000
+        units.extend((0xD800 + (value >> 10), 0xDC00 + (value & 0x3FF)))
+    return units
+
+
+class _Library:
+    """The Core Text, Core Foundation, and Core Graphics symbols this module uses, bound from
+    `ALLOWED_CALLS` only."""
+
+    def __init__(self) -> None:
+        import ctypes
+        import ctypes.util
+
+        self.C = ctypes
+        self.Point, self.Size, self.Rect = _structures()
+        frameworks = {}
+        for name in ("CoreFoundation", "CoreText", "CoreGraphics"):
+            found = ctypes.util.find_library(name)
+            if not found:
+                raise OSError(f"the {name} framework is not available")
+            frameworks[name] = ctypes.cdll.LoadLibrary(found)
+        self.cf, self.ct, self.cg = frameworks["CoreFoundation"], frameworks["CoreText"], frameworks["CoreGraphics"]
+        self.bound: set[str] = set()
+        vp, c_long, c_double = ctypes.c_void_p, ctypes.c_long, ctypes.c_double
+        self.CFRelease = self.bind(self.cf, "CFRelease", [vp])
+        self.CFArrayGetCount = self.bind(self.cf, "CFArrayGetCount", [vp], c_long)
+        self.CFArrayGetValueAtIndex = self.bind(self.cf, "CFArrayGetValueAtIndex", [vp, c_long], vp)
+        self.CFStringGetLength = self.bind(self.cf, "CFStringGetLength", [vp], c_long)
+        self.CFStringGetMaximumSizeForEncoding = self.bind(self.cf, "CFStringGetMaximumSizeForEncoding",
+                                                           [c_long, ctypes.c_uint32], c_long)
+        self.CFStringGetCString = self.bind(self.cf, "CFStringGetCString",
+                                            [vp, ctypes.c_char_p, c_long, ctypes.c_uint32], ctypes.c_bool)
+        self.CFURLCopyFileSystemPath = self.bind(self.cf, "CFURLCopyFileSystemPath", [vp, c_long], vp)
+        self.CFDictionaryGetValue = self.bind(self.cf, "CFDictionaryGetValue", [vp, vp], vp)
+        self.CFNumberGetValue = self.bind(self.cf, "CFNumberGetValue", [vp, c_long, vp], ctypes.c_bool)
+        self.CTFontCollectionCreateFromAvailableFonts = self.bind(
+            self.ct, "CTFontCollectionCreateFromAvailableFonts", [vp], vp)
+        self.CTFontCollectionCreateMatchingFontDescriptors = self.bind(
+            self.ct, "CTFontCollectionCreateMatchingFontDescriptors", [vp], vp)
+        self.CTFontDescriptorCopyAttribute = self.bind(self.ct, "CTFontDescriptorCopyAttribute", [vp, vp], vp)
+        self.CTFontCreateWithFontDescriptor = self.bind(self.ct, "CTFontCreateWithFontDescriptor",
+                                                        [vp, c_double, vp], vp)
+        self.CTFontCopyName = self.bind(self.ct, "CTFontCopyName", [vp, vp], vp)
+        self.CTFontCopyLocalizedName = self.bind(self.ct, "CTFontCopyLocalizedName",
+                                                 [vp, vp, ctypes.POINTER(vp)], vp)
+        self.CTFontCopyPostScriptName = self.bind(self.ct, "CTFontCopyPostScriptName", [vp], vp)
+        self.CTFontGetUnitsPerEm = self.bind(self.ct, "CTFontGetUnitsPerEm", [vp], ctypes.c_uint32)
+        self.CTFontGetGlyphsForCharacters = self.bind(self.ct, "CTFontGetGlyphsForCharacters",
+                                                      [vp, vp, vp, c_long], ctypes.c_bool)
+        self.CTFontGetBoundingRectsForGlyphs = self.bind(
+            self.ct, "CTFontGetBoundingRectsForGlyphs", [vp, ctypes.c_uint32, vp, vp, c_long], self.Rect)
+        self.CTFontGetAdvancesForGlyphs = self.bind(self.ct, "CTFontGetAdvancesForGlyphs",
+                                                    [vp, ctypes.c_uint32, vp, vp, c_long], c_double)
+        self.CTFontDrawGlyphs = self.bind(self.ct, "CTFontDrawGlyphs", [vp, vp, vp, c_long, vp])
+        self.CGColorSpaceCreateDeviceGray = self.bind(self.cg, "CGColorSpaceCreateDeviceGray", [], vp)
+        self.CGBitmapContextCreate = self.bind(
+            self.cg, "CGBitmapContextCreate",
+            [vp, ctypes.c_size_t, ctypes.c_size_t, ctypes.c_size_t, ctypes.c_size_t, vp, ctypes.c_uint32], vp)
+        self.CGContextSetGrayFillColor = self.bind(self.cg, "CGContextSetGrayFillColor", [vp, ctypes.c_double,
+                                                                                          ctypes.c_double])
+        for setting in ("CGContextSetShouldAntialias", "CGContextSetAllowsFontSmoothing",
+                        "CGContextSetShouldSmoothFonts"):
+            setattr(self, setting, self.bind(self.cg, setting, [vp, ctypes.c_bool]))
+        self.keys = {name: vp.in_dll(self.ct, name).value for name in (
+            "kCTFontURLAttribute", "kCTFontNameAttribute", "kCTFontTraitsAttribute", "kCTFontWeightTrait",
+            "kCTFontSymbolicTrait", "kCTFontFamilyNameKey", "kCTFontStyleNameKey", "kCTFontVersionNameKey",
+            "kCTFontManufacturerNameKey", "kCTFontDesignerNameKey")}
+        self.gray = None
+
+    def bind(self, framework, name: str, argtypes: list, restype=None):
+        require_allowed(name)
+        function = getattr(framework, name)
+        function.argtypes = argtypes
+        function.restype = restype
+        self.bound.add(name)
+        return function
+
+    def string(self, ref) -> str | None:
+        """A CFString as text; None for a null reference."""
+        if not ref:
+            return None
+        size = self.CFStringGetMaximumSizeForEncoding(self.CFStringGetLength(ref), UTF8) + 1
+        buffer = self.C.create_string_buffer(size)
+        text = buffer.value.decode("utf-8", "replace") if self.CFStringGetCString(ref, buffer, size, UTF8) else None
+        return text
+
+    def number(self, ref, kind: int):
+        if not ref:
+            return None
+        value = self.C.c_double() if kind == NUMBER_DOUBLE else self.C.c_int()
+        return value.value if self.CFNumberGetValue(ref, kind, self.C.byref(value)) else None
+
+    def attribute_string(self, descriptor, key: str) -> str | None:
+        ref = self.CTFontDescriptorCopyAttribute(descriptor, self.keys[key])
+        try:
+            return self.string(ref)
+        finally:
+            if ref:
+                self.CFRelease(ref)
+
+    def url_path(self, descriptor) -> str | None:
+        """The file URL a descriptor carries, as text. It is matched by name and never opened."""
+        ref = self.CTFontDescriptorCopyAttribute(descriptor, self.keys["kCTFontURLAttribute"])
+        if not ref:
+            return None
+        try:
+            text = self.CFURLCopyFileSystemPath(ref, 0)     # kCFURLPOSIXPathStyle
+            try:
+                return self.string(text)
+            finally:
+                if text:
+                    self.CFRelease(text)
+        finally:
+            self.CFRelease(ref)
+
+    def traits(self, descriptor) -> tuple[float | None, int | None]:
+        """(weight trait, symbolic traits) from a descriptor's trait dictionary."""
+        ref = self.CTFontDescriptorCopyAttribute(descriptor, self.keys["kCTFontTraitsAttribute"])
+        if not ref:
+            return None, None
+        try:
+            weight = self.number(self.CFDictionaryGetValue(ref, self.keys["kCTFontWeightTrait"]), NUMBER_DOUBLE)
+            symbolic = self.number(self.CFDictionaryGetValue(ref, self.keys["kCTFontSymbolicTrait"]), NUMBER_INT)
+            return weight, symbolic
+        finally:
+            self.CFRelease(ref)
+
+    def name(self, font, key: str) -> str | None:
+        ref = self.CTFontCopyName(font, self.keys[key])
+        try:
+            return (self.string(ref) or "").strip() or None
+        finally:
+            if ref:
+                self.CFRelease(ref)
+
+    def localized_name(self, font, key: str) -> tuple[str | None, str | None]:
+        language = self.C.c_void_p()
+        ref = self.CTFontCopyLocalizedName(font, self.keys[key], self.C.byref(language))
+        try:
+            return (self.string(ref) or "").strip() or None, self.string(language)
+        finally:
+            for item in (ref, language):
+                if item:
+                    self.CFRelease(item)
+
+    def glyph_array(self, font, first: int, count: int):
+        """Glyph ids of `count` consecutive code points from `first` (a plane or a block), 0 where unmapped.
+        Code points above U+FFFF go in as surrogate pairs; the glyph lands in the high surrogate's slot."""
+        units = _utf16(first, count)
+        glyphs = array.array("H", bytes(2 * len(units)))
+        units_ref = (self.C.c_uint16 * len(units)).from_buffer(units)
+        glyphs_ref = (self.C.c_uint16 * len(glyphs)).from_buffer(glyphs)
+        self.CTFontGetGlyphsForCharacters(font, units_ref, glyphs_ref, len(units))
+        if first + count > 0x10000:
+            glyphs = glyphs[0::2]                       # one glyph per code point, from the high surrogate slot
+        return glyphs
+
+
+# ---------------------------------------------------------------- the provider
+
+class CoreText(Provider):
+    """Adobe Fonts faces as Core Text lists them (see the module doc for what is read). `is_adobe` decides from
+    a face's URL, as text, whether it is an Adobe Fonts face; tests narrow it to their own synthetic fonts so
+    that no real Adobe face is ever read."""
+
+    def __init__(self, is_adobe: Callable[[str], bool] = is_adobe_path) -> None:
+        self.is_adobe = is_adobe
+        self.lib = _Library()
+        self._collection = None
+        self._descriptors = None
+        self._index: dict[str, int] | None = None
+
+    def __del__(self) -> None:
+        if getattr(self, "_descriptors", None):
+            self.lib.CFRelease(self._descriptors)
+        if getattr(self, "_collection", None):
+            self.lib.CFRelease(self._collection)
+
+    def _list(self) -> dict[str, int]:
+        """identity -> position in the descriptor array, for the Adobe faces, first listing of a name wins."""
+        if self._index is not None:
+            return self._index
+        lib = self.lib
+        self._collection = lib.CTFontCollectionCreateFromAvailableFonts(None)
+        self._descriptors = lib.CTFontCollectionCreateMatchingFontDescriptors(self._collection)
+        index: dict[str, int] = {}
+        for position in range(lib.CFArrayGetCount(self._descriptors) if self._descriptors else 0):
+            descriptor = lib.CFArrayGetValueAtIndex(self._descriptors, position)
+            path = lib.url_path(descriptor)
+            if path is None or not self.is_adobe(path):
+                continue
+            postscript = lib.attribute_string(descriptor, "kCTFontNameAttribute")
+            if postscript:
+                index.setdefault(IDENTITY_PREFIX + postscript, position)
+        self._index = index
+        return index
+
+    def _descriptor(self, identity: str):
+        position = self._list().get(identity)
+        if position is None:
+            raise LookupError(f"Core Text does not list {identity}")
+        return self.lib.CFArrayGetValueAtIndex(self._descriptors, position)
+
+    def identities(self) -> list[str]:
+        return sorted(self._list())
+
+    def faces(self) -> list[AdobeFace]:
+        out = []
+        for identity in self.identities():
+            descriptor = self._descriptor(identity)
+            font = self.lib.CTFontCreateWithFontDescriptor(descriptor, 12.0, None)
+            try:
+                version = self.lib.name(font, "kCTFontVersionNameKey") or ""
+            finally:
+                self.lib.CFRelease(font)
+            out.append(AdobeFace(identity, IDENTITY_PREFIX + version,
+                                 lambda blocks, identity=identity: self._describe(identity, blocks)))
+        return out
+
+    def _describe(self, identity: str, blocks: dict[str, list[tuple[int, int]]]) -> dict:
+        """Names, one localized family name, and coverage counts of a face. `blocks` maps a coverage name to
+        code point ranges (scan.COVERAGE)."""
+        lib = self.lib
+        font = lib.CTFontCreateWithFontDescriptor(self._descriptor(identity), 12.0, None)
+        try:
+            ps_ref = lib.CTFontCopyPostScriptName(font)
+            try:
+                postscript = (lib.string(ps_ref) or "").strip() or None
+            finally:
+                if ps_ref:
+                    lib.CFRelease(ps_ref)
+            family = lib.name(font, "kCTFontFamilyNameKey")
+            local, language = lib.localized_name(font, "kCTFontFamilyNameKey")
+            key = language_key(language)
+            glyphs = lib.glyph_array(font, 0, 0x10000)
+            coverage = {}
+            for block, ranges in blocks.items():
+                count = sum((hi - lo + 1) - glyphs[lo:hi + 1].count(0) for lo, hi in ranges)
+                if count:
+                    coverage[block] = count
+            return {"postscript_name": postscript, "family": family, "subfamily": lib.name(font, "kCTFontStyleNameKey"),
+                    "names_i18n": {key: local} if key and local else {},
+                    "manufacturer": lib.name(font, "kCTFontManufacturerNameKey"),
+                    "designer": lib.name(font, "kCTFontDesignerNameKey"), "coverage": coverage}
+        finally:
+            lib.CFRelease(font)
+
+    def open(self, identity: str, raster_px: int) -> CTFace:
+        return CTFace(self.lib, self._descriptor(identity), raster_px)
+
+
+# ---------------------------------------------------------------- measurement adapter
+
+class CTFace:
+    """`measure.Face` for a face Core Text lists: the same questions, answered from Core Text metrics in font
+    units and from glyphs the system draws into a bitmap that lives for one call. `pixel_outline` is not
+    checked (it needs contours, and no outline is ever read), so it stays unmeasured."""
+
+    method = "coretext"
+
+    def __init__(self, lib: _Library, descriptor, raster_px: int) -> None:
+        self.lib = lib
+        self.raster_px = raster_px
+        probe = lib.CTFontCreateWithFontDescriptor(descriptor, 1000.0, None)
+        self.upm = int(lib.CTFontGetUnitsPerEm(probe))
+        lib.CFRelease(probe)
+        self.font = lib.CTFontCreateWithFontDescriptor(descriptor, float(self.upm), None)     # one point per unit
+        self.raster_font = lib.CTFontCreateWithFontDescriptor(descriptor, float(raster_px), None)
+        self.weight_trait, self.symbolic = lib.traits(descriptor)
+        self._cmap: dict[int, int] | None = None
+        self._bounds: dict[str, tuple | None] = {}
+
+    def __del__(self) -> None:
+        for name in ("font", "raster_font"):
+            if getattr(self, name, None):
+                self.lib.CFRelease(getattr(self, name))
+
+    @property
+    def cmap(self) -> dict[int, int]:
+        """code point -> glyph id for the planes that hold letters."""
+        if self._cmap is None:
+            cmap = {}
+            for plane in UNICODE_PLANES:
+                first = plane * 0x10000
+                glyphs = self.lib.glyph_array(self.font, first, 0x10000)
+                cmap.update((first + offset, glyph) for offset, glyph in enumerate(glyphs) if glyph)
+            self._cmap = cmap
+        return self._cmap
+
+    def font_metrics(self) -> dict:
+        """The face-level numbers the measurer records; weight class and italic come from Core Text traits."""
+        metrics = {"upm": self.upm}
+        if (weight := weight_class(self.weight_trait)) is not None:
+            metrics["weight_class"] = weight
+        if self.symbolic is not None:
+            metrics["italic"] = bool(self.symbolic & ITALIC_TRAIT)
+        return metrics
+
+    def has(self, ch: str) -> bool:
+        return ord(ch) in self.cmap
+
+    def _glyph(self, ch: str):
+        glyph = self.lib.C.c_uint16(self.cmap[ord(ch)])
+        return glyph
+
+    def _rect(self, font, ch: str):
+        lib = self.lib
+        rect = lib.Rect()
+        lib.CTFontGetBoundingRectsForGlyphs(font, 0, lib.C.byref(self._glyph(ch)), lib.C.byref(rect), 1)
+        return rect
+
+    def bounds(self, ch: str) -> tuple[float, float, float, float] | None:
+        """(xMin, yMin, xMax, yMax) in font units."""
+        if ch not in self._bounds:
+            if not self.has(ch):
+                self._bounds[ch] = None
+            else:
+                rect = self._rect(self.font, ch)
+                self._bounds[ch] = (None if rect.width <= 0 and rect.height <= 0 else
+                                    (rect.x, rect.y, rect.x + rect.width, rect.y + rect.height))
+        return self._bounds[ch]
+
+    def height(self, ch: str) -> float | None:
+        b = self.bounds(ch)
+        return b[3] - b[1] if b else None
+
+    def width(self, ch: str) -> float | None:
+        b = self.bounds(ch)
+        return b[2] - b[0] if b else None
+
+    def advance(self, ch: str) -> int | None:
+        if not self.has(ch):
+            return None
+        lib = self.lib
+        size = lib.Size()
+        lib.CTFontGetAdvancesForGlyphs(self.font, 0, lib.C.byref(self._glyph(ch)), lib.C.byref(size), 1)
+        return round(size.width)
+
+    def raster(self, ch: str) -> np.ndarray | None:
+        """Ink mask of one glyph, cropped to its ink; rows run top to bottom. The system draws the glyph white
+        on black into a bitmap that is dropped when this returns."""
+        import math
+
+        import numpy as np
+
+        if not self.has(ch):
+            return None
+        lib = self.lib
+        rect = self._rect(self.raster_font, ch)
+        if rect.width <= 0 or rect.height <= 0:
+            return None
+        pad = 8
+        left, bottom = math.floor(rect.x), math.floor(rect.y)
+        width = math.ceil(rect.x + rect.width) - left + 2 * pad
+        height = math.ceil(rect.y + rect.height) - bottom + 2 * pad
+        pixels = (lib.C.c_ubyte * (width * height))()
+        if lib.gray is None:
+            lib.gray = lib.CGColorSpaceCreateDeviceGray()
+        context = lib.CGBitmapContextCreate(pixels, width, height, 8, width, lib.gray, 0)   # kCGImageAlphaNone
+        if not context:
+            return None
+        try:
+            lib.CGContextSetShouldAntialias(context, True)
+            lib.CGContextSetAllowsFontSmoothing(context, False)
+            lib.CGContextSetShouldSmoothFonts(context, False)
+            lib.CGContextSetGrayFillColor(context, 1.0, 1.0)
+            position = lib.Point(pad - left, pad - bottom)
+            lib.CTFontDrawGlyphs(self.raster_font, lib.C.byref(self._glyph(ch)), lib.C.byref(position), 1, context)
+        finally:
+            lib.CFRelease(context)
+        ink = np.frombuffer(pixels, dtype=np.uint8).reshape(height, width) > 127     # row 0 is the top
+        rows, cols = np.where(ink)
+        if not len(rows):
+            return None
+        return ink[rows.min():rows.max() + 1, cols.min():cols.max() + 1]
+
+    def units(self, px: float) -> float:
+        return px * self.upm / self.raster_px

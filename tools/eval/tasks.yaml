@@ -1,0 +1,111 @@
+# Skill-effectiveness tasks (schema: tools/eval/README.md, "Tasks").
+# `prompt` is sent unchanged to both arms; `acceptance` is for the human or critic reading the blind
+# review sheet and is never shown to the agent. `skills` are the dist/skills trees the with-skill arm
+# receives. `checks` names what score.py runs: `behavior` needs the stub (a path relative to this
+# folder); without it the behavior check is not applicable and the task never scores it.
+version: 1
+
+tasks:
+  kiln-landing-ko:
+    title: Korean mobile-first landing for a pottery class studio
+    skills: [lapis, lps-copy, lps-system]
+    checks:
+      render: true
+      lint: true
+      behavior: null
+    prompt: |
+      Task id: kiln-landing-ko
+
+      Build a mobile-first landing page for a small pottery studio, as a static site in the current
+      folder: index.html at the folder root, with any CSS, JavaScript, and images beside it or inline.
+      No build step, no package installs, and no network requests when the page loads (no CDN, web
+      fonts, or remote images).
+
+      The studio is 물레마루 공방 (fictional), a wheel-throwing studio near Hapjeong Station in Seoul,
+      run by two potters. Most visitors are first-timers, often two friends or a couple, who found it
+      through a friend or a map search. The page has one job: get them to reserve a seat in a
+      one-day class.
+
+      Use only these facts. Invent no reviews, ratings, awards, visitor counts, press mentions, or
+      other prices:
+      - One-day wheel-throwing class: 2 hours, ₩48,000 per person; clay, glaze, and firing included.
+      - Sessions on Saturdays and Sundays at 11:00, 14:00, and 17:00; six seats per session.
+      - Pieces are fired after the class and ready for pickup about three weeks later.
+      - Free cancellation until 3 days before the class.
+      - The studio is open 10:00-20:00 every day except Monday.
+      - Seats are booked on the studio's KakaoTalk channel (search 물레마루 공방); this page does not
+        take bookings itself.
+      - No photographs are provided. Make any imagery yourself (inline SVG or CSS) or use none.
+
+      All visible copy is Korean, written for the people above. The page must work from 320 px wide
+      upward, by keyboard alone, and with reduced motion respected.
+
+      Nobody is available to answer questions and there is no review step. Make the decisions
+      yourself, finish the page, and end with a short note of the assumptions you made.
+    acceptance:
+      - Reads as a page for this studio, not a template. Some part of the layout or imagery comes from
+        the subject (the wheel, clay, a throwing session, firing), not from a generic landing pattern.
+      - Mobile is designed, not only reflowed. At 390 px the reservation call to action is reachable
+        in the first screen and again after the sessions and price are known.
+      - The visitor can tell what happens, when, for how much, and how to book, without scrolling
+        back; the booking channel is named exactly as given.
+      - Korean copy sounds written for this audience in one consistent register, without translated
+        phrasing, filler, or hype; no invented proof (reviews, counts, awards, press).
+      - Korean typography holds at 320 px (no mid-word breaks, readable line length and size), and
+        focus, contrast, and touch targets are usable.
+      - The one-day class is the product. The page is about taking a class, not about selling finished
+        pieces from an online shop.
+
+  signup-recovery-ko:
+    title: Korean sign-up flow that recovers from field errors and a server error
+    skills: [lapis, lps-ux, lps-copy]
+    checks:
+      render: true
+      lint: true
+      behavior:
+        stub: stubs/signup-recovery-ko.stub.yaml
+    prompt: |
+      Task id: signup-recovery-ko
+
+      Build the sign-up page for 골목서재 (fictional), a neighborhood lending library with a monthly
+      membership, as a static site in the current folder: index.html at the folder root, with any CSS,
+      JavaScript, and images beside it or inline. No build step, no package installs, and no network
+      requests when the page loads (no CDN, web fonts, or remote images) apart from the one endpoint
+      below.
+
+      The page has one job: let a new member create an account on a phone. Fields: name, email,
+      password (at least 8 characters), a required checkbox to agree to the terms, and an optional
+      checkbox for news by email that starts unchecked. The terms themselves are out of scope; a short
+      inline summary is enough.
+
+      There is no real backend. On submit the page calls one endpoint with fetch:
+      POST /api/signup with the JSON body
+      {"name": "...", "email": "...", "password": "...", "terms": true, "news": false}
+      and must handle these answers:
+      - 201 {"ok": true}: the account was created.
+      - 409 {"error": "email_taken"}: an account with this email already exists.
+      - 422 {"errors": {"name" | "email" | "password": "<reason>"}}: the server rejects those fields.
+      - Any 5xx, or no answer: the server failed or could not be reached.
+
+      Design every state of the flow instead of leaving defaults: field errors that name the problem
+      and the way to fix it next to the field; the state while the request is in flight; a server
+      error that says what happened and offers a retry; a success state that says what happens next.
+      What the person typed is kept after any failure.
+
+      All visible copy is Korean, written for members of the library. The page must work from 320 px
+      wide upward, by keyboard alone, and with reduced motion respected.
+
+      Nobody is available to answer questions and there is no review step. Make the decisions
+      yourself, finish the page, and end with a short note of the assumptions you made.
+    acceptance:
+      - Each field error appears next to its field, says what is wrong and what to do, is tied to the
+        field for assistive technology, and moves focus to the first field with an error on submit.
+      - The 409 answer is a recoverable email error (change the email or sign in), not a generic failure.
+      - A server or network failure keeps every typed value except possibly the password, says what
+        happened in plain words, and offers a retry that works without retyping.
+      - While the request is in flight the submit control shows progress and cannot send twice.
+      - The success state replaces the form, says what the member can do next, and does not expose the
+        typed password.
+      - The terms checkbox is required and the news checkbox stays off until chosen; neither is
+        pre-checked nor hidden in the terms text.
+      - Korean copy is consistent in register and free of blame ("you entered it wrong") and filler.

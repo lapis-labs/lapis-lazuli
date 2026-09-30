@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><style>
+/* A single regular CSS face resolves a local OS font; no font binary is copied. */
+@font-face { font-family: 'Single Regular Face'; src: local('Andale Mono'), local('DejaVu Sans'), local('Liberation Sans'), local('Arial'); font-style: normal; font-weight: 400; }
+* {box-sizing:border-box}
+html,body {margin:0; background:#fff; color:#171717; font:16px/1.4 Arial,sans-serif}
+section {padding:12px 16px}
+h1 {font-size:42px;line-height:1.1}
+h2 {font-size:24px}
+nav {display:flex;gap:10px}
+nav code {font-size:12px}
+p {margin:12px 0}
+#wrap {width:290px}
+#left,#center {width:100%;height:30px;white-space:nowrap;overflow:hidden}
+#center {text-align:center}
+#gradient-text {font-size:20px;color:transparent;background:linear-gradient(90deg,#000,#eee);
+  background-clip:text;-webkit-background-clip:text}
+#flat {background:#bee9d1}
+#gradient-back {background:linear-gradient(90deg,#001843,#e7edff);color:#fff}
+#image-back {background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='24'%3E%3Crect width='30' height='24' fill='%23071830'/%3E%3Crect x='30' width='30' height='24' fill='%23b9d4ef'/%3E%3C/svg%3E");background-size:60px 24px;color:#fff}
+#flat,#gradient-back,#image-back {padding:10px;font-size:20px;min-height:55px}
+#state {background:#141e36;color:#fff;border:0;padding:12px;font-size:16px;transition:color .25s,background-color .25s}
+#state:hover {color:#ff3040;background:#ededed}
+#state:focus-visible {color:#48ff60;background:#222}
+#state:active {color:#ffc02a;background:#164a90}
+#synthetic {font:700 18px 'Single Regular Face';}
+#synthetic-italic {font:italic 18px 'Single Regular Face';}
+#synthetic-both {font:italic 700 18px 'Single Regular Face';}
+#spacer {height:200px}
+</style></head><body><main><section id="typography">
+<h1>Display heading</h1><p>Opening body copy for the display title.</p>
+<h2>Secondary heading</h2><p id="wrap">We measure words and spaces across a paragraph that wraps to multiple rendered lines within this narrow space.</p>
+<div style="font-size:22px;font-weight:700">Block-based heading</div><p>Following paragraph body copy.</p>
+<p>Inline body sentence with <a href="#typography">an inline link</a> in the middle.</p>
+<ul><li><a href="#typography">Listed link</a></li></ul>
+<nav><code>nav() => 2</code><a href="#typography">Navigation item</a></nav>
+<button id="state">State button</button>
+<a href="#typography">Standalone action</a>
+<p><code>const answer = 42;</code></p>
+<table><tr><td>429.00</td><td>49.00</td></tr></table>
+<div><p>€19</p><p>€29</p></div>
+<figure><div>Visual sample</div><figcaption>Picture caption</figcaption></figure>
+<div><small>Small label</small><h2>Measured label target</h2></div>
+<label for="field">Field label</label><input id="field" aria-label="Field" value="Hello">
+<p id="gradient-text">Weakest gradient stop</p>
+<p id="flat">Flat background text sample</p>
+<p id="gradient-back">Gradient background text sample wide enough for color variation</p>
+<p id="image-back">Image background text sample wide enough for color variation</p>
+<p id="left">Short left text</p><p id="center">Centered words</p>
+<p id="synthetic">Synthetic bold face requested</p>
+<p id="synthetic-italic">Synthetic italic face requested</p>
+<p id="synthetic-both">Synthetic both faces requested</p>
+<div id="spacer"></div>
+</section></main></body></html>

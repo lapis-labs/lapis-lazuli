@@ -1,0 +1,313 @@
+# LapisLazuli detector registry — v0 draft
+# Every `detector` name used in rules.yaml must be registered here, and a rule may use a detector
+# only at a layer listed for it.
+#
+# Fields
+#   status   implemented (reference code in cli/lapis_design: plan_check, rights_check, lint/) | planned
+#   input    what the detector reads. Render detectors read the render extract
+#            (render/extract.schema.yaml); plan-layer copy detectors read the plan's key copy;
+#            behavior detectors read the behavior session log (behavior/session.schema.yaml),
+#            written by behavior_check while it drives our own render in a browser.
+#   params   what the rule may configure (what to look at)
+#   threshold  keys the rule may set for decision bounds (checker view only)
+#   reads    render extract fields the detector reads, as <def>.<field> paths into
+#            render/extract.schema.yaml (tests check that each path exists)
+#   reads_session  behavior session fields the detector reads, as <def>.<field> paths into
+#            behavior/session.schema.yaml (tests check that each path exists). Every behavior
+#            detector also reads `coverage_entry`: it reports every hit it observes, and when its
+#            probe ran only partly or not at all, the rule also gets a skipped finding.
+#   reads_plan  plan fields a detector reads, in the plan path grammar below
+#   reads_ledger  asset ledger fields a detector reads, as <def>.<field> paths into
+#            assets/ledger.schema.yaml (tests check that each path exists)
+#   reads_lock  fonts lock fields a detector reads, as fonts.<field> paths into fonts/lock.schema.yaml
+#   probes   behavior detectors: the session coverage probes their verdicts depend on
+#   needs    inputs the current render extract does not provide yet; none since extract v1
+#
+# Plan path grammar (used by `path` in plan-layer detectors and by plan_check):
+#   path      := segment ("." segment)*
+#   segment   := name selector*
+#   name      := [a-z_][a-z0-9_]*
+#   selector  := "[*]"                              every item of an array
+#              | "[" integer "]"                    one item by index
+#              | "[?" name "=" value ("|" value)* "]"   items whose field equals one of the values
+#   value     := [A-Za-z0-9_-]+
+# Examples:
+#   tokens.color.roles[?role=identity|interaction].oklch
+#   tokens.type.roles[*].family
+#   layout.sections[*].archetype
+# A path resolves to a list of values; missing fields resolve to an empty list.
+
+version: 0
+
+detectors:
+  # ---------------- plan layer ----------------
+  - name: plan-palette-region
+    layers: [plan]
+    input: "OKLCH values at `path`"
+    params: { region: "space oklch with bounds l/c/h (h may wrap)" }
+    output: "matched values"
+    status: implemented
+  - name: plan-section-sequence
+    layers: [plan]
+    input: "archetype strings at `path`"
+    params: { templates: "list of template sequences", max_distance: "normalized edit distance, default 0.34" }
+    output: "closest template and distance"
+    status: implemented
+  - name: plan-font-region
+    layers: [plan]
+    input: "families at `path`, measured features from the lazuli DB"
+    params: { list: "key in lists (feature-region names)" }
+    output: "families whose PANOSE/CJK features fall in a listed region"
+    status: implemented
+  - name: plan-distinct-values
+    layers: [plan]
+    input: "values at `path`"
+    params: { min_items: "evaluate only when at least this many values exist (default 1)" }
+    threshold: { distinct_min: "hit when fewer distinct values than this" }
+    output: "the distinct values"
+    status: implemented
+  - name: plan-value-range
+    layers: [plan]
+    input: "numbers at `path`"
+    threshold: { min: "hit when a value is below", max: "hit when a value is above" }
+    output: "values outside the range"
+    status: implemented
+  - name: plan-missing
+    layers: [plan]
+    input: "values at `path`"
+    params: { modes: "plan modes the check applies to; all modes when omitted" }
+    output: "hit when the path resolves to nothing"
+    status: implemented
+  - name: package-hit
+    layers: [plan, render, behavior]
+    input: "hits of the package's member rules at the same layer, within the package's structure scope"
+    params: { package: "key in packages" }
+    output: "members that hit; a hit when their count reaches hit_when.min_members"
+    reads: []              # member rule results, not extract fields
+    reads_session: []
+    probes: []             # the members' own coverage applies
+    status: implemented
+
+  # ---------------- source layer (leads; confirmed at render or behavior) ----------------
+  - { name: css-font-family, layers: [source], input: "CSS font-family declarations", params: { compare: "contract-families" }, status: implemented }
+  - { name: css-literal-color, layers: [source], input: "hex/rgb/hsl/oklch literals outside token files", status: implemented }
+  - { name: css-off-scale-value, layers: [source], input: "literal values for the given properties vs the contract scale", params: { properties: "CSS properties" }, status: implemented }
+  - { name: source-pattern, layers: [source], input: "source text", params: { patterns: "regular expressions in ECMAScript (u flag) or Python regex syntax: lookbehind, \\p{...} classes, \\uXXXX escapes", scope: "optional slot filter" }, output: "leads only", status: implemented }
+  - { name: source-ast, layers: [source], input: "JSX/TSX/HTML/CSS syntax trees", params: { query: "named query" }, output: "leads only", status: implemented }
+  - { name: dependency-check, layers: [source], input: "package manifest and lockfile vs imports", params: { check: "icon-packages | animation-imports-vs-installed", unobserved: "status when imports cannot be read: not-verified" }, status: implemented }
+
+  # ---------------- render layer (input: render extract) ----------------
+  - { name: palette-region, layers: [render], input: "viewport palette", params: { region: "oklch bounds; region.role names role_guess values, | separated" }, reads: [viewport.palette], status: implemented }
+  - { name: rendered-family-region, layers: [render], input: "text runs (rendered family) + lazuli features", params: { roles: "type roles", roles_except: "type roles", include_italic: boolean }, reads: [text_run.font, text_run.type_role, text_run.style], status: implemented }
+  - { name: font-fallback, layers: [render], input: "text runs where requested != rendered", reads: [text_run.font, text_run.script], status: implemented }
+  - { name: synthetic-style, layers: [render], input: "text runs with synthetic bold/italic", reads: [text_run.font], status: implemented }
+  - { name: hangul-negative-tracking, layers: [render], input: "hang text runs with letter_spacing_em < 0 in body roles", threshold: { min: "hit when a body run letter-spacing (em) is below this" }, reads: [text_run.script, text_run.letter_spacing_em, text_run.type_role], status: implemented }
+  - { name: keep-all-missing, layers: [render], input: "hang body text runs without word-break keep-all", reads: [text_run.script, text_run.word_break, text_run.type_role], status: implemented }
+  - { name: type-hierarchy, layers: [render], input: "derived.type_fingerprint", params: { check: "flat | oversized", levers: "flat: levers that may separate heading from body (size | weight | contrast)" }, threshold: { first_viewport_area_share_max: "oversized: hit when display text covers more than this share of the first viewport", lines_at_390_max: "oversized: hit when the display heading wraps to more lines than this at 390 px width", heading_body_ratio_min: "flat: hit when no listed lever separates heading from body by at least this ratio" }, output: "flat hierarchy, oversized hero", reads: [derived.type_fingerprint, text_run.type_role, text_run.size_px, text_run.weight, text_run.color, text_run.lines, text_run.box, box.rect, viewport.height], status: implemented }
+  - name: text-metrics
+    layers: [render]
+    input: "text runs grouped by type role and script"
+    params: { metric: "letter_spacing_em | line_height | measure_chars | size_px | lines | rows (distinct text rows of the role inside one box) | uppercase_run_words | distinct_families", roles: "type or box roles", viewport: "one viewport width" }
+    threshold: { min: "number or per-script map", max: "number or per-script map" }
+    reads: [text_run.text, text_run.script, text_run.type_role, text_run.letter_spacing_em, text_run.line_height, text_run.measure_chars, text_run.size_px, text_run.lines, text_run.transform, text_run.font, text_run.box, box.role, box.rect]
+    status: implemented
+  - { name: eyebrow-relation, layers: [render], input: "boxes + text runs", params: { kind: "label | badge" }, threshold: { repeats_max: "hit when more sections than this open with the label or badge" }, output: "small tracked uppercase labels or badges before headings, repeated across sections", reads: [box.rect, box.role, text_run.text, text_run.type_role, text_run.transform, text_run.letter_spacing_em, text_run.box], status: implemented }
+  - { name: index-markers, layers: [render], input: "numeric markers before headings vs content order", params: { check: non-sequential }, reads: [text_run.text, text_run.type_role, text_run.box, derived.sections], status: implemented }
+  - { name: template-repetition, layers: [render], input: "role order per section", params: { pattern: "role sequence or alternating-media-text" }, threshold: { repeats_max: "hit when the pattern repeats in more consecutive sections than this" }, reads: [box.role, box.parent, box.rect, derived.sections], status: implemented }
+  - { name: section-sequence, layers: [render], input: "derived.section_sequence", params: { templates: list, max_distance: number }, reads: [derived.section_sequence], status: implemented }
+  - { name: section-inventory, layers: [render], input: "per-section counts of media, logos, metrics, actions, and text", params: { section: "first | all", check: "proof-in-hero | task-below-ornament" }, reads: [derived.sections, box.role, box.parent, box.media, text_run.text, text_run.box], status: implemented }
+  - { name: sibling-identity, layers: [render], input: "derived.sibling_groups + plan priorities", params: { compare: "plan-priority (compare siblings the plan ranks differently)" }, threshold: { similarity_max: "hit when such siblings are more similar than this (0-1)" }, reads: [derived.sibling_groups], status: implemented }
+  - { name: card-nesting, layers: [render], input: "derived.card_nesting_max and card-like boxes", params: { check: "depth | card-share" }, threshold: { depth_max: "depth: hit when cards nest deeper than this", content_share_max: "card-share: hit when cards hold more than this share of the content area" }, reads: [derived.card_nesting_max, box.role, box.rect, box.style], status: implemented }
+  - { name: grid-filler, layers: [render], input: "grid cells and their content", reads: [box.rect, box.parent, text_run.chars, text_run.box, box.media], status: implemented }
+  - { name: gap-proximity, layers: [render], input: "derived.gaps", params: { check: "heading-above-vs-below | monotonous (derived.gaps.level_ratio)" }, threshold: { level_ratio_min: "monotonous: hit when adjacent spacing levels differ by less than this ratio" }, output: "proximity order violations, monotonous spacing", reads: [derived.gaps, box.rect, box.role, text_run.type_role], status: implemented }
+  - { name: symmetry, layers: [render], input: "derived.symmetry", params: { section: "hero | all", shapes: list, compare: plan-priority }, threshold: { max: "hit when the symmetry score (0-1) is above this" }, reads: [derived.symmetry, derived.sections, box.rect, box.role], status: implemented }
+  - { name: reading-path, layers: [render], input: "boxes in reading order", params: { check: heading-separated-from-intro }, reads: [box.rect, text_run.type_role, text_run.box], status: implemented }
+  - { name: edge-inset, layers: [render], input: "card and scroller boxes vs viewport edges", params: { viewport: width }, threshold: { inset_px_min: "hit when a card or scroller sits closer than this to the viewport edge" }, reads: [box.scroll, box.rect, viewport.width], status: implemented }
+  - { name: overflow-check, layers: [render], input: "page and box overflow at given viewports", params: { viewports: "widths", checks: list }, reads: [viewport.width, viewport.height, viewport.browser_chrome, viewport.scroll_width, box.clipped, box.rect, box.role, box.parent], status: implemented }
+  - { name: text-occlusion, layers: [render], input: "text boxes vs boxes painted above them", reads: [box.paint_order, box.rect, box.style, box.media, text_run.box], status: implemented }
+  - { name: responsive-structure, layers: [render], input: "layout structure at several viewports", params: { compare: "viewport widths", check: scaled-only }, reads: [viewport.width, derived.sections, box.rect, box.id], status: implemented }
+  - { name: signature-present, layers: [render], input: "derived.signature_found and derived.signature_evidence", reads: [derived.signature_found, derived.signature_evidence], status: implemented }
+  - { name: contrast-wcag, layers: [render], input: "text runs over box backgrounds", params: { themes: list, states: list, pair: "optional pair filter", neutral_text_c: "neutral-text-on-chromatic-field pair: text at or below this OKLCH chroma counts as neutral", chromatic_background_c: "neutral-text-on-chromatic-field pair: backgrounds at or above this chroma count as chromatic" }, threshold: { normal_min: "hit when normal-size text contrast is below this ratio", large_min: "hit when large text contrast is below this ratio" }, reads: [text_run.color, text_run.backdrop, text_run.states, text_run.size_px, text_run.weight, viewport.theme], status: implemented }
+  - { name: palette-structure, layers: [render], input: "viewport palette with role guesses", params: { check: "accent-roles | neutral-temperature | pure-endpoints", neutral_c: "neutral-temperature: palette entries at or below this OKLCH chroma count as neutrals", uses: "pure-endpoints: exact-palette-entries (only exact black or white entries count)" }, threshold: { hue_spread_deg_max: "neutral-temperature: hit when neutral hues spread wider than this (degrees)", area_share_max: "pure-endpoints: hit when pure endpoints cover more than this share of the area" }, reads: [viewport.palette], status: implemented }
+  - { name: theme-pair, layers: [render], input: "light and dark viewports of the same page", params: { check: literal-inversion }, reads: [viewport.theme, viewport.palette, box.id, box.style, text_run.color], status: implemented }
+  - { name: gradient-inventory, layers: [render], input: "background and text-fill gradients with OKLCH stops, shape, blur, and position", params: { target: "background | text", kind: "linear | radial", behind: "section archetype", min_stops_in_region: "count a gradient when at least this many stops fall in the rule region", roles: "text target: type roles checked", include_accent_word: "text target: also count a gradient fill on one accent word inside a run", min_blur_px: "count shapes blurred at least this much" }, threshold: { area_share_max: "hit when counted gradients cover more than this share of the page area", first_viewport_share_max: "hit when counted gradients cover more than this share of the first viewport" }, reads: [box.style.gradients, box.style.filter_blur_px, box.style.background, box.rect, box.parent, derived.sections, text_run.fill, text_run.color, text_run.type_role, text_run.box], status: implemented }
+  - { name: surface-effects, layers: [render], input: "shadows, glows, backdrop filters, radii, side borders, background patterns", params: { effect: "glow | shadow | backdrop-filter | radius | side-accent-border | background-pattern", dark_background_l: "glow: backgrounds at or below this OKLCH lightness count as dark", min_glow_chroma: "glow: shadows at or above this OKLCH chroma count as glow", min_glow_blur_px: "glow: minimum shadow blur for a glow", min_radius_px: "radius: containers at or above this radius count as large", check: "shadow: light-model-consistency (shadow directions disagree on one surface level)", kinds: "background-pattern: pattern kinds counted (extract background_pattern.kind values)", max_blur_px: "shadow: count shadows blurred at most this much", min_offset_px: "shadow: count shadows offset at least this much" }, threshold: { panel_share_max: "backdrop-filter: hit when more than this share of panels use a backdrop filter", container_share_max: "radius: hit when more than this share of containers use a large radius", card_share_max: "shadow: hit when more than this share of cards carry a counted shadow" }, reads: [box.role, box.rect, box.style.background, box.style.shadows, box.style.backdrop_filter, box.style.radius_px, box.style.border_sides, box.style.background_pattern, text_run.backdrop], status: implemented }
+  - { name: decorative-dom, layers: [render], input: "clusters of non-semantic boxes drawn with CSS", params: { kind: "app-window | shape-illustration" }, reads: [box.role, box.rect, box.parent, box.style, box.a11y, box.media], status: implemented }
+  - { name: icon-inventory, layers: [render], input: "icon boxes: emoji, inline SVG, icon font, package of origin, stroke and grid", params: { check: "emoji | hand-authored-standard-actions | families" }, threshold: { families_max: "families: hit when more icon families than this appear" }, reads: [box.icon, box.role], status: implemented }
+  - { name: image-inventory, layers: [render], input: "media boxes: load state, intrinsic size, alt, overlays, clip paths", params: { check: "decorative-clip-path | overlay-coverage | load-failure | unresolved-placeholder | missing-alternative", min_covered_share: "overlay-coverage: count images whose overlay covers at least this share" }, threshold: { overlay_alpha_max: "overlay-coverage: hit when the overlay is more opaque than this" }, reads: [box.media, box.style.clip, box.rect], status: implemented }
+  - { name: image-embedding-region, layers: [render], input: "image crops embedded and compared with listed regions", params: { list: "key in lists" }, reads: [box.media, box.rect, viewport.screenshot], status: implemented }
+  - { name: large-list, layers: [render], input: "item counts inside scroll containers", threshold: { rendered_items_max: "hit when a scroll container renders more items than this at once" }, reads: [box.scroll, box.role], status: implemented }
+  - { name: contract-diff, layers: [render], input: "rendered families, colors, radii, sizes, spacing vs the contract token set", params: { kind: "font-family | color | radius | font-size | spacing" }, threshold: { delta_e_ok_max: "color: hit when a rendered color is farther than this OKLab distance from every color token" }, reads: [text_run.font, text_run.color, text_run.size_px, box.style, viewport.palette, derived.gaps], status: implemented }
+  - { name: typicality-distance, layers: [render], input: "extract vs typicality corpus", params: { corpus: "defaults | starter-themes | library-default-themes", features: list, exclude_features: list }, threshold: { distance_min: "hit when the extract is closer than this normalized distance to the corpus" }, reads: [viewport.derived, viewport.palette, text_run.text], status: implemented }
+  - { name: reference-distance, layers: [render], input: "extract vs reference profiles", params: { rights: list, dimensions: list, require_all_dimensions: "hit only when every listed dimension is close" }, threshold: { distance_min: "hit when the distance is below this" }, output: "clone risk when layout, palette, type, and copy are all close", reads: [viewport.derived, viewport.palette, viewport.text_sig, meta.sig_key_id], status: implemented }
+  - { name: reference-asset-match, layers: [render], input: "images and text vs reference-only profiles", params: { rights: "rights classes matched; a single value or a list (reference-only)" }, reads: [box.media.phash, text_run.text_sig, meta.sig_key_id], status: implemented }
+  - name: motion-inventory
+    layers: [render, behavior]
+    input: "animations and transitions per box (properties, duration, easing, iterations); at behavior, what moves on hover, scroll, and over time"
+    params: { check: "infinite-pulse-small-element | blink-keyframes | auto-moving-content | pause-control | overshoot-easing | animated-properties | hover-transform | transition-property-all | infinite-decorative | hidden-at-rest", properties: "longhand properties (animated-properties)", target: "media (hover-transform)" }
+    threshold: { share_max: "share of animated boxes", count_max: count, seconds_without_control_max: "seconds content moves without a pause control", media_share_max: "share of hovered media that transforms; no hit when none were hovered" }
+    output: "auto-moving-content at render is a lead: the pause control is judged at behavior"
+    reads: [box.motion, box.rect, box.role, viewport.reduced_motion]
+    reads_session: [motion_probe.auto_moving, motion_probe.hover_media, motion_probe.scroll_reveal, motion_probe.moving]
+    probes: [motion]
+    status: implemented
+  - name: accessibility-tree
+    layers: [render, behavior]
+    input: "accessibility tree snapshot (name, role, state, focusability, pointer handlers); at behavior, labels observed while filling forms"
+    params: { check: "input-label | label-persists-after-input | control-name | pointer-only-control", roles: "control-name: roles checked for an accessible name" }
+    output: "pointer-only-control is a lead confirmed at behavior, and skips boxes that contain a focusable link or button"
+    reads: [box.a11y, box.role, box.icon, box.media, box.parent]
+    reads_session: [field.label, field.box]
+    probes: [forms]
+    status: implemented
+  - { name: layout-shift, layers: [render, behavior], input: "layout shift measured during load or a state change", params: { during: "load | state-change", measure: "shift | layout-animated (boxes whose geometry animated through a layout property)" }, threshold: { cls_max: number }, reads: [viewport.metrics.cls, viewport.metrics.shift_sources], reads_session: [effect.layout_shift, effect.shift_sources, effect.layout_animated], probes: [controls], status: implemented }
+  - name: target-size
+    layers: [render]
+    input: "pointer targets and the clear space around them"
+    params: { roles: "box roles treated as targets, when focusable or given a pointer handler" }
+    threshold: { size_min: "CSS px; a smaller target passes when a circle of this diameter centered on it touches no other target or circle" }
+    output: "undersized targets; links inside running text and unstyled native controls are excluded, and a target whose name and function a full-size control on the page repeats is reported as a lead"
+    reads: [box.rect, box.role, box.a11y, box.parent, text_run.box]
+    status: implemented
+
+  # ---------------- copy (plan key copy, render text, or source strings) ----------------
+  - { name: copy-family-rate, layers: [plan, render], input: "text by locale", params: { trigger: "once | density | co-occurrence", per: "1000-words | 1000-chars | page", slots: "at render, headline = display or heading runs of the first section, subhead = the first body run after it, cta = link and button runs of the first section", roles: list, through_metaphor_min_repeats: "density: also hit when one metaphor family recurs at least this many times", also: "extra check run with the family: duplicate-labels (one label on controls with different outcomes)" }, reads: [text_run.text, text_run.lang, text_run.type_role, text_run.box, box.role], status: implemented }
+  - { name: rhetorical-shell, layers: [render], input: "sentences by locale", params: { shell: "not-x-but-y | staging | triad", trigger: "once | density" }, reads: [text_run.text, text_run.lang, text_run.type_role, text_run.box, box.role], status: implemented }
+  - { name: construction-rate, layers: [render], input: "text by locale; Korean double-passive morphology with cjk extra, lexical patterns otherwise", params: { per: "1000-words | 1000-chars", trigger: density }, reads: [text_run.text, text_run.lang, text_run.type_role, text_run.box, box.role], status: implemented }
+  - { name: punctuation-density, layers: [render], input: "text by locale", params: { glyphs: list, trigger: density }, threshold: { ratio_to_baseline_max: "hit when the glyph rate exceeds the locale baseline by more than this factor" }, reads: [text_run.text, text_run.lang, text_run.type_role, text_run.box, box.role], status: implemented }
+  - { name: rhythm-variance, layers: [render], input: "sentence lengths, openings, and endings by locale", params: { checks: list }, reads: [text_run.text, text_run.lang, text_run.type_role, text_run.box, box.role], status: implemented }
+  - { name: formatting-residue, layers: [render], input: "headings, lists, emphasis, and label-value structure", params: { checks: list }, reads: [text_run.text, text_run.lang, text_run.type_role, text_run.box, box.role, text_run.weight, text_run.transform], status: implemented }
+  - { name: separator-shape, layers: [render], input: "label + separator + tail shapes across components", params: { lead_only: boolean }, threshold: { repeats_max: "hit when the shape repeats across more components than this" }, output: "leads for semantic review", reads: [text_run.text, text_run.lang, text_run.type_role, text_run.box, box.role, box.rect], status: implemented }
+  - { name: register-consistency, layers: [render], input: "sentence-final endings by locale vs the plan's register", params: { expected: "plan path" }, reads: [text_run.text, text_run.lang, text_run.type_role, text_run.box, box.role], status: implemented }
+  - { name: placeholder-genericness, layers: [plan, render], input: "names, numbers, company strings", params: { check: "names-and-companies | fabricated-proof", kinds: list }, reads: [text_run.text, text_run.lang, text_run.type_role, text_run.box, box.role, box.media], status: implemented }
+  - { name: meta-text, layers: [plan, render], input: "producer-facing or UI-describing strings", params: { kinds: list }, reads: [text_run.text, text_run.lang, text_run.type_role, text_run.box, box.role, box.parent, box.a11y], status: implemented }
+
+  # ---------------- behavior layer (input: behavior session log) ----------------
+  - name: control-has-effect
+    layers: [behavior]
+    input: "every interactive box exercised once"
+    params: { also: "console-errors" }
+    output: "controls whose outcome is no-effect or error, or does not match what they promise; a navigation stopped at another host counts as navigated"
+    reads_session: [control_probe.promise, control_probe.effect, control_probe.derived, effect.outcome, effect.console_errors, effect.external]
+    probes: [controls]
+    status: implemented
+  - { name: console-errors, layers: [behavior], input: "runtime exceptions and warnings during a session", params: { kinds: list }, reads_session: [console_entry.kind, console_entry.level, console_entry.message], probes: [console], status: implemented }
+  - { name: focus-visible, layers: [behavior], input: "keyboard stops", output: "stops where focus_visible is false", reads_session: [stop.focus_visible, stop.indicator, stop.box], probes: [keyboard], status: implemented }
+  - name: state-coverage
+    layers: [behavior]
+    input: "one state probe per attempted surface and state"
+    params: { state: "one state", states: list, relevance: "plan-and-task: states the plan's flows and data surfaces can reach", check: "indicator-kind | problem-and-recovery | distinguishable" }
+    threshold: { spinner_shown_ms_max: "indicator-kind: how long a spinner may stand alone for a region or page" }
+    output: "a relevant state that was attempted and not shown, or shown blank or the same as another state; indicator-kind hits a loading state of region or page scope that shows only a spinner beyond the bound; problem-and-recovery hits an error or offline state without problem text or a working recovery action"
+    reads_session: [state_probe.state, state_probe.shown, state_probe.same_as, state_probe.blank, state_probe.indicator, state_probe.indicator_delay_ms, state_probe.indicator_shown_ms, state_probe.scope, state_probe.problem_text, state_probe.recovery_action, state_probe.recovery_works]
+    probes: [states]
+    status: implemented
+  - { name: reduced-motion-respected, layers: [behavior], input: "motion under reduced motion vs the same page without it", output: "non-essential boxes that still move by transform, scrolling, video, or canvas with reduced motion; opacity fades do not count", reads_session: [motion_probe.moving, motion_probe.compare_to, context.reduced_motion], probes: [motion], status: implemented }
+  - name: dialog-usage
+    layers: [behavior]
+    input: "dialogs, sheets, banners, and interstitials seen during the session, one probe per distinct request"
+    params: { check: "routine-navigation-or-long-task | entry-interruption | focus-management | recurrence", triggers: "dialog triggers", purposes: "dialog purposes", blocking: boolean }
+    threshold: { reasks_after_decline_max: "recurrence: re-asks allowed after a decline" }
+    output: "focus-management hits a dialog that blocks content and does not move focus in or contain it, any dialog that neither Escape nor a visible control closes, a control-triggered dialog that returns focus to the body or elsewhere, and a destructive confirmation that opens with focus on the destructive control; recurrence also hits a permission request repeated after a denial"
+    reads_session: [dialog_probe.kind, dialog_probe.trigger, dialog_probe.blocks_content, dialog_probe.purpose, dialog_probe.focus, dialog_probe.appearances, dialog_probe.derived, dialog_probe.area_share, permission_request.after_denial, commit_probe.confirm]
+    probes: [dialogs, permissions, commits]
+    status: implemented
+  - name: keyboard-traversal
+    layers: [behavior]
+    input: "the Tab and Shift+Tab walk, and keyboard activation of exercised controls"
+    params: { check: "trap | operable | order | obscured", semantic: "operable: true for native and ARIA widget controls, false for clickable non-interactive elements" }
+    threshold: { order_inversions_max: count, obscured_share_max: share }
+    output: "trap hits cycles that Escape does not leave; operable hits unreachable boxes of the given kind, and reachable controls whose keyboard activation is none or different"
+    reads_session: [keyboard_probe.traps, keyboard_probe.unreachable, keyboard_probe.derived, keyboard_probe.completed, keyboard_probe.containers, stop.obscured_share, stop.obscured_by, stop.container, control_probe.keyboard]
+    probes: [keyboard, controls]
+    status: implemented
+  - name: keyboard-bypass
+    layers: [behavior]
+    input: "keyboard walks of several routes in one context: repeated leading stops and the mechanisms that skip them"
+    params: { check: "bypass | skip-link" }
+    threshold: { repeated_stops_max: "repeated leading stops tolerated" }
+    output: "bypass hits walks with more repeated stops than the threshold and no bypass mechanism; skip-link hits a skip link whose lands_at is null (with any number of routes), and walks with more repeated stops than the threshold and no skip-link bypass; both report not-verified when a context has one walked route"
+    reads_session: [keyboard_probe.path, keyboard_probe.derived, keyboard_probe.skip_link, keyboard_probe.landmarks, keyboard_probe.headings, stop.name, stop.landmark, stop.in_main]
+    probes: [keyboard]
+    status: implemented
+  - name: context-change
+    layers: [behavior]
+    input: "what focusing a stop or changing a field did without a submit"
+    params: { events: "list of focus | input" }
+    reads_session: [stop.context_change, field.on_change]
+    probes: [keyboard, forms]
+    status: implemented
+  - name: choice-analysis
+    layers: [behavior]
+    input: "choice sets and optional form fields"
+    params: { check: "preselection | prominence | decline-effort | copy", purposes: "choice purposes", field_purposes: "form field purposes (preselection)", kinds: "option kinds (copy)" }
+    threshold: { prominence_ratio_max: number, decline_extra_interactions_max: count }
+    output: "preselection: accept options or optional fields selected on load, and plan options preselected at a higher annualized price than the cheapest comparable one; decline-effort also hits when no decline route exists, and skips choice sets whose accept route is a preselected option (preselection reports those); copy matches option labels against `family` in lists and reports leads for review"
+    reads_session: [choice_set.purpose, choice_set.derived, option.kind, option.preselected, option.price, option.cadence, option.label, option.lang, field.purpose, field.checked_on_load]
+    probes: [choices, forms]
+    status: implemented
+  - name: flow-analysis
+    layers: [behavior]
+    input: "runs of the plan's flows"
+    params: { check: "drip | sneak | terms | exit | gates | dead-end | steps | review", kinds: "flow kinds", gates: "gate kinds", channel: "required finishing channel (exit)" }
+    threshold: { extra_steps_max: count, extra_interactions_max: count, offers_max: count, blocking_offers_max: count, steps_over_plan_max: count, single_field_steps_max: count }
+    output: "exit hits a run that ended blocked, dead-end, or abandoned, a channel other than self-serve, added reauthentication, or effort over the thresholds against a paired join flow that completed in the same context; gates hits gates of the listed kinds that are neither skippable nor declared; steps compares effort.steps with the plan flow's max_steps; review hits a flow with a commit and a price where no review step comes at or before the commit and the commit offers no undo that restores"
+    reads_session: [flow_run.kind, flow_run.status, flow_run.derived, flow_run.effort, flow_run.gates, flow_run.steps, flow_run.commit_step, flow_run.prices, flow_run.review_before_commit, step.dead_end, step.offers, commit_probe.undo]
+    reads_plan: ["flows[*].max_steps", "flows[*].requires", "flows[*].requires_reason", "flows[*].pair"]
+    probes: [flows, commits]
+    status: implemented
+  - name: form-behavior
+    layers: [behavior]
+    input: "form probes: typing, invalid and failed submits, preservation, paste, submit state"
+    params: { check: "lost-input | premature-validation | error-identification | disabled-submit | redundant-entry | auth", after: "preservation events (lost-input)" }
+    output: "error-identification hits errors not described in text, not associated, shown by color only, or neither announced nor focused; auth hits a puzzle, transcription, or memory test without an alternative, and blocked paste in password and code fields"
+    reads_session: [form_probe.preservation, form_probe.validation, form_probe.invalid_submit, form_probe.submit, form_probe.auth, field.kind, field.repeats, field.prefilled, field.same_as_offered, field.paste_blocked, field.sensitive]
+    probes: [forms]
+    status: implemented
+  - name: commit-safety
+    layers: [behavior]
+    input: "commit probes: double activation, injected failures, confirmation, undo; reloads of submitted pages"
+    params: { check: "duplicate | status | undo" }
+    threshold: { effects_max: "state changes allowed for one intended commit" }
+    output: "duplicate hits when the effects of one intended commit (behavior/DERIVED.md, Commits) exceed the bound, or a reload offers to resend a submitted form; status hits a success claim when the change was not applied or is unknown, and a failure claim when it was applied; undo hits a destructive commit with neither a confirmation naming the object nor an offered undo, an undo that does not restore after reload, and an undo surface that disappears while focused"
+    reads_session: [commit_probe.double_activation, commit_probe.outcomes, commit_probe.destructive, commit_probe.confirm, commit_probe.undo, commit_outcome.claimed, commit_outcome.actual, commit_outcome.retry_effects, commit_outcome.auto_resent, history_probe.resubmit_prompt]
+    probes: [commits, history]
+    status: implemented
+  - name: status-announcement
+    layers: [behavior]
+    input: "visible status changes after actions, commits, and states that appear in response to an action"
+    params: { sources: "controls | commits | states" }
+    output: "status changes (effect.status_changed) with no announcement; states that appear with the page load are not status messages"
+    reads_session: [effect.status_changed, effect.announcements, effect.focus_to, commit_outcome.announced, state_probe.announced, state_probe.on_action]
+    probes: [controls, commits, states]
+    status: implemented
+  - { name: urgency-integrity, layers: [behavior], input: "countdowns, deadlines, holds, and stock, demand, or activity claims read over time", params: { checks: "resets | drifts | expiry | unbacked", unbacked_kinds: "claim kinds that must be backed" }, output: "expiry hits at_expiry restarts or unchanged, holds excepted; unbacked hits claims of the listed kinds that no backend response supplied", reads_session: [urgency_probe.kind, urgency_probe.derived, urgency_probe.at_expiry, urgency_probe.readings, urgency_probe.backed], probes: [urgency], status: implemented }
+  - { name: time-limit, layers: [behavior], input: "time limits found with the clock advanced", params: { exempt_over_s: "limits longer than this are exempt" }, threshold: { warn_lead_s_min: seconds, extensions_min: count }, output: "a limit the user cannot turn off or lengthen tenfold, and that is not warned in time with enough extensions", reads_session: [time_limit.limit_s, time_limit.warned, time_limit.warn_lead_s, time_limit.extendable, time_limit.extensions, time_limit.turn_off, time_limit.adjustable, time_limit.input_after_expiry], probes: [time_limits], status: implemented }
+  - name: history-behavior
+    layers: [behavior]
+    input: "Back, reload, and deep links after sign-in"
+    params: { check: "back-trap | restore", restores: "state kinds (restore)", also: "deep-link" }
+    threshold: { presses_to_leave_max: "Back presses allowed to leave, not counting one that closed an overlay the user opened" }
+    output: "back-trap also hits when three presses never leave"
+    reads_session: [history_probe.action, history_probe.presses, history_probe.left_page, history_probe.overlay_closed_first, history_probe.overlay_opened_by, history_probe.pushed_entries, history_probe.restored, history_probe.landed]
+    probes: [history]
+    status: implemented
+  - { name: pointer-alternatives, layers: [behavior], input: "drag and gesture targets, hover reveals", params: { check: "gesture | hover-content", kinds: "pointer probe kinds" }, output: "gesture hits alternatives none and keyboard-only; hover-content hits content not revealed on focus, not hoverable, not persistent, or not dismissible while it covers other content", reads_session: [pointer_probe.kind, pointer_probe.alternative, pointer_probe.on_focus_too, pointer_probe.obscures, pointer_probe.dismissible, pointer_probe.hoverable, pointer_probe.persistent], probes: [pointer], status: implemented }
+  - { name: scroll-behavior, layers: [behavior], input: "scroll inputs vs distance moved", threshold: { ratio_min: number, ratio_max: number }, output: "hits outside the ratio bounds, on snapping of the document scroller, or when scrolling is blocked", reads_session: [scroll_probe.derived, scroll_probe.snapped, scroll_probe.blocked], probes: [scroll], status: implemented }
+  - { name: permission-requests, layers: [behavior], input: "calls to permission APIs", params: { check: "without-gesture", apis: list }, reads_session: [permission_request.api, permission_request.user_gesture, permission_request.after_denial], probes: [permissions], status: implemented }
+  - { name: media-autoplay, layers: [behavior], input: "media that starts without a gesture", threshold: { audible_seconds_max: seconds }, output: "audible autoplay beyond the bound without a pause, stop, or volume control", reads_session: [media_probe.autoplay, media_probe.audible, media_probe.audible_s, media_probe.controls], probes: [media], status: implemented }
+
+  # ---------------- rights (asset ledger, fonts lock, shipped files) ----------------
+  - name: asset-ledger
+    layers: [source, render]
+    input: "the asset ledger and fonts lock against the files under the scan roots (source) and our own render extracts (render); assets/CHECKS.md"
+    params: { check: "coverage | license | use | expiry | attribution | notices | reserved-names | marks | generated | releases | mark-symbols" }
+    output: "records that are missing, uses beyond the recorded grant, and recorded conditions that are not met; never a legal conclusion"
+    reads: [box.media, box.icon, text_run.text, text_run.box]
+    reads_ledger: [asset.kind, asset.role, asset.origin, asset.files, asset.hosts, asset.phashes, asset.library, asset.rights, asset.use, asset.attribution, asset.notices, asset.notices_embedded, asset.modified, asset.releases, asset.mark, asset.generated]
+    reads_lock: [fonts.source, fonts.license, fonts.delivery, fonts.files, fonts.modified, fonts.reserved_names, fonts.shipped_names, fonts.notices, fonts.notices_embedded]
+    status: implemented
+
+  # ---------------- review layer (evaluator) ----------------
+  - { name: counterfactual-test, layers: [review], output: "which decisions would change for a different subject", status: implemented }
+  - { name: name-swap-test, layers: [plan, review], input: "key copy (plan) or rendered copy (review)", output: "whether key copy stays true for another product", status: implemented }

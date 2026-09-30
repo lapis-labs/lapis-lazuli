@@ -1,0 +1,16 @@
+<!doctype html><html><meta charset="utf-8"><title>Account</title><main>
+<h1>My account</h1><form id="login" hidden><input type="email" aria-label="Email" required>
+<input type="password" aria-label="Password" required><button type="submit">Sign in</button></form>
+<p id="account" hidden>Private account</p></main>
+<script>
+fetch('/api/account').then(async response => {
+  if(response.status===401) document.getElementById('login').hidden=false;
+  else document.getElementById('account').hidden=false;
+});
+document.getElementById('login').onsubmit=async event=>{
+  event.preventDefault();
+  const inputs=event.currentTarget.querySelectorAll('input');
+  const response=await fetch('/api/sign-in',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:inputs[0].value,password:inputs[1].value})});
+  if(response.ok) location.href='/';
+};
+</script></html>

@@ -1,0 +1,15 @@
+# Synthetic backend for the signup-recovery-ko task; no real members, emails, or accounts.
+# The task prompt fixes the endpoint (POST /api/signup) and the input kinds below, so the same stub
+# fits every arm's page. Failure answers (409, 422, 5xx) come from the driver's own probes.
+version: 0
+clock: { start: '2026-09-29T00:00:00Z' }
+collections: {}
+variants:
+  empty: {}
+  partial: {}
+routes:
+  - { method: POST, path: /api/signup, response: { status: 201, json: { ok: true } } }
+values:
+  v1: { kind: name, valid: Sample Reader, invalid: '!', alternate: Sample Borrower }
+  v2: { kind: email, valid: reader@example.com, invalid: not-an-email, alternate: borrower@example.org }
+  v3: { kind: password, valid: shelf-test-only-1, invalid: x, alternate: shelf-test-only-2 }

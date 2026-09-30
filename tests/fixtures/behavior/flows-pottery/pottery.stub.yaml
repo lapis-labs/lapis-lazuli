@@ -1,0 +1,21 @@
+version: 0
+clock: {start: '2026-09-26T00:00:00Z'}
+collections:
+  pieces: [{id: p1, name: Celadon cup}]
+  reservations: []
+  firing-notices: []
+  memberships: []
+variants:
+  empty: {pieces: [], reservations: [], firing-notices: []}
+  partial: {pieces: [{id: p1, name: Celadon cup}], reservations: [], firing-notices: []}
+routes:
+  - {method: GET, path: /api/pieces, collection: pieces, operation: list}
+  - {method: POST, path: /api/reservations, collection: reservations, operation: create}
+  - {method: GET, path: /api/firing-notices, collection: firing-notices, operation: list}
+  - {method: POST, path: /api/firing-notices, collection: firing-notices, operation: create}
+  - {method: DELETE, path: '/api/firing-notices/:id', collection: firing-notices, operation: delete}
+  - {method: POST, path: /api/memberships, collection: memberships, operation: create}
+values:
+  v1: {kind: address, valid: 10 Fictional Street, invalid: '', alternate: 12 Fictional Street}
+  v2: {kind: email, valid: potter@example.com, invalid: not-an-email, alternate: collector@example.org}
+  v3: {kind: card, valid: '4242 4242 4242 4242', invalid: '0000', alternate: '4000 0000 0000 0002'}

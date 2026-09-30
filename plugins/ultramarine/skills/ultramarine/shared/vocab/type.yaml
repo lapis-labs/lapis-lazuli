@@ -1,0 +1,272 @@
+# LapisLazuli type vocabulary — v0 draft
+# Shared by lapis (decisions), lzl-fonts (measurement and catalogs), and ultramarine (checks).
+# Korean, Japanese, and Chinese names appear as data fields (ko/ja/zh), not as comments.
+#
+# `measure` texts say what `lazuli local fonts` computes (cli/lazuli/measure.py). Heights, widths,
+# and advances are outline bounds in font units; stroke thicknesses come from a raster at 512 px per
+# em converted back to font units. A font's own PANOSE bytes are never trusted.
+# Where the vocabulary comes from is in `provenance`, for maintainers; the build strips it.
+
+version: 0
+
+# ---------------------------------------------------------------------------
+# Roles used in plan files, locks, and checks
+roles:
+  - { id: display, ko: 디스플레이 }
+  - { id: heading, ko: 제목 }
+  - { id: body, ko: 본문 }
+  - { id: ui, ko: UI }
+  - { id: data, ko: 데이터·숫자 }
+  - { id: code, ko: 코드 }
+  - { id: caption, ko: 캡션 }
+
+# Family kind decides which measurement set applies (never exclude a font for being irregular).
+# `measure` is how a local face gets its kind; hand and decorative forms are not yet told apart by
+# measurement, and catalogs label them better.
+family_kinds:
+  - { id: text, panose: 2, ko: 본문 계열, measure: "at least 20 letters or at least 90% of the assigned
+      letters in the cmap's most-represented Unicode Script, and no hand name hint" }
+  - { id: hand, panose: 3, ko: 손글씨·붓, measure: "text-eligible letter coverage and a name_hints.hand match" }
+  - { id: decorative, panose: 4, ko: 장식, measure: "never assigned by measurement; catalogs label it" }
+  - id: symbol
+    panose: 5
+    ko: 기호
+    measure: "fewer than 20 letters in the cmap, unless at least 90% of the assigned letters in its
+      most-represented Unicode Script are present. Letters have Unicode category Lu, Ll, Lt, Lm,
+      or Lo, excluding Private Use code points and Mathematical Alphanumeric Symbols
+      (U+1D400-1D7FF). Unicode Script and category counts use the same Unicode data (unicodedata2,
+      pinned in the lock), cached for the script denominators; the version is stored as
+      metrics.unicode_version. The letter count is stored as metrics.letter_count."
+
+# Script coverage: the script groups the local font summary counts. Coverage, not language: Korean
+# sets carry kana and 4,620 Hanja, and Simplified Chinese sets carry kana too, so kana alone does
+# not mark a Japanese font. A face is in every group whose minimums it meets (counts of cmap code
+# points in the blocks cli/lazuli/scan.py counts).
+script_coverage:
+  - { id: Latin, needs: { latin: 52 }, note: "the basic A-Z and a-z; also the gate for Latin measurement" }
+  - { id: Hangul, needs: { hangul_syllables: 2350 }, note: "the precomposed syllables of the KS X 1001 set" }
+  - { id: Kana+Han, needs: { kana: 150, han: 6000 } }
+  - { id: Han, needs: { han: 6000 }, note: "JIS X 0208 and GB 2312 reach it; the Hanja of Korean sets do not" }
+
+# ---------------------------------------------------------------------------
+# PANOSE 1.0, Latin Text (family kind 2). Values 0 = Any, 1 = No Fit in every digit.
+# Measured only on faces with Latin coverage (script_coverage Latin).
+panose_latin_text:
+  - digit: 2
+    id: serif_style
+    measure: "not measured as a digit; metrics.serif records only whether serifs are present: true when
+      the foot of H's left stem (the widest first ink run in H's bottom 6% of rows) is at least 1.3 times
+      the stem a quarter of the way down. H rather than l, whose foot in monospaced sans faces is a bar.
+      The fine serif style is left to catalogs."
+    values: { 2: cove, 3: obtuse-cove, 4: square-cove, 5: obtuse-square-cove, 6: square, 7: thin,
+              8: oval, 9: exaggerated, 10: triangle, 11: normal-sans, 12: obtuse-sans,
+              13: perpendicular-sans, 14: flared, 15: rounded }
+  - digit: 3
+    id: weight
+    measure: "WeightRat = CapH / stem width of E. CapH is the height of H. The stem is the median, over
+      the rows between E's arms (20-40% and 60-80% of its height), of each row's first ink run from the left."
+    values: { 2: very-light, 3: light, 4: thin, 5: book, 6: medium, 7: demi, 8: bold,
+              9: heavy, 10: black, 11: extra-black }
+    thresholds:                         # WeightRat lower bounds (value >= bound)
+      very-light: 35
+      light: 18
+      thin: 10
+      book: 7.5
+      medium: 5.5
+      demi: 4.5
+      bold: 3.5
+      heavy: 2.5
+      black: 2.0
+      extra-black: 0
+  - digit: 4
+    id: proportion
+    measure: "ORat = height / width of O; PropRat = mean(E, S widths) / mean(O, H widths)"
+    values: { 2: old-style, 3: modern, 4: even-width, 5: extended, 6: condensed,
+              7: very-extended, 8: very-condensed, 9: monospaced }
+    rules:
+      monospaced: "all advance widths of i, m, W, 0, and period are equal (hmtx), not the J/M ratio"
+      very-condensed: "ORat >= 2.0"
+      condensed: "ORat >= 1.27"
+      very-extended: "ORat < 0.90"
+      extended: "0.90 <= ORat < 0.92"
+      old-style: "otherwise, PropRat < 0.70"
+      modern: "otherwise, 0.70 <= PropRat < 0.83"
+      even-width: "otherwise, PropRat >= 0.83"
+  - digit: 5
+    id: contrast
+    measure: "ConRat = narrowest / widest stroke of O. Rays from the centre of O's ink box, one every 5
+      degrees, measure the ring's radial thickness (the first ink run along the ray); narrowest and widest
+      are the 5th and 95th percentiles of those thicknesses. Unmeasured when fewer than 36 rays cross the ring."
+    values: { 2: none, 3: very-low, 4: low, 5: medium-low, 6: medium, 7: medium-high,
+              8: high, 9: very-high }
+    thresholds:                         # ConRat lower bounds (value >= bound)
+      none: 0.80
+      very-low: 0.65
+      low: 0.48
+      medium-low: 0.30
+      medium: 0.20
+      medium-high: 0.15
+      high: 0.08
+      very-high: 0
+  - digit: 6
+    id: stroke_variation
+    values: { 2: no-variation, 3: gradual-diagonal, 4: gradual-transitional, 5: gradual-vertical,
+              6: gradual-horizontal, 7: rapid-vertical, 8: rapid-horizontal,
+              9: instant-vertical, 10: instant-horizontal }
+  - digit: 7
+    id: arm_style
+    values: { 2: straight-horizontal, 3: straight-wedge, 4: straight-vertical,
+              5: straight-single-serif, 6: straight-double-serif, 7: nonstraight-horizontal,
+              8: nonstraight-wedge, 9: nonstraight-vertical, 10: nonstraight-single-serif,
+              11: nonstraight-double-serif }
+  - digit: 8
+    id: letterform
+    values: { 2: normal-contact, 3: normal-weighted, 4: normal-boxed, 5: normal-flattened,
+              6: normal-rounded, 7: normal-off-center, 8: normal-square, 9: oblique-contact,
+              10: oblique-weighted, 11: oblique-boxed, 12: oblique-flattened,
+              13: oblique-rounded, 14: oblique-off-center, 15: oblique-square }
+  - digit: 9
+    id: midline
+    values: { 2: standard-trimmed, 3: standard-pointed, 4: standard-serifed, 5: high-trimmed,
+              6: high-pointed, 7: high-serifed, 8: constant-trimmed, 9: constant-pointed,
+              10: constant-serifed, 11: low-trimmed, 12: low-pointed, 13: low-serifed }
+  - digit: 10
+    id: x_height
+    measure: "XRat = height of x / CapH gives the size (metrics.x_height_size). Constant or ducking comes
+      from accented capitals: ducking when Á rises less than 10% of CapH above A (the capital was
+      shortened to make room), constant otherwise. Without Á the digit is left out and only the size is recorded."
+    values: { 2: constant-small, 3: constant-standard, 4: constant-large, 5: ducking-small,
+              6: ducking-standard, 7: ducking-large }
+    thresholds: { small: "XRat <= 0.50", standard: "XRat <= 0.66", large: "XRat > 0.66" }
+
+# Hand Written and Decorative families use their own digit sets (tool kind, treatment,
+# topology, ...). Not yet encoded here — TODO in v1.
+
+# ---------------------------------------------------------------------------
+# CJK extension. Measured properties plus a classification vocabulary. Measured on Hangul when the
+# face has Hangul syllables, else on Han.
+cjk_measurements:
+  - id: bu_ratio
+    measure: "stroke width at the top of a vertical stroke / mid-stroke width, on the ㅣ of 이 (Hangul)
+      or the vertical of 十 (Han). The stroke is a group of adjacent columns whose ink covers at least half
+      the glyph height: the rightmost group in 이, the one with the most ink in 十. Its top width is the
+      longest row run touching those columns within the top 12% of the stroke, so a bu-ri nub that reaches
+      beyond the stem counts; its mid width is the run through the stroke's middle (in 十, 80% of the way
+      down, below the bar)."
+    classes: { bu: ">= 1.35", min_bu: "< 1.35" }
+  - id: cjk_contrast
+    measure: "horizontal / vertical stroke thickness in 口, or ㅁ when the face has no 口: the top bar's
+      first ink run down the middle column over the left bar's first ink run along the middle row"
+    uses_thresholds_of: contrast
+    grading: "the contrast thresholds apply to min(value, 1 / value); a value above 1 is also recorded
+      as reverse_contrast"
+  - id: square_spread
+    measure: "population std / mean of the outline heights of structurally different characters:
+      가각과곽괄늙뷁히흐을의쀍 (Hangul) or 国龍鬱永書風道間開寒 (Han, full-height only); unmeasured with
+      fewer than 5 of them"
+    note: "high spread suggests tal-nemo (non-square) or hand-drawn forms"
+    thresholds: { tal-nemo: 0.1, square: 0 }   # lower bounds (value >= bound)
+    calibration: uncalibrated-seed      # changes only after a calibration report is approved
+  - id: weight_ratio_cjk_latin
+    measure: "(height of 口 or ㅁ / its left vertical stroke) / Latin WeightRat within the same font"
+    note: "normal range depends on style and weight; calibrate per class, never one fixed range"
+
+pixel_outline:
+  measure: "true when every contour of the sampled glyphs has only on-curve points and every
+    segment is horizontal or vertical. The samples are H and O (Latin) and 이 and 口, or ㅁ
+    when the face has no 口 (CJK), whichever the face has with ink; glyphs without contours
+    do not count. It is measured only when the samples include O or 이, whose designed
+    curves a pixel face draws as steps; otherwise it is not measured. Stored as
+    metrics.pixel_outline."
+  effect: "bu_ratio, cjk_contrast, and the Latin contrast digit read stroke shapes that pixel
+    steps do not have, so they are not measured on such a face; weight, proportion, x_height,
+    serif, square_spread, and weight_ratio_cjk_latin still are. lazuli local fonts counts
+    these families as pixel."
+
+hangul_classes:                         # subclasses are v0 candidates
+  - id: bu-ri
+    ko: 부리
+    subclasses:
+      - { id: old, ko: 옛 부리 }
+      - { id: new, ko: 새 부리 }
+      - { id: handmade, ko: 손멋 부리 }
+      - { id: straight, ko: 곧은 부리 }
+  - id: min-bu-ri
+    ko: 민부리
+    subclasses:
+      - { id: old, ko: 옛 민부리 }
+      - { id: new, ko: 새 민부리 }
+      - { id: handmade, ko: 손멋 민부리 }
+      - { id: geometric, ko: 기하학 민부리 }
+      - { id: rounded, ko: 둥근 민부리 }
+  - id: display
+    ko: 디스플레이
+    subclasses:
+      - { id: high-contrast, ko: 획대비, measurable: cjk_contrast }
+      - { id: reverse-contrast, ko: 역획대비, measurable: cjk_contrast }
+      - { id: tal-nemo, ko: 탈네모틀, measurable: square_spread }
+      - { id: full-square, ko: 꽉 찬 네모틀 }
+      - { id: terminal-ornament, ko: 획 끝 장식 }
+  - id: hand
+    ko: 손글씨·붓
+
+# ---------------------------------------------------------------------------
+# Catalog labels. lazuli catalogs map a source's genre and license text to these ids
+# (`catalog_label.mapped`); a value with no sound mapping keeps only its raw text. A genre is a Latin
+# genre or a Hangul class above; a subclass is `<class>.<subclass>` of hangul_classes.
+# `mono` is a width attribute, not a form. A catalog may give it as a genre. A measured face
+# records it as metrics.monospaced beside its serif or sans form (metrics.serif), so a family can
+# be both mono and serif. Calibration scores the serif/sans form of every face and scores
+# monospace on its own.
+latin_genres:
+  - { id: serif, ko: 세리프 }
+  - { id: sans, ko: 산세리프 }
+  - { id: slab, ko: 슬랩 세리프 }
+  - { id: mono, ko: 고정폭 }
+  - { id: display, ko: 디스플레이 }
+  - { id: hand, ko: 손글씨 }
+
+license_ids:
+  - { id: OFL-1.1, note: "SPDX identifier" }
+  - { id: Apache-2.0, note: "SPDX identifier" }
+  - { id: KOGL-1, ko: 공공누리 제1유형, note: "Korea Open Government License type 1: attribution only" }
+  - { id: UFL-1.0, note: "SPDX identifier" }
+  - { id: commercial, note: "sold or subscribed under the source's own terms" }
+  - { id: free-other, note: "free of charge under the source's own terms, not an open license" }
+  - { id: system, note: "ships with an operating system; usable only where the device has it (fonts/system-fonts.yaml)" }
+
+# Name heuristics used as a weak labeling function (never as the only signal)
+name_hints:
+  bu-ri: [명조, 바탕, Myeongjo, Batang, Serif, Mincho, UDMincho, Songti, STSongti, 明朝, Song, 宋, Ming, 明]
+  min-bu-ri: [고딕, 돋움, Gothic, UDGothic, Dotum, Sans, Hei, Heiti, STHeiti, 黑, ゴシック]
+  min-bu-ri.rounded: [둥근, 굴림, Round, Rounded, 丸, 圆, Gulim, Maru]
+  hand: [손글씨, 붓, Hand, Roundhand, Pen, Brush, Script, 筆, 手書き, 手写]
+
+# ---------------------------------------------------------------------------
+# Font feature regions: feature combinations that rules name in rules.yaml `lists` (read by the
+# plan-font-region and rendered-family-region detectors). Each is judged on one measured face,
+# whose features are the PANOSE classes above (weight, proportion, contrast, x_height),
+# metrics.serif, metrics.x_height_size, metrics.monospaced, and italic:
+#   when      every key is measured and matches (one value, or any value of a list); a key that is
+#             not measured leaves the face unjudged
+#   unless    a measured key that matches puts the face outside the region; unmeasured keys are ignored
+#   when_any  a measured key that matches puts the face inside; unjudged only when none is measured
+font_feature_regions:
+  - id: neutral-grotesque-low-contrast-high-xheight
+    means: "Sans, contrast low or lower, x-height large (x / H above 0.66), normal width"
+    when: { serif: false, contrast: [none, very-low, low], x_height_size: large,
+            proportion: [old-style, modern, even-width] }
+  - id: high-contrast-didone-display
+    means: "Upright serif with high or very high stroke contrast"
+    when: { serif: true, contrast: [high, very-high] }
+    unless: { italic: true }
+  - id: high-contrast-italic-display
+    means: "Italic face with high or very high stroke contrast"
+    when: { italic: true, contrast: [high, very-high] }
+  - id: light-transitional-display
+    means: "Upright serif in a light weight (very light to thin) with medium or higher contrast"
+    when: { serif: true, weight: [very-light, light, thin], contrast: [medium, medium-high, high, very-high] }
+    unless: { italic: true }
+  - id: monospaced-proportion
+    means: "Every measured advance (i, m, W, 0, period) is equal"
+    when_any: { monospaced: true, proportion: monospaced }

@@ -1,0 +1,24 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><style>
+html,body { margin:0; background:white; color:#182838; font:16px/1.5 Arial,sans-serif }
+section { min-height:100vh; padding:20px; box-sizing:border-box }
+.grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:12px }
+.card { padding:16px; border:1px solid #8292a2; border-radius:8px; background:#f1f4f8 }
+@media (prefers-color-scheme:dark) {
+ html,body { background:#182838; color:#f5f6fa }
+ .card { background:#304257; border-color:#62778a }
+}
+</style></head><body><main><section id="hero"><h1>Page title</h1>
+<p lang="ko">안녕하세요 우리 함께 만드는 디자인</p><p lang="zh_Hant_TW">繁體中文</p>
+<p id="inline">Same <span>style</span> text</p>
+<p style="text-transform:capitalize">mixed<span>case</span> headline</p>
+<p lang="tr" style="text-transform:uppercase">istanbul</p>
+<p lang="bad tag!">Invalid locale</p>
+<p style="font-family: 'Arial, Experimental', Arial">Fallback check</p><div class="grid">
+<article class="card"><h2>First card</h2><p>Simple details.</p></article>
+<article class="card"><h2>Second card</h2><p>More details.</p></article>
+<article class="card"><h2>Third card</h2><p>Useful details.</p></article>
+</div><a href="/about">Learn more</a><div class="icon-wrapper"><span aria-label="sparkle icon">✨</span></div>
+<div role="button" aria-label="Open">Proxy button</div>
+<div style="opacity:0"><p>Invisible fixture sentence</p></div>
+<div style="display:none"><button>Hidden fixture button</button></div>
+<p id="format-only">&#8203;&#8205;</p></section></main></body></html>

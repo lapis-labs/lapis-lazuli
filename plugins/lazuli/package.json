@@ -1,0 +1,11 @@
+{
+  "name": "@lapis-labs/lazuli-omp",
+  "version": "0.1.0",
+  "license": "MIT AND CC-BY-4.0",
+  "private": true,
+  "omp": {
+    "extensions": [
+      "./extensions/session-start.ts"
+    ]
+  }
+}

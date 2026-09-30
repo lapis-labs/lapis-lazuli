@@ -1,0 +1,20 @@
+version: 0
+clock: { start: '2026-09-26T00:00:00Z' }
+routes:
+  - { method: GET, path: /api/account, response: { status: 200, json: { signed_in: true } }, require_session: true }
+  - { method: POST, path: /api/sign-in, response: { status: 200, json: { signed_in: true } } }
+collections: {}
+variants: { empty: {}, partial: {} }
+values:
+  v1: { kind: email, valid: shopper@example.com, invalid: invalid, alternate: alternate@example.org }
+  v2: { kind: password, valid: synthetic-pass, invalid: 'no', alternate: another-pass }
+  v3: { kind: search, valid: ceramics, invalid: '?', alternate: bowls }
+accounts: { username: v1, password: v2 }
+auth: { sign_in: { method: POST, path: /api/sign-in }, cookie: lapis_session }
+urgency:
+  countdown: { at: '2026-09-26T00:10:00Z' }
+  deadline: { at: '2026-09-26T00:10:00Z' }
+  hold: { hold_s: 300 }
+  stock: { product-a: 5 }
+  demand: { product-a: 2 }
+  activity: [{ event: purchased, count: 1 }]

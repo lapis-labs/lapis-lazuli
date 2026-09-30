@@ -1,0 +1,116 @@
+---
+name: ultramarine
+description: Checks interfaces that exist - render capture at every width, behavior probes against a stub, slop lint over plan, source, render, and behavior, and a separate critic - then turns findings into fixes for the maker. Use to review a page or app, check work in progress, answer "does this look generic", or loop until nothing blocks.
+license: MIT AND CC-BY-4.0
+---
+
+# ultramarine
+
+ultramarine checks designs; it does not make them. It runs the `lapis-design` checks on our own
+render, reads the findings in order of authority, has a separate critic judge what measurement
+cannot, and hands each fix back to the maker. The full pre-ship gate is `ulm-release`.
+
+## Order of authority
+
+1. Requirements: accessibility, working behavior, honest behavior, rights, reduced motion. Never
+   traded, never waived.
+2. The project's contract: `DESIGN.md` and its tokens. A finding against it is fixed in the code,
+   or the plan records a `proposed_design_changes` entry that the user approves.
+3. Platform and framework conventions.
+4. Named defaults (the cards). A default the plan keeps with a basis and reason is waived unless
+   the render contradicts the reason.
+
+## What the checks may touch
+
+- `render check` captures hosts that are ours without a flag: loopback, private addresses, and a
+  `.test` name that resolves only to them. A public host of ours needs `--public`. A host in the
+  source registry or in the plan's `references` is never captured; pages that are not ours go
+  through `lazuli ref capture`.
+- `behavior check` drives only our render, against a stub (`.lapis/stub.yaml`, or one served by
+  `lapis-design stub serve` and given with `--stub-url`) or an isolated local backend with
+  synthetic values (`--backend local-dev --outbound none --values <file>`). Never real accounts,
+  credentials, or payment methods.
+- When something can only be checked by crossing these limits, report it as not checked.
+
+## Modes
+
+- **create** - work in progress, after the plan gate. Findings use their create severity (`gate`
+  blocks, `warn` informs).
+- **review** - an existing surface, with or without a plan. Run lint with `--mode review`;
+  findings use review severity, and P0-P1 block.
+
+## Files
+
+| What | Path |
+|---|---|
+| plan | `.lapis/plans/<task>.yaml` |
+| render extract and screenshots | `.lapis/renders/<task>.json`, `.lapis/renders/<task>.shots/` |
+| behavior session | `.lapis/behavior/<task>.json` |
+| lint report | `.lapis/lint/<task>.json` |
+| critic report | `.lapis/critic/<task>.json` |
+| fonts lock, asset ledger | `.lapis/fonts.lock.json`, `.lapis/assets.ledger.json` |
+| reference profiles | `.lapis/refs/<slug>.json` |
+
+Every report follows `shared/slop/finding.schema.yaml`.
+
+## Run the checks
+
+1. **Render.** `lapis-design render check <url> --task <task>` captures 320, 390, 768, and 1440
+   px in light, and the wider widths in dark when the page has a dark theme. While iterating on one
+   layout, add `--width <px>`; the release gate needs them all.
+2. **Behavior**, for anything interactive. `lapis-design behavior check <url> --task <task> --plan
+   .lapis/plans/<task>.yaml --stub .lapis/stub.yaml`. Every probe runs by default; `--probe <name>`
+   narrows it while iterating. Without a stub, write the minimal one that
+   `shared/behavior/stub.schema.yaml` allows (version, clock, empty routes, collections, values,
+   and `empty` and `partial` variants) and tell the maker to complete it.
+3. **Lint.** `lapis-design slop lint --plan .lapis/plans/<task>.yaml --extract
+   .lapis/renders/<task>.json --session .lapis/behavior/<task>.json --source . --ledger
+   .lapis/assets.ledger.json --lock .lapis/fonts.lock.json -o .lapis/lint/<task>.json`. Leave out
+   inputs that do not exist yet, add `--ref .lapis/refs/<slug>.json` for each reference the plan
+   borrows from, and add `--mode review` for an existing surface.
+4. **Critic**, below.
+
+## Read the findings
+
+- Blocking findings first, then open findings by severity.
+- `skipped` means the check could not judge, never that it passed. A skip for a missing input
+  names the check to run; a skip that asks for a reviewer goes to the critic. Report the rest as
+  not checked.
+- `waived` means the plan keeps that default. It stays waived unless the critic finds the render
+  contradicts the keep's reason.
+- A finding's `rule_id` leads to its `why`, `better`, and `keep_when` in
+  `shared/slop/rules.yaml`, and a default rule belongs to one card in `shared/slop/cards.yaml`,
+  whose routes are the ways out.
+- Several findings on one package are one decision, not several fixes.
+
+## Run the critic
+
+The critic judges in a context that did not make the design, reading only the inputs listed in
+`references/critic.md`.
+
+- When the harness can start the `critic` agent (installed as `ulm-critic` where agents are
+  global), start it with the task id and those paths.
+- Otherwise run `references/critic.md` in a fresh context: a new subtask or session that has not
+  seen the design conversation, given only those files.
+- Never judge in the context that made the design. If no fresh context is possible, say that no
+  independent review ran.
+- A critic that cannot write files returns its report as JSON; save it to
+  `.lapis/critic/<task>.json`.
+
+## Hand fixes back
+
+1. Group the fixes by the plan field they change. The maker changes the plan first (the `lapis`
+   skill in repair mode), then the code.
+2. Each fix spends a world material, the signature, or a plan decision. A different named default
+   is not a fix.
+3. Rerun only what the fix touched - that width, that probe, that layer - then lint again, then
+   the critic on the changed parts.
+4. Stop when nothing blocks and every open finding is fixed, kept in `defaults` with a reason, or
+   accepted by the user.
+
+## Reporting
+
+Tell the user, in this order: blocking findings with their fixes; the most consequential unearned
+choices from the critic; what was not checked (widths, themes, probes, layers, skipped rules) and
+why; and the next step, another loop or the release gate (`ulm-release`). Leave rule text and
+raw output in the report files.

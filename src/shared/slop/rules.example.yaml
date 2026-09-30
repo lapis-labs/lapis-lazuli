@@ -1,0 +1,121 @@
+# Format example: a small subset of rules.yaml, kept for plan_check unit tests.
+# Ids, classes, domains, and severities must match rules.yaml (tests enforce this).
+# The Pantone label below is a placeholder that shows the label format only.
+version: 0
+as_of: 2026-09
+
+lists:
+  overused_type_regions:
+    as_of: 2026-09
+    values:
+      latin: [neutral-grotesque-low-contrast-high-xheight]   # names of feature regions, not font names
+  metaphor_families:
+    as_of: 2026-09
+    values:
+      all: [economic-mass, accounting, agriculture, architecture, weight, signal, mirror-shadow]
+
+packages:
+  warm-editorial:
+    members: [color.cream-base, color.terracotta-accent, type.serif-luxury-display]
+    structure:
+      base: { role: field, warmth: warm, c_max: 0.04, l_min: 0.9 }
+      accent: { count: 1, warmth: warm, c: [0.06, 0.16] }
+      display_type: { serif: true }
+    hit_when: { min_parts: 2 }
+    observed: { eras: [2025], note: editorial default package }
+
+rules:
+  - id: color.terracotta-accent
+    class: default
+    domain: color
+    layers: [plan, render]
+    severity: { create: gate, review: P3 }
+    detect:
+      plan: { detector: plan-palette-region, path: "tokens.color.roles[?role=identity|interaction].oklch", region: { space: oklch, bounds: { h: [30, 55], c: [0.08, 0.16] }, role: identity|interaction } }
+      render:
+        detector: palette-region
+        region: { space: oklch, bounds: { h: [30, 55], c: [0.08, 0.16] }, role: identity|interaction }
+        anchors:
+          - oklch: [0.608, 0.134, 40.5]
+            source_class: authored
+            labels:
+              pantone: { code: "<code> C", source_class: screen-sample, use: detection_only }
+              tailwind: { name: orange-700, source_class: published }
+    packages: [warm-editorial]
+    why: An earthy accent used regardless of the subject
+    better: Ground the accent in the subject's world_materials, or choose again using relation vocabulary
+    keep_when: [approved brand color, the subject itself is terracotta]
+    waiver: { scope: value }
+    verify: static
+
+  - id: type.overused-neutral-grotesque
+    class: default
+    domain: type
+    layers: [plan, render]
+    severity: { create: gate, review: P3 }
+    detect:
+      plan: { detector: plan-font-region, path: "tokens.type.roles[*].family", list: overused_type_regions }
+      render: { detector: rendered-family-region, list: overused_type_regions }
+    why: A featureless low-contrast, high-x-height grotesque used for every role
+    better: Pair by role, or record a keep decision with the reason if body readability justifies it
+    waiver: { scope: value }
+
+  - id: layout.template-section-sequence
+    class: default
+    domain: layout
+    layers: [plan, render]
+    severity: { create: gate, review: P3 }
+    detect:
+      plan: { detector: plan-section-sequence, path: "layout.sections[*].archetype", params: { templates: [[hero, feature-grid, pricing, cta], [hero, logo-strip, feature-grid, testimonial, cta]] } }
+      render: { detector: section-sequence, params: { templates: [[hero, feature-grid, pricing, cta], [hero, logo-strip, feature-grid, testimonial, cta]] } }
+    why: Section order follows a landing template instead of content priority
+    better: Reorder sections by the user questions each one answers
+
+  - id: copy.generative-metaphor
+    class: quality
+    domain: copy
+    layers: [render, review]
+    severity: { create: warn, review: P2 }
+    detect:
+      render: { detector: copy-family-rate, family: metaphor_families, params: { per: 1000-words, trigger: density } }
+    why: Metaphor families unrelated to the subject stand in for plain statements
+    better: State the literal proposition first; keep only imagery drawn from the subject
+
+  - id: ux.dead-control
+    class: requirement
+    domain: ux
+    layers: [behavior]
+    severity:
+      create: gate
+      review: P1
+      adjust:
+        - { when: "the primary task is blocked", review: P0 }
+    detect:
+      behavior: { detector: control-has-effect }
+    why: An element that looks interactive does nothing
+    waiver: { scope: none }
+    verify: runtime
+
+  - id: reference.brand-asset-reuse
+    class: requirement
+    domain: reference
+    layers: [render, review]
+    severity: { create: gate, review: P0 }
+    detect:
+      render: { detector: reference-asset-match, params: { rights: reference-only } }
+    why: Logos, illustrations, or copy from a reference-only source are reused as is
+    waiver: { scope: none }
+    verify: static
+
+  - id: ux.false-hierarchy
+    class: requirement
+    domain: ux
+    layers: [behavior]
+    severity: { create: gate, review: P2 }
+    detect:
+      behavior: { detector: choice-analysis, params: { check: prominence, purposes: [consent, marketing, upsell] }, threshold: { prominence_ratio_max: 4 } }
+    why: The option that serves the business far outweighs the refusal
+    waiver: { scope: none }
+    verify: runtime
+    provenance:
+      - { kind: regulation, source: "law:kr/ecommerce-act#21-2.1.3", note: "correspondence for maintainers, not a compliance determination" }

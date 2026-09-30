@@ -1,0 +1,277 @@
+{
+  "version": 0,
+  "released": "2027-01-15",
+  "space": {
+    "id": "lazuli-style",
+    "version": "1.0.0"
+  },
+  "specimen": {
+    "version": "1.0.0",
+    "min_cli": "0.6.0"
+  },
+  "models": [
+    {
+      "id": "lazuli-1B",
+      "version": "1.0.0",
+      "role": "teacher",
+      "params_m": 1000,
+      "dims": {
+        "full": 1024,
+        "prefixes": [
+          1024,
+          256,
+          64
+        ]
+      },
+      "dtype": "float16",
+      "runtime": "onnx",
+      "scripts": [
+        "latn",
+        "cyrl",
+        "grek",
+        "hang",
+        "hani",
+        "kana"
+      ],
+      "requires": {
+        "min_cli": "0.6.0",
+        "ram_mb": 6000
+      },
+      "recommend": [
+        "gpu"
+      ],
+      "source": {
+        "host": "huggingface.co",
+        "repo": "lapis-labs/lazuli-1B",
+        "revision": "1111111111111111111111111111111111111111"
+      },
+      "files": [
+        {
+          "path": "model.fp16.onnx",
+          "kind": "weights",
+          "precision": "fp16",
+          "bytes": 2000000000,
+          "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+        },
+        {
+          "path": "preprocess.json",
+          "kind": "preprocess",
+          "bytes": 812,
+          "sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+        },
+        {
+          "path": "LICENSE",
+          "kind": "license",
+          "bytes": 11357,
+          "sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+        },
+        {
+          "path": "NOTICE",
+          "kind": "notice",
+          "bytes": 640,
+          "sha256": "4444444444444444444444444444444444444444444444444444444444444444"
+        },
+        {
+          "path": "data/fonts.yaml",
+          "kind": "training-data",
+          "bytes": 48213,
+          "sha256": "5555555555555555555555555555555555555555555555555555555555555555"
+        },
+        {
+          "path": "eval/report.json",
+          "kind": "eval",
+          "bytes": 9120,
+          "sha256": "6666666666666666666666666666666666666666666666666666666666666666"
+        }
+      ],
+      "license": {
+        "spdx": "Apache-2.0",
+        "file": "LICENSE",
+        "notice": "NOTICE",
+        "training_data": "data/fonts.yaml"
+      },
+      "gate": {
+        "beats_baseline": true,
+        "report": "eval/report.json"
+      }
+    },
+    {
+      "id": "lazuli-0.3B",
+      "version": "1.0.0",
+      "role": "student",
+      "teacher": "lazuli-1B",
+      "params_m": 300,
+      "dims": {
+        "full": 1024,
+        "prefixes": [
+          1024,
+          256,
+          64
+        ]
+      },
+      "dtype": "float16",
+      "runtime": "onnx",
+      "scripts": [
+        "latn",
+        "cyrl",
+        "grek",
+        "hang",
+        "hani",
+        "kana"
+      ],
+      "requires": {
+        "min_cli": "0.6.0",
+        "ram_mb": 2400
+      },
+      "recommend": [
+        "apple-silicon",
+        "gpu"
+      ],
+      "source": {
+        "host": "huggingface.co",
+        "repo": "lapis-labs/lazuli-0.3B",
+        "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "files": [
+        {
+          "path": "model.fp16.onnx",
+          "kind": "weights",
+          "precision": "fp16",
+          "bytes": 610000000,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        {
+          "path": "preprocess.json",
+          "kind": "preprocess",
+          "bytes": 812,
+          "sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+        },
+        {
+          "path": "LICENSE",
+          "kind": "license",
+          "bytes": 11357,
+          "sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+        },
+        {
+          "path": "NOTICE",
+          "kind": "notice",
+          "bytes": 640,
+          "sha256": "4444444444444444444444444444444444444444444444444444444444444444"
+        },
+        {
+          "path": "data/fonts.yaml",
+          "kind": "training-data",
+          "bytes": 48213,
+          "sha256": "5555555555555555555555555555555555555555555555555555555555555555"
+        },
+        {
+          "path": "eval/report.json",
+          "kind": "eval",
+          "bytes": 9120,
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+      ],
+      "license": {
+        "spdx": "Apache-2.0",
+        "file": "LICENSE",
+        "notice": "NOTICE",
+        "training_data": "data/fonts.yaml"
+      },
+      "gate": {
+        "beats_baseline": true,
+        "report": "eval/report.json",
+        "teacher_gap": 0.012,
+        "cross_retrieval": 0.94
+      }
+    },
+    {
+      "id": "lazuli-0.09B",
+      "version": "1.0.0",
+      "role": "student",
+      "teacher": "lazuli-1B",
+      "params_m": 90,
+      "dims": {
+        "full": 1024,
+        "prefixes": [
+          1024,
+          256,
+          64
+        ]
+      },
+      "dtype": "float16",
+      "runtime": "onnx",
+      "scripts": [
+        "latn",
+        "cyrl",
+        "grek",
+        "hang",
+        "hani",
+        "kana"
+      ],
+      "requires": {
+        "min_cli": "0.6.0",
+        "ram_mb": 900
+      },
+      "recommend": [
+        "cpu",
+        "apple-silicon"
+      ],
+      "source": {
+        "host": "huggingface.co",
+        "repo": "lapis-labs/lazuli-0.09B",
+        "revision": "7777777777777777777777777777777777777777"
+      },
+      "files": [
+        {
+          "path": "model.fp16.onnx",
+          "kind": "weights",
+          "precision": "fp16",
+          "bytes": 180000000,
+          "sha256": "8888888888888888888888888888888888888888888888888888888888888888"
+        },
+        {
+          "path": "preprocess.json",
+          "kind": "preprocess",
+          "bytes": 812,
+          "sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+        },
+        {
+          "path": "LICENSE",
+          "kind": "license",
+          "bytes": 11357,
+          "sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+        },
+        {
+          "path": "NOTICE",
+          "kind": "notice",
+          "bytes": 640,
+          "sha256": "4444444444444444444444444444444444444444444444444444444444444444"
+        },
+        {
+          "path": "data/fonts.yaml",
+          "kind": "training-data",
+          "bytes": 48213,
+          "sha256": "5555555555555555555555555555555555555555555555555555555555555555"
+        },
+        {
+          "path": "eval/report.json",
+          "kind": "eval",
+          "bytes": 9120,
+          "sha256": "9999999999999999999999999999999999999999999999999999999999999999"
+        }
+      ],
+      "license": {
+        "spdx": "Apache-2.0",
+        "file": "LICENSE",
+        "notice": "NOTICE",
+        "training_data": "data/fonts.yaml"
+      },
+      "gate": {
+        "beats_baseline": true,
+        "report": "eval/report.json",
+        "teacher_gap": 0.031,
+        "cross_retrieval": 0.9
+      }
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Fixture shop</title>
+<main>
+  <p id="countdown">Offer expires in 09:00</p>
+  <p id="deadline">Offer deadline: 2026-09-26 00:10:00 UTC</p>
+  <p id="hold">Your seat is held for 05:00</p>
+  <p id="fake">3 left</p><p id="real">5 left</p>
+  <p id="viewing">2 people viewing</p><p id="activity">Someone just bought</p>
+  <p id="deadline-ko">마감 2026년 9월 26일 00시 10분 UTC</p>
+  <p id="stock-ko">재고 7개 남음</p>
+  <p id="demand-ko">2명 보고 있어요</p>
+  <p id="activity-ko">방금 구매했어요</p>
+  <label>Filter <input id="filter" type="checkbox"></label>
+  <label>Search <input id="query" type="search"></label>
+  <button id="page" type="button" aria-current="false">Page 2</button>
+  <a href="/detail.html">Item detail</a><a href="/private.html">My account</a><a href="/session.html">Session form</a>
+  <form method="post" action="/submitted.html"><button type="submit">Submit an empty form</button></form>
+  <label>Draft <input id="draft" type="text"></label>
+  <div style="height:1200px">Scrollable catalog</div>
+</main>
+<script>
+  history.pushState({added:true},'', '/?auto=1');
+  const visits=+(sessionStorage.getItem('visits')||0);
+  document.getElementById('fake').textContent=`${visits ? 4 : 3} left`;
+  sessionStorage.setItem('visits', String(visits+1));
+  const started=Date.now(), expiry=started+540000, held=started+300000;
+  function format(ms){const seconds=Math.max(0,Math.ceil(ms/1000));return `${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`}
+  function paint(){
+    document.getElementById('countdown').textContent=`Offer expires in ${format(expiry-Date.now())}`;
+    document.getElementById('hold').textContent=`Your seat is held for ${format(held-Date.now())}`;
+  }
+  paint();setInterval(paint,1000);
+  addEventListener('pagehide',()=>{document.getElementById('filter').checked=false;});
+  document.getElementById('page').onclick=()=>document.getElementById('page').setAttribute('aria-current','page');
+</script>

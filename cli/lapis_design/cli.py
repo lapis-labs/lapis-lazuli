@@ -1,0 +1,49 @@
+"""lapis-design: the checks the LapisLazuli skills run, and the command their hooks and MCP entries call."""
+from __future__ import annotations
+
+import argparse
+import importlib
+import sys
+
+from lapis_design import __version__
+from lapis_design.hooks import HOOKS
+
+# `lapis-design <noun> <verb> ARGS...` hands ARGS to the check's own parser unchanged
+CHECKS = {
+    ("plan", "check"): "lapis_design.plan_check",
+    ("rights", "check"): "lapis_design.rights_check",
+    ("render", "check"): "lapis_design.render",
+    ("behavior", "check"): "lapis_design.behavior_check",
+    ("stub", "serve"): "lapis_design.stub",
+    ("slop", "lint"): "lapis_design.lint.cli",
+    ("release", "check"): "lapis_design.release_check",
+}
+
+
+def main(argv: list[str] | None = None) -> int:
+    argv = sys.argv[1:] if argv is None else argv
+    module = CHECKS.get(tuple(argv[:2]))
+    if module:
+        return importlib.import_module(module).main(argv[2:], prog=f"lapis-design {argv[0]} {argv[1]}")
+
+    ap = argparse.ArgumentParser(prog="lapis-design", description=__doc__.split(":", 1)[1].strip())
+    ap.add_argument("--version", action="version", version=f"lapis-design {__version__}")
+    sub = ap.add_subparsers(dest="command", required=True)
+    for noun in dict.fromkeys(n for n, _ in CHECKS):
+        verbs = sub.add_parser(noun, help=f"{noun} checks").add_subparsers(dest="verb", required=True)
+        for n, verb in CHECKS:
+            if n == noun:
+                verbs.add_parser(verb, help=f"run {noun} {verb} (see `lapis-design {noun} {verb} -h`)")
+    hook = sub.add_parser("hook", help="run a harness hook (reads the event JSON on stdin)")
+    hook.add_argument("name", choices=list(HOOKS))
+    sub.add_parser("mcp", help="serve the lapis-lazuli MCP server over stdio")
+    args = ap.parse_args(argv)
+    if args.command == "hook":
+        return HOOKS[args.name](sys.stdin, sys.stdout)
+    from lapis_design.mcp_server import serve   # the SDK loads only for the server, not for every hook
+    serve()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

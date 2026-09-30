@@ -1,0 +1,65 @@
+# LapisLazuli source registry schema — v0 draft
+# Location: src/shared/sources/registry.yaml (shipped with the CLI as lapis_design/shared/sources/).
+# One entry per place people look for fonts, colors, assets, or design references, with what it is
+# good for and how lazuli may reach it. `lazuli sources` lists it, `lazuli read` checks it before it
+# fetches a page, and the font catalog adapters must agree with it (tests/test_lazuli_sources.py).
+#
+# access:
+#   adapter       a lazuli catalog adapter collects it at a human pace (`adapter` names the module)
+#   read          `lazuli read` may fetch one page the user asked for (robots.txt still applies)
+#   browser-link  a link for the user only: sign-in walls, sites that turn tools away, or terms that
+#                 restrict tool use without banning it outright (`reason` says which)
+#   refused       the terms forbid automated access; `clause` cites it and nothing is ever requested.
+#                 A refused catalog keeps its REFUSED adapter module, named in `adapter`.
+# checked_at is the day the access policy was checked against the source's terms and robots.txt.
+
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/sources-registry.v0.json
+title: LapisLazuli source registry
+type: object
+additionalProperties: false
+required: [version, sources]
+properties:
+  version: { const: 0 }
+  sources:
+    type: array
+    minItems: 1
+    items: { $ref: "#/$defs/source" }
+$defs:
+  https_url: { type: string, pattern: "^https://[a-z0-9.-]+\\.[a-z]{2,}(/[^\\s#]*)?$" }
+  source:
+    type: object
+    additionalProperties: false
+    required: [id, name, url, type, good_for, access, terms_url, checked_at]
+    properties:
+      id: { type: string, pattern: "^[a-z0-9]+(-[a-z0-9]+)*$" }
+      name: { type: string, minLength: 1 }
+      url: { $ref: "#/$defs/https_url" }        # the page to open; its host (and path on shared hosts) identifies the source
+      hosts:                                    # other hosts that belong to the source (APIs, sign-in apps, redirects)
+        type: array
+        uniqueItems: true
+        items: { type: string, pattern: "^[a-z0-9.-]+\\.[a-z]{2,}$" }
+      type:
+        type: array
+        minItems: 1
+        uniqueItems: true
+        items: { enum: [font, color, asset, search] }
+      good_for: { type: string, minLength: 1 }
+      access: { enum: [adapter, read, browser-link, refused] }
+      adapter: { type: string, pattern: "^[a-z0-9]+(-[a-z0-9]+)*$" }   # lazuli.catalog module NAME
+      reason: { type: string, minLength: 1 }   # why the access is browser-link or refused, shown to the user
+      clause: { type: string, minLength: 1 }   # the terms clause a refusal rests on
+      terms_url: { $ref: "#/$defs/https_url" }  # license or terms page; the source's own page when it publishes none
+      license: { type: string, minLength: 1 }  # content or code license where one applies to the whole source
+      color_system: { enum: [pantone, ral-classic, ral-design-plus, ncs, munsell, hlc, freetone] }   # vocab/color.yaml systems
+      checked_at: { type: string, format: date, pattern: "^\\d{4}-\\d{2}-\\d{2}$" }
+      note: { type: string, minLength: 1 }
+    allOf:
+      - if: { properties: { access: { const: adapter } } }
+        then: { required: [adapter] }
+      - if: { properties: { access: { const: refused } } }
+        then: { required: [reason, clause] }
+      - if: { properties: { access: { const: browser-link } } }
+        then: { required: [reason] }
+      - if: { properties: { access: { enum: [read, browser-link] } } }
+        then: { not: { required: [adapter] } }

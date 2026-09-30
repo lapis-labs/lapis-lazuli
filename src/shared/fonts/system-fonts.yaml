@@ -1,0 +1,62 @@
+# LapisLazuli system fonts table — v0 draft
+# Fonts that ship with operating systems. They can be used as local fallbacks, never self-hosted.
+# Seeded from the multilingual-font-stacks asset of the previous repository, design-and-frontend.
+#
+# verified:
+#   reviewed-2026-09-22  names confirmed in that asset's reviewed Windows 11 inventory
+#   scanned-2026-09-26-macos27  found by `lazuli local fonts` on macOS 27.0 (26A428) under
+#                        /System/Library/Fonts; a `note` says when the file came from a downloadable
+#                        system asset (/System/Library/AssetsV2) that a fresh install may lack
+#   unverified           commonly cited; confirm on the target OS with `lazuli local fonts`
+#                        before relying on it (that asset warns against adding Apple CJK
+#                        family names from memory)
+#   keyword              a CSS generic font keyword (`class: generic`), not a font: the browser maps
+#                        it to an installed family, so there is no file to find and nothing to verify.
+#                        What it maps to varies by browser and OS; a `note` says what to watch.
+# class values come from vocab/type.yaml: a Latin genre (latin_genres), a Hangul/CJK class or
+# `class.subclass` (hangul_classes), or `generic` for a CSS generic keyword.
+
+version: 0
+
+defaults:
+  license: system
+  delivery: system-only          # usable only if the device has it; no @font-face redistribution
+
+fonts:
+  # ---------------- Windows ----------------
+  - { family: Segoe UI, platforms: [windows], scripts: [latn, cyrl, grek], class: sans, verified: unverified }
+  - { family: Consolas, platforms: [windows], scripts: [latn], class: mono, verified: reviewed-2026-09-22 }
+  - { family: Cascadia Mono, platforms: [windows], scripts: [latn], class: mono, verified: unverified }
+  - { family: Malgun Gothic, platforms: [windows], scripts: [hang, latn], class: min-bu-ri, verified: unverified }
+  - { family: Gulim, platforms: [windows], scripts: [hang, latn], class: min-bu-ri.rounded, verified: unverified, note: "may be an optional supplemental font" }
+  - { family: Dotum, platforms: [windows], scripts: [hang, latn], class: min-bu-ri, verified: unverified, note: "may be an optional supplemental font" }
+  - { family: Batang, platforms: [windows], scripts: [hang, latn], class: bu-ri, verified: unverified, note: "may be an optional supplemental font" }
+  - { family: Yu Gothic UI, platforms: [windows], scripts: [kana, hani, latn], class: min-bu-ri, verified: reviewed-2026-09-22 }
+  - { family: Yu Gothic, platforms: [windows], scripts: [kana, hani, latn], class: min-bu-ri, verified: reviewed-2026-09-22 }
+  - { family: Yu Mincho, platforms: [windows], scripts: [kana, hani, latn], class: bu-ri, verified: unverified }
+  - { family: Meiryo, platforms: [windows], scripts: [kana, hani, latn], class: min-bu-ri, verified: unverified }
+  - { family: Microsoft YaHei UI, platforms: [windows], scripts: [hani, latn], locales: [zh-Hans], class: min-bu-ri, verified: reviewed-2026-09-22 }
+  - { family: Microsoft YaHei, platforms: [windows], scripts: [hani, latn], locales: [zh-Hans], class: min-bu-ri, verified: reviewed-2026-09-22 }
+  - { family: SimSun, platforms: [windows], scripts: [hani, latn], locales: [zh-Hans], class: bu-ri, verified: unverified }
+  - { family: Microsoft JhengHei UI, platforms: [windows], scripts: [hani, latn], locales: [zh-Hant], class: min-bu-ri, verified: reviewed-2026-09-22 }
+  - { family: Microsoft JhengHei, platforms: [windows], scripts: [hani, latn], locales: [zh-Hant], class: min-bu-ri, verified: reviewed-2026-09-22 }
+  - { family: PMingLiU, platforms: [windows], scripts: [hani, latn], locales: [zh-Hant], class: bu-ri, verified: unverified }
+
+  # ---------------- macOS / iOS ----------------
+  - { family: Apple SD Gothic Neo, platforms: [macos, ios], scripts: [hang, latn], class: min-bu-ri, verified: scanned-2026-09-26-macos27 }
+  - { family: AppleMyungjo, platforms: [macos], scripts: [hang, latn], class: bu-ri, verified: scanned-2026-09-26-macos27 }
+  - { family: Hiragino Sans, platforms: [macos, ios], scripts: [kana, hani, latn], class: min-bu-ri, verified: scanned-2026-09-26-macos27 }
+  - { family: Hiragino Mincho ProN, platforms: [macos, ios], scripts: [kana, hani, latn], class: bu-ri, verified: scanned-2026-09-26-macos27 }
+  - { family: PingFang SC, platforms: [macos, ios], scripts: [hani, latn], locales: [zh-Hans], class: min-bu-ri, verified: scanned-2026-09-26-macos27, note: "a downloadable system asset on macOS 27 (AssetsV2); may be absent until downloaded" }
+  - { family: PingFang TC, platforms: [macos, ios], scripts: [hani, latn], locales: [zh-Hant], class: min-bu-ri, verified: scanned-2026-09-26-macos27, note: "a downloadable system asset on macOS 27 (AssetsV2); may be absent until downloaded" }
+  - { family: Menlo, platforms: [macos], scripts: [latn, cyrl, grek], class: mono, verified: scanned-2026-09-26-macos27 }
+
+  # ---------------- Generic families (always available by keyword) ----------------
+  - { family: system-ui, platforms: [all], scripts: [all], class: generic, verified: reviewed-2026-09-22, note: "CSS generic keyword; the honest fallback when a named system family is unverified" }
+  - { family: ui-monospace, platforms: [all], scripts: [latn], class: generic, verified: keyword, note: "CSS generic keyword; support varies by browser" }
+
+# Language-scoped composition defaults paired with these stacks (from that asset)
+composition:
+  ko: { word-break: keep-all, overflow-wrap: break-word, note: "a Korean paragraph choice, not a CJK-wide rule" }
+  ja: { word-break: normal, line-break: strict }
+  zh: { word-break: normal, line-break: strict }

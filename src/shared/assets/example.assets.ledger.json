@@ -1,0 +1,115 @@
+{
+  "version": 0,
+  "updated_at": "2026-09-24T12:00:00Z",
+  "scan": { "roots": ["public"] },
+  "assets": [
+    {
+      "id": "studio-logo",
+      "kind": "logo",
+      "role": "brand",
+      "origin": "own",
+      "files": [{ "path": "public/images/logo*.svg" }],
+      "rights": { "license": "own", "holder": "Kiln shop studio", "source_class": "rights-holder" },
+      "mark": { "owner": "Kiln shop studio", "name": "Kiln shop", "relationship": "own", "authorization": "not-needed" },
+      "use": { "channels": ["web", "email", "social"], "commercial": true, "promotional": true },
+      "used_by": ["kiln-shop-landing"],
+      "checked_at": "2026-09-24",
+      "approved_by": "studio owner"
+    },
+    {
+      "id": "kiln-hero",
+      "kind": "photo",
+      "role": "evidentiary",
+      "origin": "own",
+      "files": [{ "path": "public/images/kiln-hero-*.jpg" }],
+      "rights": { "license": "own", "holder": "Kiln shop studio", "source_class": "rights-holder" },
+      "modified": "resized",
+      "releases": { "people": "none-depicted", "property": "none-depicted" },
+      "use": { "channels": ["web", "social"], "commercial": true, "promotional": true },
+      "used_by": ["kiln-shop-landing"],
+      "checked_at": "2026-09-24",
+      "approved_by": "studio owner"
+    },
+    {
+      "id": "kiln-1978",
+      "kind": "photo",
+      "role": "informative",
+      "origin": "open-license",
+      "files": [{ "path": "public/images/archive/kiln-1978.webp" }],
+      "source": { "url": "https://example.org/archive/kiln-1978", "provider": "Example ceramics archive", "retrieved": "2026-09-20" },
+      "rights": {
+        "license": "cc-by", "version": "4.0", "holder": "Example ceramics archive",
+        "evidence": { "kind": "url", "ref": "https://example.org/archive/kiln-1978/license" },
+        "source_class": "rights-holder"
+      },
+      "attribution": {
+        "required": true, "text": "사진: Example ceramics archive, CC BY 4.0, 일부를 잘라 씀", "placement": "adjacent",
+        "license_url": "https://creativecommons.org/licenses/by/4.0/", "indicates_changes": true
+      },
+      "modified": "cropped",
+      "releases": { "people": "none-depicted", "property": "none-depicted" },
+      "use": { "channels": ["web"], "commercial": true, "promotional": false },
+      "used_by": ["kiln-shop-landing"],
+      "checked_at": "2026-09-24"
+    },
+    {
+      "id": "celadon-texture",
+      "kind": "texture",
+      "role": "decorative",
+      "origin": "open-license",
+      "files": [{ "path": "public/images/textures/celadon-crackle.webp" }],
+      "source": { "url": "https://example.com/textures/celadon-crackle", "provider": "Example texture library", "retrieved": "2026-09-20" },
+      "rights": { "license": "cc0", "evidence": { "kind": "url", "ref": "https://example.com/textures/celadon-crackle" }, "source_class": "provider" },
+      "modified": "cropped",
+      "use": { "channels": ["web"], "commercial": true, "promotional": true },
+      "used_by": ["kiln-shop-landing"],
+      "checked_at": "2026-09-24"
+    },
+    {
+      "id": "ui-icons",
+      "kind": "icon-set",
+      "role": "functional",
+      "origin": "open-license",
+      "library": "lucide",
+      "rights": { "license": "isc", "holder": "icon set contributors", "evidence": { "kind": "file", "ref": "public/licenses/icons.txt" }, "source_class": "provider" },
+      "notices": ["public/licenses/icons.txt"],
+      "use": { "channels": ["web"], "commercial": true, "promotional": false },
+      "used_by": ["kiln-shop-landing"],
+      "checked_at": "2026-09-24"
+    },
+    {
+      "id": "notice-illustration",
+      "kind": "illustration",
+      "role": "decorative",
+      "origin": "generated",
+      "files": [{ "path": "public/images/notice-kiln.webp" }],
+      "rights": {
+        "license": "provider-terms", "source_class": "provider",
+        "evidence": { "kind": "kept-elsewhere", "ref": "studio records, generator terms reviewed 2026-09-23" }
+      },
+      "generated": { "tool": "project-approved image generator", "date": "2026-09-23", "inputs": ["none"], "reviewed": true },
+      "use": { "channels": ["web"], "commercial": true, "promotional": true },
+      "used_by": ["kiln-shop-landing"],
+      "checked_at": "2026-09-24",
+      "approved_by": "studio owner"
+    },
+    {
+      "id": "courier-mark",
+      "kind": "mark",
+      "role": "brand",
+      "origin": "third-party",
+      "files": [{ "path": "public/images/marks/courier.svg" }],
+      "rights": {
+        "license": "permission", "holder": "Example courier",
+        "evidence": { "kind": "kept-elsewhere", "ref": "operations team, partner agreements folder" },
+        "source_class": "rights-holder", "expires": "2027-03-31"
+      },
+      "mark": { "owner": "Example courier", "relationship": "integration", "authorization": "confirmed",
+                "evidence": { "kind": "kept-elsewhere", "ref": "operations team, partner agreements folder" } },
+      "use": { "channels": ["web"], "commercial": true, "promotional": false },
+      "used_by": ["kiln-shop-landing"],
+      "checked_at": "2026-09-24",
+      "open_questions": ["Renew the mark permission with the delivery contract in March 2027"]
+    }
+  ]
+}

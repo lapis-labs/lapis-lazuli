@@ -1,0 +1,578 @@
+# LapisLazuli render extraction / reference profile schema — v1 draft
+# Used by:
+#   - ultramarine render_check output (measuring our own output)
+#   - lazuli ref capture/profile/system output (reference profiles; adds the reference block)
+#   - one entry of the typicality corpus (the defaults corpus uses the same format)
+# Sharing one format lets us measure distances between output, references, and the corpus directly.
+# All colors are normalized to OKLCH [L, C, H], with an optional fourth value for alpha.
+# How each value is measured: render/DERIVED.md.
+# One file per captured page or render, with every viewport inside `viewports`.
+#
+# v1 (2026-09-25) adds the inputs the slop detectors read: text strings and their locale, type
+# roles, effective backdrops and state colors, gradients, shadows, filters, background patterns,
+# border sides, clip paths, icons, media, scroll containers, motion, accessibility, paint order,
+# clipping, page overflow, layout shift, text signatures, and the 320 px viewport. It also closes
+# objects that accepted any key and requires text in our own renders. No v0 extracts were ever
+# produced, so there is no converter. Within v1, 2026-09-27 adds the optional
+# `derived.signature_evidence`; extracts without it stay valid.
+#
+# Rights: a reference-only capture stores no copy, alt text, accessible names, or screenshots.
+# Its text runs carry `text_sig`, a keyed MinHash signature; the schema enforces this at the bottom.
+
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/extract.v1.json
+title: LapisLazuli render extraction / reference profile
+type: object
+additionalProperties: false
+required: [version, meta, source]
+
+properties:
+  version: { const: 1 }
+
+  meta:
+    type: object
+    additionalProperties: false
+    required: [extractor, generated_at]
+    properties:
+      extractor:
+        type: object
+        additionalProperties: false
+        required: [name, version]
+        properties:
+          name: { enum: [render_check, lazuli-ref] }
+          version: { type: string }
+      generated_at: { type: string, format: date-time }
+      sig_key_id: { type: string, pattern: "^[0-9a-f]{8}$" }   # which local key made the text signatures
+      dark_theme: { type: boolean }                  # render check found a dark theme; dark captures exist at whichever of 390, 768, and 1440 were captured
+
+  source:
+    type: object
+    additionalProperties: false
+    required: [kind]
+    properties:
+      kind: { enum: [render, site, image, system] }   # render = our own output
+      url: { type: string, pattern: "^[^?#]*$" }      # page URL without query or fragment
+      path: { type: string }
+      task: { type: string }                          # the plan's task.id (for render)
+      addresses:                                      # resolved IPs only for a pinned own .test render
+        type: array
+        minItems: 1
+        items: { type: string, anyOf: [{ format: ipv4 }, { format: ipv6 }] }
+
+  # References only. Pairs with an entry in the plan's references.
+  reference:
+    type: object
+    additionalProperties: false
+    required: [rights]
+    properties:
+      rights: { enum: [own, licensed, reference-only] }
+      captured_by: { enum: [user-request] }           # capture only what the user asked for
+      notes: { type: string }
+
+  # Rendered web results (render, site). One entry per captured viewport.
+  viewports:
+    type: array
+    items: { $ref: "#/$defs/viewport" }
+
+  # Image references (image)
+  image:
+    type: object
+    additionalProperties: false
+    properties:
+      path: { type: string }                          # the image file in the user's local cache
+      palette: { $ref: "#/$defs/palette" }
+      composition: { type: string }                   # our own description of the composition; never quotes the image's text
+      type_impressions: { type: array, items: { type: string } }
+      similar_fonts:                                  # when a font embedding model is available
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [family, distance]
+          properties:
+            family: { type: string }
+            distance: { type: number, minimum: 0 }
+            model: { type: string }                   # e.g. lazuli-0.09B@1
+
+  # Design system references (system)
+  system:
+    type: object
+    additionalProperties: false
+    properties:
+      tokens_path: { type: string }                   # a DTCG file or DESIGN.md
+      type_scale: { $ref: "#/$defs/type_scale" }
+      color_roles:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [role, oklch]
+          properties:
+            role: { type: string }
+            oklch: { $ref: "#/$defs/oklch" }
+      states: { type: array, items: { type: string } }   # summary of component state rules
+
+
+$defs:
+  oklch:                                             # [L, C, H] or [L, C, H, alpha]
+    type: array
+    minItems: 3
+    maxItems: 4
+    prefixItems:
+      - { type: number, minimum: 0, maximum: 1 }       # L
+      - { type: number, minimum: 0, maximum: 0.5 }     # C
+      - { type: number, minimum: 0, maximum: 360 }     # H
+      - { type: number, minimum: 0, maximum: 1 }       # alpha
+
+  rect:
+    type: object
+    additionalProperties: false
+    required: [x, y, w, h]
+    properties:
+      x: { type: number }
+      y: { type: number }
+      w: { type: number, minimum: 0 }
+      h: { type: number, minimum: 0 }
+
+  palette:                                           # colors with their area share
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [oklch, share]
+      properties:
+        oklch: { $ref: "#/$defs/oklch" }
+        share: { type: number, minimum: 0, maximum: 1 }
+        role_guess: { enum: [field, foreground, identity, interaction, status, data, content, unknown] }
+        exact: { type: boolean }                      # an exact-color bin (pure black or white), not a cluster
+
+  type_scale:
+    type: object
+    additionalProperties: false
+    properties:
+      base_px: { type: number }
+      ratio: { type: number }
+      steps_px: { type: array, items: { type: number } }
+
+  # ---------------------------------------------------------------- box
+
+  box:
+    type: object
+    additionalProperties: false
+    required: [id, rect, role, role_confidence]
+    properties:
+      id: { type: string, pattern: "^b[0-9a-f]{12}$" }   # hashed stable DOM path, see DERIVED.md
+      parent: { oneOf: [ { type: "null" }, { type: string, pattern: "^b[0-9a-f]{12}$" } ] }
+      role: { enum: [section, card, heading, text, media, button, link, input, nav, list, icon, dialog, other] }
+      role_confidence: { type: number, minimum: 0, maximum: 1 }
+      role_basis: { enum: [semantic, aria, heuristic] }
+      rect: { $ref: "#/$defs/rect" }
+      paint_order: { type: integer, minimum: 0 }     # rank in the page's paint order; higher paints later
+      clipped: { enum: [none, overflow, ellipsis, line-clamp] }   # content cut off by the box
+      style: { $ref: "#/$defs/box_style" }
+      a11y: { $ref: "#/$defs/a11y" }
+      icon: { $ref: "#/$defs/icon" }                  # boxes with role icon (and icon-only buttons)
+      media: { $ref: "#/$defs/media" }                # one slot per box: role media, or the topmost CSS background image
+      scroll: { $ref: "#/$defs/scroll" }              # scroll containers and long lists
+      motion: { $ref: "#/$defs/motion" }
+
+  box_style:
+    type: object
+    additionalProperties: false
+    properties:
+      background: { $ref: "#/$defs/oklch" }           # solid background color, when there is one
+      border_px: { type: number }                     # widest side
+      border_color: { $ref: "#/$defs/oklch" }
+      border_sides:                                   # per side, for side-accent borders
+        type: object
+        additionalProperties: false
+        properties:
+          top: { $ref: "#/$defs/border_side" }
+          right: { $ref: "#/$defs/border_side" }
+          bottom: { $ref: "#/$defs/border_side" }
+          left: { $ref: "#/$defs/border_side" }
+      shadow: { type: boolean }                       # any shadow at all (kept for card detection)
+      shadows: { type: array, items: { $ref: "#/$defs/shadow" } }
+      radius_px: { type: number }                     # largest corner radius
+      gradients: { type: array, items: { $ref: "#/$defs/gradient" } }
+      filter_blur_px: { type: number, minimum: 0 }    # filter: blur() on the element itself
+      backdrop_filter:
+        type: object
+        additionalProperties: false
+        properties:
+          blur_px: { type: number, minimum: 0 }
+          other: { type: array, items: { type: string } }   # other filter functions, e.g. saturate(1.4)
+      background_pattern:                             # repeating decorative background, classified
+        type: object
+        additionalProperties: false
+        required: [kind]
+        properties:
+          kind: { enum: [grid, dot-grid, crosshair, stripes, noise, other] }
+          cell_px: { type: number, minimum: 0 }
+          contrast: { type: number, minimum: 0 }      # OKLCH L difference between pattern and ground
+      clip:
+        type: object
+        additionalProperties: false
+        required: [kind]
+        properties:
+          kind: { enum: [none, polygon, circle, ellipse, inset, path] }
+          vertices: { type: integer, minimum: 0 }     # polygon vertex count
+          jaggedness: { type: number, minimum: 0, maximum: 1 }   # see DERIVED.md
+
+  border_side:
+    type: object
+    additionalProperties: false
+    required: [px]
+    properties:
+      px: { type: number, minimum: 0 }
+      color: { $ref: "#/$defs/oklch" }
+
+  shadow:
+    type: object
+    additionalProperties: false
+    required: [source, offset_x, offset_y, blur_px, color]
+    properties:
+      source: { enum: [box-shadow, drop-shadow, text-shadow] }
+      inset: { type: boolean }
+      offset_x: { type: number }
+      offset_y: { type: number }
+      blur_px: { type: number, minimum: 0 }
+      spread_px: { type: number }
+      color: { $ref: "#/$defs/oklch" }                # alpha as the fourth value
+
+  gradient:
+    type: object
+    additionalProperties: false
+    required: [target, kind, stops]
+    properties:
+      target: { enum: [background, text, border, mask] }
+      kind: { enum: [linear, radial, conic] }
+      repeating: { type: boolean }
+      angle_deg: { type: number }
+      stops:
+        type: array
+        minItems: 2
+        items:
+          type: object
+          additionalProperties: false
+          required: [oklch]
+          properties:
+            oklch: { $ref: "#/$defs/oklch" }          # alpha as the fourth value
+            at: { type: number }                      # fraction of the gradient line; may fall outside 0-1
+      blur_px: { type: number, minimum: 0 }           # filter blur on the painted layer, if any
+      area_share: { type: number, minimum: 0, maximum: 1 }   # of the full page, as painted
+      first_viewport_share: { type: number, minimum: 0, maximum: 1 }   # of the first viewport
+      behind: { type: string }                        # box id this layer sits behind, if any
+
+  a11y:
+    type: object
+    additionalProperties: false
+    properties:
+      role: { type: string }                          # computed ARIA role
+      name: { type: string }                          # accessible name (not stored for reference-only captures)
+      name_source: { enum: [contents, label, aria-label, aria-labelledby, title, alt, placeholder, none] }
+      focusable: { type: boolean }
+      tabindex: { type: integer }
+      pointer_handler: { type: boolean }              # own or framework-attached click/pointer handler
+      pointer_cursor: { type: boolean }               # cursor: pointer without native interactivity
+      keyboard_handler: { type: boolean }
+      disabled: { type: boolean }
+      hidden: { type: boolean }                       # aria-hidden or removed from the tree
+      focus_indicator: { type: boolean }              # a visible change when focused by keyboard
+
+  icon:
+    type: object
+    additionalProperties: false
+    required: [kind]
+    properties:
+      kind: { enum: [svg, icon-font, emoji, image] }
+      library: { type: [string, "null"] }            # family guessed from import, class, or sprite; null when hand-authored
+      glyph: { type: string, pattern: "^U\\+[0-9A-F]{4,6}( U\\+[0-9A-F]{4,6})*$" }   # code points for emoji and symbol glyphs
+      stroke_px: { type: number, minimum: 0 }
+      grid_px: { type: number, minimum: 0 }           # viewBox size
+      action:                                         # standard action the icon stands for; omitted until an icon set is chosen
+        enum: [close, search, menu, back, forward, add, remove, edit, share, download, upload, settings,
+               user, cart, home, info, warning, check, more, filter, sort, play, pause, external]
+      confidence: { type: number, minimum: 0, maximum: 1 }
+
+  media:
+    type: object
+    additionalProperties: false
+    required: [kind, loaded]
+    properties:
+      kind: { enum: [img, picture, video, canvas, svg, css-background] }
+      host: { type: [string, "null"] }                # loaded URL's host; on-page proxy with an absolute http(s) URL query uses the inner host
+      loaded: { type: boolean }
+      natural_w: { type: number, minimum: 0 }
+      natural_h: { type: number, minimum: 0 }
+      intrinsic_size: { type: boolean }               # width/height attributes or aspect-ratio before load
+      alt: { type: [string, "null"] }                 # null when the attribute is absent; not stored for reference-only captures
+      decorative: { type: boolean }                   # alt="" or aria-hidden
+      placeholder: { type: boolean }                  # placeholder service, lorem image, or unresolved slot
+      overlay:                                        # layers painted over the image
+        type: object
+        additionalProperties: false
+        properties:
+          alpha_max: { type: number, minimum: 0, maximum: 1 }
+          coverage: { type: number, minimum: 0, maximum: 1 }
+      phash: { type: string, pattern: "^[0-9a-f]{16}$" }   # 64-bit perceptual hash of the displayed screenshot region
+
+  scroll:
+    type: object
+    additionalProperties: false
+    required: [axis]
+    properties:
+      axis: { enum: [x, y, both, page] }              # page: a long list that scrolls with the page
+      items: { type: integer, minimum: 0 }            # direct children rendered in the DOM
+      content_px: { type: number, minimum: 0 }        # scrollable length along the axis
+      inset_start_px: { type: number }                # gap between the container edge and the first item
+      inset_end_px: { type: number }
+
+  motion:
+    type: object
+    additionalProperties: false
+    properties:
+      transitions:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [property]
+          properties:
+            property: { type: string }                # longhand CSS property name, or "all"
+            duration_ms: { type: number, minimum: 0 }
+            delay_ms: { type: number }
+            easing: { type: string }                  # CSS timing function as computed
+      animations:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [properties]
+          properties:
+            name: { type: string }
+            properties: { type: array, items: { type: string } }   # longhand properties the keyframes change
+            duration_ms: { type: number, minimum: 0 }
+            iterations: { oneOf: [ { type: number, minimum: 0 }, { const: infinite } ] }
+            easing: { type: string }
+            stepped: { type: boolean }                # steps() timing, as in blink cursors
+      hover_changes: { type: array, items: { type: string } }   # longhand properties that change when :hover is forced
+      moves_at_rest: { type: boolean }                # position changes over the sampling window without input
+      hidden_until_scroll: { type: boolean }          # invisible at rest until scrolled into view
+
+  # ---------------------------------------------------------------- text
+
+  state_colors:
+    type: object
+    additionalProperties: false
+    required: [color]
+    properties:
+      color: { $ref: "#/$defs/oklch" }
+      backdrop: { $ref: "#/$defs/oklch" }
+
+  text_run:
+    type: object
+    additionalProperties: false
+    required: [id, box, chars, script, font, size_px]
+    properties:
+      id: { type: string }
+      box: { type: string }
+      text: { type: string, minLength: 1 }            # the string as rendered; never stored for reference-only captures
+      text_sig: { type: string, pattern: "^[0-9a-f]{128}$" }   # keyed MinHash, 16 values, see DERIVED.md
+      lang: { type: string, pattern: "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$" }   # canonical BCP 47
+      chars: { type: integer, minimum: 1 }            # code points, whitespace excluded
+      script: { enum: [latn, cyrl, grek, hang, kana, hani, arab, hebr, thai, mixed, other] }
+      type_role: { enum: [display, heading, body, ui, caption, label, nav, code, data, other] }   # see DERIVED.md
+      font:
+        type: object
+        additionalProperties: false
+        required: [requested, rendered]
+        properties:
+          requested: { type: string }                 # family requested by CSS
+          rendered: { type: string }                  # family actually rendered (fallback detection)
+          fallback: { type: boolean }
+          synthetic: { enum: [none, bold, italic, both] }   # synthesized bold/italic; omitted when the browser gives no signal
+      size_px: { type: number }
+      weight: { type: number }
+      line_height: { type: number }                   # multiplier
+      letter_spacing_em: { type: number }
+      transform: { enum: [none, uppercase, lowercase, capitalize] }
+      style: { enum: [normal, italic, oblique] }
+      color: { $ref: "#/$defs/oklch" }
+      fill: { enum: [solid, gradient, transparent] }  # gradient when text is painted through a background gradient
+      backdrop:                                       # what the text actually sits on, from pixels
+        type: object
+        additionalProperties: false
+        required: [oklch]
+        properties:
+          oklch: { $ref: "#/$defs/oklch" }            # median backdrop color under the glyphs
+          worst: { $ref: "#/$defs/oklch" }            # backdrop color giving the lowest contrast ratio
+          kind: { enum: [solid, gradient, image, mixed] }
+      states:                                         # runs inside interactive boxes
+        type: object
+        additionalProperties: false
+        properties:
+          hover: { $ref: "#/$defs/state_colors" }
+          focus: { $ref: "#/$defs/state_colors" }
+          active: { $ref: "#/$defs/state_colors" }
+      lines: { type: integer, minimum: 0 }
+      measure_chars: { type: number, minimum: 0 }     # median code points per line, spaces included
+      word_break: { type: string }                    # for checking keep-all on Hangul
+
+  # ---------------------------------------------------------------- derived
+
+  derived:
+    type: object
+    additionalProperties: false
+    properties:
+      type_fingerprint:                               # role summary weighted by character count
+        type: object
+        additionalProperties: false
+        properties:
+          roles:
+            type: array
+            items:
+              type: object
+              additionalProperties: false
+              properties:
+                size_px: { type: number }
+                weight: { type: number }
+                tracking_em: { type: number }
+                transform: { enum: [none, uppercase, lowercase, capitalize] }
+                share: { type: number }
+          adjacent_ratios: { type: array, items: { type: number } }
+          measure_chars: { type: number }             # median characters per line of the body group
+      sections:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [box, archetype]
+          properties:
+            box: { type: string }
+            archetype: { $ref: "#/$defs/archetype" }
+            confidence: { type: number }
+      section_sequence: { type: array, items: { $ref: "#/$defs/archetype" } }
+      sibling_groups:                                 # detection of identical siblings
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [parent, members, similarity]
+          properties:
+            parent: { type: string }
+            members: { type: array, items: { type: string } }
+            similarity: { type: number, minimum: 0, maximum: 1 }
+      card_nesting_max: { type: integer, minimum: 0 }
+      gaps:                                           # proximity-order checks
+        type: object
+        additionalProperties: false
+        properties:
+          inside_group: { $ref: "#/$defs/stats" }
+          between_groups: { $ref: "#/$defs/stats" }
+          between_sections: { $ref: "#/$defs/stats" }
+          level_ratio: { type: number, minimum: 0 }   # median(between_sections) / median(inside_group); omitted when undefined
+      symmetry: { type: number, minimum: 0, maximum: 1 }
+      density: { type: number, minimum: 0, maximum: 1 }
+      signature_found: { type: boolean }              # whether the plan's layout.signature is present
+      signature_evidence: { enum: [verified, not-verified] }   # verified: data-lapis-signature; not-verified: text match only
+
+  archetype: { enum: [hero, pricing, testimonial, faq, logo-strip, feature-grid, cta, footer, other] }
+
+  stats:
+    type: object
+    additionalProperties: false
+    properties:
+      median: { type: number }
+      p10: { type: number }
+      p90: { type: number }
+      cv: { type: number }                            # coefficient of variation
+
+  metrics:
+    type: object
+    additionalProperties: false
+    properties:
+      cls: { type: number, minimum: 0 }               # cumulative layout shift, navigation start to 1 s of network idle after the scroll pass
+      shift_sources: { type: array, items: { type: string } }   # box ids that moved
+
+  viewport:
+    type: object
+    additionalProperties: false
+    required: [width, theme, boxes, text]
+    properties:
+      width: { enum: [320, 390, 768, 1440] }
+      height: { type: number }                        # visible height
+      browser_chrome: { type: boolean }               # visible height reduced by emulated browser UI; layout keeps the full height
+      dpr: { type: number }
+      theme: { enum: [light, dark] }
+      reduced_motion: { type: boolean }
+      scroll_width: { type: number, minimum: 0 }      # document scroll width; above `width` means horizontal page scroll
+      screenshot: { type: string }                    # not stored for reference-only captures
+      text_sig: { type: string, pattern: "^[0-9a-f]{1024}$" }   # keyed MinHash of all visible text, 128 values
+      boxes: { type: array, items: { $ref: "#/$defs/box" } }
+      text: { type: array, items: { $ref: "#/$defs/text_run" } }
+      palette: { $ref: "#/$defs/palette" }
+      metrics: { $ref: "#/$defs/metrics" }
+      derived: { $ref: "#/$defs/derived" }
+
+allOf:
+  - if:
+      required: [source]
+      properties:
+        source:
+          required: [kind, url]
+          properties:
+            kind: { const: render }
+            url: { pattern: "^https?://([a-z0-9]([a-z0-9-]*[a-z0-9])?\\.)+test(:[0-9]+)?(/|$)" }
+    then: { properties: { source: { required: [addresses] } } }
+    else: { properties: { source: { not: { required: [addresses] } } } }
+  - if: { required: [source], properties: { source: { required: [kind], properties: { kind: { enum: [render, site] } } } } }
+    then: { required: [viewports] }
+  - if: { required: [source], properties: { source: { required: [kind], properties: { kind: { const: image } } } } }
+    then: { required: [image] }
+  - if: { required: [source], properties: { source: { required: [kind], properties: { kind: { const: system } } } } }
+    then: { required: [system] }
+  - if: { required: [source], properties: { source: { required: [kind], properties: { kind: { enum: [site, image, system] } } } } }
+    then: { required: [reference] }
+  # Our own renders carry no reference block, and their text runs carry the text itself
+  - if: { required: [source], properties: { source: { required: [kind], properties: { kind: { const: render } } } } }
+    then:
+      not: { required: [reference] }
+      properties:
+        viewports:
+          items:
+            properties:
+              text:
+                items: { required: [text] }
+  # Any text signature needs the id of the key that made it
+  - if:
+      required: [viewports]
+      properties:
+        viewports:
+          contains:
+            anyOf:
+              - { required: [text_sig] }
+              - { required: [text], properties: { text: { contains: { required: [text_sig] } } } }
+    then: { required: [meta], properties: { meta: { required: [sig_key_id] } } }
+  # A reference-only capture keeps keyed signatures, not copy, alt text, names, or screenshots
+  - if:
+      required: [reference]
+      properties: { reference: { required: [rights], properties: { rights: { const: reference-only } } } }
+    then:
+      if: { required: [viewports] }
+      then: { properties: { meta: { required: [sig_key_id] } } }
+      properties:
+        viewports:
+          items:
+            required: [text_sig]
+            not: { required: [screenshot] }
+            properties:
+              text:
+                items:
+                  required: [text_sig]
+                  not: { required: [text] }
+              boxes:
+                items:
+                  properties:
+                    a11y: { not: { required: [name] } }
+                    media: { not: { required: [alt] } }

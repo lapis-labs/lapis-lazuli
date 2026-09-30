@@ -1,0 +1,22 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Decisions fixture</title>
+<style>
+body {font:16px Arial;margin:0;background:#fff;color:#111}main{padding:24px;min-height:1700px}
+button {cursor:pointer;padding:12px;background:#eee;color:#111;border:1px solid #666}
+#cookie {position:fixed;bottom:0;left:0;width:100%;box-sizing:border-box;background:#fff;border-top:2px solid #333;padding:16px;z-index:10}
+#cookieAccept{background:#171717;color:white;padding:20px 48px}
+#cookieReject{background:transparent;border:1px solid #555;padding:8px}
+#settings{display:none}#newsletter,#offer{display:none;position:fixed;left:20%;top:20%;width:60%;height:60%;box-sizing:border-box;background:white;border:6px solid #444;padding:30px;z-index:20}
+#newsletter.open,#offer.open{display:block}#confirm{width:300px}
+</style>
+<main><h1>Decision store</h1><nav><a href="/other.html">Other route</a> <a href="/third.html">Third route</a> <a href="/choices.html">Choose a plan</a></nav>
+<button id="confirmOpen">Open confirm dialog</button> <button id="notifyOpen">Enable notifications</button> <button id="devicePermissions">Request device permissions</button>
+<div id="permissionPreprompt" role="dialog" style="display:none;border:2px solid #333;padding:12px"><p>Allow notification permission for order updates?</p><button id="permissionContinue">Continue allow notifications</button><button id="permissionClose">Close</button></div>
+<video id="badVideo" autoplay loop playsinline width="240" height="135" src="/tone.webm"></video>
+<video id="goodVideo" autoplay muted loop controls tabindex="0" playsinline width="240" height="135" src="/tone.webm"></video>
+<button id="playTone">Play audio tone</button><button id="stopTone">Stop audio tone</button>
+<p>Additional page text at the bottom.</p></main>
+<div id="cookie" role="dialog" aria-label="Cookie consent"><p>Cookie consent: we process analytics and optional tracking.</p><button id="cookieAccept">Accept all</button><button id="cookieManage">Manage settings</button><div id="settings"><button id="cookieReject">Reject all</button></div></div>
+<div id="newsletter" role="dialog" aria-modal="true" aria-label="Newsletter subscription"><p>Subscribe to our newsletter for weekly email updates</p><button id="newsletterAccept">Subscribe</button><button id="newsletterDecline">No thanks</button></div>
+<div id="offer" role="dialog" aria-modal="true" aria-label="Exit offer"><p>Special offer before you leave: upgrade today</p><button id="offerAccept">Accept offer</button><button id="offerDecline">No thanks</button></div>
+<dialog id="confirm" aria-label="Confirm action"><p>Confirm this action?</p><button id="confirmCancel">Cancel</button><button id="confirmYes">Confirm</button></dialog>
+<script src="/app.js"></script></html>

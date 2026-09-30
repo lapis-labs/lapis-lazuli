@@ -1,0 +1,1699 @@
+# LapisLazuli 도메인 이관 지도 — 기계용 v0 (문서 "도메인 이관 지도"에서 생성)
+version: 0
+generated: '2026-09-24'
+updated: '2026-09-29'   # lps-copy 참조 interface-copy.md 반영(원본 8개; 다른 2개는 일부만 옮겨 todo 유지). 그 전: lps-system 참조 tokens.md·theming.md, lps-ux 참조 navigation.md, ulm-release 참조 visual-regression.md 반영(원본 8개). 그 전: lapis 참조 layout.md·archetypes.md 반영(원본 20개)
+status_legend:
+  todo: 시작 전
+  partial: 일부 행선지 완료 (done에 적은 것)
+  done: 모든 행선지 완료
+source: design-and-frontend-frozen-20260923T065202Z
+legend:
+  card: SKILL.md 본문
+  reference: 스킬 참조 문서
+  schema: 계획 파일 필드
+  rule: 검사 규칙
+  lazuli: lzl-* 스킬·CLI·출처 등록부
+  docs: 지식 베이스
+  merge: 다른 파일에 흡수(merge 그룹 참고)
+  drop: 옮기지 않음
+  shared: src/shared 공유 항목
+  cli: CLI 코드
+  repo: 저장소(evals/tools/docs)
+always:
+- 상용구 절(When to consult, Common pitfalls, Quick decision matrix, Cross-references) 제거
+- 스냅숏 날짜는 유지보수 메타데이터로
+- 출처는 provenance 필드로
+merge_groups:
+  motion: lapis/references/motion.md
+  data-viz: lapis/references/data-viz.md
+  3d: lapis/references/3d.md
+  tokens: lps-system/references/tokens.md
+  theming: lps-system/references/theming.md
+  archetypes: lapis/references/archetypes.md
+  platforms: lapis/references/platforms.md
+  form-levers: lapis/references/form-levers.md
+  review-and-repair: ultramarine (카드 + 참조 + 평가자)
+  visual-regression: ulm-release/references/visual-regression.md
+  copy: lps-copy
+  ia-navigation: lps-ux/references/navigation.md
+  font-facts: lzl-fonts
+  engine-principles: lapis 카드
+  layout: lapis/references/layout.md
+  visual-assets: lapis/references/visual-assets.md
+  reference-unit: 레퍼런스 분석과 차용 (lzl-research + lapis/references/reference-analysis.md + 규칙)
+entries:
+- path: references/animation/animation-assets-and-delivery.md
+  words: 2328
+  dest:
+  - merge
+  target: lapis/references/motion.md
+  merge: motion
+  status: todo
+- path: references/animation/interaction-choreography.md
+  words: 2906
+  dest:
+  - merge
+  target: lapis/references/motion.md
+  merge: motion
+  status: todo
+- path: references/animation/scroll-navigation-and-transitions.md
+  words: 1866
+  dest:
+  - merge
+  target: lapis/references/motion.md
+  merge: motion
+  status: todo
+- path: references/art-direction/bold-expression-and-restraint.md
+  words: 6970
+  dest:
+  - reference
+  target: lapis
+  note: 표현 레퍼토리 표로 압축
+  status: todo
+- path: references/art-direction/concept-development.md
+  words: 3103
+  dest:
+  - card
+  - reference
+  target: lapis
+  status: todo
+- path: references/art-direction/direction-to-implementation.md
+  words: 3717
+  dest:
+  - reference
+  - schema
+  target: lapis
+  note: claims 필드, 관계 보존 원칙은 레퍼런스 단위로도
+  status: todo
+- path: references/art-direction/expressive-interfaces.md
+  words: 3328
+  dest:
+  - reference
+  target: lapis
+  note: bold-expression과 합칠지 판단
+  status: todo
+- path: references/art-direction/formal-experimentation.md
+  words: 3736
+  dest:
+  - reference
+  target: lapis
+  status: todo
+- path: references/artistic-methods/form-meaning-and-experience.md
+  words: 4526
+  dest:
+  - merge
+  - docs
+  target: lapis/references/form-levers.md
+  merge: form-levers
+  status: todo
+- path: references/artistic-methods/metaphor-motif-and-symbol.md
+  words: 3687
+  dest:
+  - merge
+  - docs
+  target: lapis/references/form-levers.md
+  merge: form-levers
+  status: todo
+- path: references/artistic-methods/participation-and-interaction.md
+  words: 3587
+  dest:
+  - merge
+  - docs
+  target: lapis/references/form-levers.md
+  merge: form-levers
+  status: todo
+- path: references/artistic-methods/rhythm-time-and-narrative.md
+  words: 3017
+  dest:
+  - merge
+  - docs
+  target: lapis/references/form-levers.md
+  merge: form-levers
+  status: todo
+- path: references/artistic-methods/tension-balance-and-asymmetry.md
+  words: 3466
+  dest:
+  - merge
+  - docs
+  target: lapis/references/form-levers.md
+  merge: form-levers
+  status: todo
+- path: references/artistic-methods/texture-materiality-and-tactility.md
+  words: 3463
+  dest:
+  - merge
+  - docs
+  target: lapis/references/form-levers.md
+  merge: form-levers
+  status: todo
+- path: references/artistic-methods/typography-as-form.md
+  words: 4418
+  dest:
+  - merge
+  - docs
+  target: lapis/references/form-levers.md
+  merge: form-levers
+  status: todo
+- path: references/color/color-spaces-and-management.md
+  words: 3187
+  dest:
+  - docs
+  status: todo
+- path: references/color/color-systems-and-standards.md
+  words: 3756
+  dest:
+  - docs
+  - lazuli
+  target: lzl-color
+  note: 공개 표준(HLC) 절 추가
+  status: partial
+  done: [lazuli]
+- path: references/color/palette-art-direction.md
+  words: 3383
+  dest:
+  - schema
+  - card
+  - rule
+  - reference
+  target: lapis/references/color.md + lapis
+  note: 색 참조에 판단 절차 반영. 계획 스키마·카드·검사 규칙 행선지는 별도 이관
+  status: partial
+  done: [reference]
+- path: references/color/palette-discovery-and-resources.md
+  words: 3674
+  dest:
+  - lazuli
+  target: lazuli sources
+  note: 자료 목록(영감·지각 편집·데이터 팔레트·인쇄·소재 카탈로그·칼럼)을 출처 등록부 src/shared/sources/registry.yaml로, 약관·robots 확인 후 접근 정책 표시(2026-09-26). 참조 주석 형식·검색 축은 등록부 대상 아님(lzl-research 카드 쓸 때 원본 참고)
+  status: done
+  done: [lazuli]
+- path: references/color/pantone-lookup-and-digital-color.md
+  words: 5750
+  dest:
+  - docs
+  - lazuli
+  target: lzl-color
+  status: partial
+  done: [lazuli]
+- path: references/color/perceptual-authoring-and-tokens.md
+  words: 3595
+  dest:
+  - card
+  - reference
+  - rule
+  target: lapis/references/color.md + lps-system/references/tokens.md
+  merge: tokens
+  note: 지각 편집 원칙은 lapis 색 참조에, 토큰 제작 절차(램프·역할 대응·마스터와 파생값·대체값 먼저 쓰는 CSS·쌍 검사)는 lps-system tokens.md에 반영(2026-09-29). 카드와 검사 규칙 행선지는 남음
+  status: partial
+  done: [reference]
+- path: references/color/profiles-and-output-conditions.md
+  words: 3410
+  dest:
+  - docs
+  - schema
+  note: output_condition 필드
+  status: todo
+- path: references/color/semantic-and-data-palettes.md
+  words: 3038
+  dest:
+  - reference
+  - rule
+  target: lps-system
+  merge: data-viz
+  status: todo
+- path: references/creative-workflows/answer-calibration.md
+  words: 2659
+  dest:
+  - card
+  target: lapis
+  status: todo
+- path: references/creative-workflows/brief-inference.md
+  words: 2121
+  dest:
+  - card
+  - schema
+  target: lapis
+  note: brief·direction 필드
+  status: todo
+- path: references/creative-workflows/design-brainstorming.md
+  words: 1897
+  dest:
+  - reference
+  target: lapis
+  status: todo
+- path: references/creative-workflows/revision-and-feedback-loops.md
+  words: 2834
+  dest:
+  - merge
+  target: ultramarine
+  merge: review-and-repair
+  status: todo
+- path: references/creative-workflows/user-agent-collaboration.md
+  words: 2946
+  dest:
+  - card
+  target: lapis
+  status: todo
+- path: references/design-feedback/bounded-closed-loop.md
+  words: 4069
+  dest:
+  - card
+  - reference
+  target: ultramarine
+  merge: review-and-repair
+  status: todo
+- path: references/design-feedback/comparison-and-regression.md
+  words: 3399
+  dest:
+  - reference
+  target: ulm-release/references/visual-regression.md
+  merge: visual-regression
+  note: 비교 계약·층별 비교·차이 분류를 기준선 비교로. 렌더 대안 고르기는 lapis·평가자 몫이라 뺌
+  status: done
+  done: [reference]
+- path: references/design-feedback/diagnosis-and-repair.md
+  words: 3155
+  dest:
+  - merge
+  target: ultramarine
+  merge: review-and-repair
+  status: todo
+- path: references/design-feedback/inspection-and-evidence.md
+  words: 3801
+  dest:
+  - reference
+  target: ultramarine
+  merge: review-and-repair
+  status: todo
+- path: references/design-systems/adopting-existing-systems.md
+  words: 3054
+  dest:
+  - reference
+  target: lps-system
+  status: todo
+- path: references/design-systems/asset-led-system-building.md
+  words: 3329
+  dest:
+  - reference
+  target: lps-system
+  status: todo
+- path: references/design-systems/building-from-scratch.md
+  words: 2569
+  dest:
+  - reference
+  target: lps-system
+  status: todo
+- path: references/design-systems/component-architecture.md
+  words: 2638
+  dest:
+  - reference
+  target: lps-system
+  status: todo
+- path: references/design-systems/design-system-anatomy.md
+  words: 2616
+  dest:
+  - card
+  target: lps-system
+  status: todo
+- path: references/design-systems/design-tokens.md
+  words: 2941
+  dest:
+  - merge
+  target: lps-system/references/tokens.md
+  merge: tokens
+  note: 토큰 그래프·이름·구성 요소 토큰·DESIGN.md 항목·리터럴 이관 절차는 tokens.md로, 모드·적응형 단계 부분은 theming.md로(2026-09-29)
+  status: done
+  done: [merge]
+- path: references/design-systems/documentation-and-governance.md
+  words: 3892
+  dest:
+  - docs
+  status: todo
+- path: references/design-systems/theming-and-dark-mode.md
+  words: 3024
+  dest:
+  - merge
+  target: lps-system/references/theming.md
+  merge: theming
+  note: 테마 구조·선택 우선순위·첫 화면·네이티브 요소와 미디어·고대비와 강제 색·브랜드 조합·파일 내보내기·검사를 theming.md로. 다크 재결정 순서는 lapis 색 참조에 이미 있음(2026-09-29)
+  status: done
+  done: [merge]
+- path: references/fonts/adobe-and-commercial-workflows.md
+  words: 3862
+  dest:
+  - lazuli
+  target: lzl-fonts + ulm-release
+  merge: font-facts
+  status: done
+  done: [lazuli]
+- path: references/fonts/discovery-and-procurement.md
+  words: 3546
+  dest:
+  - lazuli
+  target: lzl-fonts
+  merge: font-facts
+  status: done
+  done: [lazuli]
+- path: references/fonts/display-and-expressive-type.md
+  words: 2845
+  dest:
+  - reference
+  target: lapis/references/type.md
+  status: done
+  done: [reference]
+- path: references/fonts/font-fit-and-overuse.md
+  words: 2390
+  dest:
+  - rule
+  - card
+  target: slop rules + lapis
+  status: todo
+- path: references/fonts/installed-font-discovery.md
+  words: 3808
+  dest:
+  - lazuli
+  target: lzl-fonts
+  merge: font-facts
+  status: done
+  done: [lazuli]
+- path: references/fonts/license-risk-screening.md
+  words: 2442
+  dest:
+  - lazuli
+  - rule
+  target: lzl-fonts
+  merge: font-facts
+  note: 동기화·OS·출처 불명 파일 배포 금지를 plan_check font.channel-mismatch로, 라이선스 불명·힌트를 rights.*로(2026-09-25)
+  status: done
+  done: [rule, lazuli]
+- path: references/fonts/licensing-and-entitlements.md
+  words: 3786
+  dest:
+  - lazuli
+  - docs
+  - rule
+  - shared
+  target: lzl-fonts
+  merge: font-facts
+  note: 사용별 허가·배포 파일·고지·예약 이름 필드를 글꼴 잠금 계약으로, 고지·예약 이름 검사를 rights.*로(2026-09-25)
+  status: partial
+  done: [rule, shared, lazuli]
+- path: references/fonts/monospace-and-numeric-typography.md
+  words: 2257
+  dest:
+  - reference
+  target: lapis/references/type.md
+  status: done
+  done: [reference]
+- path: references/fonts/multilingual-font-selection.md
+  words: 2984
+  dest:
+  - reference
+  target: lapis/references/type.md
+  status: done
+  done: [reference]
+- path: references/fonts/pairing-and-role-systems.md
+  words: 3506
+  dest:
+  - card
+  - reference
+  target: lapis/references/type.md
+  note: 글꼴 역할·짝짓기 참조에 반영. 카드 본문 행선지는 별도 이관
+  status: partial
+  done: [reference]
+- path: references/frontend-maintenance/code-health-and-ownership.md
+  words: 3303
+  dest:
+  - reference
+  - card
+  target: ulm-maintain
+  note: card에는 담당자 먼저 확인하기와 원인별 부채 묶기만 들어감(ulm-maintain, 2026-09-28). 소유 경계와 상태 권한은 reference로
+  status: partial
+  done: [card]
+- path: references/frontend-maintenance/maintenance-and-modernization.md
+  words: 4116
+  dest:
+  - reference
+  - card
+  target: ulm-maintain
+  status: partial
+  done: [card]
+- path: references/frontend-maintenance/performance-investigation-and-optimization.md
+  words: 3644
+  dest:
+  - reference
+  - card
+  target: ulm-maintain
+  status: partial
+  done: [card]
+- path: references/frontend-maintenance/safe-refactoring-and-cleanup.md
+  words: 3734
+  dest:
+  - reference
+  - card
+  target: ulm-maintain
+  status: partial
+  done: [card]
+- path: references/fundamentals/accessibility.md
+  words: 2273
+  dest:
+  - card
+  - rule
+  target: ultramarine requirement rules
+  note: 키보드 절(우회 블록·건너뛰기 링크 포함)을 동작 층 ux.* 규칙으로(2026-09-25)
+  status: partial
+  done: [rule]
+- path: references/fundamentals/color.md
+  words: 1723
+  dest:
+  - merge
+  target: lapis card
+  merge: engine-principles
+  status: todo
+- path: references/fundamentals/iconography-and-imagery.md
+  words: 2334
+  dest:
+  - merge
+  target: lapis/references/visual-assets.md
+  merge: visual-assets
+  status: todo
+- path: references/fundamentals/motion.md
+  words: 1653
+  dest:
+  - merge
+  target: lapis card
+  merge: engine-principles
+  status: todo
+- path: references/fundamentals/perception-and-psychology.md
+  words: 4753
+  dest:
+  - docs
+  - reference
+  note: 측정 가능한 원리만 관계 제약으로
+  status: todo
+- path: references/fundamentals/shape-elevation-and-surfaces.md
+  words: 3639
+  dest:
+  - reference
+  - rule
+  target: lapis
+  status: todo
+- path: references/fundamentals/spacing-and-grids.md
+  words: 2050
+  dest:
+  - merge
+  target: lapis/references/layout.md
+  merge: layout
+  status: done
+  done: [merge]
+- path: references/fundamentals/typography.md
+  words: 2441
+  dest:
+  - merge
+  target: lapis card
+  merge: engine-principles
+  status: todo
+- path: references/fundamentals/ux-writing-and-microcopy.md
+  words: 2374
+  dest:
+  - merge
+  target: lps-copy/references/interface-copy.md
+  merge: copy
+  note: 역할표, 행동 라벨, 상태별 문구, 오류, 동의 문구, 용어 기록을 interface-copy.md로. 쉬운 언어 절은 SKILL 본문이 다루고, 제품 이름이 붙은 한국어 절은 옮기지 않음
+  status: done
+  done: [merge]
+- path: references/fundamentals/visual-hierarchy-and-composition.md
+  words: 3944
+  dest:
+  - reference
+  - rule
+  target: lapis/references/layout.md
+  note: 관계 제약으로 재작성
+  status: partial
+  done: [reference]
+- path: references/fundamentals/what-design-is.md
+  words: 1451
+  dest:
+  - merge
+  - docs
+  target: lapis card
+  merge: engine-principles
+  status: todo
+- path: references/interop/adobe-xd.md
+  words: 2711
+  dest:
+  - docs
+  note: 우선순위 낮음, 폐기 후보
+  status: todo
+- path: references/interop/claude-design.md
+  words: 2806
+  dest:
+  - docs
+  note: 스킬 본문에서 제품 이름 쓰지 않음
+  status: todo
+- path: references/interop/design-md.md
+  words: 2322
+  dest:
+  - reference
+  target: lps-system
+  status: todo
+- path: references/interop/design-tokens-dtcg.md
+  words: 2346
+  dest:
+  - merge
+  target: lps-system/references/tokens.md
+  merge: tokens
+  note: 형식 규칙(노드·이름·타입 결정·별칭·확장·타입 표·합성 타입·색 객체·손실 보고)은 tokens.md로, 테마 내보내기 방식은 theming.md로. 옛 도구 명령과 외부 도구 변수 대응은 옮기지 않음(2026-09-29)
+  status: done
+  done: [merge]
+- path: references/interop/figma.md
+  words: 3705
+  dest:
+  - docs
+  - reference
+  target: lps-system
+  note: 형식 수준만 참조로
+  status: todo
+- path: references/interop/handoff-and-specs.md
+  words: 2889
+  dest:
+  - reference
+  target: lps-system + ulm-release
+  status: todo
+- path: references/interop/interop-overview.md
+  words: 1738
+  dest:
+  - drop
+  note: lps-system 카드로 흡수
+  status: todo
+- path: references/interop/opendesign.md
+  words: 2827
+  dest:
+  - docs
+  - reference
+  target: lps-system
+  note: 방언 부분만
+  status: todo
+- path: references/interop/other-tools.md
+  words: 3407
+  dest:
+  - docs
+  status: todo
+- path: references/layout/density-and-data-heavy-ui.md
+  words: 3383
+  dest:
+  - reference
+  target: lapis/references/layout.md
+  note: 상호작용·상태 내용은 lps-ux 몫, 아직 행선지 없음
+  status: done
+  done: [reference]
+- path: references/layout/layout-decision-procedure.md
+  words: 2686
+  dest:
+  - schema
+  - reference
+  target: plan.layout.procedure + lapis/references/layout.md
+  note: 아홉 단계는 계획 필드로, 필드별 설명과 예시는 layout.md로
+  status: done
+  done: [schema, reference]
+- path: references/layout/marketing-sections-and-rhythm.md
+  words: 3210
+  dest:
+  - reference
+  - rule
+  target: lapis/references/archetypes.md
+  note: 템플릿 섹션 순서 탐지 근거
+  status: partial
+  done: [reference]
+- path: references/layout/navigation-patterns.md
+  words: 2988
+  dest:
+  - reference
+  target: lps-ux/references/navigation.md
+  merge: ia-navigation
+  note: 패턴 선택표, 패턴별 결정, 닮은 컨트롤 구분, 뒤로·위로·닫기, 기록 목록을 navigation.md로. 스케치와 제품별 규칙(탭 수 등)은 옮기지 않고, 플랫폼별 동작은 platforms 참조 몫
+  status: done
+  done: [reference]
+- path: references/layout/page-and-screen-archetypes.md
+  words: 4866
+  dest:
+  - reference
+  target: lapis/references/archetypes.md
+  merge: archetypes
+  status: done
+  done: [reference]
+- path: references/layout/responsive-and-adaptive.md
+  words: 2438
+  dest:
+  - reference
+  - rule
+  target: lapis/references/layout.md
+  status: partial
+  done: [reference]
+- path: references/platforms/android-and-material.md
+  words: 2353
+  dest:
+  - merge
+  target: lapis/references/platforms.md
+  merge: platforms
+  status: todo
+- path: references/platforms/cross-platform.md
+  words: 3525
+  dest:
+  - merge
+  target: lapis/references/platforms.md
+  merge: platforms
+  status: todo
+- path: references/platforms/desktop.md
+  words: 3116
+  dest:
+  - merge
+  target: lapis/references/platforms.md
+  merge: platforms
+  status: todo
+- path: references/platforms/email-and-embedded-surfaces.md
+  words: 3331
+  dest:
+  - reference
+  target: lapis/references/email.md
+  note: 한중일 폰트 제약
+  status: todo
+- path: references/platforms/ios-and-apple-platforms.md
+  words: 2414
+  dest:
+  - merge
+  target: lapis/references/platforms.md
+  merge: platforms
+  status: todo
+- path: references/platforms/web.md
+  words: 2185
+  dest:
+  - merge
+  target: lapis/references/platforms.md
+  merge: platforms
+  status: todo
+- path: references/product-types/consumer-mobile-app.md
+  words: 2244
+  dest:
+  - merge
+  target: lapis/references/archetypes.md
+  merge: archetypes
+  note: 유형 고유 제약만 원형별 절에
+  status: done
+  done: [merge]
+- path: references/product-types/content-editorial-and-docs.md
+  words: 2690
+  dest:
+  - merge
+  target: lapis/references/archetypes.md
+  merge: archetypes
+  note: 유형 고유 제약만 원형별 절에
+  status: done
+  done: [merge]
+- path: references/product-types/data-visualization.md
+  words: 3334
+  dest:
+  - merge
+  target: lapis/references/data-viz.md
+  merge: data-viz
+  status: todo
+- path: references/product-types/developer-tools.md
+  words: 1978
+  dest:
+  - merge
+  target: lapis/references/archetypes.md
+  merge: archetypes
+  note: 유형 고유 제약만 원형별 절에
+  status: done
+  done: [merge]
+- path: references/product-types/e-commerce.md
+  words: 1922
+  dest:
+  - merge
+  target: lapis/references/archetypes.md
+  merge: archetypes
+  note: 유형 고유 제약만 원형별 절에
+  status: done
+  done: [merge]
+- path: references/product-types/fintech-and-regulated.md
+  words: 2148
+  dest:
+  - merge
+  target: lapis/references/archetypes.md
+  merge: archetypes
+  note: 유형 고유 제약만 원형별 절에
+  status: done
+  done: [merge]
+- path: references/product-types/forms-onboarding-and-checkout.md
+  words: 4635
+  dest:
+  - reference
+  target: lps-ux
+  note: 한국형 폼 패턴 보강
+  status: todo
+- path: references/product-types/games-and-entertainment.md
+  words: 2223
+  dest:
+  - merge
+  target: lapis/references/archetypes.md
+  merge: archetypes
+  note: 유형 고유 제약만 원형별 절에
+  status: done
+  done: [merge]
+- path: references/product-types/internal-tools.md
+  words: 1820
+  dest:
+  - merge
+  target: lapis/references/archetypes.md
+  merge: archetypes
+  note: 유형 고유 제약만 원형별 절에
+  status: done
+  done: [merge]
+- path: references/product-types/marketing-and-landing.md
+  words: 1863
+  dest:
+  - merge
+  target: lapis/references/archetypes.md
+  merge: archetypes
+  note: 유형 고유 제약만 원형별 절에
+  status: done
+  done: [merge]
+- path: references/product-types/overview-and-frame-matrix.md
+  words: 2106
+  dest:
+  - schema
+  - card
+  target: plan.brief.product_frame + lapis
+  status: todo
+- path: references/product-types/portfolio-and-personal.md
+  words: 1898
+  dest:
+  - merge
+  target: lapis/references/archetypes.md
+  merge: archetypes
+  note: 유형 고유 제약만 원형별 절에
+  status: done
+  done: [merge]
+- path: references/product-types/saas-dashboard-and-admin.md
+  words: 1688
+  dest:
+  - merge
+  target: lapis/references/archetypes.md
+  merge: archetypes
+  note: 유형 고유 제약만 원형별 절에
+  status: done
+  done: [merge]
+- path: references/production/design-debt-and-maintenance.md
+  words: 2710
+  dest:
+  - reference
+  - card
+  target: ulm-maintain
+  status: partial
+  done: [card]
+- path: references/production/design-ops-and-collaboration.md
+  words: 2351
+  dest:
+  - docs
+  status: todo
+- path: references/production/design-qa-and-visual-regression.md
+  words: 3075
+  dest:
+  - reference
+  target: ulm-release/references/visual-regression.md
+  merge: visual-regression
+  note: 캡처 조건·허용치·가림·기준선 교체를 render check 기준으로. 도구 설정·수동 QA 항목·독립 검토는 뺌
+  status: done
+  done: [reference]
+- path: references/production/i18n-l10n-and-rtl.md
+  words: 2791
+  dest:
+  - reference
+  - rule
+  target: lapis + lps-copy
+  note: 한중일·RTL 보강. 메시지 전체·변수·로케일 값·번역자 맥락 절은 lps-copy/references/interface-copy.md에 반영(2026-09-29). RTL·양방향·CJK 조판·입력기·이름과 주소·QA 표는 lapis 몫으로 남음
+  status: todo
+- path: references/production/metrics-and-iteration.md
+  words: 2657
+  dest:
+  - docs
+  - reference
+  target: lps-ux
+  status: todo
+- path: references/production/production-readiness-checklist.md
+  words: 2734
+  dest:
+  - card
+  target: ulm-release
+  status: todo
+- path: references/quality/accessibility-audit.md
+  words: 2644
+  dest:
+  - reference
+  - rule
+  target: ultramarine
+  status: todo
+- path: references/quality/anti-slop.md
+  words: 5399
+  dest:
+  - rule
+  - card
+  target: slop rules + lapis
+  note: 카탈로그 107행 → rules.yaml (추적표 tools/slop-id-trace.yaml). 판정 네 질문·거절 기준·수리 순서는 카드로
+  status: partial
+  done: [rule]
+- path: references/quality/critique-and-feedback.md
+  words: 2813
+  dest:
+  - reference
+  target: ultramarine agents/critic.md
+  merge: review-and-repair
+  status: todo
+- path: references/quality/improvement-playbook.md
+  words: 2274
+  dest:
+  - merge
+  target: ultramarine
+  merge: review-and-repair
+  status: todo
+- path: references/quality/ui-audit-procedure.md
+  words: 2637
+  dest:
+  - card
+  target: ultramarine
+  merge: review-and-repair
+  status: todo
+- path: references/quality/what-good-design-is.md
+  words: 2312
+  dest:
+  - merge
+  - docs
+  target: lapis card
+  merge: engine-principles
+  status: todo
+- path: references/readability/diagnosis-and-editing.md
+  words: 2542
+  dest:
+  - reference
+  target: lps-copy/references/interface-copy.md
+  merge: copy
+  note: 보존 목록, 추가·삭제·변경 비교, 삭제 금지 목록, 이름 일치, 고치기 예시를 interface-copy.md로. 맥락 카드·진단표·보고 양식·검증용 표는 옮기지 않음
+  status: done
+  done: [reference]
+- path: references/readability/interface-copy-and-meta-text.md
+  words: 3297
+  dest:
+  - reference
+  - rule
+  target: lps-copy/references/interface-copy.md
+  merge: copy
+  note: 역할표, 문구를 지우는 기준, 시연·시뮬레이션 고지, 오류·랜딩·온보딩 문구를 interface-copy.md로. 문서·긴 도움말 절은 옮기지 않음. 규칙 행선지는 남음
+  status: partial
+  done: [reference]
+- path: references/readability/korean-editing.md
+  words: 3145
+  dest:
+  - reference
+  - rule
+  target: lps-copy/references/interface-copy.md
+  merge: copy
+  note: 말투 세 가지, 라벨과 문장, 접미사 변환 금지, 존댓말 절제, 조사·어미, 변수 뒤 조사, 번역투를 interface-copy.md로. 원 예시 하나는 뜻이 바뀌어 다시 씀. 규칙 행선지는 남음
+  status: partial
+  done: [reference]
+- path: references/readability/llm-language-patterns.md
+  words: 3731
+  dest:
+  - rule
+  target: slop rules + lps-copy
+  merge: copy
+  note: 신호 계열 → rules.yaml의 copy 규칙과 목록. 고치기 예시와 편집 원칙은 lps-copy 참조로
+  status: done
+  done: [rule]
+- path: references/readability/locale-and-surface-review.md
+  words: 2749
+  dest:
+  - reference
+  target: lps-copy/references/interface-copy.md
+  merge: copy
+  note: 일본어·중국어 보강. 언어별 검토 질문, 로케일은 성격이 아님, 검토자에게 넘길 항목을 interface-copy.md로. 신뢰 등급 표와 검토 의견 충돌 절은 옮기지 않음
+  status: done
+  done: [reference]
+- path: references/research/art-research.md
+  words: 4637
+  dest:
+  - reference
+  - docs
+  - card
+  target: lzl-research
+  status: partial
+  done: [card]
+- path: references/research/brand-and-ip-guardrails.md
+  words: 3002
+  dest:
+  - rule
+  - card
+  - merge
+  - shared
+  target: requirement rules + lapis
+  merge: reference-unit
+  note: 출처 원장을 자산 원장 계약(src/shared/assets)으로, 판정 가능한 조건을 rights.* 규칙으로(2026-09-25)
+  status: partial
+  done: [rule, shared, card]
+- path: references/research/competitive-and-comparative-analysis.md
+  words: 2371
+  dest:
+  - reference
+  - merge
+  - card
+  target: lzl-research
+  merge: reference-unit
+  status: partial
+  done: [card]
+- path: references/research/reference-and-inspiration-digging.md
+  words: 3022
+  dest:
+  - card
+  - merge
+  target: lzl-research + lapis
+  merge: reference-unit
+  status: partial
+  done: [card]
+- path: references/research/trend-research.md
+  words: 2176
+  dest:
+  - reference
+  - card
+  target: lzl-research
+  status: partial
+  done: [card]
+- path: references/styles/ai-era-aesthetics.md
+  words: 2601
+  dest:
+  - rule
+  - card
+  target: slop packages + lapis
+  note: 세 기본값 묶음 → packages, 주제 근거 테스트·탈출 절차 → 카드
+  status: partial
+  done: [rule]
+- path: references/styles/bento-and-modern-saas.md
+  words: 2137
+  dest:
+  - reference
+  target: lapis/references/style-bento-and-modern-saas.md
+  note: 공통 틀로 압축
+  status: todo
+- path: references/styles/brutalism-and-neo-brutalism.md
+  words: 1893
+  dest:
+  - reference
+  target: lapis/references/style-brutalism-and-neo-brutalism.md
+  note: 공통 틀로 압축
+  status: todo
+- path: references/styles/design-history-timeline.md
+  words: 3186
+  dest:
+  - docs
+  status: todo
+- path: references/styles/glass-neumorphism-and-liquid.md
+  words: 2084
+  dest:
+  - reference
+  target: lapis/references/style-glass-neumorphism-and-liquid.md
+  note: 공통 틀로 압축
+  status: todo
+- path: references/styles/maximalism-y2k-and-retro.md
+  words: 2075
+  dest:
+  - reference
+  target: lapis/references/style-maximalism-y2k-and-retro.md
+  note: 공통 틀로 압축
+  status: todo
+- path: references/styles/minimalism-and-editorial.md
+  words: 2354
+  dest:
+  - reference
+  target: lapis/references/style-minimalism-and-editorial.md
+  note: 공통 틀로 압축
+  status: todo
+- path: references/styles/modernist-swiss-and-international.md
+  words: 1975
+  dest:
+  - reference
+  target: lapis/references/style-modernist-swiss-and-international.md
+  note: 공통 틀로 압축
+  status: todo
+- path: references/styles/regional-design-cultures.md
+  words: 2392
+  dest:
+  - reference
+  target: lapis/references/style-regional-design-cultures.md
+  note: 동아시아 보강
+  status: todo
+- path: references/styles/skeuomorphism-flat-and-material.md
+  words: 2110
+  dest:
+  - reference
+  target: lapis/references/style-skeuomorphism-flat-and-material.md
+  note: 공통 틀로 압축
+  status: todo
+- path: references/styles/style-catalog-and-selection.md
+  words: 2760
+  dest:
+  - card
+  - reference
+  target: lapis
+  note: 주제에서 시작하는 선택 절차, 스타일×제품 틀 적합표는 카드
+  status: todo
+- path: references/technology/animation-and-motion-libraries.md
+  words: 2397
+  dest:
+  - merge
+  target: lapis/references/motion.md
+  merge: motion
+  status: todo
+- path: references/technology/choosing-a-stack.md
+  words: 2168
+  dest:
+  - reference
+  target: lapis/references/implementation.md
+  status: todo
+- path: references/technology/component-libraries.md
+  words: 2113
+  dest:
+  - reference
+  target: lapis/references/implementation.md
+  status: todo
+- path: references/technology/data-visualization-implementation.md
+  words: 3649
+  dest:
+  - merge
+  target: lapis/references/data-viz.md
+  merge: data-viz
+  status: todo
+- path: references/technology/fonts-and-icons-in-code.md
+  words: 2997
+  dest:
+  - reference
+  - lazuli
+  target: lapis + lzl-fonts
+  status: partial
+  done: [lazuli]
+- path: references/technology/implementation-patterns.md
+  words: 3780
+  dest:
+  - reference
+  target: lapis/references/implementation.md
+  status: todo
+- path: references/technology/json-render-and-design-systems.md
+  words: 2451
+  dest:
+  - reference
+  target: lps-system
+  status: todo
+- path: references/technology/performance-and-quality-budgets.md
+  words: 3155
+  dest:
+  - rule
+  - reference
+  - card
+  target: ulm-maintain
+  note: card에는 이미지 크기·가상화·폰트 교체 규칙과 측정 가능한 퇴행만 들어감(ulm-maintain, 2026-09-28). 예산표와 보고 형식은 reference로
+  status: partial
+  done: [card]
+- path: references/technology/styling-approaches.md
+  words: 2555
+  dest:
+  - reference
+  target: lapis/references/implementation.md
+  status: todo
+- path: references/technology/threejs-asset-integration.md
+  words: 3268
+  dest:
+  - merge
+  target: lapis/references/3d.md
+  merge: 3d
+  status: todo
+- path: references/typography/multiscript-typesetting.md
+  words: 2978
+  dest:
+  - reference
+  - rule
+  target: lapis/references/type.md
+  note: 다중 문자 조판 참조에 반영. 검사 규칙 행선지는 별도 이관
+  status: partial
+  done: [reference]
+- path: references/typography/paragraphs-and-reading.md
+  words: 2867
+  dest:
+  - reference
+  - rule
+  target: lapis/references/type.md
+  note: 문단 읽기 참조에 반영. 검사 규칙 행선지는 별도 이관
+  status: partial
+  done: [reference]
+- path: references/typography/responsive-typesetting.md
+  words: 3626
+  dest:
+  - reference
+  target: lapis/references/type.md
+  status: done
+  done: [reference]
+- path: references/ux-methodology/adoption-and-account-lifecycle.md
+  words: 3686
+  dest:
+  - reference
+  target: lps-ux
+  status: todo
+- path: references/ux-methodology/ai-product-interactions.md
+  words: 4388
+  dest:
+  - reference
+  target: lps-ux
+  status: todo
+- path: references/ux-methodology/community-safety-and-moderation.md
+  words: 5028
+  dest:
+  - reference
+  target: lps-ux
+  status: todo
+- path: references/ux-methodology/content-design.md
+  words: 2412
+  dest:
+  - merge
+  target: lps-copy/references/interface-copy.md
+  merge: copy
+  note: 용어 관리, 위험에 따른 어조, 실제 문구 사용을 interface-copy.md로. CMS 콘텐츠 모델·인벤토리·수명주기·검색 노출은 옮기지 않음(문구 참조 범위 밖)
+  status: done
+  done: [merge]
+- path: references/ux-methodology/contextual-and-situational-constraints.md
+  words: 5238
+  dest:
+  - reference
+  - schema
+  target: lps-ux
+  note: brief.constraints
+  status: todo
+- path: references/ux-methodology/ethics-and-dark-patterns.md
+  words: 5060
+  dest:
+  - rule
+  - card
+  target: requirement rules + lps-ux
+  note: 한국 전자상거래 다크 패턴 규제 대응 추가. 기만·강요 패턴 규칙 12개와 동작 묶음 3개로 이관(2026-09-25), 규제 대응은 provenance의 regulation 항목. 윤리 판단 틀·거절 응답·개인정보 제어 화면은 lps-ux 카드로
+  status: partial
+  done: [rule]
+- path: references/ux-methodology/help-and-service-recovery.md
+  words: 3606
+  dest:
+  - reference
+  target: lps-ux
+  status: todo
+- path: references/ux-methodology/information-architecture.md
+  words: 2030
+  dest:
+  - reference
+  target: lps-ux/references/navigation.md
+  merge: ia-navigation
+  note: 네 체계, 분류 방식, 라벨, 검색 요건, 정보 냄새를 navigation.md로. 카드 분류·트리 테스트 같은 조사 방법은 옮기지 않음
+  status: done
+  done: [reference]
+- path: references/ux-methodology/interaction-design.md
+  words: 4592
+  dest:
+  - card
+  - reference
+  target: lps-ux
+  status: todo
+- path: references/ux-methodology/system-state-and-recovery.md
+  words: 4351
+  dest:
+  - card
+  - rule
+  target: lps-ux
+  note: 상태 누락은 요구사항 규칙. 중복 제출·거짓 상태·입력 유실·되돌리기 규칙과 세션의 commits·states 탐침으로 이관(2026-09-25)
+  status: partial
+  done: [rule]
+- path: references/ux-methodology/usability-heuristics-and-evaluation.md
+  words: 2485
+  dest:
+  - reference
+  target: ultramarine
+  status: todo
+- path: references/ux-methodology/usability-testing-and-metrics.md
+  words: 2640
+  dest:
+  - docs
+  status: todo
+- path: references/ux-methodology/user-flow-design-and-testing.md
+  words: 5253
+  dest:
+  - reference
+  - schema
+  target: lps-ux
+  note: 흐름 계약(시작·끝·전제)을 계획 파일 flows로(2026-09-25)
+  status: partial
+  done: [schema]
+- path: references/ux-methodology/user-messages-and-feedback.md
+  words: 4595
+  dest:
+  - reference
+  target: lps-ux + lps-copy
+  note: 원인별 오류 문구, 결과 불명 문구, 오류 문구의 개인정보 주의를 lps-copy/references/interface-copy.md에 반영(2026-09-29). 배치·알림·지속성·낭독·오버레이 선택은 lps-ux 몫으로 남음
+  status: todo
+- path: references/ux-methodology/user-research.md
+  words: 2793
+  dest:
+  - docs
+  status: todo
+- path: references/ux-methodology/ux-process-overview.md
+  words: 1960
+  dest:
+  - drop
+  status: todo
+- path: references/validation/first-release-readiness.md
+  words: 9405
+  dest:
+  - repo
+  target: tools/
+  note: LapisLazuli 자체 릴리스 관문으로 재작성
+  status: todo
+- path: references/validation/prompt-smoke-tests.md
+  words: 8721
+  dest:
+  - repo
+  target: evals/
+  note: 시나리오만 씨앗으로, 실행 기록은 폐기
+  status: todo
+- path: references/visual-assets/asset-delivery-and-handoff.md
+  words: 2244
+  dest:
+  - reference
+  - shared
+  target: ulm-release
+  note: 권리 첨부·만료 필드를 자산 원장 계약으로(2026-09-25)
+  status: partial
+  done: [shared]
+- path: references/visual-assets/blender-asset-preparation.md
+  words: 3455
+  dest:
+  - merge
+  - docs
+  target: lapis/references/3d.md
+  merge: 3d
+  note: 도구 절차는 docs
+  status: todo
+- path: references/visual-assets/icon-systems-and-alternatives.md
+  words: 2920
+  dest:
+  - reference
+  - rule
+  target: lapis/references/visual-assets.md
+  merge: visual-assets
+  note: 브랜드 글리프·플랫폼 한정·고지 조건을 rights.* 규칙으로(2026-09-25)
+  status: partial
+  done: [rule]
+- path: references/visual-assets/image-selection-and-art-direction.md
+  words: 2220
+  dest:
+  - reference
+  target: lapis/references/visual-assets.md
+  merge: visual-assets
+  status: todo
+- path: references/visual-assets/svg-reuse-and-authoring.md
+  words: 3208
+  dest:
+  - reference
+  target: lapis/references/implementation.md
+  status: todo
+- path: references/visual-assets/three-dimensional-assets.md
+  words: 2421
+  dest:
+  - merge
+  target: lapis/references/3d.md
+  merge: 3d
+  status: todo
+- path: assets/accessibility-cheatsheet.md
+  words: 916
+  dest:
+  - rule
+  - reference
+  target: ultramarine
+  note: 키보드 걷기·초점·시간 제한·포인터·상태 알림 등 동작 접근성 규칙 14개와 대상 크기 규칙으로 이관(2026-09-25)
+  status: partial
+  done: [rule]
+- path: assets/asset-harmonization-checklist.md
+  words: 2044
+  dest: &id003
+  - reference
+  - rule
+  target: lapis/references/visual-assets.md
+  merge: visual-assets
+  status: todo
+- path: assets/brand-voice-by-locale-cheatsheet.md
+  words: 1656
+  dest: &id006
+  - reference
+  target: lps-copy/references/interface-copy.md
+  merge: copy
+  note: 회사·안내서 이름과 문구는 옮기지 않고 결정 종류만(제품별 말투 범위, 일본어 라벨 두 형식, 你·您, 역할별 문장부호) interface-copy.md로
+  status: done
+  done: [reference]
+- path: assets/chart-accessibility-card.md
+  words: 1247
+  dest:
+  - merge
+  target: lapis/references/data-viz.md
+  merge: data-viz
+  status: todo
+- path: assets/color-and-contrast-cheatsheet.md
+  words: 1810
+  dest:
+  - merge
+  - rule
+  target: lapis card
+  status: todo
+- path: assets/color-profile-decision-card.md
+  words: 1118
+  dest:
+  - docs
+  - rule
+  - card
+  note: card 행선지는 lzl-color 본문. 프로필을 추측하지 않고 인쇄소가 이름 붙인 출력 조건을 요구(2026-09-28). 같은 규칙이 lapis 색 참조에도 있음
+  status: partial
+  done: [card]
+- path: assets/component-states-checklist.md
+  words: 1722
+  dest: &id009
+  - card
+  - rule
+  target: lps-ux
+  note: 대화상자 초점·토스트·실행 취소·검증 시점 항목을 동작 규칙으로 이관(2026-09-25)
+  status: partial
+  done: [rule]
+- path: assets/design-brief-template.md
+  words: 482
+  dest: &id007
+  - merge
+  target: plan schema
+  status: todo
+- path: assets/design-md-template.md
+  words: 946
+  dest: &id001
+  - reference
+  target: lps-system templates
+  status: todo
+- path: assets/design-read-and-dials-card.md
+  words: 682
+  dest:
+  - schema
+  - card
+  target: plan.direction + lapis
+  status: todo
+- path: assets/design-system-snapshot-template.md
+  words: 638
+  dest: *id001
+  target: lps-system templates
+  status: todo
+- path: assets/design-terminology-glossary.md
+  words: 4429
+  dest:
+  - shared
+  - docs
+  target: src/shared/vocab/glossary.yaml
+  status: todo
+- path: assets/diagnostic-checklists.md
+  words: 981
+  dest: &id011
+  - reference
+  target: ultramarine
+  merge: review-and-repair
+  status: todo
+- path: assets/display-type-selection-card.md
+  words: 1293
+  dest: &id010
+  - reference
+  - rule
+  target: lapis/references/type.md
+  note: 디스플레이 서체 선택 참조에 반영. 검사 규칙 행선지는 별도 이관
+  status: partial
+  done: [reference]
+- path: assets/flow-review-and-test-card.md
+  words: 1615
+  dest: &id005
+  - reference
+  target: lps-ux
+  status: todo
+- path: assets/font-discovery-sources.md
+  words: 1137
+  dest: &id002
+  - lazuli
+  target: lazuli sources registry
+  note: 한국·일본·공개 출처 표를 출처 등록부로, 카탈로그 어댑터 정책과 맞춤(눈누·Adobe Fonts는 refused, 산돌·Google Fonts 등은 adapter)(2026-09-26)
+  status: done
+  done: [lazuli]
+- path: assets/font-license-decision-card.md
+  words: 1219
+  dest:
+  - lazuli
+  - shared
+  target: lzl-fonts
+  merge: font-facts
+  note: 다섯 사실(파일·경로·라이선스·용도·수신자)을 글꼴 잠금 필드로(2026-09-25)
+  status: done
+  done: [shared, lazuli]
+- path: assets/free-stock-asset-sources.md
+  words: 1435
+  dest:
+  - lazuli
+  - shared
+  target: lazuli sources registry
+  note: 항목별 확인 카드를 자산 원장 필드로(2026-09-25); 카탈로그 12개를 출처 등록부 asset 유형으로, 약관이 도구를 막는 unDraw·Poly Haven·Openverse는 refused(2026-09-26)
+  status: done
+  done: [shared, lazuli]
+- path: assets/icon-library-matrix.md
+  words: 1449
+  dest: *id003
+  target: lapis/references/visual-assets.md
+  merge: visual-assets
+  status: todo
+- path: assets/layout-archetype-cards.md
+  words: 1594
+  dest:
+  - merge
+  target: lapis/references/archetypes.md
+  merge: archetypes
+  status: done
+  done: [merge]
+- path: assets/motion-cheatsheet.md
+  words: 1130
+  dest: &id004
+  - merge
+  target: lapis/references/motion.md
+  merge: motion
+  status: todo
+- path: assets/motion-delivery-cheatsheet.md
+  words: 1276
+  dest: *id004
+  target: lapis/references/motion.md
+  merge: motion
+  status: todo
+- path: assets/multilingual-font-stacks.md
+  words: 2274
+  dest:
+  - shared
+  - lazuli
+  target: src/shared/fonts/system-fonts.yaml
+  status: todo
+- path: assets/notification-and-attention-card.md
+  words: 2076
+  dest: *id005
+  target: lps-ux
+  status: todo
+- path: assets/platform-conventions-cheatsheet.md
+  words: 621
+  dest:
+  - merge
+  target: lapis/references/platforms.md
+  merge: platforms
+  status: todo
+- path: assets/readability-review-card.md
+  words: 1257
+  dest: *id006
+  target: lps-copy/references/interface-copy.md
+  merge: copy
+  note: 보존 확인, 로케일별 멈춤 표지, 지우지 말 것 목록을 interface-copy.md로. 틀 잡기 카드·신호 목록·검증용 표는 옮기지 않음
+  status: done
+  done: [reference]
+- path: assets/response-templates.md
+  words: 1380
+  dest:
+  - merge
+  target: lapis card
+  merge: engine-principles
+  status: todo
+- path: assets/session-brief-and-decision-log.md
+  words: 801
+  dest: *id007
+  target: plan schema
+  status: todo
+- path: assets/shape-line-and-layout-cheatsheet.md
+  words: 1952
+  dest: &id008
+  - merge
+  target: lapis/references/layout.md
+  merge: layout
+  status: done
+  note: 모서리·윤곽·형태 내용은 아직 행선지 없음(나중 형태·표면 참조 후보)
+  done: [merge]
+- path: assets/slop-detector-checklist.md
+  words: 2606
+  dest:
+  - rule
+  target: slop rules
+  note: 안정 ID 73개 이관 완료 → rules.yaml (추적표 tools/slop-id-trace.yaml)
+  status: done
+  done: [rule]
+- path: assets/spacing-and-grid-cheatsheet.md
+  words: 703
+  dest: *id008
+  target: lapis/references/layout.md
+  merge: layout
+  status: done
+  done: [merge]
+- path: assets/stack-decision-cards.md
+  words: 1798
+  dest:
+  - reference
+  target: lapis/references/implementation.md
+  status: todo
+- path: assets/state-transition-and-recovery-card.md
+  words: 1431
+  dest: *id009
+  target: lps-ux
+  status: todo
+- path: assets/style-cards.md
+  words: 1843
+  dest:
+  - reference
+  target: lapis/references/style-cards.md
+  status: todo
+- path: assets/type-scale-cheatsheet.md
+  words: 845
+  dest: *id010
+  target: lapis/references/type.md
+  note: 타입 스케일 요약 참조에 반영. 검사 규칙 행선지는 별도 이관
+  status: partial
+  done: [reference]
+- path: assets/ui-audit-rubric.md
+  words: 1126
+  dest: *id011
+  target: ultramarine
+  merge: review-and-repair
+  status: todo
+- path: assets/web-search-cheatsheet.md
+  words: 680
+  dest: *id002
+  target: lazuli sources registry
+  note: 참고처·기계 판독 경로를 출처 등록부 search 유형으로, 약관이 도구를 막는 Apple·Pinterest·Are.na·Dribbble 등은 refused(2026-09-26). 질의 예시·증거 라벨은 등록부 대상 아님
+  status: done
+  done: [lazuli]
+- path: scripts/design_md_tools.py
+  dest:
+  - cli
+  target: lapis-design
+  note: 표준 라이브러리 유지
+  status: todo
+- path: scripts/test_design_md_tools.py
+  dest:
+  - cli
+  target: lapis-design tests
+  status: todo
+- path: scripts/design_archive_inspect.py
+  dest:
+  - cli
+  target: lapis-design
+  status: todo
+- path: scripts/figma_fetch.py
+  dest:
+  - cli
+  target: lazuli
+  status: todo
+- path: scripts/design_skill_sanity_check.py
+  dest:
+  - repo
+  target: tools/
+  note: 새 구조용으로 재작성
+  status: todo
+- path: scripts/test_design_skill_sanity_check.py
+  dest:
+  - repo
+  target: tools/
+  status: todo
+- path: SKILL.md
+  dest:
+  - drop
+  note: 라우터 → 엔진으로 재작성
+  status: todo
+- path: README.md
+  dest:
+  - repo
+  note: 재작성, INSTALLATION.md 연결
+  status: todo
+- path: README.ko.md
+  dest:
+  - repo
+  note: 재작성
+  status: todo
+- path: MAINTENANCE.md
+  dest:
+  - repo
+  target: docs/maintainers/
+  status: todo
+- path: KNOWN-LIMITATIONS.md
+  dest:
+  - repo
+  target: docs/maintainers/
+  status: todo
+- path: LICENSE.md
+  dest:
+  - repo
+  note: 문서 CC BY 4.0, 스크립트 MIT → 새 라이선스 결정
+  status: todo
+- path: references/workflow.md
+  words: 6020
+  dest:
+  - card
+  - schema
+  - reference
+  - merge
+  target: lapis 카드 + 계획 스키마 + ultramarine
+  merge: review-and-repair
+  note: 요청 해석 8단계와 요청자·제품 사용자 구분은 카드, 생성·수리·집중 경로는 계획 mode, 보고 전 자가 점검은 평가 루프로. 비교 사례는 참조, 상용구 절은 폐기
+  status: todo
+- path: references/00-navigation.md
+  words: 6363
+  dest:
+  - drop
+  - merge
+  target: ultramarine 진단·수리 참조
+  merge: review-and-repair
+  note: 라우터 문서라 폐기. 막연한 문제 → 진단 표만 진단·수리 참조로
+  status: todo
+- path: references/teaching-design.md
+  words: 6354
+  dest:
+  - docs
+  - merge
+  target: docs/ + ultramarine 평가자 지시문
+  merge: review-and-repair
+  note: 사람용 학습 경로와 연습은 docs. 비평 5단계(중립 목록, 의도, 원인, 보존과 수리, 검증)만 평가자 지시문 재료로
+  status: todo
+- path: references/source-bibliography.md
+  words: 25381
+  dest:
+  - lazuli
+  - docs
+  target: lzl-research 카드 + provenance + docs/
+  note: 출처 계층과 확인함·단서 구분은 lzl-research 카드 원칙으로. 개별 출처는 관련 규칙·참조의 provenance로 나누고 나머지는 docs 참고문헌
+  status: partial
+  done: [lazuli]

@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fixture shop</title><style>body{font-family:system-ui;margin:2rem;max-width:42rem}button{margin:.5rem;padding:.7rem}dialog{padding:2rem}#toast{position:fixed;bottom:1rem;background:#163;color:white;padding:1rem}.bar{width:80px;height:20px;background:#aca}#animated{transition:width 350ms linear}#quick{transition:width 30ms linear}</style></head>
+<body><header><h1>Fixture shop</h1></header><main><section><h2>Products</h2><ul id="products"></ul>
+<button id="add" type="button">Add to cart</button><p id="status" role="status" aria-live="polite"></p>
+<label for="contact">Email</label><input id="contact" type="email">
+<label for="subscribe">Subscribe</label><input id="subscribe" type="checkbox">
+<label for="pick">Contact choice</label><select id="pick">
+  <option value="">Choose</option><option value="shopper@example.com">shopper@example.com</option>
+</select>
+<button id="dialog-opener" type="button">Open shipping dialog</button>
+<button id="nothing" type="button">No-op</button>
+<button id="expand" type="button">Expand card</button><div id="animated" class="bar">Moving</div>
+<button id="expand-instant" type="button">Expand instantly</button><div id="instant" class="bar">Jumping</div>
+<button id="expand-quick" type="button">Expand quickly</button><div id="quick" class="bar">Snapping</div>
+<button id="grow" type="button">Grow panel</button><div id="growing" class="bar">Growing</div>
+<a id="second" href="/second">Other route</a><button id="reserve" type="button">Reserve</button>
+<a id="outside" href="https://checkout.example.test/reservations/r-2409-031?token=private">External checkout</a></section>
+<dialog id="shipping"><h2>Shipping details</h2><button id="dismiss" type="button">Close dialog</button></dialog>
+<p id="toast" role="status" aria-live="polite" hidden></p></main><script src="/app.js"></script></body></html>

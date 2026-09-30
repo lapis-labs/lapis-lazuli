@@ -1,0 +1,30 @@
+{
+  "name": "lapis-lazuli",
+  "owner": {
+    "name": "lapis-labs"
+  },
+  "description": "LapisLazuli design skills",
+  "plugins": [
+    {
+      "name": "lapis",
+      "source": "./plugins/lapis",
+      "description": "Design direction, plans, and named defaults for new UI and redesigns",
+      "version": "0.1.0",
+      "category": "design"
+    },
+    {
+      "name": "ultramarine",
+      "source": "./plugins/ultramarine",
+      "description": "Render checks, slop and rights review, and a separate critic",
+      "version": "0.1.0",
+      "category": "design"
+    },
+    {
+      "name": "lazuli",
+      "source": "./plugins/lazuli",
+      "description": "Local fonts and colors, catalogs, references, and the lazuli CLI",
+      "version": "0.1.0",
+      "category": "design"
+    }
+  ]
+}

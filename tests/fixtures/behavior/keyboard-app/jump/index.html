@@ -1,0 +1,5 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="/style.css"><title>Keyboard jump</title></head><body>
+<header><a class="skip" href="#content">Skip to content</a><nav aria-label="Site"><a href="/second/">Second route</a><a href="/jump/">Jump route</a></nav><button type="button">Header action</button></header>
+<main id="content" tabindex="-1"><h1>Jump title</h1><button>Before selector</button><select id="navigate" aria-label="Move on focus"><option>One</option></select><button>After selector</button></main>
+<script>document.getElementById('navigate').addEventListener('focus',()=>{ history.pushState({},'', '/jump/changed'); })</script>
+</body></html>

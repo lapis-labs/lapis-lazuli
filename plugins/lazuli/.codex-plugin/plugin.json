@@ -1,0 +1,14 @@
+{
+  "name": "lazuli",
+  "version": "0.1.0",
+  "description": "Local fonts and colors, catalogs, references, and the lazuli CLI",
+  "license": "MIT AND CC-BY-4.0",
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Lazuli",
+    "shortDescription": "Local fonts and colors, catalogs, references, and the lazuli CLI",
+    "developerName": "lapis-labs"
+  }
+}

@@ -1,0 +1,5 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="/style.css"><title>Keyboard second</title></head><body>
+<header><a class="skip" href="#missing">Skip to content</a><nav aria-label="Site"><a href="/second/">Second route</a><a href="/jump/">Jump route</a></nav><button type="button">Header action</button></header>
+<main id="content" tabindex="-1"><h1>Second title</h1><button>Before widget</button><section id="widget"><h2>Non-modal picker</h2><button id="trap-a">Widget A</button><button id="trap-b">Widget B</button></section><button id="after-widget">After widget</button></main>
+<script>document.getElementById('widget').addEventListener('keydown',event=>{if(event.key==='Tab' && !event.shiftKey){event.preventDefault();(document.activeElement.id==='trap-a'?document.getElementById('trap-b'):document.getElementById('trap-a')).focus()}})</script>
+</body></html>

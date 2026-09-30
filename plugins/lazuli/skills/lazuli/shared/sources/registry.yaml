@@ -1,0 +1,833 @@
+# LapisLazuli source registry — v0 draft (schema: sources/registry.schema.yaml)
+# Where to look for fonts, colors, assets, and design references, and how lazuli may reach each one.
+# A listing is a lead, not a license: the item's own terms still decide reuse. Access policies were
+# checked against each source's terms and robots.txt on checked_at; recheck before relying on one.
+# `lazuli sources` lists this file; `lazuli read` looks a URL up here before fetching it.
+
+version: 0
+
+sources:
+  # ---------------------------------------------------------------- fonts
+  - id: google-fonts
+    name: Google Fonts
+    url: https://fonts.google.com/
+    type: [font]
+    good_for: open-license families with categories, tags, scripts, and variable axes
+    access: adapter
+    adapter: google-fonts
+    terms_url: https://policies.google.com/terms
+    checked_at: "2026-09-26"
+    note: robots.txt disallows only /license/; the terms forbid automated access only against robots.txt
+
+  - id: google-fonts-repository
+    name: Google Fonts repository
+    url: https://github.com/google/fonts
+    type: [font]
+    good_for: the separately distributed open packages, their license directories, and tag data
+    access: adapter
+    adapter: google-fonts
+    terms_url: https://docs.github.com/en/site-policy/github-terms/github-terms-of-service
+    license: mostly OFL-1.1; some Apache-2.0 or Ubuntu Font License
+    checked_at: "2026-09-26"
+    note: the adapter reads tag and tree data through the GitHub API within its unauthenticated rate limit
+
+  - id: fontsource
+    name: Fontsource
+    url: https://fontsource.org/
+    hosts: [api.fontsource.org]
+    type: [font]
+    good_for: self-hostable packages of open fonts with SPDX license ids
+    access: adapter
+    adapter: fontsource
+    terms_url: https://fontsource.org/docs/api/introduction
+    checked_at: "2026-09-26"
+
+  - id: fontshare
+    name: Fontshare
+    url: https://www.fontshare.com/
+    hosts: [api.fontshare.com]
+    type: [font]
+    good_for: free Latin families from one foundry; a visual lead until each family's license is kept
+    access: adapter
+    adapter: fontshare
+    terms_url: https://www.fontshare.com/licenses/itf-ffl
+    license: ITF Free Font License or OFL-1.1, per family
+    checked_at: "2026-09-26"
+
+  - id: anshim
+    name: 안심글꼴 (Gongu, Korea Copyright Commission)
+    url: https://gongu.copyright.or.kr/
+    type: [font]
+    good_for: Korean fonts cleared for use, with the license per font (KOGL type 1 or OFL)
+    access: adapter
+    adapter: anshim
+    terms_url: https://gongu.copyright.or.kr/gongu/main/contents.do?menuNo=200174
+    checked_at: "2026-09-26"
+
+  - id: sandoll-cloud
+    name: Sandoll Cloud (산돌구름)
+    url: https://www.sandollcloud.com/
+    type: [font]
+    good_for: the subscription and commercial Korean catalog, its classification, and per-channel license terms
+    access: adapter
+    adapter: sandoll
+    terms_url: https://www.sandollcloud.com/policyTermsUser
+    checked_at: "2026-09-26"
+    note: robots.txt asks for 10 seconds between requests; a subscription's base scope differs from web, app, and server terms
+
+  - id: noonnu
+    name: noonnu (눈누)
+    url: https://noonnu.cc/
+    type: [font]
+    good_for: discovering Korean candidates and the maker's license link; its license summary is only a hint
+    access: refused
+    adapter: noonnu
+    reason: noonnu's terms forbid scraping and every robot other than search engines, so lazuli sends it nothing; look fonts up on noonnu.cc in your browser.
+    clause: 이용약관 제7조 (이용자의 의무)
+    terms_url: https://noonnu.cc/user_agreement
+    checked_at: "2026-09-26"
+
+  - id: adobe-fonts
+    name: Adobe Fonts
+    url: https://fonts.adobe.com/
+    type: [font]
+    good_for: desktop activation and Adobe-hosted web projects; CJK classification facets
+    access: refused
+    adapter: adobe-cjk
+    reason: Adobe's General Terms of Use forbid data gathering and extraction on Adobe websites; check a font's classification at https://fonts.adobe.com/fonts in your browser.
+    clause: Adobe General Terms of Use, section 6.18 (effective 2025-10-03)
+    terms_url: https://www.adobe.com/legal/terms.html
+    checked_at: "2026-09-26"
+
+  - id: yoon-design
+    name: FONCO / Yoon Design
+    url: https://font.co.kr/
+    type: [font]
+    good_for: Yoon and partner Korean families; embedding and webfont rights are separate contracts
+    access: browser-link
+    reason: Yoon Design blocks tools, so lazuli has no adapter for it; open the family page in your browser.
+    terms_url: https://font.co.kr/policy/service
+    checked_at: "2026-09-26"
+
+  - id: morisawa
+    name: Morisawa
+    url: https://www.morisawa.co.jp/
+    type: [font]
+    good_for: professional Japanese families; subscription, embedding, webfont, and server products differ
+    access: read
+    terms_url: https://www.morisawa.co.jp/terms/
+    checked_at: "2026-09-26"
+
+  - id: fontworks-lets
+    name: Fontworks LETS
+    url: https://lets.fontworks.co.jp/
+    type: [font]
+    good_for: existing LETS customers and the current Fontworks catalog; options and renewals have dated changes
+    access: read
+    terms_url: https://lets.fontworks.co.jp/legal/site
+    checked_at: "2026-09-26"
+
+  - id: noto-cjk
+    name: Noto CJK
+    url: https://github.com/notofonts/noto-cjk
+    type: [font]
+    good_for: region-specific and pan-CJK sans and serif packages
+    access: read
+    terms_url: https://docs.github.com/en/site-policy/github-terms/github-terms-of-service
+    license: OFL-1.1
+    checked_at: "2026-09-26"
+
+  - id: source-han-sans
+    name: Source Han Sans
+    url: https://github.com/adobe-fonts/source-han-sans
+    type: [font]
+    good_for: pan-CJK sans releases; the Reserved Font Name "Source" constrains modified copies
+    access: read
+    terms_url: https://docs.github.com/en/site-policy/github-terms/github-terms-of-service
+    license: OFL-1.1
+    checked_at: "2026-09-26"
+
+  - id: source-han-serif
+    name: Source Han Serif
+    url: https://github.com/adobe-fonts/source-han-serif
+    type: [font]
+    good_for: pan-CJK serif releases
+    access: read
+    terms_url: https://docs.github.com/en/site-policy/github-terms/github-terms-of-service
+    license: OFL-1.1
+    checked_at: "2026-09-26"
+
+  - id: fontsquirrel
+    name: FontSquirrel
+    url: https://www.fontsquirrel.com/
+    type: [font]
+    good_for: curated free fonts with per-font use clues; the original foundry license still controls
+    access: read
+    terms_url: https://www.fontsquirrel.com/faq
+    checked_at: "2026-09-26"
+
+  - id: myfonts
+    name: MyFonts
+    url: https://www.myfonts.com/
+    type: [font]
+    good_for: the commercial global foundry marketplace; each purchase follows its own EULA and tier
+    access: refused
+    reason: MyFonts' terms forbid robots, spiders, and any automatic device that retrieves, indexes, or scrapes the site; browse it yourself.
+    clause: Terms of Use, prohibited uses ("Use any robot, spider, site search/retrieval application or other manual or automatic device to retrieve, index, scrape, data mine")
+    terms_url: https://www.myfonts.com/a/font/legal/terms-of-use
+    checked_at: "2026-09-26"
+
+  # ---------------------------------------------------------------- colors: inspiration and preview
+  - id: adobe-color
+    name: Adobe Color
+    url: https://color.adobe.com/
+    type: [color]
+    good_for: color-wheel and image-derived palettes, curated and trending themes, per-swatch values
+    access: refused
+    reason: Adobe's General Terms of Use forbid data gathering and extraction on Adobe websites; open Adobe Color in your browser.
+    clause: Adobe General Terms of Use, section 6.18 (effective 2025-10-03)
+    terms_url: https://www.adobe.com/legal/terms.html
+    checked_at: "2026-09-26"
+
+  - id: coolors
+    name: Coolors
+    url: https://coolors.co/
+    type: [color]
+    good_for: a palette generator, community gallery, image picker, and palette visualizer
+    access: refused
+    reason: Coolors' license forbids parsing or stockpiling its palettes and using them to train machine learning or AI systems; open it in your browser.
+    clause: License, prohibited uses ("reverse engineer, parse, stockpile, download beyond reasonable implication"; "training machine learning nor artificial intelligence systems"), updated 2023-08-16
+    terms_url: https://coolors.co/license
+    checked_at: "2026-09-26"
+
+  - id: color-hunt
+    name: Color Hunt
+    url: https://colorhunt.co/
+    type: [color]
+    good_for: curated four-swatch palettes with hex values and stable palette pages
+    access: read
+    terms_url: https://colorhunt.co/terms
+    checked_at: "2026-09-26"
+    note: the terms grant no palette reuse; treat palettes as visual leads
+
+  - id: happy-hues
+    name: Happy Hues
+    url: https://www.happyhues.co/
+    type: [color]
+    good_for: palettes applied to a page specimen with hero, cards, forms, and illustration
+    access: read
+    terms_url: https://www.happyhues.co/
+    checked_at: "2026-09-26"
+    note: no license or terms page is published; study relationships, do not copy the palette or artwork
+
+  - id: realtime-colors
+    name: Realtime Colors
+    url: https://www.realtimecolors.com/
+    type: [color]
+    good_for: five colors previewed on a multi-section page with type, plus exports
+    access: read
+    terms_url: https://github.com/juxtopposed/realtimecolors/blob/main/LICENSE.md
+    license: CC BY-NC-ND 4.0 (repository); the site allows use of the colors a user generates
+    checked_at: "2026-09-26"
+
+  - id: lospec
+    name: Lospec Palette List
+    url: https://lospec.com/palette-list
+    type: [color]
+    good_for: tagged limited-color and pixel-art palettes filtered by color count
+    access: refused
+    reason: Lospec's terms forbid spidering, crawling, and scraping the service; browse the list yourself.
+    clause: Terms and Conditions, prohibited uses (i) ("to spam, phish, pharm, pretext, spider, crawl, or scrape")
+    terms_url: https://lospec.com/terms-and-conditions
+    checked_at: "2026-09-26"
+
+  # ---------------------------------------------------------------- colors: perceptual editing and ramps
+  - id: oklch-picker
+    name: OKLCH Color Picker & Converter
+    url: https://oklch.com/
+    type: [color]
+    good_for: picking and converting OKLCH and LCH with gamut views for sRGB and Display P3
+    access: read
+    terms_url: https://github.com/evilmartians/oklch-picker
+    license: MIT
+    checked_at: "2026-09-26"
+
+  - id: huetone
+    name: Huetone
+    url: https://huetone.ardov.me/
+    type: [color]
+    good_for: editing ramps in CIELCH D50 or OKLCH with per-color contrast badges and token export
+    access: read
+    terms_url: https://github.com/ardov/huetone
+    license: MIT
+    checked_at: "2026-09-26"
+
+  - id: leonardo
+    name: Leonardo
+    url: https://leonardocolor.io/
+    type: [color]
+    good_for: adaptive scales generated from a background, base colors, and target contrast ratios
+    access: read
+    terms_url: https://github.com/adobe/leonardo
+    license: Apache-2.0
+    checked_at: "2026-09-26"
+
+  - id: material-theme-builder
+    name: Material Theme Builder
+    url: https://material-foundation.github.io/material-theme-builder/
+    type: [color]
+    good_for: HCT-based light and dark roles from a source image or core colors
+    access: read
+    terms_url: https://github.com/material-foundation/material-theme-builder
+    license: Apache-2.0
+    checked_at: "2026-09-26"
+
+  - id: radix-colors
+    name: Radix Colors
+    url: https://www.radix-ui.com/colors
+    type: [color]
+    good_for: published 12-step light, dark, and alpha scales with a use for each step
+    access: read
+    terms_url: https://github.com/radix-ui/colors
+    license: MIT
+    checked_at: "2026-09-26"
+
+  - id: atmos
+    name: Atmos
+    url: https://atmos.style/
+    type: [color]
+    good_for: shade curves, LCH and OKLCH editing, gamut limits, and contrast checks in one account-based tool
+    access: browser-link
+    reason: Atmos works inside a signed-in account (the terms admit only human sign-ups), so there is nothing for a tool to read; open it in your browser.
+    terms_url: https://atmos.style/legal/terms
+    checked_at: "2026-09-26"
+
+  # ---------------------------------------------------------------- colors: data palettes
+  - id: colorbrewer
+    name: ColorBrewer 2.0
+    url: https://colorbrewer2.org/
+    type: [color]
+    good_for: sequential, diverging, and qualitative data palettes for maps, with colorblind, print, and photocopy filters
+    access: read
+    terms_url: https://github.com/axismaps/colorbrewer
+    license: Apache-2.0
+    checked_at: "2026-09-26"
+
+  - id: cartocolors
+    name: CARTOColors
+    url: https://carto.com/carto-colors/
+    type: [color]
+    good_for: sequential, diverging, and qualitative data palettes for light and dark basemaps
+    access: read
+    terms_url: https://github.com/CartoDB/CartoColor
+    license: CC BY 4.0
+    checked_at: "2026-09-26"
+
+  - id: scientific-colour-maps
+    name: Scientific colour maps
+    url: https://www.fabiocrameri.ch/colourmaps/
+    type: [color]
+    good_for: versioned perceptually uniform colormaps for scientific data; pin the version
+    access: read
+    terms_url: https://doi.org/10.5281/zenodo.1243862
+    license: MIT (citation requested)
+    checked_at: "2026-09-26"
+
+  - id: hcl-wizard
+    name: HCL Wizard
+    url: https://hclwizard.org/
+    type: [color]
+    good_for: HCL data palette construction and a color vision deficiency emulator
+    access: read
+    terms_url: https://hclwizard.org/
+    checked_at: "2026-09-26"
+    note: the export formats and the underlying package's license were not verified
+
+  - id: matplotlib-colormaps
+    name: Matplotlib colormap guidance
+    url: https://matplotlib.org/stable/users/explain/colors/colormaps.html
+    type: [color]
+    good_for: categorized data colormaps with lightness diagnostics and known failure patterns
+    access: read
+    terms_url: https://matplotlib.org/stable/project/license.html
+    checked_at: "2026-09-26"
+    note: follow each imported map's own provenance
+
+  # ---------------------------------------------------------------- colors: print and material systems
+  - id: pantone-color-finder
+    name: Pantone Color Finder
+    url: https://www.pantone.com/color-finder
+    hosts: [connect.pantone.com]
+    type: [color]
+    good_for: confirming a Pantone code's name, system, and library; numeric color data needs a Pantone Connect account
+    access: browser-link
+    reason: public pages show identity only and numeric data sits behind Pantone Connect accounts, which lazuli never signs in to; look the code up in your browser.
+    terms_url: https://www.pantone.com/about/terms-of-use
+    color_system: pantone
+    checked_at: "2026-09-26"
+    note: the terms page is built by script and was not readable by a tool
+
+  - id: ncs
+    name: NCS System
+    url: https://ncscolour.com/en-int/pages/the-system
+    type: [color]
+    good_for: the NCS notation (blackness, chromaticness, hue) and its physical samples
+    access: read
+    terms_url: https://ncscolour.com/en-int/pages/terms-conditions
+    color_system: ncs
+    checked_at: "2026-09-26"
+
+  - id: ral-classic
+    name: RAL CLASSIC
+    url: https://www.ral-farben.de/en/ral-classic
+    type: [color]
+    good_for: the four-digit RAL collection used by specifications and industry
+    access: read
+    terms_url: https://www.ral-farben.de/en/legal-notice
+    color_system: ral-classic
+    checked_at: "2026-09-26"
+
+  - id: ral-design-system-plus
+    name: RAL DESIGN SYSTEM plus
+    url: https://www.ral-farben.de/en/ral-design-system-plus
+    type: [color]
+    good_for: 1,825 colors ordered by hue, lightness, and chroma under a seven-digit code
+    access: read
+    terms_url: https://www.ral-farben.de/en/legal-notice
+    color_system: ral-design-plus
+    checked_at: "2026-09-26"
+
+  - id: ral-effect
+    name: RAL EFFECT
+    url: https://www.ral-farben.de/en/ral-effect
+    type: [color]
+    good_for: plain shades paired with metallic ones; metallic appearance cannot be approved from a screen
+    access: read
+    terms_url: https://www.ral-farben.de/en/legal-notice
+    checked_at: "2026-09-26"
+
+  - id: munsell
+    name: Munsell Color System (X-Rite)
+    url: https://www.xrite.com/blog/munsell
+    type: [color]
+    good_for: the Hue Value/Chroma notation and routes to physical Munsell references
+    access: read
+    terms_url: https://www.xrite.com/legal/terms-of-use
+    color_system: munsell
+    checked_at: "2026-09-26"
+
+  - id: freiefarbe-hlc
+    name: freieFarbe HLC Colour Atlas
+    url: https://freiefarbe.de/en/thema-farbe/hlc-colour-atlas/
+    type: [color]
+    good_for: an open colour atlas whose codes are CIELAB LCh coordinates, with free data files
+    access: read
+    terms_url: https://freiefarbe.de/en/licence/
+    license: CC BY-ND 4.0 (atlas files; no modified copies)
+    color_system: hlc
+    checked_at: "2026-09-26"
+
+  - id: freetone
+    name: Freetone
+    url: https://culturehustle.com/products/freetone
+    type: [color]
+    good_for: a free third-party swatch library; an unofficial table, never a standard
+    access: browser-link
+    reason: Culture Hustle's terms forbid copying its content without permission; open the page in your browser.
+    terms_url: https://culturehustle.com/policies/terms-of-service
+    color_system: freetone
+    checked_at: "2026-09-26"
+
+  - id: dic-color
+    name: DIC Color Design
+    url: https://www.dic-color.com/
+    hosts: [shop.dic-color.com]
+    type: [color]
+    good_for: DIC color guides and color-design services; no public swatch dataset
+    access: browser-link
+    reason: DIC's terms forbid using or copying the site's content without written consent beyond personal use; open it in your browser.
+    terms_url: https://www.dic-color.com/terms/index.html
+    checked_at: "2026-09-26"
+
+  # ---------------------------------------------------------------- colors: articles
+  - id: webaim-contrast
+    name: WebAIM — Contrast and Color Accessibility
+    url: https://webaim.org/articles/contrast/
+    type: [color, search]
+    good_for: WCAG text and non-text contrast, use of color, and states, explained
+    access: read
+    terms_url: https://webaim.org/copyright
+    checked_at: "2026-09-26"
+
+  - id: datawrapper-colors
+    name: Datawrapper — choosing colors for data visualization
+    url: https://www.datawrapper.de/blog/colors
+    type: [color, search]
+    good_for: editorial practice for color in charts (position first, stable meaning, gray as context)
+    access: read
+    terms_url: https://www.datawrapper.de/terms
+    checked_at: "2026-09-26"
+
+  - id: stripe-accessible-colors
+    name: Stripe — Designing accessible color systems
+    url: https://stripe.com/blog/accessible-color-systems
+    type: [color, search]
+    good_for: a case study of generating ramps with a perceptual model and live contrast feedback
+    access: read
+    terms_url: https://stripe.com/privacy
+    checked_at: "2026-09-26"
+
+  - id: evil-martians-oklch
+    name: Evil Martians — OKLCH in CSS
+    url: https://evilmartians.com/chronicles/oklch-in-css-why-quit-rgb-hsl
+    type: [color, search]
+    good_for: OKLCH controls, HSL failure modes, wide gamut, and non-displayable coordinates in CSS
+    access: read
+    terms_url: https://evilmartians.com/
+    checked_at: "2026-09-26"
+    note: the site publishes Markdown versions of its pages for automated tools
+
+  # ---------------------------------------------------------------- assets
+  - id: unsplash
+    name: Unsplash
+    url: https://unsplash.com/
+    type: [asset]
+    good_for: free photographs under the Unsplash License; no resale without significant change
+    access: browser-link
+    reason: Unsplash answers tools with HTTP 401, so lazuli reads nothing there; open the photo page in your browser.
+    terms_url: https://unsplash.com/license
+    checked_at: "2026-09-26"
+
+  - id: pexels
+    name: Pexels
+    url: https://www.pexels.com/
+    type: [asset]
+    good_for: free photos and video; no unaltered resale, endorsement, or trademark use
+    access: browser-link
+    reason: Pexels answers tools with HTTP 403, so lazuli reads nothing there; open the item page in your browser.
+    terms_url: https://www.pexels.com/license/
+    checked_at: "2026-09-26"
+
+  - id: pixabay
+    name: Pixabay
+    url: https://pixabay.com/
+    type: [asset]
+    good_for: free images, video, and audio under the Pixabay Content License; no standalone redistribution
+    access: browser-link
+    reason: Pixabay answers tools with HTTP 403, so lazuli reads nothing there; open the item page in your browser.
+    terms_url: https://pixabay.com/service/license-summary/
+    checked_at: "2026-09-26"
+
+  - id: wikimedia-commons
+    name: Wikimedia Commons
+    url: https://commons.wikimedia.org/
+    type: [asset]
+    good_for: mixed media with a license or public-domain rationale on every file page
+    access: read
+    terms_url: https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use
+    checked_at: "2026-09-26"
+    note: automated use must not be abusive or disruptive; check each file page's license and creator
+
+  - id: openverse
+    name: Openverse
+    url: https://openverse.org/
+    type: [asset]
+    good_for: searching openly licensed media hosted elsewhere; it does not verify licenses
+    access: refused
+    reason: Openverse's terms forbid scraping its catalog; search it in your browser and follow each result to its host.
+    clause: Terms of Service ("You must not scrape the content in the Openverse catalog")
+    terms_url: https://docs.openverse.org/terms_of_service.html
+    checked_at: "2026-09-26"
+
+  - id: undraw
+    name: unDraw
+    url: https://undraw.co/illustrations
+    type: [asset]
+    good_for: customizable vector illustrations for commercial use without attribution
+    access: refused
+    reason: unDraw's license forbids automated linking, embedding, scraping, searching, or downloading without consent, and any machine learning use; browse it yourself.
+    clause: unDraw license ("automated and non-automated ways to link, embed, scrape, search or download the assets included on the website without our consent")
+    terms_url: https://undraw.co/license
+    checked_at: "2026-09-26"
+
+  - id: open-doodles
+    name: Open Doodles
+    url: https://www.opendoodles.com/
+    type: [asset]
+    good_for: hand-drawn illustrations for personal and commercial use without credit
+    access: read
+    terms_url: https://www.opendoodles.com/about
+    license: CC0-1.0
+    checked_at: "2026-09-26"
+
+  - id: kenney
+    name: Kenney
+    url: https://kenney.nl/assets
+    type: [asset]
+    good_for: game, UI, and 3D asset packs; never the Kenney logo or implied endorsement
+    access: read
+    terms_url: https://kenney.nl/assets
+    license: CC0-1.0 (game assets)
+    checked_at: "2026-09-26"
+
+  - id: poly-haven
+    name: Poly Haven
+    url: https://polyhaven.com/
+    type: [asset]
+    good_for: HDRIs, textures, and models released as CC0
+    access: refused
+    reason: Poly Haven's terms forbid web scraping and data mining without express permission; download assets yourself.
+    clause: License page, website terms 3.2 ("Web scraping or data mining without express permission")
+    terms_url: https://polyhaven.com/license
+    license: CC0-1.0 (assets)
+    checked_at: "2026-09-26"
+
+  - id: ambientcg
+    name: ambientCG
+    url: https://ambientcg.com/
+    type: [asset]
+    good_for: CC0 materials, models, and HDRIs with preview renders
+    access: read
+    terms_url: https://docs.ambientcg.com/license/
+    license: CC0-1.0
+    checked_at: "2026-09-26"
+
+  - id: blendkit
+    name: Blendkit
+    url: https://www.blendkit.com/
+    type: [asset]
+    good_for: a mixed 3D catalog where each item is CC0 or Blendkit Royalty Free
+    access: read
+    terms_url: https://www.blendkit.com/terms-and-conditions-2026/
+    checked_at: "2026-09-26"
+
+  - id: sketchfab
+    name: Sketchfab
+    url: https://sketchfab.com/
+    type: [asset]
+    good_for: creator-uploaded 3D models, each under its own Standard, Editorial, or Creative Commons license
+    access: read
+    terms_url: https://sketchfab.com/terms
+    checked_at: "2026-09-26"
+    note: the terms forbid collecting or scraping content in order to publish or distribute it
+
+  # ---------------------------------------------------------------- design references and search
+  - id: apple-hig
+    name: Apple Human Interface Guidelines
+    url: https://developer.apple.com/design/human-interface-guidelines
+    type: [search]
+    good_for: first-party guidance for Apple platforms
+    access: refused
+    reason: Apple's website terms forbid page-scrape, robot, and spider tools on every Apple site; read the guidelines in your browser.
+    clause: Apple Website Terms of Use, "Your Use of the Site"
+    terms_url: https://www.apple.com/legal/internet-services/terms/site.html
+    checked_at: "2026-09-26"
+
+  - id: android-compose
+    name: Android Developers — Jetpack Compose
+    url: https://developer.android.com/develop/ui/compose
+    type: [search]
+    good_for: first-party guidance and components for Android UI
+    access: read
+    terms_url: https://developer.android.com/license
+    checked_at: "2026-09-26"
+
+  - id: material-design
+    name: Material Design 3
+    url: https://m3.material.io/
+    type: [search]
+    good_for: Material components and foundations; token values also ship as generated files
+    access: read
+    terms_url: https://policies.google.com/terms
+    checked_at: "2026-09-26"
+
+  - id: wcag-understanding
+    name: Understanding WCAG 2.2 (W3C)
+    url: https://www.w3.org/WAI/WCAG22/Understanding/
+    type: [search]
+    good_for: the normative intent and techniques behind each success criterion
+    access: read
+    terms_url: https://www.w3.org/copyright/document-license-2023/
+    checked_at: "2026-09-26"
+
+  - id: github
+    name: GitHub
+    url: https://github.com/
+    hosts: [raw.githubusercontent.com]
+    type: [search]
+    good_for: versioned primary sources such as design-system repositories, token files, and documentation
+    access: read
+    terms_url: https://docs.github.com/en/site-policy/github-terms/github-terms-of-service
+    checked_at: "2026-09-26"
+    note: the acceptable use policies limit what information gathered by tools may be used for (section 7); bulk reads go through the API
+
+  - id: vercel-guidelines
+    name: Vercel web interface guidelines
+    url: https://vercel.com/design/guidelines
+    type: [search]
+    good_for: current web-interface rules, also offered as Markdown
+    access: read
+    terms_url: https://vercel.com/legal/terms
+    checked_at: "2026-09-26"
+
+  - id: apps-in-toss
+    name: Apps in Toss developer center
+    url: https://developers-apps-in-toss.toss.im/
+    type: [search]
+    good_for: policy and component guidance for Toss mini-apps, with llms.txt and per-page Markdown
+    access: read
+    terms_url: https://developers-apps-in-toss.toss.im/
+    checked_at: "2026-09-26"
+
+  - id: shadcn-ui
+    name: shadcn/ui
+    url: https://ui.shadcn.com/
+    type: [search]
+    good_for: registry and primitive status, with documentation as Markdown and source
+    access: read
+    terms_url: https://github.com/shadcn-ui/ui
+    license: MIT
+    checked_at: "2026-09-26"
+
+  - id: godly
+    name: Godly
+    url: https://godly.design/
+    type: [search]
+    good_for: curated web and UI references and component-level expression
+    access: read
+    terms_url: https://godly.design/about/
+    checked_at: "2026-09-26"
+
+  - id: awwwards
+    name: Awwwards
+    url: https://www.awwwards.com/
+    type: [search]
+    good_for: ambitious authored sites and interaction leads; awards do not prove usability
+    access: read
+    terms_url: https://www.awwwards.com/terms/
+    checked_at: "2026-09-26"
+
+  - id: siteinspire
+    name: siteInspire
+    url: https://www.siteinspire.com/
+    type: [search]
+    good_for: comparing composition, typography, and navigation across websites
+    access: browser-link
+    reason: siteInspire answered lazuli's first request with HTTP 429, so its terms could not be read by a tool; open it in your browser.
+    terms_url: https://www.siteinspire.com/
+    checked_at: "2026-09-26"
+
+  - id: land-book
+    name: Land-book
+    url: https://land-book.com/
+    type: [search]
+    good_for: landing-page composition references
+    access: refused
+    reason: Land-book's terms forbid bots, crawlers, and scrapers that collect or copy content; browse it yourself.
+    clause: Terms of Service 3, Acceptable Use ("use bots, crawlers, or scrapers to collect or copy content")
+    terms_url: https://land-book.com/terms-of-service
+    checked_at: "2026-09-26"
+
+  - id: mobbin
+    name: Mobbin
+    url: https://mobbin.com/
+    type: [search]
+    good_for: real product screens and flows by platform
+    access: browser-link
+    reason: screens need a signed-in account, and the terms forbid using AI tools to make derivative works from its content; open it in your browser.
+    terms_url: https://mobbin.com/terms
+    checked_at: "2026-09-26"
+
+  - id: refero
+    name: Refero
+    url: https://refero.design/
+    type: [search]
+    good_for: real product screens and flows for reference
+    access: browser-link
+    reason: Refero's terms page is built by script and could not be read by a tool, so lazuli does not read the site; open it in your browser.
+    terms_url: https://refero.design/terms
+    checked_at: "2026-09-26"
+
+  - id: screenlane
+    name: Screenlane (now Page Flows)
+    url: https://screenlane.com/
+    hosts: [pageflows.com]
+    type: [search]
+    good_for: recorded product flows; check the date and platform of each
+    access: read
+    terms_url: https://pageflows.com/terms/
+    checked_at: "2026-09-26"
+    note: screenlane.com redirects to pageflows.com
+
+  - id: fonts-in-use
+    name: Fonts In Use
+    url: https://fontsinuse.com/
+    type: [search, font]
+    good_for: typefaces documented in real work, by typeface, format, and period
+    access: refused
+    reason: Fonts In Use's terms forbid data mining, robots, spiders, and similar extraction tools; browse it yourself.
+    clause: Terms and Conditions of Use ("any use of data mining, robots, spiders or similar data gathering and extraction tools")
+    terms_url: https://fontsinuse.com/terms-and-conditions-of-use/
+    checked_at: "2026-09-26"
+
+  - id: typewolf
+    name: Typewolf
+    url: https://www.typewolf.com/
+    type: [search, font]
+    good_for: typefaces seen on current websites, with pairing notes
+    access: read
+    terms_url: https://www.typewolf.com/about
+    checked_at: "2026-09-26"
+
+  - id: are-na
+    name: Are.na
+    url: https://www.are.na/
+    type: [search]
+    good_for: annotated boards that connect references across media
+    access: refused
+    reason: Are.na's terms forbid automated scraping, crawling, and retrieval of its content; browse it yourself.
+    clause: Terms of Service, prohibited activities ("Scraping - Automated data scraping or crawling of content from the Service")
+    terms_url: https://www.are.na/terms
+    checked_at: "2026-09-26"
+
+  - id: pinterest
+    name: Pinterest
+    url: https://www.pinterest.com/
+    type: [search]
+    good_for: materials, artifacts, and visual branching; trace each pin back to its original creator
+    access: refused
+    reason: Pinterest's terms forbid scraping or accessing its content by automated means, and its robots.txt disallows every path; browse it yourself.
+    clause: Terms of Service, "Using Pinterest" ("not to scrape, collect, search, copy or otherwise access data or content from Pinterest in unauthorized ways, such as by using automated means")
+    terms_url: https://policy.pinterest.com/en/terms-of-service
+    checked_at: "2026-09-26"
+
+  - id: brand-new
+    name: Brand New (UnderConsideration)
+    url: https://www.underconsideration.com/brandnew/
+    type: [search]
+    good_for: identity redesigns with commentary; never reuse the marks
+    access: read
+    terms_url: https://www.underconsideration.com/about/
+    checked_at: "2026-09-26"
+
+  - id: behance
+    name: Behance
+    url: https://www.behance.net/
+    type: [search]
+    good_for: identity and process across several artifacts of one project
+    access: refused
+    reason: Behance runs under Adobe's General Terms of Use, which forbid data gathering and extraction on Adobe websites; browse it yourself.
+    clause: Adobe General Terms of Use, section 6.18 (effective 2025-10-03)
+    terms_url: https://www.adobe.com/legal/terms.html
+    checked_at: "2026-09-26"
+
+  - id: dribbble
+    name: Dribbble
+    url: https://dribbble.com/
+    type: [search]
+    good_for: focused visual details and finding designers; a shot does not show shipped behavior
+    access: refused
+    reason: Dribbble's terms forbid copying any part of the site by automated or manual scraping; browse it yourself.
+    clause: Terms of Service, prohibited activities ("Copying, distributing, or disclosing any part of the Website or any Services in any medium, including without limitation by any automated or non-automated scraping")
+    terms_url: https://dribbble.com/terms
+    checked_at: "2026-09-26"

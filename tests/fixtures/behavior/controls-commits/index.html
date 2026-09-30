@@ -1,0 +1,7 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Reservation desk</title></head>
+<body><main><h1>Reservation desk</h1>
+<section><h2>Seat 7</h2><input id="guest" aria-label="Guest name"><input id="window-seat" type="checkbox" aria-label="Window seat"><button id="reserve">Reserve seat</button><button id="unsafe">Reserve without guard</button><button id="false-success">Save falsely</button><button id="dead">Dead button</button><a href="/wrong" role="button" id="misleading">Show details</a><output id="reservation-status" role="status" aria-live="polite"></output><button id="preview">Submit preview</button></section>
+<section id="object"><h2>Sample record</h2><button id="delete">Delete Sample record</button><button id="delete-unsafe">Delete without confirmation</button></section>
+<dialog id="confirmation"><p>Delete Sample record?</p><button id="cancel">Keep record</button><button id="confirm">Confirm deletion</button></dialog>
+<div id="toast" role="status" aria-live="polite" hidden></div></main><script src="/app.js"></script></body></html>

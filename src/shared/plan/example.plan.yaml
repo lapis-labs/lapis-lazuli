@@ -1,0 +1,126 @@
+# Example: sales page for a small pottery studio (create mode)
+# Free text is in English; key_copy.text stays in the target locale (ko-KR) because it is real UI copy.
+version: 0
+mode: create
+task: { id: kiln-shop-landing, title: Pottery studio sales landing }
+context:
+  product: PRODUCT.md
+  design: null
+brief:
+  subject: Online sales for a small pottery studio
+  one_job: Let visitors see this firing's pieces and reserve one
+  audience: Craft lovers in their 30s and 40s
+  platform: [web]
+  locales: [ko-KR]
+  product_frame: e-commerce
+  constraints: [Most visits are on mobile, Photos show pieces straight out of the kiln]
+claims:
+  known: [The studio fires once a month]
+  declared: [No brand color yet]
+  proposed: [Use the firing log as the page signature]
+  unresolved: [Delivery regions]
+world_materials: [firing log sheet, glaze numbers, kiln temperature curve, foot-ring marks]
+direction:
+  read:
+    text: "Reading this as: e-commerce / Persuade + Operate on web for craft lovers, subject-derived language, constrained by mobile-first reading"
+    surface_mode: [persuade, operate]
+    style_frame: subject-derived
+    constraint_frame: [mobile first, real kiln photography]
+  dials: { variance: 5, motion: 2, density: 4 }
+  concept: Not a sales page but the record of one firing
+  levers: [deliberate negative space, log-sheet grid]
+references:
+  - source: https://example.com/archive
+    kind: site
+    rights: reference-only
+    mode: borrow
+    take: [row rhythm of the log-sheet grid, caption-to-image ratio]
+    leave: [brand colors, illustrations, copy]
+    profile: .lapis/refs/example-archive.json
+tokens:
+  color:
+    decision:
+      medium: { answer: "Web, mobile first", status: known }
+      task_structure: { answer: list -> detail -> reserve, status: declared }
+      content_colors: { answer: Glaze colors are the protagonists, status: known }
+      identity: { answer: None yet, status: known }
+      environment: { answer: Bright indoor viewing, status: proposed }
+      tone: { answer: Quiet, status: proposed }
+    roles:
+      - { name: paper, role: field, oklch: [0.97, 0.01, 85] }
+      - { name: ink, role: foreground, oklch: [0.25, 0.01, 60] }
+      - { name: reserve, role: interaction, oklch: [0.45, 0.09, 250], source_class: authored }
+      - { name: kiln-night, role: field, oklch: [0.22, 0.01, 60], theme: dark }
+    relations: [near-monochrome]
+    themes: [light, dark]
+  type:
+    roles:
+      - { role: heading, family: Gowun Batang, weights: [400, 700], scripts: [hang, latn], source: catalog }
+      - { role: body, family: Pretendard, weights: [400, 600], scripts: [hang, latn], source: inventory }
+    scale: { base_px: 16, ratio: 1.25 }
+  shape:
+    radius: { scale: [0, 4, 8], by_role: { control: 4, card: 8, image: 0 } }
+    rule: Square image edges like the firing-log sheets; softer corners only on things you press
+  surface:
+    elevation:
+      - { level: 0, means: the page and the firing log }
+      - { level: 1, means: piece cards and the reservation sheet }
+    borders: hairlines in ink at low contrast, never shadows on the log
+    treatments:
+      - { name: paper grain, job: marks the firing log as the studio's own record, where: [firing-log] }
+  icons: { family: line icons on a 24 px grid, source: library, style: outline, stroke_px: 1.5, sizes_px: [16, 24] }
+  motion: { reduced_motion: respect }
+layout:
+  procedure:
+    content_inventory: [pieces from this firing, firing log, how to reserve]
+    priority: [pieces, reservation, log]
+    archetype: list-detail
+  sections:
+    - { id: firing-log, archetype: signature, answers: How were these pieces made }
+    - { id: works, archetype: list, answers: What can I buy }
+  signature: firing log row
+content:
+  real_copy: true
+  voice: { register: haeyo }
+  key_copy:
+    - { slot: headline, text: "9월 소성분, 스물네 점이 나왔어요", locale: ko-KR }
+    - { slot: cta, text: 예약하기, locale: ko-KR }
+flows:
+  - id: reserve-piece
+    kind: primary
+    goal: Reserve one piece from this firing and get a reservation number
+    start: /
+    done: { route: /reservations/* }
+    requires: [address]
+    max_steps: 4
+  - id: firing-notices
+    kind: grant-consent
+    goal: Get an email when the next firing's pieces go up
+    start: /
+    done: { text: 알림을 신청했어요 }
+  - id: stop-firing-notices
+    kind: withdraw-consent
+    goal: Stop the firing emails
+    start: /
+    done: { text: 알림을 껐어요 }
+    pair: firing-notices
+defaults:
+  - id: type.single-neutral-sans
+    decision: keep
+    basis: brief
+    reason: Body text favors mobile readability, so a neutral sans stays
+  - id: type.overused-neutral-grotesque
+    decision: keep
+    basis: brief
+    reason: Body text favors mobile readability, so a neutral sans stays
+  - id: color.warm-editorial
+    decision: reject
+    basis: brief
+    reason: A cream base with terracotta would compete with the glaze colors
+  - id: color.cream-base
+    decision: keep
+    basis: brief
+    reason: The field is the paper of the firing log sheet, one of the world materials
+sources:
+  - { ref: PRODUCT.md }
+  - { ref: https://example.com/archive, note: log-sheet grid reference }

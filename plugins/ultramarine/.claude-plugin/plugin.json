@@ -1,0 +1,11 @@
+{
+  "name": "ultramarine",
+  "version": "0.1.0",
+  "description": "Render checks, slop and rights review, and a separate critic",
+  "author": {
+    "name": "lapis-labs"
+  },
+  "homepage": "https://github.com/lapis-labs/lapis-lazuli",
+  "repository": "https://github.com/lapis-labs/lapis-lazuli",
+  "license": "MIT AND CC-BY-4.0"
+}

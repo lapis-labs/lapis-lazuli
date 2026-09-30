@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Lazy layout shift</title>
+<style>
+ body { margin: 0; font: 16px Arial, sans-serif; }
+ #top { height: 900px; background: #f4f4f4; }
+ #slot { height: 1px; }
+ #below { height: 600px; background: #e0e0e0; }
+ #late { height: 120px; background: #ccc; }
+</style></head><body><main id="page">
+ <section id="top">Top of the page</section>
+ <div id="slot"></div>
+ <section id="below">Content below the lazy slot</section>
+</main><script>
+ // The slot scrolls into view on the last scroll step. Its content arrives through a request and is
+ // placed 400 ms later: after the step's own wait, inside the network-idle second that follows it.
+ const slot = document.getElementById('slot');
+ let placed = false;
+ new IntersectionObserver((entries, observer) => {
+   if (!entries.some(entry => entry.isIntersecting)) return;
+   observer.disconnect();
+   fetch('lazy-shift.html', {cache: 'no-store'}).then(response => response.text())
+     .then(() => setTimeout(() => { slot.style.height = '240px'; placed = true; }, 400));
+ }).observe(slot);
+ // Returning to the top comes after the window, so the shift this banner causes is not counted.
+ addEventListener('scroll', () => {
+   if (!placed || scrollY !== 0 || document.getElementById('late')) return;
+   const late = document.createElement('div');
+   late.id = 'late';
+   late.textContent = 'Inserted on the way back up';
+   document.body.insertBefore(late, document.getElementById('page'));
+ });
+</script></body></html>

@@ -1,0 +1,167 @@
+# LapisLazuli rules file schema — v0 draft
+# Source: src/shared/slop/rules.yaml (+ lists/, anchors/, corpus/)
+# Build: generators (lapis, lps-copy, lps-ux) get id, why, better, and keep_when only; checkers
+#        (ultramarine, ulm-*) get everything. provenance is stripped from every skill output.
+# Thresholds live here (single source). Calibration updates edit the rule and bump as_of.
+# Findings follow slop/finding.schema.yaml; detector names come from slop/detectors.yaml.
+
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/rules.v0.json
+title: LapisLazuli rules
+type: object
+additionalProperties: false
+required: [version, as_of, rules]
+
+properties:
+  version: { const: 0 }
+  as_of: { type: string, pattern: "^\\d{4}-\\d{2}$" }
+
+  # Value lists refreshed per era. Material for anchors and families, not rules themselves.
+  lists:
+    type: object
+    additionalProperties:
+      type: object
+      required: [as_of, values]
+      properties:
+        as_of: { type: string }
+        values:
+          type: object                                 # locale or scope -> list of values
+          additionalProperties: { type: array, items: { type: string } }
+        provenance: { $ref: "#/$defs/provenance" }
+
+  # Default packages: judged by structural co-occurrence, not by single signals
+  packages:
+    type: object
+    additionalProperties:
+      type: object
+      required: [members, hit_when]
+      properties:
+        members: { type: array, minItems: 2, items: { $ref: "#/$defs/rule_id" } }
+        structure: { type: object }                    # feature combination (e.g. base warmth/chroma range, accent count)
+        hit_when:
+          type: object
+          properties:
+            min_members: { type: integer, minimum: 2 }
+            min_parts: { type: integer, minimum: 2 }
+        observed:
+          type: object
+          properties:
+            eras: { type: array, items: { type: integer } }
+            note: { type: string }
+        provenance: { $ref: "#/$defs/provenance" }
+
+  rules:
+    type: array
+    items: { $ref: "#/$defs/rule" }
+
+
+$defs:
+  rule_id: { type: string, pattern: "^[a-z]+(\\.[a-z0-9-]+)+$" }
+
+  provenance:                                          # maintainers only; stripped at build
+    type: array
+    items:
+      type: object
+      required: [kind, source]
+      properties:
+        kind: { enum: [method, taxonomy, measurement, wording, regulation] }   # regulation: where a rule meets a law
+        note: { type: string }
+        source: { type: string }
+        license: { type: string }
+
+  region:                                              # a region in a normalized feature space
+    type: object
+    required: [space]
+    properties:
+      space: { enum: [oklch, panose, type-fingerprint, layout-vector, copy-family, embedding] }
+      bounds: { type: object }                         # e.g. { h: [30, 55], c: [0.08, 0.16] }
+      role: { type: string }
+      radius: { type: number }                         # for distance-from-anchor regions
+
+  anchor:
+    type: object
+    properties:
+      oklch: { type: array, minItems: 3, maxItems: 3, items: { type: number } }
+      source_class: { enum: [authored, provider, brand-approved, measured, published, computed, converted, nearest-match, screen-sample, unofficial] }   # see vocab/color.yaml
+      labels:                                          # color-system labels (Pantone: code only)
+        type: object
+        additionalProperties:
+          type: object
+          properties:
+            code: { type: string }
+            name: { type: string }
+            source_class: { type: string }
+            use: { enum: [detection_only, spec] }
+
+  detector:
+    type: object
+    properties:
+      detector: { type: string }                       # implementation name (e.g. css-font-family, section-sequence)
+      region: { $ref: "#/$defs/region" }
+      anchors: { type: array, items: { $ref: "#/$defs/anchor" } }
+      list: { type: string }                           # key in lists
+      family: { type: string }                         # copy family name
+      path: { type: string }                           # plan layer: path expression into the plan file
+      threshold: {}                                    # included in the checker view only
+      params: { type: object }
+
+  rule:
+    type: object
+    additionalProperties: false
+    required: [id, class, domain, layers, severity, why]
+    properties:
+      id: { $ref: "#/$defs/rule_id" }
+      class: { enum: [requirement, quality, default, contract] }
+      domain: { enum: [type, color, layout, surface, component, motion, copy, imagery, code, system, ux, reference, rights] }
+      layers:
+        type: array
+        minItems: 1
+        items: { enum: [plan, source, render, behavior, review] }
+      locales:
+        type: array
+        items: { enum: [all, latin, ko, ja, zh, cyrl, grek, arab, hebr, thai] }
+        default: [all]
+      severity:
+        type: object
+        additionalProperties: false
+        required: [create, review]
+        properties:
+          create: { enum: [gate, warn, off] }
+          review: { enum: [P0, P1, P2, P3] }
+          adjust:                                      # conditions that move the review severity; first match wins
+            type: array
+            items:
+              type: object
+              additionalProperties: false
+              required: [when, review]
+              properties:
+                when: { type: string, minLength: 8 }
+                review: { enum: [P0, P1, P2, P3] }
+      detect:
+        type: object
+        additionalProperties: false
+        properties:
+          plan: { $ref: "#/$defs/detector" }
+          source: { $ref: "#/$defs/detector" }
+          render: { $ref: "#/$defs/detector" }
+          behavior: { $ref: "#/$defs/detector" }
+          review: { $ref: "#/$defs/detector" }
+      packages: { type: array, items: { type: string } }
+      why: { type: string, minLength: 8 }              # why this reads as a default or defect
+      better: { type: string }                         # the better move when the choice is unearned
+      keep_when: { type: array, items: { type: string } }
+      waiver:
+        type: object
+        properties:
+          scope: { enum: [value, rule, none] }
+      verify: { enum: [static, runtime, review] }
+      ref: { type: string }                            # docs path
+      provenance: { $ref: "#/$defs/provenance" }
+    allOf:
+      # Requirements cannot be waived and always gate, regardless of mode
+      - if: { properties: { class: { const: requirement } } }
+        then:
+          required: [waiver]
+          properties:
+            waiver: { properties: { scope: { const: none } } }
+            severity: { properties: { create: { const: gate } } }

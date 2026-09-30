@@ -1,0 +1,259 @@
+# LapisLazuli shared items index — v0 draft
+# The build reads this list and injects only the view each skill needs.
+# CLI: lapis-design shared list --for <skill>   /   docs: shared items page
+#
+# Views:
+#   full                    everything but `provenance`, which is for maintainers
+#   names-and-alternatives  rule ids, reasons, alternatives, and keep_when only (no bounds, lists, corpus) — for generators
+#   fields-for-lookup       only the fields lazuli needs for lookups and execution: the item's `lookup_fields`
+#                           (top-level schema properties) and the `$defs` they reach
+#   summary                 one-line summary and path only
+#   none                    not included
+
+version: 0
+
+items:
+  - id: plan-schema
+    kind: contract
+    path: plan/schema.yaml
+    lookup_fields: [version, task, brief, references, tokens, sources]
+    consumers:
+      lapis: full
+      lps-ux: full
+      lps-copy: full
+      lps-system: full
+      ultramarine: full
+      lazuli: fields-for-lookup
+
+  - id: plan-harness-modes
+    kind: contract
+    path: plan/HARNESS-PLAN-MODES.md
+    note: how the plan file coexists with harness plan modes
+    consumers:
+      lapis: full
+      lps-ux: summary
+      ultramarine: summary
+
+  - id: render-extract
+    kind: contract
+    path: render/extract.schema.yaml
+    note: v1; output measurement, reference profiles, and the typicality corpus share one format
+    consumers:
+      ultramarine: full
+      ulm-release: full
+      lazuli: full
+      lzl-research: full
+      lapis: summary
+      ulm-maintain: full
+
+  - id: behavior-session
+    kind: contract
+    path: behavior/session.schema.yaml
+    note: v0; what behavior_check records while it drives our own render, read by behavior detectors
+    consumers:
+      ultramarine: full
+      ulm-release: full
+      lps-ux: summary
+      lapis: summary
+
+  - id: behavior-stub
+    kind: contract
+    path: behavior/stub.schema.yaml
+    note: v0; synthetic API fixture for the in-browser stub and local HTTP server
+    consumers:
+      ultramarine: full
+      ulm-release: full
+      lps-ux: full
+      lapis: full
+
+  - id: behavior-derived
+    kind: contract
+    path: behavior/DERIVED.md
+    note: how session values are observed and derived; reference code in cli/lapis_design/behavior.py
+    consumers:
+      ultramarine: full
+      ulm-release: full
+
+  - id: slop-rules
+    kind: rules
+    path: slop/rules.yaml
+    note: 184 rules - 125 migrated from the checklist and catalog of the previous repository (design-and-frontend), 44 behavior-layer rules (deceptive patterns, behavioral accessibility, state and recovery), one render target-size rule, and 14 rights rules on asset provenance and licenses; thresholds and lists are v0 seeds
+    consumers:
+      lapis: names-and-alternatives
+      lps-copy: names-and-alternatives
+      lps-ux: names-and-alternatives
+      ultramarine: full
+      ulm-maintain: full
+      ulm-release: full
+
+  - id: default-cards
+    kind: data
+    path: slop/cards.yaml
+    note: v0; the 61 default-class rules grouped into 20 named cards with a cue and alternative routes; tests/test_cards.py keeps coverage exact and the text free of checker bounds and lexicons
+    consumers:
+      lapis: full
+      lps-copy: full
+      lps-ux: full
+      lps-system: full
+      ultramarine: full
+      ulm-maintain: full
+
+  - id: slop-lists
+    kind: data
+    path: slop/lists/
+    status: planned
+    consumers:
+      ultramarine: full
+      ulm-maintain: full
+
+  - id: color-anchors
+    kind: data
+    path: slop/anchors/
+    status: planned
+    note: openly licensed values only; Pantone and similar systems as codes and links
+    consumers:
+      ultramarine: full
+      lzl-color: full
+
+  - id: typicality-corpus
+    kind: data
+    path: slop/corpus/
+    status: planned
+    note: per-era defaults corpus; never included for generators
+    consumers:
+      ultramarine: full
+      ulm-maintain: full
+
+  - id: slop-detectors
+    kind: contract
+    path: slop/detectors.yaml
+    note: detector registry and the plan path grammar
+    consumers:
+      ultramarine: full
+      lazuli: summary
+
+  - id: finding-schema
+    kind: contract
+    path: slop/finding.schema.yaml
+    consumers:
+      lapis: summary
+      ultramarine: full
+      ulm-release: full
+      ulm-maintain: full
+
+  - id: render-derived
+    kind: contract
+    path: render/DERIVED.md
+    note: definitions of derived values in the render extract
+    consumers:
+      ultramarine: full
+      lzl-research: full
+      ulm-maintain: full
+
+  - id: fonts-lock-schema
+    kind: contract
+    path: fonts/lock.schema.yaml
+    note: the fonts' provenance record, including per-use grants, shipped files, and notices
+    consumers:
+      lapis: summary
+      lazuli: full
+      lzl-fonts: full
+      ulm-release: full
+
+  - id: release-gate
+    kind: contract
+    path: release/GATE.md
+    note: v0; what `lapis-design release check` reads, the release.* findings it writes, and when output may ship
+    consumers:
+      ulm-release: full
+      ultramarine: full
+
+  - id: model-manifest
+    kind: contract
+    path: models/manifest.schema.yaml
+    note: v0; release manifest for optional style embedding models (space, specimen, files with SHA-256, license, gate), read by `lazuli setup`
+    consumers:
+      lazuli: full
+      lzl-fonts: summary
+
+  - id: model-setup
+    kind: contract
+    path: models/SETUP.md
+    note: how `lazuli setup` checks and installs a model from a manifest; reference code in cli/lazuli/setup.py
+    consumers:
+      lazuli: full
+      lzl-fonts: summary
+
+  - id: assets-ledger-schema
+    kind: contract
+    path: assets/ledger.schema.yaml
+    note: v0; provenance record for media other than fonts, written when lapis selects or generates an asset
+    consumers:
+      lapis: full
+      lps-copy: summary
+      ultramarine: full
+      ulm-release: full
+
+  - id: assets-checks
+    kind: contract
+    path: assets/CHECKS.md
+    note: how the asset-ledger detector reads the ledger, fonts lock, shipped files, and renders; reference code in cli/lapis_design/rights_check.py
+    consumers:
+      ultramarine: full
+      ulm-release: full
+      lapis: summary
+
+  - id: system-fonts
+    kind: data
+    path: fonts/system-fonts.yaml
+    note: table of OS and office bundled fonts; seeded from the previous repository's multilingual-font-stacks asset
+    consumers:
+      lzl-fonts: full
+      lapis: summary
+
+  - id: type-vocabulary
+    kind: vocabulary
+    path: vocab/type.yaml
+    note: PANOSE Latin digits and a Sandoll-style Hangul classification vocabulary
+    consumers:
+      lapis: full
+      lzl-fonts: full
+      ultramarine: full
+
+  - id: color-vocabulary
+    kind: vocabulary
+    path: vocab/color.yaml
+    note: seven roles, six relations, six decision axes, value-source classes
+    consumers:
+      lapis: full
+      lps-system: full
+      lzl-color: full
+      ultramarine: full
+
+  - id: glossary
+    kind: vocabulary
+    path: vocab/glossary.yaml
+    note: migrated from the previous repository's design-terminology-glossary, with Korean terms alongside
+    consumers:
+      lapis: summary
+      lps-copy: full
+      ultramarine: summary
+
+  - id: sources-registry
+    kind: data
+    path: sources/registry.yaml
+    note: v0; where to look for fonts, colors, assets, and design references, with each source's access policy (adapter, read, browser-link, refused); seeded from the previous repository's discovery and search cards
+    consumers:
+      lazuli: full
+      lzl-fonts: full
+      lzl-color: full
+      lzl-research: full
+      lapis: summary
+
+  - id: sources-registry-schema
+    kind: contract
+    path: sources/registry.schema.yaml
+    note: v0; registry entry fields and access policies, read by `lazuli sources` and `lazuli read`
+    consumers:
+      lazuli: full
+      lzl-research: summary

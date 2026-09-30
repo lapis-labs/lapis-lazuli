@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Interaction measurements</title>
+<style>
+ body { margin: 0; font: 16px Arial, sans-serif; }
+ #content { padding: 16px; }
+ #cursor-handler { cursor: pointer; transition: margin 250ms linear; }
+ button { outline: none; border: 0; background: #ddd; padding: 8px; }
+ #focus-visible:focus-visible { outline: 3px solid blue; }
+ #focus-background { background: transparent; }
+ #focus-background:focus-visible { background: #2020df; }
+ #card { transition: all 300ms ease-in; background: #eee; width: 220px; padding: 12px; }
+ #card:hover { transform: translateX(12px); }
+ #hover-only { background: #eee; }
+ #hover-only:hover { background: #000; }
+ @keyframes travel { from { transform: translateX(0); } to { transform: translateX(80px); } }
+ #marquee { animation: travel 1.3s linear infinite; width: 120px; }
+ @keyframes blink { from { opacity: 1; } to { opacity: .2; } }
+ #blink { animation: blink .8s steps(2) 2; }
+ @media (prefers-reduced-motion: reduce) { #marquee, #blink { animation: none; } }
+ #spacer { height: 1000px; }
+ #reveal { opacity: .01; transform: translateY(40px); transition: opacity .1s, transform .1s; }
+ #reveal.show { opacity: 1; transform: translateY(0); }
+ #timer-only { opacity: .01; }
+ #carousel { display: flex; gap: 10px; width: 180px; padding: 0 12px; background: #fafafa; overflow-x: auto; overflow-y: hidden; }
+ #carousel > div { flex: 0 0 100px; }
+ #ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100px; }
+ #clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; width: 120px; }
+ #overflow { width: 80px; height: 20px; overflow: hidden; }
+ #long-list { min-height: 2600px; }
+</style></head><body><main id="content">
+ <div id="cursor-handler" onclick="void 0">Clickable div</div>
+ <div id="listener">Native listener</div><div id="framework-props">Framework props</div>
+ <button id="no-focus">No focus style</button><button id="focus-visible">Visible focus</button>
+ <button id="focus-background">Background focus</button>
+ <input id="placeholder" placeholder="Only placeholder">
+ <label for="labeled">Email</label><input id="labeled"><label><input id="wrapped" type="checkbox"> Wrapped</label>
+ <svg id="hidden-icon" aria-hidden="true" width="24" height="24"><circle cx="12" cy="12" r="8"/></svg>
+ <div id="card">Hover card</div><div id="hover-only">Nontransitioned hover</div>
+ <div id="marquee">Traveling</div><div id="blink">Stepped blink</div>
+ <div id="carousel"><div>Item one</div><div>Item two</div><div>Item three</div></div>
+ <p id="ellipsis">This text is much wider than its constrained box and should truncate</p>
+ <p id="clamp">These words intentionally occupy many lines beyond the two line limit imposed by the line clamp style on this paragraph.</p>
+ <div id="overflow">Overflowing content must be clipped by container</div>
+ <div id="spacer"></div><section id="reveal">Scroll revealed content</section>
+ <section id="timer-only">Time revealed without scrolling</section>
+ <ul id="long-list"><li>First</li><li>Last</li></ul>
+</main><script>
+ document.querySelector('#listener').addEventListener('click', () => {});
+ document.querySelector('#listener').addEventListener('keydown', () => {});
+ Object.defineProperty(document.querySelector('#framework-props'), '__reactProps$fixture', {
+   value: {onPointerDown: () => {}, onKeyDown: () => {}}
+ });
+ setTimeout(() => { const banner = document.createElement('div'); banner.textContent = 'Late banner'; banner.style.height = '80px'; document.body.insertBefore(banner, document.querySelector('#content')); }, 550);
+ setTimeout(() => { document.querySelector('#timer-only').style.opacity = '1'; }, 2400);
+ addEventListener('scroll', () => {
+   const reveal = document.querySelector('#reveal');
+   if (reveal.getBoundingClientRect().top < innerHeight) reveal.classList.add('show');
+ });
+</script></body></html>

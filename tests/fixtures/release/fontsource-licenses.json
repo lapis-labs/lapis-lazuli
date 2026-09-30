@@ -1,0 +1,8 @@
+[
+  {"id":"ofl", "family":"OFL Family", "license":"OFL-1.1"},
+  {"id":"apache", "family":"Apache Family", "license":"Apache-2.0"},
+  {"id":"kogl", "family":"KOGL Family", "license":"KOGL-1"},
+  {"id":"system", "family":"System Family", "license":"system"},
+  {"id":"commercial", "family":"Commercial Family", "license":"commercial"},
+  {"id":"other", "family":"Other Family", "license":"UFL-1.0"}
+]

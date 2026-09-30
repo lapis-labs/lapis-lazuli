@@ -1,0 +1,105 @@
+# LapisLazuli finding schema — v0 draft
+# Output of plan_check, slop_lint, the evaluator, and the release gate.
+# Every rejection states the observed property, why it matters here, and a corrective move;
+# evidence says how the finding was established so unverified claims stay labeled.
+
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/finding.v0.json
+title: LapisLazuli findings report
+type: object
+additionalProperties: false
+required: [version, tool, target, findings]
+properties:
+  version: { const: 0 }
+  tool:
+    type: object
+    required: [name, version]
+    properties:
+      name: { enum: [plan_check, slop_lint, render_check, behavior_check, rights_check, critic, release_gate] }
+      version: { type: string }
+  target:
+    type: object
+    properties:
+      plan: { type: string }                         # path to the plan file
+      extract: { type: string }                      # path to the render extract
+      session: { type: string }                      # path to the behavior session log
+      ledger: { type: string }                       # path to the asset ledger
+      source: { type: string }                       # the project source tree slop lint read (--source)
+      lock: { type: string }                         # the fonts lock slop lint read (--lock)
+      task: { type: string }
+  summary:
+    type: object
+    properties:
+      blocking: { type: integer, minimum: 0 }        # findings that stop the workflow
+      total: { type: integer, minimum: 0 }
+  scope:                                           # what slop lint actually ran (slop_lint); the release gate reads it
+    type: object
+    additionalProperties: false
+    required: [layers]
+    properties:
+      layers:                                      # layers that ran, after --layer and the inputs given; a --layer whose inputs are missing is exit 2, never dropped
+        type: array
+        items: { enum: [plan, source, render, behavior, review] }
+      rules:                                       # present only when --rule narrowed the run (its patterns leave out a packaged rule): the patterns given
+        type: array
+        items: { type: string }
+      rules_file: { type: string }                 # present only when --rules named a file other than the packaged rules
+  analyzers:                                       # morphological analyzers that ran, by locale (slop_lint)
+    type: object
+    additionalProperties: { type: string }         # e.g. ko: "kiwipiepy 0.24.0"
+  findings:
+    type: array
+    items: { $ref: "#/$defs/finding" }
+
+$defs:
+  finding:
+    type: object
+    additionalProperties: false
+    required: [rule_id, class, severity, layer, observed, blocking, evidence, status]
+    properties:
+      rule_id: { type: string }                      # a rules.yaml id, a built-in check id (schema.*, contract.*, font.*, reference.*, flow.*,
+                                                    # release.* from release/GATE.md), or a critic judgement no rule covers
+                                                    # (review.counterfactual, review.world-materials, review.package-drift)
+      class: { enum: [requirement, quality, default, contract] }
+      severity:
+        type: object
+        properties:
+          create: { enum: [gate, warn, off, info] }
+          review: { enum: [P0, P1, P2, P3] }
+      layer: { enum: [plan, source, render, behavior, review] }
+      location:
+        type: object
+        properties:
+          file: { type: string }
+          path: { type: string }                     # plan path, JSON pointer, or CSS selector
+          viewport: { enum: [320, 390, 768, 1440] }
+          box: { type: string }                      # box id in the render extract or the session's nodes
+          context: { type: string }                  # behavior session context id
+          flow: { type: string }                     # plan flow id
+          step: { type: integer, minimum: 0 }        # step index in that flow's run
+          asset: { type: string }                    # asset ledger id, or a fonts lock family
+      observed: { type: string, minLength: 3 }       # the visible or measured property
+      context:                                       # was the choice earned here?
+        type: object
+        properties:
+          verdict: { enum: [earned, unearned, unknown] }
+          basis: { type: string }                    # e.g. a defaults entry, a contract value
+      consequence: { type: string }                  # effect on the user or the design
+      fix: { type: string }                          # the corrective move
+      blocking: { type: boolean }
+      package: { type: string }                      # package that was hit, if any
+      distance: { type: number, minimum: 0 }         # typicality or reference distance, if used
+      evidence:
+        type: object
+        required: [type]
+        properties:
+          type: { enum: [plan, source, image, runtime, measurement, review, not-verified] }
+          refs: { type: array, items: { type: string } }
+      status: { enum: [open, fixed, waived, skipped] }
+      skip_cause:                                    # why a skipped finding was not judged; slop lint sets it on every skipped finding
+        enum:
+          - input                                    # an input, field, list value, or detector the check needs is missing or failed
+          - layer                                    # a later layer that must confirm a lead did not run or could not judge
+          - probe                                    # the behavior probe that records the evidence did not run or ran partly
+          - reviewer                                 # the rule needs a reviewer's judgement; only the critic resolves it
+      waiver: { type: string }                       # the defaults entry or reason that waived it

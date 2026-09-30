@@ -1,0 +1,818 @@
+# Trace from the original slop checklist and anti-slop catalog to rules.yaml ids — v0
+# Generated from rules.yaml provenance; tests check that the two agree and that nothing is unmapped.
+# One original entry can map to several rules (split) and several entries to one rule (merge).
+# `signal` repeats the original wording so the trace can be read without the frozen files.
+version: 0
+updated: '2026-09-25'
+sources:
+  checklist: design-and-frontend/assets/slop-detector-checklist.md (frozen 2026-09-23), 73 ids
+  anti-slop: design-and-frontend/references/quality/anti-slop.md catalog tables (frozen 2026-09-23), 107 rows
+checklist:
+  SYS-01:
+    signal: Font family outside DESIGN.md/tokens
+    default: P2
+    rules:
+    - system.font-outside-contract
+  SYS-02:
+    signal: Literal color outside semantic tokens
+    default: P2
+    rules:
+    - system.literal-color
+  SYS-03:
+    signal: One-off radius/font size/spacing bypasses the rule for the same role and condition
+    default: P2
+    rules:
+    - system.off-scale-value
+  SYS-04:
+    signal: Component bypasses adopted primitives or theme API
+    default: P1
+    rules:
+    - system.bypassed-primitive
+  TYP-01:
+    signal: Unmotivated italic serif on display role
+    default: P3
+    rules:
+    - type.serif-luxury-display
+  TYP-02:
+    signal: Tracked uppercase eyebrow, kicker, or 01 marker before most headings
+    default: P3
+    rules:
+    - type.eyebrow-kicker
+  TYP-03:
+    signal: Rounded badge or status strip used as heading decoration
+    default: P3
+    rules:
+    - type.heading-badge
+  TYP-04:
+    signal: Icon tile + heading + paragraph repeated
+    default: P3
+    rules:
+    - type.icon-tile-heading
+  TYP-05:
+    signal: Display size grows beyond content/viewport need
+    default: P2
+    rules:
+    - type.oversized-display
+  TYP-06:
+    signal: letter-spacing below -0.04em
+    default: P2
+    rules:
+    - type.negative-tracking
+  TYP-07:
+    signal: Positive tracking on body paragraphs
+    default: P2
+    rules:
+    - type.body-tracking
+  TYP-08:
+    signal: Body line-height near 1 or fixed too tightly
+    default: P1
+    rules:
+    - type.tight-leading
+  TYP-09:
+    signal: Body measure repeatedly exceeds 80ch
+    default: P2
+    rules:
+    - type.long-measure
+  TYP-10:
+    signal: Same size/weight/color for title, label, body
+    default: P1
+    rules:
+    - type.flat-hierarchy
+  COL-01:
+    signal: A palette or --primary swap is the only meaningful change to a starter surface
+    default: P3
+    rules:
+    - color.palette-swap-only
+  COL-02:
+    signal: Gradient text or an isolated accent-colored word is the headline's main emphasis
+    default: P2
+    rules:
+    - color.gradient-headline
+  COL-03:
+    signal: Large radial gradient blur behind centered hero
+    default: P3
+    rules:
+    - color.hero-halo
+  COL-04:
+    signal: Bright outer glow on dark surfaces
+    default: P2
+    rules:
+    - color.neon-glow
+  COL-05:
+    signal: Gray text token used on saturated background
+    default: P1
+    rules:
+    - color.gray-on-color
+  COL-06:
+    signal: Warm cream + brass/clay + serif copied as default
+    default: P3
+    rules:
+    - color.warm-editorial
+  COL-07:
+    signal: Multiple unrelated accent hues or gray temperatures
+    default: P2
+    rules:
+    - color.competing-accents
+    - color.mixed-neutrals
+  COL-08:
+    signal: Literal light palette inverted for dark mode
+    default: P1
+    rules:
+    - color.inverted-dark-theme
+  LAY-01:
+    signal: Centered or split hero shell is chosen before proposition, evidence, action, and imagery are ranked
+    default: P3
+    rules:
+    - layout.hero-before-priority
+  LAY-02:
+    signal: Feature or pricing cards receive equal size/emphasis despite unequal content or choices
+    default: P3
+    rules:
+    - layout.equal-siblings
+  LAY-03:
+    signal: Nested borders/radii repeat without distinct ownership or behavior
+    default: P2
+    rules:
+    - layout.nested-cards
+  LAY-04:
+    signal: The page repeats a hero → equal cards → pricing → CTA shell, or identical spans across unrelated sections
+    default: P3
+    rules:
+    - layout.template-section-sequence
+  LAY-05:
+    signal: Bento cell exists only to complete the shape
+    default: P3
+    rules:
+    - layout.bento-filler
+  LAY-06:
+    signal: Consecutive image/text alternations repeat without a narrative reason
+    default: P3
+    rules:
+    - layout.zigzag
+  LAY-07:
+    signal: 01/02 labels or numbers appear on non-sequential sections
+    default: P3
+    rules:
+    - layout.decorative-numbering
+  LAY-08:
+    signal: Heading margin above ≤ margin below
+    default: P2
+    rules:
+    - layout.heading-proximity
+  LAY-09:
+    signal: Same gap value at every hierarchy level
+    default: P2
+    rules:
+    - layout.monotonous-spacing
+  LAY-10:
+    signal: Fixed columns overflow at compact width
+    default: P1
+    rules:
+    - layout.compact-overflow
+  LAY-11:
+    signal: Logo wall, metrics, and extra copy packed inside hero
+    default: P2
+    rules:
+    - layout.crowded-hero
+  LAY-12:
+    signal: Cards touch viewport/scroller edge without safe inset
+    default: P2
+    rules:
+    - layout.edge-flush
+  CMP-01:
+    signal: Emoji or Unicode glyphs used as product icons
+    default: P2
+    rules:
+    - component.emoji-icons
+  CMP-02:
+    signal: Hand-authored SVG paths mixed with library icons
+    default: P3
+    rules:
+    - component.hand-drawn-icons
+  CMP-03:
+    signal: Two or more icon packages on one surface
+    default: P2
+    rules:
+    - component.mixed-icon-families
+  CMP-04:
+    signal: Decorative divs mimic app windows/data
+    default: P2
+    rules:
+    - component.fake-app-window
+  CMP-05:
+    signal: backdrop-filter on most panels
+    default: P2
+    rules:
+    - surface.glass-everywhere
+  CMP-06:
+    signal: rounded-full or very large radius on every container
+    default: P3
+    rules:
+    - surface.uniform-large-radius
+  CMP-07:
+    signal: Generic spinner shown for every wait
+    default: P2
+    rules:
+    - component.generic-spinner
+  CMP-08:
+    signal: Modal used for routine navigation or long task
+    default: P1
+    rules:
+    - ux.routine-modal
+  MOT-01:
+    signal: Infinite pulsing status dot without live status
+    default: P2
+    rules:
+    - motion.pulse-without-status
+  MOT-02:
+    signal: Decorative blink/cursor keyframes
+    default: P3
+    rules:
+    - motion.decorative-cursor
+  MOT-03:
+    signal: Auto-scrolling marquee without user control
+    default: P1
+    rules:
+    - motion.uncontrolled-marquee
+  MOT-04:
+    signal: Bounce/elastic easing as global default
+    default: P2
+    rules:
+    - motion.bounce-default
+  MOT-05:
+    signal: Animates width/height/top/left for routine state
+    default: P1
+    rules:
+    - motion.layout-property-animation
+  MOT-06:
+    signal: Every image scales/translates on hover
+    default: P3
+    rules:
+    - motion.hover-zoom-everything
+  MOT-07:
+    signal: 'transition: all'
+    default: P2
+    rules:
+    - motion.transition-all
+  MOT-08:
+    signal: No reduced-motion branch for nonessential motion
+    default: P1
+    rules:
+    - motion.reduced-motion-missing
+  CPY-01:
+    signal: Frequent em dashes in labels/CTAs or every paragraph
+    default: P3
+    rules:
+    - copy.dash-cadence
+  CPY-02:
+    signal: “Elevate”, “seamless”, “unleash”, “next-gen” without evidence
+    default: P2
+    rules:
+    - copy.buzzwords
+  CPY-03:
+    signal: “Not X. Y.” repeated as short contrast fragments
+    default: P3
+    rules:
+    - copy.contrast-frame
+  CPY-04:
+    signal: “Submit”, “Continue”, or duplicate vague CTAs
+    default: P1
+    rules:
+    - copy.vague-cta
+  CPY-05:
+    signal: Fake metrics, generic customer names, invented quotes
+    default: P1
+    rules:
+    - copy.fabricated-proof
+  CPY-06:
+    signal: Placeholder text is the only field label
+    default: P1
+    rules:
+    - component.unlabeled-input
+  CPY-07:
+    signal: “Oops” or apology without problem and recovery
+    default: P1
+    rules:
+    - copy.error-without-recovery
+  CPY-08:
+    signal: Product UI repeats heading/body text, local/demo/fake-data badges, non-delivery notes, or QA instructions
+    default: P2; P1 when repetition obscures a consequential disclosure
+    rules:
+    - copy.meta-text
+  CPY-09:
+    signal: The same label + separator + dependent tail shape recurs across unrelated content; a glyph search alone is not
+      a finding
+    default: P3; P2 when status, eligibility, or another decision-relevant meaning is obscured
+    rules:
+    - copy.separator-join
+  IMG-01:
+    signal: CSS primitives assemble a pseudo-illustration
+    default: P3
+    rules:
+    - imagery.css-illustration
+  IMG-02:
+    signal: Jagged clip-path used on unrelated photos
+    default: P3
+    rules:
+    - imagery.jagged-clip
+  IMG-03:
+    signal: Heavy gradient/overlay covers the main raster
+    default: P2
+    rules:
+    - imagery.buried-raster
+  IMG-04:
+    signal: Broken content image, unresolved placeholder, or missing alternative for meaningful image information
+    default: P1 when required information is lost
+    rules:
+    - imagery.missing-content-image
+  IMG-05:
+    signal: Generic stock team image with no product relevance
+    default: P3
+    rules:
+    - imagery.generic-stock
+  CODE-01:
+    signal: h-screen/100vh for mobile full-height shell
+    default: P1
+    rules:
+    - code.mobile-100vh
+  CODE-02:
+    signal: 'outline: none/outline-none without replacement'
+    default: P1
+    rules:
+    - code.focus-outline-removed
+  CODE-03:
+    signal: Clickable div/span without correct semantics
+    default: P1
+    rules:
+    - code.clickable-non-interactive
+  CODE-04:
+    signal: Image lacks intrinsic width/height
+    default: P2
+    rules:
+    - code.image-dimensions
+  CODE-05:
+    signal: Hard-coded date/locale string in product UI
+    default: P2
+    rules:
+    - code.locale-time-rendering
+  CODE-06:
+    signal: Continuous pointer/scroll value stored in React state
+    default: P2
+    rules:
+    - code.continuous-value-in-state
+  CODE-07:
+    signal: Incompatible package/API import, or mixed animation packages after dependency inspection
+    default: P2 when incompatibility is observed; otherwise Not verified
+    rules:
+    - code.animation-package-mismatch
+  CODE-08:
+    signal: Large unvirtualized render map in scrolling data surface
+    default: P1
+    rules:
+    - code.unvirtualized-list
+  CODE-09:
+    signal: Runtime exception or exercised control fails to produce its promised state/data outcome
+    default: P0 if the primary task is blocked; otherwise severity follows confirmed impact, not console noise
+    rules:
+    - ux.dead-control
+anti_slop:
+  typography:
+    1:
+      signal: Italic high-contrast serif display
+      rules:
+      - type.serif-luxury-display
+    2:
+      signal: Serif-by-default luxury signal
+      rules:
+      - type.serif-luxury-display
+    3:
+      signal: One overused UI sans everywhere
+      rules:
+      - type.overused-neutral-grotesque
+    4:
+      signal: Eyebrow, kicker, or tracked ALL CAPS marker above each heading
+      rules:
+      - type.eyebrow-kicker
+    5:
+      signal: Badge chip or status strip above the hero headline
+      rules:
+      - type.heading-badge
+    6:
+      signal: Icon tile stacked above every heading
+      rules:
+      - type.icon-tile-heading
+    7:
+      signal: Oversized heading crowds the actual opening task
+      rules:
+      - type.oversized-display
+    8:
+      signal: Flat type hierarchy
+      rules:
+      - type.flat-hierarchy
+    9:
+      signal: Extreme negative tracking
+      rules:
+      - type.negative-tracking
+    10:
+      signal: Wide tracking on body text
+      rules:
+      - type.body-tracking
+    11:
+      signal: All-caps prose or decorative micro-labels
+      rules:
+      - type.caps-prose
+    12:
+      signal: Single family with no role variation
+      rules:
+      - type.single-neutral-sans
+    13:
+      signal: Tight leading
+      rules:
+      - type.tight-leading
+    14:
+      signal: Tiny interface text
+      rules:
+      - type.tiny-ui-text
+    15:
+      signal: Line length beyond comfortable reading
+      rules:
+      - type.long-measure
+    16:
+      signal: Default monospace for technical mood
+      rules:
+      - type.costume-monospace
+  color:
+    1:
+      signal: Purple-to-blue gradient, or any palette swap used as the whole direction
+      rules:
+      - color.palette-swap-only
+      - color.violet-blue-gradient
+    2:
+      signal: Gradient or isolated accent-colored title word
+      rules:
+      - color.gradient-headline
+    3:
+      signal: Radial halo behind a hero
+      rules:
+      - color.hero-halo
+    4:
+      signal: Soft spotlight glow
+      rules:
+      - color.hero-halo
+    5:
+      signal: Dark surface with neon glow
+      rules:
+      - color.neon-glow
+    6:
+      signal: Gray text on a colored surface
+      rules:
+      - color.gray-on-color
+    7:
+      signal: Beige/cream plus brass/clay package
+      rules:
+      - color.warm-editorial
+      - color.cream-base
+    8:
+      signal: Terracotta as the unexplained accent
+      rules:
+      - color.terracotta-accent
+    9:
+      signal: Accents compete without clear roles
+      rules:
+      - color.competing-accents
+    10:
+      signal: Mixed neutral temperatures
+      rules:
+      - color.mixed-neutrals
+    11:
+      signal: Pure black/white by habit
+      rules:
+      - color.pure-endpoints
+    12:
+      signal: Shadow color or direction conflicts with the surface model
+      rules:
+      - surface.depth-cue-conflict
+  layout:
+    1:
+      signal: Centered or split hero chosen before message and action
+      rules:
+      - layout.hero-before-priority
+    2:
+      signal: Equal feature or pricing cards despite unequal choices
+      rules:
+      - layout.equal-siblings
+    3:
+      signal: Default hero → card grid → pricing → CTA section list
+      rules:
+      - layout.template-section-sequence
+    4:
+      signal: Nested cards
+      rules:
+      - layout.nested-cards
+    5:
+      signal: Side accent border on rounded cards
+      rules:
+      - surface.side-accent-border
+    6:
+      signal: Border and shadow communicate conflicting boundaries or depth
+      rules:
+      - surface.depth-cue-conflict
+    7:
+      signal: 01/02 markers or numbered section labels without an ordered relationship
+      rules:
+      - layout.decorative-numbering
+    8:
+      signal: Repeated alternating image/text rows without a narrative reason
+      rules:
+      - layout.zigzag
+    9:
+      signal: Split heading across left and right columns
+      rules:
+      - layout.split-heading
+    10:
+      signal: Bento cells without content need
+      rules:
+      - layout.bento-filler
+    11:
+      signal: Decorative opening stack buries necessary context or action
+      rules:
+      - layout.decorative-opening-stack
+    12:
+      signal: Logo wall inside the hero
+      rules:
+      - layout.crowded-hero
+    13:
+      signal: Two-line navigation at common desktop widths
+      rules:
+      - layout.wrapped-navigation
+    14:
+      signal: Monotonous spacing
+      rules:
+      - layout.monotonous-spacing
+    15:
+      signal: Edge-flush cards in a scroller
+      rules:
+      - layout.edge-flush
+    16:
+      signal: Text occluded by decoration
+      rules:
+      - layout.occluded-text
+    17:
+      signal: Modal for routine navigation or editing
+      rules:
+      - ux.routine-modal
+    18:
+      signal: Cards used as the whole page structure
+      rules:
+      - layout.card-everything
+    19:
+      signal: Decorative grid/crosshair background
+      rules:
+      - surface.decorative-grid-texture
+    20:
+      signal: Same desktop composition merely shrunk
+      rules:
+      - layout.shrunk-desktop
+  components:
+    1:
+      signal: Emoji used as the icon system
+      rules:
+      - component.emoji-icons
+    2:
+      signal: Hand-drawn SVG paths for standard actions
+      rules:
+      - component.hand-drawn-icons
+    3:
+      signal: Mixed icon families
+      rules:
+      - component.mixed-icon-families
+    4:
+      signal: Div-drawn fake product screenshot
+      rules:
+      - component.fake-app-window
+    5:
+      signal: Generic spinner for every wait
+      rules:
+      - component.generic-spinner
+    6:
+      signal: Every container heavily rounded
+      rules:
+      - surface.uniform-large-radius
+    7:
+      signal: Glass effect on most surfaces
+      rules:
+      - surface.glass-everywhere
+    8:
+      signal: Default component-library theme
+      rules:
+      - component.library-default-theme
+    9:
+      signal: Component library with only --primary or palette values changed
+      rules:
+      - color.palette-swap-only
+    10:
+      signal: Polished controls lack the promised outcome or relevant states
+      rules:
+      - ux.dead-control
+      - ux.missing-states
+  motion:
+    1:
+      signal: Pulsing status dot with no changing status
+      rules:
+      - motion.pulse-without-status
+    2:
+      signal: Decorative blinking cursor
+      rules:
+      - motion.decorative-cursor
+    3:
+      signal: Auto-scrolling marquee
+      rules:
+      - motion.uncontrolled-marquee
+    4:
+      signal: Bounce/elastic easing everywhere
+      rules:
+      - motion.bounce-default
+    5:
+      signal: Layout-changing animation
+      rules:
+      - motion.layout-property-animation
+    6:
+      signal: Image zoom on every hover
+      rules:
+      - motion.hover-zoom-everything
+    7:
+      signal: Infinite decorative micro-loops
+      rules:
+      - motion.ambient-loops
+    8:
+      signal: 'transition: all'
+      rules:
+      - motion.transition-all
+    9:
+      signal: No reduced-motion alternative
+      rules:
+      - motion.reduced-motion-missing
+    10:
+      signal: Scroll animation used as reading gate
+      rules:
+      - motion.scroll-gated-content
+  copy:
+    1:
+      signal: Repeated or producer-facing text inside a product surface
+      rules:
+      - copy.meta-text
+    2:
+      signal: Em-dash overuse
+      rules:
+      - copy.dash-cadence
+    3:
+      signal: '"Elevate"'
+      rules:
+      - copy.buzzwords
+    4:
+      signal: '"Seamless"'
+      rules:
+      - copy.buzzwords
+    5:
+      signal: '"Unleash"'
+      rules:
+      - copy.buzzwords
+    6:
+      signal: '"Next-gen"'
+      rules:
+      - copy.buzzwords
+    7:
+      signal: '"Supercharge"'
+      rules:
+      - copy.buzzwords
+    8:
+      signal: '"World-class"'
+      rules:
+      - copy.buzzwords
+    9:
+      signal: '"Enterprise-grade"'
+      rules:
+      - copy.buzzwords
+    10:
+      signal: Aphoristic contrast cadence
+      rules:
+      - copy.contrast-frame
+    11:
+      signal: '"Theater" as a product metaphor'
+      rules:
+      - copy.generative-metaphor
+    12:
+      signal: '"Quietly trusted by"'
+      rules:
+      - copy.buzzwords
+    13:
+      signal: Middle-dot metadata strip
+      rules:
+      - copy.decorative-metadata
+    14:
+      signal: Label–qualifier separator join
+      rules:
+      - copy.separator-join
+    15:
+      signal: Fake photo credit
+      rules:
+      - copy.fabricated-proof
+    16:
+      signal: Version, build, or environment label in the hero
+      rules:
+      - copy.meta-text
+    17:
+      signal: Decorative locale, weather, demo, or status strip
+      rules:
+      - copy.decorative-metadata
+    18:
+      signal: Fake-precise metrics or dashboard numbers
+      rules:
+      - copy.fabricated-proof
+    19:
+      signal: Placeholder names such as John Doe, Acme, Nexus
+      rules:
+      - copy.placeholder-content
+  imagery:
+    1:
+      signal: Illustration assembled from generic geometric shapes
+      rules:
+      - imagery.css-illustration
+    2:
+      signal: Jagged decorative clip paths
+      rules:
+      - imagery.jagged-clip
+    3:
+      signal: Raster buried under overlays
+      rules:
+      - imagery.buried-raster
+    4:
+      signal: Broken or remote placeholder image
+      rules:
+      - imagery.missing-content-image
+    5:
+      signal: Generic diverse-team stock
+      rules:
+      - imagery.generic-stock
+    6:
+      signal: Logo wall presents invented customers or relationships
+      rules:
+      - copy.fabricated-proof
+  code:
+    1:
+      signal: h-screen for mobile-height layouts
+      rules:
+      - code.mobile-100vh
+    2:
+      signal: outline-none without replacement
+      rules:
+      - code.focus-outline-removed
+    3:
+      signal: Inputs without labels
+      rules:
+      - component.unlabeled-input
+    4:
+      signal: Icon buttons without accessible names
+      rules:
+      - component.unnamed-icon-button
+    5:
+      signal: Images without dimensions
+      rules:
+      - code.image-dimensions
+    6:
+      signal: Hardcoded dates and numbers
+      rules:
+      - code.locale-time-rendering
+    7:
+      signal: useState for continuous pointer/scroll values
+      rules:
+      - code.continuous-value-in-state
+    8:
+      signal: Animation import does not match the installed package/API
+      rules:
+      - code.animation-package-mismatch
+    9:
+      signal: Arbitrary values bypassing tokens
+      rules:
+      - system.literal-color
+      - system.off-scale-value
+    10:
+      signal: Only one theme variable customized
+      rules:
+      - color.palette-swap-only
+    11:
+      signal: No dark-mode contrast check
+      rules:
+      - color.text-contrast
+    12:
+      signal: Hydration-unsafe time-dependent content
+      rules:
+      - code.locale-time-rendering
+    13:
+      signal: Huge rendered list without virtualization
+      rules:
+      - code.unvirtualized-list
+    14:
+      signal: Click handlers on non-interactive elements
+      rules:
+      - code.clickable-non-interactive

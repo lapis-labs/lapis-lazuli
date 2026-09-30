@@ -1,0 +1,17 @@
+{
+  "name": "lapis-lazuli",
+  "version": "0.1.0",
+  "license": "MIT AND CC-BY-4.0",
+  "private": true,
+  "keywords": [
+    "pi-package"
+  ],
+  "pi": {
+    "skills": [
+      "./dist/skills"
+    ],
+    "extensions": [
+      "./plugins/lazuli/extensions/session-start.ts"
+    ]
+  }
+}

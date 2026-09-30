@@ -1,0 +1,10 @@
+{
+ "note": "Hand-written listing for the fake snapshot adapter in test_catalog_core.py",
+ "families": [
+  {"id": "nanum-gothic", "name": "Nanum Gothic", "ko": "나눔고딕", "category": "sans",
+   "fonts": ["NanumGothic-Regular", "NanumGothic-Bold"], "license": "SIL Open Font License, Version 1.1"},
+  {"id": "plain-serif", "name": "Plain Serif", "category": "serif", "fonts": [], "license": "OFL"},
+  {"id": "apple-sd-gothic-neo", "name": "Apple SD Gothic Neo", "category": "sans", "fonts": [],
+   "license": "proprietary"}
+ ]
+}

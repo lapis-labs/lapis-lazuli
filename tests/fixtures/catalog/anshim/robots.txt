@@ -1,0 +1,7 @@
+# Hand-written sample shaped like gongu.copyright.or.kr/robots.txt (2026-09-26), not a copy
+User-agent: *
+Disallow: /upload/
+Disallow: /portal/singl/myPage/
+
+User-agent: SomeCrawler
+Disallow: /

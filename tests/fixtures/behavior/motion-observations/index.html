@@ -1,0 +1,31 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Movement fixture</title><style>
+body{font:16px system-ui;margin:0}main{padding:20px}button{padding:8px;margin:4px}
+li{padding:10px;border:1px solid #777;cursor:grab;touch-action:none}ul{max-width:310px}input[type=range]{width:200px}
+.tooltip{position:absolute;z-index:20;top:32px;left:0;background:#222;color:white;padding:10px;width:180px}
+.tipper{position:relative;display:inline-block}.tipper button{cursor:pointer}
+#marquee{width:180px;height:30px;background:orange;animation:marquee 2s linear infinite}
+#carousel{width:180px;height:30px;background:teal;animation:marquee 3s linear infinite}
+#hero{width:180px;height:35px;background:red;animation:marquee 3s linear infinite}
+#fade{background:blue;color:white;width:180px;height:35px;animation:fade 1.4s alternate infinite}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(100px)}}
+@keyframes fade{from{opacity:.2}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){#fade{animation:none}}
+#reveal{opacity:0;transition:opacity .3s}#reveal.readable{opacity:1}
+.scroll-section{height:1450px;border-top:2px solid black}#scroll-zone{scroll-snap-type:y mandatory}
+.gesture{touch-action:none;width:250px;height:95px;border:2px solid #444;user-select:none}
+.thumb{width:120px;height:80px;display:inline-block}#zoom:hover{transform:scale(1.2)}
+.media{width:120px;height:60px;display:inline-block;vertical-align:top}
+</style></head><body><main>
+<section><h2>Moving media</h2><video id="bg-video" class="media" autoplay muted loop playsinline></video><canvas id="particles" class="media" width="120" height="60" aria-hidden="true"></canvas><canvas id="live-chart" class="media" width="120" height="60" role="img" aria-label="Live sales chart"></canvas></section>
+<section id="good"><h2>Sortable with buttons</h2><ul id="good-list"><li draggable="true" tabindex="0">Alpha</li><li draggable="true" tabindex="0">Beta</li></ul><button id="move-up">Move up</button><button id="move-down">Move down</button></section>
+<section id="bad"><h2>Sortable without alternatives</h2><ul id="bad-list"><li draggable="true">One</li><li draggable="true">Two</li></ul></section>
+<section><h2>Slider keyboard supported</h2><input id="slider" type="range" min="0" max="100" value="10" aria-label="Value"><output id="value">10</output></section>
+<section><h2>Path gesture with menu alternative</h2><div class="gesture" id="swipe" role="application" aria-label="Swipe card"><span>Unswiped</span></div><button id="swipe-menu">Options</button></section>
+<section><h2>Pinch gesture without alternative</h2><div class="gesture" id="pinch" role="application" aria-label="Pinch board"><span>Original scale</span></div></section>
+<section><span class="tipper"><button id="hover-only">Hover only</button><span id="only-tip" class="tooltip" hidden>Hover only details</span></span>
+<span class="tipper"><button id="focus-too">Hover and focus</button><span id="focus-tip" class="tooltip" hidden>Focus details</span></span></section>
+<section><h2>Automatic movement</h2><div id="marquee">Marquee text</div><div><button id="pause">Pause carousel</button><div id="carousel">Carousel slide</div></div><div id="hero">Parallax hero</div><div id="fade">Respectful fade</div></section>
+<section><h2>Hover media</h2><img id="zoom" class="thumb" alt="Zooming glaze" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='80'%3E%3Crect width='120' height='80' fill='%23a64'/%3E%3C/svg%3E"><img id="still" class="thumb" alt="Still glaze" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='80'%3E%3Crect width='120' height='80' fill='%2346a'/%3E%3C/svg%3E"></section>
+<div class="scroll-section">First scroll section</div><div class="scroll-section">Second scroll section</div><div class="scroll-section" id="reveal">Delayed scroll reveal</div>
+<div class="scroll-section">Fourth scroll section</div><div class="scroll-section">Fifth scroll section</div><div class="scroll-section">Sixth scroll section</div><div class="scroll-section">Seventh scroll section</div><div class="scroll-section">Eighth scroll section</div><div class="scroll-section">Ninth scroll section</div><div class="scroll-section">Tenth scroll section</div>
+</main><script src="/app.js"></script></body></html>

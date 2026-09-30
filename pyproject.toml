@@ -1,0 +1,77 @@
+[project]
+name = "lapis-design"
+dynamic = ["version"]
+description = "CLI for the LapisLazuli design skills: plan, rights, render, and behavior checks (lapis-design) and local font research (lazuli)"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT AND CC-BY-4.0"
+license-files = ["LICENSE", "LICENSE-docs"]
+authors = [{ name = "lapis-labs" }]
+keywords = ["agent-skills", "ai-agents", "claude-code", "codex", "design", "frontend", "typography", "accessibility"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development",
+]
+dependencies = [
+    "fonttools>=4.66.0",
+    "jsonschema>=4.26.0",
+    "mcp>=2.2,<3",
+    "numpy>=2.4.6",
+    "pillow>=12.3.0",
+    "playwright>=1.63.0",
+    "pyyaml>=6.0.3",
+    "unicodedata2>=18.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/lapis-labs/lapis-lazuli"
+Repository = "https://github.com/lapis-labs/lapis-lazuli"
+Issues = "https://github.com/lapis-labs/lapis-lazuli/issues"
+Changelog = "https://github.com/lapis-labs/lapis-lazuli/blob/release/CHANGELOG.md"
+
+[project.optional-dependencies]
+cjk = [
+    "kiwipiepy>=0.24,<0.25",
+    "sudachipy>=0.7,<0.8",
+    "sudachidict-core>=20260723.1",
+    "rjieba>=0.2.1,<0.3",
+]
+
+[project.scripts]
+lapis-design = "lapis_design.cli:main"
+lazuli = "lazuli.cli:main"
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "cli/lapis_design/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["cli/lapis_design", "cli/lazuli"]
+
+# The CLI carries the full contracts; lapis_design.shared_dir() finds them here once installed.
+[tool.hatch.build.targets.wheel.force-include]
+"src/shared" = "lapis_design/shared"
+
+[tool.hatch.build.targets.sdist]
+include = ["/cli", "/src/shared", "/pyproject.toml", "/README.md", "/README.ko.md", "/CHANGELOG.md",
+           "/LICENSE", "/LICENSE-docs", "/NOTICE"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-xdist>=3.8.0",
+]
+
+[tool.pytest.ini_options]
+markers = [
+    "browser: drives Chromium; needs `playwright install chromium-headless-shell`",
+    "cjk: requires the optional morphological analyzers (`uv sync --extra cjk`)",
+]

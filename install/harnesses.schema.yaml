@@ -1,0 +1,175 @@
+# LapisLazuli harness definitions schema — v0 draft
+# Location: install/harnesses.yaml in the repository.
+# The single source for what the build emits for each harness (outputs), how the install scripts
+# detect, install, update, remove, and verify it (harnesses), and the per-harness sections of
+# INSTALLATION.md. install.sh, install.ps1, and INSTALLATION.md are generated from it.
+#
+# Commands are argv arrays, never shell strings, so the scripts can quote them per platform.
+# Placeholders in argv items and paths:
+#   {repo}     owner/name on GitHub              {catalog}  catalog (marketplace) name
+#   {plugin}   one plugin name (step runs once per plugin, or per plugin listed in `plugins`)
+#   {skill}    one skill name (step runs once per skill of the selected plugins)
+#   {agent}    one skills-CLI agent id (step runs once per detected agent)
+#   {ref}      release channel: the `release` branch, moved by hand to each release tag; a tag pins
+#   {sha}      the full 40-hex commit {ref} points to
+# A step that uses {plugin}, {skill}, or {agent} runs once per value; the others run once.
+# `when: all-plugins` runs a step only when every plugin of the catalog is being removed.
+# A `remove` home path ending in `/` removes the folder only if empty; other paths remove a file.
+
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/harnesses.v0.json
+title: LapisLazuli harness definitions
+type: object
+additionalProperties: false
+required: [version, checked, repo, cli, plugins, outputs, harnesses]
+properties:
+  version: { const: 0 }
+  checked: { type: string, format: date }          # when the harness facts were last checked
+  repo:
+    type: object
+    additionalProperties: false
+    required: [owner, name, catalog]
+    properties:
+      owner: { $ref: "#/$defs/slug" }
+      name: { $ref: "#/$defs/slug" }
+      catalog: { $ref: "#/$defs/slug" }             # marketplace name in every catalog
+      ref: { type: string, minLength: 1 }           # the install channel {ref} fills: the release branch
+  cli:                                              # the Python package every harness relies on
+    type: object
+    additionalProperties: false
+    required: [entry_points, install, uninstall, verify]
+    properties:
+      entry_points: { type: array, minItems: 1, items: { $ref: "#/$defs/slug" } }
+      install: { $ref: "#/$defs/alternatives" }     # first available tool wins
+      uninstall: { $ref: "#/$defs/alternatives" }
+      verify: { $ref: "#/$defs/steps" }
+  plugins:
+    type: array
+    minItems: 1
+    items: { $ref: "#/$defs/plugin" }
+  outputs:
+    type: array
+    minItems: 1
+    items: { $ref: "#/$defs/output" }
+  harnesses:
+    type: array
+    minItems: 1
+    items: { $ref: "#/$defs/harness" }
+
+$defs:
+  slug: { type: string, pattern: "^[a-z0-9]+(-[a-z0-9]+)*$", maxLength: 64 }   # also the Agent Skills name rule
+  rel_path: { type: string, pattern: "^(?!/)(?!.*\\.\\.)[^\\0]+$" }
+  home_path: { type: string, pattern: "^~/[^\\0]*$" }
+  url: { type: string, pattern: "^https://" }
+
+  plugin:
+    type: object
+    additionalProperties: false
+    required: [name, prefix, skills, description]
+    properties:
+      name: { $ref: "#/$defs/slug" }
+      prefix: { type: string, pattern: "^[a-z]{2,4}-$" }   # every skill but the main one starts with it
+      description: { type: string, maxLength: 200 }
+      skills: { type: array, minItems: 1, items: { $ref: "#/$defs/slug" } }   # the main skill shares the plugin name
+      hooks:                                        # hook events this plugin registers (outputs say how)
+        type: array
+        items: { enum: [session-start, exit-plan] }
+      agents: { type: array, items: { $ref: "#/$defs/slug" } }
+      mcp: { type: array, items: { $ref: "#/$defs/slug" } }   # MCP server names
+
+  output:
+    type: object
+    additionalProperties: false
+    required: [id, path, per, format, from]
+    properties:
+      id: { $ref: "#/$defs/slug" }
+      path: { type: string }                        # repo-relative template; {plugin} or {skill} when per says so
+      per: { enum: [repo, plugin, skill] }
+      only: { type: array, items: { $ref: "#/$defs/slug" } }   # per plugin: only these plugins get it
+      format:
+        enum: [agent-skill, claude-plugin-manifest, codex-plugin-manifest, claude-catalog, codex-catalog,
+               hooks-json, mcp-json, claude-agent, codex-agent, omp-package, pi-package,
+               ts-extension, hermes-plugin, agents-md-snippet]
+      from: { type: array, minItems: 1, items: { type: string } }   # src paths or other output ids
+      committed: { type: boolean }                  # default true: marketplace installs read the repo as is
+
+  step:
+    type: object
+    additionalProperties: false
+    minProperties: 1
+    properties:
+      run: { type: array, minItems: 1, items: { type: string } }   # argv
+      copy: { type: object, additionalProperties: false, required: [from, to], properties: { from: { type: string }, to: { $ref: "#/$defs/home_path" } } }
+      remove: { $ref: "#/$defs/home_path" }
+      manual: { type: string }                      # printed for the user; the script does not do it
+      plugins: { type: array, items: { $ref: "#/$defs/slug" } }   # limit a {plugin} step
+      when: { enum: [all-plugins] }
+      confirm: { type: boolean }                    # ask before running (it changes settings or trust)
+      expect: { type: string }                      # verify steps: what success looks like
+      note: { type: string }
+
+  steps: { type: array, items: { $ref: "#/$defs/step" } }
+
+  alternatives:
+    type: array
+    minItems: 1
+    items:
+      type: object
+      additionalProperties: false
+      required: [needs, steps]
+      properties:
+        needs: { type: string }                     # a command that must be on PATH
+        steps: { $ref: "#/$defs/steps" }
+
+  mechanism:
+    type: object
+    additionalProperties: false
+    required: [via]
+    properties:
+      via:
+        enum: [plugin-hook, plugin-agent, plugin-mcp, extension, hermes-plugin-hook, agent-file, cli-register,
+               instructions, none]
+      output: { $ref: "#/$defs/slug" }
+      event: { type: string }                       # the harness's own event or source name
+      note: { type: string }
+
+  harness:
+    type: object
+    additionalProperties: false
+    required: [id, name, detect, form, consumes, invoke, install, update, uninstall, verify,
+               session_start, critic, mcp, sources]
+    properties:
+      id: { $ref: "#/$defs/slug" }
+      name: { type: string }
+      detect:
+        type: object
+        additionalProperties: false
+        properties:
+          commands: { type: array, items: { type: string } }
+          dirs: { type: array, items: { $ref: "#/$defs/home_path" } }
+      form: { enum: [plugin, package, flat-and-plugin, flat] }
+      min_version: { type: string, pattern: "^[0-9]+(\\.[0-9]+)*$" }   # oldest harness version the commands work with
+      consumes: { type: array, minItems: 1, items: { $ref: "#/$defs/slug" } }   # output ids
+      skill_paths: { type: array, items: { type: string } }   # where the harness itself finds skills
+      invoke: { type: string }                      # template with {plugin} and {skill}
+      agents:                                       # form flat: skills-CLI agent ids with the dirs that detect them
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [id, dirs]
+          properties:
+            id: { $ref: "#/$defs/slug" }
+            dirs: { type: array, minItems: 1, items: { $ref: "#/$defs/home_path" } }
+      install: { $ref: "#/$defs/steps" }
+      update: { $ref: "#/$defs/steps" }
+      uninstall: { $ref: "#/$defs/steps" }
+      verify: { $ref: "#/$defs/steps" }
+      session_start: { $ref: "#/$defs/mechanism" }
+      critic: { $ref: "#/$defs/mechanism" }
+      mcp: { $ref: "#/$defs/mechanism" }
+      trust: { type: array, items: { type: string } }       # what the user must approve before parts run
+      conflicts: { type: array, items: { type: string } }   # double loading and precedence traps
+      unverified: { type: array, items: { type: string } }  # facts to confirm locally before release
+      verified: { type: array, items: { type: string } }    # facts a local run confirmed ("date, version: fact")
+      sources: { type: array, minItems: 1, items: { $ref: "#/$defs/url" } }

@@ -1,0 +1,35 @@
+{
+  "version": 0,
+  "locked_at": "2026-09-24T12:00:00Z",
+  "fonts": [
+    {
+      "role": "heading",
+      "used_by": ["kiln-shop-landing"],
+      "family": "Gowun Batang",
+      "postscript_names": ["GowunBatang-Regular", "GowunBatang-Bold"],
+      "scripts": ["hang", "latn"],
+      "source": "google-fonts",
+      "catalog_match": {"catalog": "google-fonts", "key": "gowunbatang", "method": "exact_family", "confidence": 1.0},
+      "license": {"kind": "ofl", "uses": {"web": "allowed", "app": "allowed-with-conditions"}, "url": "https://openfontlicense.org", "checked_at": "2026-09-24", "source_class": "provider"},
+      "delivery": "self-host",
+      "files": ["public/fonts/gowun-batang/*.woff2"],
+      "modified": "woff-unchanged",
+      "notices": ["public/fonts/gowun-batang/OFL.txt"],
+      "fallback": ["serif"]
+    },
+    {
+      "role": "body",
+      "used_by": ["kiln-shop-landing"],
+      "family": "Pretendard",
+      "postscript_names": ["Pretendard-Regular", "Pretendard-SemiBold"],
+      "scripts": ["hang", "latn"],
+      "source": "open-source-other",
+      "license": {"kind": "ofl", "uses": {"web": "allowed", "app": "allowed-with-conditions"}, "checked_at": "2026-09-24", "source_class": "provider"},
+      "delivery": "self-host",
+      "files": ["public/fonts/pretendard/*.woff2"],
+      "modified": "none",
+      "notices": ["public/fonts/pretendard/LICENSE.txt"],
+      "fallback": ["system-ui", "sans-serif"]
+    }
+  ]
+}

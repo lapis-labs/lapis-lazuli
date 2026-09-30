@@ -1,0 +1,327 @@
+# LapisLazuli harness definitions — v0 draft (schema: install/harnesses.schema.yaml)
+# The build (tools/build) emits `outputs`; install.sh, install.ps1, and the per-harness sections of
+# INSTALLATION.md are generated from `cli` and `harnesses`. Output contents: install/OUTPUTS.md.
+# Harness facts were checked against each harness's documentation and source on `checked`;
+# `unverified` lists what still needs a local run before the first release.
+
+version: 0
+checked: "2026-09-25"
+repo: { owner: lapis-labs, name: lapis-lazuli, catalog: lapis-lazuli, ref: release }
+
+cli:
+  entry_points: [lapis-design, lazuli]
+  install:
+    - needs: uv
+      steps:
+        - run: [uv, tool, install, --force, "git+https://github.com/{repo}@{ref}"]
+    - needs: pipx
+      steps:
+        - run: [pipx, install, --force, "git+https://github.com/{repo}@{ref}"]
+  uninstall:
+    - needs: uv
+      steps:
+        - run: [uv, tool, uninstall, lapis-design]
+    - needs: pipx
+      steps:
+        - run: [pipx, uninstall, lapis-design]
+  verify:
+    - run: [lapis-design, --version]
+      expect: "prints the version of {ref}"
+    - run: [lazuli, doctor]
+      expect: "exit code 0"
+
+plugins:
+  - name: lapis
+    prefix: lps-
+    description: Design direction, plans, and named defaults for new UI and redesigns
+    skills: [lapis, lps-ux, lps-copy, lps-system]
+    hooks: [exit-plan]
+  - name: ultramarine
+    prefix: ulm-
+    description: Render checks, slop and rights review, and a separate critic
+    skills: [ultramarine, ulm-maintain, ulm-release]
+    agents: [critic]
+  - name: lazuli
+    prefix: lzl-
+    description: Local fonts and colors, catalogs, references, and the lazuli CLI
+    skills: [lazuli, lzl-fonts, lzl-color, lzl-research]
+    hooks: [session-start]
+    mcp: [lapis-lazuli]
+
+outputs:
+  - { id: flat-skills, path: "dist/skills/{skill}/", per: skill, format: agent-skill, from: [src/skills, src/shared/index.yaml] }
+  - { id: plugin-skills, path: "plugins/{plugin}/skills/{skill}/", per: skill, format: agent-skill, from: [flat-skills] }
+  - { id: claude-plugin-manifest, path: "plugins/{plugin}/.claude-plugin/plugin.json", per: plugin, format: claude-plugin-manifest, from: [install/harnesses.yaml] }
+  - { id: codex-plugin-manifest, path: "plugins/{plugin}/.codex-plugin/plugin.json", per: plugin, format: codex-plugin-manifest, from: [install/harnesses.yaml] }
+  - { id: claude-catalog, path: ".claude-plugin/marketplace.json", per: repo, format: claude-catalog, from: [install/harnesses.yaml] }
+  - { id: codex-catalog, path: ".agents/plugins/marketplace.json", per: repo, format: codex-catalog, from: [install/harnesses.yaml] }
+  - { id: plugin-hooks, path: "plugins/{plugin}/hooks/hooks.json", per: plugin, only: [lazuli], format: hooks-json, from: [install/harnesses.yaml] }
+  - { id: plugin-mcp, path: "plugins/{plugin}/.mcp.json", per: plugin, only: [lazuli], format: mcp-json, from: [install/harnesses.yaml] }
+  - { id: claude-agents, path: "plugins/{plugin}/agents/", per: plugin, only: [ultramarine], format: claude-agent, from: [src/agents] }
+  - { id: codex-agents, path: "dist/codex/agents/", per: repo, format: codex-agent, from: [src/agents] }
+  - { id: session-extension, path: "plugins/lazuli/extensions/session-start.ts", per: repo, format: ts-extension, from: [src/extensions/session-start.ts] }
+  - { id: omp-package, path: "plugins/{plugin}/package.json", per: plugin, only: [lazuli], format: omp-package, from: [session-extension] }
+  - { id: pi-package, path: "package.json", per: repo, format: pi-package, from: [flat-skills, session-extension] }
+  - { id: hermes-plugin, path: "plugins/hermes/lapis-lazuli/", per: repo, format: hermes-plugin, from: [src/hermes] }
+  - { id: agents-md-snippet, path: "dist/AGENTS.snippet.md", per: repo, format: agents-md-snippet, from: [install/harnesses.yaml] }
+
+harnesses:
+  - id: claude-code
+    name: Claude Code
+    detect: { commands: [claude], dirs: ["~/.claude"] }
+    form: plugin
+    consumes: [claude-catalog, claude-plugin-manifest, plugin-skills, plugin-hooks, plugin-mcp, claude-agents]
+    skill_paths: ["~/.claude/skills", ".claude/skills", "plugin skills/"]
+    invoke: "/{plugin}:{skill}"
+    install:
+      - run: [claude, plugin, marketplace, add, "{repo}@{ref}"]
+      - run: [claude, plugin, install, "{plugin}@{catalog}", -s, user]
+    update:
+      - run: [claude, plugin, marketplace, update, "{catalog}"]
+      - run: [claude, plugin, update, "{plugin}@{catalog}"]
+        note: the new version loads in the next session or after /reload-plugins
+    uninstall:
+      - run: [claude, plugin, uninstall, "{plugin}@{catalog}", -s, user]
+      - run: [claude, plugin, marketplace, remove, "{catalog}"]
+        when: all-plugins
+        note: removing the catalog uninstalls every plugin installed from it
+    verify:
+      - run: [claude, plugin, list, --json]
+        expect: "an enabled entry {plugin}@{catalog} with no errors"
+      - manual: "In a session, run /lapis:lapis and check that the skill loads"
+    session_start: { via: plugin-hook, output: plugin-hooks, event: "SessionStart startup|resume|clear|compact|fork" }
+    critic: { via: plugin-agent, output: claude-agents, note: "invoked as ultramarine:critic; the plan check runs from a hook inline in the lapis manifest" }
+    mcp: { via: plugin-mcp, output: plugin-mcp, note: "server plugin:lazuli:lapis-lazuli; the command is the CLI on PATH" }
+    conflicts:
+      - "Oh-My-Pi can load plugins from Claude Code's install registry; with both installed, skills load twice and dedupe by name"
+    verified:
+      - "2026-09-27, 2.1.274: `claude plugin marketplace add <local checkout>`, then `claude plugin install {plugin}@{catalog} -s user` installs all three plugins; adding the same marketplace again exits 0 (already on disk)"
+      - "2026-09-27, 2.1.274: the SessionStart hook runs `lapis-design hook session-start` and exits 0 with the inventory summary; the MCP server plugin:lazuli:lapis-lazuli connects"
+      - "2026-09-27, 2.1.274: `claude plugin list --json` reports each plugin's version and installPath (~/.claude/plugins/cache/{catalog}/{plugin}/{version}/); a local-path catalog loads the plugin from the checkout"
+      - "2026-09-27, 2.1.274: sessions started from the Claude desktop app and from an IDE extension found `lapis-design` (installed with uv tool in ~/.local/bin): the inventory summary arrived and slop_lint answered. A process started with launchd's default PATH alone does not find it (env -i), so the apps pass more than that PATH"
+      - "2026-09-27, 2.1.274: in plan mode, the PermissionRequest hook on ExitPlanMode denies a plan whose lapis-plan block has blocking findings and shows the reasons; a plan without blocking findings goes to the normal approval prompt"
+    sources:
+      - https://code.claude.com/docs/en/plugins/manifest-reference
+      - https://code.claude.com/docs/en/plugins/marketplace-reference
+      - https://code.claude.com/docs/en/plugins/cli-reference
+      - https://code.claude.com/docs/en/hooks
+
+  - id: codex
+    name: OpenAI Codex CLI
+    detect: { commands: [codex], dirs: ["~/.codex"] }
+    form: plugin
+    min_version: "0.153.0"
+    consumes: [codex-catalog, codex-plugin-manifest, plugin-skills, plugin-hooks, plugin-mcp, codex-agents]
+    skill_paths: [".agents/skills (cwd up to the repo root)", "~/.agents/skills"]
+    invoke: "${plugin}:{skill}"
+    install:
+      - run: [codex, plugin, marketplace, add, "{repo}", --ref, "{ref}"]
+      - run: [codex, plugin, add, "{plugin}@{catalog}"]
+      - copy: { from: "dist/codex/agents/ulm-critic.toml", to: "~/.codex/agents/ulm-critic.toml" }
+        confirm: true
+      - manual: "Open /hooks in Codex and trust the lazuli session-start hook; it does not run until trusted"
+    update:
+      - run: [codex, plugin, marketplace, upgrade, "{catalog}"]
+        note: there is no per-plugin update; new skills appear in the next session
+      - copy: { from: "dist/codex/agents/ulm-critic.toml", to: "~/.codex/agents/ulm-critic.toml" }
+        confirm: true
+    uninstall:
+      - run: [codex, plugin, remove, "{plugin}@{catalog}"]
+      - run: [codex, plugin, marketplace, remove, "{catalog}"]
+        when: all-plugins
+      - remove: "~/.codex/plugins/cache/{catalog}/"
+        when: all-plugins
+      - remove: "~/.codex/agents/ulm-critic.toml"
+        confirm: true
+    verify:
+      - run: [codex, plugin, list, --json]
+        expect: "{plugin}@{catalog} installed and enabled"
+      - manual: "In a new session, type $lapis:lps-ux and check that the skill is offered"
+    session_start: { via: plugin-hook, output: plugin-hooks, event: "SessionStart startup|resume|clear|compact", note: "matchers are regular expressions; the fork alternative never matches here" }
+    critic: { via: agent-file, output: codex-agents, note: "plugins cannot ship subagents; the installer copies the TOML file" }
+    mcp: { via: plugin-mcp, output: plugin-mcp }
+    trust:
+      - "every plugin hook needs trust for its exact hash via /hooks; a changed hook needs trust again"
+    conflicts:
+      - "Codex reads the first plugin manifest it finds and never merges: a root plugin.json with an agent-plugins $schema, then .codex-plugin, then .claude-plugin. The Codex manifest repeats skills, hooks, and MCP"
+      - "a github source type in a catalog is skipped; catalogs use ./ relative sources"
+    unverified:
+      - "which shell runs hook commands on Windows (the command is a plain program on PATH, so any should do)"
+    verified:
+      - "2026-09-27, 0.157.0: `codex plugin marketplace add <local checkout>`, then `codex plugin add {plugin}@{catalog}` installs all three plugins to ~/.codex/plugins/cache/{catalog}/{plugin}/{version}/; adding the same marketplace again exits 0"
+      - "2026-09-27, 0.157.0: `codex plugin list --json` reports each plugin installed and enabled; `codex mcp list` lists lapis-lazuli (lapis-design mcp)"
+      - "2026-09-27, 0.157.0: after install the plugin hook has no entry under [hooks.state] in ~/.codex/config.toml, so it stays untrusted until approved in /hooks"
+      - "2026-09-27, 0.157.0: trusting the hook in /hooks records [hooks.state.\"lazuli@lapis-lazuli:hooks/hooks.json:session_start:0:0\"]; the next session gets the inventory summary"
+      - "2026-09-27, 0.157.0: a session calls the MCP tool slop_lint on lapis-lazuli (with no inputs it answers 'nothing to lint')"
+      - "2026-09-27: a session started from the Codex app found `lapis-design`: the inventory summary arrived and slop_lint answered"
+      - "2026-09-27, 0.157.0: a plugin skill is listed to the session as {plugin}:{skill} (lapis:lapis, from the plugin cache), so it is invoked as $lapis:lapis"
+      - "2026-09-27, 0.157.0: with dist/codex/agents/ulm-critic.toml copied to ~/.codex/agents/, a read-only session (-s read-only) spawns ulm-critic as a subagent (its thread records agent_role ulm-critic) and returns the critic report as its answer; nothing is written to disk"
+      - "2026-09-27, 0.157.1: after `codex plugin add lapis@{catalog}` a new session lists lapis:lapis, lapis:lps-copy, lapis:lps-system, and lapis:lps-ux among its skills (session record)"
+      - "2026-09-27, 0.157.1: in the TUI, $ opens the skill list; typing lps-ux shows `lps-ux (lapis)` with its description, and Enter inserts $lapis:lps-ux into the composer"
+      - "2026-09-27, 0.157.1: the first TUI session after install asks about the new plugin hook (review, trust all, or continue without trusting); continuing without trust records nothing under [hooks.state]"
+      - "2026-09-27, 0.157.1: `codex plugin remove` and `codex plugin marketplace remove` leave an empty ~/.codex/plugins/cache/{catalog}/ directory; nothing else of the plugin remains, and the [plugins.\"{plugin}@{catalog}\"] entries leave config.toml"
+      - "2026-09-27, 0.157.1: `install.sh --uninstall --harness codex --yes` removes the three plugins, the marketplace, and that empty directory (`removed empty folder`)"
+    sources:
+      - https://developers.openai.com/plugins/build/plugins
+      - https://learn.chatgpt.com/docs/hooks
+      - https://developers.openai.com/codex/skills
+      - https://developers.openai.com/codex/subagents
+
+  - id: oh-my-pi
+    name: Oh-My-Pi
+    detect: { commands: [omp], dirs: ["~/.omp"] }
+    form: plugin
+    consumes: [claude-catalog, claude-plugin-manifest, plugin-skills, plugin-mcp, claude-agents, omp-package, session-extension]
+    skill_paths: [".omp/skills", "~/.omp/agent/skills", ".agents/skills", ".claude/skills"]
+    invoke: "/skill:{skill}"
+    install:
+      - run: [omp, plugin, marketplace, add, "{repo}"]
+      - run: [omp, plugin, install, --scope, user, "{plugin}@{catalog}"]
+      - manual: "Restart omp so the session-start extension loads; /reload-plugins refreshes skills and MCP only"
+    update:
+      - run: [omp, plugin, marketplace, update, "{catalog}"]
+      - run: [omp, plugin, upgrade, --scope, user, "{plugin}@{catalog}"]
+    uninstall:
+      - run: [omp, plugin, uninstall, --scope, user, "{plugin}@{catalog}"]
+      - run: [omp, plugin, marketplace, remove, "{catalog}"]
+        when: all-plugins
+    verify:
+      - run: [omp, plugin, list]
+        expect: "{plugin}@{catalog} listed and enabled"
+      - manual: "In a session, run /skill:lps-ux"
+    session_start: { via: extension, output: session-extension, event: session_start, note: "omp does not run hooks/hooks.json; a marketplace install links the plugin's package.json into ~/.omp/plugins/node_modules, and its omp.extensions load after a restart" }
+    critic: { via: plugin-agent, output: claude-agents, note: "loaded as a task agent" }
+    mcp: { via: plugin-mcp, output: plugin-mcp }
+    conflicts:
+      - "reads .omp-plugin, then .claude-plugin manifests; never .codex-plugin"
+      - "can also load Claude Code's installed plugins; skills with the same name keep the highest-priority source"
+    unverified:
+      - "whether omp plugin marketplace add accepts a ref; neither the command's help nor docs/marketplace.md (18.4.3, read 2026-09-30) names one for any source form, so the catalog follows the default branch"
+    verified:
+      - "2026-09-27, 18.3.1: `omp plugin marketplace add <local checkout>`, then `omp plugin install --scope user {plugin}@{catalog}` installs all three plugins to ~/.omp/plugins/cache/plugins/{catalog}___{plugin}___{version}/; adding the same marketplace again exits 1 (already exists), which the installer reports as a failed step to rerun with --update"
+      - "2026-09-27, 18.3.1: the MCP tool slop_lint is available in a session"
+      - "2026-09-27, 18.3.1: with the package's version field a marketplace install links @lapis-labs/lazuli-omp into ~/.omp/plugins/node_modules (a link to the plugin cache) and a new session gets the inventory summary; earlier the same day, without the version field, it got none"
+      - "2026-09-27, 18.3.1: the plugin's agents/critic.md (Claude format, name and description only) is listed among the task agents as critic, and a spawned critic returns its report"
+    sources:
+      - https://github.com/can1357/oh-my-pi/blob/main/docs/marketplace.md
+      - https://github.com/can1357/oh-my-pi/blob/main/docs/skills.md
+      - https://github.com/can1357/oh-my-pi/blob/main/docs/extensions.md
+
+  - id: pi
+    name: pi (experimental)
+    detect: { commands: [pi], dirs: ["~/.pi/agent"] }
+    form: package
+    consumes: [pi-package, flat-skills, session-extension]
+    skill_paths: ["~/.pi/agent/skills", ".pi/skills", "~/.agents/skills", ".agents/skills"]
+    invoke: "/skill:{skill}"
+    install:
+      - run: [pi, install, "git:github.com/{repo}@{ref}"]
+    update:
+      - run: [pi, install, "git:github.com/{repo}@{ref}"]
+        note: pi keys git packages by repository without the ref, so installing again replaces the older install
+    uninstall:
+      - run: [pi, remove, "git:github.com/{repo}"]
+        when: all-plugins
+        note: one package carries every plugin's skills, so it goes only when every plugin is removed
+    verify:
+      - run: [pi, list]
+        expect: "the {repo} package is listed"
+      - manual: "In a session, run /skill:lps-ux"
+    session_start: { via: extension, output: session-extension, event: session_start }
+    critic: { via: instructions, note: "pi has no subagents; the skill asks for a fresh session as the critic" }
+    mcp: { via: none, note: "pi has no MCP; the extension registers CLI tools instead (planned)" }
+    trust:
+      - "project packages load only after project trust"
+    conflicts:
+      - "a git source has no subdirectory selector, so the repository root package.json carries the pi key"
+      - "pi also reads ~/.agents/skills; do not install flat skills there alongside the package"
+    unverified:
+      - "the whole row: its commands come from pi's documentation and have not been confirmed on a real pi, so the row is experimental"
+    sources:
+      - https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/packages.md
+      - https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/extensions.md
+      - https://pi.dev
+
+  - id: hermes
+    name: Hermes Agent (experimental)
+    detect: { commands: [hermes], dirs: ["~/.hermes"] }
+    form: flat-and-plugin
+    consumes: [flat-skills, hermes-plugin]
+    skill_paths: ["~/.hermes/skills", "skills.external_dirs in ~/.hermes/config.yaml"]
+    invoke: "/{skill}"
+    install:
+      - run: [hermes, skills, install, "{repo}/dist/skills/{skill}", --yes]
+      - run: [hermes, plugins, install, "{repo}/plugins/hermes/lapis-lazuli", --ref, "{sha}", --enable]
+        confirm: true
+        note: plugins are disabled by default; --enable turns this one on. --ref takes only a full commit
+      - run: [hermes, mcp, add, lapis-lazuli, --command, lapis-design, --args, mcp]
+    update:
+      - run: [hermes, skills, update]
+      - run: [hermes, plugins, install, "{repo}/plugins/hermes/lapis-lazuli", --ref, "{sha}", --enable, --force]
+        confirm: true
+        note: update refuses to move a pinned plugin; reinstall at the new commit
+    uninstall:
+      - run: [hermes, skills, uninstall, "{skill}"]
+      - run: [hermes, plugins, remove, lapis-lazuli]
+        when: all-plugins
+        note: the one Hermes plugin serves every skill's session summary
+      - run: [hermes, mcp, remove, lapis-lazuli]
+        when: all-plugins
+    verify:
+      - run: [hermes, skills, list]
+        expect: "every skill of the selected plugins is listed"
+      - run: [hermes, plugins, list]
+        expect: "lapis-lazuli enabled"
+      - manual: "In a session, run /lps-ux"
+    session_start: { via: hermes-plugin-hook, output: hermes-plugin, event: "pre_llm_call when is_first_turn", note: "on_session_start ignores return values, so it cannot add context" }
+    critic: { via: instructions }
+    mcp: { via: cli-register, note: "hermes mcp add; tools appear as mcp_lapis-lazuli_<tool>" }
+    trust:
+      - "project skills load only after hermes skills trust"
+    conflicts:
+      - "Hermes does not read Claude or Codex plugin manifests"
+      - "skills bundled in a Hermes plugin get a plugin: namespace and stay out of the skill index, so skills install flat"
+    unverified:
+      - "that hermes skills install accepts a path inside a monorepo without a tap"
+      - "whether hermes skills install accepts a ref; its CLI reference and skills guide (read 2026-09-30) show a ref only for plugins (--ref takes a full commit), so skills come from the default branch"
+      - "the rest of the row: its commands come from Hermes's documentation and have not been confirmed on a real Hermes, so the row is experimental"
+    sources:
+      - https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/skills.md
+      - https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/plugins.md
+      - https://github.com/NousResearch/hermes-agent/blob/main/website/docs/reference/cli-commands.md
+
+  - id: other
+    name: Other Agent Skills harnesses
+    detect: {}
+    form: flat
+    consumes: [flat-skills, agents-md-snippet]
+    invoke: "per harness; usually /{skill} or automatic"
+    agents:
+      - { id: cursor, dirs: ["~/.cursor"] }
+      - { id: gemini-cli, dirs: ["~/.gemini"] }
+      - { id: github-copilot, dirs: ["~/.copilot"] }
+      - { id: opencode, dirs: ["~/.config/opencode"] }
+      - { id: windsurf, dirs: ["~/.codeium/windsurf"] }
+      - { id: kiro-cli, dirs: ["~/.kiro"] }
+    install:
+      - run: [npx, -y, skills, add, "https://github.com/{repo}/tree/{ref}/dist/skills", -g, -y, -a, "{agent}"]
+        note: the subpath keeps the search inside dist/skills, so plugin copies are never picked up
+      - manual: "Add dist/AGENTS.snippet.md to the agent's instructions file for the session summary and MCP setup"
+    update:
+      - run: [npx, -y, skills, update, -g, -y]
+    uninstall:
+      - run: [npx, -y, skills, remove, "{skill}", -g, -a, "{agent}", -y]
+    verify:
+      - run: [npx, -y, skills, list, -g, -a, "{agent}"]
+        expect: "every skill of the selected plugins is listed"
+    session_start: { via: instructions, output: agents-md-snippet }
+    critic: { via: instructions }
+    mcp: { via: instructions, output: agents-md-snippet, note: "the snippet shows the harness's own MCP registration for lapis-design mcp" }
+    conflicts:
+      - "Codex, pi, and Hermes have their own rows; the skills CLI's Codex target ~/.codex/skills is deprecated"
+    verified:
+      - "2026-09-27, skills 1.7.0: `npx skills add <local checkout>/dist/skills --list` lists exactly the six dist/skills skills and nothing else"
+      - "2026-09-27, skills 1.7.0: given the checkout root instead, it reads .claude-plugin/marketplace.json and lists the same six from plugins/*/skills (byte-identical copies today), so the install row keeps the dist/skills subpath"
+    sources:
+      - https://github.com/vercel-labs/skills
+      - https://agentskills.io/specification
