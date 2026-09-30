@@ -157,7 +157,7 @@ def test_build_does_not_read_maintainer_only_tools(tmp_path, monkeypatch):
     test_root = tmp_path / "repo"
     for directory in ("src", "install"):
         shutil.copytree(root / directory, test_root / directory)
-    for name in ("pyproject.toml", "LICENSE", "LICENSE-docs"):      # the build reads the license and copies its texts
+    for name in ("pyproject.toml", *build.LICENSE_FILES):      # the build reads the license and copies its texts
         shutil.copy(root / name, test_root / name)
     (test_root / "tools").mkdir()
     (test_root / "tools/reference-provenance.yaml").write_text("not: [valid yaml\n", encoding="utf-8")

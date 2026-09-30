@@ -16,8 +16,8 @@ install/harnesses.yaml, whose `outputs` list every output with its path template
 that are listed in harnesses.yaml but not written yet are skipped. manifests.py emits the JSON
 outputs; installers.py (when present) emits install.sh, install.ps1, and INSTALLATION.md.
 
-Every skill, plugin, and the Hermes plugin folder also gets LICENSE and LICENSE-docs, copied from the
-repository root, and every manifest and skill states the license expression of pyproject.toml.
+Every skill, plugin, and the Hermes plugin folder also gets LICENSE, LICENSE-docs, and NOTICE, copied
+from the repository root, and every manifest and skill states the license expression of pyproject.toml.
 """
 from __future__ import annotations
 
@@ -57,9 +57,10 @@ EXTENSION = "src/extensions/session-start.ts"
 HERMES_DIR = "src/hermes"
 
 # Texts at the repository root, copied byte for byte into every folder that can be installed on its
-# own (each plugin, each skill, the Hermes plugin), so a folder-only install still carries them. The
-# project's license expression is `[project] license` in pyproject.toml, the one place it is written.
-LICENSE_FILES = ("LICENSE", "LICENSE-docs")
+# own (each plugin, each skill, the Hermes plugin), so a folder-only install still carries them. NOTICE
+# names the third-party material that keeps its owner's terms. The project's license expression is
+# `[project] license` in pyproject.toml, the one place it is written.
+LICENSE_FILES = ("LICENSE", "LICENSE-docs", "NOTICE")
 
 SKILL_KEYS = {"name", "description", "license"}   # portable keys a source sets; the build adds metadata
 DESCRIPTION_MAX = 1024
@@ -273,7 +274,7 @@ class Build:
         return texts
 
     def plugin_licenses(self) -> dict[str, bytes]:
-        """plugins/<plugin>/LICENSE and LICENSE-docs for every plugin in install/harnesses.yaml."""
+        """plugins/<plugin>/LICENSE, LICENSE-docs, and NOTICE for every plugin in install/harnesses.yaml."""
         return {f"plugins/{p['name']}/{name}": data for p in self.doc["plugins"]
                 for name, data in self.license_texts.items()}
 

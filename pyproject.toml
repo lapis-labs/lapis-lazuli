@@ -5,7 +5,7 @@ description = "CLI for the LapisLazuli design skills: plan, rights, render, and 
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT AND CC-BY-4.0"
-license-files = ["LICENSE", "LICENSE-docs"]
+license-files = ["LICENSE", "LICENSE-docs", "NOTICE"]
 authors = [{ name = "lapis-labs" }]
 keywords = ["agent-skills", "ai-agents", "claude-code", "codex", "design", "frontend", "typography", "accessibility"]
 classifiers = [

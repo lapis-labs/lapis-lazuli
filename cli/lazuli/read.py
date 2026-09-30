@@ -43,6 +43,7 @@ from datetime import datetime, timezone
 from html.parser import HTMLParser
 from pathlib import Path
 
+from lapis_design import browser_install_command
 from lazuli import db, paths, sources
 from lazuli.catalog import net
 
@@ -444,8 +445,8 @@ def _render_in_new_browser(url: str, conn, notes: list[str]) -> Fetched:
         try:
             browser = playwright.chromium.launch()
         except PlaywrightError as exc:
-            raise UsageError(f"no browser for --render ({str(exc).splitlines()[0]}); run "
-                             "`uv run playwright install chromium-headless-shell`") from None
+            raise UsageError(f"no browser for --render ({str(exc).splitlines()[0]}); "
+                             f"run `{browser_install_command()}`") from None
         try:
             return _render(browser, url, conn, notes)
         finally:

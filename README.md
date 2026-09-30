@@ -143,10 +143,10 @@ repository keeps is listed in [NOTICE](NOTICE).
 
 Markdown files are licensed under CC BY 4.0 and everything else under MIT, except third-party material listed in NOTICE.
 
-The SPDX expression is `MIT AND CC-BY-4.0`. [LICENSE](LICENSE) holds the MIT text and
-[LICENSE-docs](LICENSE-docs) the CC BY 4.0 legal code. Every plugin folder, every skill folder, and
-the Hermes plugin folder carries both files, so a folder installed on its own still does.
-[NOTICE](NOTICE) says which third-party material keeps its owner's terms.
+The SPDX expression is `MIT AND CC-BY-4.0`. [LICENSE](LICENSE) holds the MIT text,
+[LICENSE-docs](LICENSE-docs) the CC BY 4.0 legal code, and [NOTICE](NOTICE) says which third-party
+material keeps its owner's terms. Every plugin folder, every skill folder, and the Hermes plugin
+folder carries all three files, so a folder installed on its own still does.
 
 To reuse a Markdown file, credit it, link the license, and say if you changed it. For example:
 

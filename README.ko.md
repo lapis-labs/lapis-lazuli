@@ -92,7 +92,7 @@ LapisLazuli는 에이전트가 코드를 쓰기 전에 인터페이스를 계획
 
 Markdown 파일은 CC BY 4.0, 그 밖의 모든 파일은 MIT 라이선스예요. 단 NOTICE에 적은 제3자 자료는 예외예요.
 
-SPDX 표현은 `MIT AND CC-BY-4.0`이에요. [LICENSE](LICENSE)에는 MIT 전문이, [LICENSE-docs](LICENSE-docs)에는 CC BY 4.0 법률 문서(legal code)가 들어 있어요. 플러그인 폴더, 스킬 폴더, Hermes 플러그인 폴더에 두 파일이 모두 들어 있어서 폴더 하나만 설치해도 함께 가요. 제3자 자료 중 어느 것이 소유자의 조건을 따르는지는 [NOTICE](NOTICE)에 있어요.
+SPDX 표현은 `MIT AND CC-BY-4.0`이에요. [LICENSE](LICENSE)에는 MIT 전문이, [LICENSE-docs](LICENSE-docs)에는 CC BY 4.0 법률 문서(legal code)가, [NOTICE](NOTICE)에는 제3자 자료 중 어느 것이 소유자의 조건을 따르는지가 들어 있어요. 플러그인 폴더, 스킬 폴더, Hermes 플러그인 폴더에 세 파일이 모두 들어 있어서 폴더 하나만 설치해도 함께 가요.
 
 Markdown 파일을 다시 쓸 때는 출처를 밝히고, 라이선스 링크를 달고, 고쳤다면 고쳤다고 적어 주세요. 예를 들면 이래요.
 

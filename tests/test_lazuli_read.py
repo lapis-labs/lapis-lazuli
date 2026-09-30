@@ -792,6 +792,29 @@ def test_render_refuses_configured_proxy_before_launch(monkeypatch, capsys, prox
     assert len(err.splitlines()) == 1 and "proxy" in err and "--render" in err
 
 
+def test_render_without_a_browser_names_the_install_command_of_the_running_python(monkeypatch, capsys):
+    from playwright import sync_api
+
+    class NoBrowser:
+        chromium = property(lambda self: self)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def launch(self, *args, **kwargs):
+            raise sync_api.Error("Executable doesn't exist at /nowhere\nrun the installer")
+
+    monkeypatch.setattr(sync_api, "sync_playwright", NoBrowser)
+    serve(monkeypatch, {"https://docs.test/page": ARTICLE})
+    code, out, err = run(capsys, "https://docs.test/page", "--render")
+    assert code == 2 and out == "" and len(err.splitlines()) == 1
+    assert f'`"{sys.executable}" -m playwright install chromium-headless-shell`' in err
+    assert "uv run" not in err
+
+
 @pytest.mark.parametrize("render", [False, True])
 def test_real_read_malformed_location_is_blocked_without_traceback(tmp_path, render):
     requested = []

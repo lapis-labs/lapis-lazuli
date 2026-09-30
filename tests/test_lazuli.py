@@ -407,6 +407,26 @@ def test_doctor_reports_and_fails_only_on_blockers(env, tmp_path, capsys, monkey
     assert "fail  sqlite" in capsys.readouterr().out
 
 
+def test_doctor_says_how_to_install_the_browser_for_the_python_that_runs_it(env, tmp_path, capsys, monkeypatch):
+    from playwright import sync_api
+
+    class NoBrowserYet:
+        chromium = property(lambda self: self)
+        executable_path = str(tmp_path / "ms-playwright" / "chromium-1" / "chrome-linux" / "chrome")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+    monkeypatch.setattr(sync_api, "sync_playwright", NoBrowserYet)
+    assert cli.main(["doctor"]) == 0                                  # a missing browser only warns
+    line = next(l for l in capsys.readouterr().out.splitlines() if l.startswith("warn  browser"))
+    assert f'`"{sys.executable}" -m playwright install chromium-headless-shell`' in line
+    assert "uv run" not in line
+
+
 def test_old_sqlite_is_refused(tmp_path, monkeypatch):
     monkeypatch.setattr(sqlite3, "sqlite_version_info", (3, 31, 1))
     monkeypatch.setattr(sqlite3, "sqlite_version", "3.31.1")

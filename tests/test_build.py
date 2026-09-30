@@ -375,13 +375,14 @@ def _installable_folders(doc: dict) -> list[str]:
             *(f"plugins/{p['name']}/skills/{s}" for p in doc["plugins"] for s in p["skills"])]
 
 
-def test_every_installable_folder_carries_both_license_texts_byte_for_byte():
+def test_every_installable_folder_carries_both_license_texts_and_the_notice_byte_for_byte():
+    texts = ("LICENSE", "LICENSE-docs", "NOTICE")                     # NOTICE names the quoted third-party terms
     files = build.collect(ROOT, VERSION)
-    wrong = [f"{folder}/{name}" for folder in _installable_folders(harnesses(ROOT)) for name in build.LICENSE_FILES
+    wrong = [f"{folder}/{name}" for folder in _installable_folders(harnesses(ROOT)) for name in texts
              if files.get(f"{folder}/{name}") != (ROOT / name).read_bytes()]
     assert wrong == []
     project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
-    assert project["license-files"] == list(build.LICENSE_FILES)      # the wheel and sdist carry the same texts
+    assert project["license-files"] == list(texts)      # the wheel and sdist carry the same files
 
 
 def test_every_generated_skill_and_manifest_states_the_project_license():

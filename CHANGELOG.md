@@ -20,6 +20,11 @@ All notable changes are recorded here. The format follows
 - Adobe Fonts faces with an optical size (`opsz`) axis are no longer measured through Core Text, which
   sets that axis from the point size; they stay unmeasured ("optical size not pinned"), and
   `lazuli local fonts` says so in one line with their count. Files are unaffected.
+- `NOTICE` ships next to the license texts: every plugin, skill, and Hermes folder carries it, and the
+  wheel and sdist list it as a `License-File`, so a folder-only install keeps the third-party terms.
+- `lazuli doctor` and `lazuli read --render` print the browser install command as
+  `"<python>" -m playwright install chromium-headless-shell` for the Python that is running, which
+  fits a uv tool, pip, and a checkout; before, they named `playwright` and `uv run playwright`.
 
 ## 0.1.0 (2026-09-30)
 

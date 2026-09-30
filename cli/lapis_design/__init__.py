@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
 __version__ = "0.1.0"
@@ -21,3 +22,14 @@ def shared_dir() -> Path:
         if (c / "plan" / "schema.yaml").is_file():
             return c
     raise FileNotFoundError("LapisLazuli shared contracts not found; reinstall the CLI or set LAPIS_SHARED")
+
+
+def browser_install_command() -> str:
+    """The command that installs the headless shell for the Python running the CLI.
+
+    Playwright looks for the browser of its own revision, so the install has to come from the same
+    environment that runs it; that holds for a uv tool, pip, and a checkout alike. On Windows the
+    quoted path is prefixed with PowerShell's call operator, which cmd users can drop.
+    """
+    call = "& " if os.name == "nt" else ""
+    return f'{call}"{sys.executable}" -m playwright install chromium-headless-shell'

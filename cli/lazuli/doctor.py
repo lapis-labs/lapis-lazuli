@@ -12,7 +12,7 @@ import sqlite3
 import sys
 from pathlib import Path
 
-from lapis_design import __version__
+from lapis_design import __version__, browser_install_command
 from lazuli import coretext, db, paths, scan
 
 
@@ -90,7 +90,7 @@ def _browser() -> tuple[str, str, str]:
     shell = revision_dir.parent / revision_dir.name.replace("chromium-", "chromium_headless_shell-") if revision_dir else None
     if executable.exists() or (shell and shell.is_dir()):
         return ("ok", "browser", "Chromium for render and behavior checks is installed")
-    return ("warn", "browser", "run `playwright install chromium-headless-shell` for render and behavior checks")
+    return ("warn", "browser", f"run `{browser_install_command()}` for render and behavior checks")
 
 
 def main(argv: list[str] | None = None, prog: str = "lazuli doctor") -> int:

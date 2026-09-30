@@ -157,12 +157,13 @@ CC-BY-4.0`: Markdown files are CC BY 4.0, everything else MIT). The build reads 
 source whose `license` is missing or differs, and writes it into both plugin manifests, the Oh-My-Pi
 package, and the pi package. The Hermes `plugin.yaml` has no license key.
 
-`LICENSE` (MIT) and `LICENSE-docs` (the CC BY 4.0 legal code) at the repository root are copied byte
-for byte into every folder a harness installs on its own: `plugins/<plugin>/`,
-`plugins/hermes/lapis-lazuli/`, and every skill folder (`dist/skills/<skill>/` and its identical
-copy under `plugins/<plugin>/skills/<skill>/`). They are not harness outputs, so `harnesses.yaml`
-does not list them; `--check` treats them as generated, and editing the root text without rebuilding
-shows up as drift in every copy.
+`LICENSE` (MIT), `LICENSE-docs` (the CC BY 4.0 legal code), and `NOTICE` (the third-party material that
+keeps its owner's terms) at the repository root are copied byte for byte into every folder a harness
+installs on its own: `plugins/<plugin>/`, `plugins/hermes/lapis-lazuli/`, and every skill folder
+(`dist/skills/<skill>/` and its identical copy under `plugins/<plugin>/skills/<skill>/`). They are not
+harness outputs, so `harnesses.yaml` does not list them; `--check` treats them as generated, and editing
+a root text without rebuilding shows up as drift in every copy. The wheel and sdist list the same three
+files as `License-File`.
 
 ## Instructions snippet — `agents-md-snippet`
 
