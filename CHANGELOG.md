@@ -26,8 +26,9 @@ The first release. This entry sums up what 0.1.0 can do.
 
 - Generated outputs for Claude Code, OpenAI Codex CLI, Oh-My-Pi, and other Agent Skills harnesses.
   Checked on 2026-09-27: installs on Claude Code 2.1.274, Codex 0.157.x, and Oh-My-Pi 18.3.1, and
-  the `skills` CLI 1.7.0 listing for other harnesses. pi and Hermes Agent are experimental rows that
-  no real install has confirmed yet.
+  the `skills` CLI 1.7.0 listing for other harnesses. pi and Hermes Agent are marked `experimental`
+  in `install/harnesses.yaml`: no real install has confirmed them, and the install scripts set them
+  up only when named with `--harness`.
 - Install scripts for macOS and Linux (`install.sh`) and Windows (`install.ps1`) and a generated
   `INSTALLATION.md`, all from `install/harnesses.yaml`. The scripts preview with `--dry-run`, ask
   before steps that change harness settings, and support `--update` and `--uninstall`.
@@ -45,14 +46,18 @@ The first release. This entry sums up what 0.1.0 can do.
 - `rights check`: compares an asset ledger and a fonts lock against license scope and expiry,
   credits, notices, reserved font names, third-party marks, generated media, and likeness or
   property consent. It compares records and states no legal conclusion.
-- `render check`: captures your own page under nine conditions (320 to 1440 px, light and dark,
+- `render check`: captures your own page under up to nine conditions (320 to 1440 px, light and dark,
   reduced motion, a mobile browser frame) into a render extract, with measured fields and derived
   values defined in `render/DERIVED.md`.
 - `behavior check` and `stub serve`: drive your own render against a stub backend or an isolated
   local backend with synthetic data, and record a behavior session that detects deceptive and
   pressuring patterns, focus and keyboard problems, missing states and recovery, and friction.
+  Korean and English wording is read for dialogs, choices, flows, commit outcomes, and undo; commit
+  outcomes read only text that appeared after the commit, and announcements count for the nearest
+  live region.
 - `slop lint`: 184 rules and 89 detectors across plan, source, render, behavior, and review layers;
   a detector that cannot judge reports why it skipped, so a missing input never reads as a pass.
+  `copy.fabricated-proof` reads a quote-only line as a possible customer quote in any role.
 - `release check`: the release gate, which reruns the plan checks, reads the lint, session, extract,
   and critic reports, rechecks catalog font licenses, and writes the gate report.
 - `hook exit-plan` and `hook session-start` for harness hooks, and `mcp`, an MCP server with the
@@ -69,7 +74,9 @@ The first release. This entry sums up what 0.1.0 can do.
   Fontshare, the Korea Copyright Commission's safe-font lists, a bundled system-font table, and
   Sandoll Cloud on request), ranked font candidates with evidence, a fonts lock that pins source,
   license, and delivery, and your own font classes that outrank catalogs.
-- `color`: color system codes with reference links; values only from the ones you record.
+- `color`: color system codes with reference links. HLC and RAL DESIGN SYSTEM plus values are
+  computed as OKLCH approximations; Pantone, RAL CLASSIC, NCS, Munsell, and Freetone values come only
+  from the ones you record.
 - `sources`, `read`, `ref`: a registry of 80 sources with access policies, single pages as Markdown,
   and reference profiles that keep only what a source's rights allow.
   A capture's profile and screenshots are replaced together or not at all.
@@ -96,6 +103,12 @@ The first release. This entry sums up what 0.1.0 can do.
 - Changes to these boundaries come with tests that attack them from a page, and tests reach only
   loopback or recorded responses.
 
+### Evaluation kit
+
+- `tools/eval/` compares agent runs with and without the skills. Its results are exploratory and are
+  not performance claims. Run records never go into the repository or a bundle; `share.py` exports a
+  stripped copy. Network and full-access options are for an evaluation-only account.
+
 ### Known limits
 
 - Contracts are `version: 0` drafts and may change.
@@ -106,10 +119,13 @@ The first release. This entry sums up what 0.1.0 can do.
   neither documents a way to pin another ref.
 - Unicode host names outside common Latin, CJK, Hangul, and fullwidth ranges are refused, even
   where a browser would accept them.
-- The behavior probes' Korean coverage stops at buttons and labels: plan-goal matching, price and
-  billing-period labels, and some form, media, and pointer heuristics remain English-oriented.
+- The behavior probes still read some wording in English only: form error reasons, sign-in
+  alternatives, cleared-field explanations, and same-as-offered text in the forms probe, and API path
+  stems for commit kinds. A Korean plan goal rarely matches a dialog by shared words, and the states
+  probe can read a fixed present-tense note ("취소할 수 없어요") as a problem.
 - The Japanese and Chinese guidance in the skill references has not yet been confirmed by proficient
-  readers (the Korean guidance was confirmed by a native reader), and rendering claims were checked
-  only in Chromium.
+  readers, and the Traditional Chinese example awaits a chosen region. The Korean guidance was
+  confirmed by a native reader, except the example sentences corrected on 2026-09-30. Rendering
+  claims were checked only in Chromium.
 - On Windows and Linux, Adobe Fonts activations are absent from `lazuli local fonts`. On macOS their
   localized names follow the system's preferred language.
