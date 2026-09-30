@@ -1232,6 +1232,21 @@ references:
     copy still is. The confirmation guidance was rewritten to match (re-verified with the lint copy detectors).'
   - 'The example copy in ko, ja, zh-Hans, and zh-Hant was run through every copy detector at plan and render
     layers on 2026-09-29 (a throwaway extract): no findings after the quotation-mark change.'
+  resolved_2026_09_30:
+  - 'The text names only what the checks count. copy.translationese counts, in Korean, double passives, ~에 있어서, and
+    ~를 통해 (not noun chains, 에 의해, or 것이 가능하다), in Japanese することができる, and in Chinese every 进行 and 被.
+    No check reads content.voice.notes. copy.vague-cta, copy.register-mix, and copy.contrast-frame keep nothing on their
+    own, so their keep_when cases (a step title that states the outcome, fixed-register legal text or a register the
+    notes change, a contrast that carries scope) need a keep entry with a reason in the plan''s defaults.'
+  - 'Examples corrected: the cancel confirmation says what happens to the piece; the unknown-outcome line asks for a
+    new request only when the booking is missing from the history; the no-results line names the filter; the landing
+    line says what the shop does; the error example shows a [다시 시도] button in place of a retry sentence; the firing
+    terms name the reservation (소성 예약, 烧制预约). The changed lines were run through every copy detector at the plan
+    and render layers on 2026-09-30 (a throwaway extract): no findings.'
+  - 'The zh-Hant example row is removed: it only converted the simplified characters, against the region rule in the
+    Chinese notes. A Traditional Chinese line waits for a region (see verify_before_release).'
+  - 'left_for_later no longer lists content models from content-design.md: the migration map records that file as done,
+    and its CMS content models, inventory, lifecycle, and search are dropped as outside an interface copy reference.'
   left_for_later:
   - 'lps-copy: the signal-family repair examples and the cross-language caution of llm-language-patterns.md
     (its rules are done); a Korean-focused reference for honorific and particle detail beyond the compact
@@ -1240,18 +1255,24 @@ references:
     of messages (user-messages-and-feedback.md).'
   - 'lapis and a later i18n reference: RTL and bidirectional content, CJK typography, names and addresses,
     input methods, images and icons, the localization QA matrix (i18n-l10n-and-rtl.md).'
-  - 'docs: content models, inventory, lifecycle, and search from content-design.md.'
   verify_before_release:
   - 'Japanese and Chinese notes and sentences with proficient readers (none has read them; the text already frames
     the notes as decisions to confirm): the label patterns, 予約を確認 against 予約の確認, ご確認ください, the
-    subject-omission advice, the zh-Hans and zh-Hant lines and the firing terms 烧制 and 燒製 and 焼成の受付,
-    quotation marks by region, and 你 or 您 as a product decision.'
+    subject-omission advice, the zh-Hans line and the firing terms 烧制预约 and 焼成の受付, quotation marks by
+    region, and 你 or 您 as a product decision.'
+  - 'A Traditional Chinese example line. The region comes first (for example Taiwan, an open question for the
+    maintainer); write the line from that market''s vocabulary, not by converting the zh-Hans line, and have a
+    proficient reader check it before a row returns to the four-language table.'
+  - 'The Korean lines corrected on 2026-09-30 (the cancel confirmation, the unknown-outcome line, the no-results line,
+    the landing line, the saved-state line, and the error example): the maintainer confirmed the earlier wording, not
+    these; a native Korean reader checks them before release.'
   - 'Checker behavior quoted in the text: copy.register-mix reading sentence endings against content.voice.register
-    and skipping quoted speech and endingless labels; copy.vague-cta reading a whole control label and duplicate
-    labels (gate); copy.name-swap on headline, subhead, and other; copy.translationese counting by density;
-    copy.fabricated-proof and an opening quotation mark; the states probe inducing error, offline, empty, and
-    partial states, the forms probe reading field errors, and the commits probe reading success and failure
-    claims and confirmations. Keep interface-copy.md in step if these change.'
+    (never the notes), skipping quoted speech and endingless labels, and not knowing legal text; copy.vague-cta reading
+    a whole control label and duplicate labels (gate); copy.name-swap on headline, subhead, and other;
+    copy.translationese counting by density the constructions named in the text; copy.fabricated-proof and an opening
+    quotation mark; the states probe inducing error, offline, empty, and partial states, the forms probe reading field
+    errors, and the commits probe reading success and failure claims and confirmations. Keep interface-copy.md in step
+    if these change.'
   verified_2026_09_30:
   - 'The known checker gap in the states probe is closed: probes/states.py now takes its problem and retry words from
     probes/_decision.py, which include Korean (오류, 실패, 다시 시도, 새로고침, and others), and

@@ -11,7 +11,8 @@ metadata:
 
 ultramarine checks designs; it does not make them. It runs the `lapis-design` checks on our own
 render, reads the findings in order of authority, has a separate critic judge what measurement
-cannot, and hands each fix back to the maker. The full pre-ship gate is `ulm-release`.
+cannot, and hands each fix back to the maker. It reports what its checks found; it does not certify
+accessibility or legal conformance. The full pre-ship gate is `ulm-release`.
 
 ## Order of authority
 

@@ -1,15 +1,15 @@
 # LapisLazuli system fonts table — v0 draft
 # Fonts that ship with operating systems. They can be used as local fallbacks, never self-hosted.
-# Seeded from the multilingual-font-stacks asset of the previous repository, design-and-frontend.
+# Seeded from the author's earlier notes on multilingual font stacks, kept in the previous repository
+# (design-and-frontend, not part of this one).
 #
 # verified:
-#   reviewed-2026-09-22  names confirmed in that asset's reviewed Windows 11 inventory
+#   reviewed-2026-09-22  names confirmed in the author's review of a Windows 11 font inventory on that date
 #   scanned-2026-09-26-macos27  found by `lazuli local fonts` on macOS 27.0 (26A428) under
 #                        /System/Library/Fonts; a `note` says when the file came from a downloadable
 #                        system asset (/System/Library/AssetsV2) that a fresh install may lack
 #   unverified           commonly cited; confirm on the target OS with `lazuli local fonts`
-#                        before relying on it (that asset warns against adding Apple CJK
-#                        family names from memory)
+#                        before relying on it (Apple CJK family names are never added from memory)
 #   keyword              a CSS generic font keyword (`class: generic`), not a font: the browser maps
 #                        it to an installed family, so there is no file to find and nothing to verify.
 #                        What it maps to varies by browser and OS; a `note` says what to watch.
@@ -55,7 +55,7 @@ fonts:
   - { family: system-ui, platforms: [all], scripts: [all], class: generic, verified: reviewed-2026-09-22, note: "CSS generic keyword; the honest fallback when a named system family is unverified" }
   - { family: ui-monospace, platforms: [all], scripts: [latn], class: generic, verified: keyword, note: "CSS generic keyword; support varies by browser" }
 
-# Language-scoped composition defaults paired with these stacks (from that asset)
+# Language-scoped composition defaults paired with these stacks (from the same earlier notes)
 composition:
   ko: { word-break: keep-all, overflow-wrap: break-word, note: "a Korean paragraph choice, not a CJK-wide rule" }
   ja: { word-break: normal, line-break: strict }

@@ -24,8 +24,8 @@ The rules every session follows are at the end, because some harnesses read only
 - Knowledge migrated from the maintainers' previous skill, `design-and-frontend` (not part of this
   repository): `tools/migration-map.yaml` records each migrated file and where it went.
 - Rule ID history: `tools/slop-id-trace.yaml`.
-- The reasons behind decisions are in the maintainers' structure and contract memos, which this
-  repository does not hold. When code and a memo disagree, the repository wins.
+- The reasons behind decisions are recorded outside this repository. When code and such a record
+  disagree, the repository wins.
 
 ## Commands
 
@@ -256,8 +256,8 @@ files beside it; the database file itself does not change.
   installing software globally, changing global git config, or changing a harness's global
   settings or installed plugins.
 - No credentials, tokens, license keys, payment data, or private receipts in any file or commit.
-- Commercial, subscription, or synced fonts and media never leave this computer, and no lazuli
-  database or other large local data goes into the repository.
+- Commercial, subscription, or synced fonts and media never leave the machine they are on, and no
+  lazuli database or other large local data goes into the repository.
 - Data derived from Adobe Fonts (names, coverage, measurements) never goes into tests, fixtures,
   evaluations, or training sets, and lazuli never opens Adobe Fonts files: on macOS it reads them
   through the operating system's font API (`cli/lazuli/coretext.py`); nowhere else are they listed.

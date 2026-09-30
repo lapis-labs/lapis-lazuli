@@ -11,6 +11,9 @@ Include the command you ran, the version (`lapis-design --version`), your operat
 smallest page, URL, or input that reproduces it. Use synthetic data; do not send credentials or
 private files.
 
+If you cannot use the private report form, open an issue that asks for a private way to reach the
+maintainers and says nothing about the vulnerability itself.
+
 Only the latest release, which the `release` branch follows, receives fixes.
 
 ## What is in scope
@@ -18,8 +21,11 @@ Only the latest release, which the `release` branch follows, receives fixes.
 The CLIs' network boundaries, which the code promises to keep (see "Boundaries the code must keep" in
 [AGENTS.md](AGENTS.md)):
 
-- `lapis-design render check` and `behavior check` reaching, capturing, or driving a host that is not
-  ours, or storing typed values, query strings, headers, or request bodies.
+- `lapis-design render check` capturing a host that is not ours, as **Target hosts** in
+  [`src/shared/render/DERIVED.md`](src/shared/render/DERIVED.md) defines it, without `--public`, or a
+  registry or plan-reference host even with it.
+- `lapis-design behavior check` reaching or driving a host that is not ours, or storing typed values,
+  query strings, headers, or request bodies.
 - `lazuli ref capture` reaching a host the source registry marks `refused` or `browser-link`, using
   a proxy from the environment, ending on a document lazuli did not fetch, or keeping more than the
   source's rights allow.
@@ -30,6 +36,17 @@ The CLIs' network boundaries, which the code promises to keep (see "Boundaries t
   source registry's policy, or its pace, or that a redirect carries to a refused host.
 - Credentials, license keys, payment data, or private receipts ending up in a ledger, lock, profile,
   session, or log.
+
+Code that runs on your machine and reads input you may not trust:
+
+- The install scripts (`install/install.sh`, `install/install.ps1`), which INSTALLATION.md fetches from
+  the `release` branch and runs straight in a shell.
+- The hooks: `lapis-design hook session-start`, which a harness runs at every session start, and
+  `lapis-design hook exit-plan`, which parses the event a harness sends on standard input.
+- The MCP server (`lapis-design mcp`).
+- `lapis-design slop lint` and `plan check` reading a project tree, plan, or report you did not
+  write: running code from it, taking unbounded time or memory, or reading or writing outside the
+  paths you gave.
 
 ## What is out of scope
 

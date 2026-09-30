@@ -63,9 +63,10 @@ not that a click will.
 | 확인 | 예약 내역 보기 | where the person lands |
 | 예 (in a confirmation) | 예약 취소 | which action a "yes" commits |
 
-`copy.vague-cta` (a gate at P1) reads a whole control label: "계속" alone is vague, "예약 내용 확인" names
-its outcome, and a step title that states the outcome keeps a plain "계속" beside it. The same rule
-reads duplicate labels. Two actions with different outcomes never share one: on a piece card 작품 보기
+`copy.vague-cta` (a gate at P1) reads a whole control label: "계속" alone is vague and "예약 내용 확인"
+names its outcome. A plain "계속" beside a step title that states the outcome is a `keep_when` case the
+check cannot see, so record a `keep` in the plan's `defaults` with that reason. The same rule reads
+duplicate labels. Two actions with different outcomes never share one: on a piece card 작품 보기
 opens the piece, and 예약하기 on the sheet commits.
 
 - One word per intent. If 저장, 적용, and 수정 all commit the same settings, choose one; if they differ,
@@ -90,11 +91,12 @@ An error names what happened, what it touches, what the person can do next, and 
 order and in as few sentences as the facts need.
 
 ```text
-예약을 저장하지 못했어요. 입력한 내용은 그대로 남아 있어요. 다시 시도해 주세요.
+예약을 저장하지 못했어요. 입력한 내용은 그대로 남아 있어요.
+[다시 시도]
 ```
 
-Say only what the product knows. "다시 시도해 주세요" is honest when the product knows only that the
-request failed; a cause it cannot confirm ("네트워크 문제로") is invented. The copy also agrees with the
+Say only what the product knows. A plain retry (`[다시 시도]`) is honest when the product knows only that
+the request failed; a cause it cannot confirm ("네트워크 문제로") is invented. The copy also agrees with the
 behavior: "입력한 내용은 그대로 남아 있어요" is false when the form cleared (`ux.lost-input`).
 
 `copy.error-without-recovery` (a gate) reads an error or offline state that says nothing about the
@@ -115,7 +117,7 @@ Diagnose the cause before wording it; the cause decides what the copy may claim.
 For an unknown outcome:
 
 ```text
-예약이 접수됐는지 확인하지 못했어요. 예약 내역에서 확인한 뒤에 다시 신청해 주세요.
+예약이 접수됐는지 확인하지 못했어요. 예약 내역에 없을 때만 다시 신청해 주세요.
 ```
 
 The line is only as good as the check it points to; write it when 예약 내역 exists.
@@ -138,7 +140,7 @@ reach (`ux.missing-states` gates a reachable state that was never designed).
 | State | The reader asks | Write | Example |
 |---|---|---|---|
 | First use | What belongs here, how do I begin? | what it holds and the first action | 예약한 작품이 아직 없어요. 9월 소성분에서 작품을 골라 예약할 수 있어요. |
-| No results | Why nothing, how do I recover? | the active filter or query, and how to clear it | 예약 가능한 작품이 없어요. 필터를 지우면 9월 소성분 전체가 보여요. |
+| No results | Why nothing, how do I recover? | the active filter or query, and how to clear it | 선택한 조건에 맞는 작품이 없어요. 필터를 지우면 9월 소성분 전체가 보여요. |
 | No access | Why can't I see it? | why it may not show, and how to check, without revealing what it holds or that it exists | 예약을 찾을 수 없어요. 예약한 계정으로 로그인했는지 확인해 주세요. |
 | Unavailable | Is it late or gone? | what is missing and a retry | 가마 온도 그래프를 불러오지 못했어요. [다시 불러오기] |
 
@@ -158,7 +160,7 @@ A confirmation names the object and the consequence, and each button names its o
 
 ```text
 9월 소성 예약을 취소할까요?
-예약한 작품 1점은 다시 예약할 수 있는 상태가 돼요.
+취소하면 이 작품을 다른 사람이 예약할 수 있어요.
 [예약 유지] [예약 취소]
 ```
 
@@ -207,9 +209,10 @@ A confirmation names the object and the consequence, and each button names its o
   sequence matters.
 - Friendly wording does not make consent valid, and legal text is a qualified reviewer's. Keep the force
   and scope words exactly (must, may, the period, the exceptions), list wording that needs review as
-  unresolved, and never soften a term to fit a button. Legal text may keep its own fixed register
-  (`copy.register-mix` keeps it); payment and account text more often take the product's formal register,
-  named per surface in `content.voice.notes`.
+  unresolved, and never soften a term to fit a button. Legal text may keep its own fixed register, but
+  `copy.register-mix` cannot tell it from a slip, so record a `keep` with that reason. Payment and account
+  text more often take the product's formal register, named per surface in `content.voice.notes` (a note
+  for writers and reviewers; no check reads it).
 
 ## Claims, proof, and real content
 
@@ -220,7 +223,7 @@ hedges are the `sales-voice` card.
 
 ```text
 Before: 흙과 불이 빚어낸 특별한 순간을 만나보세요.
-After:  9월 소성분 스물네 점을, 가마에서 꺼낸 그대로 찍은 사진과 함께 예약받아요.
+After:  9월 소성분 스물네 점을, 가마에서 꺼낸 그대로 찍은 사진과 함께 보여 드리고 예약을 받아요.
 ```
 
 The after line uses only what the brief supplies: a monthly firing, twenty-four pieces, photographs taken
@@ -267,19 +270,22 @@ After:  사진 12장 중 7장을 올렸어요. 8번째 파일이 크기 제한�
 
 The edit adds detail only because the product state supplies it, and it fixes the mixed endings on the
 way. Leave copy alone when it is already exact: a real contrast that corrects a likely misreading
-(보관하면 사이드바에서만 사라지고, 기록은 그대로 남아요., which `copy.contrast-frame` keeps because it
-carries scope), a precise term for its audience, legal scope with its exception, and a short true
-consequence such as 삭제하면 되돌릴 수 없어요.
+(보관하면 사이드바에서만 사라지고, 기록은 그대로 남아요.; if `copy.contrast-frame` counts a contrast
+like it, record a `keep` with the reason that it carries scope), a precise term for its audience, legal
+scope with its exception, and a short true consequence such as 삭제하면 되돌릴 수 없어요.
 
 ## Register and language
 
 `content.voice.register` holds one value for the surface, and `content.voice.notes` holds any split by
-surface or locale (a formal register for payment text, a plainer one for help). `copy.register-mix`
+surface or locale (a formal register for payment text, a plainer one for help). The checks read the
+register and never the notes, so a split lives with the writer and the reviewer. `copy.register-mix`
 warns at P2 when honorific or formality registers mix on one surface; it reads the sentence endings of
-each locale against the plan's register, does not count compact labels that carry no ending, and keeps
-quoted speech and fixed-register legal text. Register follows the product, the surface, and the reader,
-never a nationality. Read the notes below as decisions to confirm, not settled style: a reader proficient
-in the locale confirms product terms and tone, and the report says so when none has.
+each locale against the plan's register, and does not classify compact labels that carry no ending or a
+sentence that opens with a quotation mark. It does not know legal text or a surface whose register the
+notes change, and flags their endings against the plan's register: record a `keep` with the reason.
+Register follows the product, the surface, and the reader, never a nationality. Read the notes below
+as decisions to confirm, not settled style: a reader proficient in the locale confirms product terms
+and tone, and the report says so when none has.
 
 ### Korean
 
@@ -323,13 +329,14 @@ in the locale confirms product terms and tone, and the report says so when none 
   what the product supplies: from 승인 대기. 게시 불가., write 승인을 기다리고 있어요. 지금은 게시할 수
   없어요.; the stronger 관리자가 승인하기 전에는 게시할 수 없어요 is written only when the rule and the
   actor are confirmed.
-- **Translationese.** `copy.translationese` warns when constructions carried over from English
-  accumulate, such as agentless passives, chains of nouns, and 통해 with 것이 가능하다. 요청은 시스템에
-  의해 처리됩니다 becomes 시스템이 요청을 처리해요, and 이 화면을 통해 예약 내역을 변경하는 것이 가능해요
-  becomes 이 화면에서 예약 내역을 바꿀 수 있어요. A needless pronoun goes too: 우리는 결제를 처리하지
-  못했어요 becomes 결제를 처리하지 못했어요. The check counts by density, so one construction that names
-  a real route stays; a surface made of them reads as translated. Keep a passive when the result
-  matters more than the actor.
+- **Translationese.** `copy.translationese` warns when, by density, constructions carried over from
+  English accumulate. In Korean it counts three: double passives (되어지다, 쓰여지다), ~에 있어서, and
+  ~를 통해. It does not count agentless passives, chains of nouns, 에 의해, or 것이 가능하다; the writer
+  catches those. 요청은 시스템에 의해 처리됩니다 becomes 시스템이 요청을 처리해요, and 이 화면을 통해
+  예약 내역을 변경하는 것이 가능해요 becomes 이 화면에서 예약 내역을 바꿀 수 있어요 (the check sees
+  only the 통해). A needless pronoun goes too: 우리는 결제를 처리하지 못했어요 becomes 결제를 처리하지
+  못했어요. One construction that names a real route stays; a surface made of them reads as
+  translated. Keep a passive when the result matters more than the actor.
 
 ### Japanese
 
@@ -355,9 +362,10 @@ in the locale confirms product terms and tone, and the report says so when none 
   casual, and a sentence with neither is left unjudged. Which a product uses is a documented product and
   market decision, and a plain 你 voice is not a careless one; omitting the pronoun is common in
   interface Chinese.
-- Cut what English syntax adds. `copy.translationese` counts 进行 with a verbal noun and overused
-  passives: 您可以通过点击下面的按钮来进行预约的取消 becomes 点击“取消预约”即可取消. If the button
-  already says 取消预约, the sentence goes. A short true consequence stays short: 删除后无法恢复。
+- Cut what English syntax adds. `copy.translationese` counts every 进行 and 被 by density and cannot
+  tell a needed one from filler: 您可以通过点击下面的按钮来进行预约的取消 becomes 点击“取消预约”即可取消.
+  If the button already says 取消预约, the sentence goes. A short true consequence stays short:
+  删除后无法恢复。
 - Punctuation follows the region: curly quotes “ ” on the mainland, corner brackets 「 」 in Taiwan (Hong
   Kong varies), full-width marks inside Chinese sentences, half-width in Latin runs. Choose the measure
   word by the noun (一件作品, 一个订单) and do not reuse one across nouns.
@@ -370,10 +378,9 @@ other promise is supplied.
 
 | Locale | Copy |
 |---|---|
-| ko-KR, `haeyo` | 예약이 저장됐어요. 소성이 마감되기 전까지 예약 내역에서 바꿀 수 있어요. |
+| ko-KR, `haeyo` | 예약이 저장됐어요. 소성 예약이 마감되기 전까지 예약 내역에서 바꿀 수 있어요. |
 | ja-JP, `desu-masu` | 予約を保存しました。焼成の受付が終わるまでは、予約内容のページで変更できます。 |
-| zh-Hans | 预约已保存。本次烧制截止前，可在预约详情页修改。 |
-| zh-Hant | 預約已儲存。本次燒製截止前，可在預約詳情頁修改。 |
+| zh-Hans | 预约已保存。烧制预约截止前，可在预约详情页修改。 |
 | en, `en-casual` | Reservation saved. You can change it on the reservation page until the firing closes. |
 
 The structures differ and none adds a promise. Write each locale from the facts, then read it as a reader
@@ -441,8 +448,8 @@ content:
       forms. Terms: 소성분, 예약 (not 주문).
   key_copy:
     - { slot: cta, text: 작품 보기, locale: ko-KR }
-    - { slot: empty-state, text: "예약 가능한 작품이 없어요. 필터를 지우면 9월 소성분 전체가 보여요.", locale: ko-KR }
-    - { slot: error, text: "예약을 저장하지 못했어요. 입력한 내용은 그대로 남아 있어요. 다시 시도해 주세요.", locale: ko-KR }
+    - { slot: empty-state, text: "선택한 조건에 맞는 작품이 없어요. 필터를 지우면 9월 소성분 전체가 보여요.", locale: ko-KR }
+    - { slot: error, text: "예약을 저장하지 못했어요. 입력한 내용은 그대로 남아 있어요.", locale: ko-KR }
 ```
 
 The cancel confirmation and the notice signup are interface text written with the code, in the wording
@@ -457,7 +464,8 @@ to `cta` entries (a gate), `copy.name-swap` to `headline`, `subhead`, and `other
 entry for `copy.meta-text`, `copy.placeholder-content`, and `copy.buzzwords`. `lapis-design slop lint`
 with a render extract, which the `ultramarine` skill runs, reads the rendered copy: register,
 translationese, rhetorical habits, proof, and repeated notices. The P3 copy rules warn; walk each card
-and keep or reject it with a reason.
+and keep or reject it with a reason. The `keep_when` cases of a rule, such as a legal register or a
+contrast that carries scope, are decisions the check cannot see: record each `keep` with its reason.
 
 Error, offline, and empty states are read from a behavior session. `behavior check` with the `states`
 probe induces them from the stub and records whether each says what went wrong and offers a way forward;

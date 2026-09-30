@@ -193,14 +193,15 @@ Checks during work stay small; the full set runs once at the release gate.
 1. `lapis-design slop lint --plan .lapis/plans/<task>.yaml --source <source dir> -o .lapis/lint/<task>.json`.
    It needs no browser, so run it after every change to styles or markup: it finds literal colors,
    off-scale spacing, and bypassed primitives in the code (`system.*`) while they are cheap to fix.
-2. `lapis-design render check <url> --task <task> --width 390`, then lint again with
+2. `lapis-design render check <url> --task <task> --width 390`, then rerun the lint with
    `--extract .lapis/renders/<task>.json` added. When the render cannot run (no browser in the
    sandbox, no server), keep the source-layer lint and list the render check among the checks that
    did not run.
 3. Only when the change touched behavior: `lapis-design behavior check <url> --task <task>
    --plan .lapis/plans/<task>.yaml --stub .lapis/stub.yaml --probe <probe>`, one `--probe` per
-   area you changed (forms, dialogs, choices, flows, keyboard, ...), then lint again with
-   `--session .lapis/behavior/<task>.json`.
+   area you changed (forms, dialogs, choices, flows, keyboard, ...), then rerun the lint with
+   `--session .lapis/behavior/<task>.json` added to the same command, so the report keeps every
+   layer that has run.
 4. Hand the plan, extract, and lint report to the separate critic (the `ultramarine` skill runs it).
    You wrote the design, so you do not judge it. When `ultramarine` is not installed, tell the user
    that no independent review ran and list it among the checks that did not run.

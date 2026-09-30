@@ -116,10 +116,12 @@ primary color on an unchanged starter theme is not a system.
 ## Check
 
 Run `lapis-design plan check .lapis/plans/<task>.yaml` after updating `tokens`, and
-`lapis-design slop lint --plan .lapis/plans/<task>.yaml --source <source dir>` after writing or
-changing code: the source layer finds literal colors, off-scale values, and bypassed primitives
-(`system.*` rules) against the plan's tokens, and needs no browser. Fix what it reports before
-handing off; the `ultramarine` skill runs the full lint with the render and behavior layers.
+`lapis-design slop lint --source <source dir>` after writing or changing code; add
+`--plan .lapis/plans/<task>.yaml` when a plan exists. The source layer finds literal colors,
+off-scale values, and bypassed primitives (`system.*` rules) and needs no browser. It runs without a
+plan; then `system.off-scale-value` is judged only against token definitions in the project itself,
+and is skipped, never passed, when there are none. Fix what it reports before handing off; the
+`ultramarine` skill runs the full lint with the render and behavior layers.
 
 ## Reporting
 

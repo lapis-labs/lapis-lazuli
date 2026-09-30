@@ -15,7 +15,7 @@ one source, and two CLIs, `lapis-design` and `lazuli`, that the skills, hooks, a
    default. `lapis-design plan check` validates it before any code is written.
 2. **Build.** The agent implements against the plan; `lps-ux`, `lps-copy`, and `lps-system` cover
    flows, copy, and the design system.
-3. **Check.** `ultramarine` runs `lapis-design` on your own render: capture under nine conditions
+3. **Check.** `ultramarine` runs `lapis-design` on your own render: capture under up to nine conditions
    (320 to 1440 px wide, light and dark, reduced motion, a mobile browser frame); drive flows
    against a stub backend; lint for generic-looking and deceptive patterns and for missing rights
    records; and hand what measurement cannot judge to a separate critic. `ulm-release` is the
@@ -33,7 +33,7 @@ one source, and two CLIs, `lapis-design` and `lazuli`, that the skills, hooks, a
 | | `lps-system` | Turns a plan's decisions into a design system: OKLCH color ramps, type scale, spacing, motion, themes, `DESIGN.md`. |
 | `ultramarine` | `ultramarine` | Checks interfaces that exist: render capture, behavior probes, slop lint, and a separate critic. |
 | | `ulm-maintain` | Maintains an existing frontend (refactors, upgrades, performance, design debt) in small checked steps from a captured baseline. |
-| | `ulm-release` | Runs the release gate and writes the report that says whether the output may ship. |
+| | `ulm-release` | Runs the release gate and writes the report that says whether the checks it ran allow shipping. |
 | `lazuli` | `lazuli` | Runs the `lazuli` CLI and maps plan fields to its lookups. |
 | | `lzl-fonts` | Gives font facts with evidence: inventory, catalog labels, ranked candidates, licenses, script coverage; writes the fonts lock. |
 | | `lzl-color` | Checks color system codes and keeps your own values for them. |
@@ -92,8 +92,8 @@ The status comes from `install/harnesses.yaml`; the exact commands for each harn
 - **Scrape live sites.** `lazuli read` reads one page you ask for, within the source registry's
   policy and the site's `robots.txt`. Catalog lookups keep a human pace and any stated crawl delay,
   name lazuli in their request headers, and never get around a block or a sign-in. Where a site's
-  terms forbid automated collection (Adobe Fonts, noonnu), lazuli sends nothing and gives you a
-  link.
+  terms forbid automated collection (Adobe Fonts and noonnu, terms read on 2026-09-26), lazuli sends
+  nothing and gives you a link.
 - **Open Adobe Fonts files.** Fonts an Adobe Fonts subscription activates are listed through the
   operating system's font API on macOS (Core Text) and measured from glyphs the system draws; only
   derived numbers are kept, and the files are never opened. Windows has no such listing, so Adobe
@@ -115,6 +115,8 @@ The status comes from `install/harnesses.yaml`; the exact commands for each harn
 - **Give legal advice.** Rights checks compare the records you keep and never state a legal
   conclusion. Ledgers and locks never hold credentials, license keys, payment data, or private
   receipts.
+- **Certify conformance.** LapisLazuli reports what its checks found. It does not certify
+  accessibility or legal conformance.
 - **Approve for you.** The plan-mode hook only denies a plan that has blocking findings; approval
   stays with you.
 
