@@ -11,10 +11,19 @@ Core Text instead:
   the database is `coretext:<PostScript name>`, which is not a path.
 - Names, coverage, weight, and slant: descriptor attributes, `CTFontCopyName` and
   `CTFontCopyLocalizedName` (family, style, version, manufacturer, designer), and
-  `CTFontGetGlyphsForCharacters`. The name-table language ids of file faces have no Core Text
-  counterpart: Core Text gives one localized name, in the user's preferred language, and that is the only
-  one recorded (`names_i18n_json` holds it when that language is Korean, Japanese, or Chinese).
-  `vendor_id` (OS/2) stays empty, since nothing here reads a table.
+  `CTFontGetGlyphsForCharacters`. `vendor_id` (OS/2) stays empty, since nothing here reads a table.
+- Localized family names: the name-table language ids of file faces have no Core Text counterpart, and
+  `CTFontCopyLocalizedName` answers in the preferred language of the process that asks, so the scan's own
+  process learns one name, in the system language. For each of `ko`, `ja`, `zh-Hans`, and `zh-Hant`, a helper
+  process (`python -m lazuli.coretext --names`, started with the extra argument `-AppleLanguages (xx)`,
+  which sets that process's preferred language) is given the PostScript names of the faces the scan is
+  describing, one process per language, and answers each face's family name in that language. The helper
+  makes fonts from the same font list by PostScript name, never by path and never from a URL, binds only
+  `ALLOWED_CALLS`, and opens no file. A name is kept only when Core Text reports the requested language for
+  it, so a face with no name in that language has none, as a file face has none. The names go into
+  `names_i18n_json` under the keys files use (`ko`, `ja`, `zh-Hans`, `zh-Hant`). A helper that fails or
+  runs out of time leaves its language absent for that scan and is reported as one skipped line; it never
+  fails the scan.
 - Design metadata: `CTFontCopyVariationAxes` returns OS-derived axis identifiers and numeric limits, not fvar
   bytes. `CTFontCopyFeatures` returns OS-derived AAT feature/selector dictionaries, not GSUB/GPOS bytes;
   mapped OpenType tags are a partial list. Vertical Substitution Forms (type 4, selector 0) maps to `vert`,
@@ -34,19 +43,21 @@ Core Text instead:
   other, so outlines (`CTFontCreatePathForGlyph`) and table bytes (`CTFontCopyTable`) cannot be added
   by accident.
 
-`LAZULI_FONT_ROOTS` (tests, evaluations) turns the listing off (`provider()` returns None), so no Adobe data
-reaches a test or an evaluation. Adobe Fonts terms allow using this data for inference only. Windows has no
-counterpart here: Adobe Fonts are absent from the inventory there.
+`LAZULI_FONT_ROOTS` (tests, evaluations) turns the listing off (`provider()` returns None), and starts no
+helper (`run_names_helper`), so no Adobe data reaches a test or an evaluation. Adobe Fonts terms allow using
+this data for inference only. Windows has no counterpart here: Adobe Fonts are absent from the inventory
+there.
 """
 from __future__ import annotations
 
 import array
+import json
 import os
 import sys
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import PurePath
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Callable, Iterable
 
 if TYPE_CHECKING:
     import numpy as np
@@ -54,6 +65,8 @@ if TYPE_CHECKING:
 IDENTITY_PREFIX = "coretext:"
 SYMLINK_LIMIT = 40
 UNICODE_PLANES = (0, 1, 2, 3)            # planes that hold letters: BMP, SMP, SIP, TIP
+NAMES_LANGUAGES = ("ko", "ja", "zh-Hans", "zh-Hant")    # the keys of `names_i18n_json`, one helper process each
+NAMES_TIMEOUT = 30.0                     # seconds a helper process may run before it is killed
 
 # The Core Text, Core Foundation, and Core Graphics symbols this module may bind, and nothing else.
 ALLOWED_CALLS = frozenset({
@@ -157,6 +170,11 @@ class Provider:
     def open(self, identity: str, raster_px: int):
         """A `measure.Face`-shaped adapter for one listed face; LookupError when it is no longer listed."""
         raise NotImplementedError
+
+    def localized_names(self, identities: list[str]) -> tuple[dict[str, dict[str, str]], list[str]]:
+        """({identity: {language key: family name}}, one line per language that could not be asked). A list
+        with no localized names of its own (fakes, other platforms) has nothing to add."""
+        return {}, []
 
 
 def supported() -> bool:
@@ -448,10 +466,11 @@ class _Library:
 class CoreText(Provider):
     """Adobe Fonts faces as Core Text lists them (see the module doc for what is read). `is_adobe` decides from
     a face's URL, as text, whether it is an Adobe Fonts face; tests narrow it to their own synthetic fonts so
-    that no real Adobe face is ever read."""
+    that no real Adobe face is ever read. `names_runner` stands in for `run_names_helper` in tests."""
 
-    def __init__(self, is_adobe: Callable[[str], bool] = is_adobe_path) -> None:
+    def __init__(self, is_adobe: Callable[[str], bool] = is_adobe_path, names_runner: Runner | None = None) -> None:
         self.is_adobe = is_adobe
+        self.names_runner = names_runner
         self.lib = _Library()
         self._collection = None
         self._descriptors = None
@@ -545,6 +564,133 @@ class CoreText(Provider):
 
     def open(self, identity: str, raster_px: int) -> CTFace:
         return CTFace(self.lib, self._descriptor(identity), raster_px)
+
+    def localized_names(self, identities: list[str]) -> tuple[dict[str, dict[str, str]], list[str]]:
+        """Family names in Korean, Japanese, and both Chinese scripts, from one helper process per language
+        (see the module doc); {} while `LAZULI_FONT_ROOTS` is set. Faces are named to the helpers by PostScript
+        name, the tail of their identity."""
+        identity_of = {identity[len(IDENTITY_PREFIX):]: identity for identity in identities
+                       if identity.startswith(IDENTITY_PREFIX)}
+        names, problems = localized_names(identity_of, self.names_runner)
+        return {identity_of[postscript]: found for postscript, found in names.items()}, problems
+
+
+# ---------------------------------------------------------------- localized names: one helper process per language
+
+Runner = Callable[[str, list[str]], object]      # (language key, PostScript names) -> the helper's decoded answer
+
+
+def run_names_helper(language: str, postscripts: list[str]) -> object:
+    """Ask `python -m lazuli.coretext --names` for the family names of `postscripts` in `language`: a new
+    process whose extra argument `-AppleLanguages (language)` sets the preferred language Core Text answers in.
+    The names go in as a JSON list on stdin and come out as JSON on stdout: {PostScript name: {"name",
+    "language"}}, the language Core Text reports for that name. Raises when the process fails, is killed after
+    `NAMES_TIMEOUT` seconds, or answers something that is not JSON. `-P` keeps the working directory off the
+    helper's import path, so a folder named `lazuli` in a project is never run in its place. While
+    `LAZULI_FONT_ROOTS` is set no process is started and the answer is empty."""
+    if os.environ.get("LAZULI_FONT_ROOTS"):
+        return {}
+    import subprocess
+
+    done = subprocess.run([sys.executable, "-P", "-m", "lazuli.coretext", "--names", "-AppleLanguages", f"({language})"],
+                          input=json.dumps(postscripts), capture_output=True, encoding="utf-8",
+                          timeout=NAMES_TIMEOUT, check=True)
+    return json.loads(done.stdout)
+
+
+def _kept(language: str, wanted: list[str], answer: object) -> dict[str, str]:
+    """{PostScript name: family name} for the entries of a helper's answer that name a face asked for, in the
+    language asked for: `language_key` of the reported language must be `language`, so a fallback (English,
+    or another script) is dropped, and `zh-Hans` and `zh-Hant` are told apart."""
+    if not isinstance(answer, dict):
+        raise ValueError("the helper's answer is not an object")
+    kept = {}
+    for postscript in wanted:
+        entry = answer.get(postscript)
+        if not isinstance(entry, dict):
+            continue
+        name, reported = entry.get("name"), entry.get("language")
+        if isinstance(name, str) and isinstance(reported, str) and name.strip() and language_key(reported) == language:
+            kept[postscript] = name.strip()
+    return kept
+
+
+def localized_names(postscripts: Iterable[str], runner: Runner | None = None,
+                    languages: Iterable[str] = NAMES_LANGUAGES) -> tuple[dict[str, dict[str, str]], list[str]]:
+    """({PostScript name: {language key: family name}}, problems): the helper for each language gets every
+    name in one process, one language after another, from the calling thread (helpers started from threads
+    of a process that has Core Text loaded measured 7 times slower for 20 faces and ran into a 60 s timeout
+    for 942). A helper that fails or times out leaves its language out and adds one line to the problems
+    (the scan reports them and goes on)."""
+    wanted = sorted(set(postscripts))
+    names: dict[str, dict[str, str]] = {}
+    problems: list[str] = []
+    if not wanted:
+        return names, problems
+    run = runner or run_names_helper
+    for language in languages:
+        try:
+            kept = _kept(language, wanted, run(language, wanted))
+        except Exception as exc:                  # a language that cannot be asked stays absent
+            problems.append(f"Adobe Fonts: {language} names not read ({type(exc).__name__})")
+            continue
+        for postscript, name in kept.items():
+            names.setdefault(postscript, {})[language] = name
+    return names, problems
+
+
+def names_in_this_process(postscripts: Iterable[str]) -> dict[str, dict[str, str]]:
+    """What the helper does: {PostScript name: {"name", "language"}} for the listed faces among `postscripts`,
+    family names in the language this process prefers. Only `ALLOWED_CALLS` are bound. The font list is walked
+    for descriptors named as asked (the first of a name wins, as in `CoreText._list`); no URL is read, so
+    nothing here can tell where a font lives, let alone open it. A face with no name is left out."""
+    wanted = set(postscripts)
+    lib = _Library()
+    collection = lib.CTFontCollectionCreateFromAvailableFonts(None)
+    descriptors = lib.CTFontCollectionCreateMatchingFontDescriptors(collection)
+    answers: dict[str, dict[str, str]] = {}
+    seen: set[str] = set()
+    try:
+        for position in range(lib.CFArrayGetCount(descriptors) if descriptors else 0):
+            if len(seen) == len(wanted):
+                break
+            descriptor = lib.CFArrayGetValueAtIndex(descriptors, position)
+            postscript = lib.attribute_string(descriptor, "kCTFontNameAttribute")
+            if postscript not in wanted or postscript in seen:
+                continue
+            seen.add(postscript)
+            font = lib.CTFontCreateWithFontDescriptor(descriptor, 12.0, None)
+            try:
+                name, language = lib.localized_name(font, "kCTFontFamilyNameKey")
+            finally:
+                lib.CFRelease(font)
+            if name and language:
+                answers[postscript] = {"name": name, "language": language}
+    finally:
+        for ref in (descriptors, collection):
+            if ref:
+                lib.CFRelease(ref)
+    return answers
+
+
+def main(argv: list[str] | None = None) -> int:
+    """`python -m lazuli.coretext --names`: read a JSON list of PostScript names on stdin, write the JSON
+    answer of `names_in_this_process` on stdout. Anything after `--names` (the `-AppleLanguages (xx)` pair) is
+    for Core Text, which reads it from the process's arguments; it is not parsed here."""
+    args = sys.argv[1:] if argv is None else argv
+    if args[:1] != ["--names"]:
+        print("usage: python -m lazuli.coretext --names   (a JSON list of PostScript names on stdin; the language "
+              "comes from the extra arguments -AppleLanguages '(xx)')", file=sys.stderr)
+        return 2
+    try:
+        postscripts = json.load(sys.stdin)
+        if not isinstance(postscripts, list) or not all(isinstance(name, str) for name in postscripts):
+            raise ValueError("not a list of names")
+    except ValueError as exc:
+        print(f"--names: stdin is not a JSON list of PostScript names ({exc})", file=sys.stderr)
+        return 2
+    json.dump(names_in_this_process(postscripts), sys.stdout)          # ASCII-only, whatever the pipe's encoding
+    return 0
 
 
 # ---------------------------------------------------------------- measurement adapter
@@ -674,3 +820,7 @@ class CTFace:
 
     def units(self, px: float) -> float:
         return px * self.upm / self.raster_px
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

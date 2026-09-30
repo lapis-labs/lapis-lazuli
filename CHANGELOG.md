@@ -12,6 +12,9 @@ All notable changes are recorded here. The format follows
   writing support, version, x-height, cap height, units per em, and the OS/2 family class. Adobe
   Fonts faces get these through Core Text only. Existing databases fill them on the next scan.
 - `lazuli local fonts --origin system|user|adobe-sync` lists only the faces from one origin.
+- On macOS, Adobe Fonts faces also store Korean, Japanese, and Simplified and Traditional Chinese
+  family names where the font has them, read by short helper processes that ask Core Text in each
+  language; before, only the system language was stored.
 - The `lzl-fonts` reference `adobe-fonts.md` tells agents how to add Adobe Fonts metadata through the
   host's official Adobe integration, for display only; lazuli itself sends nothing.
 

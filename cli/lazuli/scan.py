@@ -14,8 +14,11 @@ through the operating system's font API. Adobe's folders (`~/Library/Application
 in them is opened, stat'ed, or listed. On macOS the faces Core Text lists from those folders are added as
 rows whose path is `coretext:<PostScript name>` (an identity, not a path), whose size is 0, and whose mtime
 is `coretext:<version name>` (the change detector). Names, coverage, and design metadata come from Core Text,
-and vendor_id stays empty (see `coretext`). Faces Core Text stops listing are removed with their measurements
-at the next scan. On Windows and Linux Adobe Fonts are absent from the inventory.
+and vendor_id stays empty (see `coretext`). Korean, Japanese, and Chinese family names of the faces a scan
+describes come from one helper process per language, started once for all of them, and are stored under
+the keys file faces use; a language whose helper fails is skipped with one line. Faces Core Text stops
+listing are removed with their measurements at the next scan. On Windows and Linux Adobe Fonts are absent
+from the inventory.
 
 `LAZULI_FONT_ROOTS` replaces the roots (tests, evaluations) and turns the Core Text listing off, so no Adobe
 data reaches them: entries separated by the OS path separator, each `system=path` or `user=path` (any other
@@ -291,10 +294,13 @@ def faces(path: Path):
     return [(0, TTFont(str(path), lazy=True))]
 
 
-def describe_adobe(face: coretext.AdobeFace) -> dict:
-    """Inventory and design metadata from OS-derived values only, never an Adobe font's tables or files."""
+def describe_adobe(face: coretext.AdobeFace, localized: dict[str, str] | None = None) -> dict:
+    """Inventory and design metadata from OS-derived values only, never an Adobe font's tables or files.
+    `localized` holds the family names the helper processes found ({language key: name}); the name in the
+    system language, which the scan's own process learns, stays as it is."""
     info = face.describe(COVERAGE, languages.wanted())
     i18n, coverage = info.pop("names_i18n"), info.pop("coverage")
+    i18n = {**i18n, **{language: name for language, name in (localized or {}).items() if language not in i18n}}
     metadata = info.pop("metadata")
     metadata["languages"] = languages.supported(info.pop("mapped"))
     return {**info, "family_norm": norm(info["family"]),
@@ -341,6 +347,7 @@ def scan(conn: sqlite3.Connection, *, rescan: bool = False) -> ScanResult:
     longer lists is removed with its measurements. When the listing fails, the Adobe rows already stored stay."""
     files = font_files()
     adobe: list[coretext.AdobeFace] = []
+    provider = None
     unreadable = []
     keep_adobe = False
     try:
@@ -373,13 +380,15 @@ def scan(conn: sqlite3.Connection, *, rescan: bool = False) -> ScanResult:
             updated += 1
         else:
             added += 1
-    for face in adobe:
-        present.add(face.identity)
+    present.update(face.identity for face in adobe)
+    changed = [face for face in adobe
+               if rescan or known.get(face.identity) != (0, face.token) or face.identity in stale]
+    localized, problems = provider.localized_names([face.identity for face in changed]) if changed else ({}, [])
+    unreadable.extend(problems)                       # a language nobody could ask leaves that name absent
+    for face in changed:
         unchanged = known.get(face.identity) == (0, face.token)
-        if not rescan and unchanged and face.identity not in stale:
-            continue
         try:
-            info = describe_adobe(face)
+            info = describe_adobe(face, localized.get(face.identity))
         except Exception as exc:
             unreadable.append(f"{face.identity}: {type(exc).__name__}")
             continue
