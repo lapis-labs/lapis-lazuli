@@ -55,10 +55,10 @@ Run either with `--help` for the commands and options.
 
 | Harness | Status | Notes |
 |---|---|---|
-| [Claude Code](INSTALLATION.md#claude-code) | Verified (2.1.274, 2026-09-27) | Plugins, session-start hook, plan-mode hook, MCP server, critic subagent. |
-| [OpenAI Codex CLI](INSTALLATION.md#openai-codex-cli) | Verified (0.157.x, 2026-09-27) | Plugins, session-start hook (you trust it in `/hooks`), MCP server, critic as an agent file the installer copies. |
-| [Oh-My-Pi](INSTALLATION.md#oh-my-pi) | Verified (18.3.1, 2026-09-27) | Plugins through its marketplace, session-start extension, MCP server, critic as a task agent. |
-| [Other Agent Skills harnesses](INSTALLATION.md#other-agent-skills-harnesses) (Cursor, Gemini CLI, GitHub Copilot, opencode, Windsurf, Kiro CLI) | Listing verified through the `skills` CLI (1.7.0, 2026-09-27) | Skills only, plus an `AGENTS.md` snippet for the session summary and MCP setup. Each agent was not tested on its own. |
+| [Claude Code](INSTALLATION.md#claude-code) | Verified (2.1.274, 2026-09-27; public install 2.1.277, 2026-09-30) | Plugins, session-start hook, plan-mode hook, MCP server, critic subagent. |
+| [OpenAI Codex CLI](INSTALLATION.md#openai-codex-cli) | Verified (0.157.x, 2026-09-27; public install 0.159.0, 2026-09-30) | Plugins, session-start hook (you trust it in `/hooks`), MCP server, critic as an agent file the installer copies. |
+| [Oh-My-Pi](INSTALLATION.md#oh-my-pi) | Verified (18.3.1, 2026-09-27; public install 18.4.4, 2026-09-30) | Plugins through its marketplace, session-start extension, MCP server, critic as a task agent. |
+| [Other Agent Skills harnesses](INSTALLATION.md#other-agent-skills-harnesses) (Cursor, Gemini CLI, GitHub Copilot, opencode, Windsurf, Kiro CLI) | Listing verified through the `skills` CLI (1.7.0, 2026-09-30) | Skills only, plus an `AGENTS.md` snippet for the session summary and MCP setup. Each agent was not tested on its own. |
 | [pi](INSTALLATION.md#pi) | Experimental | Skills and a session-start extension; not yet confirmed on a real install. |
 | [Hermes Agent](INSTALLATION.md#hermes-agent) | Experimental | Skills, a Hermes plugin, and MCP; not yet confirmed on a real install. |
 
