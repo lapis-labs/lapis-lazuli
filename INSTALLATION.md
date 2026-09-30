@@ -2,7 +2,7 @@
 
 # Installing LapisLazuli
 
-LapisLazuli is design skills for AI agents in 3 plugins, plus the CLI their hooks and MCP server call (commands `lapis-design`, `lazuli`). This guide is generated for version 0.1.0.
+LapisLazuli is design skills for AI agents in 3 plugins, plus the CLI their hooks and MCP server call (commands `lapis-design`, `lazuli`). This guide is generated for version 0.1.1.
 
 | Plugin | What it does | Skills |
 |---|---|---|

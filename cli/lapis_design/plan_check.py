@@ -46,11 +46,11 @@ from typing import Any, Iterable
 import yaml
 from jsonschema import Draft202012Validator
 
-from lapis_design import shared_dir
+from lapis_design import __version__, shared_dir
 
 _YAML_LOADER = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
 
-VERSION = "0.1.0"
+VERSION = __version__
 WEB_DELIVERY = {"self-host", "adobe-web-project", "google-fonts-api"}
 APP_PLATFORMS = {"ios", "android", "desktop", "embedded"}
 # Channels whose files cannot be the shipped files: a subscription client's synced copy, an OS copy,

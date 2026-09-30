@@ -5,7 +5,7 @@
 # Every harness command is an argv list from that file, run as quoted words; nothing is eval'd.
 set -u
 
-LL_VERSION='0.1.0'
+LL_VERSION='0.1.1'
 LL_REPO='lapis-labs/lapis-lazuli'
 LL_REF='release'
 LL_RAW='https://raw.githubusercontent.com/lapis-labs/lapis-lazuli/release'

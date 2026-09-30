@@ -33,11 +33,11 @@ from typing import Iterable, Mapping
 
 import yaml
 
-from lapis_design import plan_check, shared_dir
+from lapis_design import __version__, plan_check, shared_dir
 from lapis_design.lint import detectors
 from lapis_design.lint.types import DETECTORS, Context, Hit, Result
 
-VERSION = "0.1.0"
+VERSION = __version__
 LAYERS = ("plan", "source", "render", "behavior", "review")
 LAYER_EVIDENCE = {"plan": "plan", "source": "source", "render": "measurement", "behavior": "runtime",
                   "review": "review"}

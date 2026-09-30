@@ -4,7 +4,7 @@ description: Checks color system codes and keeps the user's own values for them 
 license: MIT AND CC-BY-4.0
 metadata:
   plugin: lazuli
-  version: 0.1.0
+  version: 0.1.1
 ---
 
 # lzl-color

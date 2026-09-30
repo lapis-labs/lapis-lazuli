@@ -5,7 +5,10 @@ All notable changes are recorded here. The format follows
 [Semantic Versioning](https://semver.org/) once 1.0 is released. Before then, contracts are
 `version: 0` drafts and may change between minor versions.
 
-## Unreleased
+## 0.1.1 (2026-09-30)
+
+Font metadata for every local font, Adobe Fonts handled through the operating system only, and
+install fixes. Contracts are unchanged.
 
 - `lazuli local fonts` stores and shows, for every face, supported languages (by character
   repertoire, the same rule on every platform), variation axes, OpenType feature tags and vertical

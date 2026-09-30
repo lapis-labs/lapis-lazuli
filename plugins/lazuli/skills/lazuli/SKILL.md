@@ -4,7 +4,7 @@ description: Runs the lazuli CLI that supplies facts for design work - local fon
 license: MIT AND CC-BY-4.0
 metadata:
   plugin: lazuli
-  version: 0.1.0
+  version: 0.1.1
 ---
 
 # lazuli
