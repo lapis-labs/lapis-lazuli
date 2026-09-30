@@ -53,6 +53,7 @@ import hashlib
 import re
 import unicodedata
 from difflib import SequenceMatcher
+from urllib.parse import urlsplit
 
 from lapis_design.behavior_check.probes._decision import CANCEL, CLOSE, DECLINE, LATER
 from lapis_design.behavior_check.redact import path as safe_path
@@ -650,7 +651,7 @@ def _read(driver, flow):
 def _run_one(session, open_driver, flow, ctx_id, start):
     driver = open_driver(ctx_id)
     try:
-        if start != "/":
+        if urlsplit(driver.page.url).path != start:
             driver.open(start)
         run = {"id": flow["id"], "context": ctx_id, "kind": flow["kind"], "status": "blocked",
                "steps": [], "effort": {"steps": 0, "interactions": 0, "fields": 0,

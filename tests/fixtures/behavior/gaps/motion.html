@@ -1,0 +1,36 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Motion gaps</title><style>
+body{font:16px system-ui;margin:0}main{padding:20px}
+.box,.track{width:120px;height:26px;margin:6px 0;color:#fff;background:#345}
+.group{margin:2px 0}button{padding:2px 8px}
+/* Unguarded: all four still animate under reduced motion, except the pure fade, which does not gate. */
+#slide-fade{animation:slide-fade 2s ease-in-out infinite alternate}
+#fade{animation:fade 2s ease-in-out infinite alternate}
+#margin-slide{position:relative;animation:shift 2s linear infinite alternate}
+/* Guarded: no animation at all under reduced motion. */
+@media (prefers-reduced-motion:no-preference){
+  #guarded{animation:slide 2s ease-in-out infinite alternate}
+  .track{animation:slide 2s linear infinite alternate}
+}
+@keyframes slide-fade{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fade{from{opacity:.2}to{opacity:1}}
+@keyframes shift{from{left:0}to{left:80px}}
+@keyframes slide{from{transform:translateX(0)}to{transform:translateX(80px)}}
+</style></head><body><main><h1>Motion gaps</h1>
+<section><h2>Fade combinations</h2>
+<div id="slide-fade" class="box">Fade and slide</div>
+<div id="fade" class="box">Fade only</div>
+<div id="margin-slide" class="box">Left slide</div>
+<div id="guarded" class="box">Guarded slide</div></section>
+<section><h2>Pause controls</h2>
+<div class="group"><div id="en-text" class="track">One</div><button>Pause</button></div>
+<div class="group"><div id="en-labelledby" class="track">Two</div><button aria-labelledby="stop-name"><svg aria-hidden="true" width="10" height="10"><rect width="10" height="10"/></svg></button><span id="stop-name" hidden>Stop</span></div>
+<div class="group"><div id="ko-text" class="track">Three</div><button>일시정지</button></div>
+<div class="group"><div id="ko-spaced" class="track">Four</div><button>일시 중지</button></div>
+<div class="group"><div id="ko-aria-label" class="track">Five</div><button aria-label="멈춤"><svg aria-hidden="true" width="10" height="10"><rect width="10" height="10"/></svg></button></div>
+<div class="group"><div id="ko-title" class="track">Six</div><button title="정지"><svg aria-hidden="true" width="10" height="10"><rect width="10" height="10"/></svg></button></div>
+<div class="group"><div id="ko-labelledby" class="track">Seven</div><button aria-labelledby="halt-name"><svg aria-hidden="true" width="10" height="10"><rect width="10" height="10"/></svg></button><span id="halt-name" hidden>멈추기</span></div>
+<div class="group"><div id="ko-remote" class="track">Eight</div></div>
+<button id="remote-control" aria-controls="ko-remote">중지</button>
+<div class="group"><div id="unrelated" class="track">Nine</div><button>자세히 보기</button></div>
+<div class="group"><div id="alone" class="track">Ten</div></div></section>
+</main></body></html>

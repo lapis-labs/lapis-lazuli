@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
+from urllib.parse import urljoin, urlsplit, urlunsplit
 
 import jsonschema
 import yaml
@@ -44,7 +45,12 @@ class Session:
                            ("stub", stub_path)):
             if value is not None:
                 self.meta[key] = value
-        self.source = {"kind": "render", "url": url, "task": task}
+        # The URL the run was pointed at is driven as given, query and fragment included; the session
+        # records only its host and path (DERIVED.md, Scope and safety), and never a query or fragment.
+        parts = urlsplit(url)
+        self.start_url = urlunsplit((parts.scheme, parts.netloc, parts.path or "/", parts.query, parts.fragment))
+        self.source = {"kind": "render", "url": urlunsplit((parts.scheme, parts.netloc, parts.path or "/", "", "")),
+                       "task": task}
         if addresses is not None:
             self.source["addresses"] = addresses
         if plan_path is not None:
@@ -63,6 +69,13 @@ class Session:
         base["id"] = id
         self.contexts[id] = base
         return id
+
+    def url_for(self, path: str) -> str:
+        """The address of a route on the source host. The entry's own route is the URL the run was given,
+        query and fragment kept; any other route is opened as named."""
+        if path == urlsplit(self.start_url).path:
+            return self.start_url
+        return urljoin(self.start_url, path)
 
     @property
     def matrix(self) -> list[str]:

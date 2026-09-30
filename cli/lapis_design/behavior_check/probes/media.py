@@ -2,7 +2,8 @@
 from __future__ import annotations
 import re
 
-from lapis_design.behavior_check.probes._decision import advance, dialogs, reopen_with, response
+from lapis_design.behavior_check.probes._decision import (
+    MEDIA_CONTROL, MEDIA_HALT, advance, dialogs, names, reopen_with, response)
 from lapis_design.behavior_check.probes.permissions import INIT as PERMISSIONS_INIT
 from lapis_design.render.ids import DOM_PATH_JS, box_id
 
@@ -88,22 +89,23 @@ READ = """() => ({media:(window.__lapisMedia||[]).filter(row=>row.element.isConn
  })})"""
 
 
-def _controls(driver, item):
+def _controls(driver, item, named):
     # Native controls are exposed on the media element; keyboard reachability needs a tab stop.
     if item["controls"] and driver.page.locator(f'[data-lapis-box="{item["id"]}"]').evaluate(
             "el => el.tabIndex >= 0"):
         return True
-    return driver.page.evaluate("""(id) => {
+    # Otherwise a control beside the media or naming it in `aria-controls`, read by accessible name.
+    candidates = driver.page.evaluate("""(id) => {
       const el=document.querySelector('[data-lapis-box="'+id+'"]');
-      if(!el)return false;
-      return [...document.querySelectorAll('button,[role="button"],input[type="range"]')].some(c=>{
+      if(!el)return [];
+      return [...document.querySelectorAll('button,[role="button"],input[type="range"]')].filter(c=>{
         const r=c.getBoundingClientRect(),s=getComputedStyle(c);
         return r.width>0&&r.height>0&&s.visibility!=='hidden'&&!c.disabled&&c.tabIndex>=0&&
          (c.getAttribute('aria-controls')===el.id||(el.parentElement&&
-           !el.parentElement.matches('body,main,[role=main],article,section')&&el.parentElement.contains(c)))&&
-         /pause|stop|mute|volume|play/i.test(c.getAttribute('aria-label')||c.innerText||c.title||'')
-      })
+           !el.parentElement.matches('body,main,[role=main],article,section')&&el.parentElement.contains(c)))
+      }).map(c=>c.getAttribute('data-lapis-box')).filter(Boolean)
     }""", item["id"])
+    return any(re.search(MEDIA_CONTROL, named.get(control, ""), re.I) for control in candidates)
 
 
 def run(session, open_driver):
@@ -119,12 +121,13 @@ def run(session, open_driver):
             driver.boxes()
             _audio_nodes(driver)
             values = driver.page.evaluate(READ)
+            named = names(driver) if values["media"] else {}
             for item in values["media"]:
                 if item["id"] not in session.nodes:
                     continue
                 record = {"box": item["id"], "context": ctx_id, "autoplay": item["autoplay"],
                           "audible": item["audible"], "audible_s": round(item["audible_s"], 2),
-                          "controls": _controls(driver, item), "user_gesture": item["gesture"]}
+                          "controls": _controls(driver, item, named), "user_gesture": item["gesture"]}
                 session.add_probe("media", record)
                 observed += 1
             owner_id = None
@@ -157,7 +160,7 @@ def run(session, open_driver):
                         "audible": item["audible_s"] > 0,
                         "audible_s": round(item["audible_s"], 2), "user_gesture": item["gesture"],
                         "controls": bool(owner_id and any(
-                            re.search(r"pause|stop|mute|volume", box["name"] or "", re.I)
+                            re.search(MEDIA_HALT, box["name"] or "", re.I)
                             and box["interactive"] and box["focusable"] and box["enabled"]
                             for box in boxes))})
                     observed += 1

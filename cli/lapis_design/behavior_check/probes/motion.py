@@ -1,5 +1,10 @@
 """Five-second motion windows, automatic motion, and reveal observations.
 
+`kind` is decided per moving box: `video` and `canvas` by the element, `scroll-linked` by the timeline;
+otherwise `transform` when the box's transform changed, or its position changed under an animation that
+names a position property (`left`, `margin`, `inset`, ...), even while it also fades: a fade that slides
+is movement. `opacity` is a fade that stays in place, `other` anything else.
+
 `essential` (motion that conveys the content itself) is decided per moving box:
 - video: never in the at-rest window, because the driver made no gesture there, so any
   playback is autoplay (a background video is not essential);
@@ -12,12 +17,18 @@
 """
 from __future__ import annotations
 
+import re
 from time import monotonic, sleep
 
 import numpy as np
+from lapis_design.behavior_check.probes._decision import PAUSE, names
 from lapis_design.render.ids import DOM_PATH_JS, box_id
 
 NAMES = ("motion",)
+
+# Keyframe properties (lowercased) that move a box without `transform`.
+POSITION = re.compile(r"\b(?:translate|rotate|scale|left|right|top|bottom|inset\w*|margin\w*|cssoffset|"
+                      r"offset(?:path|distance|rotate|anchor|position))\b")
 
 FRAME = """() => {
   const active=[...document.getAnimations()].filter(a=>a.playState==='running');
@@ -124,11 +135,14 @@ def _measure(driver, duration_ms=5000):
         if not animation and bid not in pixel_changed:
             continue
         keys = animation["properties"].lower() if animation else ""
+        transformed = any(state["transform"]!=initial["transform"] for state in states)
+        travelled = any(abs(state["x"]-initial["x"])>.5 or abs(state["y"]-initial["y"])>.5 for state in states)
         if initial["tag"]=="video": kind="video"
         elif initial["tag"]=="canvas": kind="canvas"
         elif any(state["scrollLinked"] for state in states): kind="scroll-linked"
+        elif transformed or (travelled and POSITION.search(keys)): kind="transform"
         elif "opacity" in keys or any(abs(state["opacity"]-initial["opacity"])>.03 for state in states): kind="opacity"
-        elif "transform" in keys or any(state["transform"]!=initial["transform"] for state in states): kind="transform"
+        elif "transform" in keys: kind="transform"
         else: kind="other"
         distance = max(((state["x"]-initial["x"])**2+(state["y"]-initial["y"])**2)**.5
                        for state in states)
@@ -136,6 +150,21 @@ def _measure(driver, duration_ms=5000):
                        "infinite":bool(animation and animation["infinite"]),
                        "essential":any(state["essential"] for state in states)})
     return moving
+
+
+def _pause_control(driver, bid, named):
+    """A pause or stop control for the box: a button beside it, or any control naming it in `aria-controls`.
+    It is read by accessible name (`<button aria-label="일시정지">` with an icon is one) and must be enabled,
+    visible, and reachable by keyboard."""
+    candidates=driver.page.evaluate(r"""id=>{
+      const el=document.querySelector('[data-lapis-box="'+id+'"]');
+      const group=el?.parentElement;
+      const controls=[...(group?.querySelectorAll(':scope > button,:scope > [role=button]')||[]),
+        ...document.querySelectorAll('[aria-controls="'+el?.id+'"]')];
+      return controls.filter(x=>!x.disabled && x.tabIndex>=0 && x.getBoundingClientRect().width)
+        .map(x=>x.getAttribute('data-lapis-box')).filter(Boolean);
+    }""",bid)
+    return any(re.search(PAUSE,named.get(control,""),re.I) for control in candidates)
 
 
 def _auto(driver, moving):
@@ -163,17 +192,13 @@ def _auto(driver, moving):
                 active=True
             track["previous"]=value
         if not active: break
-    return [{"box":bid,"seconds":track["seconds"],
-             "pause_control":driver.page.evaluate(r"""id=>{
-               const el=document.querySelector('[data-lapis-box="'+id+'"]');
-               const group=el?.parentElement;
-               const controls=[...(group?.querySelectorAll(':scope > button,:scope > [role=button]')||[]),
-                 ...document.querySelectorAll('[aria-controls="'+el?.id+'"]')];
-               return controls.some(x=>!x.disabled && x.tabIndex>=0 &&
-                 x.getBoundingClientRect().width &&
-                 /\b(pause|stop)\b/i.test((x.getAttribute('aria-label')||'')+' '+x.innerText));
-             }""",bid)} for bid,track in tracks.items() if track["seconds"]>5 or any(
-                item["box"]==bid and item["infinite"] for item in moving)]
+    kept=[bid for bid,track in tracks.items() if track["seconds"]>5 or any(
+        item["box"]==bid and item["infinite"] for item in moving)]
+    if not kept:
+        return []
+    named=names(driver)
+    return [{"box":bid,"seconds":tracks[bid]["seconds"],"pause_control":_pause_control(driver,bid,named)}
+            for bid in kept]
 
 
 def _hover_media(driver):

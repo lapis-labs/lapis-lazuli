@@ -117,7 +117,7 @@ def _entry_back(session, driver):
     driver.open(urlsplit(session.source["url"]).path or "/")
     driver.page.goto("about:blank", wait_until="domcontentloaded")
     blank_length = driver.page.evaluate("history.length")
-    driver.page.goto(session.source["url"], wait_until="domcontentloaded")
+    driver.page.goto(session.start_url, wait_until="domcontentloaded")
     driver.boxes()
     initial = _state(driver)
     page_path = _path(driver)

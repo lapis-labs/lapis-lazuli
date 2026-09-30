@@ -9,6 +9,17 @@ All notable changes are recorded here. The format follows
 
 - `render check` no longer stops on a page with a scroll-driven animation (`animation-timeline`);
   such an animation is recorded without `duration_ms`, since its computed duration is `auto`.
+- `behavior check` starts every probe at the URL it was given, path and query included (a fragment is kept
+  for driving too); before, the probes that only took the shared opener (motion, scroll, media, permissions,
+  pointer, forms, states, dialogs, choices) loaded the origin's `/`. The session still records only host
+  and path, never the query or fragment. A flow still starts at its own `start` route.
+- The motion probe lists a box as `transform` whenever its position or transform changed, even while it
+  also fades, and when a position property such as `left` or `margin` animates; before, any animation with
+  `opacity` keyframes was `opacity`, so `motion.reduced-motion-missing` let an unguarded fade-and-slide
+  pass. A fade that stays in place is still `opacity` and does not gate.
+- Pause and stop controls of moving content (`pause_control`) and of media (`controls`) are read by
+  accessible name and in Korean too (일시정지, 일시 중지, 정지, 중지, 멈춤, 멈추기; 음소거, 볼륨, 음량,
+  재생 for media); before, only English words in a label or text counted.
 
 ## 0.1.1 (2026-09-30)
 

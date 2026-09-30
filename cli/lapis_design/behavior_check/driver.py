@@ -5,7 +5,7 @@ import io
 import json
 from datetime import datetime, timezone
 from time import monotonic, sleep
-from urllib.parse import urljoin, urlsplit
+from urllib.parse import urlsplit
 
 import numpy as np
 from playwright.sync_api import Browser
@@ -133,7 +133,11 @@ class Driver:
     def t_ms(self) -> float:
         return max(0, round((monotonic() - self._start) * 1000, 2))
 
-    def open(self, path: str = "/", *, storage: str = "fresh") -> None:
+    def open(self, path: str | None = None, *, storage: str = "fresh") -> None:
+        """Load a route of the source host in a new page; without one, the URL the run was given."""
+        self._load(self.session.start_url if path is None else self.session.url_for(path), storage)
+
+    def _load(self, url: str, storage: str) -> None:
         self.close_page()
         if self.context is not None and storage == "fresh":
             self.context.close()
@@ -173,7 +177,6 @@ class Driver:
         for other in tuple(self.session.drivers):
             if other is not self and other.page is not None:
                 other.page.clock.run_for(250)
-        url = urljoin(self.session.source["url"], path)
         self._start = monotonic()
         self.page.goto(url, wait_until="domcontentloaded")
         settle.quiet(self, 0)
@@ -198,7 +201,9 @@ class Driver:
 
     def reload(self, *, reset_storage: bool = True) -> None:
         if reset_storage:
-            self.open(urlsplit(self.page.url).path)
+            here = urlsplit(self.page.url)      # the same page, query and fragment included
+            same_host = here.scheme in ("http", "https") and here.hostname == urlsplit(self.session.start_url).hostname
+            self._load(self.page.url if same_host else self.session.start_url, "fresh")
         else:
             self._start = monotonic()
             self.page.reload(wait_until="domcontentloaded")
@@ -322,7 +327,7 @@ class Driver:
         elif kind == "reload":
             self.page.reload(wait_until="domcontentloaded")
         elif kind == "navigate":
-            destination = urljoin(self.session.source["url"], action.get("path", "/"))
+            destination = self.session.url_for(action.get("path", "/"))
             if urlsplit(destination).hostname != urlsplit(self.session.source["url"]).hostname:
                 self.network.record_external(destination)
             else:
@@ -364,7 +369,7 @@ class Driver:
         if attempted and not self.network.external:
             self.network.record_external(attempted["url"], method=attempted["method"])
         if self.network.external and self.page.url.startswith("chrome-error:"):
-            self.page.goto(self.session.source["url"], wait_until="domcontentloaded")
+            self.page.goto(self.session.start_url, wait_until="domcontentloaded")
         self._acted = True
         elapsed = settle.quiet(self, before["mutations"])
         self.boxes()

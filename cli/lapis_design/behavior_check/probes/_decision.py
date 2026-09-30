@@ -26,6 +26,12 @@ RESUBMIT = f"retry|try again|resubmit|{_TRY_AGAIN_KO}|다시 ?(?:제출|전송|�
 PROBLEM = ("error|fail|offline|unavailable|not found|forbidden|denied|timed out|오류|에러|실패|못했|못해|수 없|"
            "되지 않|존재하지 않|오프라인|연결이 끊|권한이 없|거부|시간이? ?초과|문제가 (?:생|발생)")   # says what went wrong
 CUSTOMIZE = "manage|settings|preferences|customi[sz]e|설정|관리"       # opens finer choices
+_PAUSE_KO = "일시 ?정지|일시 ?중지|정지|중지|멈춤|멈추기"
+PAUSE = rf"\b(?:pause|stop)\b|{_PAUSE_KO}"                              # halts content that moves by itself
+# A control of a media element. English words match inside longer ones ("unmute", "playback"), as they did
+# before; "play" starts playback, the rest halt it or set its volume.
+MEDIA_HALT = rf"pause|stop|mute|volume|{_PAUSE_KO}|음소거|볼륨|음량"
+MEDIA_CONTROL = rf"{MEDIA_HALT}|play|재생"
 WAITING = (r"\b(?:pending|saving|processing|please wait)\b|(?:처리|저장|전송|요청|제출|결제|등록|삭제) ?중(?![단지])|잠시만|"
            r"기다려 ?(?:주세요|주십시오|주시기|주시겠|줘)")                  # a commit is under way
 # A dialog offering not to be shown again: group 1 is the English "for N days", group 2 the Korean "N일";

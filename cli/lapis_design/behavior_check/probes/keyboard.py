@@ -401,7 +401,7 @@ def _walk(driver, route):
         result["skip_link"] = {"present":True,"box":skip["box"],"index":skip["index"],"lands_at":landed}
     else:
         result["skip_link"] = {"present":False}
-    if initial_href != urljoin(driver.session.source["url"],route):
+    if initial_href != driver.session.url_for(route):
         issues.append("route redirected on load")
     return result, issues
 

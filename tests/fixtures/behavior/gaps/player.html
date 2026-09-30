@@ -1,0 +1,17 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Players</title><style>
+body{font:16px system-ui;margin:0}main{padding:20px}.player{margin:8px 0}button{padding:6px 10px;margin:2px}
+</style></head><body><main><h1>Players</h1>
+<div class="player"><video id="ko-pause" autoplay loop playsinline width="200" height="112" src="/tone.webm"></video><button aria-label="일시정지"><svg aria-hidden="true" width="10" height="10"><rect width="10" height="10"/></svg></button></div>
+<div class="player"><video id="ko-volume" autoplay loop playsinline width="200" height="112" src="/tone.webm"></video><button>볼륨 조절</button></div>
+<div class="player"><video id="unrelated" autoplay loop playsinline width="200" height="112" src="/tone.webm"></video><button>자세히 보기</button></div>
+<button id="play-tone">Play audio tone</button><button id="mute-tone">음소거</button>
+</main><script>
+const ctx = new AudioContext();
+document.getElementById('play-tone').onclick = () => {
+  ctx.resume();
+  const tone = ctx.createOscillator();
+  tone.frequency.value = 440;
+  tone.connect(ctx.destination);
+  tone.start();
+};
+</script></body></html>

@@ -109,7 +109,7 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design behavior check
         elif args.stub_url:
             from lapis_design.stub.remote import RemoteStub
             engine = RemoteStub(args.stub_url, pin=stub_pin)
-        session = Session(source, args.task, engine=engine, values_engine=values_engine, plan=plan,
+        session = Session(args.url, args.task, engine=engine, values_engine=values_engine, plan=plan,
                           plan_path=str(args.plan) if args.plan else None,
                           backend="local-dev" if args.backend else "stub", outbound=args.outbound,
                           build=args.build, extract=str(args.extract) if args.extract else None,
