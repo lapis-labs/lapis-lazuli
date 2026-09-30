@@ -17,7 +17,6 @@ from lapis_design.lint import cli as lint_cli
 
 SHARED = shared_dir()
 TASK = "kiln-shop-landing"
-ENTRY = "from lapis_design.cli import main; raise SystemExit(main())"
 
 
 def example() -> dict:
@@ -30,19 +29,94 @@ def write_plan(tmp_path: Path, text: str) -> Path:
     return path
 
 
-# `call()` defaults to 2 s, which only the speed attack tests keep. Calls that check a result (the example
-# plan, a malformed block) pass RESULT_TIMEOUT so a loaded machine cannot fail them.
-RESULT_TIMEOUT = 30
+# Speed attack tests time only the call, inside the child process after it has imported what the call
+# uses, so a slow interpreter start or a busy machine cannot fail them; `HANG_GUARD` only stops a hang.
+# On Linux the child also gets `MEMORY_HEADROOM` beyond what its imports already map, so an alias that
+# expands fails with a MemoryError; macOS does not enforce `RLIMIT_AS`.
+HANG_GUARD = 60
+CALL_LIMIT = 2
+MEMORY_HEADROOM = 512 * 2**20
+
+CHILD = """
+import importlib, json, sys, time
+
+job = json.loads(sys.argv[1])
+if job["mcp"]:
+    from lapis_design.mcp_server import slop_lint, ToolError
+
+    def call():
+        try:
+            slop_lint(plan=job["mcp"], layers=["plan"])
+        except ToolError as error:
+            print(str(error))
+            return 0
+        return 1
+else:
+    from lapis_design import cli
+
+    argv = job["argv"]
+    if argv[:1] == ["hook"]:
+        importlib.import_module("lapis_design.plan_check")     # the hook imports it after reading its input
+    elif tuple(argv[:2]) in cli.CHECKS:
+        importlib.import_module(cli.CHECKS[tuple(argv[:2])])   # `main` imports the check it names
+
+    def call():
+        return cli.main(argv)
+
+if sys.platform.startswith("linux"):
+    import resource
+
+    with open("/proc/self/statm") as statm:
+        mapped = int(statm.read().split()[0]) * resource.getpagesize()
+    hard = resource.getrlimit(resource.RLIMIT_AS)[1]
+    soft = mapped + job["headroom"]
+    resource.setrlimit(resource.RLIMIT_AS, (soft if hard == resource.RLIM_INFINITY else min(soft, hard), hard))
+
+start = time.perf_counter()
+code = call()
+elapsed = time.perf_counter() - start
+with open(job["stamp"], "w") as stamp:
+    stamp.write(repr(elapsed))
+sys.exit(code)
+"""
 
 
-def call(tmp_path: Path, *args: str, input: str | None = None, timeout: float = 2) -> subprocess.CompletedProcess[str]:
+def child_env(tmp_path: Path) -> dict[str, str]:
     home = tmp_path / "home"
     cache = tmp_path / "cache"
     home.mkdir(exist_ok=True)
     cache.mkdir(exist_ok=True)
-    env = dict(os.environ, LAZULI_DB="", HOME=str(home), XDG_CACHE_HOME=str(cache))
-    return subprocess.run([sys.executable, "-c", ENTRY, *args], cwd=tmp_path, input=input,
-                          capture_output=True, text=True, timeout=timeout, env=env)
+    return dict(os.environ, LAZULI_DB="", HOME=str(home), XDG_CACHE_HOME=str(cache))
+
+
+def call(tmp_path: Path, *args: str, input: str | None = None) -> subprocess.CompletedProcess[str]:
+    """A command whose result is checked; nothing about its speed is."""
+    return subprocess.run([sys.executable, "-c", "from lapis_design.cli import main; raise SystemExit(main())", *args],
+                          cwd=tmp_path, input=input, capture_output=True, text=True, timeout=HANG_GUARD,
+                          env=child_env(tmp_path))
+
+
+def timed(tmp_path: Path, job: dict, input: str | None, limit: float) -> subprocess.CompletedProcess[str]:
+    stamp = tmp_path / "elapsed.txt"
+    stamp.unlink(missing_ok=True)
+    job = {"mcp": None, "argv": [], "stamp": str(stamp), "headroom": MEMORY_HEADROOM, **job}
+    result = subprocess.run([sys.executable, "-c", CHILD, json.dumps(job)], cwd=tmp_path, input=input,
+                            capture_output=True, text=True, timeout=HANG_GUARD, env=child_env(tmp_path))
+    assert stamp.exists(), f"the call did not finish (exit {result.returncode}): {result.stderr[-600:]}"
+    elapsed = float(stamp.read_text())
+    assert elapsed < limit, f"the call took {elapsed:.2f} s, over {limit} s"
+    return result
+
+
+def timed_call(tmp_path: Path, *args: str, input: str | None = None,
+               limit: float = CALL_LIMIT) -> subprocess.CompletedProcess[str]:
+    """A command whose call must finish within `limit` seconds; its result is checked too."""
+    return timed(tmp_path, {"argv": list(args)}, input, limit)
+
+
+def timed_mcp(tmp_path: Path, plan: Path, limit: float = CALL_LIMIT) -> subprocess.CompletedProcess[str]:
+    """The MCP `slop_lint` tool on a plan; exit 0 and one line on stdout when it refuses with a ToolError."""
+    return timed(tmp_path, {"mcp": str(plan)}, None, limit)
 
 
 def yaml_plan(prefix: str) -> str:
@@ -98,22 +172,23 @@ def test_expanding_plan_is_stopped_before_schema(tmp_path, kind, command):
                                      "subject: *a1" if kind == "characters" else "subject: *a9")
     path = write_plan(tmp_path, plan)
     if command == "plan":
-        result = call(tmp_path, "plan", "check", str(path), "--format", "json")
+        result = timed_call(tmp_path, "plan", "check", str(path), "--format", "json")
         assert result.returncode == 1, result.stderr
         findings = json.loads(result.stdout)["findings"]
         assert [f["rule_id"] for f in findings] == ["schema.invalid"]
     elif command == "lint":
-        result = call(tmp_path, "slop", "lint", "--plan", str(path))
-        assert result.returncode == 2 and "does not match its schema" in result.stderr
+        result = timed_call(tmp_path, "slop", "lint", "--plan", str(path))
+        assert result.returncode == 2 and result.stdout == ""
+        assert len(result.stderr.splitlines()) == 1 and "does not match its schema" in result.stderr
     elif command == "hook":
-        result = call(tmp_path, "hook", "exit-plan", input=hook_event(plan))
+        result = timed_call(tmp_path, "hook", "exit-plan", input=hook_event(plan))
         message = decision(result)
         assert message.count("schema.invalid") == 1
     else:
         dest = tmp_path / ".lapis/plans" / f"{TASK}.yaml"
         dest.parent.mkdir(parents=True)
         dest.write_text(plan, encoding="utf-8")
-        result = call(tmp_path, "release", "check", "--task", TASK, "--offline")
+        result = timed_call(tmp_path, "release", "check", "--task", TASK, "--offline")
         assert result.returncode == 1, result.stderr
         report = json.loads((tmp_path / ".lapis/release" / f"{TASK}.json").read_text(encoding="utf-8"))
         assert [f["rule_id"] for f in report["findings"]] == ["schema.invalid"]
@@ -124,7 +199,7 @@ def test_expanding_plan_is_stopped_before_schema(tmp_path, kind, command):
     ("? [a]: b\n", "ConstructorError"),
 ])
 def test_uncheckable_hook_block_is_denied(tmp_path, block, expected):
-    result = call(tmp_path, "hook", "exit-plan", input=hook_event(block), timeout=RESULT_TIMEOUT)
+    result = call(tmp_path, "hook", "exit-plan", input=hook_event(block))
     message = decision(result)
     assert "lapis-plan block could not be checked:" in message
     assert expected in message and "\n" not in message
@@ -134,19 +209,19 @@ def test_deep_list_yields_schema_finding_and_hook_denial(tmp_path):
     text = yaml_plan("").replace("subject: Online sales for a small pottery studio",
                                   "subject: " + "[" * 5000 + "leaf" + "]" * 5000)
     path = write_plan(tmp_path, text)
-    plan = call(tmp_path, "plan", "check", str(path), "--format", "json", timeout=10)
+    plan = timed_call(tmp_path, "plan", "check", str(path), "--format", "json", limit=10)
     assert plan.returncode == 1, plan.stderr
     assert [f["rule_id"] for f in json.loads(plan.stdout)["findings"]] == ["schema.invalid"]
-    lint = call(tmp_path, "slop", "lint", "--plan", str(path), timeout=10)
+    lint = timed_call(tmp_path, "slop", "lint", "--plan", str(path), limit=10)
     assert lint.returncode == 2 and "does not match its schema" in lint.stderr
-    assert "schema.invalid" in decision(call(tmp_path, "hook", "exit-plan", input=hook_event(text), timeout=10))
+    assert "schema.invalid" in decision(timed_call(tmp_path, "hook", "exit-plan", input=hook_event(text), limit=10))
 
 
 def test_top_level_extension_cycle_does_not_change_plan_findings(tmp_path):
     path = write_plan(tmp_path, yaml_plan(""))
-    original = call(tmp_path, "plan", "check", str(path), "--format", "json", timeout=10)
+    original = timed_call(tmp_path, "plan", "check", str(path), "--format", "json", limit=10)
     path = write_plan(tmp_path, yaml_plan("x-notes: &a [*a]\n"))
-    extended = call(tmp_path, "plan", "check", str(path), "--format", "json", timeout=10)
+    extended = timed_call(tmp_path, "plan", "check", str(path), "--format", "json", limit=10)
     assert original.returncode == extended.returncode
     assert json.loads(original.stdout)["findings"] == json.loads(extended.stdout)["findings"]
 
@@ -157,7 +232,7 @@ def test_extension_padding_cannot_delay_hook_denial(tmp_path):
     plan["content"]["key_copy"] = [{"slot": "cta", "text": "A handmade piece"} for _ in range(60)]
     plan["content"]["key_copy"].append({"slot": "cta", "text": "Click here"})
     text = "x-pad: [" + "[], " * 199_999 + "[]]\n" + yaml.safe_dump(plan, allow_unicode=True)
-    message = decision(call(tmp_path, "hook", "exit-plan", input=hook_event(text), timeout=10))
+    message = decision(timed_call(tmp_path, "hook", "exit-plan", input=hook_event(text), limit=10))
     assert "copy.vague-cta" in message
 
 
@@ -167,7 +242,7 @@ def test_many_key_copy_items_still_reach_copy_rules(tmp_path):
     plan["content"]["key_copy"] = [{"slot": "cta", "text": "A handmade piece"} for _ in range(1849)]
     plan["content"]["key_copy"].append({"slot": "cta", "text": "Click here"})
     path = write_plan(tmp_path, yaml.safe_dump(plan, allow_unicode=True))
-    result = call(tmp_path, "slop", "lint", "--plan", str(path), timeout=5)
+    result = timed_call(tmp_path, "slop", "lint", "--plan", str(path), limit=5)
     assert result.returncode == 1, result.stderr
     findings = json.loads(result.stdout)["findings"]
     assert any(f["rule_id"] == "copy.vague-cta" and f["location"]["path"] ==
@@ -202,38 +277,32 @@ def test_hostile_aliases_fail_closed_quickly(tmp_path, kind, command):
     text = hostile_plan(kind)
     path = write_plan(tmp_path, text)
     if command == "plan":
-        result = call(tmp_path, "plan", "check", str(path), "--format", "json")
+        result = timed_call(tmp_path, "plan", "check", str(path), "--format", "json")
         assert result.returncode == 1, result.stderr
         assert [f["rule_id"] for f in json.loads(result.stdout)["findings"]] == ["schema.invalid"]
     elif command == "markdown":
-        result = call(tmp_path, "plan", "check", "--from-markdown", "-", "--format", "json",
-                      input=f"```yaml lapis-plan\n{text}\n```")
+        result = timed_call(tmp_path, "plan", "check", "--from-markdown", "-", "--format", "json",
+                            input=f"```yaml lapis-plan\n{text}\n```")
         assert result.returncode == 1, result.stderr
         assert [f["rule_id"] for f in json.loads(result.stdout)["findings"]] == ["schema.invalid"]
     elif command == "lint":
-        result = call(tmp_path, "slop", "lint", "--plan", str(path))
-        assert result.returncode == 2 and "does not match its schema" in result.stderr
+        result = timed_call(tmp_path, "slop", "lint", "--plan", str(path))
+        assert result.returncode == 2 and result.stdout == ""
+        assert len(result.stderr.splitlines()) == 1 and "does not match its schema" in result.stderr
     elif command == "hook":
-        assert decision(call(tmp_path, "hook", "exit-plan", input=hook_event(text))).count("schema.invalid") == 1
+        assert decision(timed_call(tmp_path, "hook", "exit-plan", input=hook_event(text))).count("schema.invalid") == 1
     elif command == "gate":
         dest = tmp_path / ".lapis/plans" / f"{TASK}.yaml"
         dest.parent.mkdir(parents=True)
         dest.write_text(text, encoding="utf-8")
-        result = call(tmp_path, "release", "check", "--task", TASK, "--offline")
+        result = timed_call(tmp_path, "release", "check", "--task", TASK, "--offline")
         assert result.returncode == 1, result.stderr
         report = json.loads((tmp_path / ".lapis/release" / f"{TASK}.json").read_text(encoding="utf-8"))
         assert [f["rule_id"] for f in report["findings"]] == ["schema.invalid"]
     else:
-        entry = ("from lapis_design.mcp_server import slop_lint, ToolError\n"
-                 "import sys\n"
-                 "try: slop_lint(plan=sys.argv[1], layers=['plan'])\n"
-                 "except ToolError as error: print(str(error)); sys.exit(0)\n"
-                 "sys.exit(1)\n")
-        result = subprocess.run([sys.executable, "-c", entry, str(path)], cwd=tmp_path,
-                                capture_output=True, text=True, timeout=2,
-                                env=dict(os.environ, LAZULI_DB="", HOME=str(tmp_path / "home"),
-                                         XDG_CACHE_HOME=str(tmp_path / "cache")))
-        assert result.returncode == 0 and "does not match its schema" in result.stdout, result.stderr
+        result = timed_mcp(tmp_path, path)
+        assert result.returncode == 0, result.stderr
+        assert len(result.stdout.splitlines()) == 1 and "does not match its schema" in result.stdout
 
 
 @pytest.mark.parametrize("value", [
@@ -243,8 +312,7 @@ def test_hostile_aliases_fail_closed_quickly(tmp_path, kind, command):
 ], ids=["bytes", "date", "datetime", "set", "omap", "pairs", "nan", "inf", "negative-inf", "large-int"])
 def test_non_json_yaml_values_are_rejected_before_schema_formatting(tmp_path, value):
     text = yaml_plan("").replace("subject: Online sales for a small pottery studio", f"subject: {value}")
-    result = call(tmp_path, "plan", "check", str(write_plan(tmp_path, text)), "--format", "json",
-                  timeout=RESULT_TIMEOUT)
+    result = call(tmp_path, "plan", "check", str(write_plan(tmp_path, text)), "--format", "json")
     assert result.returncode == 1, result.stderr
     findings = json.loads(result.stdout)["findings"]
     assert len(findings) == 1 and findings[0]["rule_id"] == "schema.invalid"
@@ -253,9 +321,9 @@ def test_non_json_yaml_values_are_rejected_before_schema_formatting(tmp_path, va
 
 def test_extension_with_non_string_key_and_binary_value_is_exempt(tmp_path):
     original = write_plan(tmp_path, yaml_plan(""))
-    before = call(tmp_path, "plan", "check", str(original), "--format", "json", timeout=RESULT_TIMEOUT)
+    before = call(tmp_path, "plan", "check", str(original), "--format", "json")
     write_plan(tmp_path, yaml_plan("x-special:\n  ? 1\n  : !!binary YWFh\n"))
-    after = call(tmp_path, "plan", "check", str(original), "--format", "json", timeout=RESULT_TIMEOUT)
+    after = call(tmp_path, "plan", "check", str(original), "--format", "json")
     assert before.returncode == after.returncode
     assert json.loads(before.stdout)["findings"] == json.loads(after.stdout)["findings"]
 
@@ -275,7 +343,7 @@ def test_non_string_key_reports_its_nested_location(tmp_path):
     plan = example()
     plan["content"]["key_copy"][0][7] = "invalid key"
     path = write_plan(tmp_path, yaml.safe_dump(plan, allow_unicode=True))
-    result = call(tmp_path, "plan", "check", str(path), "--format", "json", timeout=RESULT_TIMEOUT)
+    result = call(tmp_path, "plan", "check", str(path), "--format", "json")
     assert result.returncode == 1, result.stderr
     findings = json.loads(result.stdout)["findings"]
     assert [(f["rule_id"], f["location"]["path"]) for f in findings] == [
@@ -308,8 +376,7 @@ def nested_extension(shape: str, depth: int) -> str:
 
 
 def plan_check_json(tmp_path: Path, text: str) -> tuple[int, list[dict]]:
-    result = call(tmp_path, "plan", "check", str(write_plan(tmp_path, text)), "--format", "json",
-                  timeout=RESULT_TIMEOUT)
+    result = call(tmp_path, "plan", "check", str(write_plan(tmp_path, text)), "--format", "json")
     return result.returncode, json.loads(result.stdout)["findings"]
 
 
@@ -343,44 +410,36 @@ def test_plan_over_the_size_or_depth_limit_is_refused_before_parsing(tmp_path, k
     expected = "larger than 1,000,000 bytes" if kind == "big" else "nested more than 100 levels"
     path = write_plan(tmp_path, text)
     if command == "plan":
-        result = call(tmp_path, "plan", "check", str(path), "--format", "json")
+        result = timed_call(tmp_path, "plan", "check", str(path), "--format", "json")
         assert result.returncode == 1, result.stderr
         findings = json.loads(result.stdout)["findings"]
         assert [f["rule_id"] for f in findings] == ["schema.invalid"] and expected in findings[0]["observed"]
     elif command == "markdown":
         markdown = tmp_path / "harness.md"
         markdown.write_text(f"```yaml lapis-plan\n{text}\n```\n", encoding="utf-8")
-        result = call(tmp_path, "plan", "check", "--from-markdown", str(markdown), "--format", "json")
+        result = timed_call(tmp_path, "plan", "check", "--from-markdown", str(markdown), "--format", "json")
         assert result.returncode == 1, result.stderr
         findings = json.loads(result.stdout)["findings"]
         assert [f["rule_id"] for f in findings] == ["schema.invalid"] and expected in findings[0]["observed"]
     elif command == "lint":
-        result = call(tmp_path, "slop", "lint", "--plan", str(path), "--layer", "plan")
+        result = timed_call(tmp_path, "slop", "lint", "--plan", str(path), "--layer", "plan")
         assert result.returncode == 2 and result.stdout == ""
         assert len(result.stderr.splitlines()) == 1
         assert "does not match its schema" in result.stderr and expected in result.stderr
     elif command == "hook":
-        message = decision(call(tmp_path, "hook", "exit-plan", input=hook_event(text)))
+        message = decision(timed_call(tmp_path, "hook", "exit-plan", input=hook_event(text)))
         assert message.count("schema.invalid") == 1 and expected in message
     elif command == "gate":
         dest = tmp_path / ".lapis/plans" / f"{TASK}.yaml"
         dest.parent.mkdir(parents=True)
         dest.write_text(text, encoding="utf-8")
-        result = call(tmp_path, "release", "check", "--task", TASK, "--offline")
+        result = timed_call(tmp_path, "release", "check", "--task", TASK, "--offline")
         assert result.returncode == 1, result.stderr
         report = json.loads((tmp_path / ".lapis/release" / f"{TASK}.json").read_text(encoding="utf-8"))
         assert [f["rule_id"] for f in report["findings"]] == ["schema.invalid"]
         assert expected in report["findings"][0]["observed"]
     else:
-        entry = ("from lapis_design.mcp_server import slop_lint, ToolError\n"
-                 "import sys\n"
-                 "try: slop_lint(plan=sys.argv[1], layers=['plan'])\n"
-                 "except ToolError as error: print(str(error)); sys.exit(0)\n"
-                 "sys.exit(1)\n")
-        result = subprocess.run([sys.executable, "-c", entry, str(path)], cwd=tmp_path,
-                                capture_output=True, text=True, timeout=2,
-                                env=dict(os.environ, LAZULI_DB="", HOME=str(tmp_path / "home"),
-                                         XDG_CACHE_HOME=str(tmp_path / "cache")))
+        result = timed_mcp(tmp_path, path)
         assert result.returncode == 0, result.stderr
         assert len(result.stdout.splitlines()) == 1
         assert "does not match its schema" in result.stdout and expected in result.stdout
