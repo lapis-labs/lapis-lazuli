@@ -103,8 +103,11 @@ def test_flow_commit_steps_are_replayed_into_commit_probes(browser, pottery_serv
     assert "pair run firing-notices missing" in session.coverage[0]["reason"]
 
 
-def test_controls_commits_observe_good_and_bad_behaviors(browser, desk_server):
+@pytest.mark.parametrize("context", ["m", "d"])
+def test_controls_commits_observe_good_and_bad_behaviors(browser, desk_server, context):
+    # One context per test, so the two take turns on different workers; the detail is read on the desktop one.
     session = Session(desk_server, "reservation-desk", engine=StubEngine.load(APP / "desk.stub.yaml"))
+    session.contexts = {context: session.contexts[context]}
     drivers = []
     def open_driver(ctx):
         driver = Driver(browser, session, ctx)
@@ -120,39 +123,41 @@ def test_controls_commits_observe_good_and_bad_behaviors(browser, desk_server):
         for driver in drivers:
             driver.close()
     elapsed = time.monotonic() - started
-    by_name = {session.nodes[item["box"]].get("name"): item for item in document["probes"]["controls"] if item["context"] == "d"}
-    assert by_name["Dead button"]["effect"]["outcome"] == "no-effect"
-    assert by_name["Show details"]["keyboard"] == {"focusable": True, "activation": "different"}
-    # Nothing on the pointer and nothing on the keyboard is the same effect: the dead-control finding covers it
-    assert by_name["Dead button"]["keyboard"]["activation"] == "same"
-    assert by_name["Guest name"]["keyboard"]["activation"] == "same"          # a text field takes focus only
-    assert by_name["Window seat"]["effect"]["outcome"] == "state-changed"
-    assert by_name["Window seat"]["keyboard"]["activation"] == "same"         # a checkbox activates with Space only
-    assert by_name["Reserve seat"]["promise"] == "other"
-    assert {item["context"] for item in document["probes"]["controls"]} == {"m", "d"}
-    commits_by_name = {session.nodes[item["box"]].get("name"): item for item in document["probes"]["commits"] if item["context"] == "d"}
-    good = commits_by_name["Reserve seat"]
-    assert next(item for item in commits_by_name["Save falsely"]["outcomes"] if item["injected"] == "fail-5xx")["actual"] == "not-applied"
-    bad = commits_by_name["Reserve without guard"]
-    assert good["kind"] == bad["kind"] == "reserve"
-    assert good["double_activation"]["effects"] == 1
-    assert good["double_activation"]["pending_shown"] is True
-    assert bad["double_activation"]["effects"] == 2
-    assert next(item for item in commits_by_name["Save falsely"]["outcomes"] if item["injected"] == "fail-5xx")["claimed"] == "success"
-    assert next(item for item in good["outcomes"] if item["injected"] == "hang")["actual"] == "applied"
-    assert {row["injected"]: row["actual"] for row in good["outcomes"]} == {
-        "none": "applied", "fail-5xx": "not-applied", "fail-network": "not-applied",
-        "hang": "applied", "forbidden": "not-applied"}
-    assert next(row for row in good["outcomes"] if row["injected"] == "fail-5xx")["claimed"] == "failure"
-    assert next(row for row in good["outcomes"] if row["injected"] == "fail-5xx")["input_kept"] is True
-    assert next(row for row in good["outcomes"] if row["injected"] == "fail-5xx")["announced"] is True
-    deleted = commits_by_name["Confirm deletion"]
-    assert deleted["confirm"]["shown"] and deleted["confirm"]["names_object"]
-    assert deleted["undo"]["offered"] and deleted["undo"]["restores"] and deleted["undo"]["survives_reload"]
-    assert commits_by_name["Delete without confirmation"]["confirm"] == {"shown": False}
+    if context == "d":
+        by_name = {session.nodes[item["box"]].get("name"): item for item in document["probes"]["controls"] if item["context"] == "d"}
+        assert by_name["Dead button"]["effect"]["outcome"] == "no-effect"
+        assert by_name["Show details"]["keyboard"] == {"focusable": True, "activation": "different"}
+        # Nothing on the pointer and nothing on the keyboard is the same effect: the dead-control finding covers it
+        assert by_name["Dead button"]["keyboard"]["activation"] == "same"
+        assert by_name["Guest name"]["keyboard"]["activation"] == "same"          # a text field takes focus only
+        assert by_name["Window seat"]["effect"]["outcome"] == "state-changed"
+        assert by_name["Window seat"]["keyboard"]["activation"] == "same"         # a checkbox activates with Space only
+        assert by_name["Reserve seat"]["promise"] == "other"
+    assert {item["context"] for item in document["probes"]["controls"]} == {context}     # {"m", "d"} over both tests
+    if context == "d":
+        commits_by_name = {session.nodes[item["box"]].get("name"): item for item in document["probes"]["commits"] if item["context"] == "d"}
+        good = commits_by_name["Reserve seat"]
+        assert next(item for item in commits_by_name["Save falsely"]["outcomes"] if item["injected"] == "fail-5xx")["actual"] == "not-applied"
+        bad = commits_by_name["Reserve without guard"]
+        assert good["kind"] == bad["kind"] == "reserve"
+        assert good["double_activation"]["effects"] == 1
+        assert good["double_activation"]["pending_shown"] is True
+        assert bad["double_activation"]["effects"] == 2
+        assert next(item for item in commits_by_name["Save falsely"]["outcomes"] if item["injected"] == "fail-5xx")["claimed"] == "success"
+        assert next(item for item in good["outcomes"] if item["injected"] == "hang")["actual"] == "applied"
+        assert {row["injected"]: row["actual"] for row in good["outcomes"]} == {
+            "none": "applied", "fail-5xx": "not-applied", "fail-network": "not-applied",
+            "hang": "applied", "forbidden": "not-applied"}
+        assert next(row for row in good["outcomes"] if row["injected"] == "fail-5xx")["claimed"] == "failure"
+        assert next(row for row in good["outcomes"] if row["injected"] == "fail-5xx")["input_kept"] is True
+        assert next(row for row in good["outcomes"] if row["injected"] == "fail-5xx")["announced"] is True
+        deleted = commits_by_name["Confirm deletion"]
+        assert deleted["confirm"]["shown"] and deleted["confirm"]["names_object"]
+        assert deleted["undo"]["offered"] and deleted["undo"]["restores"] and deleted["undo"]["survives_reload"]
+        assert commits_by_name["Delete without confirmation"]["confirm"] == {"shown": False}
     assert {entry["status"] for entry in document["coverage"] if entry["probe"] in ("controls", "commits")} == {"ran"}
     assert [entry["probe"] for entry in document["coverage"]] == ["controls", "commits"]
-    print(f"controls+commits m/d runtime: {elapsed:.2f}s")
+    print(f"controls+commits {context} runtime: {elapsed:.2f}s")
 
 
 def test_declared_flow_commit_without_backend_effect_is_not_missed(browser, desk_server):

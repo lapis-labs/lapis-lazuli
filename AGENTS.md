@@ -68,7 +68,8 @@ uv build --out-dir build/wheels          # wheel carries src/shared as lapis_des
 
 Run them from this folder. CI runs `uv sync --locked`, then the two test commands above as separate
 jobs (the contracts job excludes `cjk`; the browser job runs on four runners, each with
-`--shard K/4`, a fixed part of the tests chosen by test id), plus a third job that installs the
+`--shard K/4`, a part of the tests weighed by `tests/shard_durations.json`, which `tests/shards.py`
+refreshes from a full run's JUnit file after slow browser tests are added or split), plus a third job that installs the
 `cjk` extra and runs `-m cjk`, and a light docs workflow when only documents change, on Python 3.12
 (`.python-version`), the lowest version `requires-python` allows. Tests
 that drive Chromium carry the `browser` marker (`tests/conftest.py` sets it by file and

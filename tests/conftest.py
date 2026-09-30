@@ -1,7 +1,6 @@
 """Shared test fixtures: isolated user cache, browser loopback server, and browser/CJK markers."""
 from __future__ import annotations
 
-import hashlib
 import importlib.util
 import os
 import re
@@ -12,6 +11,8 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import pytest
+
+from shards import load_durations, partition
 
 BROWSER_MODULES = re.compile(r"test_(render_(core|interaction|text|visual)|behavior_\w+)\.py$")
 
@@ -63,12 +64,7 @@ def pytest_collection_modifyitems(items):
 
 def pytest_addoption(parser):
     parser.addoption("--shard", metavar="K/N", help="run only the Kth of N disjoint parts of the selected tests "
-                     "(CI splits the browser tests across runners); parts are fixed by each test's id")
-
-
-def shard_of(nodeid: str, count: int) -> int:
-    """The part (1..count) a test belongs to: stable across runs, machines, and Python versions."""
-    return int.from_bytes(hashlib.sha256(nodeid.encode()).digest()[:8], "big") % count + 1
+                     "(CI splits the browser tests across runners); parts are weighed by tests/shard_durations.json")
 
 
 class _Shard:
@@ -80,8 +76,9 @@ class _Shard:
 
     @pytest.hookimpl(trylast=True)
     def pytest_collection_modifyitems(self, config, items):
-        keep = [item for item in items if shard_of(item.nodeid, self.count) == self.part]
-        config.hook.pytest_deselected(items=[item for item in items if shard_of(item.nodeid, self.count) != self.part])
+        parts = partition((item.nodeid for item in items), self.count, load_durations())
+        keep = [item for item in items if parts[item.nodeid] == self.part]
+        config.hook.pytest_deselected(items=[item for item in items if parts[item.nodeid] != self.part])
         items[:] = keep
 
 

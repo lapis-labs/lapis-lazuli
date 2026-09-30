@@ -89,8 +89,8 @@ def test_pointer_local_dev_skips_state_changing_gestures(browser,movement_server
         for driver in tuple(session.drivers):driver.close()
 
 
-def _media_ids(open_driver):
-    driver=open_driver("d")
+def _media_ids(open_driver,ctx_id):
+    driver=open_driver(ctx_id)
     try:
         return dict(driver.page.evaluate("""() => ['bg-video','particles','live-chart'].map(id =>
             [id, document.getElementById(id).getAttribute('data-lapis-box')])"""))
@@ -98,34 +98,42 @@ def _media_ids(open_driver):
         driver.close()
 
 
-def test_motion_reduced_twin_and_controls(probe_session):
+@pytest.mark.parametrize("base",["m","d"])
+def test_motion_reduced_twin_and_controls(probe_session,base):
     session,open_driver=probe_session
+    # One base context and its reduced-motion twin per test, so the two take turns on different workers;
+    # the detail is read on the desktop one.
+    session.contexts={base:session.contexts[base]}
     started=monotonic()
     motion.run(session,open_driver)
     rows={row["context"]:row for row in session.probes["motion"]}
-    assert rows["m-rm"]["compare_to"]=="m" and rows["d-rm"]["compare_to"]=="d"
+    twin=base+"-rm"
+    assert rows[twin]["compare_to"]==base
     assert all(row["window_ms"]==5000 for row in rows.values())
-    assert any(item["kind"]=="transform" for item in rows["d"]["moving"])
-    assert any(item["kind"]=="opacity" for item in rows["d"]["moving"])
-    assert all(item["kind"]!="opacity" for item in rows["d-rm"]["moving"])
-    assert any(item["kind"]=="transform" for item in rows["d-rm"]["moving"])
-    assert any(not item["pause_control"] for item in rows["d"]["auto_moving"])
-    assert any(item["pause_control"] for item in rows["d"]["auto_moving"])
-    assert any(item["hidden_at_rest"] and item.get("reveal_delay_ms",0)>=200
-               for item in rows["d"]["scroll_reveal"])
-    assert rows["d"]["hover_media"]=={"total":3,"transforming":1}  # two images and the video
-    assert "hover_media" not in rows["m"]
+    if base=="d":
+        assert any(item["kind"]=="transform" for item in rows["d"]["moving"])
+        assert any(item["kind"]=="opacity" for item in rows["d"]["moving"])
+        assert all(item["kind"]!="opacity" for item in rows["d-rm"]["moving"])
+        assert any(item["kind"]=="transform" for item in rows["d-rm"]["moving"])
+        assert any(not item["pause_control"] for item in rows["d"]["auto_moving"])
+        assert any(item["pause_control"] for item in rows["d"]["auto_moving"])
+        assert any(item["hidden_at_rest"] and item.get("reveal_delay_ms",0)>=200
+                   for item in rows["d"]["scroll_reveal"])
+        assert rows["d"]["hover_media"]=={"total":3,"transforming":1}  # two images and the video
+    else:
+        assert "hover_media" not in rows["m"]
     assert all(bid in session.nodes for row in rows.values()
                for bid in [i["box"] for i in row["moving"]+row["auto_moving"]+row["scroll_reveal"]])
-    assert rows["d"]["input_blocked_ms"]==0
-    ids=_media_ids(open_driver)
-    for ctx in ("d-rm","m-rm"):
-        by_box={item["box"]:item for item in rows[ctx]["moving"]}
-        assert by_box[ids["bg-video"]]["kind"]=="video" and not by_box[ids["bg-video"]]["essential"]
-        assert by_box[ids["particles"]]["kind"]=="canvas" and not by_box[ids["particles"]]["essential"]
-        assert by_box[ids["live-chart"]]["kind"]=="canvas" and by_box[ids["live-chart"]]["essential"]
-    assert not any(item["essential"] for item in rows["d"]["moving"]
-                   if item["kind"] not in ("canvas","video"))
+    if base=="d":
+        assert rows["d"]["input_blocked_ms"]==0
+    ids=_media_ids(open_driver,base)
+    by_box={item["box"]:item for item in rows[twin]["moving"]}
+    assert by_box[ids["bg-video"]]["kind"]=="video" and not by_box[ids["bg-video"]]["essential"]
+    assert by_box[ids["particles"]]["kind"]=="canvas" and not by_box[ids["particles"]]["essential"]
+    assert by_box[ids["live-chart"]]["kind"]=="canvas" and by_box[ids["live-chart"]]["essential"]
+    if base=="d":
+        assert not any(item["essential"] for item in rows["d"]["moving"]
+                       if item["kind"] not in ("canvas","video"))
     assert session.coverage[-1]["status"]=="ran"
     schema=yaml.safe_load((shared_dir()/"behavior"/"session.schema.yaml").read_text())
     jsonschema.Draft202012Validator(schema).validate(session.document())

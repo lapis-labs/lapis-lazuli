@@ -76,31 +76,34 @@ def test_states_survive_a_surface_that_rerenders_or_disappears(browser):
     assert coverage["status"] == "partial" and "could not observe" not in coverage["reason"]
 
 
-def test_forms_record_all_six_steps_and_bad_cases(browser, probe_server):
-    doc = _run(browser, probe_server, forms)
+@pytest.mark.parametrize("context", ["m", "d"])
+def test_forms_record_all_six_steps_and_bad_cases(browser, probe_server, context):
+    # One context per test, so the two take turns on different workers; the detail is read on the desktop one.
+    doc = _run(browser, probe_server, forms, contexts=(context,))
     probes = doc["probes"]["forms"]
-    signup = next(p for p in probes if p["purpose"] == "signup" and p["context"] == "d")
-    assert signup["validation"] == {"first_error": "submit", "untouched_invalid_on_load": False}
-    assert signup["invalid_submit"]["described_in_text"] is True
-    assert signup["invalid_submit"]["associated"] is True
-    assert signup["invalid_submit"]["announced"] is False
-    assert signup["invalid_submit"]["new_requirement"] is True
-    assert signup["invalid_submit"]["focus_to"] == "first-error"
-    assert next(f for f in signup["fields"] if f["kind"] == "password")["paste_blocked"] is True
-    assert next(f for f in signup["fields"] if f["kind"] == "email")["paste_blocked"] is False
-    assert next(f for f in signup["fields"] if f["purpose"] == "marketing")["checked_on_load"] is True
-    assert next(f for f in signup["fields"] if f["purpose"] == "terms")["checked_on_load"] is False
-    assert next(f for f in signup["fields"] if f["kind"] == "email")["label"] == {
-        "visible": True, "programmatic": True, "persists_after_input": True}
-    assert next(f for f in signup["fields"] if f["box"] == next(
-        box for box, node in doc["nodes"].items() if node.get("name") == "Display name"))["label"]["visible"] is False
-    assert next(row for row in signup["preservation"] if row["after"] == "server-error")["cleared"] >= 1
-    assert next(row for row in signup["preservation"] if row["after"] == "server-error")["cleared_sensitive"] == 1
-    assert next(row for row in signup["preservation"] if row["after"] == "invalid-submit")["kept"] >= 1
-    instant = next(p for p in probes if p["purpose"] == "other" and p["context"] == "d")
-    assert instant["validation"]["first_error"] == "keystroke"
-    assert instant["invalid_submit"]["associated"] is False
-    assert len(probes) == 4
+    if context == "d":
+        signup = next(p for p in probes if p["purpose"] == "signup" and p["context"] == "d")
+        assert signup["validation"] == {"first_error": "submit", "untouched_invalid_on_load": False}
+        assert signup["invalid_submit"]["described_in_text"] is True
+        assert signup["invalid_submit"]["associated"] is True
+        assert signup["invalid_submit"]["announced"] is False
+        assert signup["invalid_submit"]["new_requirement"] is True
+        assert signup["invalid_submit"]["focus_to"] == "first-error"
+        assert next(f for f in signup["fields"] if f["kind"] == "password")["paste_blocked"] is True
+        assert next(f for f in signup["fields"] if f["kind"] == "email")["paste_blocked"] is False
+        assert next(f for f in signup["fields"] if f["purpose"] == "marketing")["checked_on_load"] is True
+        assert next(f for f in signup["fields"] if f["purpose"] == "terms")["checked_on_load"] is False
+        assert next(f for f in signup["fields"] if f["kind"] == "email")["label"] == {
+            "visible": True, "programmatic": True, "persists_after_input": True}
+        assert next(f for f in signup["fields"] if f["box"] == next(
+            box for box, node in doc["nodes"].items() if node.get("name") == "Display name"))["label"]["visible"] is False
+        assert next(row for row in signup["preservation"] if row["after"] == "server-error")["cleared"] >= 1
+        assert next(row for row in signup["preservation"] if row["after"] == "server-error")["cleared_sensitive"] == 1
+        assert next(row for row in signup["preservation"] if row["after"] == "invalid-submit")["kept"] >= 1
+        instant = next(p for p in probes if p["purpose"] == "other" and p["context"] == "d")
+        assert instant["validation"]["first_error"] == "keystroke"
+        assert instant["invalid_submit"]["associated"] is False
+    assert len(probes) == 2                                          # the two forms of this context; four over both
     serialized = json.dumps(doc)
     assert "visitor@example.com" not in serialized
     assert "SyntheticPass123" not in serialized

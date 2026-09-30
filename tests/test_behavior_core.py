@@ -349,11 +349,12 @@ raise SystemExit(main(sys.argv[1:]))
         worker.join()
 
 
-def test_cli_runs_every_probe_into_a_valid_session(shop_server, tmp_path):
-    output = tmp_path / "shop.json"
-    result = subprocess.run(["uv", "run", "lapis-design", "behavior", "check", shop_server, "--task", "shop",
-                             "--stub", str(FIXTURE), "--out", str(output)], capture_output=True, text=True)
-    assert result.returncode == 0, result.stderr
+def _behavior_check(url, output, *args):
+    return subprocess.run(["uv", "run", "lapis-design", "behavior", "check", url, "--task", "shop",
+                           "--stub", str(FIXTURE), "--out", str(output), *args], capture_output=True, text=True)
+
+
+def _valid_session(output):
     document = json.loads(output.read_text())
     schema = yaml.safe_load((shared_dir() / "behavior" / "session.schema.yaml").read_text())
     jsonschema.Draft202012Validator(schema).validate(document)
@@ -362,7 +363,30 @@ def test_cli_runs_every_probe_into_a_valid_session(shop_server, tmp_path):
     from lapis_design.behavior_check.probes import PROBES
     expected = {name for module in PROBES for name in module.NAMES} | {"console"}
     assert {row["probe"] for row in document["coverage"]} == expected         # every probe says what ran
-    assert document["nodes"] and {row["id"] for row in document["contexts"]} >= {"m", "d"}
+    assert document["nodes"]
+    return document
+
+
+@pytest.mark.parametrize("context", ["m", "d"])
+def test_cli_runs_every_probe_into_a_valid_session(shop_server, tmp_path, context):
+    # One context per test (the run that reaches every probe is the slowest in the suite), so the two
+    # take turns on different workers; the default selection of both contexts is the next test.
+    output = tmp_path / "shop.json"
+    result = _behavior_check(shop_server, output, "--context", context)
+    assert result.returncode == 0, result.stderr
+    document = _valid_session(output)
+    assert {row["id"] for row in document["contexts"]} >= {context}
+
+
+def test_cli_opens_the_mobile_and_desktop_contexts_by_default(shop_server, tmp_path):
+    output = tmp_path / "shop.json"
+    result = _behavior_check(shop_server, output, "--probe", "console")      # no probe runs; both contexts still open
+    assert result.returncode == 0, result.stderr
+    document = _valid_session(output)
+    assert {row["id"] for row in document["contexts"]} >= {"m", "d"}
+
+
+def test_cli_refuses_a_public_source_before_any_probe(tmp_path):
     result = subprocess.run(["uv", "run", "lapis-design", "behavior", "check", "https://public.example.invalid/",
                              "--task", "shop", "--stub", str(FIXTURE), "--out", str(tmp_path / "invalid.json")],
                             capture_output=True, text=True)
