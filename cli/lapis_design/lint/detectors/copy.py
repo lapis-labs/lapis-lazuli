@@ -1404,10 +1404,16 @@ def _plan_support(plan: dict | None) -> tuple[str, set[str]]:
     return folded, {n.replace(",", "") for n in re.findall(r"\d[\d,.]*", folded)}
 
 
-# A run that opens with a quotation mark reads as a customer quote only in running copy. Interface text
-# (a dialog, a heading, a button, a label) that quotes a product, a reservation, or a name is not one.
+# A run that opens with a quotation mark reads as a customer quote. Only two kinds of line are not one:
+# interface text that quotes a product, a reservation, or a name inside a sentence of its own
+# (‘9월 소성 예약’을 취소할까요?), and a button or input. A heading, display run, label, UI line, or dialog
+# line that is only a quotation stays a lead, with or without a dash and a name after it, and so does
+# every quotation in a testimonial section.
 _INTERFACE_TYPE_ROLES = ("display", "heading", "label", "ui")
 _INTERFACE_BOX_ROLES = ("heading", "button", "input")
+_FIELD_ROLES = ("button", "input")
+_QUOTE_CLOSE = {'"': '"', "'": "'", "«": "»", "「": "」", "『": "』"}
+_DASHES = "\u2010\u2011\u2012\u2013\u2014\u2015~-"
 
 
 def _is_named(text: str) -> bool:
@@ -1419,6 +1425,43 @@ def _interface_text(page: _Page | None, s: _Seg) -> bool:
     if s.role in _INTERFACE_TYPE_ROLES or s.box_role in _INTERFACE_BOX_ROLES or s.control:
         return True
     return page is not None and any(b.get("role") == "dialog" for b in _chain(page.boxes, s.box))
+
+
+def _apostrophe(text: str, i: int) -> bool:
+    """A single quote between two Latin letters (I've, Chef's) belongs to the word, not to the quotation."""
+    return 0 < i < len(text) - 1 and all(c.isalpha() and ord(c) < 0x250 for c in (text[i - 1], text[i + 1]))
+
+
+def _after_quotation(folded: str) -> str:
+    """How a line that opens with a quotation mark goes on after the closing mark: `ends` (nothing, or only
+    punctuation), `attributed` (a dash and a short name), or `continues` (a sentence carries on: a particle
+    on the closing mark, or a predicate)."""
+    close = _QUOTE_CLOSE[folded[0]]
+    end = next((i for i in range(1, len(folded))
+                if folded[i] == close and not (close == "'" and _apostrophe(folded, i))), None)
+    if end is None:
+        return "ends"
+    rest = folded[end + 1:]
+    start = next((i for i, c in enumerate(rest) if c.isalnum() or c in _DASHES), len(rest))
+    rest = rest[start:]
+    if not rest:
+        return "ends"
+    if rest[0] not in _DASHES:
+        return "continues"
+    name = rest.lstrip(_DASHES + " \t")
+    if not name:
+        return "ends"
+    return "attributed" if name[0].isalpha() and _tokens(name) <= 10 else "continues"
+
+
+def _reads_as_quote(page: _Page | None, s: _Seg, folded: str) -> bool:
+    """Whether a run that opens with a quotation mark reads as a customer quote."""
+    if page is not None and page.archetype(s.section) == "testimonial":
+        return True
+    after = _after_quotation(folded)
+    if after == "continues" and _interface_text(page, s):
+        return False
+    return after == "attributed" or s.control not in _FIELD_ROLES
 
 
 def _fabricated_proof(ctx: Context, page: _Page | None, segs: list[_Seg], kinds: list[str]) -> list[Hit]:
@@ -1450,7 +1493,7 @@ def _fabricated_proof(ctx: Context, page: _Page | None, segs: list[_Seg], kinds:
             if "customer-names" in kinds and folded not in support_text:
                 lead(f'customer attribution in the {s.where}: "{_clip(s.text)}"', s)
         elif len(folded) >= 12 and (
-                (folded[0] in _QUOTE_OPEN and not _interface_text(page, s))
+                (folded[0] in _QUOTE_OPEN and _reads_as_quote(page, s, folded))
                 or (page is not None and s.role == "body" and page.archetype(s.section) == "testimonial")):
             quote_at.add(s.order)
             if "quotes" in kinds and folded.strip(_QUOTE_OPEN + " ")[:24] not in support_text:
