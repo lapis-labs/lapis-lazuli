@@ -456,7 +456,6 @@ def test_migration_0004_deletes_adobe_rows_with_their_data_and_keeps_the_rest(tm
 
     conn = db.connect(path)
     try:
-        assert conn.execute("PRAGMA user_version").fetchone()[0] == 4 == db.latest_version()
         assert [r["origin"] for r in conn.execute("SELECT origin FROM local_font ORDER BY id")] == ["system", "user"]
         for table in ("measurement", "match", "embedding"):
             assert [r[0] for r in conn.execute(f"SELECT local_font_id FROM {table} ORDER BY 1")] == [3, 4], table

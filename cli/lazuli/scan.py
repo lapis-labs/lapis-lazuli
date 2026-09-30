@@ -13,15 +13,25 @@ through the operating system's font API. Adobe's folders (`~/Library/Application
 `%APPDATA%\\Adobe\\CoreSync`) are skipped wherever a root would lead into them, links included, and nothing
 in them is opened, stat'ed, or listed. On macOS the faces Core Text lists from those folders are added as
 rows whose path is `coretext:<PostScript name>` (an identity, not a path), whose size is 0, and whose mtime
-is `coretext:<version name>` (the change detector); names, one localized family name, and coverage come from
-Core Text, and vendor_id stays empty (see `coretext`). Faces Core Text stops listing are removed with their
-measurements at the next scan. On Windows and Linux Adobe Fonts are absent from the inventory.
+is `coretext:<version name>` (the change detector). Names, coverage, and design metadata come from Core Text,
+and vendor_id stays empty (see `coretext`). Faces Core Text stops listing are removed with their measurements
+at the next scan. On Windows and Linux Adobe Fonts are absent from the inventory.
 
 `LAZULI_FONT_ROOTS` replaces the roots (tests, evaluations) and turns the Core Text listing off, so no Adobe
 data reaches them: entries separated by the OS path separator, each `system=path` or `user=path` (any other
 origin, `adobe-sync` included, or a path inside Adobe's folders is a `RootsError`). A file is a font when its
 first four bytes are an sfnt or collection signature, whatever its name. Unchanged files (same size and mtime)
-are not reopened.
+are not reopened except when a migration marks their metadata for refresh; that alone keeps measurements.
+
+`metadata_json` records supported languages, variation axes, feature availability, version, heights (font
+units), units per em, and stylistic class. File faces use fontTools only: fvar axes, GSUB/GPOS FeatureList
+tags, name ID 5, head.unitsPerEm, and OS/2 sxHeight/sCapHeight/sFamilyClass. Missing or zero OS/2 heights are
+unknown (null). OS/2 Unicode/code-page range words are retained as declarations, not evidence of support.
+Languages use the same mapped-character rule for both origins (`languages.py`), reusing the scripts in
+COVERAGE rather than trusting those declarations or an OS language list. `vertical` contains the available
+vert/vrt2/vhal/vkna tags for files; Core Text reports mapped AAT features, which fold vrt2 into vert and may
+hide vhal. Thus an absent Adobe feature is not proof that the font lacks it. Metadata is local, inference-only
+for Adobe faces, like coverage and measurements.
 """
 from __future__ import annotations
 
@@ -37,7 +47,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-from lazuli import coretext
+from lazuli import coretext, languages
 
 logging.getLogger("fontTools").setLevel(logging.ERROR)
 
@@ -59,6 +69,8 @@ COVERAGE = {
     "han": [(0x4E00, 0x9FFF)],
     "digits": [(0x30, 0x39)],
 }
+
+VERTICAL_FEATURES = frozenset({"vert", "vrt2", "vhal", "vkna"})
 
 # name-table language ids for the CJK names kept in names_i18n_json
 WINDOWS_LANGS = {0x412: "ko", 0x411: "ja", 0x804: "zh-Hans", 0x1004: "zh-Hans", 0x404: "zh-Hant",
@@ -216,6 +228,37 @@ def _i18n(table) -> dict[str, str]:
     return names
 
 
+def feature_tags(font) -> list[str]:
+    """All GSUB/GPOS feature tags, sorted; reading FeatureList leaves unrelated lazy subtables alone."""
+    tags = set()
+    for name in ("GSUB", "GPOS"):
+        if name in font:
+            features = font[name].table.FeatureList
+            if features:
+                tags.update(record.FeatureTag for record in features.FeatureRecord)
+    return sorted(tags)
+
+
+def variation_axes(font) -> list[dict]:
+    """fvar axes in the font's order, including hidden axes; names are not needed to identify a tag."""
+    return [{"tag": axis.axisTag, "min": axis.minValue, "default": axis.defaultValue, "max": axis.maxValue}
+            for axis in font["fvar"].axes] if "fvar" in font else []
+
+
+def _file_metadata(font, cmap, os2) -> dict:
+    features = feature_tags(font)
+    family_class = os2.sFamilyClass if os2 is not None else None
+    return {"languages": languages.of_cmap(cmap), "axes": variation_axes(font), "features": features,
+            "features_source": "opentype", "vertical": sorted(VERTICAL_FEATURES.intersection(features)),
+            "version": _name(font["name"], 5), "units_per_em": font["head"].unitsPerEm,
+            "x_height": getattr(os2, "sxHeight", 0) or None, "cap_height": getattr(os2, "sCapHeight", 0) or None,
+            "family_class": family_class, "class_id": ((family_class & 0xFF00) >> 8) if family_class is not None else None,
+            "class_source": "os2",
+            "os2_ranges": {"unicode": [getattr(os2, f"ulUnicodeRange{i}", 0) for i in range(1, 5)],
+                           "codepage": [getattr(os2, f"ulCodePageRange{i}", 0) for i in range(1, 3)]}
+                          if os2 is not None else None}
+
+
 def describe(font) -> dict:
     """The inventory fields of one face (a fontTools TTFont)."""
     table = font["name"]
@@ -232,7 +275,7 @@ def describe(font) -> dict:
             "subfamily": _name(table, 17, 2), "names_i18n_json": json.dumps(i18n, ensure_ascii=False) if i18n else None,
             "manufacturer": _name(table, 8), "designer": _name(table, 9),
             "vendor_id": (os2.achVendID.strip("\x00 ") or None) if os2 is not None else None,
-            "coverage_json": json.dumps(coverage)}
+            "coverage_json": json.dumps(coverage), "metadata_json": json.dumps(_file_metadata(font, cmap, os2))}
 
 
 def faces(path: Path):
@@ -249,13 +292,14 @@ def faces(path: Path):
 
 
 def describe_adobe(face: coretext.AdobeFace) -> dict:
-    """The inventory fields of one Adobe Fonts face, from the operating system's names and character
-    mapping. `vendor_id` (OS/2) stays empty: nothing here reads a table."""
-    info = face.describe(COVERAGE)
+    """Inventory and design metadata from OS-derived values only, never an Adobe font's tables or files."""
+    info = face.describe(COVERAGE, languages.wanted())
     i18n, coverage = info.pop("names_i18n"), info.pop("coverage")
+    metadata = info.pop("metadata")
+    metadata["languages"] = languages.supported(info.pop("mapped"))
     return {**info, "family_norm": norm(info["family"]),
             "names_i18n_json": json.dumps(i18n, ensure_ascii=False) if i18n else None,
-            "vendor_id": None, "coverage_json": json.dumps(coverage)}
+            "vendor_id": None, "coverage_json": json.dumps(coverage), "metadata_json": json.dumps(metadata)}
 
 
 @dataclass
@@ -270,23 +314,23 @@ class ScanResult:
 
 
 def _store(conn: sqlite3.Connection, key: str, size: int, mtime: str, origin: str, rows: list[tuple[int, dict]],
-           existed: bool) -> None:
-    """Write the faces of one file (or one Adobe Fonts identity); a changed one loses its measurements."""
+           changed: bool) -> None:
+    """Write a file's faces (or an Adobe identity); only a changed font loses its measurements."""
     conn.execute("DELETE FROM local_font WHERE path = ? AND face_index >= ?", (key, len(rows)))
     for index, info in rows:
         conn.execute(
             """INSERT INTO local_font (path, size, mtime, face_index, postscript_name, family, family_norm,
-                 subfamily, names_i18n_json, manufacturer, vendor_id, designer, coverage_json, origin)
+                 subfamily, names_i18n_json, manufacturer, vendor_id, designer, coverage_json, metadata_json, origin)
                VALUES (:path, :size, :mtime, :face_index, :postscript_name, :family, :family_norm, :subfamily,
-                 :names_i18n_json, :manufacturer, :vendor_id, :designer, :coverage_json, :origin)
+                 :names_i18n_json, :manufacturer, :vendor_id, :designer, :coverage_json, :metadata_json, :origin)
                ON CONFLICT (path, face_index) DO UPDATE SET size = excluded.size, mtime = excluded.mtime,
                  postscript_name = excluded.postscript_name, family = excluded.family,
                  family_norm = excluded.family_norm, subfamily = excluded.subfamily,
                  names_i18n_json = excluded.names_i18n_json, manufacturer = excluded.manufacturer,
                  vendor_id = excluded.vendor_id, designer = excluded.designer,
-                 coverage_json = excluded.coverage_json, origin = excluded.origin""",
+                 coverage_json = excluded.coverage_json, metadata_json = excluded.metadata_json, origin = excluded.origin""",
             {"path": key, "size": size, "mtime": mtime, "face_index": index, "origin": origin, **info})
-        if existed:                                   # the file changed: old measurements no longer apply
+        if changed:                                   # changed font: old measurements no longer apply
             conn.execute("""DELETE FROM measurement WHERE local_font_id =
                             (SELECT id FROM local_font WHERE path = ? AND face_index = ?)""", (key, index))
 
@@ -307,13 +351,15 @@ def scan(conn: sqlite3.Connection, *, rescan: bool = False) -> ScanResult:
         keep_adobe = True
     known = {(row["path"]): (row["size"], row["mtime"]) for row in
              conn.execute("SELECT DISTINCT path, size, mtime FROM local_font")}
+    stale = {row[0] for row in conn.execute("SELECT DISTINCT path FROM local_font WHERE metadata_json IS NULL")}
     present = set()
     added = updated = 0
     for root, path, stat in files:
         key = str(path)
         present.add(key)
         mtime = datetime.fromtimestamp(int(stat.st_mtime), timezone.utc).isoformat()
-        if not rescan and known.get(key) == (stat.st_size, mtime):
+        unchanged = known.get(key) == (stat.st_size, mtime)
+        if not rescan and unchanged and key not in stale:
             continue
         try:
             opened = faces(path)
@@ -322,14 +368,15 @@ def scan(conn: sqlite3.Connection, *, rescan: bool = False) -> ScanResult:
             unreadable.append(f"{path}: {type(exc).__name__}")
             continue
         existed = key in known
-        _store(conn, key, stat.st_size, mtime, root.origin, rows, existed)
+        _store(conn, key, stat.st_size, mtime, root.origin, rows, existed and (rescan or not unchanged))
         if existed:
             updated += 1
         else:
             added += 1
     for face in adobe:
         present.add(face.identity)
-        if not rescan and known.get(face.identity) == (0, face.token):
+        unchanged = known.get(face.identity) == (0, face.token)
+        if not rescan and unchanged and face.identity not in stale:
             continue
         try:
             info = describe_adobe(face)
@@ -337,7 +384,7 @@ def scan(conn: sqlite3.Connection, *, rescan: bool = False) -> ScanResult:
             unreadable.append(f"{face.identity}: {type(exc).__name__}")
             continue
         existed = face.identity in known
-        _store(conn, face.identity, 0, face.token, "adobe-sync", [(0, info)], existed)
+        _store(conn, face.identity, 0, face.token, "adobe-sync", [(0, info)], existed and (rescan or not unchanged))
         if existed:
             updated += 1
         else:

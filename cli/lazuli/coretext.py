@@ -15,6 +15,17 @@ Core Text instead:
   counterpart: Core Text gives one localized name, in the user's preferred language, and that is the only
   one recorded (`names_i18n_json` holds it when that language is Korean, Japanese, or Chinese).
   `vendor_id` (OS/2) stays empty, since nothing here reads a table.
+- Design metadata: `CTFontCopyVariationAxes` returns OS-derived axis identifiers and numeric limits, not fvar
+  bytes. `CTFontCopyFeatures` returns OS-derived AAT feature/selector dictionaries, not GSUB/GPOS bytes;
+  mapped OpenType tags are a partial list. Vertical Substitution Forms (type 4, selector 0) maps to `vert`,
+  including fonts whose only substitution is `vrt2`; Optimized Kana (type 34, selector 2) maps to `vkna`.
+  `vhal` is indistinguishable from horizontal `halt`, so it is not claimed. Missing Adobe tags are unknown,
+  not proof of absence. `CTFontGetXHeight` and `CTFontGetCapHeight` return OS-derived metrics, normalized to
+  font units using `CTFontGetUnitsPerEm` (already used for measurement); Core Text may estimate missing
+  heights. The stylistic class is the OS-derived kCTFontClassMaskTrait bits of descriptor symbolic traits,
+  not OS/2 bytes. Version comes from the existing `CTFontCopyName` version key. Supported languages use the
+  same mapped-character rule as files (`languages.py`), not `CTFontCopySupportedLanguages`: its different,
+  OS-dependent language claims would break cross-origin parity, so that additional API is not bound.
 - Measurement: `CTFace` answers the questions `measure.Face` answers, from metrics Core Text gives in font
   units (`CTFontGetBoundingRectsForGlyphs`, `CTFontGetAdvancesForGlyphs`, `CTFontGetUnitsPerEm`) and from
   glyphs the system draws (`CTFontDrawGlyphs`) into an 8-bit grayscale bitmap that lives for one
@@ -55,6 +66,7 @@ ALLOWED_CALLS = frozenset({
     "CTFontCopyName", "CTFontCopyLocalizedName", "CTFontCopyPostScriptName", "CTFontGetUnitsPerEm",
     "CTFontGetGlyphsForCharacters", "CTFontGetBoundingRectsForGlyphs", "CTFontGetAdvancesForGlyphs",
     "CTFontDrawGlyphs",
+    "CTFontCopyVariationAxes", "CTFontCopyFeatures", "CTFontGetXHeight", "CTFontGetCapHeight",
     # Core Graphics: an in-memory grayscale bitmap
     "CGColorSpaceCreateDeviceGray", "CGBitmapContextCreate", "CGContextSetGrayFillColor",
     "CGContextSetShouldAntialias", "CGContextSetAllowsFontSmoothing", "CGContextSetShouldSmoothFonts",
@@ -130,7 +142,7 @@ class AdobeFace:
     """One Adobe Fonts face as the operating system lists it."""
     identity: str                                  # local_font.path: `coretext:<PostScript name>`, never a path
     token: str                                     # local_font.mtime: changes when the face is updated
-    describe: Callable[[dict], dict]               # coverage blocks -> names, one localized name, coverage counts
+    describe: Callable[[dict, frozenset[int]], dict]  # coverage blocks + wanted characters -> inventory and OS metadata
 
 
 class Provider:
@@ -181,6 +193,7 @@ UTF8 = 0x08000100                                # kCFStringEncodingUTF8
 NUMBER_DOUBLE = 13                               # kCFNumberDoubleType
 NUMBER_INT = 9                                   # kCFNumberIntType
 ITALIC_TRAIT = 1                                 # kCTFontItalicTrait in the symbolic traits
+CLASS_MASK_TRAIT = 0xF0000000                      # kCTFontClassMaskTrait, stored without collapsing to a file class
 WEIGHT_ANCHORS = ((-0.8, 100), (-0.6, 200), (-0.4, 300), (0.0, 400), (0.23, 500), (0.3, 600), (0.4, 700),
                   (0.56, 800), (0.62, 900))      # kCTFontWeightTrait of the OS/2 weight classes
 LOCALIZED_LANGUAGES = (("ko", "ko"), ("ja", "ja"), ("zh-hans", "zh-Hans"), ("zh-cn", "zh-Hans"),
@@ -259,6 +272,10 @@ class _Library:
                                                  [vp, vp, ctypes.POINTER(vp)], vp)
         self.CTFontCopyPostScriptName = self.bind(self.ct, "CTFontCopyPostScriptName", [vp], vp)
         self.CTFontGetUnitsPerEm = self.bind(self.ct, "CTFontGetUnitsPerEm", [vp], ctypes.c_uint32)
+        self.CTFontCopyVariationAxes = self.bind(self.ct, "CTFontCopyVariationAxes", [vp], vp)
+        self.CTFontCopyFeatures = self.bind(self.ct, "CTFontCopyFeatures", [vp], vp)
+        self.CTFontGetXHeight = self.bind(self.ct, "CTFontGetXHeight", [vp], c_double)
+        self.CTFontGetCapHeight = self.bind(self.ct, "CTFontGetCapHeight", [vp], c_double)
         self.CTFontGetGlyphsForCharacters = self.bind(self.ct, "CTFontGetGlyphsForCharacters",
                                                       [vp, vp, vp, c_long], ctypes.c_bool)
         self.CTFontGetBoundingRectsForGlyphs = self.bind(
@@ -278,7 +295,11 @@ class _Library:
         self.keys = {name: vp.in_dll(self.ct, name).value for name in (
             "kCTFontURLAttribute", "kCTFontNameAttribute", "kCTFontTraitsAttribute", "kCTFontWeightTrait",
             "kCTFontSymbolicTrait", "kCTFontFamilyNameKey", "kCTFontStyleNameKey", "kCTFontVersionNameKey",
-            "kCTFontManufacturerNameKey", "kCTFontDesignerNameKey")}
+            "kCTFontManufacturerNameKey", "kCTFontDesignerNameKey",
+            "kCTFontVariationAxisIdentifierKey", "kCTFontVariationAxisMinimumValueKey",
+            "kCTFontVariationAxisDefaultValueKey", "kCTFontVariationAxisMaximumValueKey",
+            "kCTFontFeatureTypeIdentifierKey", "kCTFontFeatureTypeSelectorsKey",
+            "kCTFontFeatureSelectorIdentifierKey", "kCTFontOpenTypeFeatureTag")}
         self.gray = None
 
     def bind(self, framework, name: str, argtypes: list, restype=None):
@@ -357,6 +378,58 @@ class _Library:
                 if item:
                     self.CFRelease(item)
 
+    def axes(self, font) -> list[dict]:
+        """OS-derived variation axis limits; no font table is obtained."""
+        ref = self.CTFontCopyVariationAxes(font)
+        try:
+            out = []
+            for position in range(self.CFArrayGetCount(ref) if ref else 0):
+                axis = self.CFArrayGetValueAtIndex(ref, position)
+                identifier = self.number(self.CFDictionaryGetValue(axis, self.keys["kCTFontVariationAxisIdentifierKey"]),
+                                         NUMBER_INT)
+                values = {field: self.number(self.CFDictionaryGetValue(axis, self.keys[key]), NUMBER_DOUBLE)
+                          for field, key in (("min", "kCTFontVariationAxisMinimumValueKey"),
+                                             ("default", "kCTFontVariationAxisDefaultValueKey"),
+                                             ("max", "kCTFontVariationAxisMaximumValueKey"))}
+                if identifier is not None and all(value is not None for value in values.values()):
+                    tag = (identifier & 0xFFFFFFFF).to_bytes(4, "big").decode("latin-1")
+                    out.append({"tag": tag, **values})
+            return out
+        finally:
+            if ref:
+                self.CFRelease(ref)
+
+    def features(self, font) -> tuple[list[str], list[str]]:
+        """Mapped OpenType tags and vertical-writing tags from OS-derived AAT feature dictionaries.
+
+        Core Text folds vrt2 into vert and vhal into halt; neither original tag can be recovered.
+        """
+        ref = self.CTFontCopyFeatures(font)
+        try:
+            tags, vertical = set(), set()
+            for position in range(self.CFArrayGetCount(ref) if ref else 0):
+                feature = self.CFArrayGetValueAtIndex(ref, position)
+                kind = self.number(self.CFDictionaryGetValue(feature, self.keys["kCTFontFeatureTypeIdentifierKey"]),
+                                   NUMBER_INT)
+                selectors = self.CFDictionaryGetValue(feature, self.keys["kCTFontFeatureTypeSelectorsKey"])
+                for index in range(self.CFArrayGetCount(selectors) if selectors else 0):
+                    selector = self.CFArrayGetValueAtIndex(selectors, index)
+                    value = self.number(self.CFDictionaryGetValue(selector, self.keys["kCTFontFeatureSelectorIdentifierKey"]),
+                                        NUMBER_INT)
+                    tag = self.string(self.CFDictionaryGetValue(selector, self.keys["kCTFontOpenTypeFeatureTag"]))
+                    if tag:
+                        tags.add(tag)
+                        if tag in ("vert", "vrt2", "vhal", "vkna"):
+                            vertical.add(tag)
+                    if kind == 4 and value == 0:
+                        vertical.add("vert")
+                    if kind == 34 and value == 2:
+                        vertical.add("vkna")
+            return sorted(tags), sorted(vertical)
+        finally:
+            if ref:
+                self.CFRelease(ref)
+
     def glyph_array(self, font, first: int, count: int):
         """Glyph ids of `count` consecutive code points from `first` (a plane or a block), 0 where unmapped.
         Code points above U+FFFF go in as surrogate pairs; the glyph lands in the high surrogate's slot."""
@@ -428,14 +501,14 @@ class CoreText(Provider):
             finally:
                 self.lib.CFRelease(font)
             out.append(AdobeFace(identity, IDENTITY_PREFIX + version,
-                                 lambda blocks, identity=identity: self._describe(identity, blocks)))
+                                 lambda blocks, wanted, identity=identity: self._describe(identity, blocks, wanted)))
         return out
 
-    def _describe(self, identity: str, blocks: dict[str, list[tuple[int, int]]]) -> dict:
-        """Names, one localized family name, and coverage counts of a face. `blocks` maps a coverage name to
-        code point ranges (scan.COVERAGE)."""
+    def _describe(self, identity: str, blocks: dict[str, list[tuple[int, int]]], wanted: frozenset[int]) -> dict:
+        """Names, coverage, and OS-derived metadata; `wanted` is the BMP character set the language rule needs."""
         lib = self.lib
-        font = lib.CTFontCreateWithFontDescriptor(self._descriptor(identity), 12.0, None)
+        descriptor = self._descriptor(identity)
+        font = lib.CTFontCreateWithFontDescriptor(descriptor, 12.0, None)
         try:
             ps_ref = lib.CTFontCopyPostScriptName(font)
             try:
@@ -452,10 +525,21 @@ class CoreText(Provider):
                 count = sum((hi - lo + 1) - glyphs[lo:hi + 1].count(0) for lo, hi in ranges)
                 if count:
                     coverage[block] = count
+            upm = int(lib.CTFontGetUnitsPerEm(font))
+            _, symbolic = lib.traits(descriptor)
+            family_class = symbolic & CLASS_MASK_TRAIT if symbolic is not None else None
+            features, vertical = lib.features(font)
+            metadata = {"axes": lib.axes(font), "features": features, "features_source": "coretext",
+                        "vertical": vertical, "version": lib.name(font, "kCTFontVersionNameKey"),
+                        "units_per_em": upm, "x_height": round(lib.CTFontGetXHeight(font) * upm / 12.0),
+                        "cap_height": round(lib.CTFontGetCapHeight(font) * upm / 12.0),
+                        "family_class": family_class, "class_id": family_class >> 28 if family_class is not None else None,
+                        "class_source": "coretext", "os2_ranges": None}
             return {"postscript_name": postscript, "family": family, "subfamily": lib.name(font, "kCTFontStyleNameKey"),
                     "names_i18n": {key: local} if key and local else {},
                     "manufacturer": lib.name(font, "kCTFontManufacturerNameKey"),
-                    "designer": lib.name(font, "kCTFontDesignerNameKey"), "coverage": coverage}
+                    "designer": lib.name(font, "kCTFontDesignerNameKey"), "coverage": coverage,
+                    "mapped": {cp for cp in wanted if glyphs[cp]}, "metadata": metadata}
         finally:
             lib.CFRelease(font)
 

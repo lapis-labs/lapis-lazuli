@@ -16,6 +16,9 @@ SCRIPT_GROUPS = [("Hangul", "Hangul 2,350+ syllables"), ("Kana+Han", "kana + 6,0
                  ("Han", "6,000+ Han")]
 
 LATIN_CLASSES = ("serif", "sans", "hand", "decorative", "symbol")
+FONT_CLASSES = {0: "unclassified", 1: "oldstyle-serif", 2: "transitional-serif", 3: "modern-serif",
+                4: "clarendon-serif", 5: "slab-serif", 7: "freeform-serif", 8: "sans-serif",
+                9: "ornamental", 10: "script", 12: "symbolic"}
 
 
 def _scripts(coverage: dict) -> set[str]:
@@ -31,25 +34,38 @@ def _scripts(coverage: dict) -> set[str]:
     return out
 
 
-def _families(conn: sqlite3.Connection, pattern: str | None = None) -> list[dict]:
-    """One entry per family: origins, faces, scripts, and the measured classes of its faces."""
+def _families(conn: sqlite3.Connection, pattern: str | None = None, origin: str | None = None) -> list[dict]:
+    """One entry per family: origins, faces, scripts, and the measured classes of its faces.
+
+    `origin` keeps only the faces that came from it, so every value of an entry describes those faces.
+    `languages` and `vertical` are unions of the listed faces; inspect a face before relying on its support.
+    """
     rows = conn.execute(
         """SELECT lf.family, lf.origin, lf.subfamily, lf.postscript_name, lf.coverage_json,
+                  lf.manufacturer, lf.designer, lf.metadata_json,
                   m.family_kind, m.panose_json, m.cjk_json, m.metrics_json
            FROM local_font lf LEFT JOIN measurement m
              ON m.local_font_id = lf.id AND m.measurer_version = ?
            WHERE lf.family IS NOT NULL AND lf.family NOT LIKE '.%'
              AND (? IS NULL OR lf.family_norm LIKE '%' || ? || '%' OR lf.names_i18n_json LIKE '%' || ? || '%')
+             AND (? IS NULL OR lf.origin = ?)
            ORDER BY lf.family, lf.subfamily""",
-        (measure.MEASURER_VERSION, pattern and scan.norm(pattern), pattern and scan.norm(pattern), pattern)).fetchall()
+        (measure.MEASURER_VERSION, pattern and scan.norm(pattern), pattern and scan.norm(pattern), pattern,
+         origin, origin)).fetchall()
     out: dict[str, dict] = {}
     for row in rows:
         entry = out.setdefault(row["family"], {"family": row["family"], "origins": set(), "faces": [],
-                                               "scripts": set(), "classes": Counter(), "measured": 0})
+                                               "scripts": set(), "classes": Counter(), "measured": 0,
+                                               "languages": set(), "vertical": set()})
         entry["origins"].add(row["origin"])
         coverage = json.loads(row["coverage_json"] or "{}")
         entry["scripts"].update(_scripts(coverage))
-        face = {"subfamily": row["subfamily"], "postscript_name": row["postscript_name"]}
+        metadata = json.loads(row["metadata_json"] or "{}")
+        face = {"subfamily": row["subfamily"], "postscript_name": row["postscript_name"],
+                "manufacturer": row["manufacturer"], "designer": row["designer"], **metadata,
+                "class_name": FONT_CLASSES.get(metadata.get("class_id"))}
+        entry["languages"].update(metadata.get("languages", []))
+        entry["vertical"].update(metadata.get("vertical", []))
         if row["family_kind"]:
             entry["measured"] += 1
             panose = json.loads(row["panose_json"] or "{}")
@@ -68,6 +84,7 @@ def _families(conn: sqlite3.Connection, pattern: str | None = None) -> list[dict
                 entry["classes"][row["family_kind"]] += 1
         entry["faces"].append(face)
     return [{**e, "origins": sorted(e["origins"]), "scripts": sorted(e["scripts"]),
+             "languages": sorted(e["languages"]), "vertical": sorted(e["vertical"]),
              "classes": [name for name, _ in e["classes"].most_common()]} for e in out.values()]
 
 

@@ -42,14 +42,20 @@ class FakeAdobe(coretext.Provider):
         if self.broken:
             raise OSError("the font list is gone")
         return [coretext.AdobeFace(identity, coretext.IDENTITY_PREFIX + version,
-                                   lambda blocks, path=path: self._describe(path))
+                                   lambda blocks, wanted, path=path, version=version: self._describe(path, wanted, version))
                 for identity, (path, version) in sorted(self.entries.items())]
 
     @staticmethod
-    def _describe(path: Path) -> dict:
-        info = scan.describe(scan.faces(path)[0][1])
+    def _describe(path: Path, wanted: frozenset[int], version: str) -> dict:
+        with scan.faces(path)[0][1] as font:
+            info = scan.describe(font)
+            mapped = {cp for cp in wanted if cp in (font.getBestCmap() or {})}
+        metadata = json.loads(info["metadata_json"])
+        metadata.update(version=version, features_source="coretext", class_source="coretext", os2_ranges=None)
+        metadata["family_class"] = (metadata["class_id"] << 28) if metadata["class_id"] is not None else None
         return {**{key: info[key] for key in ("postscript_name", "family", "subfamily", "manufacturer", "designer")},
-                "names_i18n": json.loads(info["names_i18n_json"] or "{}"), "coverage": json.loads(info["coverage_json"])}
+                "names_i18n": json.loads(info["names_i18n_json"] or "{}"), "coverage": json.loads(info["coverage_json"]),
+                "mapped": mapped, "metadata": metadata}
 
     def open(self, identity: str, raster_px: int):
         if identity not in self.entries:
