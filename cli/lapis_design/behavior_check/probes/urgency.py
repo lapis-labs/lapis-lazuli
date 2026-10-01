@@ -32,6 +32,18 @@ _ACTIVITY = re.compile(r"(?:\b(?:someone|\d+\s*(?:people|customers?))\b.{0,40}\b
 _LOOKBACK = re.compile(r"(?:최근|지난)\s*\d+\s*시간|\b(?:(?:in|over|within|during)\s+the\s+(?:last|past)|past)\s+\d+\s*(?:hours?|hrs?|days?)\b", re.I)
 _HOLD = re.compile(r"\b(?:hold|held|reserved for you|reservation expires)\b|(?:홀드|보류|임시\s*예약|예약\s*유지|확보)", re.I)
 _DEADLINE = re.compile(r"\b(?:deadline|ends?\s+(?:on|at)|expires?\s+(?:on|at)|until)\b|(?:마감|종료|까지|기한)", re.I)
+# `mm:ss` that names a time of day is a clock time, not a countdown ("입실 14:00부터", "11:00까지", "6:00 PM UTC",
+# "6:00–7:00 PM"), unless the text also says time is running out ("ends in 14:00", "남은 시간 14:00").
+_TIME_OF_DAY = re.compile(r"(?<![a-z])[ap]\.?m\b\.?|오전|오후|부터|까지|입실|퇴실|체크\s*(?:인|아웃)|\b(?:UTC|GMT|KST)\b"
+                          r"|\b(?:at|from|until|opens?|closes?|check-?in|check-?out|daily)\b(?!\s+in\b)"
+                          r"|\d:\d\d\s*[~–—-]\s*\d{1,2}:\d\d", re.I)
+_RUNNING_OUT = re.compile(r"\b(?:left|remaining|(?:ends?|expires?|closes?|starts?)\s+in|countdown|timer)\b"
+                          r"|남음|남았|남은|남아|후\s*(?:마감|종료|만료)|타이머", re.I)
+
+
+def _time_of_day(text: str) -> bool:
+    """The text gives a clock time of day rather than time left."""
+    return bool(_TIME_OF_DAY.search(text)) and not _RUNNING_OUT.search(text)
 
 
 def _claim(text: str, now_ms: int, zone: tzinfo = timezone.utc):
@@ -55,7 +67,7 @@ def _claim(text: str, now_ms: int, zone: tzinfo = timezone.utc):
         end_ms = (instant + timedelta(days=1 if hour is None else 0)).timestamp() * 1000
         return ("deadline", max(0, (end_ms - now_ms) / 1000), resolution, "seconds")
     match = _TIME.search(ticking)
-    if match:
+    if match and not _time_of_day(ticking):
         value = (int(match[1] or 0) * 3600 + int(match[2]) * 60 + int(match[3]))
         return ("hold" if hold else "countdown", value, 1, "seconds")
     match = _DAYS.search(ticking)
@@ -115,9 +127,19 @@ def run(session, open_driver):
         for ctx, driver in drivers.items():
             candidates = _visible(driver)
             parsed = {item["id"]: _claim(item["text"], start, _zone(driver)) for item in candidates}
+            # The nearest enclosing box: a time set apart in its own element ("입실 <b>14:00</b>부터") is read
+            # with the words around it.
+            enclosing = {}
+            for item in sorted(candidates, key=lambda candidate: len(candidate["children"])):
+                for child in item["children"]:
+                    enclosing.setdefault(child, item)
             for item in candidates:
                 result = parsed[item["id"]]
                 if not result or any(parsed.get(child) for child in item["children"]):
+                    continue
+                outer = " ".join(enclosing.get(item["id"], {}).get("text", "").split())
+                if (result[0] in ("countdown", "hold") and _TIME.search(item["text"]) and len(outer) <= 180
+                        and _time_of_day(outer)):
                     continue
                 kind, value, resolution, unit = result
                 entry = {"box": item["id"], "context": ctx, "kind": kind,

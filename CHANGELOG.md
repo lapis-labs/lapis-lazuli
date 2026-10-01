@@ -74,6 +74,11 @@ of calibration and evaluation, and a README that starts with what the tool print
   "잔여 2석", "마지막 1자리"), viewers with words between ("14명이 이 날짜를 보고 있어요", "14 people
   are viewing this site"), and "booked" notices. A look-back window ("최근 3시간 동안", "in the last 7
   days") is no longer a countdown, and a Korean activity count ("5명이 예약했어요") is read.
+- The urgency probe no longer reads a clock time of day as a countdown: "입실 14:00부터", "11:00까지",
+  "6:00 PM UTC", "6:00–7:00 PM", and "Doors open at 18:30" are not urgency claims, and neither is a
+  time set apart in its own element inside such words; before, each was a countdown of minutes and
+  seconds, and `ux.false-urgency` reported it as unbacked. A time with words that say it is running
+  out ("ends in 14:59", "남은 시간 14:00") is still a countdown.
 - `copy.fabricated-proof` reads a name after a quotation's closing mark as an attribution whatever
   separator it follows (a bracket, a middle dot, a bar, a slash, a comma, a blank, or a speech verb
   such as says), so such a quotation stays a lead in headings, display runs, labels, UI lines, and
@@ -152,7 +157,8 @@ of calibration and evaluation, and a README that starts with what the tool print
   unnamed inline `svg` chart reads as identity ink. Nothing reads `tokens.color.data_scales`.
 - The urgency probe reads one claim per box and only counts that carry a unit or noun; it records a
   reservation hold timer but does not judge it, and recognizes look-back windows only in hours and,
-  in English, days.
+  in English, days. A bare time such as "14:00" with no words around it in its box or the box that
+  holds it is still read as a countdown.
 - A quotation followed after a blank by up to ten words that start with a letter reads as an
   attribution, so an interface sentence that quotes a term and goes on stays a `copy.fabricated-proof`
   lead (evidence `not-verified`).
