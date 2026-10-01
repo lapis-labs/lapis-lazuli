@@ -29,6 +29,9 @@ Where each fact comes from, first match wins:
                     declared" is recorded only after reading a notice or a shipped file, never from an
                     installed copy alone. `permission` is --[no-]reserved-name-permission, else the lock's.
 
+`files` globs are walked without entering Adobe's font folders or a link in the project that leads into them,
+and a notice there is refused: nothing under Adobe's folders is listed or opened (see `coretext`).
+
 Shipped names and embedded notices are recorded only when every file resolved could be read (WOFF2 needs the
 brotli module). The user's own class of the family (`lazuli class`, source `user`) is named in a note as a
 hint for choosing; it is never a license fact, and nothing of it is written to the lock. An invalid lock is
@@ -38,16 +41,18 @@ invalid; 2 usage or missing input, including a family the DB does not know when 
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import functools
 import importlib.util
 import json
+import os
 import re
 import sqlite3
 import sys
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePath
 
 import yaml
 from jsonschema import Draft202012Validator, FormatChecker
@@ -305,12 +310,66 @@ def read_file(path: Path, face_index: int | None = None) -> FileRecords:
     return out
 
 
+_GLOB_MAGIC = re.compile(r"[*?\[]")
+
+
+def _enterable(path: str | os.PathLike, *, link: bool | None = None) -> bool:
+    """Whether `path` may be listed or looked at: it is not in Adobe's font folders by name, and when it is a
+    symbolic link (`link`, else one lstat of the name itself) it does not lead there. Decided from names and
+    `readlink` alone, as `scan` does for the files below a root."""
+    if coretext.is_adobe_path(path):
+        return False
+    if link is None:
+        link = os.path.islink(path)
+    return not (link and coretext.reaches_adobe(path))
+
+
+def _glob(directory: Path, parts: tuple[str, ...]):
+    """The paths the glob `parts` (a pattern split at its separators) matches below `directory`, found as
+    `Path.glob` finds them (`**` does not follow links), except that nothing Adobe's font folders can be reached
+    through is entered: each name is judged by `_enterable` before it is listed, so a link in the project that
+    leads there is never opened. `directory` has been judged already."""
+    if not parts:
+        yield directory
+        return
+    part, rest = parts[0], parts[1:]
+    if part != "**" and not _GLOB_MAGIC.search(part):
+        child = directory / part
+        if _enterable(child) and child.exists():
+            yield from _glob(child, rest)
+        return
+    try:
+        with os.scandir(directory) as listing:
+            entries = list(listing)
+    except OSError:                                              # not a folder, or not readable
+        entries = []
+    if part == "**":
+        yield from _glob(directory, rest)
+    for entry in entries:
+        try:
+            if not _enterable(entry.path, link=entry.is_symlink()):
+                continue
+            if part == "**":
+                if entry.is_dir(follow_symlinks=False):
+                    yield from _glob(Path(entry.path), parts)
+            elif fnmatch.fnmatch(entry.name, part):
+                yield from _glob(Path(entry.path), rest)
+        except OSError:
+            continue
+
+
 def resolve_files(project: Path, patterns: list[str]) -> tuple[list[Path], list[str]]:
-    """Local files the `files` globs match under the project, and the globs that match none."""
+    """Local files the `files` globs match under the project, and the globs that match none. Adobe's font folders
+    are never entered, nor any link in the project that leads into them (see `_glob`); an absolute pattern or one
+    with `..`, which the lock schema refuses, matches nothing."""
     found: list[Path] = []
     empty = []
     for pattern in patterns:
-        hits = sorted(p for p in project.glob(pattern) if not coretext.reaches_adobe(p) and p.is_file())
+        wanted = PurePath(pattern)
+        if wanted.is_absolute() or ".." in wanted.parts or coretext.reaches_adobe(project):
+            hits = []
+        else:
+            hits = sorted(p for p in set(_glob(project, wanted.parts)) if p.is_file())
         if not hits:
             empty.append(pattern)
         found += [p for p in hits if p not in found]
@@ -392,7 +451,9 @@ def build_entry(old: dict | None, facts: Facts, args, project: Path, notes: list
     notice_texts = []
     for notice in notices or ():
         path = project / notice
-        if path.is_file():
+        if coretext.reaches_adobe(path):               # decided by name and links, nothing is looked at
+            notes.append(f"notice {notice!r} is inside Adobe's font folders, which lazuli never opens")
+        elif path.is_file():
             notice_texts.append(path.read_text(encoding="utf-8", errors="replace"))
         else:
             notes.append(f"notice {notice!r} is not in {project} yet; the release check looks for it")

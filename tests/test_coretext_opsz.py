@@ -113,8 +113,8 @@ def test_a_face_measured_before_its_axes_were_stored_is_decided_again(adobe):
     conn = db.connect(paths.db_path())
     scan.scan(conn)
     axes = conn.execute("SELECT metadata_json FROM local_font").fetchone()[0]
-    conn.execute("UPDATE local_font SET metadata_json = NULL")
-    assert measure.measure_pending(conn) == (1, [])                       # the axes were unknown, so numbers were made
+    conn.execute("UPDATE local_font SET metadata_json = ?", (json.dumps({**json.loads(axes), "axes": []}),))
+    assert measure.measure_pending(conn) == (1, [])                       # stored as not variable: numbers were made
     assert stored(conn)["Sync Serif Display"][0] == "text"
     conn.execute("UPDATE local_font SET metadata_json = ?", (axes,))      # the next scan fills them in
     assert measure.measure_pending(conn) == (0, [f"Adobe Fonts: 1 face with an opsz axis not measured ({REASON})"])

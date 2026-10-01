@@ -8,12 +8,13 @@ inventory stays in the user's lazuli database. Roots per platform, with their `o
 - Windows: %WINDIR%\\Fonts (system); %LOCALAPPDATA%\\Microsoft\\Windows\\Fonts (user).
 - Linux: /usr/share/fonts and /usr/local/share/fonts (system); ~/.local/share/fonts and ~/.fonts (user).
 
-Adobe Fonts (origin `adobe-sync`) are never read from files, because Adobe's terms allow reaching them only
-through the operating system's font API. Adobe's folders (`~/Library/Application Support/Adobe/`,
-`%APPDATA%\\Adobe\\CoreSync`) are skipped wherever a root would lead into them, links included, and nothing
-in them is opened, stat'ed, or listed. On macOS the faces Core Text lists from those folders are added as
-rows whose path is `coretext:<PostScript name>` (an identity, not a path), whose size is 0, and whose mtime
-is `coretext:<version name>` (the change detector). Names, coverage, and design metadata come from Core Text,
+Adobe Fonts (origin `adobe-sync`) are never read from files, because, as lazuli reads Adobe's terms (not legal
+advice), they allow reaching them only through the operating system's font API. Adobe's folders
+(`~/Library/Application Support/Adobe/`, `%APPDATA%\\Adobe\\CoreSync`) are skipped wherever a root would lead
+into them, links included, and nothing in them is opened, stat'ed, or listed. On macOS the faces Core Text
+lists from those folders are added as rows whose path is `coretext:<PostScript name>` (an identity, not a
+path), whose size is 0, and whose mtime is `coretext:<version name>` (the change detector). Names, coverage,
+and design metadata come from Core Text,
 and vendor_id stays empty (see `coretext`). Korean, Japanese, and Chinese family names of the faces a scan
 describes come from one helper process per language, started once for all of them, and are stored under
 the keys file faces use; a language whose helper fails is skipped with one line. Faces Core Text stops

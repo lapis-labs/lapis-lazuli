@@ -6,7 +6,9 @@ The lazuli database is opened read-only (default: the user cache, or LAZULI_DB).
 no font file is opened: the report compares stored measurements (the current measurer version) with the
 mapped labels of exact catalog matches (`exact_ps` or `exact_family`; fuzzy matches are too loose to count
 as ground truth and are only counted). The report holds family names and numbers only: no paths, font
-files, or catalog payloads.
+files, or catalog payloads. Faces of Adobe Fonts (origin `adobe-sync`) are left out of every count, label,
+and sweep: as lazuli reads Adobe's terms (not legal advice), their data is never used to create, train,
+test, or improve machine learning or AI systems, and a measurer calibration is that.
 
 Unit: one installed family, read on its representative face (the face nearest a regular upright weight,
 as `lazuli search --similar-to` picks it) among the faces that have the measurement in question.
@@ -49,6 +51,12 @@ HANGUL_OTHER = ("display", "hand")
 GENRES = frozenset({"serif", "sans", "slab", "mono", *HANGUL_TEXT, *HANGUL_OTHER})
 TAL_NEMO = "display.tal-nemo"
 EXACT = ("exact_ps", "exact_family")
+ADOBE = "adobe-sync"                 # never calibrated against: Adobe Fonts data is not used to improve anything
+# The baselines below were made while Adobe Fonts faces were still counted (their reports name families that
+# are Adobe Fonts families today) and were not redone without them.
+BASELINE_COHORT = ("It was made while Adobe Fonts faces were still counted and has not been redone without "
+                   "them; this report leaves them out, so the cohorts differ and a gap is not only the "
+                   "measurer's.")
 
 MIN_SUPPORT = 10                    # labeled families needed on each side of a boundary
 MIN_GAIN = 0.05
@@ -87,8 +95,9 @@ def boundaries() -> dict[str, float]:
 
 def exact_labels(conn) -> tuple[dict[str, dict[str, set[str]]], dict[str, dict[str, set[str]]]]:
     """({installed family: {source: mapped genre and subclass ids}}, the same for Hangul classes), over exact
-    matches only. A source that names Hangul classes in Korean beside its Latin classes (sandoll: 손글씨 next to
-    Display) gives the Hangul view only its Korean names; other sources give both views the same labels."""
+    matches only, and never over the faces of Adobe Fonts (`adobe-sync`). A source that names Hangul classes in
+    Korean beside its Latin classes (sandoll: 손글씨 next to Display) gives the Hangul view only its Korean
+    names; other sources give both views the same labels."""
     pairs: dict[str, dict[str, set[tuple[str, str]]]] = defaultdict(lambda: defaultdict(set))
     placeholders = ", ".join("?" * len(EXACT))
     for row in conn.execute(f"""
@@ -96,7 +105,7 @@ def exact_labels(conn) -> tuple[dict[str, dict[str, set[str]]], dict[str, dict[s
             FROM match m JOIN local_font lf ON lf.id = m.local_font_id JOIN source s ON s.id = m.source_id
             JOIN catalog_label cl ON cl.source_id = m.source_id AND cl.source_key = m.source_key
             WHERE m.method IN ({placeholders}) AND cl.kind IN ('genre', 'subclass') AND cl.mapped IS NOT NULL
-              AND lf.family IS NOT NULL""", EXACT):
+              AND lf.family IS NOT NULL AND lf.origin != ?""", (*EXACT, ADOBE)):
         pairs[row["family"]][row["source"]].add((row["mapped"], row["raw"]))
     every = {family: {source: {mapped for mapped, _ in found} for source, found in by_source.items()}
              for family, by_source in pairs.items()}
@@ -107,12 +116,13 @@ def exact_labels(conn) -> tuple[dict[str, dict[str, set[str]]], dict[str, dict[s
 
 
 def source_rows(conn) -> list[dict]:
-    """Per source: kind, priority, fetch date, catalog families, installed families matched exactly or only fuzzily."""
+    """Per source: kind, priority, fetch date, catalog families, installed families matched exactly or only fuzzily.
+    Faces of Adobe Fonts (`adobe-sync`) count for nothing."""
     matched: dict[str, dict[str, bool]] = defaultdict(dict)
     for row in conn.execute("""
             SELECT s.name AS source, lf.family, MIN(m.method = 'fuzzy') AS fuzzy_only
             FROM match m JOIN local_font lf ON lf.id = m.local_font_id JOIN source s ON s.id = m.source_id
-            WHERE lf.family IS NOT NULL GROUP BY s.name, lf.family"""):
+            WHERE lf.family IS NOT NULL AND lf.origin != ? GROUP BY s.name, lf.family""", (ADOBE,)):
         matched[row["source"]][row["family"]] = bool(row["fuzzy_only"])
     out = []
     for row in conn.execute("""SELECT s.name, s.kind, s.priority, s.fetched_at, s.status,
@@ -589,7 +599,7 @@ def comparison_section(families: list[dict], labels: dict, hangul_labels: dict) 
                                        f"not measured {hand['missing']}")
     latest = [
         "## Comparison with 14a985c", "",
-        "Baseline: the 14a985c calibration report, for the same exact-labeled family cohorts. "
+        f"Baseline: the 14a985c calibration report. {BASELINE_COHORT} "
         "Form and monospace cells are precision / recall; the other cells are a count, recall, "
         "or precision. Not-measured families are excluded from scored denominators.", "",
         *table(["metric", "14a985c", "current"],
@@ -597,7 +607,7 @@ def comparison_section(families: list[dict], labels: dict, hangul_labels: dict) 
     ]
     current = [
         "## Comparison with 1497d3f", "",
-        "Baseline: the 1497d3f calibration report, for the same exact-labeled family cohort. "
+        f"Baseline: the 1497d3f calibration report. {BASELINE_COHORT} "
         "Symbol misclassifications count labeled families measured as symbol; hand precision scores "
         "measured hand families against catalog hand labels. Not-measured families are outside both denominators.", "",
         *table(["metric", "1497d3f", "current"], [
@@ -608,8 +618,8 @@ def comparison_section(families: list[dict], labels: dict, hangul_labels: dict) 
         ]), "", "## Comparison with 13ba6c5", "",
     ]
     return latest + current + [
-            "Baseline: the 13ba6c5 calibration report. Current: the same exact-match catalog cohorts "
-            "on this inventory. Form and monospace cells are precision / recall; the other cells are a "
+            f"Baseline: the 13ba6c5 calibration report. {BASELINE_COHORT} Current: the exact-match catalog "
+            "cohorts on this inventory. Form and monospace cells are precision / recall; the other cells are a "
             "count or recall. Each cell states its not-measured count, excluded from scored denominators. "
             "The baseline's symbol count covers only labeled families included in its measured-kind matrix; "
             "its one not-measured family is the 268-family exact-labeled cohort minus 267 matrix rows. "
@@ -626,7 +636,7 @@ def comparison_section(families: list[dict], labels: dict, hangul_labels: dict) 
 def report(conn) -> str:
     bounds = boundaries()
     from fontTools import unicodedata as unicode_data
-    families = local._families(conn)
+    families = local._families(conn, exclude_origin=ADOBE)
     labels, hangul_labels = exact_labels(conn)
     sources = source_rows(conn)
     priority = [s["name"] for s in sources if s["name"] in HANGUL_SOURCES]

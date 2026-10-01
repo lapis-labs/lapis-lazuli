@@ -1,4 +1,4 @@
-"""Shared test fixtures: isolated user cache, browser loopback server, and browser/CJK markers."""
+"""Shared test fixtures: isolated user cache, no installed fonts, browser loopback server, and browser/CJK markers."""
 from __future__ import annotations
 
 import importlib.util
@@ -50,6 +50,15 @@ def isolated_lazuli_cache(tmp_path, monkeypatch):
     monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", INSTALLED_BROWSERS)
     # macOS and Windows use platform cache directories rather than XDG_CACHE_HOME.
     monkeypatch.setattr(paths, "cache_dir", lambda: cache / "lazuli")
+
+
+@pytest.fixture(autouse=True)
+def no_installed_fonts(tmp_path_factory, monkeypatch):
+    """One empty font folder instead of this computer's fonts for every test. `LAZULI_FONT_ROOTS` replaces the
+    roots and turns the Core Text listing off, so no test reads an installed or an Adobe Fonts face unless it
+    sets its own roots (over this) or removes the variable (and then fakes the font list)."""
+    empty = tmp_path_factory.mktemp("no-fonts")
+    monkeypatch.setenv("LAZULI_FONT_ROOTS", f"user={empty}")
 
 
 def pytest_collection_modifyitems(items):

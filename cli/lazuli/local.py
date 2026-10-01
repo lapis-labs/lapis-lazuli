@@ -34,11 +34,13 @@ def _scripts(coverage: dict) -> set[str]:
     return out
 
 
-def _families(conn: sqlite3.Connection, pattern: str | None = None, origin: str | None = None) -> list[dict]:
+def _families(conn: sqlite3.Connection, pattern: str | None = None, origin: str | None = None,
+              exclude_origin: str | None = None) -> list[dict]:
     """One entry per family: origins, faces, scripts, and the measured classes of its faces.
 
-    `origin` keeps only the faces that came from it, so every value of an entry describes those faces.
-    `languages` and `vertical` are unions of the listed faces; inspect a face before relying on its support.
+    `origin` keeps only the faces that came from it and `exclude_origin` drops them, so every value of an
+    entry describes the faces that remain. `languages` and `vertical` are unions of the listed faces;
+    inspect a face before relying on its support.
     """
     rows = conn.execute(
         """SELECT lf.family, lf.origin, lf.subfamily, lf.postscript_name, lf.coverage_json,
@@ -49,9 +51,10 @@ def _families(conn: sqlite3.Connection, pattern: str | None = None, origin: str 
            WHERE lf.family IS NOT NULL AND lf.family NOT LIKE '.%'
              AND (? IS NULL OR lf.family_norm LIKE '%' || ? || '%' OR lf.names_i18n_json LIKE '%' || ? || '%')
              AND (? IS NULL OR lf.origin = ?)
+             AND (? IS NULL OR lf.origin != ?)
            ORDER BY lf.family, lf.subfamily""",
         (measure.MEASURER_VERSION, pattern and scan.norm(pattern), pattern and scan.norm(pattern), pattern,
-         origin, origin)).fetchall()
+         origin, origin, exclude_origin, exclude_origin)).fetchall()
     out: dict[str, dict] = {}
     for row in rows:
         entry = out.setdefault(row["family"], {"family": row["family"], "origins": set(), "faces": [],

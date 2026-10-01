@@ -2,9 +2,10 @@
 
 This file backs the inventory part of `lzl-fonts` when an answer needs Adobe's own record of a font
 lazuli marks `adobe-sync` (an Adobe Fonts activation): its designers, foundry, supported languages,
-weight and style names, whether it is variable, and its Adobe Fonts page. lazuli never asks Adobe
-for anything and never opens those fonts' files. It lists them through the operating system's font
-API and measures the glyphs the system draws, and `lazuli sources` keeps Adobe Fonts `refused`. The
+weight and style names, whether it is variable, and its Adobe Fonts page. lazuli's font listing and
+measurement never contact Adobe, and the source registry refuses `fonts.adobe.com` and the Typekit hosts
+it lists. lazuli never opens those fonts' files: it lists them through the operating system's font API
+and measures the glyphs the system draws, and `lazuli sources` keeps Adobe Fonts `refused`. The
 provider's record comes only from an official Adobe integration the user has already connected to
 this host, or from the user's own browser.
 

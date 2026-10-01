@@ -1,10 +1,10 @@
 """Adobe Fonts through the operating system's font API, never through their files (macOS Core Text).
 
-Adobe's terms allow other software to list and use the fonts a subscription activates through the
-operating system's font stack, and forbid reaching them any other way, the folders they are installed in
-included. So lazuli never opens, stats, lists, copies, or passes to fontTools or Pillow anything under
-Adobe's folders (`~/Library/Application Support/Adobe/`, `%APPDATA%\\Adobe\\CoreSync`). On macOS it asks
-Core Text instead:
+As lazuli reads Adobe's terms (not legal advice), they allow other software to list and use the fonts a
+subscription activates through the operating system's font stack, and forbid reaching them any other way, the
+folders they are installed in included. So lazuli never opens, stats, lists, copies, or passes to fontTools or
+Pillow anything under Adobe's folders (`~/Library/Application Support/Adobe/`, `%APPDATA%\\Adobe\\CoreSync`).
+On macOS it asks Core Text instead:
 
 - Which faces are Adobe Fonts: the descriptor's URL attribute, read as a string and matched by name only
   (`is_adobe_path`). The URL is never opened; it classifies a face and nothing else. A face's identity in
@@ -48,16 +48,23 @@ Core Text instead:
   `opsz` is therefore never opened as a `CTFace`: `measure.open_face` raises `OpticalSizeNotPinned`, and the
   face is recorded as unmeasured ("optical size not pinned"), never with numbers.
 
-`LAZULI_FONT_ROOTS` (tests, evaluations) turns the listing off (`provider()` returns None), and starts no
-helper (`run_names_helper`), so no Adobe data reaches a test or an evaluation. Adobe Fonts terms allow using
-this data for inference only. Windows has no counterpart here: Adobe Fonts are absent from the inventory
-there.
+Adobe data stays out of tests, calibration, and evaluations because, as lazuli reads Adobe's terms (not legal
+advice; general terms 17(C)), it is never used to create, train, test, or improve machine learning or AI
+systems: lazuli uses it only to answer for the user on this computer. Three places enforce that, and this
+module alone does not: `LAZULI_FONT_ROOTS` turns the listing off (`provider()` returns None) and starts no
+helper (`run_names_helper`), and the test suite sets it for every test (`tests/conftest.py`) as the evaluation
+runner does for the agent it starts; the calibration report leaves out every `adobe-sync` face
+(`tools/calibration/calibrate.py`); and the evaluation scorer reads its own database, built from OFL fonts
+only, never the one in the user's cache (`tools/eval/score.py`). A tool that reads the user's database for
+anything else must leave `adobe-sync` out itself. Windows has no counterpart here: Adobe Fonts are absent
+from the inventory there.
 """
 from __future__ import annotations
 
 import array
 import json
 import os
+import re
 import sys
 from dataclasses import dataclass
 from functools import lru_cache
@@ -72,6 +79,8 @@ SYMLINK_LIMIT = 40
 UNICODE_PLANES = (0, 1, 2, 3)            # planes that hold letters: BMP, SMP, SIP, TIP
 NAMES_LANGUAGES = ("ko", "ja", "zh-Hans", "zh-Hant")    # the keys of `names_i18n_json`, one helper process each
 NAMES_TIMEOUT = 30.0                     # seconds a helper process may run before it is killed
+# A language tag as a helper process takes it (`ko`, `zh-Hans`); anything else would be text in its arguments.
+LANGUAGE_TAG = re.compile(r"[a-z]{2,3}(-[A-Z][a-z]{3})?")
 
 # The Core Text, Core Foundation, and Core Graphics symbols this module may bind, and nothing else.
 ALLOWED_CALLS = frozenset({
@@ -591,8 +600,12 @@ def run_names_helper(language: str, postscripts: list[str]) -> object:
     The names go in as a JSON list on stdin and come out as JSON on stdout: {PostScript name: {"name",
     "language"}}, the language Core Text reports for that name. Raises when the process fails, is killed after
     `NAMES_TIMEOUT` seconds, or answers something that is not JSON. `-P` keeps the working directory off the
-    helper's import path, so a folder named `lazuli` in a project is never run in its place. While
-    `LAZULI_FONT_ROOTS` is set no process is started and the answer is empty."""
+    helper's import path, so a folder named `lazuli` in a project is never run in its place. `language` goes
+    into the process's arguments, so it must be a language tag (`ko`, `zh-Hans`: `LANGUAGE_TAG`), else
+    `ValueError` and no process. While `LAZULI_FONT_ROOTS` is set no process is started and the answer is
+    empty."""
+    if not isinstance(language, str) or not LANGUAGE_TAG.fullmatch(language):
+        raise ValueError(f"{language!r} is not a language tag")
     if os.environ.get("LAZULI_FONT_ROOTS"):
         return {}
     import subprocess
@@ -647,8 +660,10 @@ def localized_names(postscripts: Iterable[str], runner: Runner | None = None,
 def names_in_this_process(postscripts: Iterable[str]) -> dict[str, dict[str, str]]:
     """What the helper does: {PostScript name: {"name", "language"}} for the listed faces among `postscripts`,
     family names in the language this process prefers. Only `ALLOWED_CALLS` are bound. The font list is walked
-    for descriptors named as asked (the first of a name wins, as in `CoreText._list`); no URL is read, so
-    nothing here can tell where a font lives, let alone open it. A face with no name is left out."""
+    and the first descriptor of each PostScript name asked for answers, whatever font it is: unlike
+    `CoreText._list`, which keeps the first descriptor of a name among the Adobe Fonts faces it tells by URL,
+    this reads no URL, so nothing here can tell where a font lives, let alone open it, and a font of another
+    origin listed earlier under the same PostScript name answers in its place. A face with no name is left out."""
     wanted = set(postscripts)
     lib = _Library()
     collection = lib.CTFontCollectionCreateFromAvailableFonts(None)

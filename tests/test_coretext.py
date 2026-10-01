@@ -443,7 +443,11 @@ def test_doctor_warns_when_core_text_cannot_be_asked(env, monkeypatch):
 
 
 @pytest.mark.parametrize("name", ["CTFontCreatePathForGlyph", "CTFontCopyTable", "CTFontCopyAvailableTables",
-                                  "CGFontCopyTableForTag", "CTFontCopyGraphicsFont", "CTFontManagerCreateFontDescriptorsFromURL"])
+                                  "CGFontCopyTableForTag", "CTFontCopyGraphicsFont", "CTFontManagerCreateFontDescriptorsFromURL",
+                                  # the bitmap the drawing goes into must not come out as an image or a file
+                                  "CGBitmapContextCreateImage", "CGImageDestinationCreateWithURL",
+                                  "CGImageDestinationAddImage", "CGImageDestinationFinalize",
+                                  "CGDataProviderCreateWithURL", "CGDataProviderCopyData"])
 def test_outline_table_and_file_calls_cannot_be_bound(name):
     with pytest.raises(PermissionError, match="not one of the Core Text calls"):
         coretext.require_allowed(name)

@@ -21,7 +21,9 @@ Two ways to reach a face, recorded as metrics.method:
              axis by the point size and the two Core Text fonts of one face are made at different sizes, so
              nothing pins one optical size. It is recorded as unmeasured (`unmeasurable`: "optical size not
              pinned"), never with numbers, and counted in one line of `measure_pending`'s failures. Files are
-             unaffected: FreeType draws the font's default instance.
+             unaffected: FreeType draws the font's default instance. A row whose design metadata is not stored
+             yet (no `axes` key: empty, NULL, or `{}`) is not known to be free of an `opsz` axis, so it is not
+             measured either; it waits, with no row recorded, until a scan stores its metadata.
 
 Latin (vocab `panose_latin_text`):
   weight       WeightRat = CapH (H) / vertical stem of E. The stem is the leftmost ink run on rows
@@ -444,16 +446,30 @@ def has_optical_size_axis(metadata_json: str | None) -> bool:
     return any(axis.get("tag") == "opsz" for axis in json.loads(metadata_json or "{}").get("axes") or ())
 
 
+class DesignMetadataMissing(Exception):
+    """An Adobe Fonts row whose design metadata is not stored yet (no `axes` key). Whether it has an `opsz`
+    axis is not known, so it is neither measured nor recorded as unmeasurable."""
+
+
+def design_metadata_stored(metadata_json: str | None) -> bool:
+    """Whether a scan stored design metadata for the row: scans always store `axes` (a list, empty when the face
+    is not variable). Empty, NULL, and `{}` mean "not known yet", never "no axes"."""
+    stored = json.loads(metadata_json) if metadata_json else None
+    return isinstance(stored, dict) and "axes" in stored
+
 def open_face(path: str, index: int, row: dict, provider: coretext.Provider | None = None):
     """The face a row describes. An `adobe-sync` row is an identity, not a path: it is opened only through the
-    operating system's font list, never as a file, and never when its stored axes include `opsz`
-    (`OpticalSizeNotPinned`; files are unaffected, since FreeType draws the default instance)."""
+    operating system's font list, never as a file, never when its stored axes include `opsz`
+    (`OpticalSizeNotPinned`; files are unaffected, since FreeType draws the default instance), and never before
+    a scan has stored its design metadata (`DesignMetadataMissing`), since its axes are not known until then."""
     if row.get("origin") != "adobe-sync":
         return Face(path, index)
     if has_optical_size_axis(row.get("metadata_json")):
         raise OpticalSizeNotPinned(OPTICAL_SIZE_REASON)
     if provider is None:
         raise LookupError("Adobe Fonts are measured only through the operating system's font list")
+    if not design_metadata_stored(row.get("metadata_json")):
+        raise DesignMetadataMissing(path)
     return provider.open(path, RASTER_PX)
 
 
@@ -500,7 +516,8 @@ def measure_pending(conn: sqlite3.Connection, *, limit: int | None = None) -> tu
     (another platform, or `LAZULI_FONT_ROOTS` set). An Adobe Fonts face whose stored axes include `opsz` is
     never measured: it is recorded as unmeasurable ("optical size not pinned", once per measurer version, like
     any failure), also when it was measured before its axes were stored, and `failures` gets one line with
-    the count of such faces."""
+    the count of such faces. A face whose design metadata is not stored yet (`design_metadata_stored`) also
+    waits, unmeasured and unrecorded: its axes are not known, so a scan has to store them first."""
     vocab = _vocab()
     rows = conn.execute(
         """SELECT lf.* FROM local_font lf
@@ -532,6 +549,8 @@ def measure_pending(conn: sqlite3.Connection, *, limit: int | None = None) -> tu
             arguments = {}
         try:
             values = measure_face(data["path"], data["face_index"], data, vocab, **arguments)
+        except DesignMetadataMissing:             # not known yet: no row, so a later run decides
+            continue
         except OpticalSizeNotPinned as exc:       # counted in one line below, not one per face
             unpinned += 1
             values = _unmeasurable(str(exc))

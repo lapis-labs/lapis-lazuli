@@ -37,12 +37,18 @@ plan. It locks only a family already chosen.
   (OpenType tags) and `vertical` (`vert`, `vrt2`, `vhal`, `vkna`); `x_height`, `cap_height`,
   `units_per_em` in font units; and the font's own class as declared (`family_class`, `class_id`,
   `class_name`, `class_source`; 0 is unclassified and common), and `os2_ranges`, its declared Unicode
-  and code-page bits, which are declarations, not support. Declared classes and ranges never replace
-  the measured classes, a user class, or coverage.
+  and code-page bits, which are declarations, not support. `family_class` means something different per
+  `class_source`: `os2` is the file's class and subclass word, `coretext` (an `adobe-sync` face) is the
+  system's class bits without a subclass, so compare `class_id` across origins, never `family_class`.
+  Declared classes and ranges never replace the measured classes, a user class, or coverage.
 - For an `adobe-sync` face these come from the operating system, and some are partial: `features`
   (`features_source: coretext`) lists only the tags it maps, `vertical` can show `vert` and `vkna` but
   never `vhal`, `os2_ranges` is null, and heights are the system's own numbers. An absent tag is
   unknown, not missing from the font.
+- `lazuli catalog lookup` sends the family name of an `adobe-sync` face that no snapshot catalog matched,
+  and its Korean name where the system gives one, as the search term to the lookup catalog the source
+  registry allows (`sandoll`), and nothing else about the face: no PostScript name, other-language name,
+  coverage, or measurement.
 - Groups count coverage, not language: Hangul is the 2,350 common syllables or more, Han 6,000
   ideographs or more. Korean and Chinese sets carry kana, so kana alone does not make a face
   Japanese.
