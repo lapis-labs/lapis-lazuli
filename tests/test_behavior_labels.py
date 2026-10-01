@@ -244,7 +244,7 @@ def test_retry_wording_is_a_second_try_not_any_button(label, retry):
 
 @pytest.mark.parametrize("text, claim", [
     ("예약이 완료됐어요", "success"), ("저장했어요", "success"), ("예약되었어요", "success"), ("예약됐어요", "success"),
-    ("가입되었어요", "success"), ("삭제했어요", "success"), ("메시지를 보냈어요", "success"), ("성공적으로 저장됐어요", "success"),
+    ("가입되었어요", "success"), ("메시지를 보냈어요", "success"), ("성공적으로 저장됐어요", "success"),
     ("예약하지 못했어요. 다시 시도해 주세요.", "failure"), ("저장에 실패했어요", "failure"), ("오류가 발생했어요", "failure"),
     ("저장되지 않았어요", "failure"), ("저장할 수 없었어요", "failure"), ("문제가 생겼어요", "failure"),
     ("다시 시도해 주세요", "failure"), ("완료하지 못했어요", "failure"),

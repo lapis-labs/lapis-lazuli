@@ -4,6 +4,8 @@ from __future__ import annotations
 import re
 from urllib.parse import urlsplit
 
+from lapis_design.behavior_check.probes._decision import names
+
 NAMES = ("time_limits",)
 
 # Installed before the measured document loads; records due times without changing callback timing.
@@ -44,16 +46,18 @@ _ADJUST = re.compile(r"\b(?:duration|timeout|session length|time limit)\b|(?:제
 
 
 def _snapshot(driver, *, ids=False):
-    if ids:
-        driver.boxes()
-    return driver.page.evaluate("""() => ({
+    """The page's text, fields, and controls. With `ids`, controls are named by their accessible name (a button's
+    value, an image's alt, aria-label), which needs a fresh snapshot; without, by what they show."""
+    named = names(driver) if ids else {}
+    return driver.page.evaluate("""named => ({
       text:document.body?.innerText||'', path:location.pathname,
       inputs:[...document.querySelectorAll('input:not([type=hidden]),textarea')]
         .map(e=>({name:e.name||e.id||e.outerHTML.slice(0,60),value:e.value})),
-      controls:[...document.querySelectorAll('button,a,[role=button],input[type=button]')]
+      controls:[...document.querySelectorAll('button,a,[role=button],input[type=button],input[type=submit],input[type=image]')]
         .filter(e=>e.getBoundingClientRect().width && e.getBoundingClientRect().height)
-        .map(e=>({id:e.getAttribute('data-lapis-box'),name:(e.innerText||e.value||e.getAttribute('aria-label')||'').trim()}))
-    })""")
+        .map(e=>{const id=e.getAttribute('data-lapis-box');
+          return {id,name:(named[id]||e.innerText||e.value||e.getAttribute('aria-label')||'').trim()}})
+    })""", named)
 
 
 def _next(driver):
@@ -131,7 +135,7 @@ def _idle(session, driver, horizon_ms, *, extend=False):
         if not expiry and values and any(item["name"] in values and not item["value"] for item in state["inputs"]):
             expiry = True
             limit_kind = "form"
-        if warning and any(_EXTEND.search(item["name"]) for item in state["controls"]):
+        if warning:
             state = _snapshot(driver, ids=True)
         controls = [item for item in state["controls"] if _EXTEND.search(item["name"]) and item["id"]]
         extendable |= bool(warning and controls)
@@ -210,17 +214,19 @@ def run(session, open_driver):
             driver = open_driver(ctx)
             try:
                 _load_step(driver, route, expected, actions)
-                starting = _snapshot(driver)
+                starting = _snapshot(driver, ids=True)
                 _seed_input(driver, session.values_engine)
                 control_names = [item["name"] for item in starting["controls"]]
                 turn_off = any(_TURN_OFF.search(name) for name in control_names)
                 adjustable = False
+                named = names(driver)
                 for el in driver.page.locator('input[type=number][max]').all():
                     maximum = el.get_attribute("max")
                     current = el.input_value()
                     if maximum and current and maximum.isdecimal() and current.isdecimal() and int(current) > 0:
+                        label = named.get(el.get_attribute("data-lapis-box")) or el.get_attribute("aria-label") or ""
                         adjustable |= int(maximum) >= int(current) * 10 and bool(_ADJUST.search(
-                            (el.get_attribute("aria-label") or "") + " " + (el.get_attribute("name") or "")))
+                            label + " " + (el.get_attribute("name") or "")))
                 baseline = _idle(session, driver, 20 * 3600_000)
                 if baseline["expired"] is None:
                     continue

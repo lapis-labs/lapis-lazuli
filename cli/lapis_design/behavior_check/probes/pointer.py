@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from playwright.sync_api import Error as PlaywrightError
 
+from lapis_design.behavior_check.probes._decision import names
 from lapis_design.behavior_check.probes.motion import base_contexts
 
 NAMES = ("pointer",)
@@ -36,22 +37,28 @@ STATE = """id => {const el=document.querySelector('[data-lapis-box="'+id+'"]');
 }"""
 
 
+# Controls of one widget that do what a drag does, read by accessible name: buttons that move or step the value,
+# or a menu. English words carry boundaries (\b); a Hangul word runs into its ending, so Korean has none.
+_STEP = (r"\b(?:move up|move down|reorder|previous|next|increase|decrease|increment|decrement)\b|"
+         r"위로|아래로|순서|이전|다음|증가|감소")
+_MENU = r"\b(?:menu|options|actions)\b|메뉴|더보기|옵션|작업"
+
+
 def _alternative(driver, item):
     """Identify controls *in the same widget*, not unrelated page buttons."""
-    return driver.page.evaluate(r"""id => {
+    return driver.page.evaluate(r"""({id, named, step, menu}) => {
       const el=document.querySelector('[data-lapis-box="'+id+'"]');
       if(!el) return 'none';
       const group=el.closest('section,[role=group]')||el.parentElement;
       const others=[...group.querySelectorAll('button,[role=button],[role=menuitem],select,input')]
         .filter(x=>x!==el && !x.disabled && x.getBoundingClientRect().width);
-      if(others.some(x=>/\b(move up|move down|reorder|previous|next|increase|decrease|increment|decrement)\b/i.test(
-        (x.getAttribute('aria-label')||'')+' '+x.textContent))) return 'buttons';
-      if(others.some(x=>x.matches('select,[role=menuitem]') ||
-        /\b(menu|options|actions)\b/i.test(x.getAttribute('aria-label')||x.textContent))) return 'menu';
+      const label=x=>named[x.getAttribute('data-lapis-box')]||(x.getAttribute('aria-label')||'')+' '+x.textContent;
+      if(others.some(x=>new RegExp(step,'i').test(label(x)))) return 'buttons';
+      if(others.some(x=>x.matches('select,[role=menuitem]') || new RegExp(menu,'i').test(label(x)))) return 'menu';
       if(others.some(x=>x.matches('input:not([type=range])'))) return 'input';
       return el.matches('input[type=range],[role=slider]') || el.tabIndex>=0 ||
         el.hasAttribute('aria-keyshortcuts') ? 'keyboard-only' : 'none';
-    }""", item["id"])
+    }""", {"id": item["id"], "named": names(driver), "step": _STEP, "menu": _MENU})
 
 
 def _drag(driver, box):

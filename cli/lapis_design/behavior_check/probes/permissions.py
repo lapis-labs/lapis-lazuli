@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 
-from lapis_design.behavior_check.probes._decision import advance, dialogs, reopen_with
+from lapis_design.behavior_check.probes._decision import REFUSE, advance, dialogs, reopen_with
 
 NAMES = ("permissions",)
 
@@ -81,7 +81,8 @@ def run(session, open_driver):
                     drain()
                     for prompt in dialogs(driver):
                         button = next((button for button in prompt["controls"] if re.search(
-                            r"allow|continue|enable|허용|계속|활성화|켜기", button["text"], re.I)), None)
+                            r"allow|continue|enable|허용|계속|활성화|켜기", button["text"], re.I)
+                            and not re.search(REFUSE, button["text"], re.I)), None)
                         if button and session.meta["backend"] == "stub":
                             driver.act({"kind": "click", "target": button["id"]})
                             drain()

@@ -4,6 +4,7 @@ from __future__ import annotations
 import re
 from urllib.parse import urljoin, urlsplit
 
+from lapis_design.behavior_check.probes._decision import names
 from lapis_design.behavior_check.redact import path as safe_path
 
 NAMES = ("history",)
@@ -17,8 +18,8 @@ def _path(driver):
 
 
 def _state(driver):
-    driver.boxes()
-    return driver.page.evaluate("""() => ({scroll:scrollY,
+    named = names(driver)                       # a link's wording is its accessible name (alt, aria-label), not its text
+    return driver.page.evaluate("""named => ({scroll:scrollY,
       fields:[...document.querySelectorAll('input,textarea,select')]
         .filter(el=>el.type!=='hidden' && el.getBoundingClientRect().width)
         .map(el=>({id:el.getAttribute('data-lapis-box'),name:el.id||el.name||'',type:el.type,
@@ -32,7 +33,7 @@ def _state(driver):
       links:[...document.querySelectorAll('a[href]')]
         .filter(el=>el.getBoundingClientRect().width && el.getBoundingClientRect().height)
         .map(el=>({id:el.getAttribute('data-lapis-box'),href:el.href,
-          name:(el.innerText||el.getAttribute('aria-label')||'').trim()}))})""")
+          name:(named[el.getAttribute('data-lapis-box')]||el.innerText||el.getAttribute('aria-label')||'').trim()}))})""", named)
 
 
 def _restore(before, after):

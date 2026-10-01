@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 
 from lapis_design.behavior_check.probes._decision import (
-    CANCEL, CLOSE, CUSTOMIZE, DECLINE, DISMISS, LATER, REFUSE, advance, dialogs, names, purpose, reopen_with, route)
+    CANCEL, CLOSE, CUSTOMIZE, DECLINE, DISMISS, LATER, REFUSE, REMIND, advance, dialogs, names, purpose, reopen_with, route)
 from lapis_design.behavior_check.probes.permissions import INIT as DENY_DEVICES
 
 NAMES = ("choices",)
@@ -42,17 +42,24 @@ GROUPS = """() => [...document.querySelectorAll('fieldset,[role="group"]')]
  .filter(group=>group.id && /plan|add-on|optional|gift wrap|요금제|추가 ?상품|선택 ?사항|선물 ?포장/i.test(group.text))"""
 
 
-# A Korean "옵션 추가하기" adds an option (an upsell's accept); the word alone opens option choices.
-_ADDS_OPTION = re.compile(r"추가|담기|담아|담을|장바구니|\badd\b|\bcart\b", re.I)
+# A Korean "옵션 추가하기" adds an option (an upsell's accept): the verb follows the word and nothing after it
+# turns it down ("옵션 추가 안 함", "옵션 추가 없이 계속" decline). The word alone, or with another word first
+# ("추가 옵션 보기"), opens option choices.
+_ADDS_OPTION = re.compile(r"옵션[을를]?\s*(?:장바구니에\s*)?(?:추가|담)")
+_OPTION = re.compile(r"옵션|\boptions?\b", re.I)
+_NOT_ADDING = r"안 ?(?:함|할|해)|없이|하지 ?(?:않|마)"                                  # a Korean refusal of an add-on
 
 
 def _kind(text, input_type, purpose_name):
-    adds_option = "옵션" in text and _ADDS_OPTION.search(text) and not re.search(CUSTOMIZE, text, re.I)
+    refuses = re.search(rf"{REFUSE}|{DECLINE}|{_NOT_ADDING}", text, re.I)
+    if _OPTION.search(text) and refuses:                       # an add-on turned down
+        return "decline" if purpose_name != "confirm" else "neutral"
+    adds_option = _ADDS_OPTION.search(text) and not re.search(CUSTOMIZE, text, re.I)
     if not adds_option and re.search(rf"{CUSTOMIZE}|options|옵션|선택 ?사항", text, re.I):
         return "customize"
     if re.search(rf"{REFUSE}|{DECLINE}|opt out|unsubscribe|수신 ?거부|구독 ?(?:해지|취소)|{CANCEL}", text, re.I):
         return "decline" if purpose_name != "confirm" else "neutral"
-    if re.search(rf"{CLOSE}|{DISMISS}|{LATER}", text, re.I):
+    if re.search(rf"{CLOSE}|{DISMISS}|{LATER}|{REMIND}", text, re.I):
         return "dismiss"
     if input_type == "radio" and purpose_name != "plan":
         return "neutral"

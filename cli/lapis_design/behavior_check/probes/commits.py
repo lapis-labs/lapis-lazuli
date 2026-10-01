@@ -5,9 +5,11 @@ import re
 from collections import Counter
 from time import sleep
 
+from lapis_design.behavior import EXIT_KINDS
 from lapis_design.behavior_check import settle
-from lapis_design.behavior_check.probes._decision import CLAIMS, NOT_A_RESULT, RESUBMIT, WAITING
+from lapis_design.behavior_check.probes._decision import NOT_A_RESULT, RESUBMIT, WAITING, claim_table
 from lapis_design.behavior_check.probes.controls import element, fresh
+from lapis_design.behavior_check.probes._decision import BACK_OUT, CLOSE, CONFIRM, DECLINE, EXIT_ACTION, names
 
 NAMES = ("commits",)
 _METHODS = {"POST", "PUT", "PATCH", "DELETE"}
@@ -113,9 +115,21 @@ def _new_text(before, after):
     return " ".join(fresh)
 
 
-def _claimed(text):
+def _claimed(text, leaving=False):
+    """What `text` claims about a commit's result. `leaving`: the commit leaves something (see `_exits`), so
+    the completed forms of leaving (unsubscribed, cancelled, 해지됐어요) are a success."""
     text = NOT_A_RESULT.sub(" ", text.lower())
-    return next((claim for claim, words in CLAIMS if re.search(words, text)), "none")
+    return next((claim for claim, words in claim_table(leaving) if re.search(words, text)), "none")
+
+
+# A control that cancels or deletes (the probe's kind), is named for what it leaves ("Unsubscribe", "구독 해지"),
+# starts with Cancel, or ends with 취소 ("Cancel reservation", "예약 취소") leaves something, whatever noun the kind
+# went by. A booking button that mentions "free cancellation" does not.
+_LEAVES = re.compile(rf"{EXIT_ACTION}|^\W*cancel\b|취소(?:하기)?\W*$", re.I)
+
+
+def _exits(name, kind):
+    return kind in ("cancel", "delete") or bool(_LEAVES.search(name))
 
 
 def _kind(name, request):
@@ -218,7 +232,8 @@ def _seed_inputs(driver, target):
             element(driver, field["id"]).fill(driver.session.values_engine.value(value_id))
 
 
-def _outcome(driver, target, request, mode):
+def _outcome(driver, target, request, mode, leaving=False):
+    """One commit with one injected mode. `leaving`: the commit belongs to an exit flow."""
     opener = _reach(driver, target)
     if opener is False:
         return None, request
@@ -237,11 +252,13 @@ def _outcome(driver, target, request, mode):
     text_after = (_region(driver, target) if element(driver, target).is_visible() else
                   driver.page.evaluate("[...document.querySelectorAll('[role=status],[role=alert],dialog,.toast')]"
                                        ".filter(e=>e.getClientRects().length).map(e=>e.innerText||'')"))
-    claim = _claimed(_new_text(text_before, text_after))
+    name = driver.session.nodes.get(target, {}).get("name") or ""
+    leaving = leaving or _exits(name, _kind(name, request))
+    claim = _claimed(_new_text(text_before, text_after), leaving)
     item = {"injected": mode, "claimed": claim, "actual": actual,
             "auto_resent": len([r for r in requests if r["method"] == request.get("method") and
                 r["path"] == request.get("path") and not r.get("idempotency_key")]) > 1,
-            "announced": any(_claimed(entry.get("text", "")) not in ("none", "pending")
+            "announced": any(_claimed(entry.get("text", ""), leaving) not in ("none", "pending")
                              for entry in effect.get("announcements", ()))}
     if initial:
         surviving = driver.page.evaluate("""() => [...document.querySelectorAll('input,textarea,select')]
@@ -266,12 +283,15 @@ def _confirm_and_undo(driver, target, opener):
         object_name = re.sub(r"^(?:delete|remove|cancel|erase)\s+|\s*(?:삭제|제거|취소|해지|지우기)(?:하기)?$", "",
                              opener_name, flags=re.I).strip()
         result["confirm"]["names_object"] = bool(object_name and object_name.lower() in dialog.lower())
-        focus = driver.page.evaluate("""() => {const el=document.activeElement;
-          return el && el.closest('dialog,[role=dialog],[role=alertdialog]') ?
-            (el.innerText||el.getAttribute('aria-label')||'') : ''}""").lower()
+        named = names(driver)
+        focused = driver.page.evaluate("""() => {const el=document.activeElement;
+          return el && !el.matches('dialog,[role=dialog],[role=alertdialog]') &&
+            el.closest('dialog,[role=dialog],[role=alertdialog]') ?
+            (el.closest('[data-lapis-box]')?.getAttribute('data-lapis-box')||'') : ''}""")
+        focus = (named.get(focused) or "").lower()
         result["confirm"]["initial_focus"] = ("destructive" if re.search(
-            r"\b(delete|remove|confirm|erase|yes)\b|삭제|제거|지우|확인|^예$|^네$", focus) else
-            "safe" if re.search(r"\b(keep|cancel|back|close|no)\b|유지|취소|뒤로|닫기|아니요|아니오", focus) else "none")
+            rf"\b(?:remove|erase|yes)\b|삭제|제거|지우|^예$|^네$|{CONFIRM}|{EXIT_ACTION}", focus) else
+            "safe" if re.search(rf"\b(?:keep|back|no)\b|유지|뒤로|{BACK_OUT}|{CLOSE}|{DECLINE}", focus) else "none")
     driver.act({"kind": "tap" if driver.ctx["pointer"] == "coarse" else "click", "target": _live(driver, target)})
     undo = driver.page.get_by_role("button", name=_UNDO)
     if not undo.count() or not undo.first.is_visible():
@@ -315,6 +335,7 @@ def run(session, open_driver):
     for ctx_id in session.matrix:
         controls = [item for item in session.probes.get("controls", ()) if item["context"] == ctx_id]
         flow_targets = {}
+        exit_targets = set()               # commit controls of exit flows
         unseeded = {}
         plan_flows = {flow["id"]: flow for flow in (session.plan or {}).get("flows", [])}
         runs = {run["id"]: run for run in session.flows if run["context"] == ctx_id}
@@ -335,6 +356,8 @@ def run(session, open_driver):
                 continue
             target = step["actions"][activations[-1]]["target"]
             flow_targets[target] = flow["id"]
+            if flow.get("kind") in EXIT_KINDS:
+                exit_targets.add(target)
             prior = [dict(action) for earlier in steps if earlier["index"] < index
                      for action in earlier.get("actions", ())]
             prior += [dict(action) for action in step["actions"][:activations[-1]]]
@@ -410,7 +433,7 @@ def run(session, open_driver):
                         skipped.append(f"{label}: no state-changing request observed to target {mode}")
                         continue
                     try:
-                        observed, request = _outcome(driver, target, request, mode)
+                        observed, request = _outcome(driver, target, request, mode, target in exit_targets)
                     except Exception as exc:
                         if session.engine is not None:
                             session.engine.clear_injections()

@@ -302,7 +302,7 @@ def test_choices_probe_and_response_read_a_label_the_same_way(label, answer, kin
     ("Cancel", True, False, True), ("Cancel.", True, False, True), ("취소", True, False, True), ("취소…", True, False, True),
     ("Not now", True, False, False), ("Later", True, False, False), ("Close", True, False, False), ("닫기", True, False, False),
     ("✕", True, False, False), ("Maybe later", True, False, False), ("나중에", True, False, False),
-    ("Cancel subscription", False, False, True), ("구독 취소", False, False, True), ("해지", True, False, True),
+    ("Cancel subscription", False, False, True), ("구독 취소", False, False, True), ("해지", False, False, True),
     ("해지하기", False, False, True), ("Pay later", False, True, True), ("Save for later", False, True, True),
     ("다음에 할게요", True, False, False), ("다음", False, True, True), ("Confirm", False, True, True), ("OK", False, True, True),
 ])

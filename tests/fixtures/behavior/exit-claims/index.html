@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Account</title></head>
+<body><main><h1 id="title">Account</h1>
+<!-- One button that leaves or pays. The page path picks the case: the button, its request, the message a
+     successful request puts up, and the message a failed one puts up. -->
+<section>
+  <button id="go" type="button"></button>
+  <p id="message" role="status"></p>
+</section></main>
+<script>
+  const cases = {
+    'cancel-sub':     {lang: 'en', button: 'Cancel subscription', api: '/api/cancellations',
+                       done: 'Your subscription has been cancelled', failure: "Couldn't cancel your subscription"},
+    'unsubscribe':    {lang: 'en', button: 'Unsubscribe', api: '/api/unsubscribes',
+                       done: "You've been unsubscribed", failure: 'Not unsubscribed. Try again.'},
+    'cancel-booking': {lang: 'en', button: 'Cancel reservation', api: '/api/cancellations',
+                       done: 'Reservation cancelled', failure: 'Reservation not cancelled'},
+    'withdraw':       {lang: 'en', button: 'Withdraw consent', api: '/api/consents',
+                       done: 'Consent withdrawn', failure: 'Consent was not withdrawn'},
+    'haeji':          {lang: 'ko', button: '구독 해지', api: '/api/cancellations',
+                       done: '구독이 해지됐어요', failure: '해지하지 못했어요'},
+    'pay':            {lang: 'en', button: 'Pay now', api: '/api/payments',
+                       done: 'Payment completed', failure: 'Payment cancelled'},
+  };
+  const page = cases[location.pathname.slice(1)] || cases['cancel-sub'];
+  document.documentElement.lang = page.lang;
+  const button = document.getElementById('go');
+  button.textContent = page.button;
+  button.onclick = async () => {
+    const message = document.getElementById('message');
+    try {
+      const response = await fetch(page.api, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'});
+      message.textContent = response.ok ? page.done : page.failure;
+    } catch (error) {
+      message.textContent = page.failure;
+    }
+  };
+</script></body></html>

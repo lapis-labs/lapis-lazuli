@@ -5,7 +5,7 @@ import re
 
 from playwright.sync_api import Error as PlaywrightError
 
-from lapis_design.behavior_check.probes._decision import PROBLEM, RETRY
+from lapis_design.behavior_check.probes._decision import PROBLEM, RETRY, names
 
 
 NAMES = ("states",)
@@ -83,7 +83,7 @@ def _resolve(driver, box, identity):
 
 def _snapshot(driver, box):
     """Observe the surface; with the surface gone, observe what main shows in its place."""
-    driver.boxes()
+    named = names(driver)                       # a control's wording is its accessible name (value, alt, aria-label)
     selector = f'[data-lapis-box="{box}"]' if box else "main" if driver.page.locator("main").count() else "body"
     target = driver.page.locator(selector).first
     snap = target.evaluate("""(el, words) => {
@@ -103,11 +103,12 @@ def _snapshot(driver, box):
           indicator.matches('.spinner')?'spinner':indicator.matches('.skeleton')?'skeleton':
           indicator.matches('[aria-busy=true]')?'inline-status':'text' : 'none',
         problem:new RegExp(words.problem,'i').test(body),
-        recovery:!![...el.querySelectorAll('button,a')].find(node=>visible(node) && new RegExp(words.retry,'i').test(node.innerText)),
+        recovery:!![...el.querySelectorAll('button,a,[role=button],input[type=button],input[type=submit],input[type=image]')].find(node=>visible(node) &&
+          new RegExp(words.retry,'i').test(words.names[node.getAttribute('data-lapis-box')] ?? node.innerText)),
         announced:markers.some(node => node.matches('[role=alert],[role=status],[aria-live]') ||
           node.closest('[role=alert],[role=status],[aria-live]')),
         scope:el.matches('main')?'page':el.matches('li,article')?'object':'region'};
-    }""", {"problem": PROBLEM, "retry": RETRY}, timeout=_TIMEOUT_MS)
+    }""", {"problem": PROBLEM, "retry": RETRY, "names": named}, timeout=_TIMEOUT_MS)
     return snap
 
 
