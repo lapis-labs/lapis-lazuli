@@ -1,9 +1,11 @@
 """Adobe Fonts through the operating system's font API, never through their files (macOS Core Text).
 
-As lazuli reads Adobe's terms (not legal advice), they allow other software to list and use the fonts a
-subscription activates through the operating system's font stack, and forbid reaching them any other way, the
-folders they are installed in included. So lazuli never opens, stats, lists, copies, or passes to fontTools or
-Pillow anything under Adobe's folders (`~/Library/Application Support/Adobe/`, `%APPDATA%\\Adobe\\CoreSync`).
+As lazuli reads Adobe's terms (not legal advice), other software may list and use the fonts a subscription
+activates through the operating system's font stack, and may not reach their files directly: the folders
+they are installed in included. Using those fonts in designs, desktop apps, and the user's Adobe web project
+is untouched by this; only lazuli's route to them is. So lazuli never opens, stats, lists, copies, or passes
+to fontTools or Pillow anything under Adobe's folders (`~/Library/Application Support/Adobe/`,
+`%APPDATA%\\Adobe\\CoreSync`).
 On macOS it asks Core Text instead:
 
 - Which faces are Adobe Fonts: the descriptor's URL attribute, read as a string and matched by name only

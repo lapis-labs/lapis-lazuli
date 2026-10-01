@@ -9,6 +9,12 @@ All notable changes are recorded here. The format follows
 
 - The Korean section of `lps-ux/references/forms-and-recovery.md` was confirmed by a native Korean
   reader on 2026-10-01 (listed under 0.1.2's known limits as awaiting one).
+- `lzl-fonts/references/adobe-fonts.md` now opens by saying that activated Adobe Fonts are fonts like
+  any other to recommend, choose, and lock (web delivery through the user's Adobe web project), and
+  that its limits concern how lazuli and the agent reach Adobe's data: no file access, no extracted
+  glyph data, nothing sent, no Adobe-derived values in training, evaluation, or tests. Its metadata
+  lookup still never activates a font; the integration's search and recommendation tools may suggest
+  families when the user asks, and a font is activated only on the user's request.
 
 ## 0.1.2 (2026-10-01)
 

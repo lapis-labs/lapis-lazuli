@@ -1,13 +1,20 @@
 # Adobe Fonts metadata
 
+Adobe Fonts the user has activated are fonts like any other here: recommend them, compare them, and
+choose them for a design when they fit, and lock them with `lazuli lock` (source `adobe-sync`,
+delivery `adobe-web-project` for a web page, through the user's own Adobe web project). The limits in
+this file are about how lazuli and the agent reach Adobe's data, not about using the fonts: never
+open, parse, copy, or ship the synced font files, never extract outlines or tables, never send font
+data anywhere, and never use Adobe-derived values as training, evaluation, calibration, or test data.
+
 This file backs the inventory part of `lzl-fonts` when an answer needs Adobe's own record of a font
 lazuli marks `adobe-sync` (an Adobe Fonts activation): its designers, foundry, supported languages,
 weight and style names, whether it is variable, and its Adobe Fonts page. lazuli's font listing and
 measurement never contact Adobe, and the source registry refuses `fonts.adobe.com` and the Typekit hosts
-it lists. lazuli never opens those fonts' files: it lists them through the operating system's font API
-and measures the glyphs the system draws, and `lazuli sources` keeps Adobe Fonts `refused`. The
-provider's record comes only from an official Adobe integration the user has already connected to
-this host, or from the user's own browser.
+it lists for lazuli's own requests; a page that loads its fonts from the user's Adobe web project is
+not affected. lazuli never opens those fonts' files: it lists them through the operating system's font
+API and measures the glyphs the system draws. The provider's record comes only from an official Adobe
+integration the user has already connected to this host, or from the user's own browser.
 
 ## What to look up
 
@@ -37,13 +44,15 @@ this host, or from the user's own browser.
    If the integration says an initialization tool must run before its others, run that first. The
    details give the family, style, and full name, designers, foundry, supported languages, weight,
    style, whether the font is variable, and links to its Adobe Fonts page and preview. They give no
-   classification and no width. Call nothing that activates, syncs, or installs a font, and nothing
-   that searches the library or recommends fonts: the lookup is for the faces lazuli listed.
+   classification and no width. For this lookup, call nothing that activates, syncs, or installs a
+   font: it is for the faces lazuli listed. When the user asks for Adobe Fonts beyond what is
+   activated, the integration's search or recommendation tools may suggest families; activate one
+   only when the user asks for that font to be activated.
 2. **No such integration, or it is not connected.** Say that Adobe Fonts metadata is unavailable
    here and answer from lazuli's own results. Give the user `https://fonts.adobe.com/` to open in
    their browser and search for the family. Never fill a value from memory or a guess, never fetch
-   that site or any other Adobe address yourself, and never sign in or connect the integration for
-   the user.
+   or scrape that site or any other Adobe address yourself, and never sign in or connect the
+   integration for the user.
 
 A face the integration does not know, and a permission, sign-in, or rate-limit error, are
 unavailable metadata for that face: say so, and do not retry in a loop or try another route.
@@ -55,7 +64,8 @@ unavailable metadata for that face: say so, and do not retry in a loop or try an
   not reconcile them.
 - The values are for display in the current answer. Never use them as a classifier label, an
   evaluation criterion, a test fixture, or training data, and never write them to a class
-  (`lazuli class set`), the fonts lock, the plan, or any project file.
+  (`lazuli class set`), the fonts lock, the plan, or any project file. Naming a chosen Adobe font in
+  the plan and locking it is a font choice, not stored metadata, and is fine.
 - Classification, similarity, coverage, and ranking stay lazuli's measurements (`lazuli search`,
   `--similar-to`). The metadata never changes a score, a class, or the order of candidates.
 - Send the integration the PostScript name and the locale, nothing more: no font file, table,

@@ -259,8 +259,10 @@ files beside it; the database file itself does not change.
   installing software globally, changing global git config, or changing a harness's global
   settings or installed plugins.
 - No credentials, tokens, license keys, payment data, or private receipts in any file or commit.
-- Commercial, subscription, or synced fonts and media never leave the machine they are on, and no
-  lazuli database or other large local data goes into the repository.
+- Commercial, subscription, or synced font files and media never leave the machine they are on, and no
+  lazuli database or other large local data goes into the repository. This limits where files go, not
+  which fonts a design may use: recommending and using licensed fonts, Adobe Fonts included (on the web
+  through the user's Adobe web project), is fine.
 - Data derived from Adobe Fonts (names, coverage, measurements) never goes into tests, fixtures,
   calibrations, evaluations, or training sets, and lazuli never opens Adobe Fonts files: on macOS it reads them
   through the operating system's font API (`cli/lazuli/coretext.py`); nowhere else are they listed.
