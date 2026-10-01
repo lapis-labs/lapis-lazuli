@@ -505,7 +505,7 @@ references:
       the editorial hero numbers (heading line count, support word count, element count, navigation height, zigzag
       cap), which sit too close to detector bounds, the pixel spacing example and alignment-line list (references/layout.md),
       copy and label discipline and CTA label stability (lps-copy), demonstration and logo asset handling (the future
-      visual-assets reference), the default marquee advice (the future motion reference), pitfalls, and the quick
+      visual-assets reference), the default marquee advice (lapis/references/motion.md), pitfalls, and the quick
       matrix.
   - path: references/product-types/marketing-and-landing.md
     taken: Proof inventory before composition; technical audiences get an artifact right after the proposition;
@@ -579,7 +579,7 @@ references:
       the work index as grid, list, or hybrid with scale by importance; a contact route that needs no social account;
       a way back from immersive pages.
     dropped: The editorial thesis prompts, case-study step list, direction-from-subject examples, motion moments
-      (the future motion reference), professional voice and contact copy (lps-copy), media rights and performance
+      (lapis/references/motion.md), professional voice and contact copy (lps-copy), media rights and performance
       (the future visual-assets and implementation references), accessibility list, metrics, dials, pitfalls, and
       the matrix.
   - path: references/product-types/games-and-entertainment.md
@@ -589,7 +589,7 @@ references:
       focus following the layout and type sized for viewing distance; inventory as grid or list by what drives the
       decision; store price, recurrence, and scope beside the purchase action.
     dropped: The play-context prompts, map and lobby detail, the input table (the future platforms reference), motion,
-      feedback, and reduced-motion treatment (the future motion reference), onboarding and difficulty, copy voices
+      feedback, and reduced-motion treatment (lapis/references/motion.md), onboarding and difficulty, copy voices
       (lps-copy), monetization ethics (lps-ux and its behavior rules), accessibility settings, metrics, dials, pitfalls,
       and the matrix.
   external:
@@ -653,6 +653,164 @@ references:
     margin for overscan) and Apple''s Layout page (system safe areas), read on 2026-09-30. The text states no numbers.'
   - 'Plan section ids: every lint detector that reads sections uses derived.sections, the render''s box ids; none reads
     plan section ids against them (grep of cli/lapis_design/lint, 2026-09-30).'
+- reference: lapis/references/data-viz.md
+  sources:
+  - path: references/product-types/data-visualization.md
+    taken: 'A chart as a claim made through encodings, chosen from the question; the analysis brief as a diagnostic list
+      (condensed to what can change the form, open items as unresolved claims); the task-to-form table (rephrased, eight
+      rows) read as hypotheses, with a plain table as a complete answer; the perceptual tradeoff as a tendency, with the
+      conditions for a pie; dashboard region jobs (monitor, diagnose, compare, act), no filler modules, and the per-width
+      responsive decisions; scales and baselines (zero for bars, labeled log scales, two axes, rates against totals, honest
+      time, fixed scales across selections, disclosed breaks); labels and annotation (question title, units, evidence for
+      annotations, actual versus forecast, missing shown as missing); uncertainty and freshness; tooltips, one status
+      message, and focus retention; the equivalent nonvisual layers and the equivalence list; the separate no-data,
+      filtered, small-sample, no-permission, and failed-query messages.'
+    dropped: 'The dials baseline and the synthetic dispatch Design Read (the dials row is in SKILL.md step 3), the metrics
+      list, typical failures and pitfalls (their substance survives as positive rules), the quick matrix, the analytical
+      view sketch (already the data-visualization entry of archetypes.md, which this file points to), the interaction
+      purposes list beyond one sentence, the worked selected-quarter contract, the encoding-cost list beyond what a form
+      choice needs, and the cross-references: boilerplate, held elsewhere, or example material.'
+  - path: references/technology/data-visualization-implementation.md
+    taken: 'The renderer draws marks and the application owns meaning, access, and state; build on the existing stack and
+      add missing access instead of replacing charts; the four renderer kinds as one paragraph of fit and cost (by
+      criteria, not products); no universal point-count threshold, measured on the real workload; context loss keeps the
+      last committed text and table; one committed view with its seam fields, pending scope, failure, and request
+      identity (as a clause); a deterministic first scope; aggregation honesty.'
+    dropped: 'The named-options table (four chart libraries with dated license observations: product names, which skill
+      text never carries), the library criteria and the vendor accessibility caution, the vector-graphics server-rendering
+      API example, the SSR and hydration detail beyond a deterministic first scope, the volume table and the three clocks,
+      the export rules (spreadsheet-injection handling), the complete dependency-free specimen and its expected outcomes
+      (a runnable page, left for an eval fixture), the snapshot note, the connector pointer for library docs, pitfalls,
+      the quick matrix, and the cross-references.'
+  - path: assets/chart-accessibility-card.md
+    taken: 'The access layers (merged with the reference''s equivalence list), the equivalence checks, the keyboard and
+      touch exercise rows (folded into the keyboard paragraph and the tooltip paragraph), the update and failure checks
+      (everything committing together, one ordinary status, no live region around the chart, focus surviving redraws,
+      pause versus disconnected, a failed refresh keeping labeled old data, renderer failure leaving text and table).'
+    dropped: 'The task-and-evidence template and the observed-evidence report template (review reporting belongs to
+      ultramarine and the skill Reporting sections), the worked check table and its specimen, the checkbox lists, the
+      controls-disabled-until-working note, the snapshot note, and the cross-references.'
+  - path: references/color/semantic-and-data-palettes.md
+    taken: 'The build rules beyond choosing the scale: highlight as a job of color and not a fifth scale; status kept out of
+      chart hue alone; one role per color, with an adaptive interface step reused in a chart becoming a data entry of its
+      own; categorical assignment kept across views and themes and stopped at what people can tell apart; sequential class
+      boundaries recorded, continuous ramps with ticks; a diverging midpoint named in the legend; missing, suppressed,
+      below-detection, and out-of-range marks with legend entries; marks smaller than swatches and the plot-surface and
+      gridline checks; second encodings, forced colors, and the limits of a simulation.'
+    dropped: 'Token namespaces, semantic state families (already in color.md), the property, role, variant, and state model
+      and the pairing graph, the gradient token families, the handoff YAML example, the incident dashboard and status-pair
+      worked examples, pitfalls, the quick matrix, and cross-references: token mechanics for lps-system, material held in
+      color.md (the cyclic seam, the dark-theme retune, the handoff), or boilerplate. Also left out as detail a chart
+      decision does not need: the legend-order rule, the rainbow argument, the bivariate caution, and unknown canvases.
+      The rule destination of this source is untouched.'
+  external:
+  - kind: standard
+    name: WCAG 2.2 SC 1.4.13 Content on Hover or Focus (dismissible, hoverable, persistent)
+    used_for: 'Keyboard, touch, and updates: tooltip content (said without the number)'
+  - kind: standard
+    name: WCAG 2.2 SC 4.1.3 Status Messages
+    used_for: 'Keyboard, touch, and updates: one concise status without moving focus, never a live region around the chart'
+  - kind: standard
+    name: WCAG 2.2 SC 1.4.1 Use of Color and SC 1.4.11 Non-text Contrast (through color.md)
+    used_for: 'Data color: a second encoding for every consequential distinction'
+  - kind: standard
+    name: WCAG 2.2 SC 2.5.7 Dragging Movements
+    used_for: 'Keyboard, touch, and updates: range or date controls beside a zoom or brush gesture'
+  - kind: standard
+    name: CSS Color Adjustment Module Level 1 (forced colors mode rewrites author fill and stroke)
+    used_for: 'Data color: under forced colors only labels, dashes, markers, and patterns survive'
+  - kind: practice
+    name: W3C WAI Images tutorial, Complex Images (short and long descriptions, structured detail, aria-describedby as one
+      continuous text)
+    used_for: 'Access to a chart''s values: name and description plus a real table, never a table inside a description'
+  - kind: practice
+    name: W3C WAI Tables tutorial (caption and header associations)
+    used_for: 'Access to a chart''s values: the table needs a caption and header cells'
+  - kind: practice
+    name: WAI-ARIA Authoring Practices pattern index (no chart pattern)
+    used_for: 'Keyboard, touch, and updates: no universal key convention for marks, so the model is specified'
+  - kind: measurement
+    name: Graphical perception studies on the accuracy of position, length, angle, area, and color (described, not named, in
+      the source)
+    used_for: Choose the form
+  - kind: taxonomy
+    name: qualitative, sequential, diverging, and cyclic color scheme types (Brewer, ColorBrewer; Scientific colour maps), as
+      in color.md
+    used_for: Data color
+  - kind: practice
+    name: Renderer and accessibility documentation of four chart libraries, read by the source on 2026-09-22 (not named in
+      the text)
+    used_for: 'Building it: the renderer paragraph'
+  skill_body_pointer: 'A chart, map, or other data view inside a section has its own decisions: choosing the form from the
+    question, scales and annotation, text and keyboard access to its values, data color, and what an implementation must
+    satisfy. For those, read `references/data-viz.md`.'
+  left_for_later:
+  - 'lps-system tokens: the data token namespaces beside action, focus, selection, and status, the property, role, variant,
+    and state model with its pairing graph, gradient token jobs and families, and the data palette handoff fields (this
+    file hands over nothing but the pointer to color.md). The reference part of semantic-and-data-palettes.md for lps-system
+    stays open in the map.'
+  - 'Rules: nothing reads tokens.color.data_scales (the vocabulary lists a check for each scale, no detector runs it); no
+    render check measures chart mark contrast against the plot surface or simulates color vision; no check compares a chart
+    with its adjacent table, asks for a name on an inline svg or canvas chart, or reads a chart''s form, axis, or series.'
+  - 'Eval fixture: the source''s runnable synthetic specimen (two selects, named svg, semantic table, selected-data
+    download, status region) and its expected-outcome list.'
+  - 'lps-ux: filter, selection, linked-view, and loading state mechanics (the text points there). lps-copy: chart title,
+    summary, and no-data wording (the text points there). Review reporting of observed evidence: ultramarine.'
+  - 'Dropped from a longer local draft of this file (about 5,300 words, branch night): the regions-of-an-analysis-view
+    section, the encoding-cost list, the cyclic-scale and user-supplied-color bullets, the library criteria, the volume
+    table, the export rules, and the worked firing-log contract. Restore one only if an eval shows agents missing it.'
+  verify_before_release:
+  - 'The graphical-perception sentence (positions along a shared scale judged more accurately than area, angle, or color
+    intensity) comes from the source without a citation; check it against the perception literature before release.'
+  - 'Renderer statements (pixels carry no per-mark structure, GPU context loss and resource limits, server-made graphics
+    are static) come from the source''s 2026-09-22 reading of library documentation and general browser knowledge; not
+    re-read. Check the context-loss behavior in current browser documentation.'
+  - 'WCAG 2.2 SC 4.1.3, 1.4.1, 1.4.11, and 2.5.7 were not re-read for this file; 1.4.13 was read on 2026-09-30. The
+    aria-describedby flattening claim rests on the W3C WAI Complex Images tutorial read on 2026-09-30, not re-read since.
+    The forced-colors sentence was checked against the 2020-04-02 working draft of CSS Color Adjustment Level 1 only.'
+  - 'Checker behavior quoted in the text was read in code and run on 2026-10-01 (see verified_2026_10_01). Keep data-viz.md
+    in step if any of these change: the palette role hint (class, id, role attribute words; table cells), the status words
+    and the any-announcement rule of ux.status-not-announced, the gesture candidates and the straight drag compared on the
+    target''s own group, the hover probe at a box center, the large-list count of direct children, and the motion probe
+    watching captured boxes only. The pointer probe''s step and menu words were being widened to Korean in the same
+    session; the text states no language for them.'
+  - 'Possible detector gaps, for the maintainers rather than the text: a chart summary sentence rewritten after a button
+    press is recorded as changed text but never judged unless it holds one of the result words; the controls probe never
+    picks another option in a select; the drag is straight down, so a horizontal brush is not exercised; animation of
+    shapes inside an svg is invisible to the motion probe; a table''s rows are not counted by code.unvirtualized-list; an
+    unnamed inline svg is read as identity ink. The text states each as it is.'
+  verified_2026_10_01:
+  - 'Source drift: the four mapped files in the live design-and-frontend folder have the word counts the map records (3334,
+    3649, 1247, 3038, wc -w).'
+  - 'Overlap audit: a seven-word shingle comparison of data-viz.md against the four sources, and against color.md,
+    archetypes.md, layout.md, and type.md, found four spans of seven or eight words in a first version (three from the
+    source, one from color.md); the sentences were rephrased and a rerun found none. The task-to-form table and the
+    renderer kinds keep the source''s shapes because each row is a decision; their words differ.'
+  - 'Runtime (throwaway pages served from /tmp on loopback, render check and behavior check with the controls, pointer,
+    and motion probes, then slop lint on the named rules): the palette read an svg whose own class said chart as data and
+    read the same three hues as identity ink when the word sat on a wrapper div or on no element, and then
+    color.competing-accents reported three unrelated hue families; an svg with role img and an aria-label read as content
+    and was not reported. color.text-contrast measured svg text (2.65:1 reported) and no mark, line, or fill.
+    component.small-target reported two 6 px circles with role button that touch. imagery.missing-content-image reported
+    only the img without alt, not the unnamed canvas or svg. layout.compact-overflow reported a 640 px svg outside a
+    scrolling region (document 656 px at 320 and 390) and nothing for the same svg inside a keyboard-reachable
+    overflow-x region. code.unvirtualized-list reported a ul of 600 items taller than three viewports and a bordered
+    scrolling div and a role list with 600 children, and reported nothing for a table of 600 rows, with or without a
+    scrolling wrapper. ux.status-not-announced reported a changed paragraph holding the word results when nothing else
+    announced, reported nothing for a paragraph without result words, and reported nothing when another changed
+    paragraph in the same click was a role status region; the controls probe clicked a select and changed nothing.
+    ux.hover-content reported a button whose tooltip did not appear on focus; a mouseover tooltip on svg rects left no
+    pointer record. A canvas brush with a touch-action none style and an aria-label, updating a readout outside its own
+    group, left no pointer record. motion.reduced-motion-missing reported an svg element animated by transform and three
+    div bars animated by transform, did not report a canvas named as a chart, reported an unnamed moving canvas, and
+    did not see bars scaling inside an svg or a stroke draw-in, nor an svg fading in place (kind opacity).'
+  - 'Plan paths and rule ids named in the text were checked by script against src/shared/plan/schema.yaml and
+    src/shared/slop/rules.yaml: brief.product_frame, brief.one_job, layout.sections[].answers,
+    layout.procedure.content_inventory and responsive, claims.unresolved and proposed, content.key_copy,
+    tokens.color.roles (role data) and data_scales, and the fifteen rule ids.'
+  - 'Consistency with color.md: the four scale kinds, highlight as a treatment and not a fifth kind, selection and status
+    kept out of series colors, and forced colors read through labels and patterns. The data-viz.md sentences about the
+    reduced-motion branch for a decorative draw-in match the motion probe''s treatment of a canvas presented as content.'
 - reference: lps-system/references/tokens.md
   sources:
   - path: references/design-systems/design-tokens.md
@@ -750,7 +908,6 @@ references:
     design-md.md and opendesign.md (dialect details for conversions).'
   - 'platforms reference: native token outputs (platform color assets, text styles, units).'
   - 'data-viz reference: construction of data-scale tokens (color.md keeps scale choice).'
-  - 'motion reference: duration and easing values by purpose.'
   - 'shape and surface reference: nested radii and the elevation model beyond token naming.'
   verify_before_release:
   - 'Checker behavior quoted in the text (render color diff against plan role oklch values,
@@ -964,7 +1121,6 @@ references:
   - 'lps-ux: interaction-design.md (focus, dialogs, gestures, recovery) beyond its navigation-facing parts.'
   - 'platforms reference: native navigation stacks, system back per platform, tab bar behavior and counts per
     platform or host.'
-  - 'motion reference: scroll restoration and route transitions (animation/scroll-navigation-and-transitions.md).'
   - 'lps-copy: final navigation label wording; lps-copy already drafts nav key copy.'
   verify_before_release:
   - 'Composition on real Korean keyboards: the order of compositionend and the Enter keydown in each engine and on phone
@@ -1055,8 +1211,8 @@ references:
   left_for_later:
   - 'lapis and the critic: choosing among rendered alternatives, the selection criteria, and the rejection record
     (the "Select a direction" section of comparison-and-regression has no other destination in the map).'
-  - 'ultramarine: the bounded repair loop, decision owners, adopt and revert states, and the independent-review scope
-    (bounded-closed-loop.md and inspection-and-evidence.md, still todo).'
+  - 'ultramarine: the bounded repair loop, decision owners, and adopt and revert states (bounded-closed-loop.md, still todo);
+    the independent-review scope is in ultramarine/references/inspection-and-evidence.md and critic.md.'
   - 'i18n reference and lps-copy: pseudo-localization stress, RTL mirroring, locale formats, translation review.'
   - 'Contracts: a baseline input, a comparison record, and the capture environment in the extract (contract
     proposals recorded in the 2026-09-29 cloud review).'
@@ -1281,3 +1437,419 @@ references:
   - 'Korean examples confirmed on 2026-09-30 by the maintainer, a native Korean reader: the three register lines, the
     corrected honorific example, the translationese repairs, 취소 against 닫기 and the 예약 유지 and 예약 취소 buttons,
     the particle rewrites, and the counter 점.'
+- reference: ultramarine/references/inspection-and-evidence.md
+  sources:
+  - path: references/design-feedback/inspection-and-evidence.md
+    taken: 'Inspection as read-only: a request to inspect, review, or audit never authorizes source or token edits,
+      plan changes, account actions, or deployment, and a visible defect is no emergency permission; the evidence
+      labels carried as the findings schema''s seven evidence types, with the requester''s report kept outside
+      them as ground truth that becomes runtime only when reproduced and is never rerun to be believed, and labels
+      that combine when they describe different parts of one finding; the table of what each evidence surface
+      supports and does not (a source declaration and a rendered result answer different questions); the
+      screenshot-only safe and unsafe judgments with the scale, crop, and invented-viewport cautions; the
+      source-only path as a risk until rendered; the native and hardware path (real device, simulator, supplied
+      recording, source only, unavailable) with the simulator limits; the design-file limit (a flattened export
+      shows no layers or prototype behavior); the exercised-evidence record (state, action, observation, evidence,
+      limit) and a finding located at a region and state with its cause kept a hypothesis; an independent look
+      as a new inspection and not stronger proof, with a reviewer''s silence never a pass; conflicting evidence
+      settled by the surface that observed the claim; a failed tool recorded and not retried unchanged while the
+      reachable inspection finishes; the stop conditions.'
+    dropped: 'The inspection-boundary checklist as its own list (the record''s state line and the report carry it),
+      the inventory-before-opinions list, the contextual anti-slop inspection and its checklist item (lint and the
+      critic own it), the override-layer note, the composition-by-genre note (the plan''s surface mode), the two
+      worked examples (replaced by one hypothetical record on the pottery page), the optional-subagent framing
+      and the reviewer-input list (critic.md and SKILL.md own the critic''s inputs), and the when-to-consult
+      list, pitfalls, decision matrix, and cross-references: owned by the checks and the critic, or boilerplate
+      (the matrix is folded into the routes).'
+  - path: references/quality/ui-audit-procedure.md
+    taken: 'The evidence labels and their combination rule, a code pattern not being a runtime failure and a
+      screenshot not being evidence of semantics, automated tooling not proving conformance, and no responsive
+      result from one width.'
+    dropped: 'The audit contract, the nine passes, optional scoring, the report skeleton, the severity and verb
+      table and worked example, bounded verification, and the pitfalls and decision matrix: the passes are what
+      the checks and lint rules run, the report order is in the SKILL body, P0 to P3 is the findings schema,
+      scores are not wanted, and the rest is the maker''s loop (still todo, with the card) or boilerplate.'
+  external:
+  - kind: practice
+    name: Evidence labels for audit and critique findings (observed, measured, reported, not verified); the sources
+      define their own and cite no outside work for them
+    used_for: The seven evidence types of finding.schema.yaml, with the user's report written in observed
+  - kind: practice
+    name: Design tools and device simulators (Figma, Adobe XD, platform simulators), named in the source
+    used_for: A flattened export shows no layers and a simulator proves no haptics; no product name reaches the text
+  skill_body_pointer: In the review mode of SKILL.md. For a screenshot, source files, a live site, a page that is not
+    ours, a native screen, or a user's report, `references/inspection-and-evidence.md` says what each can support and
+    what to list as not checked.
+  left_for_later:
+  - 'ultramarine: the bounded repair loop, decision owners, adopt and revert states, and diagnosis and repair
+    (bounded-closed-loop.md and the other review-and-repair sources, still todo), and the card passes of
+    ui-audit-procedure.md.'
+  - 'platforms reference (lapis, after the announcement): the device exercise each native platform needs; the native
+    route here only says what does not run and what a simulator cannot show.'
+  - 'Contracts: the findings schema has no evidence type for a user''s report, so the text writes it as "reported by
+    the user" in observed; a reported type would be a contract proposal. detectors.yaml calls the source layer
+    leads and gives source-ast "output: leads only", while lint/engine.py reports source-ast and css-* matches as
+    open findings and treats only source-pattern matches as leads; the text follows the engine.'
+  verify_before_release:
+  - 'Checker behavior quoted in the text: slop lint --source with --mode review and no plan or extract running the
+    source layer only (scope.layers); a source-pattern match with a render or behavior counterpart coming back
+    skipped with skip_cause layer; skip_cause input for a missing contract (system.font-outside-contract without a
+    plan or fonts lock); a source tree without CSS, markup, or scripts giving only skips and exit 0; render check
+    refusing registry and plan-reference hosts even with --public; behavior check driving only hosts that are ours;
+    the critic stopping without an extract; reference-only profiles keeping no copy, alt text, accessible names, or
+    screenshots; lint reading a profile only through --ref. Keep inspection-and-evidence.md in step if lint, the
+    hosts rule, the critic, or the schemas change.'
+  - 'The pottery record in the text (styles.css:212, the reserve button) is invented and says so; it is no claim
+    about any fixture.'
+  verified_2026_10_01:
+  - 'Source drift: check_source_drift.py against the live design-and-frontend (read only) reported 223 snapshot files,
+    223 live, 0 changed, 0 added, 0 removed, so the two sources were read in their frozen state.'
+  - 'Overlap audit: every 7-word run of the reference (1,526 distinct) against the two sources and the other 214
+    frozen markdown files shares none; at 5 words the two sources share 11 runs, all stock phrases (a request to
+    inspect review, what is visible and where, do not repeat the same, and similar).'
+  - 'slop lint --source <throwaway tree> --mode review with no plan, under a temporary HOME: scope.layers was [source];
+    system.literal-color, system.off-scale-value, component.unlabeled-input, imagery.missing-content-image,
+    code.clickable-non-interactive, and code.image-dimensions were open source findings (the P1 ones blocking, exit 1);
+    code.focus-outline-removed (to confirm at behavior) and code.mobile-100vh, component.emoji-icons, and
+    motion.transition-all (to confirm at render) came back skipped with skip_cause layer and evidence not-verified.'
+  - 'A throwaway tree holding one Swift file: scope.layers [source], 36 findings, all skipped for input (no CSS,
+    markup, or script files; no asset ledger; no package manifest), 0 blocking, exit 0.'
+  - 'Rule IDs the text names were checked against rules.yaml. review.* stands for the critic''s three own ids, which
+    critic.md and the findings schema define and rules.yaml does not hold.'
+- reference: lapis/references/motion.md
+  sources:
+  - path: references/fundamentals/motion.md
+    taken: The purpose order (feedback, orientation, continuity, then expression) as the four jobs and 'no job, no
+      motion'; the editorial duration ranges by kind of change (framework-neutral rows only); easing by role and
+      overshoot as a voice, not a default; transition against keyframes and naming every property; compositor
+      properties as guidance and not a ban, and transform order against reading order; continuous input kept out
+      of component state; interruptibility with state authoritative; stagger limits and one authored moment per
+      surface; the loading feedback choices and no fabricated percentages; reduced motion as replacement, not
+      speed; the motion tells (now the ambient-motion and global-habit-values cards and the checks table).
+    dropped: 'The published duration and easing token tables of a named design system and its curve values, the
+      0.96 to 0.98 press scale range, the one-second spinner heuristic, the task-panel worked example, the quick
+      decision matrix, the common pitfalls, the when-to-consult list, and the cross-references: named product
+      tables, numbers that are one design system''s, boilerplate, and pointers to files that are elsewhere.'
+  - path: references/animation/interaction-choreography.md
+    taken: State before keyframes (the nine-field contract folded into six questions for one principles sentence);
+      latest intent wins and the redirect, reverse, cut, and queue policies as one sentence; a completion callback
+      never holding the only copy of a state change; focus and reachability as separate from timing, with the opening
+      and closing orders; relationships, not decoration; press feedback as acknowledgement with a color baseline;
+      loading kept apart from press; reduced motion as a live state; the flashing, motion-as-input, and five-second
+      safety gates; failure and teardown states (folded into the last of the six questions).
+    dropped: 'The dependency-free disclosure example (about 120 lines of HTML, CSS, and script), the overlay and
+      route code blocks, the interaction matrix, the pitfalls, the snapshot note, the spring model detail (mass,
+      stiffness, damping against a damping ratio), the scale-target nesting rules, the haptics note, and the
+      modal focus contract: an implementation artifact that would freeze one code shape, repeated tables, and
+      detail that belongs to a component reference.'
+  - path: references/technology/animation-and-motion-libraries.md
+    taken: Preserve the existing stack; the native-first ladder as criteria (the library and player rows rewritten
+      without names); the questions before adding a dependency (shortened to five); a second layer multiplying
+      contracts; the proposal-against-measurement rule, reduced to the sentence that the checks measure no frame
+      pacing, long tasks, or bytes.
+    dropped: 'Every code sample and library API name (framework imports, presence and reduced-motion hooks, the
+      timeline context and media-query calls), the free-licensing announcement for one timeline library, the
+      reduced-motion example of one player runtime, the lifecycle details (the finished promise rejecting on
+      cancel, presence helpers, scoped contexts), the measurement list, the filter drawer worked choice, the
+      quick decision matrix, the pitfalls, and the snapshot note: product names and syntax that change, living
+      licensing claims, and duplicates.'
+  - path: references/animation/animation-assets-and-delivery.md
+    taken: The decision order shortened to the job and the control; the representation table (eight rows merged
+      to six, columns changed to choose and fallback); vector is not small or fast; a real control or message
+      never inside an asset; the per-asset contract as a list (trigger, reserved box, autoplay and loop, hidden
+      pause, failure result); a still instead of a heavy runtime under reduced motion; five rights records kept
+      apart, tied to the ledger and fonts lock.
+    dropped: 'The packaged-archive format details (container, manifest, media type), the video markup sample and
+      the codec, alpha, HDR, and caption checklist, the reduced-transparency, forced-colors, and gradient-text
+      section (forced colors and reduced transparency are in theming.md; the gradient-text fallback waits for
+      the visual-assets reference), the ten-step review procedure, the SVG review list, the exporter list, the
+      budget worksheet, the fallback ladder and the success-mark example, the pitfalls, and the matrix: format
+      internals, code samples, topics with another owner, and duplicates.'
+  - path: references/animation/scroll-navigation-and-transitions.md
+    taken: Native baseline; no scroll hijack and bounded controls for cinematic pieces; snapping rules; sticky
+      offsets with scroll-padding and margin; smooth scrolling as an enhancement under the preference; restoration
+      as navigation state; no hidden-at-rest content (the CSS is new, with different names, ranges, and start
+      values); scroll coupling as a sentence; pinned sequences; view transitions and what they do not own.
+    dropped: 'The reading-progress CSS sample, the manual-restoration testing list, the scroll-linked accessibility
+      checklist and the performance list, the route-change field list (the text points to the lps-ux navigation
+      decisions), the same-document and cross-document support split, the snapshot review caution, the review
+      keys, the pitfalls, and the matrix: samples and lists that repeat other paragraphs.'
+  - path: assets/motion-cheatsheet.md
+    taken: The purpose check as the job sentence, the framework-neutral duration ranges, easing roles, the
+      reduced-motion contract, and the loading choice.
+    dropped: 'The published token bands and curve values of a named design system, the component recipe table, the
+      implementation table, and the review signals: named product values, and content the timing, layer, and
+      checks sections already carry.'
+  - path: assets/motion-delivery-cheatsheet.md
+    taken: The reduced-motion table (regrouped and reordered by effect), the interaction contract (into the six
+      questions), the asset handoff items (into the per-asset list), the budget point that the checks measure
+      none of it, and the safety gate (into the reduced-motion bullets).
+    dropped: 'The one-minute format table, the runtime and asset checklists, the scroll and navigation guard
+      checklist, and the delivery verdict template: repeats of the representation table, of the scroll section,
+      and of the skill body''s reporting.'
+  external:
+  - kind: standard
+    name: WCAG 2.2 SC 2.3.3 Animation from Interactions (AAA), with the project policy in the plan schema
+      (tokens.motion.reduced_motion) making it a requirement
+    used_for: Reduced motion as a requirement, the replacement rule, vestibular triggers
+  - kind: standard
+    name: WCAG 2.2 SC 2.3.1 Three Flashes or Below Threshold
+    used_for: 'Safety: the flashing limit, decorative content included'
+  - kind: standard
+    name: WCAG 2.2 SC 2.2.2 Pause, Stop, Hide
+    used_for: 'Safety: anything that moves by itself for more than five seconds'
+  - kind: standard
+    name: WCAG 2.2 SC 2.5.4 Motion Actuation
+    used_for: 'Safety: motion as input needs a conventional control and a way to turn it off'
+  - kind: standard
+    name: Media Queries Level 5 (prefers-reduced-motion)
+    used_for: Reduced motion branches, smooth scrolling under no-preference
+  - kind: standard
+    name: CSS Scroll-driven Animations (animation-timeline, view(), animation-range)
+    used_for: Nothing hidden at rest
+  - kind: standard
+    name: CSS View Transitions
+    used_for: The view transitions paragraph and the layer sentence
+  - kind: standard
+    name: Web Animations and CSS Transitions and Animations
+    used_for: The layer sentence, transition against keyframes, the checks table
+  - kind: standard
+    name: CSS Scroll Snap (proximity and mandatory snapping, scroll-padding, scroll-margin) and CSS Overflow (scroll-behavior)
+    used_for: No scroll hijack, sticky offsets
+  - kind: standard
+    name: HTML inert attribute
+    used_for: Focus and reach, closing content that takes no input
+  - kind: practice
+    name: Material Design 3 motion tokens (duration bands and easing curves)
+    used_for: Nothing in the text; the sources start from them and the text keeps only the framework-neutral ranges
+  - kind: practice
+    name: Documentation of the animation libraries and players the sources name (a React motion library, a timeline
+      library, a vector-sequence player and its packaged archive, a state-machine player)
+    used_for: The layer sentence and the representation table rows, rewritten as criteria
+  skill_body_pointer: 'The motion dial has three bands: 1-3 feedback only, 4-6 transitions that explain a change,
+    7-10 authored moments. Write the band into `tokens.motion.principles` with a reduced-motion branch for each
+    effect (`reduced_motion: respect` is required). For timing and easing, interruption, scroll and route
+    enhancement, choosing between native and library animation, and delivering authored animation, read
+    `references/motion.md`.'
+  resolved_2026_10_01:
+  - 'A compromise of two drafts, written 2026-10-01. The local night draft (5,284 words, all seven sources) and the
+    kit outline (gap-plan 4, about 1,300 words) were compared section by section; the outline is the spine and the
+    draft supplies what earns its place at decision time. The text is about 3,300 words by wc -w with table bars
+    counted, the low end of its peers (3,268 to 5,233): it covers seven sources and 13 rules, and its checks table
+    holds claims re-verified against main.'
+  - 'The dial table has the outline''s three bands (1-3, 4-6, 7-10) in place of the draft''s five. The bands are a
+    synthesis of the outline and the sources: the sources give the one-authored-moment limit and say experience
+    surfaces may use more, and the bands are the maker''s reading of the dial, not a source claim. A marketing page at
+    6 lands in the middle band, which does not owe a fade-up per section (gap-plan 4 and the lapis starting-point
+    table). The lps-system motion paragraph, the pottery example in tokens.md, and the ambient-motion card agree.'
+  - 'Cut from the draft, kept in the sources and the night branch: the persuade and experience sentences of the
+    surface modes, press and loading detail, the spring model line, the seven-row decide table (six questions in a
+    sentence remain), the interruption table (one sentence remains), the route and view change field list, SVG,
+    video, and archive specifics, the budget worksheet, the fallback ladder, the reserve-sheet worked example (the
+    pottery sentence in the dial paragraph and the example plan lines carry it), and the handoff detail. Added:
+    the three dial bands, the script-driven movement limit, the command to run after a motion change, and the
+    decorative-cursor and transition-all rows of the checks table.'
+  - 'Library, player, and format names are replaced by criteria in every row (a maintained library, an imperative
+    timeline library, a player for a designer-authored asset). API names, imports, and code samples of those
+    products are left in the sources on purpose: skill text does not freeze library syntax. No duration or curve
+    value of a named design system is used.'
+  - 'Check statements were rewritten from the code and DERIVED.md and checked on main at ccde220 on 2026-10-01 (see
+    verified_2026_10_01): a fade that also slides is transform and gates; the pause control is read in English and
+    Korean; the render check no longer fails on scroll-driven animation. The text says what the tools read and what
+    they do not.'
+  - 'Source rule provenance entries for the motion.* rules point at references/fundamentals/motion.md and the
+    animation files; those pointers still resolve in the frozen snapshot and are not edited here.'
+  left_for_later:
+  - 'Implementation and performance: complete component states and cleanup, and the performance and quality budgets
+    file (jank investigation, budgets) that the source files load with. motion.md names only the motion-specific
+    measures.'
+  - 'Visual-assets reference: the gradient-text fallback with a solid color first, a supports guard, and a forced-colors
+    path, from animation-assets-and-delivery.md; also the video codec, alpha, and caption detail and the SVG review.'
+  - 'Platforms: platform motion and haptic guidance and the expressive-motion notes.'
+  - 'Backlog (probes): no probe drives a hover, press, or open transition with reduced motion emulated; the motion
+    probe records input_blocked_ms without any rule reading it; the motion window lists only elements with a running CSS
+    or Web animation and canvas, video, and image changes, so movement a script writes into styles every frame is not
+    listed (checked with a requestAnimationFrame page); and it samples captured boxes, so shapes inside an svg
+    (a child rect scaled, a path drawn with stroke-dashoffset) are not listed (checked with a throwaway svg page).'
+  verify_before_release:
+  - 'Checker behavior quoted in the text (the reduced-motion bullets and the checks table): one extra 390 px capture
+    with reduced motion, and the plain capture read by the render motion rules; the motion probe run in every base
+    context and its reduced twin over a five-second window after load; the kinds that gate and the essential canvas
+    and video conditions; the 32 px pulse size, the 0 and 2 s rest sampling, more than half of animated elements for
+    overshoot, the 50 ms layout animation, four in five hovered media, more than one endless animation, the scroll
+    ratio between half and twice the browser default, and the English and Korean pause and stop words. Most are v0
+    threshold seeds; keep motion.md in step if the detectors or thresholds change.'
+  - 'Firefox and Safari are not installed here: scroll-driven animations and the inert attribute were exercised only
+    in Chromium. Check the support wording (view transitions and scroll-driven CSS "where supported, behind a guard")
+    against current engine support before release.'
+  - 'Exact wording of the flash rule (more than three in a second unless below the general and red thresholds), the
+    five-second pause rule, and the motion-as-input rule against the published criteria; the sources cite them, and
+    they were not re-read here.'
+  - 'The duration ranges and the 50 to 100 ms stagger are editorial starting points from the sources, stated as
+    proposals; they are not detector bounds.'
+  verified_2026_10_01:
+  - 'Chromium 153.0.8010.12 headless shell against throwaway pages on 127.0.0.1 (files under /tmp, not in the
+    repository). Behavior check --probe motion on a page with an unguarded transform loop, an in-place fade, a
+    fade-and-slide loop (opacity 0 to 1 with a 40 px translation), a guarded loop, and a marquee loop with a button
+    labelled 일시 정지 beside it: contexts m, d, m-rm, d-rm were recorded; the plain loop, the fade-and-slide (listed
+    as transform, about 26 px), and the marquee loop were listed as moving in the reduced twins and
+    motion.reduced-motion-missing reported each; the in-place fade was listed as opacity and did not gate; the
+    guarded loop was absent from the reduced twins; the marquee''s Korean button was read as a pause control, and
+    the four loops without one were reported by motion.uncontrolled-marquee (the guarded loop in the plain contexts
+    only).'
+  - 'Nothing hidden at rest: the guarded scroll-driven CSS in motion.md rendered with render check (six captures,
+    including 02-390-light-reduced) and behavior check listed no moving or hidden element in m or m-rm and raised no
+    finding; the same page with the start at opacity 0 listed 21 hidden elements in m (none in m-rm) and raised
+    motion.scroll-gated-content.'
+  - 'A page whose element is moved by requestAnimationFrame writing style.transform listed no moving element in any
+    context, which is why the text says script-written movement is not observed.'
+  - 'A page with a div moved by transform and an svg whose child rect (scaleY) and path (stroke-dashoffset) were
+    animated listed only the div, in m and in m-rm. That an svg element animated as a whole is listed, and that a
+    chart-named canvas is essential, was reported by the data-viz author from the same probe and was not re-run here.'
+  - 'Source lint on a throwaway stylesheet and markup: the pulse class names, an overshooting cubic-bezier, a width
+    transition, and transition: all each matched and were reported as skipped leads (lead not confirmed at render or
+    behavior), which is what the checks table says about source matches by pattern.'
+  - 'No source rule reads a reduced-motion media query, no check measures flashing, and no check measures frame pacing,
+    long tasks, or bytes (grep over cli/lapis_design/lint and the rules); layout shift during load is measured and read
+    by code.image-dimensions.'
+  - 'Source files: check_source_drift.py against the live checkout reported 223 of 223 files unchanged from the frozen
+    snapshot. A 7-word run comparison of motion.md (code blocks left out) against the seven source files found no run
+    of 6 or more words in common.'
+- reference: lps-ux/references/forms-and-recovery.md
+  sources:
+  - path: references/product-types/forms-onboarding-and-checkout.md
+    taken: 'The field inventory questions (needed, when, already known, accurately suppliable) as one test for
+      removing, deferring, prefilling, or explaining a field; blocking only on a real prerequisite, which became the
+      flow requires list with ux.forced-action and a guest path; one column grouped by task; a persistent visible
+      label and the placeholder rule; constraints stated before entry; paste and autofill metadata; steps only where
+      they differ, with meaningful names, entries kept on Back, and a warning before an earlier answer clears later
+      ones; validation after leaving a field or on submit, never on load; the four-part error and the summary with
+      focus; entries kept after a server failure; a review before commitment and a success message that says what
+      happens next; required terms and optional consent kept apart; locale-dependent name, address, phone, and date
+      assumptions (rewritten as the Korean section, because the source has no Korean form).'
+    dropped: 'The field and compound-control regions, the value-model table of radios, checkboxes, switches, selects,
+      sliders, and steppers with the commit boundary of pickers, the flow-state list, action naming (owned by
+      interface-copy.md), the Onboarding and learning section apart from the real-prerequisite test (learning
+      vehicles, retirement, novice-to-expert movement, the comparative case), the checkout order model, guest
+      checkout and address and payment detail, content and copy, the accessibility and internationalization lists
+      (merged into the rules and the Korean section), metrics, typical failures, the dials baseline, two worked
+      examples, and the when-to-consult, pitfalls, matrix, and cross-reference sections: a separate lifecycle topic,
+      component anatomy, copy owned elsewhere, or boilerplate.'
+  - path: references/ux-methodology/interaction-design.md
+    taken: 'Forms: one column in the task order of the person, a persistent label, helper text before an error
+      exists, semantic types and autocomplete tokens, entries kept after validation and network errors; format checks
+      after leaving a field only when the rule is stable, cross-field and server rules at submission, a summary with
+      links and a predictable move to the first problem; meaningful stage names and safe return in multi-step flows.
+      Error prevention: the order from prevention to recovery, reduced to timing and preservation.'
+    dropped: 'The mandatory state inventory, behavior naming and state dimensions, feedback and perceived response,
+      decision support and honest defaults, friction in proportion to consequence, the pricing comparative case, the
+      value-model table and field wrapper regions, progressive disclosure, dialogs and interruption, gestures,
+      keyboard-first interaction, the invite-teammates example, the specification template, the evidence boundary,
+      and boilerplate: interaction topics left for the later lps-ux interaction reference or the card destination.'
+  - path: assets/state-transition-and-recovery-card.md
+    taken: 'Confirmed failure kept apart from outcome unknown, with no timeout-as-failure shortcut; no blind retry after
+      an ambiguous commit (a retry only after a check or with the same key); the durability boundary in a saved claim
+      (this device against the server); what survives reload, Back, and reauthentication.'
+    dropped: 'The truth record, commitment posture by harm, the action label audit, conflict and collaboration
+      review, permission loss and look-alike access routes, partial bulk work, the handoff sentence, and the fast
+      failure scan: product-wide state and collaboration topics kept for the card destination and the later
+      interaction reference.'
+  - path: references/ux-methodology/user-messages-and-feedback.md
+    taken: 'Diagnosing the cause before choosing where a failure shows, as the reading of a server answer by cause
+      (field problems to the fields, access apart from input, an unreachable server never blamed on input); one
+      announcement owner per event with a focused summary after a failed submit; a pending control keeps its name
+      and ignores repeats; a saved claim only for real persistence; success somewhere durable.'
+    dropped: 'The surface table (inline, summary, status, toast, banner, dialog, page, history, help), overlay choice by
+      task depth, versioned deprecations, sticky and floating action rules, the announcement mechanism table and its
+      streaming detail, the durability and privacy lists (their copy-facing parts are in interface-copy.md), the
+      wrong-and-right table, the local feedback specimen and its exercise, and boilerplate: placement, mechanism, and
+      overlay choices left for the later lps-ux interaction reference.'
+  external:
+  - kind: standard
+    name: WCAG 2.2 SC 3.3.1 Error Identification, 3.3.2 Labels or Instructions, 3.3.3 Error Suggestion, 3.3.4 Error
+      Prevention (Legal, Financial, Data), 3.3.7 Redundant Entry, 3.3.8 Accessible Authentication (Minimum), 1.3.5
+      Identify Input Purpose, 1.4.1 Use of Color, 2.2.1 Timing Adjustable, 3.2.2 On Input, 4.1.3 Status Messages
+    used_for: 'Messages, autocomplete tokens, paste, one announcement owner, no context change on input, and
+      timeouts. They sit behind the rules the text names; the text names none of them.'
+  - kind: standard
+    name: HTML form controls (input types, required, autocomplete tokens name, tel, postal-code, address-line1,
+      address-line2, one-time-code, inputmode, lang) and WAI-ARIA (aria-invalid, aria-describedby, aria-errormessage,
+      role alert and status)
+    used_for: Fields, errors, and the Korean section. Added while drafting; the sources name few tokens.
+  - kind: standard
+    name: HTTP Semantics status codes 401, 403, 409, 422, and 5xx, and the Idempotency-Key header field (IETF draft)
+    used_for: Reading a server answer by cause; a repeated send as the same order. Added while drafting; the sources do
+      not cite them.
+  - kind: practice
+    name: GOV.UK error summary and validation guidance (named in user-messages-and-feedback)
+    used_for: A summary with a link to each field and focus after a failed submit
+  - kind: standard
+    name: UI Events composition events and InputEvent.isComposing
+    used_for: Korean typing, by pointing to navigation.md. Added while drafting.
+  - kind: practice
+    name: 'Korean web and app form conventions: one name field, mobile numbers written 010-1234-5678, an address
+      search that fills a five-digit postal code and the road-name address before a separate detail field, a weekday
+      after the date, 필수 and 선택 marks, SMS verification codes'
+    used_for: The Korean forms section. Added while drafting; no source describes a Korean form.
+  - kind: practice
+    name: 'Korean service consent practice: required terms, personal-data collection, and optional marketing consent
+      shown as separate items marked 필수 and 선택, with a select-all box and marketing consent per channel'
+    used_for: The consent list. Added while drafting; the text states no law.
+  - kind: practice
+    name: Korean identity-verification services reached through a mobile carrier or a government-linked app (no product
+      named in the text)
+    used_for: The identity verification bullet. Added while drafting.
+  skill_body_pointer: 'When a flow collects input or can fail partway - a form, sign-up, booking, checkout, a slow or
+    unanswered request - read `references/forms-and-recovery.md` (SKILL.md, At the start, step 4).'
+  left_for_later:
+  - 'lps-ux with adoption-and-account-lifecycle: the onboarding and learning aids of forms-onboarding-and-checkout
+    (wizard, checklist, tour, sample data, sandbox, novice-to-expert movement, retirement rules).'
+  - 'lps-ux interaction reference (gap plan row 10): the rest of interaction-design (state inventory, decision support,
+    progressive disclosure, dialogs, gestures, keyboard-first), and message placement, announcement mechanisms, and
+    overlay choice from user-messages-and-feedback.'
+  - 'lps-ux card or rules: commitment posture by harm, the action label audit, conflict and collaboration, permission
+    loss, entitlement routes, and partial bulk work from state-transition-and-recovery-card.'
+  - 'checkout detail (order model, guest checkout, address and payment) in the e-commerce archetype or a later
+    reference; platforms reference: native form controls and autofill.'
+  verify_before_release:
+  - 'The Korean forms section, by a native Korean reader (new writing; no source has a Korean form): one name field
+    with no length cap and a legal name only for verification; a single phone field that accepts 010-1234-5678 and
+    01012345678 (landline and foreign numbers are not covered); the address flow (five-digit postal code, road-name
+    address, separate detail field, direct entry); the weekday after the date, 9월 27일(토); the 필수 and 선택 marks; the
+    consent list items and marketing consent per channel; 본인 확인 only for an age limit or a financial step, with a
+    birth date instead of a resident registration number; the SMS code field. Whether the consent items named are
+    what a Korean service must show is a legal question the text does not settle.'
+  - 'Checker behavior quoted in the text (behavior/DERIVED.md Forms, Commits, Flows, States, Time limits; the forms,
+    flows, commits, states, and time_limits probes): the English-only reading list of the forms probe; a form kind
+    read from its id, accessible name, and opening text; flows starting at the plan start route, not the URL given;
+    the flow driver never ticking a checkbox; one stub value per kind, a plain text field using the text kind; one
+    invalid value in the invalid submit; two activations 80 ms apart; states reading each surface filled from a GET.
+    Keep forms-and-recovery.md in step if these change.'
+  - 'Flow driver defects found in the 2026-10-01 smoke run and reported to Main (the text describes the contract, not
+    these): the field kind of autocomplete postal-code was read as password, and 주소 with 상세 주소 were read as one
+    kind, so the second was typed from the same value and flagged as repeated entry. Check they are fixed before the
+    Korean reservation demo.'
+  - 'The checkbox limit (a required terms checkbox ends a flow blocked) is DERIVED.md text, so Main proposed a decision
+    change to the cloud on 2026-10-01. Drop the bullet in What no check does if the driver learns to tick required
+    terms.'
+  resolved_2026_10_01:
+  - 'Migration statuses: forms-onboarding-and-checkout is done (this reference is its only destination); interaction-design,
+    state-transition-and-recovery-card, and user-messages-and-feedback stay todo with notes, because their card, rule,
+    interaction-reference, and lps-copy destinations remain; test_migration_map tracks only the first.'
+  - 'Length: 1,711 words by wc -w (code blocks and table bars included) against about 1,400 planned; the Korean section is 302 words against about 250.'
+  verified_2026_10_01:
+  - 'Chromium headless shell (Playwright) with behavior check on throwaway pages and stubs under /tmp (not in the
+    repository): a form with no English word in its id, aria-label, or text was recorded with purpose other, and the
+    same page with the id reserve as reservation; with the probes forms and commits but not flows, forms coverage
+    was partial with "flow field repetitions unavailable: flow runs have not been recorded"; a stub with no text value
+    made forms coverage partial with "no synthetic text value" and no invalid submit; a page that accepted the stub
+    invalid value recorded an invalid submit with no errors; the flow of a two-field page completed in both contexts and
+    the same page with one required checkbox ended blocked; a page that showed a failure message after a request hung
+    was recorded with claimed failure against actual applied.'
+  - 'The flows probe starts at the flow start route, not at the URL given to behavior check: the first runs drove
+    index.html while the other probes drove the named page.'
+  - 'The values block in the kiln shop validates against behavior/stub.schema.yaml. Every rule ID in the text exists
+    in src/shared/slop/rules.yaml (script check).'
+  - 'Source files: check_source_drift.py against the live checkout reported 223 of 223 files unchanged from the frozen
+    snapshot. A 7-word run comparison of forms-and-recovery.md (code blocks left out) against the four source files
+    found no run of 5 or more words in common.'

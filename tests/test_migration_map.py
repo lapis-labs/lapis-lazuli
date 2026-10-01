@@ -83,6 +83,53 @@ COPY_REFERENCES = {
 }
 
 
+# Sources of the ultramarine inspection-and-evidence reference, same shape. ui-audit-procedure gives the
+# reference only its evidence labels and their combination rule, so its card destination keeps it partial.
+INSPECTION_REFERENCES = {
+    "ultramarine/references/inspection-and-evidence.md": {
+        "references/design-feedback/inspection-and-evidence.md": ("done", ["reference"]),
+        "references/quality/ui-audit-procedure.md": ("partial", ["reference"]),
+    },
+}
+
+
+# Sources of the lapis motion reference, same shape. fundamentals/motion.md also goes to the engine-principles
+# card, so its reference destination alone keeps it partial.
+MOTION_REFERENCES = {
+    "lapis/references/motion.md": {
+        "references/animation/animation-assets-and-delivery.md": ("done", ["merge"]),
+        "references/animation/interaction-choreography.md": ("done", ["merge"]),
+        "references/animation/scroll-navigation-and-transitions.md": ("done", ["merge"]),
+        "references/technology/animation-and-motion-libraries.md": ("done", ["merge"]),
+        "assets/motion-cheatsheet.md": ("done", ["merge"]),
+        "assets/motion-delivery-cheatsheet.md": ("done", ["merge"]),
+        "references/fundamentals/motion.md": ("partial", ["reference"]),
+    },
+}
+
+
+# Sources of the lps-ux forms-and-recovery reference, same shape. interaction-design, the state-transition card, and
+# user-messages-and-feedback give it only parts and keep destinations it does not serve (cards, rules, a later
+# interaction reference, the lps-copy split), so they stay todo and are not tracked.
+FORMS_REFERENCES = {
+    "lps-ux/references/forms-and-recovery.md": {
+        "references/product-types/forms-onboarding-and-checkout.md": ("done", ["reference"]),
+    },
+}
+
+
+# Sources of the lapis data-viz reference, same shape. The data-scale source also keeps a rule destination and the
+# token mechanics of lps-system, so it stays partial.
+DATA_VIZ_REFERENCES = {
+    "lapis/references/data-viz.md": {
+        "references/product-types/data-visualization.md": ("done", ["merge"]),
+        "references/technology/data-visualization-implementation.md": ("done", ["merge"]),
+        "assets/chart-accessibility-card.md": ("done", ["merge"]),
+        "references/color/semantic-and-data-palettes.md": ("partial", ["reference"]),
+    },
+}
+
+
 def assert_sources_track_their_reference(references):
     root = MAP.parents[1]
     entries = {entry["path"]: entry for entry in yaml.safe_load(MAP.read_text(encoding="utf-8"))["entries"]}
@@ -110,6 +157,22 @@ def test_system_navigation_and_regression_sources_track_their_reference():
 
 def test_copy_sources_track_their_reference():
     assert_sources_track_their_reference(COPY_REFERENCES)
+
+
+def test_inspection_sources_track_their_reference():
+    assert_sources_track_their_reference(INSPECTION_REFERENCES)
+
+
+def test_motion_sources_track_their_reference():
+    assert_sources_track_their_reference(MOTION_REFERENCES)
+
+
+def test_forms_sources_track_their_reference():
+    assert_sources_track_their_reference(FORMS_REFERENCES)
+
+
+def test_data_viz_sources_track_their_reference():
+    assert_sources_track_their_reference(DATA_VIZ_REFERENCES)
 
 
 def test_each_style_reference_has_its_own_flat_destination():

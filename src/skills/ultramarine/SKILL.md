@@ -38,7 +38,10 @@ accessibility or legal conformance. The full pre-ship gate is `ulm-release`.
 - **create** - work in progress, after the plan gate. Findings use their create severity (`gate`
   blocks, `warn` informs).
 - **review** - an existing surface, with or without a plan. Run lint with `--mode review`;
-  findings use review severity, and P0-P1 block.
+  findings use review severity, and P0-P1 block. When you have only a screenshot, source files, a
+  live site, a page that is not ours, a native screen, or a user's report, read
+  `references/inspection-and-evidence.md` first: it says what each can support and what to list as
+  not checked.
 
 ## Files
 

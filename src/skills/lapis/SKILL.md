@@ -92,6 +92,12 @@ Starting points, which the brief and existing designs override:
 
 "Premium" in a brief is not a style. Never turn it silently into low density, cream, and serif.
 
+The motion dial has three bands: 1-3 feedback only, 4-6 transitions that explain a change, 7-10 authored
+moments. Write the band into `tokens.motion.principles` with a reduced-motion branch for each effect
+(`reduced_motion: respect` is required). For timing and easing, interruption, scroll and route
+enhancement, choosing between native and library animation, and delivering authored animation, read
+`references/motion.md`.
+
 ### 4. Concept and signature - `direction.concept`, `direction.levers`, `layout.signature`
 
 Start the concept from a live tension in the subject: a pottery shop's sales page can become the
@@ -137,6 +143,10 @@ related before choosing a container. Every section answers one question a reader
 responsive primitives, density, and what to check after rendering, read `references/layout.md`; for
 choosing the screen archetype, section kinds and their order, and what each product frame adds, read
 `references/archetypes.md`.
+
+A chart, map, or other data view inside a section has its own decisions: choosing the form from the
+question, scales and annotation, text and keyboard access to its values, data color, and what an
+implementation must satisfy. For those, read `references/data-viz.md`.
 
 ### 9. Content - `content`
 

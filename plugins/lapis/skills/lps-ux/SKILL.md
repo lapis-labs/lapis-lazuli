@@ -32,6 +32,10 @@ and the stub (`.lapis/stub.yaml`) that `behavior check` drives.
    move among them and back. For grouping and labels, the navigation model at each width, current
    location, Back and deep links, search with Korean input, and long collections, read
    `references/navigation.md`.
+4. When a flow collects input or can fail partway - a form, sign-up, booking, checkout, a slow or
+   unanswered request - read `references/forms-and-recovery.md` for the fields, when they are checked,
+   messages, retry and unknown outcomes, consent inside a form, Korean form conventions, and the stub's
+   values.
 
 ## Flows - `flows`
 

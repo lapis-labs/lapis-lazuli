@@ -484,4 +484,4 @@ The screen archetype is usually `dashboard`. A single analysis view takes an id 
 view | controls beside what they change → the annotation that explains the signal → details, table, and
 definitions on demand`. Each chart region names its period, unit, comparison, source, and freshness, and its values
 stay available as text or a table; a compact chart may simplify its annotation but keeps its values.
-Data visualization choices themselves are decided separately.
+Which chart answers each question, and how it is scaled, colored, and read without sight, is decided in `data-viz.md`.

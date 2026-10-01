@@ -48,21 +48,27 @@ entries:
   - merge
   target: lapis/references/motion.md
   merge: motion
-  status: todo
+  note: 표현 선택 순서(일과 조작 먼저)·형식 표(여섯 행)·벡터는 작지도 빠르지도 않음·자산별 계약 목록·권리 기록·줄인 모션의 정지 이미지를 motion.md '층 고르기와 전달' 절로(2026-10-01). 패키지 형식 세부·영상 마크업과 코덱 점검표·강제 색상과 투명도 감소(theming.md에 있음)·그라디언트 글자·10단계 검토·예산 표·대체 사다리·성공 표식 예시는 옮기지 않음
+  status: done
+  done: [merge]
 - path: references/animation/interaction-choreography.md
   words: 2906
   dest:
   - merge
   target: lapis/references/motion.md
   merge: motion
-  status: todo
+  note: 상태 먼저(여섯 질문)·최신 의도 우선·중단 방식 한 문장·초점과 도달 가능성·눌림 피드백·깜박임과 동작 입력 안전을 motion.md '중단과 연출'·'줄인 모션' 절로(2026-10-01). 펼침 예제 코드·오버레이와 경로 코드·상호작용 표·스프링 모델 세부·크기 키우기 중첩 규칙·햅틱·모달 초점 계약은 옮기지 않음
+  status: done
+  done: [merge]
 - path: references/animation/scroll-navigation-and-transitions.md
   words: 1866
   dest:
   - merge
   target: lapis/references/motion.md
   merge: motion
-  status: todo
+  note: 스크롤 가로채기 금지·앵커와 복원·처음부터 보이는 기본 상태(CSS는 새로 씀)·스크롤 결합·고정 구간·보기 전환을 motion.md '스크롤·탐색·전환' 절로(2026-10-01). 읽기 진행 CSS·점검 목록·경로 변경 필드 목록(제목·초점·이력은 lps-ux 탐색 몫)·문서 간 전환 지원 구분은 옮기지 않음
+  status: done
+  done: [merge]
 - path: references/art-direction/bold-expression-and-restraint.md
   words: 6970
   dest:
@@ -218,9 +224,11 @@ entries:
   dest:
   - reference
   - rule
-  target: lps-system
+  target: lapis/references/data-viz.md + lapis/references/color.md + lps-system
   merge: data-viz
-  status: todo
+  note: 데이터 척도별 제작 규칙(초점은 다섯째 척도가 아님·한 색 한 역할·범주 배정·순차 경계 기록·발산 중간값·누락 표시·작은 마크·이차 부호화·강제 색상)은 data-viz.md에, 상태 역할과 척도 선택은 color.md에 반영(2026-10-01). 토큰 이름공간·속성×역할×변형×상태·그라디언트 토큰·인계 필드는 lps-system tokens.md로, 규칙 행선지와 함께 남음
+  status: partial
+  done: [reference]
 - path: references/creative-workflows/answer-calibration.md
   words: 2659
   dest:
@@ -282,9 +290,11 @@ entries:
   words: 3801
   dest:
   - reference
-  target: ultramarine
+  target: ultramarine/references/inspection-and-evidence.md
   merge: review-and-repair
-  status: todo
+  note: 읽기만 하는 검토, 증거 종류와 각각이 세울 수 있는 것·없는 것, 스크린숏·소스·네이티브 길, 사용자의 말, 발견 하나의 기록, 평가자 없이 검토할 때를 inspection-and-evidence.md로. 경계 점검표, 사전 목록, 맥락 반슬롭 점검, 예시 둘, 하위 에이전트 안내는 옮기지 않음
+  status: done
+  done: [reference]
 - path: references/design-systems/adopting-existing-systems.md
   words: 3054
   dest:
@@ -480,10 +490,13 @@ entries:
 - path: references/fundamentals/motion.md
   words: 1653
   dest:
+  - reference
   - merge
-  target: lapis card
+  target: lapis/references/motion.md + lapis card
   merge: engine-principles
-  status: todo
+  note: 목적 순서·기간 범위·이징 역할·전환 대 키프레임·속성 선택·중단·연출·로딩·줄인 모션·모션 경고 신호를 motion.md로 옮김(2026-10-01). 이름 붙은 시스템의 기간 표와 곡선 값·작업 패널 예제·결정 표는 뺌. lapis 카드(SKILL.md 본문)에는 다이얼 세 단계와 motion.md 포인터가 있음. 목적 순서 한 줄을 카드에 올릴지는 engine-principles 이관 때 결정
+  status: partial
+  done: [reference]
 - path: references/fundamentals/perception-and-psychology.md
   words: 4753
   dest:
@@ -716,7 +729,9 @@ entries:
   - merge
   target: lapis/references/data-viz.md
   merge: data-viz
-  status: todo
+  note: 질문에서 차트 고르기·정직한 척도·주석과 불확실성·구역별 일과 폭별 결정·접근 계층과 동등성·키보드와 갱신을 data-viz.md로(2026-10-01). 분석 뷰 구역 순서는 archetypes.md 원형 절에 이미 있어 가리키기만. dials·지표·함정·매트릭스·합성 Design Read 예시·선택 분기 계약 예시는 옮기지 않음
+  status: done
+  done: [merge]
 - path: references/product-types/developer-tools.md
   words: 1978
   dest:
@@ -748,9 +763,10 @@ entries:
   words: 4635
   dest:
   - reference
-  target: lps-ux
-  note: 한국형 폼 패턴 보강
-  status: todo
+  target: lps-ux/references/forms-and-recovery.md
+  note: 폼 구조, 검증 시점, 서버 응답 읽기, 확정 전 검토, 폼 안의 동의를 forms-and-recovery.md로. 한국형 폼 절은 원본에 한국어 양식이 없어 새로 씀(원어민 확인은 provenance의 verify_before_release). 온보딩·학습 보조 절, 체크아웃 주문 모델, 지표는 옮기지 않음(2026-10-01)
+  status: done
+  done: [reference]
 - path: references/product-types/games-and-entertainment.md
   words: 2223
   dest:
@@ -880,9 +896,12 @@ entries:
   words: 2637
   dest:
   - card
-  target: ultramarine
+  - reference
+  target: ultramarine card + ultramarine/references/inspection-and-evidence.md
   merge: review-and-repair
-  status: todo
+  note: 증거 표시와 그 결합 규칙, 코드 패턴과 실행 실패를 구분하는 말, 한 너비로 반응형을 말하지 않기를 inspection-and-evidence.md로. 점검 아홉 쪽, 점수, 보고 뼈대는 카드 몫이라 남음
+  status: partial
+  done: [reference]
 - path: references/quality/what-good-design-is.md
   words: 2312
   dest:
@@ -1070,7 +1089,9 @@ entries:
   - merge
   target: lapis/references/motion.md
   merge: motion
-  status: todo
+  note: 라이브러리 이름을 뺀 기준(층 사다리·의존성 추가 전 질문·두 번째 층의 비용·측정 한 문장)으로 motion.md '층 고르기와 전달' 절에(2026-10-01). 라이브러리별 코드와 API 이름·수명주기 세부·측정 목록·라이선스 안내·결정 표는 옮기지 않음
+  status: done
+  done: [merge]
 - path: references/technology/choosing-a-stack.md
   words: 2168
   dest:
@@ -1089,7 +1110,9 @@ entries:
   - merge
   target: lapis/references/data-viz.md
   merge: data-viz
-  status: todo
+  note: 렌더러 선택은 이름 대신 기준(알맞은 조건·떠안는 비용)으로 한 문단에, 단일 커밋 뷰·실패 표시·결정적 첫 범위·집계 정직성은 구축 절에 옮김(2026-10-01). 라이브러리 이름·라이선스 관찰·SSR API 예시·볼륨 표·내보내기 직렬화 규칙·실행형 HTML 표본은 옮기지 않음(스킬 본문에 도구 이름 금지)
+  status: done
+  done: [merge]
 - path: references/technology/fonts-and-icons-in-code.md
   words: 2997
   dest:
@@ -1223,6 +1246,7 @@ entries:
   - card
   - reference
   target: lps-ux
+  note: 폼 절의 입력 구조·검증 시점·단계와 오류 예방의 시점·입력 보존을 lps-ux/references/forms-and-recovery.md에 반영(2026-10-01). 결정 지원·점진적 공개·대화상자·제스처·키보드 중심과 카드 행선지는 남음
   status: todo
 - path: references/ux-methodology/system-state-and-recovery.md
   words: 4351
@@ -1258,7 +1282,7 @@ entries:
   dest:
   - reference
   target: lps-ux + lps-copy
-  note: 원인별 오류 문구, 결과 불명 문구, 오류 문구의 개인정보 주의를 lps-copy/references/interface-copy.md에 반영(2026-09-29). 배치·알림·지속성·낭독·오버레이 선택은 lps-ux 몫으로 남음
+  note: 원인별 오류 문구, 결과 불명 문구, 오류 문구의 개인정보 주의를 lps-copy/references/interface-copy.md에 반영(2026-09-29). 서버 응답을 원인별로 읽기, 알림 소유자 하나, 대기 중 이름 유지와 중복 활성 무시, 저장 경계를 lps-ux/references/forms-and-recovery.md에 반영(2026-10-01). 배치·낭독 방식·지속성·오버레이 선택은 lps-ux 몫으로 남음
   status: todo
 - path: references/ux-methodology/user-research.md
   words: 2793
@@ -1364,7 +1388,9 @@ entries:
   - merge
   target: lapis/references/data-viz.md
   merge: data-viz
-  status: todo
+  note: 접근 계층·동등성·키보드·갱신·실패 점검을 data-viz.md의 접근·키보드·구축 절에 병합(2026-10-01). 관찰 증거 보고 서식은 ultramarine 몫이라 옮기지 않음. 표본 기반 점검표와 작업 사례는 옮기지 않음
+  status: done
+  done: [merge]
 - path: assets/color-and-contrast-cheatsheet.md
   words: 1810
   dest:
@@ -1490,13 +1516,17 @@ entries:
   - merge
   target: lapis/references/motion.md
   merge: motion
-  status: todo
+  note: 기간 범위(중립 행)·이징 역할·목적 표·줄인 모션 계약·로딩 선택을 motion.md 각 절로(2026-10-01). 이름 붙은 시스템의 기간 표와 곡선 값·컴포넌트별 레시피 표·구현 선택 표·검토 신호 목록은 옮기지 않음(검사 표와 카드가 대신함)
+  status: done
+  done: [merge]
 - path: assets/motion-delivery-cheatsheet.md
   words: 1276
   dest: *id004
   target: lapis/references/motion.md
   merge: motion
-  status: todo
+  note: 줄인 모션 표·상호작용 질문·자산 목록·검사가 재지 않는 항목·안전 문을 motion.md로(2026-10-01). 런타임별 체크리스트·스크롤 가드 체크리스트·판정 서식·한 분 형식 표는 옮기지 않음(본문과 중복)
+  status: done
+  done: [merge]
 - path: assets/multilingual-font-stacks.md
   words: 2274
   dest:
@@ -1570,6 +1600,7 @@ entries:
   words: 1431
   dest: *id009
   target: lps-ux
+  note: 실패와 결과 불명의 구분, 저장 경계, 중단 뒤 보존, 재시도 전 확인을 lps-ux/references/forms-and-recovery.md에 반영(2026-10-01). 카드·규칙 행선지와 나머지 점검 항목은 남음
   status: todo
 - path: assets/style-cards.md
   words: 1843

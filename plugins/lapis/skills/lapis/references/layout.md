@@ -497,8 +497,8 @@ win when each member is a rich object browsed on its own.
   labeled record cards only when comparing across rows is not the task.
 - Each measure shown has a label, unit, time scope, and comparison; no number is invented to fill a
   module.
-- Which chart answers a question is a data visualization choice outside this step; here, decide only a
-  chart's place, span, and rank.
+- Which chart answers a question is decided in `data-viz.md`; here, decide only a chart's place, span,
+  and rank.
 - Filters, saved views, selection scope, bulk-action states, and paging belong to the `lps-ux` skill.
 
 ## Check after rendering
