@@ -6,10 +6,10 @@ name: docs
 on:
   push:
     paths: ["README*.md", "CHANGELOG.md", "SECURITY.md", "AGENTS.md", "NOTICE", "LICENSE*", "INSTALLATION.md",
-            ".github/workflows/docs.yml"]
+            "docs/**", "install/OUTPUTS.md", ".github/workflows/docs.yml"]
   pull_request:
     paths: ["README*.md", "CHANGELOG.md", "SECURITY.md", "AGENTS.md", "NOTICE", "LICENSE*", "INSTALLATION.md",
-            ".github/workflows/docs.yml"]
+            "docs/**", "install/OUTPUTS.md", ".github/workflows/docs.yml"]
 
 permissions:
   contents: read
@@ -22,7 +22,7 @@ jobs:
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7   # v10.2.0; Python comes from .python-version
       - name: Install the CLI and test dependencies from the lock
         run: uv sync --locked
-      - name: Links resolve, and the READMEs show the harness status from install/harnesses.yaml
-        run: uv run --no-sync pytest -q tests/test_docs_links.py tests/test_harness_status_docs.py
+      - name: Links resolve, the READMEs show the harness status and the current plan check output, and eval wording states methods only
+        run: uv run --no-sync pytest -q tests/test_docs_links.py tests/test_harness_status_docs.py tests/test_readme_front.py tests/test_eval_wording.py
       - name: INSTALLATION.md and the license copies match the sources
         run: uv run --no-sync python tools/build/build.py --check
