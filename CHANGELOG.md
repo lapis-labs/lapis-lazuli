@@ -5,7 +5,38 @@ All notable changes are recorded here. The format follows
 [Semantic Versioning](https://semver.org/) once 1.0 is released. Before then, contracts are
 `version: 0` drafts and may change between minor versions.
 
-## Unreleased
+## 0.1.2 (2026-10-01)
+
+Four new references, behavior probes that read Korean and exit flows as written, Adobe Fonts kept out
+of calibration and evaluation, and a README that starts with what the tool prints.
+
+### References and skill bodies
+
+- `ultramarine` gains `references/inspection-and-evidence.md`: what a review may touch, what each
+  evidence type can and cannot support, which route to take with only a screenshot, source files, a
+  live site, a page that is not ours, or a native screen, how to record a finding and a user's report,
+  and what to list as not checked.
+- `lapis` gains `references/motion.md`: what the motion dial's three bands mean (feedback only,
+  transitions that explain a change, authored moments), durations and easing by purpose as proposals,
+  interruption and focus, scroll and route enhancement that keeps content visible at rest, a
+  reduced-motion branch for each effect, choosing a layer and delivering authored animation, and what
+  render check and the motion probe read for each motion rule.
+- `lapis` gains `references/data-viz.md`: choosing a chart form from the question, honest scales,
+  labels and uncertainty, dashboard region jobs, data color, text and keyboard access to a chart's
+  values, build decisions, and what the checks do and do not read about charts. `layout.md` and
+  `archetypes.md` point to it.
+- `lps-ux` gains `references/forms-and-recovery.md`: fields from the goal, when to check and how to
+  word what is checked, reading a server answer by cause, waiting and unknown outcomes, consent inside
+  a form, Korean form conventions (new writing, to be read by a native Korean reader), the stub's
+  values, and what the form, flow, commit, state, and time-limit checks do and do not read.
+- The `lapis` body names example form levers, the asset ledger schema
+  (`shared/assets/ledger.schema.yaml`), `--public` for capturing a live site of ours before a
+  redesign, and that render and behavior checks and the critic do not run on a native screen.
+- `lzl-fonts` says that `lazuli catalog lookup` sends an unmatched `adobe-sync` face's family name,
+  and its Korean name where the system gives one, to Sandoll as the search term, and nothing else
+  about the face; and that `family_class` means different things per `class_source`.
+
+### `lapis-design`
 
 - `render check` no longer stops on a page with a scroll-driven animation (`animation-timeline`);
   such an animation is recorded without `duration_ms`, since its computed duration is `auto`.
@@ -20,6 +51,127 @@ All notable changes are recorded here. The format follows
 - Pause and stop controls of moving content (`pause_control`) and of media (`controls`) are read by
   accessible name and in Korean too (일시정지, 일시 중지, 정지, 중지, 멈춤, 멈추기; 음소거, 볼륨, 음량,
   재생 for media); before, only English words in a label or text counted.
+- A dialog counts as asking for agreement only when its text asks (agree or accept near terms,
+  `[required]`, 약관 동의, 필수 항목). An offer's own terms ("Terms apply", "혜택 약관"), "No card
+  required", and the dialog's button names no longer make it required. Agree wording (Agree, 동의)
+  wins where agreement is asked, and refusing wording (동의 안 함) never does.
+- In an exit flow, the control named for leaving (Unsubscribe, Withdraw, Stop emails, Cancel plan,
+  해지, 탈퇴, 철회, 수신 거부) is the confirm control, and 해지 ends a contract instead of backing out.
+- Reject, 거부, necessary-only choices (필수 쿠키만 허용), skip, 건너뛰기, and leave form one shared
+  decline list for flows, dialogs, and choices; 알림 받기 is an acceptance; 나중에 결제 is an action,
+  not a put-off; refusing an add-on (옵션 추가 안 함, 없이) declines, and 추가 옵션 보기 customizes.
+- Flows, states, time limits, history, commit focus, and the pointer probe read a control by its
+  accessible name (a button's value, an image's alt); the pointer probe reads Korean step and menu
+  words, and a plan goal matches Hangul words of two or more syllables.
+- The flow driver no longer reads a postal-code field as a one-time code, and types a second address
+  line from free text, so an address form no longer trips `ux.redundant-entry`.
+- The commits probe reads "cannot be confirmed" as `unknown`; "Cannot be saved", "Nothing was saved",
+  "No changes saved", "Not all items were saved", and "Your subscription was not cancelled" as
+  `failure`; and the completed forms of leaving (unsubscribed, cancelled, withdrawn, deleted,
+  해지됐어요, 취소됐어요, 탈퇴했어요, 삭제했어요) as `success` only for a commit that leaves something.
+  After a payment, "Payment cancelled" is not a success.
+- The urgency probe reads a count with the thing it counts ("Only 2 sites left", "2곳 남았어요",
+  "잔여 2석", "마지막 1자리"), viewers with words between ("14명이 이 날짜를 보고 있어요", "14 people
+  are viewing this site"), and "booked" notices. A look-back window ("최근 3시간 동안", "in the last 7
+  days") is no longer a countdown, and a Korean activity count ("5명이 예약했어요") is read.
+- `copy.fabricated-proof` reads a name after a quotation's closing mark as an attribution whatever
+  separator it follows (a bracket, a middle dot, a bar, a slash, a comma, a blank, or a speech verb
+  such as says), so such a quotation stays a lead in headings, display runs, labels, UI lines, and
+  dialogs. Only a Korean, Japanese, or Chinese letter right on the closing mark (a particle) or a
+  lowercase Latin word that is not a speech verb marks a sentence that carries on.
+- `slop lint` no longer reads a source or corpus file that is a link resolving outside its folder, and
+  warns on stderr.
+
+### `lazuli` and Adobe Fonts
+
+- `tools/calibration/calibrate.py` leaves Adobe Fonts faces (`adobe-sync`) out of every count, label,
+  and sweep; its comparisons with older reports say those reports were made while Adobe Fonts faces
+  were still counted.
+- `lazuli lock --files` no longer lists a folder through a link in the project that leads into
+  Adobe's font folders, and `--notice` refuses a path there; before, such a link was listed and a
+  notice behind it was read.
+- An Adobe Fonts face whose design metadata is not stored yet is not measured until a scan stores it,
+  since its optical size axis is unknown.
+- The localized-name helper accepts only a language tag (`ko`, `zh-Hans`) as its language.
+- Every test starts with `LAZULI_FONT_ROOTS` set to an empty folder, and a source-level test keeps
+  the Core Text calls on the allow-list.
+
+### Evaluation kit
+
+- `tools/eval/score.py` needs `--font-db`, an evaluation font database built from OFL fonts only; the
+  checkers run with `LAZULI_DB` pinned to it and a scratch home and cache, and `score.json` records its
+  sha256 under `font_db`.
+- Scoring, summaries, the export, and the blind review refuse a run whose event log shows a call to an
+  Adobe tool.
+- `share.py` no longer stops when the account is called `root`, `copy`, or `site` because of a JSON
+  key, stops instead of rewriting an ordinary word when the account name is one, removes user names
+  from paths and whole values only, and builds `summary.md` and `summary.csv` again from the cleaned
+  records so no private skill name reaches them.
+- Scoring and the blind review no longer take a site folder that is itself a link out of the project;
+  `score.json` lists it under `site.skipped_roots`.
+- `run.py --resume` counts a zombie as ended and names `kill -- -PID` when only the process group is
+  left.
+- `docs/eval/README.md` sets what evaluation and benchmark output may say and where: methods only, no
+  results.
+
+### Documentation, packaging, and CI
+
+- The README opens with the `plan check` output for an example plan, then the install lines; the
+  plugin table, harness table, and the rest follow, and `README.ko.md` has the same order.
+- The Claude Code and Codex catalogs describe the repository as "Design skills for coding agents, plus
+  two CLIs."; the package keywords list the repository topics.
+- The generated `INSTALLATION.md` says, before the per-harness commands and under each harness's
+  install step, that plugin commands do not install the CLI, and that hooks, extensions, and MCP need
+  `lapis-design` on PATH.
+- `NOTICE` states that the comparison covered the standards, guidelines, and agent-skill repositories
+  the previous repository draws on, and that passages shared with the previous repository are the
+  author's own writing.
+- Workflow actions are pinned to commit SHAs with their version beside them; the cjk job runs every
+  test but the browser ones; browser tests are split over four runners by recorded duration.
+
+### Contracts
+
+- `DERIVED.md` states how the probes choose an action in a dialog or exit flow, which commit kinds
+  exist, how outcomes are read for an exit commit, and that the Typekit hosts are refused.
+
+### Known limits
+
+- The forms probe reads the kind of form, sign-in text (alternatives and cognitive tests), error
+  reasons, cleared-field explanations, and same-as-offered text in English only. The media probe reads
+  the control that starts a sound in English only. A flow kind's own vocabulary is English, and choice
+  prices are read from $, €, £, and ISO codes, with recurrence from English periods.
+- The flow driver never ticks a checkbox, so a flow with a required terms checkbox ends `blocked`. A
+  409 or 422 comes only from a stub route with that literal status, and no probe presses one.
+- The motion probe watches five seconds after load with no input and lists only boxes with a running
+  CSS or Web animation, plus canvas, video, and image content that changes. Movement a script writes
+  into styles every frame, a transition that a hover, press, or open starts, and shapes animated inside
+  an `svg` are not seen, so `motion.reduced-motion-missing` misses them.
+- `ux.gesture-only` drags a recognized target straight down and compares only that target's own group;
+  `ux.status-not-announced` passes every changed result in an action once anything in it is announced;
+  `code.unvirtualized-list` counts direct children, so a long table's rows are never counted; an
+  unnamed inline `svg` chart reads as identity ink. Nothing reads `tokens.color.data_scales`.
+- The urgency probe reads one claim per box and only counts that carry a unit or noun; it records a
+  reservation hold timer but does not judge it, and recognizes look-back windows only in hours and,
+  in English, days.
+- A quotation followed after a blank by up to ten words that start with a letter reads as an
+  attribution, so an interface sentence that quotes a term and goes on stays a `copy.fabricated-proof`
+  lead (evidence `not-verified`).
+- A commit leaves something when its kind is cancel or delete, it belongs to an exit flow, or its name
+  leads with Cancel, ends with 취소, or carries an exit action; another control that leaves something
+  (for example "Clear all") reads its "cancelled" message as no claim.
+- No check reads a screenshot, a recording, or a native screen, and `slop lint --source` reads web
+  source only. The findings schema has no evidence type for a user's report; the reference writes it
+  in `observed`.
+- The calibration comparisons with older reports are not like for like: those baselines counted
+  Adobe Fonts faces, and the current column leaves them out.
+- `lazuli catalog lookup` sends an Adobe Fonts face's family name, and its Korean name where there is
+  one, to Sandoll as a search term.
+- The lint's link check covers files read by the tree walk; folder links are not followed or listed,
+  and `node_modules/<pkg>/package.json` reads for the dependency check still follow links.
+- Evaluation scores made in an account where Adobe Fonts are activated may include their shapes in
+  page measurements (not checked); render in an account without them. One model session saw no Adobe
+  tool; that is the model's own list, and runs that call one are refused at scoring.
+- The Korean section of `forms-and-recovery.md` awaits a native reader.
 
 ## 0.1.1 (2026-09-30)
 
@@ -35,7 +187,8 @@ install fixes. Contracts are unchanged.
   family names where the font has them, read by short helper processes that ask Core Text in each
   language; before, only the system language was stored.
 - The `lzl-fonts` reference `adobe-fonts.md` tells agents how to add Adobe Fonts metadata through the
-  host's official Adobe integration, for display only; lazuli itself sends nothing.
+  host's official Adobe integration, for display only; lazuli's font listing and measurement never
+  contact Adobe, and the source registry refuses fonts.adobe.com and the Typekit hosts it lists.
 - Adobe Fonts faces with an optical size (`opsz`) axis are no longer measured through Core Text, which
   sets that axis from the point size; they stay unmeasured ("optical size not pinned"), and
   `lazuli local fonts` says so in one line with their count. Files are unaffected.
@@ -44,6 +197,10 @@ install fixes. Contracts are unchanged.
 - `lazuli doctor` and `lazuli read --render` print the browser install command as
   `"<python>" -m playwright install chromium-headless-shell` for the Python that is running, which
   fits a uv tool, pip, and a checkout; before, they named `playwright` and `uv run playwright`.
+- Reports from `lapis-design` and `lazuli` name tool version 0.1.1.
+- Installs from the public repository were checked on 2026-09-30 in Claude Code, Codex, and Oh-My-Pi
+  (all three plugins at the release commit, all eleven skills listed in a new session), and
+  `npx skills add --list` lists exactly the eleven skills; `install/harnesses.yaml` records the versions.
 
 ## 0.1.0 (2026-09-30)
 

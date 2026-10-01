@@ -1,6 +1,6 @@
 {
   "name": "lapis",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Design direction, plans, and named defaults for new UI and redesigns",
   "license": "MIT AND CC-BY-4.0",
   "skills": "./skills/",

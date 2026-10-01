@@ -4,7 +4,7 @@ description: Designs flows, states, and navigation - sign-up, checkout, subscrip
 license: MIT AND CC-BY-4.0
 metadata:
   plugin: lapis
-  version: 0.1.1
+  version: 0.1.2
 ---
 
 # lps-ux

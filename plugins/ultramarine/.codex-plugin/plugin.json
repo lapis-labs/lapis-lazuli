@@ -1,6 +1,6 @@
 {
   "name": "ultramarine",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Render checks, slop and rights review, and a separate critic",
   "license": "MIT AND CC-BY-4.0",
   "skills": "./skills/",

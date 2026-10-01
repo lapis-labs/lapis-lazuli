@@ -4,7 +4,7 @@ description: Finds where to look and reads what the user asks for - the source r
 license: MIT AND CC-BY-4.0
 metadata:
   plugin: lazuli
-  version: 0.1.1
+  version: 0.1.2
 ---
 
 # lzl-research
