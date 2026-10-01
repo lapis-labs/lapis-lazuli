@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>방문 신청</title>
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; margin: 0; }
+  main { max-width: 480px; margin: 0 auto; padding: 24px 16px; }
+  /* Far off the left edge, and not shown again on focus: no pointer reaches it. */
+  .offscreen { position: absolute; left: -9999px; top: 0; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+  button, input[type=text] { min-height: 44px; font: inherit; }
+</style>
+</head>
+<body>
+<main id="visit-page">
+  <h1>방문 신청</h1>
+  <a class="offscreen" href="#details">계속 진행</a>
+  <form id="visit" novalidate>
+    <p>
+      <label for="patient">환자 이름</label>
+      <input id="patient" name="patient" type="text" required>
+    </p>
+    <!-- No label, and the only box around it has no size: nothing visible toggles it. -->
+    <div><input class="visually-hidden" type="checkbox" name="terms" required></div>
+    <button type="submit">예약 내용 확인</button>
+  </form>
+  <p id="picked" role="status" aria-live="polite"></p>
+</main>
+<script>
+  const form = document.getElementById('visit');
+  const picked = document.getElementById('picked');
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    picked.textContent = form.elements.patient.value ? '예약 내용을 확인해 주세요.' : '필수 항목을 입력해 주세요.';
+  });
+</script>
+</body>
+</html>

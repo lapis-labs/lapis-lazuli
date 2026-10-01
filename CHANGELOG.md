@@ -26,6 +26,13 @@ All notable changes are recorded here. The format follows
   blocked, so every text run read 1.00:1 against itself and `color.text-contrast` fired on ordinary
   text; it now uses constructed style sheets, which the policy does not block. `color(a98-rgb …)`
   converts correctly.
+- `behavior check`: a control no pointer can hit no longer times out for 30 s and skips its probe. A
+  form control visually hidden behind a visible label (a clipped or 1 px radio or checkbox, an
+  off-screen input) is acted on through its label or nearest visible wrapper and must change state; a
+  link that only slides in on focus (a skip link) is focused, then pressed; a control nothing visible
+  toggles or shows is recorded as `not reachable by pointer` in the probe's coverage reason. One
+  control's failure is a gap in the controls, forms, and flows probes, and the other controls, forms,
+  flows, and contexts still run.
 
 ## 0.1.2 (2026-10-01)
 

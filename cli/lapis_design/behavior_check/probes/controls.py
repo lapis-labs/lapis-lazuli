@@ -5,6 +5,10 @@ import re
 from collections import deque
 from urllib.parse import urlsplit
 
+from playwright.sync_api import Error as PlaywrightError
+
+from lapis_design.behavior_check.driver import ACTION_TIMEOUT_MS
+
 NAMES = ("controls",)
 
 _DESTRUCTIVE = re.compile(r"\b(delete|remove|unsubscribe|cancel subscription|leave|erase|destroy)\b|"
@@ -58,9 +62,6 @@ def fresh(driver, path=None):
     # A control that is not there fails in seconds, not after Playwright's 30 s default.
     driver.page.set_default_timeout(ACTION_TIMEOUT_MS)
     driver._box_alias = {}
-
-
-ACTION_TIMEOUT_MS = 4000
 
 
 def element(driver, box_id):
@@ -160,40 +161,46 @@ def run(session, open_driver):
                     skipped.append(f"{box_id}: requires more than three preceding actions")
                     continue
                 seen.add(box_id)
-                if first:
-                    first = False
-                else:
-                    fresh(driver)
-                replay(driver, path)
-                box = next((item for item in driver.interactive() if item["id"] == box_id), None)
-                if box is None:
-                    skipped.append(f"{box_id}: not visible after replaying prerequisite actions")
-                    continue
-                session._control_paths[(ctx_id, box_id)] = path
-                expected = promise(driver, box)
-                restricted = session.meta["backend"] == "local-dev" and session.meta.get("outbound") != "none"
-                if expected == "destructive" and session.meta["backend"] != "stub":
-                    skipped.append(f"{box.get('name') or box_id}: destructive action requires stub")
-                    continue
-                if restricted and (expected == "submit" or _COMMIT_LABEL.search(box.get("name") or "")):
-                    skipped.append(f"{box.get('name') or box_id}: possible commit requires outbound none")
-                    continue
-                action = {"kind": "tap" if driver.ctx["pointer"] == "coarse" else "click", "target": box_id}
-                before_effects = session.engine.effects_total if session.engine else None
-                effect = driver.act(action)
-                if (before_effects is not None and session.engine.effects_total > before_effects and
-                        any(req["method"] in ("POST", "PUT", "PATCH", "DELETE")
-                            for req in effect.get("requests", ()))):
-                    session._control_commit_requests.add((ctx_id, box_id))
-                for child in driver.interactive():
-                    if child["id"] not in seen and all(child["id"] != queued for queued, _ in queue):
-                        queue.append((child["id"], (*path, box_id)))
-                keyboard = _keyboard(driver, box, path, effect)
-                session.add_probe("controls", {"box": box_id, "context": ctx_id,
-                    "promise": expected, "action": action,
-                    "effect": {key: value for key, value in effect.items() if key != "outcome"},
-                    "keyboard": keyboard})
-                ran += 1
+                label = box_id
+                try:
+                    if first:
+                        first = False
+                    else:
+                        fresh(driver)
+                    replay(driver, path)
+                    box = next((item for item in driver.interactive() if item["id"] == box_id), None)
+                    if box is None:
+                        skipped.append(f"{box_id}: not visible after replaying prerequisite actions")
+                        continue
+                    label = box.get("name") or box_id
+                    session._control_paths[(ctx_id, box_id)] = path
+                    expected = promise(driver, box)
+                    restricted = session.meta["backend"] == "local-dev" and session.meta.get("outbound") != "none"
+                    if expected == "destructive" and session.meta["backend"] != "stub":
+                        skipped.append(f"{box.get('name') or box_id}: destructive action requires stub")
+                        continue
+                    if restricted and (expected == "submit" or _COMMIT_LABEL.search(box.get("name") or "")):
+                        skipped.append(f"{box.get('name') or box_id}: possible commit requires outbound none")
+                        continue
+                    action = {"kind": "tap" if driver.ctx["pointer"] == "coarse" else "click", "target": box_id}
+                    before_effects = session.engine.effects_total if session.engine else None
+                    effect = driver.act(action)
+                    if (before_effects is not None and session.engine.effects_total > before_effects and
+                            any(req["method"] in ("POST", "PUT", "PATCH", "DELETE")
+                                for req in effect.get("requests", ()))):
+                        session._control_commit_requests.add((ctx_id, box_id))
+                    for child in driver.interactive():
+                        if child["id"] not in seen and all(child["id"] != queued for queued, _ in queue):
+                            queue.append((child["id"], (*path, box_id)))
+                    keyboard = _keyboard(driver, box, path, effect)
+                    session.add_probe("controls", {"box": box_id, "context": ctx_id,
+                        "promise": expected, "action": action,
+                        "effect": {key: value for key, value in effect.items() if key != "outcome"},
+                        "keyboard": keyboard})
+                    ran += 1
+                except PlaywrightError as exc:
+                    # One control that cannot be acted on is a gap in the probe, never the end of it.
+                    skipped.append(f"{label}: {driver.reason(exc)}")
             if skipped:
                 statuses.extend(f"{ctx_id}: {reason}" for reason in skipped)
             if not ran and not skipped:

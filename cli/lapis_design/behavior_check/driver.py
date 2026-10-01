@@ -9,6 +9,8 @@ from urllib.parse import urlsplit
 
 import numpy as np
 from playwright.sync_api import Browser
+from playwright.sync_api import Error as PlaywrightError
+from playwright.sync_api import TimeoutError as PlaywrightTimeout
 
 from lapis_design.behavior import outcome
 from lapis_design.behavior_check import nodes, redact, settle
@@ -18,6 +20,18 @@ from lapis_design.behavior_check.network import Network, navigation_guard
 class MissingSyntheticValues(ValueError):
     """A local-dev input action has no declared synthetic fixture."""
 
+
+class NotReachable(PlaywrightError):
+    """No pointer can act on a control, and nothing visible stands in for it. It is a Playwright error, as the
+    timeout it replaces was, so the probes that already catch a failed action catch it too."""
+
+
+# A control that is not there fails in seconds, not after Playwright's 30 s default.
+ACTION_TIMEOUT_MS = 4000
+# How long a pointer looks for a control to hit before it tries what stands in for it, and how long it
+# looks again for one that only shows itself on focus.
+REACH_TIMEOUT_MS = 300
+REVEAL_TIMEOUT_MS = 1000
 
 ATTRS = ("aria-expanded", "aria-pressed", "aria-selected", "aria-checked", "aria-current",
          "aria-invalid", "aria-busy", "aria-disabled", "aria-hidden", "aria-label", "disabled",
@@ -108,6 +122,32 @@ OBSERVE = r"""() => {
   return {boxes:result,dialogs,live,focus,scroll:scrollY,mutations:o.mutations,shifts:o.shifts.length,
      href:location.href,documentToken:o.documentToken};
 }""".replace("__ARIA_ROLES__", json.dumps(_ARIA_ROLES))
+
+# What the pointer needs to know of a control: whether it is a form control, and a native checkbox or radio's state.
+CONTROL = r"""el => ({form: ['INPUT','SELECT','TEXTAREA'].includes(el.tagName),
+  toggle: el.matches('input[type=checkbox],input[type=radio]') ? el.type : null, checked: !!el.checked})"""
+
+# What a person would press for a form control no pointer can hit: its visible labels (wrapping, or `for`), then the
+# nearest visible element around it, unless that holds another control (a click there could pick another option).
+STAND_INS = r"""el => {
+  const shown = node => {
+    const r = node.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) return false;          // one pixel is the visually-hidden pattern
+    for (let p = node; p; p = p.parentElement) {
+      const s = getComputedStyle(p);
+      if (s.display === 'none' || s.visibility === 'hidden' || Number(s.opacity) === 0) return false;
+    }
+    return true;
+  };
+  const found = [...(el.labels || [])].filter(shown);
+  for (let p = el.parentElement; p && p !== document.body && p !== document.documentElement; p = p.parentElement) {
+    if (!shown(p)) continue;
+    if (p.localName !== 'form' && !found.includes(p) &&
+        ![...p.querySelectorAll('input,select,textarea,button')].some(control => control !== el)) found.push(p);
+    break;
+  }
+  return found;
+}"""
 
 
 class Driver:
@@ -268,11 +308,80 @@ class Driver:
                 "network" if "failed to load resource" in text.lower() else "other")
         self._log(kind, text, "warning" if message.type == "warning" else "error")
 
+    def reason(self, exc: Exception) -> str:
+        """One line on why an action failed (the Playwright call log stays out of the session), redacted."""
+        first = (str(exc) if isinstance(exc, NotReachable) else f"{type(exc).__name__}: {exc}").splitlines()[0]
+        return redact.console(first, self.session.fixture_values)
+
+    def _pointer(self, target, kind: str) -> None:
+        """Click, tap, check, or uncheck the way a person reaches the control: where it is when a pointer can
+        hit it, else through what stands in for it."""
+        tap = kind == "tap" or (kind == "click" and self.ctx["pointer"] == "coarse")
+        want = {"check": True, "uncheck": False}.get(kind)
+        info = target.evaluate(CONTROL, timeout=ACTION_TIMEOUT_MS)
+        if want is not None and not info["toggle"]:
+            getattr(target, kind)(timeout=ACTION_TIMEOUT_MS)         # an ARIA checkbox or switch: Playwright reads its state
+            return
+        if want is not None and info["checked"] == want:
+            return                                                   # already so, as for Playwright's own check()
+        if want is not None:
+            act = getattr(target, kind)
+        else:
+            act = target.tap if tap else target.click
+        try:
+            act(trial=True, timeout=REACH_TIMEOUT_MS)
+        except PlaywrightTimeout:
+            self._stand_in(target, tap, want, info)
+            return
+        act(timeout=ACTION_TIMEOUT_MS)
+
+    def _stand_in(self, target, tap: bool, want: bool | None, info: dict) -> None:
+        """The control is not hit-testable. A form control is pressed through its visible label, or the nearest
+        visible element around it that holds no other control, and a checkbox or radio must then have changed
+        state; any other control may show itself on focus (a skip link slides in), so it is focused and pressed
+        where it now is. When none of these reaches it, the control is not reachable."""
+        if not info["form"]:
+            target.focus(timeout=REACH_TIMEOUT_MS)
+            press = target.tap if tap else target.click
+            try:
+                press(trial=True, timeout=REVEAL_TIMEOUT_MS)
+            except PlaywrightTimeout:
+                raise NotReachable("not reachable by pointer: it is not hit-testable and focusing it shows "
+                                   "nothing to press") from None
+            press(timeout=ACTION_TIMEOUT_MS)
+            return
+        goal = want if want is not None else (not info["checked"] if info["toggle"] == "checkbox" else True)
+        found = target.evaluate_handle(STAND_INS, timeout=ACTION_TIMEOUT_MS)
+        items = list(found.get_properties().values())
+        try:
+            for candidate in (item.as_element() for item in items):
+                press = candidate.tap if tap else candidate.click
+                try:
+                    press(trial=True, timeout=REACH_TIMEOUT_MS)
+                except PlaywrightTimeout:
+                    continue
+                press(timeout=ACTION_TIMEOUT_MS)
+                # None: the page replaced the control in response, so its state cannot be read, and it did react.
+                if not info["toggle"] or self._checked(target) in (goal, None):
+                    return
+        finally:
+            for handle in (found, *items):
+                handle.dispose()
+        raise NotReachable("not reachable by pointer: it is not hit-testable and no visible label or wrapper "
+                           f"{'toggles' if info['toggle'] else 'reaches'} it")
+
+    @staticmethod
+    def _checked(target) -> bool | None:
+        try:
+            return target.evaluate("el => el.checked", timeout=REACH_TIMEOUT_MS)
+        except PlaywrightTimeout:
+            return None
+
     def _perform(self, action):
         kind = action["kind"]
         target = self.locate(action["target"]) if "target" in action else None
         if kind in ("click", "tap"):
-            (target.tap() if kind == "tap" or self.ctx["pointer"] == "coarse" else target.click())
+            self._pointer(target, kind)
         elif kind == "key":
             self.page.keyboard.press(action["key"])
         elif kind in ("type", "paste"):
@@ -310,7 +419,7 @@ class Driver:
             target.select_option(value=self.session.values_engine.value(selected))
             action["value_id"] = selected.split(":")[0]
         elif kind in ("check", "uncheck"):
-            getattr(target, kind)()
+            self._pointer(target, kind)
         elif kind in ("hover", "focus"):
             getattr(target, kind)()
         elif kind == "drag":

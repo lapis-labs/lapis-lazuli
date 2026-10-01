@@ -45,8 +45,9 @@ region; in an optional-offer dialog the decline control wins. On a screen that o
 (in an exit flow also a control named for the exit action, such as Unsubscribe or 탈퇴), a control whose
 whole name is cancel, close, or put-off wording gets neither forward nor goal-word points; cancel wording
 is forward only in an exit flow, and 해지 never backs out. A control is read by its accessible name. An
-action that changed nothing is not repeated on that screen. Runs stop as completed, blocked, dead-end, or
-abandoned after 40 actions.
+action that changed nothing is not repeated on that screen. A control no pointer reaches (not hit-testable, with
+nothing visible that toggles or shows it) is not an action of the run: it counts as tried, and a run that does not
+complete names it in the coverage reason. Runs stop as completed, blocked, dead-end, or abandoned after 40 actions.
 Flows run only against the stub backend, since any control may commit.
 """
 from __future__ import annotations
@@ -56,6 +57,8 @@ import re
 import unicodedata
 from difflib import SequenceMatcher
 from urllib.parse import urlsplit
+
+from playwright.sync_api import Error as PlaywrightError
 
 from lapis_design.behavior_check.probes._decision import (
     ACCEPT, AGREE, BACK_OUT, CANCEL, CLOSE, CONFIRM, DECLINE, DISMISS, EXIT_ACTION, LATER, REFUSE, names)
@@ -697,6 +700,7 @@ def _run_one(session, open_driver, flow, ctx_id, start):
         state = {"log": [], "touched": set(), "chosen": set(), "add_words": set(), "last_seen": {},
                  "screen_keys": [], "signed_in": False}
         tried = set()
+        unreachable = []
         prev = None
         for _ in range(41):
             screen = _read(driver, flow)
@@ -740,7 +744,13 @@ def _run_one(session, open_driver, flow, ctx_id, start):
                 break
             old_signature = (path, screen["main_text"], screen["dialog"])
             control = next((c for c in screen["controls"] if c["id"] == action["target"]), None)
-            effect = driver.act(action)
+            try:
+                effect = driver.act(action)
+            except PlaywrightError as exc:
+                # A control nothing reaches is not an action of the run: it is tried, and the run goes on without it.
+                unreachable.append(f"{driver.clean(name or action['target'])}: {driver.reason(exc)}")
+                tried.add(action["target"])
+                continue
             step["actions"].append(action)
             field = _field_kind(control) if control and control["type"].lower() in FIELD_TYPES else None
             state["log"].append({"target": action["target"], "name": control["name"] if control else "", "field": field})
@@ -790,7 +800,7 @@ def _run_one(session, open_driver, flow, ctx_id, start):
             for kind in sorted(required - recorded):
                 run.setdefault("disclosures", []).append({"kind": kind, "placement": "absent", "at_commit": False})
         del run["_requires"]
-        return run
+        return run, unreachable
     finally:
         driver.close()
 
@@ -811,11 +821,12 @@ def run(session, open_driver):
             session.engine.reset()
         for flow in plans:
             start = by_id.get(flow.get("pair"), flow)["start"]
-            result = _run_one(session, open_driver, flow, ctx_id, start)
+            result, unreachable = _run_one(session, open_driver, flow, ctx_id, start)
             session.add_flow_run(result)
             where = f"{ctx_id}/{flow['id']}"
             if result["status"] != "completed":
-                gaps.append(f"{where}: {result['status']} ({result.get('note', 'goal not reached')})")
+                detail = "; ".join([result.get("note", "goal not reached"), *unreachable])
+                gaps.append(f"{where}: {result['status']} ({detail})")
             if result["kind"] in PRICED_KINDS and "commit_step" in result and not result.get("prices"):
                 gaps.append(f"{where}: commit reached without an observed price")
             if result["kind"] in EXIT_KINDS and "channel" not in result["effort"]:

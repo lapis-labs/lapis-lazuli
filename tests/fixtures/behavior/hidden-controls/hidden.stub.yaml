@@ -1,0 +1,10 @@
+version: 0
+clock: {start: '2026-10-01T00:00:00Z'}
+collections: {}
+variants:
+  empty: {}
+  partial: {}
+routes: []
+values:
+  v1: {kind: name, valid: 이하늘, invalid: '', alternate: 남궁해솔}
+  v2: {kind: text, valid: 정기 진료를 예약하고 싶어요., invalid: '', alternate: 지난 진료 이후 경과를 확인하고 싶어요.}

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>진료 안내</title>
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; margin: 0; }
+  main { max-width: 480px; margin: 0 auto; padding: 24px 16px; }
+  /* Above the window until it takes focus, then in place: a keyboard user finds it, a pointer cannot hit it. */
+  .skip { position: fixed; top: 12px; left: 16px; padding: 12px 20px; background: #fff; transform: translateY(-200%); }
+  .skip:focus { transform: none; }
+  .arrived { display: none; }
+  #guide:target .arrived { display: block; }
+</style>
+</head>
+<body>
+<a class="skip" href="#guide">예약 안내로 바로 가기</a>
+<main>
+  <h1>진료 안내</h1>
+  <section id="guide"><h2>방문 전 안내</h2><p>신분증과 복용 중인 약을 가져오세요.</p><p class="arrived">안내 구역에 도착했어요.</p></section>
+</main>
+</body>
+</html>

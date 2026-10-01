@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import re
 
+from playwright.sync_api import Error as PlaywrightError
+
 
 NAMES = ("forms",)
 
@@ -119,18 +121,29 @@ def _input_action(driver, field, kind, variant):
     return action
 
 
-def _enter(driver, field, value="valid"):
+def _unchanged(driver, field, what, exc):
+    """The gap a choice leaves when no pointer could set it: which one, and why."""
+    return f"{driver.ctx_id}: {field['kind']} {field['box']} could not be {what} ({driver.reason(exc)})"
+
+
+def _enter(driver, field, gaps, value="valid"):
     kind = field["kind"]
     box = field["box"]
     if kind in ("checkbox", "radio", "switch"):
-        if not driver.locate(box).is_checked():
-            driver.act({"kind": "check", "target": box})
+        try:
+            if not driver.locate(box).is_checked():
+                driver.act({"kind": "check", "target": box})
+        except PlaywrightError as exc:
+            gaps.add(_unchanged(driver, field, "set", exc))
         return None
     if kind == "select":
-        options = driver.locate(box).locator("option").all()
-        option = next((o for o in options if o.get_attribute("value") and not o.is_disabled()), None)
-        if option:
-            driver.locate(box).select_option(value=option.get_attribute("value"))
+        try:
+            options = driver.locate(box).locator("option").all()
+            option = next((o for o in options if o.get_attribute("value") and not o.is_disabled()), None)
+            if option:
+                driver.locate(box).select_option(value=option.get_attribute("value"))
+        except PlaywrightError as exc:
+            gaps.add(_unchanged(driver, field, "set", exc))
         return None
     if kind == "file":
         return None
@@ -247,7 +260,11 @@ def _one(driver, form_id, session, gaps):
                 "focus-moved" if current_focus not in (None, before_focus, field["box"]) else "none")
             effect = None
         else:
-            effect = driver.act({"kind": "uncheck" if field["checked"] else "check", "target": field["box"]})
+            try:
+                effect = driver.act({"kind": "uncheck" if field["checked"] else "check", "target": field["box"]})
+            except PlaywrightError as exc:
+                gaps.add(_unchanged(driver, field, "changed", exc))
+                continue
         if effect:
             row["on_change"] = ("new-window" if effect["navigation"] == "new-window" else
                 "navigated" if effect["navigation"] in ("document", "same-document") else
@@ -299,7 +316,7 @@ def _one(driver, form_id, session, gaps):
                 for field in fields:
                     if field["kind"] != "file":
                         try:
-                            _enter(driver, field)
+                            _enter(driver, field, gaps)
                         except (KeyError, ValueError) as exc:
                             gaps.add(f"{driver.ctx_id}: valid value unavailable for {field['kind']}: {exc}")
                 submit["disabled_until_valid"] = not (button.is_disabled() or button.get_attribute("aria-disabled") == "true")
@@ -322,10 +339,13 @@ def _one(driver, form_id, session, gaps):
         initial_colors = field_colors() if invalid_field else None
         for field in fields:
             if field is invalid_field and field["kind"] in ("checkbox", "switch"):
-                if driver.locate(field["box"]).is_checked():
-                    driver.act({"kind": "uncheck", "target": field["box"]})
+                try:
+                    if driver.locate(field["box"]).is_checked():
+                        driver.act({"kind": "uncheck", "target": field["box"]})
+                except PlaywrightError as exc:
+                    gaps.add(_unchanged(driver, field, "cleared", exc))
             elif field["kind"] != "file":
-                _enter(driver, field, "invalid" if field is invalid_field else "valid")
+                _enter(driver, field, gaps, "invalid" if field is invalid_field else "valid")
         prior = _values(driver, fields)
         before_text = driver.locate(form_id).inner_text().lower()
         button_box, effect = _submit(driver, form_id)
@@ -348,7 +368,7 @@ def _one(driver, form_id, session, gaps):
             driver.reload()
             for field in fields:
                 if field["kind"] != "file":
-                    _enter(driver, field)
+                    _enter(driver, field, gaps)
             prior = _values(driver, fields)
             session.engine.inject("fail-5xx", method="POST", times=1)
             try:
@@ -370,14 +390,14 @@ def _one(driver, form_id, session, gaps):
             driver.reload()
             for field in fields:
                 if field["kind"] != "file":
-                    _enter(driver, field)
+                    _enter(driver, field, gaps)
             prior = _values(driver, fields)
             driver.reload(reset_storage=False)
             entry.setdefault("preservation", []).append(_preserved(driver, form_id, fields, prior, "reload"))
             driver.reload()
             for field in fields:
                 if field["kind"] != "file":
-                    _enter(driver, field)
+                    _enter(driver, field, gaps)
             prior = _values(driver, fields)
             next_control = driver.locate(form_id).locator("button,a").filter(
                 has_text=re.compile(r"next|continue|review|step|다음|계속|검토|단계", re.I)).first
@@ -403,7 +423,7 @@ def _one(driver, form_id, session, gaps):
                 driver.reload()
                 for field in fields:
                     if field["kind"] != "file":
-                        _enter(driver, field)
+                        _enter(driver, field, gaps)
                 prior = _values(driver, fields)
                 driver.context.clear_cookies()
                 account = session.engine.account()
@@ -467,8 +487,12 @@ def run(session, open_driver):
         try:
             for box in _forms(driver):
                 found = True
-                driver.reload()
-                _one(driver, box, session, gaps)
+                try:
+                    driver.reload()
+                    _one(driver, box, session, gaps)
+                except PlaywrightError as exc:
+                    # Whatever one form could not do leaves the others, and the rest of the probe, to run.
+                    gaps.add(f"{ctx}/{box}: {driver.reason(exc)}")
         finally:
             driver.close()
     session.cover("forms", "partial" if gaps else "ran" if found else "not-applicable",
