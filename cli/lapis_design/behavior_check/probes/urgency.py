@@ -39,11 +39,38 @@ _TIME_OF_DAY = re.compile(r"(?<![a-z])[ap]\.?m\b\.?|오전|오후|부터|까지|
                           r"|\d:\d\d\s*[~–—-]\s*\d{1,2}:\d\d", re.I)
 _RUNNING_OUT = re.compile(r"\b(?:left|remaining|(?:ends?|expires?|closes?|starts?)\s+in|countdown|timer)\b"
                           r"|남음|남았|남은|남아|후\s*(?:마감|종료|만료)|타이머", re.I)
+# What turns a count of days or hours into time left: running out, or a deadline or cut-off ("2 days to go",
+# "마감까지 3시간", "Order within the next 3 hours"). A span that measures a quantity ("Keep 30 days of changes",
+# "valid for 90 days", "14 days free", "24시간 고객센터") has none of these. Only a day count with an hour count
+# ("2 days 4 hours", "3일 5시간") is a countdown on its own.
+_COUNTS_DOWN = re.compile(_RUNNING_OUT.pattern + r"|\b(?:deadline|due|to\s+go|within\s+the\s+next)\b"
+                          r"|\b(?:order|buy|book|reserve|claim|checkout)\s+within\b|(?:마감|종료|만료)까지"
+                          r"|시간\s*내(?:에)?\s*(?:주문|결제|구매|예약|신청)", re.I)
+_REACH = 40        # characters between the words and the span, in one sentence
+_APART = re.compile(r"[.!?;。·|•—–]")
 
 
 def _time_of_day(text: str) -> bool:
     """The text gives a clock time of day rather than time left."""
     return bool(_TIME_OF_DAY.search(text)) and not _RUNNING_OUT.search(text)
+
+
+def _time_left(pattern: re.Pattern, text: str, hold: bool, pair: bool = False):
+    """The first span of `pattern` that is time left rather than a quantity: words in its sentence within reach
+    say time is running out or a deadline is near, the page names a hold, or (`pair`) it gives days and hours.
+    The "left" of a stock claim ("5 spots left") belongs to its count, not to a span beside it."""
+    owned = [stock.span() for stock in _STOCK.finditer(text)]
+    for match in pattern.finditer(text):
+        if hold or (pair and match[2]):
+            return match
+        for words in _COUNTS_DOWN.finditer(text):
+            if any(start <= words.start() < end for start, end in owned):
+                continue
+            between = (text[words.end():match.start()] if words.end() <= match.start() else
+                       text[match.end():words.start()] if words.start() >= match.end() else "")   # "" overlaps it
+            if len(between) <= _REACH and not _APART.search(between):
+                return match
+    return None
 
 
 def _claim(text: str, now_ms: int, zone: tzinfo = timezone.utc):
@@ -70,11 +97,11 @@ def _claim(text: str, now_ms: int, zone: tzinfo = timezone.utc):
     if match and not _time_of_day(ticking):
         value = (int(match[1] or 0) * 3600 + int(match[2]) * 60 + int(match[3]))
         return ("hold" if hold else "countdown", value, 1, "seconds")
-    match = _DAYS.search(ticking)
+    match = _time_left(_DAYS, ticking, hold, pair=True)
     if match:
         return ("hold" if hold else "countdown", int(match[1]) * 86400 + int(match[2] or 0) * 3600,
                 3600 if match[2] else 86400, "seconds")
-    match = _HOURS.search(ticking)
+    match = _time_left(_HOURS, ticking, hold)
     if match:
         return ("hold" if hold else "countdown", int(match[1]) * 3600 + int(match[2] or 0) * 60,
                 60 if match[2] else 3600, "seconds")

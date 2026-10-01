@@ -512,6 +512,16 @@ def test_hidden_subscription_marks_trials_that_convert():
     assert run("ux.hidden-subscription", session(flows=[clear])).hits == []
 
 
+def test_hidden_subscription_needs_a_commit_to_judge_terms_at():
+    # A preview on a page that lists monthly plans never commits, so no term can be hidden at a commit.
+    prices = [{"step": 0, "currency": "USD", "components": [comp("personal", "recurring", 8, cadence="month")]}]
+    preview = run("ux.hidden-subscription", session(flows=[flow("preview", "primary", prices=prices)]))
+    assert preview.hits == [] and preview.skipped is None
+    # A flow declared as a subscription that reached no commit is not verified rather than passed.
+    join = run("ux.hidden-subscription", session(flows=[flow("join", "subscribe", prices=prices)]))
+    assert join.hits == [] and "join" in join.skipped and "reached no commit" in join.skipped
+
+
 def test_obstructed_exit_compares_effort_with_the_join_flow_at_the_bound():
     join = flow("join", "subscribe", steps=2, interactions=3)
     at_bound = run("ux.obstructed-exit", session(flows=[join, flow("leave", "cancel-subscription", steps=4, interactions=6)]),

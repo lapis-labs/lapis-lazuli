@@ -876,6 +876,12 @@ def flow_analysis(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
 
 
 def _terms_hits(run: dict, derived: dict, add, notes: list[str], name: str) -> None:
+    # Terms are due where the user commits. A flow declared as a purchase or subscription that reached no commit is
+    # not verified; any other flow (a preview, a search) has no commit to judge.
+    if run.get("commit_step") is None:
+        if run["kind"] in ("purchase", "subscribe") and required_terms(run):
+            notes.append(f"{name} in context {run['context']}: recurring terms not verified: the run reached no commit")
+        return
     # Whether terms are required at all rests on the recurring components. When no recurring
     # component is confirmed and some component's hint disputes its kind or cadence, recurrence
     # itself is not verified.

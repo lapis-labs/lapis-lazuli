@@ -33,6 +33,15 @@ All notable changes are recorded here. The format follows
   toggles or shows is recorded as `not reachable by pointer` in the probe's coverage reason. One
   control's failure is a gap in the controls, forms, and flows probes, and the other controls, forms,
   flows, and contexts still run.
+- The urgency probe reads a count of days or hours as time left only when words beside it say so
+  (left, remaining, ends in, 남음, 후 마감, or a cut-off such as "order within the next 3 hours"), or
+  when days come with hours ("2 days 4 hours"). A period the page describes ("Keep 30 days of
+  changes", "valid for 90 days", "14일 무료 체험", "24시간 고객센터") is no longer a countdown and no
+  longer trips `ux.false-urgency`.
+- `ux.hidden-subscription` no longer judges a flow run that reached no commit. Before, a local preview
+  that never charged was flagged for terms "not readable at the commit" whenever the page showed a
+  monthly price elsewhere; a declared `purchase` or `subscribe` flow with no commit is now reported as
+  not verified.
 
 ## 0.1.2 (2026-10-01)
 
