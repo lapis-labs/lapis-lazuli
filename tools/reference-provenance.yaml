@@ -1812,13 +1812,13 @@ references:
   - 'checkout detail (order model, guest checkout, address and payment) in the e-commerce archetype or a later
     reference; platforms reference: native form controls and autofill.'
   verify_before_release:
-  - 'The Korean forms section, by a native Korean reader (new writing; no source has a Korean form): one name field
-    with no length cap and a legal name only for verification; a single phone field that accepts 010-1234-5678 and
-    01012345678 (landline and foreign numbers are not covered); the address flow (five-digit postal code, road-name
-    address, separate detail field, direct entry); the weekday after the date, 9월 27일(토); the 필수 and 선택 marks; the
-    consent list items and marketing consent per channel; 본인 확인 only for an age limit or a financial step, with a
-    birth date instead of a resident registration number; the SMS code field. Whether the consent items named are
-    what a Korean service must show is a legal question the text does not settle.'
+  - 'Korean forms section (new writing; no source has a Korean form) confirmed on 2026-10-01 by the maintainer, a native
+    Korean reader: one name field with no length cap and a legal name only for verification; a single phone field that
+    accepts 010-1234-5678 and 01012345678 (landline and foreign numbers are not covered); the address flow (five-digit
+    postal code, road-name address, separate detail field, direct entry); the weekday after the date, 9월 27일(토); the
+    필수 and 선택 marks; the consent list items and marketing consent per channel; 본인 확인 only for an age limit or a
+    financial step, with a birth date instead of a resident registration number; the SMS code field. Whether the consent
+    items named are what a Korean service must show is a legal question the text does not settle.'
   - 'Checker behavior quoted in the text (behavior/DERIVED.md Forms, Commits, Flows, States, Time limits; the forms,
     flows, commits, states, and time_limits probes): the English-only reading list of the forms probe; a form kind
     read from its id, accessible name, and opening text; flows starting at the plan start route, not the URL given;

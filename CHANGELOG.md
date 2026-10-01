@@ -5,6 +5,11 @@ All notable changes are recorded here. The format follows
 [Semantic Versioning](https://semver.org/) once 1.0 is released. Before then, contracts are
 `version: 0` drafts and may change between minor versions.
 
+## Unreleased
+
+- The Korean section of `lps-ux/references/forms-and-recovery.md` was confirmed by a native Korean
+  reader on 2026-10-01 (listed under 0.1.2's known limits as awaiting one).
+
 ## 0.1.2 (2026-10-01)
 
 Four new references, behavior probes that read Korean and exit flows as written, Adobe Fonts kept out
