@@ -6,9 +6,10 @@ from time import perf_counter
 import pytest
 
 import lapis_design.render.fields as fields
+from lapis_design.lint.detectors.render_type import contrast, srgb
 from lapis_design.render import _configs
 from lapis_design.render.capture import capture
-from lapis_design.render.color import contrast_ratio, to_oklch
+from lapis_design.render.color import contrast_ratio, delta_e_ok, to_oklch
 from lapis_design.render.extract import assemble, validate
 from lapis_design.render.fields import text
 
@@ -26,7 +27,8 @@ def measured(browser, render_server: str, tmp_path_factory):
         actual_apply(view, vp)
         timing['pass'] = perf_counter() - start
         assert view.page.evaluate("""() => ({
-          leftover: !!document.querySelector('#lapis-text-backdrop-style, #lapis-text-no-transition, [data-lapis-text-clip]'),
+          leftover: !!document.querySelector('[data-lapis-text-clip]') ||
+                    document.adoptedStyleSheets.length > 0 || !!window.__lapisSheets,
           runNodes: !!window.__lapisRunNodes,
           color: getComputedStyle(document.querySelector('#state')).color
         })""") == {'leftover': False, 'runNodes': False, 'color': 'rgb(255, 255, 255)'}
@@ -105,6 +107,63 @@ def test_inked_line_symmetry(measured):
     vp, _ = measured
     assert 0 < vp['derived']['symmetry'] < 1
     assert 0 < vp['derived']['density'] < .5  # Small label's captured box is the whole section.
+
+
+def _wcag(a: tuple[int, int, int], b: tuple[int, int, int]) -> float:
+    """WCAG 2 ratio of two painted sRGB triples, independent of lapis_design."""
+    def luminance(rgb):
+        lin = [c / 255 / 12.92 if c / 255 <= .04045 else ((c / 255 + .055) / 1.055) ** 2.4 for c in rgb]
+        return .2126 * lin[0] + .7152 * lin[1] + .0722 * lin[2]
+    high, low = sorted((luminance(a), luminance(b)), reverse=True)
+    return (high + .05) / (low + .05)
+
+
+# text-csp.css written in oklch() and display-p3: the sRGB the browser paints for each text and surface.
+CSP_PAINTED = {
+    'Ink token on canvas': ((38, 49, 44), (246, 249, 247)),
+    'Tinted surface text': ((22, 35, 48), (232, 243, 255)),
+    'Display P3 text': ((55, 24, 10), (245, 229, 201)),
+    'Translucent white over blue': ((170, 186, 213), (42, 83, 151)),    # white at 60 % over the surface
+    'Barely darker than its surface': ((180, 104, 92), (164, 90, 78)),
+}
+
+
+def test_backdrop_is_measured_on_a_page_whose_csp_blocks_injected_styles(browser, render_server, tmp_path):
+    """`style-src 'self'` stops an injected <style>, so the text-free render still showed the text and
+    every run measured 1.00:1 against itself."""
+    with pytest.MonkeyPatch.context() as monkeypatch:
+        monkeypatch.setattr(fields, 'FIELD_MODULES', (text,))
+        vp = capture(browser, f'{render_server}/text-csp.html', _configs(False, [390])[0],
+                     tmp_path / 'csp.png', bytes(range(32)))
+    for value, (ink, surface) in CSP_PAINTED.items():
+        run = _run(vp, value)
+        assert run['backdrop']['kind'] == 'solid', value
+        assert run['backdrop']['worst'] == pytest.approx(to_oklch(f'rgb{surface}'), abs=.01), value
+        assert contrast(run['color'], run['backdrop']['worst']) == pytest.approx(_wcag(ink, surface), rel=.01), value
+    button = _run(vp, 'Action button')
+    assert delta_e_ok(button['states']['hover']['color'], to_oklch('rgb(187 6 30)')) < .01   # not mid-transition
+
+
+# CSS colors Chromium returns from getComputedStyle, with the 8-bit sRGB it paints for them.
+PAINTED = [
+    ('oklch(0.5 0.1 200)', (0, 116, 122)),
+    ('oklab(0.6 -0.1 0.05)', (67, 147, 96)),
+    ('lab(50 40 30)', (187, 88, 70)),
+    ('lch(30 30 200)', (0, 82, 86)),
+    ('color(srgb 0.2 0.4 0.6)', (51, 102, 153)),
+    ('color(srgb-linear 0.2 0.4 0.6)', (124, 170, 203)),
+    ('color(display-p3 0.2 0.4 0.6)', (26, 104, 157)),
+    ('color(a98-rgb 0.5 0.3 0.2)', (143, 75, 46)),
+    ('color(prophoto-rgb 0.5 0.3 0.2)', (185, 77, 59)),
+    ('color(rec2020 0.5 0.3 0.4)', (161, 83, 117)),
+    ('color(xyz-d65 0.2 0.3 0.4)', (0, 167, 164)),
+    ('color(xyz-d50 0.2 0.3 0.4)', (0, 168, 189)),
+]
+
+
+@pytest.mark.parametrize(('css', 'painted'), PAINTED)
+def test_computed_color_forms_convert_to_the_srgb_the_browser_paints(css, painted):
+    assert [round(channel * 255) for channel in srgb(to_oklch(css))] == pytest.approx(painted, abs=1)
 
 
 def test_symmetry_uses_ink_extents_not_full_width_paragraph(browser, render_server, tmp_path):

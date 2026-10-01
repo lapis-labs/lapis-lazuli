@@ -123,7 +123,7 @@ def to_oklch(css: str) -> list[float] | None:
             r, g, b = (_signed_power(c, 563 / 256) for c in channels)
             rgb = _xyz_to_rgb(0.5767309*r + 0.1855540*g + 0.1881852*b,
                               0.2973769*r + 0.6273491*g + 0.0752741*b,
-                              0.0270343*g + 0.9911085*b)
+                              0.0270343*r + 0.0703124*g + 0.9911085*b)
         elif space == "prophoto-rgb":
             r, g, b = (c / 16 if abs(c) <= 1/32 else _signed_power(c, 1.8) for c in channels)
             rgb = _xyz_to_rgb(0.79776049*r + 0.135185837*g + 0.031349349*b,

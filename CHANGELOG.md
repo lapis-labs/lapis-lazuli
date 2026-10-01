@@ -20,6 +20,12 @@ All notable changes are recorded here. The format follows
   (time quadratic in the run: 820 replayed actions per context for a 40-action run, so a full run on a small
   page with an abandoned flow did not finish in 30 minutes). A page it has idled or typed into is still
   reloaded for the next step, so the limits found and their numbers are unchanged.
+- `render check` now measures text backdrops, line ink extents (`density`, `symmetry`), and
+  interactive-state colors on pages whose Content-Security-Policy sets `style-src` without
+  `'unsafe-inline'`. The text-free render used an injected `<style>` that such a policy silently
+  blocked, so every text run read 1.00:1 against itself and `color.text-contrast` fired on ordinary
+  text; it now uses constructed style sheets, which the policy does not block. `color(a98-rgb …)`
+  converts correctly.
 
 ## 0.1.2 (2026-10-01)
 

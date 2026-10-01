@@ -336,13 +336,40 @@ def _gradient_stops(background: str) -> list[list[float]]:
     return [converted for css in _COLOR.findall(background) if (converted := to_oklch(css))]
 
 
+# The measurement styles are constructed stylesheets, not <style> elements: a page whose
+# Content-Security-Policy sets `style-src` without 'unsafe-inline' blocks an injected <style>
+# silently, and the "backdrop" screenshot would then still contain the text.
+_SHEETS_JS = """
+  const addSheet = (name, css) => {
+    const sheet = new CSSStyleSheet();
+    sheet.replaceSync(css);
+    (window.__lapisSheets ||= {})[name] = sheet;
+    document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+  };
+  const removeSheet = name => {
+    const sheet = window.__lapisSheets?.[name];
+    if (!sheet) return;
+    document.adoptedStyleSheets = document.adoptedStyleSheets.filter(other => other !== sheet);
+    delete window.__lapisSheets[name];
+    if (!Object.keys(window.__lapisSheets).length) delete window.__lapisSheets;
+  };
+"""
+
+_BACKDROP_CSS = ('* , *::before, *::after { color: transparent !important; '
+                 '-webkit-text-fill-color: transparent !important; } '
+                 '[data-lapis-text-clip] { background-image: none !important; }')
+
+
+def _set_sheet(view: RawView, name: str, css: str | None) -> None:
+    """Adopt `css` as the page-wide stylesheet `name`, or drop that sheet when `css` is None."""
+    view.page.evaluate("([name, css]) => {" + _SHEETS_JS + "css === null ? removeSheet(name) : addSheet(name, css); }",
+                       [name, css])
+
+
 def _set_backdrop_mode(view: RawView, enabled: bool) -> None:
-    view.page.evaluate("""enabled => {
+    view.page.evaluate("([enabled, css]) => {" + _SHEETS_JS + """
       if (enabled) {
-        const style=document.createElement('style');
-        style.id='lapis-text-backdrop-style';
-        style.textContent='* , *::before, *::after { color: transparent !important; -webkit-text-fill-color: transparent !important; } [data-lapis-text-clip] { background-image: none !important; }';
-        document.head.append(style);
+        addSheet('backdrop', css);
         const changed=[];
         for(const element of document.querySelectorAll('*')) {
           if(getComputedStyle(element).backgroundClip === 'text') {
@@ -352,14 +379,14 @@ def _set_backdrop_mode(view: RawView, enabled: bool) -> None:
         }
         window.__lapisTextBackdropChanged=changed;
       } else {
-        document.getElementById('lapis-text-backdrop-style')?.remove();
+        removeSheet('backdrop');
         for(const [element,value] of window.__lapisTextBackdropChanged || []) {
           if(value===null) element.removeAttribute('data-lapis-text-clip');
           else element.setAttribute('data-lapis-text-clip',value);
         }
         delete window.__lapisTextBackdropChanged;
       }
-    }""", enabled)
+    }""", [enabled, _BACKDROP_CSS])
 
 
 def apply(view: RawView, vp: dict) -> None:
@@ -396,12 +423,7 @@ def apply(view: RawView, vp: dict) -> None:
     forced: list[int] = []
     state_style = False
     try:
-        view.page.evaluate("""() => {
-          const style = document.createElement('style');
-          style.id = 'lapis-text-no-transition';
-          style.textContent = '*,*::before,*::after { transition: none !important; }';
-          document.head.append(style);
-        }""")
+        _set_sheet(view, 'no-transition', '*,*::before,*::after { transition: none !important; }')
         state_style = True
         _set_backdrop_mode(view, True)
         backdrop_mode = True
@@ -466,6 +488,6 @@ def apply(view: RawView, vp: dict) -> None:
         if state_style:
             view.page.evaluate("() => { void document.body.offsetWidth; void getComputedStyle(document.body).color; }")
         if state_style:
-            view.page.evaluate("document.getElementById('lapis-text-no-transition')?.remove()")
+            _set_sheet(view, 'no-transition', None)
         view.page.evaluate('position => window.scrollTo(position.x,position.y)', scroll)
         view.page.evaluate('delete window.__lapisRunNodes')
