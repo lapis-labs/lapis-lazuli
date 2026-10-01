@@ -90,6 +90,7 @@ sources:
   - id: adobe-fonts
     name: Adobe Fonts
     url: https://fonts.adobe.com/
+    hosts: [typekit.com, use.typekit.net, p.typekit.net]
     type: [font]
     good_for: desktop activation and Adobe-hosted web projects; CJK classification facets
     access: refused

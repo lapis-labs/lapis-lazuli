@@ -476,8 +476,8 @@ def test_host_resolver_rules_cover_all_refused_and_link_hosts(registry):
 
 def test_host_resolver_rules_cover_real_registry():
     rules, hosts = site._host_resolver_rules(sources.load_registry())
-    assert len(hosts) == 29
-    assert len(rules.split(", ")) == 116
+    assert len(hosts) == 32
+    assert len(rules.split(", ")) == 128
     assert "github.com" not in hosts
 
 

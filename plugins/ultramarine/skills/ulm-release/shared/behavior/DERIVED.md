@@ -192,15 +192,18 @@ Text added anywhere inside counts for the nearest enclosing element that has `ar
 with a live default, so an inner `aria-live="off"`, `timer`, or `marquee` silences it. Text inside
 an `aria-hidden` subtree is not announced.
 
-**Wording.** The dialog, choice, flow, state, and commit-result probes read labels, dialog text, and
-messages in English and Korean; the other probes (control kinds, forms, permissions) read English
-only. Each kind of wording (confirm, cancel, close, decline, refuse, put off, retry, a problem, and
-each commit result) has one shared list holding both languages, which every probe judging that kind
-reads, so a language added for one probe is not missing from another. Where this document names
-words, the English ones stand for the kind, and the Korean examples show counterparts (확인, 취소,
-닫기, 거절, 나중에, 다시 시도, and so on). A control's wording is read from its accessible name.
-Other languages are not read, so a page in another language gets fewer matches, not different
-ones.
+**Wording.** Every probe that reads wording reads labels, dialog text, and messages in English and
+Korean, except that the forms probe reads the kind of form (sign-in, sign-up, checkout, and the
+like), error reasons, sign-in alternatives, cleared-field explanations, and same-as-offered text in
+English only, and the media probe reads its controls in English only. A plan goal matches page text
+through its words of five or more letters, or two or more Hangul syllables. Each kind of wording
+(confirm, agree, cancel, close, decline, refuse, put off, remind, retry, a problem, and each commit
+result) has one shared list holding both languages, which every probe judging that kind reads, so a
+language added for one probe is not missing from another. Where this document names words, the
+English ones stand for the kind, and the Korean examples show counterparts (확인, 동의, 취소, 닫기, 거절, 나중에,
+다시 시도, and so on). A control's wording is read from its accessible name, which includes a button's
+`value` and an image's `alt`. Other languages are not read, so a page in another language gets fewer
+matches, not different ones.
 
 ## Controls
 
@@ -262,15 +265,16 @@ and `commits` coverage is `partial`. For each commit control:
 - **Outcomes.** The commit is repeated with each injection. `claimed` is what the page says within
   the settle window, from the text and state of the control's region and any toast or dialog:
   `success` (done, saved, confirmed, and the completed forms of subscribe, sign up, register,
-  submit, pay, book, and place), `failure` (failed, not saved, try again), `pending` (in progress),
-  `unknown` (the page says it is checking or cannot confirm), `saved-locally` (the page says the
-  change is kept on this device), `none` (nothing said). Only text the region did not show before
-  the commit is read, so a standing note ("this cannot be undone") is not a claim. A negated result
-  reads as a failure (not saved, 저장하지 않았어요, 결제를 완료하지 않았어요), unless it says the
-  result cannot be confirmed (could not confirm, 확인하지 못했어요), which is `unknown`; a
-  conditional or future one (once saved, 완료되면, 완료 후) is no claim. `actual` follows the stub
-  contract: applied for `none` and `hang`, not applied for the rest; `unknown` only with
-  `local-dev`.
+  submit, pay, book, and place, and, for an exit commit, of unsubscribe, cancel, delete, and
+  withdraw, such as unsubscribed, 해지됐어요, 탈퇴했어요), `failure` (failed, not saved, try again), `pending`
+  (in progress), `unknown` (the page says it is checking or cannot confirm), `saved-locally` (the
+  page says the change is kept on this device), `none` (nothing said). Only text the region did not
+  show before the commit is read, so a standing note ("this cannot be undone") is not a claim. A
+  negated result reads as a failure (not saved, nothing was saved, cannot be saved, not all items
+  were saved, 저장하지 않았어요, 결제를 완료하지 않았어요), unless it says the result cannot be confirmed (could not
+  confirm, cannot be confirmed, 확인하지 못했어요), which is `unknown`; a conditional or future one (once
+  saved, 완료되면, 완료 후) is no claim. `actual` follows the stub contract: applied for `none` and `hang`,
+  not applied for the rest; `unknown` only with `local-dev`.
   `retry_offered`: a retry or resubmit control appeared. `retry_effects`: effects added by
   activating it once. `auto_resent`: the client sent the same state-changing request again without
   user action and without an idempotency key. `input_kept`: entered values survived. `announced`:
@@ -416,11 +420,13 @@ field as one). Leaving an optional add-on unchecked is a `decline` route with 0 
 `visual`. A reject-all reached through "manage settings" is a `decline` option on layer 2 with its
 full interaction count, and the "manage settings" control is a `customize` option on layer 1.
 
-- **Kinds**: `accept` gives the business what it asks for (consent, subscribe, add, upgrade, stay);
-  `decline` refuses it (including a refusal of consent, such as do not agree); `dismiss` closes or
-  puts the question off while leaving it open (maybe later, remind me later); `customize` opens
-  finer choices; `neutral` when the choice has no business-favored side (a confirmation of the
-  user's own action, a size picker).
+- **Kinds**: `accept` gives the business what it asks for (consent, subscribe, add, upgrade, stay,
+  turn on notifications such as 알림 받기); `decline` refuses it (including a refusal of consent,
+  such as do not agree or a necessary-only choice such as 필수 쿠키만 허용, and of an add-on, such
+  as 옵션 추가 안 함 or continue without it);
+  `dismiss` closes or puts the question off while leaving it open (maybe later, remind me later);
+  `customize` opens finer choices; `neutral` when the choice has no business-favored side (a
+  confirmation of the user's own action, a size picker).
 - **`visual`**: `area_px` is the painted area: the background or border box when the control is
   `filled` (a background differing from its surroundings by at least 0.05 OKLCH L) or `bordered` (an
   outline without a fill), otherwise the bounding box of its label text or icon. `contrast` is the
@@ -631,24 +637,29 @@ card, or password field, with the fixture's `valid` value of that kind; without 
 stops as `blocked` with a `note`. Otherwise it ranks the enabled controls not yet tried on this
 screen, leaving out fields, checkboxes, radios, switches, and `tel:` and `mailto:` links: 30 points
 when the accessible name shares a word with the goal or the flow kind's vocabulary (for `purchase`:
-buy, checkout, continue, pay, place, order) and 5 more per shared word, where a Korean word shares
-a goal word of two or more syllables when it begins with it (해지하기 shares 해지); 14 for forward
-wording (continue, next, checkout, confirm, submit, pay, and the like; cancel wording is forward
-only in an exit flow); 4 inside `main`; 30 fewer for back wording and, outside a dialog, 25 fewer
-for sign-in, support, or help. On a screen that offers a confirm control (confirm, submit, save,
-done, OK, and the like), a control whose whole name, punctuation aside, is cancel, close, or put-off
-wording (Cancel, 취소, Not now) gets neither the forward points nor the goal-word points; a name
-with more words (Cancel subscription, 구독 취소) keeps them. In a dialog, confirm, continue, accept,
-yes, okay, close, or dismiss wording adds 20, and a decline (no thanks, decline, not now, maybe
-later, skip, leave) adds 100 when the dialog is an optional offer (its text speaks of an offer,
-retention, upsell, marketing, cookies, a discount, or staying). A dialog that asks for consent the
-flow needs, such as agreeing to terms or a required item, is not an offer, even when it also offers
-optional consent such as marketing; the word consent alone does not make a dialog an offer.
-Put-off wording is a phrase that puts the offer off (maybe later, remind me later), not a word
-inside another action (pay later, save for later). The highest score wins, earlier in document
-order on a tie; when no control scores above zero the run stops. An action after
-which the path, the main region's text, and the open dialog are all unchanged is not tried again on
-that screen.
+buy, checkout, continue, pay, place, order) and 5 more per shared word, where a Korean word shares a
+goal word of two or more syllables when it begins with it (해지하기 shares 해지); 14 for forward wording
+(continue, next, checkout, confirm, submit, pay, and the like; cancel wording is forward only in an
+exit flow); 4 inside `main`; 30 fewer for back wording and, outside a dialog, 25 fewer for sign-in,
+support, or help. On a screen that offers a confirm control (confirm, submit, save, done, OK, and
+the like; in an exit flow also a control named for the exit action, such as Unsubscribe, Withdraw,
+Cancel plan, 해지, 탈퇴, 철회, or 수신 거부), a control whose whole name, punctuation aside, is cancel, close,
+or put-off wording (Cancel, 취소, Not now; not 해지) gets neither the forward points nor the goal-word
+points; a name with more words (Cancel subscription, 구독 취소) keeps them. 해지 names ending a contract
+and is never read as backing out. In a dialog, confirm, continue, accept, agree, yes, okay, close,
+or dismiss wording adds 20 (agree wording that refuses, such as 동의 안 함, is a decline), and a decline
+(no thanks, decline, not now, maybe later, skip, leave, reject, 거부, or a necessary-only choice such
+as 필수 쿠키만 허용) adds 100 when the dialog is an optional offer (its text speaks of an offer, retention,
+upsell, marketing, cookies, a discount, or staying). A dialog that asks the user to agree to
+something the flow needs (terms, or an item marked required) is not an offer, even when it also
+offers optional consent such as marketing. A dialog that only mentions terms or a required item
+without asking for agreement (Terms apply, required cookies stay on, no card required) is judged by
+the rest of its text, and the word consent alone does not make a dialog an offer. Put-off wording is
+a whole name or a phrase that puts the offer off (maybe later, remind me later, 나중에 할게요), not a word
+inside another action (pay later, save for later, 나중에 결제). The highest score wins, earlier in
+document order on a tie; when no control scores above zero the run stops. An action after which the
+path, the main region's text, and the open dialog are all unchanged is not tried again on that
+screen.
 
 - **Steps**: a new step starts at a new URL path, when a dialog that must be answered opens, or when
   the main region is replaced (its text changes by more than half). The screen that satisfies `done`
