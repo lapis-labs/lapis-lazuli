@@ -2,7 +2,7 @@
 # The build (tools/build) emits `outputs`; install.sh, install.ps1, and the per-harness sections of
 # INSTALLATION.md are generated from `cli` and `harnesses`. Output contents: install/OUTPUTS.md.
 # Harness facts were checked against each harness's documentation and source on `checked`;
-# `unverified` lists what still needs a local run before the first release. `status: experimental`
+# `unverified` lists what a real run on the harness has not confirmed yet. `status: experimental`
 # marks a harness whose commands come from its documentation and have not been confirmed on a real
 # install; the install scripts install it only when --harness names it. Remove the status, and say
 # how and when it was checked in the commit, once a real install confirms the commands.

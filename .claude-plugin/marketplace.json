@@ -3,7 +3,7 @@
   "owner": {
     "name": "lapis-labs"
   },
-  "description": "LapisLazuli design skills",
+  "description": "Design skills for coding agents, plus two CLIs.",
   "plugins": [
     {
       "name": "lapis",

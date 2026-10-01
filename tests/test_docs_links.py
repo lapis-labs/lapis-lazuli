@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-DOCS = ["README.md", "README.ko.md", "CHANGELOG.md", "SECURITY.md"]
+DOCS = ["README.md", "README.ko.md", "CHANGELOG.md", "SECURITY.md", "INSTALLATION.md", "docs/eval/README.md"]
 LINK = re.compile(r"(?<!!)\[[^\]]*\]\(([^)\s]+)\)")
 FENCE = re.compile(r"^```")
 

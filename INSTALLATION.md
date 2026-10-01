@@ -73,6 +73,8 @@ The scripts treat a harness as installed when its command is on PATH or its fold
 
 Each section lists the exact commands the scripts run, with the release filled in. Where a command names a plugin or a skill, the scripts run it once for each selected one.
 
+These commands install the plugins (or skills) only, not the CLI. The hooks, extensions, and MCP server they set up run `lapis-design` by name, so it must be on the PATH the harness sees: install the CLI as described under [CLI and optional components](#cli-and-optional-components). Without it, a harness that loaded the plugins reports an error such as `Executable not found in $PATH: "lapis-design"`; the skills still work and say what to run by hand.
+
 ### Claude Code
 
 Installed as: plugin. Skills are invoked as `/<plugin>:<skill>` (for example `/lapis:lapis`).
@@ -92,6 +94,8 @@ What gets installed:
 The harness also reads skills from: `~/.claude/skills`, `.claude/skills`, `plugin skills/`.
 
 **Install**
+
+These commands do not install the CLI. The plugin hooks and MCP server run `lapis-design` by name, so the CLI must be on the PATH the harness sees (see [CLI and optional components](#cli-and-optional-components)).
 
 ```sh
 claude plugin marketplace add lapis-labs/lapis-lazuli@release
@@ -161,6 +165,8 @@ What gets installed:
 The harness also reads skills from: `.agents/skills (cwd up to the repo root)`, `~/.agents/skills`.
 
 **Install**
+
+These commands do not install the CLI. The plugin hooks and MCP server run `lapis-design` by name, so the CLI must be on the PATH the harness sees (see [CLI and optional components](#cli-and-optional-components)).
 
 ```sh
 codex plugin marketplace add lapis-labs/lapis-lazuli --ref release
@@ -245,6 +251,8 @@ The harness also reads skills from: `.omp/skills`, `~/.omp/agent/skills`, `.agen
 
 **Install**
 
+These commands do not install the CLI. The session-start extension and MCP server run `lapis-design` by name, so the CLI must be on the PATH the harness sees (see [CLI and optional components](#cli-and-optional-components)).
+
 ```sh
 omp plugin marketplace add lapis-labs/lapis-lazuli
 omp plugin install --scope user lapis@lapis-lazuli
@@ -317,6 +325,8 @@ The harness also reads skills from: `~/.pi/agent/skills`, `.pi/skills`, `~/.agen
 
 These steps cover every plugin at once; `--plugin` does not narrow them.
 
+These commands do not install the CLI. The session-start extension runs `lapis-design` by name, so the CLI must be on the PATH the harness sees (see [CLI and optional components](#cli-and-optional-components)).
+
 ```sh
 pi install git:github.com/lapis-labs/lapis-lazuli@release
 ```
@@ -372,6 +382,8 @@ What gets installed:
 The harness also reads skills from: `~/.hermes/skills`, `skills.external_dirs in ~/.hermes/config.yaml`.
 
 **Install**
+
+These commands do not install the CLI. The Hermes plugin hook and MCP server run `lapis-design` by name, so the CLI must be on the PATH the harness sees (see [CLI and optional components](#cli-and-optional-components)).
 
 ```sh
 hermes skills install lapis-labs/lapis-lazuli/dist/skills/lapis --yes

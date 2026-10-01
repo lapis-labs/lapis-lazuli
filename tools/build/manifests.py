@@ -16,6 +16,8 @@ HOOKS = {
     "exit-plan": {"event": "PermissionRequest", "matcher": "ExitPlanMode", "timeout": 30, "file": "claude"},
 }
 MCP_COMMAND = {"command": "lapis-design", "args": ["mcp"]}
+# The first sentence of the repository's GitHub About text, which the maintainers set by hand.
+ABOUT = "Design skills for coding agents, plus two CLIs."
 
 
 def _repo_url(doc: dict) -> str:
@@ -67,14 +69,14 @@ def _catalog_entry(plugin: dict, version: str) -> dict:
 
 def claude_catalog(doc: dict, version: str) -> dict:
     return {"name": doc["repo"]["catalog"], "owner": {"name": doc["repo"]["owner"]},
-            "description": "LapisLazuli design skills", "plugins": [_catalog_entry(p, version) for p in doc["plugins"]]}
+            "description": ABOUT, "plugins": [_catalog_entry(p, version) for p in doc["plugins"]]}
 
 
 def codex_catalog(doc: dict, version: str) -> dict:
     plugins = [{**_catalog_entry(p, version), "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"}}
                for p in doc["plugins"]]
     return {"name": doc["repo"]["catalog"], "owner": {"name": doc["repo"]["owner"]},
-            "description": "LapisLazuli design skills", "interface": {"displayName": "LapisLazuli"}, "plugins": plugins}
+            "description": ABOUT, "interface": {"displayName": "LapisLazuli"}, "plugins": plugins}
 
 
 def hooks_json(plugin: dict) -> dict | None:

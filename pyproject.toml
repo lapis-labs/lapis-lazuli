@@ -7,7 +7,8 @@ requires-python = ">=3.12"
 license = "MIT AND CC-BY-4.0"
 license-files = ["LICENSE", "LICENSE-docs", "NOTICE"]
 authors = [{ name = "lapis-labs" }]
-keywords = ["agent-skills", "ai-agents", "claude-code", "codex", "design", "frontend", "typography", "accessibility"]
+keywords = ["agent-skills", "claude-code", "openai-codex", "ui-design", "design-system", "accessibility",
+            "dark-patterns", "typography", "korean", "playwright", "mcp-server", "linter"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",

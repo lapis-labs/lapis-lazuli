@@ -1,29 +1,82 @@
 # LapisLazuli
 
-Design skills for AI coding agents, plus the two command-line tools they rely on.
+Skills that make a coding agent write a plan for an interface before it writes code, and a CLI
+that checks the plan, the rendered page, and the page's behavior against that plan.
 
-LapisLazuli helps an agent plan an interface before it writes code, check what it built in a real
-browser, and stay honest about fonts, colors, and references. It ships as three plugins built from
-one source, and two CLIs, `lapis-design` and `lazuli`, that the skills, hooks, and MCP server call.
+For developers who build web interfaces with Claude Code, Codex, Oh-My-Pi, or another Agent Skills
+harness and want each finding tied to a named rule and a fix. [한국어](README.ko.md)
 
-[한국어 README](README.ko.md)
+An example plan for a campsite booking page, checked before any code exists, on a machine without a
+lazuli font database (four of seven findings left out):
+
+```console
+$ lapis-design plan check site-booking.yaml
+plan_check 0.1.1: 2 blocking, 7 total
+  [WARN] copy.buzzwords content.key_copy[*].text — "elevate" (buzzwords) in the headline key copy: "Elevate your camping experience"
+          fix: Add a defaults entry for copy.buzzwords (keep or reject with a reason). Name the user action, the handoff removed, or the verifiable capability
+  [BLOCK] copy.vague-cta content.key_copy[?slot=cta].text — "continue" (vague_cta) in the cta key copy: "Continue"
+          fix: Add a defaults entry for copy.vague-cta (keep or reject with a reason). Name the outcome of the action in the label
+  [BLOCK] font.no-lock tokens.type.lock — type roles are set but no fonts lock was given
+          fix: Run `lazuli lock` after choosing fonts.
+```
+
+Once the page runs on localhost, `lapis-design slop lint` also reads Chromium captures from 320 to
+1440 px and a scripted session against a stub backend, with rules such as `color.text-contrast`,
+`type.ko.keep-all-missing`, `ux.preselected-option`, `ux.false-urgency`, and `rights.no-provenance`.
+
+## Install
+
+```sh
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/lapis-labs/lapis-lazuli/release/install/install.sh)" install.sh --dry-run
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/lapis-labs/lapis-lazuli/release/install/install.sh)" install.sh
+lazuli doctor
+```
+
+The first line prints every command and changes nothing. Windows, single harnesses, and Chromium:
+[INSTALLATION.md](INSTALLATION.md). Then start with `/lapis:lapis` (Claude Code), `$lapis:lapis`
+(Codex), or `/skill:lapis` (Oh-My-Pi).
+
+LapisLazuli reports what its checks found. It does not certify accessibility or legal conformance;
+the full list is under [What it will not do](#what-it-will-not-do).
+
+## Supported harnesses
+
+| Harness | Status | Notes |
+|---|---|---|
+| [Claude Code](INSTALLATION.md#claude-code) | Verified (2.1.274, 2026-09-27; public install 2.1.277, 2026-09-30) | Plugins, session-start hook, plan-mode hook, MCP server, critic subagent. |
+| [OpenAI Codex CLI](INSTALLATION.md#openai-codex-cli) | Verified (0.157.x, 2026-09-27; public install 0.159.0, 2026-09-30) | Plugins, session-start hook (you trust it in `/hooks`), MCP server, critic as an agent file the installer copies. |
+| [Oh-My-Pi](INSTALLATION.md#oh-my-pi) | Verified (18.3.1, 2026-09-27; public install 18.4.4, 2026-09-30) | Plugins through its marketplace, session-start extension, MCP server, critic as a task agent. |
+| [Other Agent Skills harnesses](INSTALLATION.md#other-agent-skills-harnesses) (Cursor, Gemini CLI, GitHub Copilot, opencode, Windsurf, Kiro CLI) | Listing verified through the `skills` CLI (1.7.0, 2026-09-30) | Skills only, plus an `AGENTS.md` snippet for the session summary and MCP setup. Each agent was not tested on its own. |
+| [pi](INSTALLATION.md#pi) | Experimental | Skills and a session-start extension; not yet confirmed on a real install. |
+| [Hermes Agent](INSTALLATION.md#hermes-agent) | Experimental | Skills, a Hermes plugin, and MCP; not yet confirmed on a real install. |
+
+The status comes from `install/harnesses.yaml`; the exact commands for each harness are in
+[INSTALLATION.md](INSTALLATION.md). The install script installs the CLI with `uv` or `pipx`, then
+registers the plugins in each harness it finds (pi and Hermes Agent only when you name them with
+`--harness`). Plugin commands run by hand install the plugins only; the hooks and the MCP server
+need the CLI on your PATH (see [CLI and optional components](INSTALLATION.md#cli-and-optional-components)).
 
 ## How it works
 
-1. **Plan.** `lapis` turns a request into a plan file, `.lapis/plans/<task>.yaml`: brief, world
-   materials, type and color roles, layout, key copy, and a keep-or-reject decision on every named
-   default. `lapis-design plan check` validates it before any code is written.
-2. **Build.** The agent implements against the plan; `lps-ux`, `lps-copy`, and `lps-system` cover
-   flows, copy, and the design system.
-3. **Check.** `ultramarine` runs `lapis-design` on your own render: capture under up to nine conditions
-   (320 to 1440 px wide, light and dark, reduced motion, a mobile browser frame); drive flows
-   against a stub backend; lint for generic-looking and deceptive patterns and for missing rights
-   records; and hand what measurement cannot judge to a separate critic. `ulm-release` is the
+1. Before any code, `lapis` turns a request into a plan file, `.lapis/plans/<task>.yaml`: brief,
+   world materials, type and color roles, layout, key copy, and a keep-or-reject decision on every
+   named default. `lapis-design plan check` validates it.
+2. While the agent builds, it follows the plan; `lps-ux`, `lps-copy`, and `lps-system` cover flows,
+   copy, and the design system.
+3. After it builds, `ultramarine` runs `lapis-design` on your own render: capture under up to nine
+   conditions (320 to 1440 px wide, light and dark, reduced motion, a mobile browser frame); drive
+   flows against a stub backend; lint for generic-looking and deceptive patterns and for missing
+   rights records; and hand what measurement cannot judge to a separate critic. `ulm-release` is the
    final gate.
-4. **Look things up.** `lazuli` supplies facts on request: fonts on your computer, catalog labels
-   and licenses, color system codes, single pages, and reference profiles.
+4. At any step, `lazuli` supplies facts on request: fonts on your computer, catalog labels and
+   licenses, color system codes, single pages, and reference profiles.
 
 ## Plugins and skills
+
+`lapis` is the stone you start from: the plan, made from the subject's own materials. `ultramarine`
+is the pigment ground from it: the finished work, which the checks look at. The name `lazuli` comes
+from Lajward, the place the stone was mined, and it is where fonts, colors, licenses, and sources
+come from. `lapis-design` runs the checks for `lapis` and `ultramarine`; `lazuli` runs lookups.
 
 | Plugin | Skill | What it does |
 |---|---|---|
@@ -51,32 +104,6 @@ hand.
 
 Run either with `--help` for the commands and options.
 
-## Supported harnesses
-
-| Harness | Status | Notes |
-|---|---|---|
-| [Claude Code](INSTALLATION.md#claude-code) | Verified (2.1.274, 2026-09-27; public install 2.1.277, 2026-09-30) | Plugins, session-start hook, plan-mode hook, MCP server, critic subagent. |
-| [OpenAI Codex CLI](INSTALLATION.md#openai-codex-cli) | Verified (0.157.x, 2026-09-27; public install 0.159.0, 2026-09-30) | Plugins, session-start hook (you trust it in `/hooks`), MCP server, critic as an agent file the installer copies. |
-| [Oh-My-Pi](INSTALLATION.md#oh-my-pi) | Verified (18.3.1, 2026-09-27; public install 18.4.4, 2026-09-30) | Plugins through its marketplace, session-start extension, MCP server, critic as a task agent. |
-| [Other Agent Skills harnesses](INSTALLATION.md#other-agent-skills-harnesses) (Cursor, Gemini CLI, GitHub Copilot, opencode, Windsurf, Kiro CLI) | Listing verified through the `skills` CLI (1.7.0, 2026-09-30) | Skills only, plus an `AGENTS.md` snippet for the session summary and MCP setup. Each agent was not tested on its own. |
-| [pi](INSTALLATION.md#pi) | Experimental | Skills and a session-start extension; not yet confirmed on a real install. |
-| [Hermes Agent](INSTALLATION.md#hermes-agent) | Experimental | Skills, a Hermes plugin, and MCP; not yet confirmed on a real install. |
-
-The status comes from `install/harnesses.yaml`; the exact commands for each harness are in
-[INSTALLATION.md](INSTALLATION.md).
-
-## Quick start
-
-1. Follow [INSTALLATION.md](INSTALLATION.md). The install scripts take `--dry-run`, which prints
-   every command and changes nothing, so preview first. They install the CLI with `uv` or `pipx`,
-   then register the plugins in each harness they find (pi and Hermes Agent only when you name them
-   with `--harness`).
-2. Check the CLI: `lapis-design --version` and `lazuli doctor`.
-3. Optional, for render and behavior checks: install Chromium as INSTALLATION.md describes.
-4. In your harness, start a design task with the `lapis` skill (`/lapis:lapis` in Claude Code,
-   `$lapis:lapis` in Codex, `/skill:lapis` in Oh-My-Pi). It writes the plan and asks only what
-   changes it.
-
 ## Requirements
 
 - Python 3.12 or later.
@@ -92,16 +119,19 @@ The status comes from `install/harnesses.yaml`; the exact commands for each harn
 - **Scrape live sites.** `lazuli read` reads one page you ask for, within the source registry's
   policy and the site's `robots.txt`. Catalog lookups keep a human pace and any stated crawl delay,
   name lazuli in their request headers, and never get around a block or a sign-in. Where a site's
-  terms forbid automated collection (Adobe Fonts and noonnu, terms read on 2026-09-26), lazuli sends
-  nothing and gives you a link.
+  terms forbid automated collection (Adobe Fonts and noonnu, terms read on 2026-09-26), the source
+  registry refuses its hosts: lazuli sends nothing to them and gives you a link.
 - **Open Adobe Fonts files.** Fonts an Adobe Fonts subscription activates are listed through the
   operating system's font API on macOS (Core Text) and measured from glyphs the system draws; only
   derived numbers are kept, and the files are never opened. Windows has no such listing, so Adobe
-  Fonts are absent from the inventory there.
+  Fonts are absent from the inventory there. When you run `lazuli catalog lookup`, the family name
+  of an Adobe Fonts face that no catalog snapshot matched, and its Korean name where the system
+  gives one, go to Sandoll Cloud as the search term, like those of any other installed family;
+  nothing else about the face is sent.
 - **Drive pages that are not yours.** Render and behavior checks capture only your own pages:
-  `localhost`, loopback and private addresses, and `.test` names that resolve privately. A public
-  address needs `--public`, and never a source-registry host or a host your plan lists as a
-  reference. Every other host is blocked.
+  `localhost`, loopback and private addresses, and `.test` names that resolve privately. Only
+  `render check` takes a public address of yours, with `--public`, and never a source-registry host
+  or a host your plan lists as a reference. Every other host is blocked.
 - **Touch real accounts.** Behavior checks use a stub or an isolated local backend with synthetic
   data, never real accounts, credentials, or payment methods, and they never store typed values,
   query strings, headers, or request bodies.
@@ -127,6 +157,9 @@ Early releases: the contracts are `version: 0` drafts and may change between rel
 `lazuli setup` installs an optional font-style embedding model, and no model is published yet, so it
 exits 1 for now. CI runs the contract tests, the Chromium tests, and the optional CJK tests on
 Linux.
+
+The repository includes the kit we use to study how agents work with the skills (`tools/eval/`).
+Its results are case studies, not measurements of quality; see [`docs/eval/`](docs/eval/README.md).
 
 ## Working on the repository
 

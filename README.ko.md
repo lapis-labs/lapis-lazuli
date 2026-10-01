@@ -1,19 +1,61 @@
 # LapisLazuli
 
-AI 코딩 에이전트를 위한 디자인 스킬과, 그 스킬이 기대는 명령줄 도구 두 개예요.
+코딩 에이전트가 코드를 쓰기 전에 화면 계획을 쓰게 하는 스킬과, 계획·렌더된 화면·화면의 동작을 그 계획에 비춰 검사하는 CLI예요.
 
-LapisLazuli는 에이전트가 코드를 쓰기 전에 인터페이스를 계획하고, 만든 결과를 실제 브라우저에서 확인하고, 폰트·색·레퍼런스에 대해 정직하게 말하도록 도와요. 한 원천에서 빌드한 플러그인 세 개와, 스킬·훅·MCP 서버가 부르는 CLI 두 개(`lapis-design`, `lazuli`)로 이루어져 있어요.
+Claude Code, Codex, Oh-My-Pi 같은 하네스로 웹 화면을 만드는 개발자용이에요. 발견마다 규칙 이름과 고칠 방법이 붙어요. [English](README.md)
 
-[English README](README.md)
+캠핑장 예약 화면의 예시 계획을, 코드가 생기기 전에 lazuli 폰트 DB가 없는 기계에서 검사한 출력이에요(일곱 가지 발견 중 넷은 뺐어요).
+
+```console
+$ lapis-design plan check site-booking.yaml
+plan_check 0.1.1: 2 blocking, 7 total
+  [WARN] copy.buzzwords content.key_copy[*].text — "최적의" (buzzwords) in the headline key copy: "최적의 캠핑 경험을 선사합니다"; "경험을 선사" (buzzwords) in the headline key copy: "최적의 캠핑 경험을 선사합니다"
+          fix: Add a defaults entry for copy.buzzwords (keep or reject with a reason). Name the user action, the handoff removed, or the verifiable capability
+  [BLOCK] copy.vague-cta content.key_copy[?slot=cta].text — "계속하기" (vague_cta) in the cta key copy: "계속하기"
+          fix: Add a defaults entry for copy.vague-cta (keep or reject with a reason). Name the outcome of the action in the label
+  [BLOCK] font.no-lock tokens.type.lock — type roles are set but no fonts lock was given
+          fix: Run `lazuli lock` after choosing fonts.
+```
+
+`copy.buzzwords`는 `"최적의"`와 `"경험을 선사"`를 경고하고, `copy.vague-cta`는 `"계속하기"`를, `font.no-lock`은 글꼴 역할만 정하고 폰트 잠금이 없는 계획을 막아요.
+
+화면이 localhost에서 돌면 `lapis-design slop lint`가 너비 320~1440px의 Chromium 캡처와 스텁 백엔드에 대한 스크립트 세션도 읽어요. 예를 들어 `type.ko.keep-all-missing`(한글 본문 줄바꿈), `copy.register-mix`(해요체와 합니다체 섞임), `ux.preselected-option`(미리 체크된 유료 옵션), `ux.false-urgency`(근거 없는 "지금 14명이 보고 있어요")를 잡아요.
+
+## 설치
+
+```sh
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/lapis-labs/lapis-lazuli/release/install/install.sh)" install.sh --dry-run
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/lapis-labs/lapis-lazuli/release/install/install.sh)" install.sh
+lazuli doctor
+```
+
+첫 줄은 실행할 명령만 보여 주고 아무것도 바꾸지 않아요. Windows, 하네스 하나만 설치하기, Chromium은 [INSTALLATION.md](INSTALLATION.md)에 있어요. 설치가 끝나면 `/lapis:lapis`(Claude Code), `$lapis:lapis`(Codex), `/skill:lapis`(Oh-My-Pi)로 시작해요.
+
+LapisLazuli는 검사가 찾은 것을 알려 줄 뿐이고, 접근성이나 법적 준수를 보증하지 않아요. 하지 않는 일의 전체 목록은 [하지 않는 일](#하지-않는-일)에 있어요.
+
+## 지원하는 하네스
+
+| 하네스 | 상태 | 비고 |
+|---|---|---|
+| [Claude Code](INSTALLATION.md#claude-code) | 확인함 (2.1.274, 2026-09-27; 공개 저장소 설치 2.1.277, 2026-09-30) | 플러그인, 세션 시작 훅, 계획 모드 훅, MCP 서버, 평가자 서브에이전트예요. |
+| [OpenAI Codex CLI](INSTALLATION.md#openai-codex-cli) | 확인함 (0.157.x, 2026-09-27; 공개 저장소 설치 0.159.0, 2026-09-30) | 플러그인, 세션 시작 훅(`/hooks`에서 직접 신뢰해야 해요), MCP 서버, 설치 스크립트가 복사하는 에이전트 파일로 된 평가자예요. |
+| [Oh-My-Pi](INSTALLATION.md#oh-my-pi) | 확인함 (18.3.1, 2026-09-27; 공개 저장소 설치 18.4.4, 2026-09-30) | 마켓플레이스로 설치하는 플러그인, 세션 시작 확장, MCP 서버, 작업 에이전트로 불러오는 평가자예요. |
+| [그 밖의 Agent Skills 하네스](INSTALLATION.md#other-agent-skills-harnesses) (Cursor, Gemini CLI, GitHub Copilot, opencode, Windsurf, Kiro CLI) | `skills` CLI로 목록 확인함 (1.7.0, 2026-09-30) | 스킬만 들어가고, 세션 요약과 MCP 설정은 `AGENTS.md` 조각으로 안내해요. 에이전트마다 따로 시험하지는 않았어요. |
+| [pi](INSTALLATION.md#pi) | 실험적 | 스킬과 세션 시작 확장이에요. 실제 설치에서는 아직 확인하지 않았어요. |
+| [Hermes Agent](INSTALLATION.md#hermes-agent) | 실험적 | 스킬, Hermes 플러그인, MCP예요. 실제 설치에서는 아직 확인하지 않았어요. |
+
+상태는 `install/harnesses.yaml`에서 가져왔고, 하네스별 정확한 명령은 [INSTALLATION.md](INSTALLATION.md)에 있어요. 설치 스크립트는 `uv`나 `pipx`로 CLI를 설치하고, 찾은 하네스마다 플러그인을 등록해요(pi와 Hermes Agent는 `--harness`로 이름을 줄 때만이에요). 플러그인 명령만 직접 실행하면 플러그인만 설치돼요. 훅과 MCP 서버는 `PATH`에 CLI가 있어야 동작해요([CLI와 선택 구성 요소](INSTALLATION.md#cli-and-optional-components) 참고).
 
 ## 작동 방식
 
-1. **계획.** `lapis`가 요청을 계획 파일 `.lapis/plans/<task>.yaml`로 바꿔요. 브리프, 세계 재료, 글꼴·색 역할, 레이아웃, 핵심 문구, 이름 붙은 기본값마다 유지·거절 판단이 들어가요. `lapis-design plan check`가 코드를 쓰기 전에 계획을 검사해요.
-2. **구현.** 에이전트가 계획대로 구현해요. `lps-ux`, `lps-copy`, `lps-system`이 흐름, 문구, 디자인 시스템을 맡아요.
-3. **검사.** `ultramarine`이 우리 렌더에 `lapis-design`을 돌려요. 최대 아홉 가지 조건(너비 320~1440px, 라이트·다크, 모션 줄이기, 모바일 브라우저 UI)으로 캡처하고, 스텁 백엔드에서 작업 흐름을 끝까지 돌려 보고, 뻔해 보이거나 기만적인 패턴과 빠진 권리 기록을 린트하고, 측정으로 판단할 수 없는 것은 별도의 평가자에게 넘겨요. 마지막 관문은 `ulm-release`예요.
-4. **조회.** `lazuli`가 요청할 때 사실을 가져다줘요. 이 컴퓨터의 폰트, 카탈로그의 분류와 라이선스, 색 체계 코드, 페이지 하나, 레퍼런스 프로필이에요.
+1. 코드를 쓰기 전에 `lapis`가 요청을 계획 파일 `.lapis/plans/<task>.yaml`로 바꿔요. 브리프, 세계 재료, 글꼴·색 역할, 레이아웃, 핵심 문구, 이름 붙은 기본값마다 유지·거절 판단이 들어가요. `lapis-design plan check`가 이 계획을 검사해요.
+2. 구현하는 동안 에이전트는 계획을 따라요. `lps-ux`, `lps-copy`, `lps-system`이 흐름, 문구, 디자인 시스템을 맡아요.
+3. 구현이 끝나면 `ultramarine`이 우리 렌더에 `lapis-design`을 돌려요. 최대 아홉 가지 조건(너비 320~1440px, 라이트·다크, 모션 줄이기, 모바일 브라우저 UI)으로 캡처하고, 스텁 백엔드에서 작업 흐름을 끝까지 돌려 보고, 뻔해 보이거나 기만적인 패턴과 빠진 권리 기록을 린트하고, 측정으로 판단할 수 없는 것은 별도의 평가자에게 넘겨요. 마지막 관문은 `ulm-release`예요.
+4. 어느 단계에서든 `lazuli`가 요청할 때 사실을 가져다줘요. 이 컴퓨터의 폰트, 카탈로그의 분류와 라이선스, 색 체계 코드, 페이지 하나, 레퍼런스 프로필이에요.
 
 ## 플러그인과 스킬
+
+`lapis`는 출발점이 되는 돌이에요. 대상 자신의 재료로 만든 계획이에요. `ultramarine`은 그 돌을 갈아 만든 안료로, 검사가 들여다보는 완성된 작업이에요. `lazuli`라는 이름은 그 돌을 캐던 곳 라즈바르드(Lajward)에서 왔고, 폰트·색·라이선스·출처가 오는 곳이에요. `lapis-design`은 `lapis`와 `ultramarine`의 검사를 돌리고, `lazuli`는 조회를 해요.
 
 | 플러그인 | 스킬 | 하는 일 |
 |---|---|---|
@@ -38,26 +80,6 @@ LapisLazuli는 에이전트가 코드를 쓰기 전에 인터페이스를 계획
 
 명령과 옵션은 `--help`로 볼 수 있어요.
 
-## 지원하는 하네스
-
-| 하네스 | 상태 | 비고 |
-|---|---|---|
-| [Claude Code](INSTALLATION.md#claude-code) | 확인함 (2.1.274, 2026-09-27; 공개 저장소 설치 2.1.277, 2026-09-30) | 플러그인, 세션 시작 훅, 계획 모드 훅, MCP 서버, 평가자 서브에이전트예요. |
-| [OpenAI Codex CLI](INSTALLATION.md#openai-codex-cli) | 확인함 (0.157.x, 2026-09-27; 공개 저장소 설치 0.159.0, 2026-09-30) | 플러그인, 세션 시작 훅(`/hooks`에서 직접 신뢰해야 해요), MCP 서버, 설치 스크립트가 복사하는 에이전트 파일로 된 평가자예요. |
-| [Oh-My-Pi](INSTALLATION.md#oh-my-pi) | 확인함 (18.3.1, 2026-09-27; 공개 저장소 설치 18.4.4, 2026-09-30) | 마켓플레이스로 설치하는 플러그인, 세션 시작 확장, MCP 서버, 작업 에이전트로 불러오는 평가자예요. |
-| [그 밖의 Agent Skills 하네스](INSTALLATION.md#other-agent-skills-harnesses) (Cursor, Gemini CLI, GitHub Copilot, opencode, Windsurf, Kiro CLI) | `skills` CLI로 목록 확인함 (1.7.0, 2026-09-30) | 스킬만 들어가고, 세션 요약과 MCP 설정은 `AGENTS.md` 조각으로 안내해요. 에이전트마다 따로 시험하지는 않았어요. |
-| [pi](INSTALLATION.md#pi) | 실험적 | 스킬과 세션 시작 확장이에요. 실제 설치에서는 아직 확인하지 않았어요. |
-| [Hermes Agent](INSTALLATION.md#hermes-agent) | 실험적 | 스킬, Hermes 플러그인, MCP예요. 실제 설치에서는 아직 확인하지 않았어요. |
-
-상태는 `install/harnesses.yaml`에서 가져왔고, 하네스별 정확한 명령은 [INSTALLATION.md](INSTALLATION.md)에 있어요.
-
-## 빠른 시작
-
-1. [INSTALLATION.md](INSTALLATION.md)를 따라 해요. 설치 스크립트는 `--dry-run`을 받아서 실행할 명령을 모두 보여 주고 아무것도 바꾸지 않으니, 먼저 미리 보세요. 스크립트는 `uv`나 `pipx`로 CLI를 설치하고, 찾은 하네스마다 플러그인을 등록해요(pi와 Hermes Agent는 `--harness`로 이름을 줄 때만이에요).
-2. CLI를 확인해요: `lapis-design --version`, `lazuli doctor`.
-3. 선택 사항, 렌더·동작 검사용: INSTALLATION.md의 안내대로 Chromium을 설치해요.
-4. 하네스에서 `lapis` 스킬로 디자인 작업을 시작해요(Claude Code는 `/lapis:lapis`, Codex는 `$lapis:lapis`, Oh-My-Pi는 `/skill:lapis`). 계획을 쓰고, 계획을 바꿀 질문만 물어봐요.
-
 ## 요구 사항
 
 - Python 3.12 이상.
@@ -68,9 +90,9 @@ LapisLazuli는 에이전트가 코드를 쓰기 전에 인터페이스를 계획
 
 ## 하지 않는 일
 
-- **살아 있는 사이트 긁어 가기.** `lazuli read`는 요청한 페이지 하나만 출처 등록부 정책과 사이트의 `robots.txt` 안에서 읽어요. 카탈로그 조회는 사람 수준 속도와 명시된 크롤 지연을 지키고, 요청 헤더에 lazuli를 밝히고, 차단이나 로그인을 우회하지 않아요. 약관이 자동 수집을 금지하는 곳(Adobe Fonts, 눈누. 2026-09-26에 약관을 읽었어요)에는 아무 요청도 보내지 않고 링크만 줘요.
-- **Adobe Fonts 파일 열기.** Adobe Fonts 구독이 켜 둔 폰트는 macOS에서 운영체제 폰트 API(Core Text)로 목록을 읽고, 시스템이 그린 글리프로 재서 파생 수치만 남겨요. 파일은 열지 않아요. Windows에는 그런 목록이 없어서 Adobe Fonts가 인벤토리에 없어요.
-- **남의 페이지 구동하기.** 렌더·동작 검사는 우리 페이지만 캡처해요. `localhost`, 루프백·사설 주소, 사설 주소로만 풀리는 `.test` 이름이에요. 공개 주소는 `--public`이 있어야 하고, 출처 등록부의 호스트나 계획이 레퍼런스로 적은 호스트는 절대 안 돼요. 나머지 호스트는 모두 막아요.
+- **살아 있는 사이트 긁어 가기.** `lazuli read`는 요청한 페이지 하나만 출처 등록부 정책과 사이트의 `robots.txt` 안에서 읽어요. 카탈로그 조회는 사람 수준 속도와 명시된 크롤 지연을 지키고, 요청 헤더에 lazuli를 밝히고, 차단이나 로그인을 우회하지 않아요. 약관이 자동 수집을 금지하는 곳(Adobe Fonts, 눈누. 2026-09-26에 약관을 읽었어요)은 출처 등록부가 호스트를 거절해서, 아무 요청도 보내지 않고 링크만 줘요.
+- **Adobe Fonts 파일 열기.** Adobe Fonts 구독이 켜 둔 폰트는 macOS에서 운영체제 폰트 API(Core Text)로 목록을 읽고, 시스템이 그린 글리프로 재서 파생 수치만 남겨요. 파일은 열지 않아요. Windows에는 그런 목록이 없어서 Adobe Fonts가 인벤토리에 없어요. `lazuli catalog lookup`은 카탈로그 스냅샷에 맞는 곳이 없는 Adobe Fonts 페이스의 패밀리 이름과, 시스템이 한국어 이름을 주면 그 이름을 검색어로 산돌 클라우드에 보내요. 다른 설치 폰트 패밀리와 같고, 그 페이스에 대한 다른 것은 보내지 않아요.
+- **남의 페이지 구동하기.** 렌더·동작 검사는 우리 페이지만 캡처해요. `localhost`, 루프백·사설 주소, 사설 주소로만 풀리는 `.test` 이름이에요. 우리 것인 공개 주소는 `render check`만 `--public`으로 받고, 출처 등록부의 호스트나 계획이 레퍼런스로 적은 호스트는 절대 안 돼요. 나머지 호스트는 모두 막아요.
 - **실제 계정 건드리기.** 동작 검사는 스텁이나 격리된 로컬 백엔드와 합성 데이터만 쓰고, 실제 계정·자격 증명·결제 수단은 쓰지 않아요. 입력값, 질의 문자열, 헤더, 요청 본문도 저장하지 않아요.
 - **레퍼런스를 권리 이상으로 보관하기.** 레퍼런스 캡처는 사용자가 준 URL만 열고, 로그인하거나 양식을 제출하지 않고, 출처의 권리가 허락하는 것만 남겨요. 레퍼런스 전용 캡처는 문구, 대체 텍스트, 접근 이름, 스크린숏 없이 키 서명과 지각 해시만 남겨요.
 - **폰트를 가져가거나 폰트 사이트에서 대신 행동하기.** 폰트 파일은 읽기만 하고 프로젝트로 복사하거나 변환하지 않아요. 배포용으로 사용자가 직접 준 파일만 들어가요. lazuli는 사용자를 대신해 로그인, 내려받기, 활성화, 구매, 약관 동의를 하지 않아요. 폰트 데이터베이스는 사용자 캐시에만 있어요.
@@ -81,6 +103,8 @@ LapisLazuli는 에이전트가 코드를 쓰기 전에 인터페이스를 계획
 ## 상태
 
 초기 릴리스예요. 계약은 `version: 0` 초안이라 릴리스 사이에 바뀔 수 있고, 지금 버전은 [CHANGELOG.md](CHANGELOG.md)에 있어요. `lazuli setup`은 선택 사항인 폰트 스타일 임베딩 모델을 설치하는 명령인데 공개된 모델이 아직 없어서 지금은 종료 코드 1로 끝나요. CI는 Linux에서 계약 테스트, Chromium 테스트, 선택 사항인 CJK 테스트를 돌려요.
+
+스킬을 쓸 때 에이전트가 어떻게 일하는지 살펴보는 평가 도구(`tools/eval/`)가 있어요. 결과는 사례 기록이고 품질을 잰 수치가 아니에요. 방법은 [`docs/eval/`](docs/eval/README.md)에 있어요.
 
 ## 저장소에서 작업하기
 
@@ -155,6 +179,8 @@ Markdown 파일을 다시 쓸 때는 출처를 밝히고, 라이선스 링크를
 | `cli/lazuli/user_class.py` | `lazuli class set FAMILY --genre ID [--subclass ID] [--url URL]`, `lazuli class list [FAMILY]`, `lazuli class remove FAMILY`: 패밀리마다 사용자가 정한 분류를 기록해요. 장르, 선택적인 세부 분류, 그리고 lazuli가 열지 않는 선택적인 링크예요. 분류에서만 카탈로그보다 우선하고, 라이선스와 문자 체계는 계속 카탈로그에서 가져와요. 사용자 캐시 DB에만 둬요. `local fonts`·`search`·`lock`은 출처를 `user`로 보여 주고, `lock`은 힌트로만 다뤄요 |
 | `tests/` | 계약 테스트, plan_check 테스트, 문구 서명 테스트, 동작 파생 값 테스트, 권리 검사 테스트, 하네스 정의 테스트, 렌더 추출 테스트(루프백 fixture와 Chromium), 슬롭 탐지기·엔진 테스트, lazuli 명령 테스트 |
 | `.github/workflows/contracts.yml` | CI에서 테스트 실행 |
+| `.github/workflows/docs.yml` | 문서만 바뀐 푸시와 풀 리퀘스트에서, 브라우저 없이 문서 링크와 README의 하네스 상태 표, 생성된 설치 안내서가 원천과 맞는지만 확인해요 |
+| `docs/eval/README.md` | 평가와 벤치 결과를 어디에 어떻게 적는지 정한 방법 문서예요. 세 종류(방법, 진단 수치, 성능 주장), 자리별 규칙, 문구 틀이 있고 결과 수치는 싣지 않아요 |
 | `tools/migration-map.yaml` | 이전 저장소 파일 222개의 행선지와 진행 상태 (2026-09-25에 core 문서 4개 추가, 슬롭·동작·권리 원천 부분 완료 표시) |
 | `tools/slop-id-trace.yaml` | 이전 저장소의 체크리스트 ID 73개와 anti-slop 카탈로그 107행 → 새 규칙 ID 추적표 |
 | `tools/calibration/calibrate.py` | lazuli DB의 측정값을 카탈로그 분류와 대조한 보정 보고서(혼동 행렬, 클래스별 정밀도·재현율, 틀린 패밀리, 경계값 훑기)를 Markdown으로 써요. DB를 읽기 전용으로 열고 요청을 보내지 않아요. 보고서에는 패밀리 이름과 수치만 들어가요 |

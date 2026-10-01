@@ -699,6 +699,26 @@ class _Gen:
             path = path.replace("{plugin}", only[0])
         return path.replace("{plugin}", "<plugin>").replace("{skill}", "<skill>")
 
+    @staticmethod
+    def no_cli_note(h: dict) -> str:
+        """The Install-step sentence saying the commands skip the CLI this harness runs by name ("" if none)."""
+        parts = []                                  # (phrase, plural)
+        via = h["session_start"]["via"]
+        if via == "plugin-hook":
+            parts.append(("plugin hooks", True))
+        elif via == "hermes-plugin-hook":
+            parts.append(("Hermes plugin hook", False))
+        elif via == "extension":
+            parts.append(("session-start extension", False))
+        if h["mcp"]["via"] in ("plugin-mcp", "cli-register"):
+            parts.append(("MCP server", False))
+        if not parts:
+            return ""
+        verb = "run" if len(parts) > 1 or parts[0][1] else "runs"
+        return (f"These commands do not install the CLI. The {' and '.join(p for p, _ in parts)} {verb} "
+                "`lapis-design` by name, so the CLI must be on the PATH the harness sees "
+                "(see [CLI and optional components](#cli-and-optional-components)).")
+
     def doc_harness(self, h: dict) -> list[str]:
         L = [f"### {h['name']}", ""]
         if h.get("status") == "experimental":
@@ -738,6 +758,8 @@ class _Gen:
             steps = self.steps(h, phase)
             if self.whole_package(steps):
                 L += ["These steps cover every plugin at once; `--plugin` does not narrow them.", ""]
+            if phase == "install" and (note := self.no_cli_note(h)):
+                L += [note, ""]
             L += self.doc_steps(h, phase)
         L += ["**Check**", "", *self.doc_checks(self.steps(h, "verify")), ""]
         for key, title in (("trust", "Needs your approval"), ("conflicts", "Conflicts"),
@@ -823,7 +845,12 @@ class _Gen:
                 L.append(f"| {a['id']} | {status} | - | " + ", ".join(f"`{d}`" for d in a["dirs"]) + f" | {link} |")
         L += ["", "## Per-harness setup", "",
               "Each section lists the exact commands the scripts run, with the release filled in. Where a command "
-              "names a plugin or a skill, the scripts run it once for each selected one.", ""]
+              "names a plugin or a skill, the scripts run it once for each selected one.", "",
+              "These commands install the plugins (or skills) only, not the CLI. The hooks, extensions, and MCP "
+              "server they set up run `lapis-design` by name, so it must be on the PATH the harness sees: install "
+              "the CLI as described under [CLI and optional components](#cli-and-optional-components). Without "
+              "it, a harness that loaded the plugins reports an error such as `Executable not found in $PATH: "
+              '"lapis-design"`; the skills still work and say what to run by hand.', ""]
         for h in self.harnesses:
             L += self.doc_harness(h)
         L += ["## CLI and optional components", "",
