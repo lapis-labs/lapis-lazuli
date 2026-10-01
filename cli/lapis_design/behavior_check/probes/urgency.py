@@ -15,9 +15,21 @@ _DAYS = re.compile(r"(\d+)\s*(?:days?|일(?=\s*\d+\s*시간|\s*남))\s*(?:(\d+)\
 _HOURS = re.compile(r"(\d+)\s*(?:hours?|hrs?|시간)\s*(?:(\d+)\s*(?:minutes?|mins?|분))?", re.I)
 _DATE = re.compile(r"(20\d\d)\s*[-/년.]\s*(\d{1,2})\s*[-/월.]\s*(\d{1,2})\s*(?:일|T)?\s*(?:(\d{1,2})(?::|시\s*)(\d{2})(?::(\d{2}))?)?", re.I)
 _UTC = re.compile(r"\b(?:UTC|GMT)\b|\dZ\b")
-_STOCK = re.compile(r"(?:\b(\d+)\s*(?:items?\s*)?(?:left|remaining|in stock)\b|(?:재고\s*)?(\d+)\s*(?:개|점|석|장)\s*(?:남음|남았|남아|잔여|재고))", re.I)
-_DEMAND = re.compile(r"(?:\b(\d+)\s*(?:people|visitors?|users?)\s*(?:viewing|watching|looking)\b|(?:현재\s*)?(\d+)\s*(?:명|분)이?\s*(?:보고|구경|조회|시청))", re.I)
-_ACTIVITY = re.compile(r"(?:\b(?:someone|\d+\s*(?:people|customers?))\b.{0,40}\b(?:just\s*)?(?:bought|purchased|reserved|ordered)\b|(?:방금|최근).{0,40}(?:구매|주문|예약))", re.I)
+# What a stock claim counts: "2 items left", "Only 2 sites left" (any noun but a span of time), "2곳 남았어요", and
+# the count after the word: "잔여 2석", "마지막 1자리". 개월 and 동안 are not a count of 개 or 동.
+_STOCK_KO = r"(?:객실|자리|개(?!월)|점|석|장|곳|실|팀|매|동(?!안))"
+_SPAN = r"(?:seconds?|secs?|minutes?|mins?|hours?|hrs?|days?|weeks?|months?|years?)"
+_STOCK = re.compile(rf"(?:\b(\d+)\s*(?:items?\s*)?(?:left|remaining|in stock)\b"
+                    rf"|\b(\d+)\s+(?!{_SPAN}\b)\w+\s+(?:left|remaining|in stock)\b"
+                    rf"|(?:재고\s*)?(\d+)\s*{_STOCK_KO}\s*(?:남음|남았|남아|잔여|재고)"
+                    rf"|(?:잔여|남은|마지막)\s*(\d+)\s*{_STOCK_KO})", re.I)
+_DEMAND = re.compile(r"(?:\b(\d+)\s*(?:people|visitors?|users?)\s*(?:(?:are|currently|now)\s+){0,3}(?:viewing|watching|looking)\b"
+                     r"|(?:현재\s*)?(\d+)\s*(?:명|분)이?\s*(?:보고|구경|조회|시청)"
+                     r"|(\d+)\s*명이?\s+(?:[^\s.?!,]+\s+){0,3}?(?:보고|구경|조회|시청))", re.I)
+_ACTIVITY = re.compile(r"(?:\b(?:someone|\d+\s*(?:people|customers?))\b.{0,40}\b(?:just\s*)?(?:bought|purchased|reserved|ordered|booked)\b|(?:방금|최근).{0,40}(?:구매|주문|예약))", re.I)
+# A span that looks back ("최근 3시간 동안 5명이 예약했어요", "5 people booked this in the last 3 hours", "in the past
+# 7 days") is not a countdown.
+_LOOKBACK = re.compile(r"(?:최근|지난)\s*\d+\s*시간|\b(?:(?:in|over|within|during)\s+the\s+(?:last|past)|past)\s+\d+\s*(?:hours?|hrs?|days?)\b", re.I)
 _HOLD = re.compile(r"\b(?:hold|held|reserved for you|reservation expires)\b|(?:홀드|보류|임시\s*예약|예약\s*유지|확보)", re.I)
 _DEADLINE = re.compile(r"\b(?:deadline|ends?\s+(?:on|at)|expires?\s+(?:on|at)|until)\b|(?:마감|종료|까지|기한)", re.I)
 
@@ -29,6 +41,7 @@ def _claim(text: str, now_ms: int, zone: tzinfo = timezone.utc):
     if len(text) > 180:
         return None
     hold = bool(_HOLD.search(text))
+    ticking = _LOOKBACK.sub(" ", text)
     date = _DATE.search(text)
     if date and _DEADLINE.search(text):
         year, month, day, hour, minute, second = (int(part) if part else None for part in date.groups())
@@ -41,15 +54,15 @@ def _claim(text: str, now_ms: int, zone: tzinfo = timezone.utc):
         resolution = 86400 if hour is None else 60 if second is None else 1
         end_ms = (instant + timedelta(days=1 if hour is None else 0)).timestamp() * 1000
         return ("deadline", max(0, (end_ms - now_ms) / 1000), resolution, "seconds")
-    match = _TIME.search(text)
+    match = _TIME.search(ticking)
     if match:
         value = (int(match[1] or 0) * 3600 + int(match[2]) * 60 + int(match[3]))
         return ("hold" if hold else "countdown", value, 1, "seconds")
-    match = _DAYS.search(text)
+    match = _DAYS.search(ticking)
     if match:
         return ("hold" if hold else "countdown", int(match[1]) * 86400 + int(match[2] or 0) * 3600,
                 3600 if match[2] else 86400, "seconds")
-    match = _HOURS.search(text)
+    match = _HOURS.search(ticking)
     if match:
         return ("hold" if hold else "countdown", int(match[1]) * 3600 + int(match[2] or 0) * 60,
                 60 if match[2] else 3600, "seconds")
@@ -58,8 +71,8 @@ def _claim(text: str, now_ms: int, zone: tzinfo = timezone.utc):
         if match:
             return (kind, int(next(group for group in match.groups() if group is not None)), 0, unit)
     if _ACTIVITY.search(text):
-        count = re.search(r"\b(\d+)\s*(?:people|customers?|명|분)\b", text, re.I)
-        return ("activity", int(count[1]) if count else 1, 0, "events")
+        count = re.search(r"\b(\d+)\s*(?:people|customers?)\b|(\d+)\s*(?:명|분)", text, re.I)
+        return ("activity", int(count[1] or count[2]) if count else 1, 0, "events")
     return None
 
 

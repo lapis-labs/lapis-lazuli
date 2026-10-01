@@ -347,8 +347,13 @@ class _Match:
     text: str                       # the matched copy, case-folded
 
 
+def _straight(text: str) -> str:
+    """NFKC with straight quotation marks, keeping the case."""
+    return unicodedata.normalize("NFKC", text).translate(_QUOTE_FOLD)
+
+
 def _fold(text: str) -> str:
-    return unicodedata.normalize("NFKC", text).translate(_QUOTE_FOLD).casefold()
+    return _straight(text).casefold()
 
 
 def _clip(text: str, n: int = 80) -> str:
@@ -1413,7 +1418,6 @@ _INTERFACE_TYPE_ROLES = ("display", "heading", "label", "ui")
 _INTERFACE_BOX_ROLES = ("heading", "button", "input")
 _FIELD_ROLES = ("button", "input")
 _QUOTE_CLOSE = {'"': '"', "'": "'", "«": "»", "「": "」", "『": "』"}
-_DASHES = "\u2010\u2011\u2012\u2013\u2014\u2015~-"
 
 
 def _is_named(text: str) -> bool:
@@ -1432,33 +1436,40 @@ def _apostrophe(text: str, i: int) -> bool:
     return 0 < i < len(text) - 1 and all(c.isalpha() and ord(c) < 0x250 for c in (text[i - 1], text[i + 1]))
 
 
-def _after_quotation(folded: str) -> str:
-    """How a line that opens with a quotation mark goes on after the closing mark: `ends` (nothing, or only
-    punctuation), `attributed` (a dash and a short name), or `continues` (a sentence carries on: a particle
-    on the closing mark, or a predicate)."""
-    close = _QUOTE_CLOSE[folded[0]]
-    end = next((i for i in range(1, len(folded))
-                if folded[i] == close and not (close == "'" and _apostrophe(folded, i))), None)
+_ATTRIBUTION_VERBS = frozenset(("says", "said", "writes", "wrote"))
+_CJK_LETTER = re.compile(r"[\u1100-\u11ff\u3040-\u30ff\u3130-\u318f\u31f0-\u31ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7a3\uf900-\ufaff]")
+
+
+def _after_quotation(text: str) -> str:
+    """How a line that opens with a quotation mark goes on after the closing mark. `text` keeps its case
+    and has straight quotation marks (`_straight`). `ends`: nothing, or only punctuation. `continues`: a
+    sentence carries on, which is a Korean, Japanese, or Chinese letter right on the mark (a particle) or
+    a lowercase Latin word that is not a speech verb (says, said, writes, wrote). `attributed`: a name
+    follows, after a dash, a bracket, a middle dot, a bar, a slash, a comma, or a blank, in ten tokens or
+    fewer."""
+    close = _QUOTE_CLOSE[text[0]]
+    end = next((i for i in range(1, len(text))
+                if text[i] == close and not (close == "'" and _apostrophe(text, i))), None)
     if end is None:
         return "ends"
-    rest = folded[end + 1:]
-    start = next((i for i, c in enumerate(rest) if c.isalnum() or c in _DASHES), len(rest))
-    rest = rest[start:]
-    if not rest:
-        return "ends"
-    if rest[0] not in _DASHES:
+    rest = text[end + 1:]
+    if _CJK_LETTER.match(rest):
         return "continues"
-    name = rest.lstrip(_DASHES + " \t")
+    after = rest.lstrip()
+    if after[:1].islower() and ord(after[0]) < 0x250 and re.match(r"[^\W\d_]+", after).group(0) not in _ATTRIBUTION_VERBS:
+        return "continues"
+    name = next((rest[i:] for i, c in enumerate(rest) if c.isalnum()), "")
     if not name:
         return "ends"
     return "attributed" if name[0].isalpha() and _tokens(name) <= 10 else "continues"
 
 
-def _reads_as_quote(page: _Page | None, s: _Seg, folded: str) -> bool:
-    """Whether a run that opens with a quotation mark reads as a customer quote."""
+def _reads_as_quote(page: _Page | None, s: _Seg, text: str) -> bool:
+    """Whether a run that opens with a quotation mark reads as a customer quote. `text` is the run with
+    straight quotation marks and its case."""
     if page is not None and page.archetype(s.section) == "testimonial":
         return True
-    after = _after_quotation(folded)
+    after = _after_quotation(text)
     if after == "continues" and _interface_text(page, s):
         return False
     return after == "attributed" or s.control not in _FIELD_ROLES
@@ -1493,7 +1504,7 @@ def _fabricated_proof(ctx: Context, page: _Page | None, segs: list[_Seg], kinds:
             if "customer-names" in kinds and folded not in support_text:
                 lead(f'customer attribution in the {s.where}: "{_clip(s.text)}"', s)
         elif len(folded) >= 12 and (
-                (folded[0] in _QUOTE_OPEN and _reads_as_quote(page, s, folded))
+                (folded[0] in _QUOTE_OPEN and _reads_as_quote(page, s, _straight(s.text).strip()))
                 or (page is not None and s.role == "body" and page.archetype(s.section) == "testimonial")):
             quote_at.add(s.order)
             if "quotes" in kinds and folded.strip(_QUOTE_OPEN + " ")[:24] not in support_text:
