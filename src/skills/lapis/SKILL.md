@@ -24,7 +24,8 @@ into an implementation that follows it. The plan is written before code, checked
 
 - **create** - a new surface. The plan needs `world_materials`, `sources`, `direction`, and `layout`.
 - **redesign** - an existing surface. Capture it first
-  (`lapis-design render check <url> --task <task>-before --plan .lapis/plans/<task>.yaml`), read
+  (`lapis-design render check <url> --task <task>-before --plan .lapis/plans/<task>.yaml`; add
+  `--public` when the URL is a live site of ours, since public hosts are refused without it), read
   `DESIGN.md`, and write in the plan
   what stays, what changes, and why.
 - **repair** - start from findings (lint, critic, or the user's report). Change only what they name;
@@ -101,8 +102,10 @@ enhancement, choosing between native and library animation, and delivering autho
 ### 4. Concept and signature - `direction.concept`, `direction.levers`, `layout.signature`
 
 Start the concept from a live tension in the subject: a pottery shop's sales page can become the
-record of one kiln firing. Name the form levers you will pull. The signature is the one element only
-this task has, built from a world material; the page is organized around it, not around a hero shell.
+record of one kiln firing. Name the form levers you will pull: scale contrast, density, rhythm,
+tension and asymmetry, material and texture, type as form, or a motif from the subject. The signature
+is the one element only this task has, built from a world material; the page is organized around it,
+not around a hero shell.
 
 
 ### 5. References - `references`
@@ -192,7 +195,8 @@ List every document, page, and file the plan relied on.
 - Follow the plan. When implementation forces a change, change the YAML first and tell the user.
 - Tokens become variables; no raw values in components.
 - Build every state a component has: default, hover, focus, active, disabled, loading, empty, error.
-- Record each image, icon set, or generated asset in `.lapis/assets.ledger.json` when you choose it.
+- Record each image, icon set, or generated asset in `.lapis/assets.ledger.json`
+  (`shared/assets/ledger.schema.yaml`) when you choose it.
 - Never present invented metrics, customers, quotes, or logos as real.
 
 
@@ -218,6 +222,9 @@ Checks during work stay small; the full set runs once at the release gate.
 
 All widths, all probes, the rights check, and fresh license lookups belong to the release gate
 (`ulm-release`), not to each iteration.
+
+Render and behavior checks capture web pages; for a native screen they and the critic do not run, so
+list them as not run.
 
 ## Write the stub
 

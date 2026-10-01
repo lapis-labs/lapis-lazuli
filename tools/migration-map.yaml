@@ -1,7 +1,7 @@
 # LapisLazuli 도메인 이관 지도 — 기계용 v0 (문서 "도메인 이관 지도"에서 생성)
 version: 0
 generated: '2026-09-24'
-updated: '2026-09-29'   # lps-copy 참조 interface-copy.md 반영(원본 8개; 다른 2개는 일부만 옮겨 todo 유지). 그 전: lps-system 참조 tokens.md·theming.md, lps-ux 참조 navigation.md, ulm-release 참조 visual-regression.md 반영(원본 8개). 그 전: lapis 참조 layout.md·archetypes.md 반영(원본 20개)
+updated: '2026-10-01'   # 알리기 전 참조 네 편 반영(ultramarine inspection-and-evidence.md, lapis motion.md·data-viz.md, lps-ux forms-and-recovery.md)과 행선지 없던 18개의 Q30 결정(빼기 10개는 dest [drop]·done·target null). 그 전: lps-copy 참조 interface-copy.md 반영(원본 8개; 다른 2개는 일부만 옮겨 todo 유지). 그 전: lps-system 참조 tokens.md·theming.md, lps-ux 참조 navigation.md, ulm-release 참조 visual-regression.md 반영(원본 8개). 그 전: lapis 참조 layout.md·archetypes.md 반영(원본 20개)
 status_legend:
   todo: 시작 전
   partial: 일부 행선지 완료 (done에 적은 것)
@@ -163,7 +163,9 @@ entries:
 - path: references/color/color-spaces-and-management.md
   words: 3187
   dest:
-  - docs
+  - lazuli
+  target: lzl-color 참조
+  note: Q30. lzl-color 참조로(알린 뒤). CSS 색 공간 부분은 lps-system을 가리키고 겹쳐 쓰지 않음
   status: todo
 - path: references/color/color-systems-and-standards.md
   words: 3756
@@ -215,10 +217,12 @@ entries:
 - path: references/color/profiles-and-output-conditions.md
   words: 3410
   dest:
-  - docs
+  - lazuli
   - schema
-  note: output_condition 필드
-  status: todo
+  target: lzl-color 참조
+  note: Q30. lzl-color 참조로(알린 뒤). output_condition 필드는 이미 계획 스키마에 있음
+  status: partial
+  done: [schema]
 - path: references/color/semantic-and-data-palettes.md
   words: 3038
   dest:
@@ -337,7 +341,9 @@ entries:
 - path: references/design-systems/documentation-and-governance.md
   words: 3892
   dest:
-  - docs
+  - reference
+  target: ulm-maintain 참조
+  note: Q30. ulm-maintain 참조로(알린 뒤). 판 관리와 폐기
   status: todo
 - path: references/design-systems/theming-and-dark-mode.md
   words: 3024
@@ -500,9 +506,9 @@ entries:
 - path: references/fundamentals/perception-and-psychology.md
   words: 4753
   dest:
-  - docs
-  - reference
-  note: 측정 가능한 원리만 관계 제약으로
+  - merge
+  target: lapis/references/layout.md
+  note: Q30. 측정 가능한 원리만 이름 붙은 틀 없이 100단어 이하로 lapis에 합침(묶음 단서는 layout.md에 이미 있음)
   status: todo
 - path: references/fundamentals/shape-elevation-and-surfaces.md
   words: 3639
@@ -555,15 +561,17 @@ entries:
 - path: references/interop/adobe-xd.md
   words: 2711
   dest:
-  - docs
-  note: 우선순위 낮음, 폐기 후보
-  status: todo
+  - drop
+  target: null
+  note: Q30. 빼기. 스킬 글은 도구 이름을 적지 않음
+  status: done
 - path: references/interop/claude-design.md
   words: 2806
   dest:
-  - docs
-  note: 스킬 본문에서 제품 이름 쓰지 않음
-  status: todo
+  - drop
+  target: null
+  note: Q30. 빼기. 스킬 글은 도구 이름을 적지 않음
+  status: done
 - path: references/interop/design-md.md
   words: 2322
   dest:
@@ -597,8 +605,9 @@ entries:
   words: 1738
   dest:
   - drop
-  note: lps-system 카드로 흡수
-  status: todo
+  target: null
+  note: Q30. 빼기. lps-system 카드에 흡수됨
+  status: done
 - path: references/interop/opendesign.md
   words: 2827
   dest:
@@ -610,8 +619,10 @@ entries:
 - path: references/interop/other-tools.md
   words: 3407
   dest:
-  - docs
-  status: todo
+  - drop
+  target: null
+  note: Q30. 빼기. 스킬 글은 도구 이름을 적지 않음. 압축 파일 검사기는 CLI 몫으로 적혀 있음
+  status: done
 - path: references/layout/density-and-data-heavy-ui.md
   words: 3383
   dest:
@@ -830,7 +841,9 @@ entries:
 - path: references/production/design-ops-and-collaboration.md
   words: 2351
   dest:
-  - docs
+  - reference
+  target: ulm-maintain 참조
+  note: Q30. ulm-maintain 참조로(알린 뒤). 결정 기록과 넘기기
   status: todo
 - path: references/production/design-qa-and-visual-regression.md
   words: 3075
@@ -1031,8 +1044,10 @@ entries:
 - path: references/styles/design-history-timeline.md
   words: 3186
   dest:
-  - docs
-  status: todo
+  - drop
+  target: null
+  note: Q30. 빼기. 양식의 역사는 결정에 쓰이지 않음
+  status: done
 - path: references/styles/glass-neumorphism-and-liquid.md
   words: 2084
   dest:
@@ -1266,7 +1281,9 @@ entries:
 - path: references/ux-methodology/usability-testing-and-metrics.md
   words: 2640
   dest:
-  - docs
+  - lazuli
+  target: lzl-research 참조
+  note: Q30. lzl-research 참조로(알린 뒤). 이름 붙은 척도는 일반적으로 설명
   status: todo
 - path: references/ux-methodology/user-flow-design-and-testing.md
   words: 5253
@@ -1287,13 +1304,17 @@ entries:
 - path: references/ux-methodology/user-research.md
   words: 2793
   dest:
-  - docs
+  - lazuli
+  target: lzl-research 참조
+  note: Q30. lzl-research 참조로(알린 뒤)
   status: todo
 - path: references/ux-methodology/ux-process-overview.md
   words: 1960
   dest:
   - drop
-  status: todo
+  target: null
+  note: Q30. 빼기. 스킬의 순서가 대신함
+  status: done
 - path: references/validation/first-release-readiness.md
   words: 9405
   dest:
@@ -1401,11 +1422,9 @@ entries:
 - path: assets/color-profile-decision-card.md
   words: 1118
   dest:
-  - docs
-  - rule
   - card
-  note: card 행선지는 lzl-color 본문. 프로필을 추측하지 않고 인쇄소가 이름 붙인 출력 조건을 요구(2026-09-28). 같은 규칙이 lapis 색 참조에도 있음
-  status: partial
+  note: card 행선지는 lzl-color 본문. 프로필을 추측하지 않고 인쇄소가 이름 붙인 출력 조건을 요구(2026-09-28). 같은 규칙이 lapis 색 참조에도 있음. Q30에서 docs·rule 행선지를 뺌(검사가 찾을 것이 없음)
+  status: done
   done: [card]
 - path: assets/component-states-checklist.md
   words: 1722
@@ -1661,20 +1680,26 @@ entries:
   target: tools/
   status: todo
 - path: SKILL.md
+  words: 2267
   dest:
   - drop
-  note: 라우터 → 엔진으로 재작성
-  status: todo
+  target: null
+  note: Q30. 빼기. 옛 라우터를 새 스킬로 다시 씀
+  status: done
 - path: README.md
+  words: 1868
   dest:
-  - repo
-  note: 재작성, INSTALLATION.md 연결
-  status: todo
+  - drop
+  target: null
+  note: Q30. 빼기. 저장소 README를 새로 씀(INSTALLATION.md 연결)
+  status: done
 - path: README.ko.md
+  words: 727
   dest:
-  - repo
-  note: 재작성
-  status: todo
+  - drop
+  target: null
+  note: Q30. 빼기. 저장소 README.ko.md를 새로 씀
+  status: done
 - path: MAINTENANCE.md
   dest:
   - repo
@@ -1686,10 +1711,12 @@ entries:
   target: docs/maintainers/
   status: todo
 - path: LICENSE.md
+  words: 267
   dest:
-  - repo
-  note: 문서 CC BY 4.0, 스크립트 MIT → 새 라이선스 결정
-  status: todo
+  - drop
+  target: null
+  note: Q30. 빼기. LICENSE, LICENSE-docs, NOTICE로 바뀜
+  status: done
 - path: references/workflow.md
   words: 6020
   dest:
