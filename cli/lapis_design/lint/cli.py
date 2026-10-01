@@ -10,6 +10,8 @@ in review mode when a plan or an extract was given.
 
 Output follows src/shared/slop/finding.schema.yaml with tool `slop_lint`: to --out, or stdout.
 When an optional CJK analyzer runs, `analyzers` names its locale and installed version.
+A source or corpus file that is a link resolving outside the folder it was found in is not read; a
+warning on stderr lists such links.
 Exit code 1 when any finding is blocking, 2 when an input cannot be used.
 
 Usage:
@@ -101,20 +103,33 @@ def _load(path: Path, kind: str, label: str | None = None) -> Any:
     return doc
 
 
-def _corpus(path: Path) -> list[dict]:
+def _corpus(path: Path, skipped: list[str]) -> list[dict]:
     """Corpus entries tagged `_corpus` with their corpus name: the first folder under a corpus
-    directory (entries directly in it take the directory's name), or a single file's folder."""
+    directory (entries directly in it take the directory's name), or a single file's folder. Inside a
+    directory, a file that is a link resolving outside it is not read; its path is added to `skipped`."""
     if path.is_file():
         files = [(path, path.parent.name)]
     elif path.is_dir():
         files = []
+        base = path.resolve()
         for f in sorted(path.rglob("*")):
             if f.is_file() and f.suffix.lower() in DOC_SUFFIXES:
+                if not f.resolve().is_relative_to(base):
+                    skipped.append(f.relative_to(path).as_posix())
+                    continue
                 parts = f.relative_to(path).parts
                 files.append((f, parts[0] if len(parts) > 1 else path.name))
     else:
         raise LintError(f"corpus not found: {path}")
     return [{**_load(f, "extract", "corpus entry"), "_corpus": name} for f, name in files]
+
+
+def _warn_links(kind: str, skipped: list[str], folder: Path | None) -> None:
+    """Say on stderr which files were passed over because they are links leading out of `folder`."""
+    if skipped:
+        shown = ", ".join(skipped[:5]) + (f" (and {len(skipped) - 5} more)" if len(skipped) > 5 else "")
+        print(f"warning: {len(skipped)} {kind} file(s) in {folder} are links that point outside it and were "
+              f"not read: {shown}", file=sys.stderr)
 
 
 def default_layers(*, plan: bool, source: bool, extract: bool, session: bool, mode: str) -> list[str]:
@@ -167,6 +182,7 @@ def run(*, rules: Path | None = None, plan: Path | None = None, extract: Path | 
         raise LintError(f"no rule matches: {', '.join(unmatched)}")
     if lazuli_db and not lazuli_db.is_file():
         raise LintError(f"lazuli database not found: {lazuli_db}")
+    corpus_links: list[str] = []
     ctx = Context(
         rules=rules_doc, mode=mode,
         plan=plan_doc, plan_path=str(plan) if plan else None,
@@ -176,7 +192,7 @@ def run(*, rules: Path | None = None, plan: Path | None = None, extract: Path | 
         ledger=_load(ledger, "ledger", "asset ledger") if ledger else None,
         lock=_load(lock, "lock", "fonts lock") if lock else None,
         refs=[_load(p, "extract", "reference profile") for p in refs],
-        corpus=_corpus(corpus) if corpus else [],
+        corpus=_corpus(corpus, corpus_links) if corpus else [],
     )
     if lazuli_db:
         try:
@@ -196,6 +212,8 @@ def run(*, rules: Path | None = None, plan: Path | None = None, extract: Path | 
     finally:
         if ctx.lazuli is not None:
             ctx.lazuli.close()
+    _warn_links("source", ctx.cache.get("source.skipped_links") or [], source)
+    _warn_links("corpus", corpus_links, corpus)
     report = engine.report(ctx, findings, ledger_path=str(ledger) if ledger else None,
                            lock_path=str(lock) if lock else None)
     report["scope"] = {"layers": layers}

@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools" / "eval"))
 
 import evalkit  # noqa: E402
+from evallint_support import make_font_db  # noqa: E402
 
 
 def load(name):
@@ -248,7 +249,8 @@ def test_a_run_that_built_nothing_is_not_scored_as_zero_findings(tmp_path):
     run_dir = tmp_path / "runs" / evalkit.run_id("signup-recovery-ko", 1, "without")
     (run_dir / "project").mkdir(parents=True)
     evalkit.write_json(run_dir / "run.json", {**run_record("signup-recovery-ko", "without"), "project": "project"})
-    result = score.score_run(run_dir, evalkit.load_tasks(), sig_key=tmp_path / "sig.key")
+    font_db = evalkit.evaluation_font_db(make_font_db(tmp_path / "eval-fonts.db"))
+    result = score.score_run(run_dir, evalkit.load_tasks(), font_db=font_db, sig_key=tmp_path / "sig.key")
     checkers = result["checkers"]
     assert checkers["render_check"]["code"] == "no site" and checkers["behavior_check"]["code"] == "no site"
     assert checkers["lint"]["status"] == "not scored"

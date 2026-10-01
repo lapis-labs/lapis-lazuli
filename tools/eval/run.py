@@ -400,19 +400,66 @@ def signals_as_interrupt():
             signal.signal(sig, old)
 
 
-def pid_alive(pid: int) -> bool:
-    """Whether a process with this id, or any member of the process group it leads, still exists."""
+def _process_table(proc: Path = Path("/proc")) -> list[tuple[int, int, str]] | None:
+    """(process id, process group, state letter) of every process, from `proc` where it is a /proc and
+    from `ps` otherwise; None when neither can be read."""
+    if (proc / "self" / "stat").exists():
+        rows = []
+        for entry in proc.iterdir():
+            if not entry.name.isdigit():
+                continue
+            try:
+                fields = (entry / "stat").read_text(encoding="utf-8", errors="replace").rpartition(")")[2].split()
+                rows.append((int(entry.name), int(fields[2]), fields[0]))     # state, parent, group, ...
+            except (OSError, ValueError, IndexError):
+                continue                  # gone while reading
+        return rows
+    try:
+        done = subprocess.run(["ps", "-A", "-o", "pid=,pgid=,stat="], capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if done.returncode:
+        return None
+    rows = []
+    for line in done.stdout.splitlines():
+        parts = line.split()
+        if len(parts) >= 3 and parts[0].isdigit() and parts[1].isdigit():
+            rows.append((int(parts[0]), int(parts[1]), parts[2]))
+    return rows
+
+
+def live_target(pid: int) -> str | None:
+    """What is left of a process: `"process"` while the process itself runs, `"group"` when only other
+    members of the process group it led run, None when nothing does. A zombie (state `Z`: ended, not yet
+    collected by its parent) is ended. When the process table cannot be read, anything that answers a
+    signal counts as running."""
     if pid <= 1:
-        return False
+        return None
+    exists = []
     for probe in (os.kill, os.killpg):
         try:
             probe(pid, 0)
         except ProcessLookupError:
-            continue
+            exists.append(False)
         except PermissionError:
-            return True
-        return True
-    return False
+            exists.append(True)
+        else:
+            exists.append(True)
+    if not any(exists):
+        return None
+    table = _process_table()
+    if table is None:
+        return "process" if exists[0] else "group"
+    if any(p == pid and state != "Z" for p, _, state in table):
+        return "process"
+    if any(group == pid and p != pid and state != "Z" for p, group, state in table):
+        return "group"
+    return None
+
+
+def pid_alive(pid: int) -> bool:
+    """Whether a process with this id, or any member of the process group it leads, still runs."""
+    return live_target(pid) is not None
 
 
 def _stop(proc: subprocess.Popen) -> None:
@@ -610,9 +657,13 @@ def _check_resume(args: argparse.Namespace, previous: dict, out: Path, order: li
         record_file = out / "runs" / spec["id"] / "run.json"
         record = kit.read_json(record_file) if record_file.is_file() else {}
         pid = record.get("pid")
-        if record.get("status") == "running" and isinstance(pid, int) and pid_alive(pid):
-            raise KitError(f"{spec['id']}: its Codex process {pid} is still alive; wait for it or stop it "
-                           f"(kill {pid}), then --resume. Nothing in {out} was changed")
+        target = live_target(pid) if record.get("status") == "running" and isinstance(pid, int) else None
+        if target:
+            alive = (f"its Codex process {pid} is still alive" if target == "process"
+                     else f"its Codex process {pid} has ended, but its process group still has live members")
+            stop = f"kill {pid}" if target == "process" else f"kill -- -{pid}"
+            raise KitError(f"{spec['id']}: {alive}; wait for it or stop it ({stop}), then --resume. "
+                           f"Nothing in {out} was changed")
 
 
 def _main(args: argparse.Namespace, ap: argparse.ArgumentParser) -> int:
@@ -698,7 +749,7 @@ def _main(args: argparse.Namespace, ap: argparse.ArgumentParser) -> int:
     manifest["finished_at"] = kit.utc_now()
     kit.write_json(manifest_path, manifest)
     print(f"\nall runs finished under {out}\n"
-          f"score them: uv run --no-sync python tools/eval/score.py {shlex.quote(str(out))}")
+          f"score them: uv run --no-sync python tools/eval/score.py {shlex.quote(str(out))} --font-db EVAL_FONT_DB")
     if incomplete:
         print("not completed (still scorable, but read their run.json first): " + ", ".join(incomplete),
               file=sys.stderr)

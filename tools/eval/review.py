@@ -37,7 +37,9 @@ scores.csv."""
 def _candidates(out: Path) -> dict[str, list[dict]]:
     """Scored runs grouped by task: run folder, its score, and the render extract when there is one."""
     by_task: dict[str, list[dict]] = {}
-    for run_dir in kit.list_runs(out):
+    runs = kit.list_runs(out)
+    kit.refuse_adobe_calls(runs, "build a review")
+    for run_dir in runs:
         if not (run_dir / "score.json").is_file():
             continue
         run = kit.read_json(run_dir / "run.json")
@@ -71,6 +73,9 @@ def _hidden(name: str) -> bool:
 
 def _refuse_outside_links(root: Path, project: Path | None) -> None:
     outside = kit.links_outside(root, project, skip=_hidden)
+    if outside == ["."]:
+        raise KitError(f"{root} is itself a link that points outside its project; the site folder must be "
+                       "inside the project, then build the review again")
     if outside:
         raise KitError(f"{root} holds links that point outside its project: {', '.join(outside)}; "
                        "remove them, then build the review again")

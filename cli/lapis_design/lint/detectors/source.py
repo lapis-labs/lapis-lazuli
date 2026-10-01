@@ -471,8 +471,16 @@ class _Tree:
     decls: list[_Decl] | None = None             # CSS declarations, read on first use
 
 
+def _source_name(name: str) -> bool:
+    """Whether the tree reads a file of this name: a manifest, a lockfile, or style, markup, or script source."""
+    if name == "package.json" or name in _LOCKFILES:
+        return True
+    return Path(name).suffix.lower() in _STYLE | _HTML | _SFC | _SCRIPT and not _SKIP_FILE.search(name)
+
+
 def _tree(ctx: Context) -> _Tree | str:
-    """The source tree, read once per run; a string says why it cannot be read."""
+    """The source tree, read once per run; a string says why it cannot be read. A file that is a link
+    resolving outside the source root is not read; its path is listed in `ctx.cache["source.skipped_links"]`."""
     root = ctx.source_root
     if root is None:
         return "no source tree given"
@@ -485,11 +493,18 @@ def _tree(ctx: Context) -> _Tree | str:
     files: list[_File] = []
     manifests: dict[str, dict] = {}
     locks: dict[str, set[str] | None] = {}
+    skipped: list[str] = ctx.cache.setdefault("source.skipped_links", [])
+    real_root = root.resolve()
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames[:] = sorted(d for d in dirnames if not d.startswith(".") and d not in _SKIP_DIRS)
         for name in sorted(filenames):
+            if not _source_name(name):
+                continue
             path = Path(dirpath) / name
             rel = path.relative_to(root).as_posix()
+            if path.is_symlink() and not path.resolve().is_relative_to(real_root):
+                skipped.append(rel)
+                continue
             if name == "package.json":
                 try:
                     doc = json.loads(path.read_text(encoding="utf-8"))
@@ -500,9 +515,6 @@ def _tree(ctx: Context) -> _Tree | str:
                 continue
             if name in _LOCKFILES:
                 locks[rel] = _lock_names(path)
-                continue
-            ext = path.suffix.lower()
-            if ext not in _STYLE | _HTML | _SFC | _SCRIPT or _SKIP_FILE.search(name):
                 continue
             f = _load(path, rel)
             if f is not None:

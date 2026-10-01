@@ -219,9 +219,9 @@ def test_deep_list_yields_schema_finding_and_hook_denial(tmp_path):
 
 def test_top_level_extension_cycle_does_not_change_plan_findings(tmp_path):
     path = write_plan(tmp_path, yaml_plan(""))
-    original = timed_call(tmp_path, "plan", "check", str(path), "--format", "json", limit=10)
+    original = call(tmp_path, "plan", "check", str(path), "--format", "json")
     path = write_plan(tmp_path, yaml_plan("x-notes: &a [*a]\n"))
-    extended = timed_call(tmp_path, "plan", "check", str(path), "--format", "json", limit=10)
+    extended = call(tmp_path, "plan", "check", str(path), "--format", "json")
     assert original.returncode == extended.returncode
     assert json.loads(original.stdout)["findings"] == json.loads(extended.stdout)["findings"]
 

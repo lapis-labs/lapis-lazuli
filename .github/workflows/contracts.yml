@@ -20,8 +20,8 @@ jobs:
   contracts:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.2.0   # Python comes from .python-version
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7   # v10.2.0; Python comes from .python-version
       - name: Install the CLI and test dependencies from the lock
         run: uv sync --locked
       - name: Contracts, plan and rights checks, derived values
@@ -38,8 +38,8 @@ jobs:
       matrix:
         shard: [1, 2, 3, 4]
     steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.2.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7   # v10.2.0
       - name: Install the CLI and test dependencies from the lock
         run: uv sync --locked
       - name: Install Chromium headless shell
@@ -50,9 +50,11 @@ jobs:
   cjk:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.2.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7   # v10.2.0
       - name: Install optional CJK analyzers from the lock
         run: uv sync --locked --extra cjk
-      - name: CJK morphological checks
-        run: uv run --no-sync pytest -q -m cjk
+      # Everything but the browser tests, with the analyzers installed (the browser part sets the run time
+      # of the browser job, and does not grow here).
+      - name: Non-browser tests with the CJK analyzers
+        run: uv run --no-sync pytest -q -m "not browser" -n auto

@@ -104,11 +104,16 @@ class Fake:
 
 @pytest.fixture
 def home(tmp_path, monkeypatch):
-    """The operator's home: HOME points at it, and it holds the login and the user's own skills."""
+    """The operator's home: HOME points at it, the account is called opuser, and it holds the login and the
+    user's own skills."""
     folder = tmp_path / "opuser"
     folder.mkdir()
     monkeypatch.setenv("HOME", str(folder))
     monkeypatch.setenv("CODEX_HOME", str(folder / ".codex"))
+    for variable in ("LOGNAME", "USER"):                    # what getpass.getuser reads before the password file
+        monkeypatch.setenv(variable, "opuser")
+    for variable in ("LNAME", "USERNAME"):
+        monkeypatch.delenv(variable, raising=False)
     return folder
 
 
@@ -175,17 +180,21 @@ def synthetic_out(tmp_path, home):
         "version": 1, "model": "m", "codex": {"bin": str(home / "bin" / "codex"), "version": "0.0"},
         "skill_digests": {"lapis": "abc"}, "tasks": {TASK: {"skills": ["lapis"]}}})
     evalkit.write_json(run_dir / "run.json", {
-        "id": f"{TASK}.r1.with", "task": TASK, "arm": "with", "order": 1, "usage": {"input_tokens": 7},
+        "id": f"{TASK}.r1.with", "task": TASK, "arm": "with", "replicate": 1, "order": 1,
+        "usage": {"input_tokens": 7},
         "isolation": {"verified": True, "reason": None, "expected": ["lapis"], "visible": ["lapis"],
                       "outside_before": ["private-brand-voice"], "disabled_count": 2},
         "session": {"skills_read": ["lapis", "private-brand-voice"],
-                    "errors": [f"cannot write {run_dir}/project/x as opuser"]}})
+                    "errors": [f"cannot write {run_dir}/project/x in /srv/opuser/cache"]}})
     evalkit.write_json(run_dir / "isolation.json", {
         "verified": True, "reason": None, "expected": ["lapis"], "visible": ["lapis"],
         "outside_before": ["private-brand-voice"], "disabled": own})
     evalkit.write_json(run_dir / "score.json", {
-        "site": {"root": "project"}, "checkers": {"lint": {"summary": {"blocking": 3},
-                                                           "reason": f"{run_dir}/project failed"}}})
+        "site": {"root": "project"},
+        "checkers": {"render_check": {"status": "ok"},
+                     "behavior_check": {"status": "not scored", "code": "n/a", "reason": "no behavior check"},
+                     "lint": {"summary": {"blocking": 3}, "reason": f"{run_dir}/project failed"}},
+        "copy": {"status": "not scored", "code": "no render", "reason": "x"}})
     (run_dir / "command.txt").write_text(
         f"# run from {run_dir}\n# environment: HOME={run_dir}/home CODEX_HOME={home}/.codex\ncodex exec \\\n"
         f"  -C {run_dir}/project \\\n  -c 'skills.config=[{{path=\"{own[0]}\",enabled=false}},"
@@ -194,7 +203,7 @@ def synthetic_out(tmp_path, home):
     (run_dir / "events.jsonl").write_text(json.dumps({"text": f"I looked at {home}/.agents/skills/x"}) + "\n")
     (run_dir / "stderr.log").write_text(f"{home}\n")
     (run_dir / "last-message.txt").write_text("done")
-    (out / "summary.md").write_text(f"| run | reason |\n| {TASK} | see {run_dir}/score |\n")
+    (out / "summary.md").write_text(f"| run | reason |\n| {TASK} | see {run_dir}/score |\n")      # never copied
     return out
 
 
@@ -304,12 +313,26 @@ def wait_for(condition, seconds=60):
     raise AssertionError("timed out waiting")
 
 
+def process_state(pid):
+    """The state letter of a process (`Z` is a zombie), from /proc where there is one, else from ps."""
+    try:
+        return Path(f"/proc/{pid}/stat").read_text().rpartition(")")[2].split()[0]
+    except (OSError, IndexError):
+        pass
+    try:
+        return subprocess.run(["ps", "-o", "stat=", "-p", str(pid)], capture_output=True, text=True).stdout.strip()[:1]
+    except OSError:
+        return ""
+
+
 def gone(pid):
+    """Ended: not in the process table, or a zombie that nothing has collected yet (a process whose parent
+    is gone and whose new parent is slow to collect it stays one for a while under load)."""
     try:
         os.kill(pid, 0)
     except ProcessLookupError:
         return True
-    return False
+    return process_state(pid) == "Z"
 
 
 def read_json_or_none(path: Path):

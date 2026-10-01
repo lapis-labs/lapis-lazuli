@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Score the runs of an eval folder and write one JSON per run plus an arm-comparison summary.
 
-    uv run --no-sync python tools/eval/score.py OUT [--run ID ...] [--rescore] [--summary-only]
+    uv run --no-sync python tools/eval/score.py OUT --font-db DB [--run ID ...] [--rescore] [--summary-only]
 
 For each run under OUT/runs: serve the produced site on a loopback port, run `lapis-design render
 check` at the default widths, `lapis-design behavior check` for tasks that name a stub, and
@@ -17,18 +17,27 @@ behavior session, lint report, checker logs). In OUT: `summary.csv` and `summary
 scored whatever its status, so a folder from `run.py --dry-run` can be filled by hand and scored.
 
 The server answers a link inside the site only when its target is inside the run's project; any other
-link gets a 403 and is listed under `site.refused_links` in `score.json`.
+link gets a 403 and is listed under `site.refused_links` in `score.json`. A conventional site folder
+(`public`, `dist`, ...) that is itself a link out of the project is passed over and listed under
+`site.skipped_roots`.
+
+The checkers run with `LAZULI_DB` pinned to the evaluation font database `--font-db` (built from OFL
+fonts only, see README.md; its sha256 goes into `score.json` as `font_db`) and with a scratch HOME and
+cache, so no checker can reach the user's own lazuli database. A run whose event log shows a call to an
+Adobe tool is neither scored nor summarized.
 """
 from __future__ import annotations
 
 import argparse
 import contextlib
 import csv
+import io
 import json
 import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 from collections import Counter, defaultdict
@@ -51,13 +60,26 @@ NA = "—"
 
 # ------------------------------------------------------------------ site, plan, server
 
-def find_site_root(project: Path) -> Path | None:
-    """The folder to serve: the project root, or the first conventional output folder with an index.html."""
+def _site_candidates(project: Path):
+    """(folder name, folder) of each conventional site folder that holds an index.html."""
     for name in SITE_FOLDERS:
         root = project / name if name else project
         if (root / "index.html").is_file():
+            yield name, root
+
+
+def find_site_root(project: Path) -> Path | None:
+    """The folder to serve: the project root, or the first conventional output folder with an index.html.
+    A folder that resolves outside the project (a link to elsewhere) is never the site."""
+    for _, root in _site_candidates(project):
+        if kit.within(root, project):
             return root
     return None
+
+
+def skipped_site_roots(project: Path) -> list[str]:
+    """The conventional site folders find_site_root passed over because they resolve outside the project."""
+    return [name for name, root in _site_candidates(project) if not kit.within(root, project)]
 
 
 def find_plan(project: Path, task: str) -> tuple[Path | None, list[str]]:
@@ -298,9 +320,35 @@ def layers_record(report: dict | None, lint: dict, *, plan: Path | None, behavio
 
 # ------------------------------------------------------------------ scoring one run
 
-def score_run(run_dir: Path, tasks: dict, *, python: str = sys.executable, timeouts: dict | None = None,
-              sig_key: Path | None = None) -> dict:
-    """Run every checker the task names against one run's project; write and return score.json."""
+def checker_env(scratch: Path, font_db: Path, sig_key: Path) -> dict:
+    """The environment of the checkers: the operator's own, except that `LAZULI_DB` is the evaluation font
+    database, HOME and the cache folders are an empty scratch (so a code path that ignored `LAZULI_DB`
+    would find no database at the user cache location either), and no font roots are replaced. The
+    Playwright browsers stay where they are."""
+    env = dict(os.environ)
+    browsers = kit.browsers_path()
+    for name in ("LAZULI_DB", "LAZULI_FONT_ROOTS", "XDG_CACHE_HOME", "XDG_CONFIG_HOME", "XDG_DATA_HOME"):
+        env.pop(name, None)
+    home = scratch / "home"
+    (home / ".cache").mkdir(parents=True)
+    env.update(HOME=str(home), XDG_CACHE_HOME=str(home / ".cache"), LAZULI_DB=str(font_db),
+               LAPIS_SIG_KEY_FILE=str(sig_key), PLAYWRIGHT_BROWSERS_PATH=browsers)
+    return env
+
+
+def score_run(run_dir: Path, tasks: dict, *, font_db: dict, python: str = sys.executable,
+              timeouts: dict | None = None, sig_key: Path | None = None) -> dict:
+    """Run every checker the task names against one run's project; write and return score.json.
+    `font_db` is `evalkit.evaluation_font_db(path)`: the checkers read that database and no other. A run
+    whose event log shows a call to an Adobe tool is refused before anything is written."""
+    kit.refuse_adobe_calls([run_dir], "score")
+    with tempfile.TemporaryDirectory(prefix="lapis-eval-score-") as scratch:
+        env = checker_env(Path(scratch), font_db["path"], sig_key or run_dir.parent.parent / ".sig.key")
+        return _score_run(run_dir, tasks, env=env, font_db=font_db, python=python, timeouts=timeouts)
+
+
+def _score_run(run_dir: Path, tasks: dict, *, env: dict, font_db: dict, python: str,
+               timeouts: dict | None) -> dict:
     run = kit.read_json(run_dir / "run.json")
     task = tasks[run["task"]]
     project = run_dir / run["project"]
@@ -308,8 +356,6 @@ def score_run(run_dir: Path, tasks: dict, *, python: str = sys.executable, timeo
     if score_dir.exists():
         shutil.rmtree(score_dir)
     score_dir.mkdir(parents=True)
-    env = dict(os.environ)
-    env["LAPIS_SIG_KEY_FILE"] = str(sig_key or run_dir.parent.parent / ".sig.key")
     ctx = {"python": python, "env": env, "score_dir": score_dir, "task": run["task"],
            "timeouts": {**TIMEOUTS, **(timeouts or {})}}
     plan, other_plans = find_plan(project, run["task"])
@@ -320,7 +366,9 @@ def score_run(run_dir: Path, tasks: dict, *, python: str = sys.executable, timeo
         "plan": {"status": "found" if plan else "no plan", "path": ".lapis/plans/" + plan.name if plan else None,
                  "other_plans": other_plans},
         "site": {"root": root.relative_to(run_dir).as_posix() if root else None,
-                 "refused_links": kit.links_outside(root, project) if root else []},
+                 "refused_links": kit.links_outside(root, project) if root else [],
+                 "skipped_roots": skipped_site_roots(project)},
+        "font_db": {key: font_db[key] for key in ("sha256", "faces", "families")},
         "checkers": {},
     }
     with contextlib.ExitStack() as stack:
@@ -543,15 +591,22 @@ def csv_rows(rows: list[dict], agg: dict) -> list[dict]:
     return out
 
 
-def write_summary(out: Path, rows: list[dict]) -> None:
+def summary_files(manifest: dict | None, rows: list[dict]) -> dict[str, str]:
+    """The text of `summary.md` and `summary.csv` for these rows, by file name."""
     agg = aggregate(rows)
+    handle = io.StringIO(newline="")
+    writer = csv.DictWriter(handle, fieldnames=CSV_COLUMNS, extrasaction="ignore", restval="")
+    writer.writeheader()
+    for row in csv_rows(rows, agg):
+        writer.writerow({k: ("" if v is None else v) for k, v in row.items()})
+    return {"summary.md": markdown(manifest, rows, agg), "summary.csv": handle.getvalue()}
+
+
+def write_summary(out: Path, rows: list[dict]) -> None:
     manifest = kit.read_json(out / "manifest.json") if (out / "manifest.json").is_file() else None
-    (out / "summary.md").write_text(markdown(manifest, rows, agg), encoding="utf-8")
-    with open(out / "summary.csv", "w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=CSV_COLUMNS, extrasaction="ignore", restval="")
-        writer.writeheader()
-        for row in csv_rows(rows, agg):
-            writer.writerow({k: ("" if v is None else v) for k, v in row.items()})
+    for name, text in summary_files(manifest, rows).items():
+        with open(out / name, "w", newline="", encoding="utf-8") as handle:
+            handle.write(text)
 
 
 def collect_rows(out: Path) -> list[dict]:
@@ -571,6 +626,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--run", action="append", default=[], help="score only this run id (repeatable)")
     ap.add_argument("--rescore", action="store_true", help="score runs that already have a score.json")
     ap.add_argument("--summary-only", action="store_true", help="rebuild summary.csv and summary.md, run no checker")
+    ap.add_argument("--font-db", type=Path,
+                    help="the evaluation font database (built from OFL fonts only; README.md); the checkers "
+                         "read it as LAZULI_DB and never the user's own database. Required unless --summary-only")
     for name, seconds in TIMEOUTS.items():
         ap.add_argument(f"--{name}-timeout", type=int, default=seconds, help=f"seconds for the {name} step")
     args = ap.parse_args(argv)
@@ -584,16 +642,25 @@ def main(argv: list[str] | None = None) -> int:
         unknown = wanted - {p.name for p in runs}
         if unknown:
             raise KitError(f"unknown run: {', '.join(sorted(unknown))}")
+        kit.refuse_adobe_calls(runs, "summarize" if args.summary_only else "score")
         if not args.summary_only:
             timeouts = {name: getattr(args, f"{name}_timeout") for name in TIMEOUTS}
+            font_db = None
             for run_dir in runs:
                 if wanted and run_dir.name not in wanted:
                     continue
                 if (run_dir / "score.json").is_file() and not args.rescore:
                     print(f"skip   {run_dir.name} (scored; --rescore to redo)")
                     continue
+                if font_db is None:
+                    if args.font_db is None:
+                        raise KitError("--font-db is required to score: the evaluation font database, built from "
+                                       "OFL fonts only (tools/eval/README.md)")
+                    font_db = kit.evaluation_font_db(args.font_db)
+                    print(f"font database: {font_db['faces']} faces, {font_db['families']} families, "
+                          f"sha256 {font_db['sha256'][:16]}")
                 print(f"score  {run_dir.name} ...", flush=True)
-                result = score_run(run_dir, tasks, timeouts=timeouts, sig_key=out / ".sig.key")
+                result = score_run(run_dir, tasks, font_db=font_db, timeouts=timeouts, sig_key=out / ".sig.key")
                 checkers = result["checkers"]
                 print("  render {} | behavior {} | lint {} | copy {}".format(
                     checkers["render_check"]["status"], checkers["behavior_check"]["status"],

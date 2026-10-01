@@ -11,8 +11,10 @@ import hashlib
 import json
 import os
 import re
+import sqlite3
 import sys
 import tempfile
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
@@ -121,8 +123,11 @@ def within(path: str | Path, base: str | Path) -> bool:
 def links_outside(root: Path, base: Path | None = None, skip=lambda name: False) -> list[str]:
     """Symlinks under `root` (paths relative to it) whose target resolves outside `base`, which is
     `root` unless given. `skip(name)` leaves out entries by name, directories with their contents;
-    links are never followed while walking."""
+    links are never followed while walking. When `root` itself resolves outside `base` the answer is
+    `["."]`: everything under it is outside."""
     root = Path(root)
+    if not within(root, base or root):
+        return ["."]
     found = []
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames[:] = sorted(d for d in dirnames if not skip(d))
@@ -189,6 +194,96 @@ def browsers_path() -> str:
     else:
         base = Path(os.environ.get("XDG_CACHE_HOME") or home / ".cache")
     return str(base / "ms-playwright")
+
+
+# ------------------------------------------------------------------ Adobe data stays out of evaluations
+
+_ADOBE = re.compile(r"adobe", re.I)
+_NOT_TOOL_ITEMS = {"agent_message", "reasoning", "command_execution", "file_change", "todo_list", "error"}
+_TOOL_NAME_KEYS = {"server", "server_name", "tool", "tool_name", "name", "namespace", "connector",
+                   "connector_name", "tool_title", "recipient_name"}
+_PAYLOAD_KEYS = {"arguments", "result", "error", "output", "input", "content", "text", "aggregated_output"}
+
+
+def _tool_names(node: Any, found: set[str]) -> None:
+    """Collect the values of tool-identifying keys that name Adobe. What the agent said or ran in a shell,
+    and what a tool was given or answered, is not looked at: only which tool was called."""
+    if isinstance(node, dict):
+        if node.get("type") in _NOT_TOOL_ITEMS:
+            return
+        for key, value in node.items():
+            if key in _PAYLOAD_KEYS:
+                continue
+            if isinstance(value, str):
+                if key in _TOOL_NAME_KEYS and _ADOBE.search(value):
+                    found.add(value)
+            else:
+                _tool_names(value, found)
+    elif isinstance(node, list):
+        for item in node:
+            _tool_names(item, found)
+
+
+def adobe_tool_calls(run_dir: Path) -> list[str]:
+    """The names of Adobe tools (connector apps) that the run's event log (`events.jsonl`) shows as
+    called; empty when the log is missing or none was. Lines that are not JSON are skipped."""
+    log = Path(run_dir) / "events.jsonl"
+    if not log.is_file():
+        return []
+    found: set[str] = set()
+    with open(log, encoding="utf-8", errors="replace") as handle:
+        for line in handle:
+            try:
+                event = json.loads(line)
+            except ValueError:
+                continue
+            _tool_names(event, found)
+    return sorted(found)
+
+
+def refuse_adobe_calls(run_dirs: Iterable[Path], action: str) -> None:
+    """Raise when any of the runs called an Adobe tool: what such a call returns is Adobe data, which
+    never goes into an evaluation (a session that used it is neither scored nor summarized)."""
+    called = {Path(d).name: names for d in run_dirs if (names := adobe_tool_calls(d))}
+    if called:
+        listing = "; ".join(f"{run}: {', '.join(names)}" for run, names in sorted(called.items()))
+        raise KitError(f"cannot {action}: the event log of {len(called)} run(s) shows a call to an Adobe tool "
+                       f"({listing}). Data from Adobe Fonts is never used in an evaluation; move those run "
+                       "folders out of the out folder, then try again")
+
+
+def evaluation_font_db(path: Path) -> dict:
+    """The evaluation font database `score.py` pins as `LAZULI_DB`: its resolved path, sha256, and the
+    number of faces and families it holds. It is built from OFL fonts only (README.md, "The evaluation
+    font database"), so it is refused when it is missing, outside a lazuli schema, empty, holds an
+    Adobe Fonts face (origin `adobe-sync`, or a `coretext:` path), or has writes that are not in the
+    file yet (the hash would not describe what the checkers read)."""
+    path = Path(path).expanduser().resolve()
+    if path == REPO or REPO in path.parents:
+        raise KitError(f"{path} is inside the repository; keep the evaluation font database outside {REPO}")
+    if not path.is_file():
+        raise KitError(f"{path} is not a file; build the evaluation font database first "
+                       "(tools/eval/README.md, \"The evaluation font database\")")
+    pending = path.with_name(path.name + "-wal")
+    if pending.is_file() and pending.stat().st_size:
+        raise KitError(f"{path} has writes in {pending.name} that are not in the file; "
+                       "run `PRAGMA wal_checkpoint(TRUNCATE)` on it, then score")
+    try:
+        conn = sqlite3.connect(f"{path.as_uri()}?mode=ro", uri=True)
+        try:
+            faces, families, adobe = conn.execute(
+                "SELECT COUNT(*), COUNT(DISTINCT family_norm), "
+                "COALESCE(SUM(origin = 'adobe-sync' OR path LIKE 'coretext:%'), 0) FROM local_font").fetchone()
+        finally:
+            conn.close()
+    except sqlite3.Error as exc:
+        raise KitError(f"{path} cannot be read as a lazuli database: {exc}") from exc
+    if adobe:
+        raise KitError(f"{path} holds {adobe} Adobe Fonts faces; an evaluation database is built from OFL "
+                       "fonts only, with LAZULI_FONT_ROOTS set (tools/eval/README.md)")
+    if not faces:
+        raise KitError(f"{path} holds no fonts; build it from the OFL folder (tools/eval/README.md)")
+    return {"path": path, "sha256": sha256_file(path), "faces": faces, "families": families}
 
 
 # ------------------------------------------------------------------ tasks

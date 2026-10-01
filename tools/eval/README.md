@@ -1,10 +1,11 @@
 # Skill-effectiveness evaluation kit
 
-Maintainer tooling that answers one question: **does an agent given the LapisLazuli skills produce
-better work than the same agent, model, and prompt without them?** It runs paired sessions of a coding
+Maintainer tooling for one question: **whether and how the LapisLazuli skills change what an agent builds,
+compared with the same agent, model, and prompt without them.** It runs paired sessions of a coding
 agent, scores what each session built with the repository's own checkers, and prepares a blind review
 sheet for a human or a critic. It is not part of the wheel or the sdist (`pyproject.toml` packages only
-`cli/` and ships `src/shared`), not run in CI, and never called by a skill.
+`cli/` and ships `src/shared`) and is never called by a skill. Its tests run in CI; CI never starts an
+agent.
 
 With two replicates per task the result is an anecdote with numbers, not a benchmark: read it as
 "where do the arms differ and why", never as a percentage.
@@ -39,7 +40,9 @@ With two replicates per task the result is an anecdote with numbers, not a bench
 7. **Same tools for both arms.** `lapis-design` and `lazuli` are put on the agent's `PATH` through
    `OUT/bin` for both arms, so the with arm can run the commands its skills name.
 8. **Scoring happens afterwards, on this machine, by us.** `score.py` serves the produced site on a
-   loopback port and runs the checkers; the agent's own claims are not read.
+   loopback port and runs the checkers; the agent's own claims are not read. The checkers read a font
+   database built from OFL fonts only and never the maintainer's own lazuli database (see "The
+   evaluation font database").
 
 ### What the checkers do here
 
@@ -66,14 +69,15 @@ With two replicates per task the result is an anecdote with numbers, not a bench
   never as zero. Means use only the runs that scored a column, and say how many did.
 - Copy detection is lexical for Korean unless the optional analyzers are installed
   (`uv sync --extra cjk`, ~340 MB); the lint report records which analyzers ran under `analyzers`. Score
-  every run of one comparison with the same environment. The font rules read the maintainer's lazuli
-  database when one exists; `score.json` does not hide that.
+  every run of one comparison with the same environment. The font rules read the evaluation font database
+  (below) and never the maintainer's own; `score.json` records its sha256 under `font_db`, so scores made
+  with different databases can be told apart.
 
 ## Tasks
 
 | Id | Prompt | Skills (with arm) | Checks |
 |---|---|---|---|
-| `kiln-landing-ko` | Korean mobile-first landing for a pottery class studio with a reservation call to action; facts are given, nothing else may be invented; concept differs from `src/shared/plan/example.plan.yaml` (classes, not a firing log) | `lapis`, `lps-copy`, `lps-system` | render, lint |
+| `kiln-landing-ko` | Korean mobile-first landing for a pottery class studio with a reservation call to action; facts are given, nothing else may be invented; concept differs from `src/shared/plan/example.plan.yaml` (classes, not a firing log). **In-domain:** the same field as the skills' own examples (pottery), so a difference here says less about other fields | `lapis`, `lps-copy`, `lps-system` | render, lint |
 | `signup-recovery-ko` | Korean sign-up flow: field errors, server error, kept input, success state; one fixed endpoint, `POST /api/signup` | `lapis`, `lps-ux`, `lps-copy` | render, lint, behavior with `stubs/signup-recovery-ko.stub.yaml` |
 
 `tasks.yaml` holds, per task: `prompt`, `skills`, `checks` (`render`, `lint`, `behavior: null | {stub}`)
@@ -97,8 +101,8 @@ uv run --no-sync python tools/eval/run.py --model MODEL --dry-run --out /tmp/lap
 # 2. The runs (2 tasks x 2 arms x 2 replicates = 8 sessions, in a shuffled order).
 uv run --no-sync python tools/eval/run.py --model MODEL --effort LEVEL --replicates 2 --out ~/.cache/lapis-eval/NAME
 
-# 3. Score every run, then build the blind sheet.
-uv run --no-sync python tools/eval/score.py ~/.cache/lapis-eval/NAME
+# 3. Score every run, then build the blind sheet. --font-db is the evaluation font database (below).
+uv run --no-sync python tools/eval/score.py ~/.cache/lapis-eval/NAME --font-db /path/to/eval-fonts.db
 uv run --no-sync python tools/eval/review.py ~/.cache/lapis-eval/NAME
 
 # 4. To hand results to someone: the records without paths, user names, or skill names (see below).
@@ -112,7 +116,9 @@ uv run --no-sync python tools/eval/share.py ~/.cache/lapis-eval/NAME /tmp/lapis-
   value; a `--model`, `--effort`, `--sandbox`, or `--network` that is given and differs from the
   manifest is refused, because every run of a comparison shares one setting. `--resume` also refuses,
   changing nothing, while a run recorded as `running` has a Codex process (`pid` in `run.json`) that is
-  still alive: wait for it or stop it. `--timeout` (default 2400 s) stops a session and records
+  still alive: wait for it or stop it. A process that has ended but is not yet collected by its parent (a
+  zombie) does not count; when only members of its process group are left, the refusal names
+  `kill -- -PID`. `--timeout` (default 2400 s) stops a session and records
   `timed_out`. The runner exits 1 when any session did not complete; the records are kept and still
   scorable.
 - Ctrl-C, SIGTERM, and SIGHUP stop a session the same way: Codex's whole process group is stopped, the
@@ -125,6 +131,26 @@ uv run --no-sync python tools/eval/share.py ~/.cache/lapis-eval/NAME /tmp/lapis-
   `--dry-run` can be filled by hand (copy a site into `runs/<id>/project/`) to try the whole pipeline.
 - `review.py --seed N` makes the candidate labels reproducible. The answer key goes to
   `OUT/review.key.json`, beside `review/` and never in it.
+
+### The evaluation font database
+
+The font rules of the lint read measured fonts from a lazuli database. `score.py` does not use yours: it
+requires `--font-db`, a database built from OFL fonts only, and runs every checker with that file as
+`LAZULI_DB`, with HOME and the cache folders pointing at an empty scratch folder, so no code path can find
+your own database at its usual place. Measurements of Adobe Fonts faces never reach the lint's font rules
+that way. Build the database once, outside this repository, from a folder of OFL fonts (the
+`lazuli-models` dataset keeps one):
+
+```bash
+LAZULI_FONT_ROOTS="user=/path/to/ofl-fonts" LAZULI_DB=/path/to/eval-fonts.db \
+  uv run --no-sync lazuli local fonts --summary
+```
+
+`LAZULI_FONT_ROOTS` replaces lazuli's font folders with that one and turns the Core Text listing of Adobe
+Fonts off; `LAZULI_DB` is a new file, so your own database is neither read nor written. `score.py` refuses
+a database that is missing, holds no fonts, holds an Adobe Fonts face, or has writes that are not in the
+file yet, and prints its face and family counts. It cannot tell an OFL font from another font in a folder,
+so the folder is the check: put nothing else in it. The hash in `score.json` names the exact file.
 
 ### Sandbox
 
@@ -156,11 +182,15 @@ uv run --no-sync python tools/eval/share.py OUT DEST
 
 `DEST` is a new or empty folder outside this repository and outside `OUT`. The export writes
 `manifest.json`, `summary.md`, `summary.csv`, and per run `run.json`, `score.json`, `isolation.json`,
-`command.txt`, and `prompt.txt`: paths under `OUT` become `<out>`, home directories `~`, user names
-`<user>`, skill names that are not this kit's own `<other-skill>`, and the name and path lists of older
-records counts. Project trees, scratch homes, transcripts, stderr logs, last messages, `score/`, and the
-review folder with its key are not copied. The export reads its own output again and writes nothing if
-a home directory, run path, or user name would remain.
+`command.txt`, and `prompt.txt`: paths under `OUT` become `<out>`, home directories `~`, a user name inside
+a path or a value that is only the name `<user>`, skill names that are not this kit's own
+`<other-skill>`, and the name and path lists of older records counts. The two summaries are built again
+from the cleaned records and never copied. Project trees, scratch homes, transcripts, stderr logs, last
+messages, `score/`, and the review folder with its key are not copied. The export reads its own output
+again and writes nothing if a run path or home directory would remain in a file, or a user name or the name
+of a skill of your own in a value. A user name inside ordinary text is not rewritten, since an account
+called `plan` would otherwise turn `plan rejected` into `<user> rejected`; the export stops instead, and
+common account names (`root`, `runner`, ...) are not looked for as words at all.
 
 ## Layout of an out folder
 
@@ -207,21 +237,39 @@ OUT/
 
 - **Shared instructions.** `$CODEX_HOME/AGENTS.md`, hooks there, and Codex's built-in instructions load
   in both arms; the manifest lists which shared files exist (by short hash). If such a file carries design
-  guidance it narrows the difference. For a number to publish, run on a machine without one.
+  guidance it narrows the difference. For a case study, run on a machine without one.
 - **The probe is not the run.** `codex debug prompt-input` has no `--ignore-user-config`, so it may list
   plugin skills that the real run would not load; that only over-disables. Whether `skills.config`
   matches a folder or a `SKILL.md` path differs from the documentation on 0.158.0 (the file matches), so
   both are listed and the result is read back.
-- **Not yet observed on a real session** (none was started while building the kit): the exact fields of
-  `codex exec --json` beyond the documented sample (the parser skips what it does not know), that a
-  scratch `HOME` leaves the model session untouched, and how often the with arm opens its skills.
+- **What real sessions showed.** Twelve real sessions have run (Codex 0.158.0, `workspace-write`, no
+  network, 2026-09-29: eight paired sessions of both tasks, then four with-arm sessions). Their event
+  streams held `thread.started`, `turn.started`, `turn.completed`, and `item.*` events of
+  `command_execution`, `file_change`, `agent_message`, and `web_search`, and the parser read usage, commands,
+  and skills from them. Not observed: any other model, harness version, or sandbox; a session that calls a
+  connector tool; and that a scratch `HOME` leaves the model session untouched, which stays an assumption.
+- **Connector tools.** Codex can offer the apps (connectors) of the operator's account to an agent; the
+  `apps` feature is on by default (`codex features list`). On 2026-10-01 one read-only session (Codex
+  0.159.2, with the flags and the allow-listed environment of a run) was asked to list the tools it had
+  whose name contains `adobe`, and any tool for finding other tools, without calling one: it named none of
+  either. That is the model's own list for that account and version, not a listing by the harness. If a
+  tool of that kind ever shows, switch apps off for evaluation runs (`-c features.apps=false` takes the
+  feature off in `codex features list`). Either way `score.py`, the summaries, the export, and the review
+  refuse a run whose event log shows a call to an Adobe tool, because what such a call returns is Adobe
+  data; move that run folder out and go on with the rest.
+- **Rendering account.** Chromium on macOS finds the font names of a page's CSS through the operating
+  system's font list, and that list can include Adobe Fonts activated for the account (not checked).
+  Render in an account where no Adobe Fonts are activated; until such an account is in use, scores made
+  where they are can include their shapes in the page measurements, and `score.json` cannot tell.
 - **Sandbox** (see above), **no network** by default, and **a single model and effort**: results say
   nothing about other models or harnesses.
 - Behavior checks depend on the page calling `POST /api/signup`; a page that renders the form but posts
   elsewhere gets probe coverage `partial` or `skipped`, which the table shows.
-- **Links.** A link in the produced site whose target is outside the project is answered with 403 by
-  the scoring server and listed under `site.refused_links` in `score.json`; `review.py` refuses to copy
-  a site that holds one. The lint step (`slop lint --source`) reads project files as they are, links
-  included, so it still reads a file behind such a link.
+- **Links.** A link in the produced site whose target is outside the project is answered with 403 by the
+  scoring server and listed under `site.refused_links` in `score.json`; `review.py` refuses to copy a site
+  that holds one. A conventional site folder (`public`, `dist`, ...) that is itself a link out of the
+  project is passed over and listed under `site.skipped_roots`; if nothing else is left, the run is
+  `no site`. The lint step (`slop lint --source`) does not read a source file that is a link resolving
+  outside the project, and says so on stderr, which `score/logs/lint.txt` keeps.
 - The prompts are English with Korean names and copy; a fully Korean prompt may behave differently.
 - Ranking and counts from two runs per arm are anecdotal; add replicates before believing a difference.
