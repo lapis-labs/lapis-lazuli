@@ -70,7 +70,7 @@ Run them from this folder. CI runs `uv sync --locked`, then the two test command
 jobs (the contracts job excludes `cjk`; the browser job runs on four runners, each with
 `--shard K/4`, a part of the tests weighed by `tests/shard_durations.json`, which `tests/shards.py`
 refreshes from a full run's JUnit file after slow browser tests are added or split), plus a third job that installs the
-`cjk` extra and runs `-m cjk`, and a light docs workflow when only documents change, on Python 3.12
+`cjk` extra and runs every test but the browser ones, and a light docs workflow when only documents change, on Python 3.12
 (`.python-version`), the lowest version `requires-python` allows. Tests
 that drive Chromium carry the `browser` marker (`tests/conftest.py` sets it by file and
 by the `browser` fixture); keep new browser tests parallel-safe (port 0, no shared files). Tests
@@ -262,5 +262,7 @@ files beside it; the database file itself does not change.
 - Commercial, subscription, or synced fonts and media never leave the machine they are on, and no
   lazuli database or other large local data goes into the repository.
 - Data derived from Adobe Fonts (names, coverage, measurements) never goes into tests, fixtures,
-  evaluations, or training sets, and lazuli never opens Adobe Fonts files: on macOS it reads them
+  calibrations, evaluations, or training sets, and lazuli never opens Adobe Fonts files: on macOS it reads them
   through the operating system's font API (`cli/lazuli/coretext.py`); nowhere else are they listed.
+  The test suite starts every test with `LAZULI_FONT_ROOTS` set to an empty folder, and eval scoring
+  reads only the OFL evaluation font database given with `--font-db`.
