@@ -15,6 +15,11 @@ All notable changes are recorded here. The format follows
   glyph data, nothing sent, no Adobe-derived values in training, evaluation, or tests. Its metadata
   lookup still never activates a font; the integration's search and recommendation tools may suggest
   families when the user asks, and a font is activated only on the user's request.
+- `behavior check`: the time-limits probe moves one page forward through a flow run's steps, applying each
+  recorded action once, instead of loading a fresh page and replaying every earlier action for every step
+  (time quadratic in the run: 820 replayed actions per context for a 40-action run, so a full run on a small
+  page with an abandoned flow did not finish in 30 minutes). A page it has idled or typed into is still
+  reloaded for the next step, so the limits found and their numbers are unchanged.
 
 ## 0.1.2 (2026-10-01)
 

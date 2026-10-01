@@ -1,0 +1,8 @@
+<!doctype html><html><meta charset="utf-8"><title>Plan</title><main>
+<button id="more" type="button" aria-expanded="false">Plan details</button>
+<p id="panel" hidden>Billed monthly. Cancel anytime.</p>
+<a href="/session.html">Session form</a>
+<script>
+const more=document.getElementById('more'),panel=document.getElementById('panel');
+more.onclick=()=>{panel.hidden=!panel.hidden;more.setAttribute('aria-expanded',String(!panel.hidden))};
+</script></main></html>

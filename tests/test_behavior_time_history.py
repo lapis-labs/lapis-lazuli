@@ -142,6 +142,57 @@ def test_time_limit_found_at_a_later_flow_step(browser, app_server):
     assert all(abs(item["limit_s"] - 900) <= 2 and item["warned"] for item in entries), entries
 
 
+def _plan_runs(browser, app_server, toggles, *, follow_link):
+    """Flow runs over plan.html: `toggles` steps that open and close its details panel, then either one more
+    step on the same screen or the click that leads to the session form and the form itself."""
+    probe_session = Session(app_server, "time-history", engine=StubEngine.load(APP / "app.stub.yaml"))
+    driver = Driver(browser, probe_session, "d")
+    driver.open("/plan.html")
+    boxes = {box["name"]: box["id"] for box in driver.boxes()}
+    driver.close()
+    toggle = {"kind": "click", "target": boxes["Plan details"]}
+    steps = [{"index": index, "path": "/plan.html", "actions": [dict(toggle)]} for index in range(toggles)]
+    if follow_link:
+        steps.append({"index": toggles, "path": "/plan.html", "actions": [{"kind": "click", "target": boxes["Session form"]}]})
+        steps.append({"index": toggles + 1, "path": "/session.html"})
+    else:
+        steps.append({"index": toggles, "path": "/plan.html"})
+    return [{"id": "wander", "context": ctx, "kind": "primary", "status": "abandoned",
+             "effort": {"steps": toggles, "interactions": toggles}, "steps": steps} for ctx in ("m", "d")], boxes["Plan details"]
+
+
+def test_time_limit_probe_replays_each_flow_action_once_per_context(browser, app_server, monkeypatch):
+    runs, toggle = _plan_runs(browser, app_server, 6, follow_link=False)
+    acts = []
+    original = Driver.act
+
+    def counting(self, action):
+        acts.append((self.ctx_id, action["target"]))
+        return original(self, action)
+
+    monkeypatch.setattr(Driver, "act", counting)
+    document = _run(browser, app_server, time_limits,
+                    plan={"flows": [{"id": "wander", "start": "/plan.html", "max_steps": 7}]}, flows=runs)
+    # Seven quiet steps, each reached by the actions before it. Replaying the whole prefix for every step
+    # clicks 0 + 1 + ... + 6 = 21 times per context (a 40-action run: 820), and no timer in the page can
+    # end a session: each recorded action is clicked once per context.
+    assert sorted(acts) == sorted((ctx, toggle) for ctx in ("m", "d") for _ in range(6)), acts
+    assert "time_limits" not in document["probes"]
+    coverage = next(entry for entry in document["coverage"] if entry["probe"] == "time_limits")
+    assert coverage["status"] == "not-applicable", coverage
+
+
+def test_time_limit_found_after_quiet_flow_steps(browser, app_server):
+    runs, _ = _plan_runs(browser, app_server, 3, follow_link=True)
+    document = _run(browser, app_server, time_limits,
+                    plan={"flows": [{"id": "wander", "start": "/plan.html", "max_steps": 5}]}, flows=runs)
+    entries = document["probes"]["time_limits"]
+    # The page stands where the quiet steps left it and follows the link to the form, whose timer ends the
+    # session; the timer hook survives that navigation, and the extension run starts from a fresh load.
+    assert [(item["flow"], item["context"]) for item in entries] == [("wander", "m"), ("wander", "d")]
+    assert all(abs(item["limit_s"] - 900) <= 2 and item["warned"] and item["extensions"] == 10 for item in entries), entries
+
+
 def test_time_limits_without_flows_probe_entry_route(browser, app_server):
     document = _run(browser, app_server + "session-bad.html", time_limits)
     assert {item["context"] for item in document["probes"]["time_limits"]} == {"m", "d"}

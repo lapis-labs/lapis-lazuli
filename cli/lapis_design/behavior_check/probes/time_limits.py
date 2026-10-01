@@ -187,18 +187,45 @@ def _targets(session, ctx, flows, missing):
     return result
 
 
-def _load_step(driver, start, expected, actions):
-    driver.open(start)
-    driver.page.add_init_script(_TIMERS)
-    driver.reload(reset_storage=False)
-    for action in actions:
-        driver.act({key: value for key, value in action.items() if key in
-                    ("kind", "target", "key", "value", "value_id", "ms", "path")})
-    if expected:
-        from lapis_design.behavior_check.redact import path as safe_path
-        reached = safe_path(driver.page.url, driver.session.fixture_values)
-        if reached != expected:
-            raise RuntimeError(f"flow step path {expected} was not reached; landed {reached}")
+class _Walk:
+    """The page a flow's steps are probed on, one context at a time.
+
+    Each step is reached by the actions of every step before it. A page that nothing but those actions has
+    touched moves on by the new actions alone; replaying the whole prefix for every step costs time quadratic
+    in the number of steps (a run of 40 actions is 820 replayed actions per context, each over half a second).
+    Idling advances the clock and seeding types into a field, so a page that was probed is loaded and replayed
+    again for the next step."""
+
+    _KEYS = ("kind", "target", "key", "value", "value_id", "ms", "path")
+
+    def __init__(self, open_driver, ctx):
+        self.driver = open_driver(ctx)
+        self.standing = None            # (route, actions) the page stands at, while nothing else has touched it
+
+    def touched(self):
+        self.standing = None
+
+    def to(self, route, expected, actions):
+        actions = [{key: value for key, value in action.items() if key in self._KEYS} for action in actions]
+        driver = self.driver
+        if self.standing is None or self.standing[0] != route or actions[:len(self.standing[1])] != self.standing[1]:
+            self.standing = None
+            driver.open(route)
+            driver.page.add_init_script(_TIMERS)
+            driver.reload(reset_storage=False)
+            applied = []
+        else:
+            applied = self.standing[1]
+        self.standing = None            # stays unset if an action fails: the page is in an unknown state
+        for action in actions[len(applied):]:
+            driver.act(dict(action))
+        self.standing = (route, actions)
+        if expected:
+            from lapis_design.behavior_check.redact import path as safe_path
+            reached = safe_path(driver.page.url, driver.session.fixture_values)
+            if reached != expected:
+                raise RuntimeError(f"flow step path {expected} was not reached; landed {reached}")
+        return driver
 
 
 def run(session, open_driver):
@@ -207,15 +234,15 @@ def run(session, open_driver):
     found = 0
     for ctx in session.matrix:
         limited = set()
+        walk = _Walk(open_driver, ctx)
         for flow, start, expected, actions in _targets(session, ctx, flows, missing):
             if flow in limited:
                 continue
             route = start if flow else expected or start
-            driver = open_driver(ctx)
             try:
-                _load_step(driver, route, expected, actions)
+                driver = walk.to(route, expected, actions)
                 starting = _snapshot(driver, ids=True)
-                _seed_input(driver, session.values_engine)
+                seeded = _seed_input(driver, session.values_engine)
                 control_names = [item["name"] for item in starting["controls"]]
                 turn_off = any(_TURN_OFF.search(name) for name in control_names)
                 adjustable = False
@@ -227,7 +254,10 @@ def run(session, open_driver):
                         label = named.get(el.get_attribute("data-lapis-box")) or el.get_attribute("aria-label") or ""
                         adjustable |= int(maximum) >= int(current) * 10 and bool(_ADJUST.search(
                             label + " " + (el.get_attribute("name") or "")))
+                clock = session.clock.now_ms()
                 baseline = _idle(session, driver, 20 * 3600_000)
+                if seeded or session.clock.now_ms() != clock:
+                    walk.touched()
                 if baseline["expired"] is None:
                     continue
                 item = {"context": ctx, "kind": baseline["kind"], "limit_s": baseline["expired"],
@@ -239,16 +269,17 @@ def run(session, open_driver):
                 if baseline["warn_at"] is not None:
                     item["warn_lead_s"] = max(0, baseline["expired"] - baseline["warn_at"])
                 if baseline["extendable"]:
-                    _load_step(driver, route, expected, actions)
+                    walk.to(route, expected, actions)
                     _seed_input(driver, session.values_engine)
+                    walk.touched()
                     item["extensions"] = _idle(session, driver, 20 * 3600_000, extend=True)["extensions"]
                 session.add_probe("time_limits", item)
                 limited.add(flow)
                 found += 1
             except Exception as exc:
+                walk.touched()
                 missing.append(f"{ctx}:{flow or 'entry'}: {type(exc).__name__}: {exc}")
-            finally:
-                driver.close()
+        walk.driver.close()
     status = "partial" if missing else ("ran" if found else "not-applicable")
     reason = "; ".join(missing) if missing else ("No plan flows; probed entry route" if not flows else None)
     session.cover("time_limits", status, contexts=list(session.matrix), reason=reason)
