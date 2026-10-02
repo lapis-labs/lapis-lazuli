@@ -15,7 +15,7 @@ from time import monotonic, sleep
 
 INIT_SCRIPT = """(() => {
   window.__lapisObserve={mutations:0,last:performance.now(),shifts:[],layoutAnimations:[],events:0,
-    documentToken:Math.random()};
+    animated:new WeakSet(),documentToken:Math.random()};
   const LAYOUT=/^(width|height|inset(-.+)?|top|right|bottom|left|margin(-.+)?|padding(-.+)?)$/;
   const kebab=name=>name.replace(/[A-Z]/g,c=>'-'+c.toLowerCase());
   const rectOf=el=>{const r=el.getBoundingClientRect();return [r.x,r.y,r.width,r.height];};
@@ -25,10 +25,14 @@ INIT_SCRIPT = """(() => {
     if(!layout.length) return;
     window.__lapisObserve.layoutAnimations.push({target,properties:layout,duration,rect:rectOf(target)});
   }
+  // The elements a transition, a CSS animation, or an `Element.animate()` call ran on since the motion probe last
+  // reset this: they keep the browser's own time, which the controlled clock does not drive (see motion.READ_REVEAL).
+  const ran=target=>{if(target instanceof Element) window.__lapisObserve.animated.add(target);};
   const keyframeProperties=effect=>[...new Set((effect?.getKeyframes?.()||[]).flatMap(k=>Object.keys(k))
     .filter(k=>!['offset','easing','composite','computedOffset'].includes(k)))];
   const durationOf=animation=>{const d=animation?.effect?.getTiming?.().duration;return typeof d==='number'?d:0;};
   document.addEventListener('transitionrun', event => {
+    ran(event.target);
     const animation=event.target.getAnimations?.().find(a=>a.transitionProperty===event.propertyName);
     let duration=durationOf(animation);
     if(!animation){
@@ -40,13 +44,14 @@ INIT_SCRIPT = """(() => {
     record(event.target,[event.propertyName],duration);
   },true);
   document.addEventListener('animationstart', event => {
+    ran(event.target);
     const animation=event.target.getAnimations?.().find(a=>a.animationName===event.animationName);
     record(event.target,keyframeProperties(animation?.effect),durationOf(animation));
   },true);
   const animate=Element.prototype.animate;
   Element.prototype.animate=function(...args){
     const animation=animate.apply(this,args);
-    try { record(this,keyframeProperties(animation.effect),durationOf(animation)); } catch(_){}
+    try { ran(this); record(this,keyframeProperties(animation.effect),durationOf(animation)); } catch(_){}
     return animation;
   };
   // What reaches the page without changing a node (a hover reveal, a focus ring, a scroll, a transition) is counted,

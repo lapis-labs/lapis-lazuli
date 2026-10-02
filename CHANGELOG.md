@@ -34,6 +34,13 @@ All notable changes are recorded here. The format follows
   focus reveal with no mutation is still seen. The session JSON is the same as 0.2.0 wrote, apart from timings;
   on the two pilot pages the full run takes 78% and 84% of the time, `flows` about 62%, and the 500 ms settle
   windows, which stay in real time, are most of what is left of `controls`.
+- The motion probe's scroll reveal no longer waits in real time for a box that nothing can reveal. For every box
+  hidden at rest it moved the page clock 100 ms and slept 100 ms, up to 51 times; the clinic pilot page has nine
+  such boxes that never reveal, in four contexts, and the probe took 253 s. The clock now moves 100 ms a step
+  with no real wait while no transition or animation reaches the box or an ancestor and no request is pending,
+  and follows real time as before once one does. `reveal_delay_ms` is still the controlled time from the box
+  entering the viewport to its being readable, and a box a timer reveals reads the timer's delay. The probe's
+  output on the two pilot pages is the same, and the clinic page's takes 48 s.
 
 ## 0.2.0 (2026-10-02)
 

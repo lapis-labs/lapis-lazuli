@@ -1,6 +1,7 @@
-"""The controls probe's cost is bounded by what it observes, not by how often it looks: a snapshot costs the same
-browser round trips on a page of any size, a snapshot stands while nothing has reached the page, an action on a page
-just seen snapshots only what it changed, and a control costs a fixed number of snapshots."""
+"""The behavior check's cost is bounded by what it observes, not by how often it looks or how long it waits: a
+snapshot costs the same browser round trips on a page of any size, a snapshot stands while nothing has reached the
+page, an action on a page just seen snapshots only what it changed, a control costs a fixed number of snapshots, and
+a box that nothing on the browser's own clock can reveal is given its page time without waiting for it."""
 from __future__ import annotations
 
 import threading
@@ -12,7 +13,7 @@ from playwright.sync_api import Locator
 
 from lapis_design.behavior_check import nodes
 from lapis_design.behavior_check.driver import Driver
-from lapis_design.behavior_check.probes import controls
+from lapis_design.behavior_check.probes import controls, motion
 from lapis_design.behavior_check.session import Session
 from lapis_design.stub.engine import StubEngine
 
@@ -270,3 +271,72 @@ def test_timers_due_inside_the_window_still_run_and_hold_it_open(opened):
     button = next(box for box in driver.interactive() if box["name"] == "go")
     effect = driver.act({"kind": "click", "target": button["id"]})
     assert effect["text_changed"] and effect["settle_ms"] >= 800          # 300 ms until the text, then 500 quiet
+
+
+# A hidden box below the fold, and what the motion probe's scroll reveal makes of it.
+SPACER = '<div style="height:2000px"></div>'
+ON_VIEW = ("<script>new IntersectionObserver(entries => {{ for (const entry of entries) if (entry.isIntersecting) "
+           "setTimeout(() => {action}, {ms}) }}).observe(document.querySelector('#late'))</script>")
+
+
+def _naps(monkeypatch) -> list:
+    """Every real wait the motion probe asks for (the waits still happen)."""
+    naps, real = [], motion.sleep
+    monkeypatch.setattr(motion, "sleep", lambda seconds: (naps.append(seconds), real(seconds)))
+    return naps
+
+
+def test_a_box_revealed_by_a_timer_reads_the_timers_delay(opened, monkeypatch):
+    body = (SPACER + '<div id="late" style="opacity:0;height:40px">late</div>' +
+            ON_VIEW.format(action="entry.target.style.opacity = 1", ms=1000))
+    _, driver = opened("timer.html", body, "d")
+    naps = _naps(monkeypatch)
+    rows = motion._scroll_reveal(driver)
+    assert [row["hidden_at_rest"] for row in rows] == [True]
+    assert 900 <= rows[0]["reveal_delay_ms"] <= 1100
+    assert sum(naps) < 0.5                          # the timer is on the controlled clock: no real waiting for it
+
+
+def test_a_box_that_nothing_reveals_costs_its_page_time_and_no_real_waiting(opened, monkeypatch):
+    body = SPACER + '<div id="late" style="opacity:0;height:40px">late</div>'
+    session, driver = opened("never.html", body, "d")
+    naps = _naps(monkeypatch)
+    before = session.clock.now_ms()
+    rows = motion._scroll_reveal(driver)
+    assert len(rows) == 1 and "reveal_delay_ms" not in rows[0]
+    assert session.clock.now_ms() - before >= 5100  # the page lived through the whole 5.1 s
+    assert sum(naps) < 0.5                          # 51 real ticks would be 5.1 s
+
+
+def test_a_transition_a_timer_starts_is_waited_for_in_real_time(opened, monkeypatch):
+    body = ("<style>#late{opacity:0;height:40px;transition:opacity .4s linear} #late.on{opacity:1}</style>" + SPACER +
+            '<div id="late">late</div>' + ON_VIEW.format(action="entry.target.classList.add('on')", ms=250))
+    _, driver = opened("transition.html", body, "d")
+    naps = _naps(monkeypatch)
+    rows = motion._scroll_reveal(driver)
+    assert 600 <= rows[0]["reveal_delay_ms"] <= 900     # 250 ms for the timer, then most of the 400 ms transition
+    assert sum(naps) >= 0.3                             # the transition runs on the browser's clock, so it was waited for
+
+
+def test_an_animation_on_an_ancestor_is_waited_for_in_real_time(opened, monkeypatch):
+    # The box is hidden by a property that its parent's animation drives; the box itself has no animation.
+    body = ("<style>@property --shown{syntax:'<number>';initial-value:0;inherits:true} @keyframes show{to{--shown:1}} "
+            "#wrap.on{animation:show .4s linear forwards} #late{opacity:var(--shown);height:40px}</style>" + SPACER +
+            '<div id="wrap"><div id="late">late</div></div>' +
+            ON_VIEW.format(action="document.querySelector('#wrap').classList.add('on')", ms=250))
+    _, driver = opened("ancestor.html", body, "d")
+    naps = _naps(monkeypatch)
+    rows = motion._scroll_reveal(driver)
+    assert 600 <= rows[0]["reveal_delay_ms"] <= 900
+    assert sum(naps) >= 0.3
+
+
+def test_an_animation_that_ended_before_the_look_still_reaches_its_box(opened):
+    body = '<div id="a" style="opacity:0;transition:transform .02s"></div><div id="b" style="opacity:0"></div>'
+    _, driver = opened("ended.html", body)
+    driver.page.evaluate("window.__lapisObserve.animated = new WeakSet(); "
+                         "document.querySelector('#a').style.transform = 'translateX(5px)'")
+    driver.page.wait_for_timeout(300)               # the transition runs and ends on the browser's clock
+    assert driver.page.evaluate("document.getAnimations().length") == 0
+    read = {name: driver.page.locator(f"#{name}").evaluate(motion.READ_REVEAL) for name in "ab"}
+    assert read == {"a": {"visible": False, "reached": True}, "b": {"visible": False, "reached": False}}

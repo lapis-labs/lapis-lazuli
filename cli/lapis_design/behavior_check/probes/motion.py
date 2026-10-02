@@ -88,16 +88,51 @@ HIDDEN = r"""() => {
 }""".replace("/* dom path */", DOM_PATH_JS)
 
 
+# What a hidden box shows at each step of the scroll reveal: whether it is readable, and whether a transition or
+# animation reaches it. Those run on the browser's own clock, which the controlled one does not drive. A box is
+# reached when it or an ancestor has an animation running, or ran one since the reveal began (the init script keeps
+# those elements in `__lapisObserve.animated`, for one too short to be running at the next look). Reading the
+# animations also brings the page's style up to date, as a rendered frame would, so one that a timer starts is seen.
+READ_REVEAL = r"""el => {
+  const s=getComputedStyle(el);
+  const chain=[];
+  for (let node=el; node; node=node.parentElement || node.getRootNode?.().host) chain.push(node);
+  const animated=window.__lapisObserve?.animated;
+  return {visible:Number(s.opacity)>.9 && s.visibility!=='hidden' && !/^inset\(50%|^inset\(100%/.test(s.clipPath),
+    reached:chain.some(node=>animated?.has(node)) ||
+      document.getAnimations().some(a=>a.playState==='running' && chain.includes(a.effect?.target))};
+}"""
+
+# A frame the browser renders after the scroll runs what only a frame delivers: intersection observers, scroll events.
+# The flag is read from outside, so a page that renders no frame costs the wait below and no more.
+FRAME_PASSED = """() => {
+  window.__lapisFrame = false;
+  const observer = new IntersectionObserver(() => { window.__lapisFrame = true; observer.disconnect(); });
+  observer.observe(document.documentElement);
+}"""
+
+
 def _frame(driver):
     return driver.page.evaluate(FRAME)
 
 
-def _tick(driver, ms=100):
-    # The core's installed page clock keeps JS timers and the stub on one timeline;
-    # a real frame interval is still necessary for CSS animation and screenshot diffs.
+def _tick(driver, ms=100, *, real=True):
+    """Move the page's clock by `ms`. The core's installed page clock keeps JS timers and the stub on one timeline;
+    `real` also waits that long, which CSS animation and screenshot diffs need: they run on the browser's time."""
+    if not real:
+        driver.advance_clock(ms)
+        return
     started = monotonic()
     sleep(ms / 1000)
     driver.advance_clock(max(ms, round((monotonic()-started)*1000)))
+
+
+def _after_a_frame(driver, wait=.1):
+    """Wait, up to `wait` real seconds, for the browser to render one frame."""
+    driver.page.evaluate(FRAME_PASSED)
+    deadline = monotonic() + wait
+    while monotonic() < deadline and not driver.page.evaluate("window.__lapisFrame"):
+        sleep(.004)
 
 
 def _measure(driver, duration_ms=5000):
@@ -218,6 +253,9 @@ def _hover_media(driver):
 
 
 def _scroll_reveal(driver):
+    """Boxes hidden at rest, and the controlled ms from scrolling one to the middle of the viewport until it reads.
+    The clock moves 100 ms a step, in real time only once a transition or animation reaches the box or a request is
+    pending: before that nothing runs on the browser's time, so waiting would not change what the page does."""
     driver.page.evaluate("scrollTo({top:0,behavior:'instant'})")
     hidden=driver.page.evaluate(HIDDEN)
     if not hidden:return []
@@ -227,17 +265,22 @@ def _scroll_reveal(driver):
         target=driver.page.locator(f'[data-lapis-hidden-index="{item["index"]}"]')
         target.evaluate("(el,id)=>{el.setAttribute('data-lapis-box',id);el.removeAttribute('data-lapis-hidden-index')}",bid)
         target=driver.page.locator(f'[data-lapis-box="{bid}"]')
-        target.evaluate("el=>el.scrollIntoView({block:'center',behavior:'instant'})")
+        target.evaluate("""el=>{if(window.__lapisObserve)window.__lapisObserve.animated=new WeakSet();
+          el.scrollIntoView({block:'center',behavior:'instant'})}""")
         delay=None
+        reached=False
         for step in range(51):
-            visible=target.evaluate(r"""el => {
-              const s=getComputedStyle(el);return Number(s.opacity)>.9 && s.visibility!=='hidden' &&
-                !/^inset\(50%|^inset\(100%/.test(s.clipPath);
-            }""")
-            if visible:
+            seen=target.evaluate(READ_REVEAL)
+            if seen["visible"]:
                 delay=step*100
                 break
-            _tick(driver)
+            reached=reached or seen["reached"]
+            if reached or driver.network.pending:
+                _tick(driver)
+                continue
+            if step==0:
+                _after_a_frame(driver)
+            _tick(driver,real=False)
         driver.boxes()
         if bid not in driver.session.nodes:
             driver.session.node(bid,role="other",rect=item["rect"],context=driver.ctx_id)
