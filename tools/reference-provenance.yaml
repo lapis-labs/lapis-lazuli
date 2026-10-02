@@ -179,10 +179,10 @@ references:
       dominance, hierarchy, and edge variables; role buckets; relation names; content stances; build candidates
       from roles, one variable at a time; four separate judgments (harmony, preference, figure-ground,
       discrimination); visual weight from area, repetition, edges, type, and isolation; concrete rejection
-      reasons
+      reasons; C1 (2026-10-03), lines 156–179 adds a cause-to-matched-comparison table linked to explorations.
     dropped: 'snapshot note, when-to-consult, research citations and their caveats, the evidence-class
       table (replaced by decision statuses and vocab value_source_classes), worked checks and expressive
-      counterexamples, the validation-view list, the decision-record template (replaced by schema tokens.color),
+      counterexamples beyond the recovered warning/repetition case, the validation-view list, the decision-record template (replaced by schema tokens.color),
       pitfalls, and cross-references: background, boilerplate, or superseded by contracts'
   - path: references/color/perceptual-authoring-and-tokens.md
     taken: notation alone changes nothing; OKLCH pays off when editing; HSL lightness is uneven; taper
@@ -232,9 +232,8 @@ references:
       canvas: implementation and docs material, nothing further belongs in color.md'
   - path: references/color/profiles-and-output-conditions.md
     taken: do not guess a print profile; ask the printer; keep the master and let the print workflow convert;
-      fill output_condition
-    dropped: 'profile tables, rendering intents, soft proofing, embedding policy, worked print decisions:
-      docs material; only the output_condition hook belongs in color.md'
+      fill output_condition; C2 (2026-10-03), lines 31–78, 160–200 adds assignment versus conversion, reproduction goal versus proof, provider conditions and unresolved output limits.
+    dropped: 'Named profile and intent recipes, embedding policies, and worked print deliverables; the OKLCH authoring contract is unchanged and no ICC operation is supplied.'
   - path: references/color/pantone-lookup-and-digital-color.md
     taken: a code is incomplete without its library suffix; a published screen value is not the physical
       definition
@@ -853,6 +852,9 @@ references:
     separate legend symbols for absence, suppression, detection limits, and values beyond the domain.'
 - reference: lps-system/references/tokens.md
   sources:
+  - path: references/color/profiles-and-output-conditions.md
+    taken: 'C2 (2026-10-03), lines 31–78, 160–200: profile/goal/intent/black-point fields in the existing transform record; approved sources and one-way masters remain unchanged.'
+    dropped: Named intent recipes, profile operations, and arithmetic separations; physical condition selection stays with color.md.
   - path: references/design-systems/design-tokens.md
     taken: Tokens as named decisions that earn their cost (reuse, theming, audit, coordinated change);
       tiers with references running downward only; the token set as a dependency graph and the impact

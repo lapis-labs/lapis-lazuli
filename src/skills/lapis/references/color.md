@@ -111,6 +111,19 @@ Make only as many candidates as the open decision needs, each changing one varia
 
 Visual weight comes from area, repetition, lightness edges, chroma, type mass, and isolation together: a mark color can dominate as a panel, and an accent repeated in every row becomes a stripe. Judge the densest real view.
 
+Diagnose dominance before replacing the hue. Keep other decisions fixed and choose the responsible variable:
+
+| Cause | Matched comparison |
+|---|---|
+| area | the same mark color on the proposed panel |
+| repetition | one instance against the densest real list |
+| type mass | the same color at the intended size and weight |
+| isolation | the same mark beside content and in open space |
+| boundary | the same fill with plausible edge treatments |
+
+Keep a true warning's meaning and quiet routine structure before recoloring the warning.
+Record the observed shift in the palette's `explorations`, not an asserted audience preference.
+
 ## Author in OKLCH
 
 Write new values as OKLCH `[L, C, H]`. Rewriting a color in OKLCH neither changes nor improves it; the space pays off when you edit: stepping a ramp, lowering chroma, holding hue, interpolating. Approved brand values stay as supplied.
@@ -205,6 +218,13 @@ Put a code in `system_code` only when it is that role's physical specification. 
 A project can keep two masters, a physical specification and an approved screen value; record both and overwrite neither. Finish, substrate, and lighting change appearance, and metallic, fluorescent, or textured finishes cannot live in one flat value.
 
 For print, fill `output_condition` with the medium and the profile the printer names. Do not guess a profile or convert by arithmetic; keep the OKLCH master and let the print workflow convert. Check that roles survive the smaller gamut: saturated accents dull, and pairs separated only by chroma can merge.
+
+Ask for process, substrate, finishing, exact destination profile, conversion owner, and approval
+condition. Preserve the tagged source while a missing answer would change the result. Assigning a
+profile reinterprets unchanged numbers; converting creates numbers for a named destination.
+Never try tags until an image looks attractive. Distinguish adapting to another medium from
+simulating a specified output: rendering intent follows that goal and the actual profiles.
+A soft proof is a simulation, not certification. Unknown conditions remain unresolved.
 
 ## Handoff to lps-system
 

@@ -160,6 +160,8 @@ The OKLCH value is the master; everything a target consumes is derived from it, 
 - Record each transform: source, destination, method (mapped or clipped; clipping can shift hue and
   merge neighboring steps), tool and version, reviewer. Pin reviewed outputs so a converter upgrade
   cannot change production silently.
+- For a profile-based rendition, also record the source/destination profiles, reproduction goal,
+  rendering intent, and black-point policy. Physical output conditions belong to `lapis`'s color reference.
 - Keep precision until final serialization, and compare adjacent steps after conversion.
 
 ```text

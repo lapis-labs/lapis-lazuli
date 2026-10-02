@@ -203,7 +203,7 @@ entries:
   - rule
   - reference
   target: lapis/references/color.md + lapis
-  note: 색 참조에 판단 절차 반영. 계획 스키마·카드·검사 규칙 행선지는 별도 이관
+  note: '색 참조에 판단 절차 반영. C1(2026-10-03): 지배 원인의 변수별 비교를 explorations에 연결. 계획 스키마·카드·검사 규칙 행선지는 남음'
   status: partial
   done: [reference]
 - path: references/color/palette-discovery-and-resources.md
@@ -238,10 +238,11 @@ entries:
   dest:
   - lazuli
   - schema
-  target: lzl-color 참조
-  note: Q30. lzl-color 참조로(알린 뒤). output_condition 필드는 이미 계획 스키마에 있음
+  - reference
+  target: lzl-color 참조 + lapis/references/color.md + lps-system/references/tokens.md
+  note: 'C2(2026-10-03): 출력 조건·지정/변환·재목적화/교정 구분은 color.md, 프로파일 변환 기록은 tokens.md로. 상세 lzl-color 참조는 남음. output_condition 스키마는 완료'
   status: partial
-  done: [schema]
+  done: [schema, reference]
 - path: references/color/semantic-and-data-palettes.md
   words: 3038
   dest:

@@ -39,6 +39,8 @@ after text.
 
 ### Changed
 
+- Color guidance gains variable-matched dominance studies and goal-led physical renditions without changing OKLCH masters or adding profile operations.
+
 - Type guidance gains descriptive display lanes, complaint-sized comparisons tied to `explorations`, and a copy-owned meaning pass before typesetting.
 
 - The critic gains paired earned/unearned grouping examples and a content-level test for replacement-package repairs.
