@@ -105,9 +105,9 @@ entries:
   words: 3736
   dest:
   - reference
-  target: lapis/references/type.md
-  note: 'T3(2026-10-03): 실제 글과 실패 조건에 맞춘 작은 타입 비교를 반영. 방향 전체의 실험·수렴은 아직 남아 partial로 기록'
-  status: partial
+  target: lapis/references/type.md + lapis/references/form-levers.md
+  note: 'T3/CR1–CR3(2026-10-03): 실패별 타입 표본은 type.md, 통제된 조정/관계 전체 탐색·질문별 최소 표본·반증·결과별 수렴은 form-levers.md의 explorations와 claims.proposed로. 새 실험 원장·의무 수량·관객 효과 주장은 제외'
+  status: done
   done: [reference]
 - path: references/artistic-methods/form-meaning-and-experience.md
   words: 4526
@@ -271,8 +271,10 @@ entries:
   words: 1897
   dest:
   - reference
-  target: lapis
-  status: todo
+  target: lapis/references/form-levers.md
+  note: 'CR1/CR3(2026-10-03): 최소 일관 변수 조정과 관계 전체 가설의 구분, 제약·일반 내용·운영 비용에 따른 한 방향 수렴을 반영. Safe/Fresh/Wild 의무·참신함 투표·새 기록 양식은 제외'
+  status: done
+  done: [reference]
 - path: references/creative-workflows/revision-and-feedback-loops.md
   words: 2834
   dest:

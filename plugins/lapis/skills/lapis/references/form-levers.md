@@ -32,6 +32,33 @@ State the mismatch limiting the analogy in `claims.proposed`.
 
 A concept earns its place when it changes a consequential choice. Write two that differ in what governs order or emphasis, not in palette, choose one, and record the loser and the reason in `explorations` (decision `direction`); `plan.uncompared-decision` reads that both are recorded, not whether the concept is good. Invent no history to make a concept sound deep; a guess about the subject goes in `claims.proposed`.
 
+## Compare an open direction
+
+To tune a suspected cause, hold content, viewport, state, and surrounding choices fixed; change
+the smallest coherent set, such as size with leading. To explore a governing relation, let type,
+grid, imagery, and pacing move together while brief and protected contracts stay fixed. Name the
+relation and expected cost; tune a promising whole afterward. Neither comparison proves trust,
+comprehension, or preference without audience evidence.
+
+| Open decision | Smallest useful specimen |
+|---|---|
+| content relation | annotated sequence or content map |
+| type idea | real titles, paragraph, and difficult label |
+| palette/state relation | existing components in real states |
+| image direction | authorized crop and sequence study |
+| density | one populated ordinary region |
+| motion continuity | minimal interaction with its reduced branch |
+| direction beyond the opening | opening, ordinary content, and one utility state |
+
+State what observation would reject the direction before making the specimen. Use real material
+or label its limit. A polished hero alone settles no system.
+
+Read each proposition, then test obligations. Reject premises requiring false evidence,
+inaccessible behavior, or unowned capability. Compare viable studies against the brief, ordinary
+content, and operating cost, not polish or novelty. Choose one governing relation; combine only
+what strengthens it. Keep candidates, comparison, chosen relation, and runner-up reason in
+`explorations`; optional keep/rework/discard/combine observations belong in `claims.proposed`.
+
 ## Allocate the levers
 
 | Decision | Plan field | What checks it |

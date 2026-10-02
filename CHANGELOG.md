@@ -41,6 +41,8 @@ after text.
 
 ### Changed
 
+- Direction explorations distinguish controlled tuning from whole-relation hypotheses, choose the smallest disprovable specimen, and converge by consequence rather than novelty.
+
 - Research notes choose comparison media by their evidence claim and pair each transferred relation with a local disproof; requested-page access policy remains unchanged.
 
 - Form levers gain blocked-question method selection, one expressive/quiet comparison with concrete failure conditions, and temporal structure choices before motion.
