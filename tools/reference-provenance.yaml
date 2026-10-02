@@ -365,11 +365,11 @@ references:
     taken: Start from the relationship, not the rectangle; candidate structures per task relation; grouping cues
       and how they conflict (equal gaps, narrow widths, nested enclosure, accidental alignment); line roles (rule,
       border, connector, emphasis, focus) with their checks; non-text contrast only for lines that identify controls
-      or states; compare only the unresolved decision on the same content.
-    dropped: 'Form reading beyond radius, corner construction and the nested-radius formula, capsule geometry, corner
-      runtime checks, industrial-design transfer, and the compact decision record: radius, contour, and elevation
-      are surface decisions (tokens.shape, tokens.surface) for a later shape and surface reference, and the record
-      repeats the plan fields.'
+      or states; compare only the unresolved decision on the same content; LA1 (2026-10-03), lines 30–41, 117–124 adds conflict-to-study selection in explorations.
+    dropped: 'Industrial-design transfer and new decision records; LA2 (2026-10-03) moves contour vocabulary, bounded circular offsets, and actual-size/focus checks to the token owner, superseding their earlier omission.'
+  - path: references/fundamentals/shape-elevation-and-surfaces.md
+    taken: 'LA3 (2026-10-03), lines 28–39, 133–144: persistent-region separation versus temporary-layer occlusion; selection/focus kept distinct from shadow.'
+    dropped: Geometry and token construction here; these stay in the token owner. No blanket flatness or elevation preset.
   - path: references/fundamentals/visual-hierarchy-and-composition.md
     taken: 'Rewritten as relation constraints, as its map note asks: proximity order; more space above a heading
       than below; one alignment line per role and no false alignment; importance following area, weight, and contrast,
@@ -852,6 +852,12 @@ references:
     separate legend symbols for absence, suppression, detection limits, and values beyond the domain.'
 - reference: lps-system/references/tokens.md
   sources:
+  - path: assets/shape-line-and-layout-cheatsheet.md
+    taken: 'LA2 (2026-10-03), lines 43–54, 71–104: descriptive painted contours, circular offset limits, ellipse/capsule distinction, actual-size comparison and separate focus/clipping ownership.'
+    dropped: Numeric token recipes, a universal full-radius geometry, symbolic meanings and geometric quality rankings.
+  - path: references/fundamentals/shape-elevation-and-surfaces.md
+    taken: 'LA2–LA3 (2026-10-03), lines 59–81, 119–144: contour comparison limits and separation jobs checked beside real content in each theme.'
+    dropped: CAD continuity equations, new scales, and CSS parity claims; structural selection stays in layout.
   - path: references/color/profiles-and-output-conditions.md
     taken: 'C2 (2026-10-03), lines 31–78, 160–200: profile/goal/intent/black-point fields in the existing transform record; approved sources and one-way masters remain unchanged.'
     dropped: Named intent recipes, profile operations, and arithmetic separations; physical condition selection stays with color.md.

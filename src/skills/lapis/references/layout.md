@@ -342,8 +342,19 @@ equal gaps hide different relations, a narrow width changes which neighbor is ne
 regions imply more levels of ownership than exist. Borders that identify a control or state meet the
 non-text contrast in `color.md`; decorative dividers need not.
 
+Choose the comparison from the conflict: proximity for equal gaps hiding levels; alignment for an
+unrelated shared edge; similarity for identical treatment on unlike objects; common region for
+invented ownership levels; connection for unclear endpoints. Hold content, rank, and width fixed
+and compare plausible cues in the layout `explorations`. After reflow, check the nearest neighbor.
+Choose the cue that expresses the intended relation, not the fewest rectangles.
+
+A permanent side region need not look detachable: compare an aligned edge, space, or tonal change.
+A compact field may need a border; an overlay needs a layer relation because it occludes context.
+Selection and keyboard focus need dedicated state indicators, not more shadow.
+
 Corner radius and elevation are surface decisions (`tokens.shape`, `tokens.surface`), made once the
-relation is settled.
+relation is settled. For contour construction and theme-specific separation, read `lps-system`'s
+token reference, **Space, radius, surfaces, and icons**.
 
 ## Responsive behavior
 

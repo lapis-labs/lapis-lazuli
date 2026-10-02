@@ -546,8 +546,10 @@ entries:
   dest:
   - reference
   - rule
-  target: lapis
-  status: todo
+  target: lapis/references/layout.md + lps-system/references/tokens.md
+  note: 'LA2–LA3(2026-10-03): 윤곽 어휘·제한된 원형 오프셋 비교·영구 영역과 임시 층 구분을 반영. 검사 규칙 행선지는 남음'
+  status: partial
+  done: [reference]
 - path: references/fundamentals/spacing-and-grids.md
   words: 2050
   dest:
@@ -1643,10 +1645,10 @@ entries:
   words: 1952
   dest: &id008
   - merge
-  target: lapis/references/layout.md
+  target: lapis/references/layout.md + lps-system/references/tokens.md
   merge: layout
   status: done
-  note: 모서리·윤곽·형태 내용은 아직 행선지 없음(나중 형태·표면 참조 후보)
+  note: 'LA1–LA2(2026-10-03): 충돌하는 그룹 단서의 비교를 layout explorations에, 실제 윤곽·원형 오프셋의 제한·초점과 미디어 클립 분리를 tokens.md에 반영. 형태의 보편 상징과 기하학 품질 순위는 제외'
   done: [merge]
 - path: assets/slop-detector-checklist.md
   words: 2606

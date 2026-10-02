@@ -267,12 +267,24 @@ each as a custom property with `radius` in its name: the source check builds its
 those definitions, and no check reads `tokens.shape` yet. One large radius on every container is the
 `global-habit-values` card.
 
+Describe the painted contour: silhouette, open or enclosed edge, stroke or fill, symmetry, void,
+and join. A percentage radius on a wide box makes an ellipse; oversized circular radii make
+semicircular ends with a straight middle. Only for adjacent circular corners with equal insets,
+outer radius minus measured inset shares a center; include the border. Do not generalize this to
+unequal offsets or continuous curves, or create off-scale values from it. Compare apparent gaps
+at actual size, long labels, and narrow widths. Exercise focus separately from media clipping.
+Smoothness is a construction choice, not a quality score.
+
 **Surfaces.** Each level in `tokens.surface.elevation` gets a token per theme for its surface color,
 border, and shadow if any. Write shadows as structured layers (color, offsets, blur, spread);
 flattened into one string they lose that, so list it as a loss in the conversion report. Each treatment in
 `tokens.surface.treatments` becomes a token named by its job, such as `surface.treatment.paper-grain`,
 used only in the firing log. A treatment a card names (`ornamental-surface`, `hard-edge`) is also
 decided in `defaults`.
+
+Name each separation's job before its values; layout's **Lines** owns the structural choice.
+Compare treatments beside actual content in each theme. Decorative dividers have no universal
+contrast minimum; boundaries needed to identify a control or state follow the color requirement.
 
 **Icons.** Sizes and stroke from `tokens.icons`, named by use: `icon.size.inline` 16 beside text,
 `icon.size.control` 24 in controls, `icon.stroke` 1.5. Icons take the text color, so themes recolor

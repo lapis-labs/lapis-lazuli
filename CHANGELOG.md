@@ -39,6 +39,8 @@ after text.
 
 ### Changed
 
+- Layout and token guidance gains conflict-led grouping comparisons, bounded contour construction, and structural separation choices rather than blanket cards, shadows, or flatness.
+
 - Motion guidance chooses acknowledgement targets and waiting feedback from accepted input, measured work, and usable context, with reduced-motion cues preserved.
 
 - Color guidance gains variable-matched dominance studies and goal-led physical renditions without changing OKLCH masters or adding profile operations.
