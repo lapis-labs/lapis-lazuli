@@ -369,14 +369,17 @@ def _best(disclosures: list[dict], kind: str) -> dict | None:
 
 
 def _hidden_terms(run: dict) -> list[str]:
+    # Terms are due where the user commits; a run with no commit step has no such point.
     commit = run.get("commit_step")
+    if commit is None:
+        return []
     disclosures = run.get("disclosures", [])
     hidden = []
     for kind in required_terms(run):
         d = _best(disclosures, kind)
         if kind == "cancellation-method":
             ok = (d is not None and d["placement"] in {"near-commit", "primary", "secondary"}
-                  and d["step"] is not None and (commit is None or d["step"] <= commit))
+                  and d["step"] is not None and d["step"] <= commit)
         else:
             ok = d is not None and d["at_commit"]
         if not ok:

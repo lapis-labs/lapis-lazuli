@@ -105,6 +105,45 @@ def test_fixture_schema_accepts_example_and_rejects_invalid_route():
     assert list(validator.iter_errors(broken))
 
 
+def _renamed_fixture(**rename):
+    fixture = yaml.safe_load(FIXTURE.read_text())
+    for old, new in rename.items():
+        fixture["values"][new] = fixture["values"].pop(old)
+        fixture["accounts"] = {field: new if ref == old else ref for field, ref in fixture["accounts"].items()}
+    return fixture
+
+
+@pytest.mark.parametrize("make,named", [
+    (lambda: _renamed_fixture(v1="patient-name"), "values key 'patient-name' is not a value id"),
+    (lambda: _renamed_fixture(v5="a:b"), "values key 'a:b' is not a value id"),
+    (lambda: _renamed_fixture(v1="patient-name", v5="a:b"), "values keys 'patient-name', 'a:b' are not value ids"),
+    (lambda: _renamed_fixture(v2="patient-email"),
+     "values key 'patient-email', accounts.username 'patient-email' are not value ids"),
+    (lambda: {**_renamed_fixture(), "accounts": {"username": "v2", "password": "secret"}},
+     "accounts.password 'secret' is not a value id"),
+])
+def test_stub_values_must_be_named_v_n_and_the_error_says_which_and_how(tmp_path, make, named):
+    fixture = make()
+    with pytest.raises(ValueError, match="value ids are v1, v2, …") as direct:
+        StubEngine(fixture)
+    assert named in str(direct.value)
+    path = tmp_path / "bad.stub.yaml"
+    path.write_text(yaml.safe_dump(fixture, allow_unicode=True, sort_keys=False))
+    with pytest.raises(ValueError, match="value ids are v1, v2, …") as loaded:
+        StubEngine.load(path)                       # not the schema's own multi-line dump
+    assert named in str(loaded.value) and "\n" not in str(loaded.value)
+
+
+def test_behavior_check_reports_a_stub_whose_values_are_not_v_n_before_starting_a_browser(tmp_path, capsys):
+    from lapis_design.behavior_check import main
+    path = tmp_path / "bad.stub.yaml"
+    path.write_text(yaml.safe_dump(_renamed_fixture(v1="patient-name")))
+    assert main(["http://127.0.0.1:9/", "--task", "demo", "--stub", str(path), "--out", str(tmp_path / "out.json")]) == 2
+    err = capsys.readouterr().err
+    assert "values key 'patient-name' is not a value id" in err and "value ids are v1, v2, …" in err
+    assert not (tmp_path / "out.json").exists()
+
+
 def test_collection_effects_and_idempotency_replay():
     stub = engine()
     assert len(content(call(stub, "GET", "/api/pieces"))) == 2

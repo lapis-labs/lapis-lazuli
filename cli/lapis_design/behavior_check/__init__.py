@@ -20,7 +20,7 @@ from jsonschema import ValidationError
 from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import sync_playwright
 
-from lapis_design import local_site, ours, shared_dir
+from lapis_design import chromium, local_site, ours, shared_dir
 from lapis_design.behavior_check import probes, redact
 from lapis_design.behavior_check.driver import Driver, MissingSyntheticValues
 from lapis_design.behavior_check.session import PROBE_NAMES, Session
@@ -75,10 +75,11 @@ def _check(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
     zone_pattern = schema["$defs"]["context"]["properties"]["timezone"]["pattern"]
     if not re.fullmatch(zone_pattern, args.timezone) or not _known_zone(args.timezone):
         parser.error(f"--timezone {args.timezone!r} is not an IANA time zone")
+    if url.scheme not in ("http", "https"):
+        parser.error(local_site.http_only("behavior check"))
     source = urlunsplit((url.scheme, url.netloc, url.path or "/", "", ""))
     source_pattern = schema["properties"]["source"]["properties"]["url"]["pattern"]
-    if (url.scheme not in ("http", "https") or not url.hostname or url.username or url.password or
-            not re.fullmatch(source_pattern, source)):
+    if not url.hostname or url.username or url.password or not re.fullmatch(source_pattern, source):
         parser.error("source URL must use HTTP(S) on a host that is ours and accepted by the session schema")
     source_pin = ours.pin_source(args.url)
     if not ours.source_is_ours(url.hostname.rstrip("."), list(source_pin.addresses) if source_pin else None):
@@ -132,7 +133,7 @@ def _check(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
         with sync_playwright() as playwright:
             pins = [pin for pin in (source_pin, stub_pin) if pin is not None]
             pins = list({pin.host: pin for pin in pins}.values())
-            browser = playwright.chromium.launch(args=ours.chromium_args(pins))
+            browser = chromium.launch(playwright, ours.chromium_args(pins))
             try:
                 def open_driver(ctx_id):
                     driver = Driver(browser, session, ctx_id)
@@ -188,7 +189,7 @@ def _check(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
         finally:
             if temporary is not None:
                 temporary.unlink(missing_ok=True)
-    except (OSError, ValueError, PlaywrightError, ValidationError, yaml.YAMLError) as exc:
+    except (chromium.BrowserUnavailable, OSError, ValueError, PlaywrightError, ValidationError, yaml.YAMLError) as exc:
         print(f"behavior check: {exc}", file=sys.stderr)
         return 2
     print(f"{len(document['contexts'])} contexts, {len(document['nodes'])} nodes, "

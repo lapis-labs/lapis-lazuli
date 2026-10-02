@@ -98,7 +98,7 @@ Starting points, which the brief and existing designs override:
 
 The motion dial has three bands: 1-3 feedback only, 4-6 transitions that explain a change, 7-10 authored
 moments. Write the band into `tokens.motion.principles` with a reduced-motion branch for each effect
-(`reduced_motion: respect` is required). For timing and easing, interruption, scroll and route
+(`respect` is the only accepted value for `reduced_motion`). For timing and easing, interruption, scroll and route
 enhancement, choosing between native and library animation, and delivering authored animation, read
 `references/motion.md`.
 
@@ -251,7 +251,8 @@ without an API still gets a minimal stub: `version`, `clock`, empty `routes`, `c
 4. `variants`: `empty` and `partial` (both required), so the empty and partial states can be driven.
 5. `values`: synthetic inputs with `valid`, `invalid`, and `alternate` forms - example.com
    addresses, fictional streets, a payment provider's published test numbers. Never real people,
-   accounts, or cards.
+   accounts, or cards. Value ids are `v1`, `v2`, … and each value is keyed by one; any other key
+   (`patient-name`) is refused.
 6. `accounts` and `auth` when a flow signs in; `outside` stand-ins for every third-party call.
 7. `urgency`: the facts behind every countdown, stock, demand, or activity claim on the page, so
    the checker can compare the claim with them.

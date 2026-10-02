@@ -25,7 +25,7 @@ from cryptography.x509.oid import NameOID
 import pytest
 import yaml
 
-from lapis_design.render.hosts import HostPolicy, plan_path
+from lapis_design.render.hosts import HostPolicy, WrongScheme, plan_path
 from lapis_design import ours
 from lapis_design.render.extract import validate
 
@@ -207,9 +207,24 @@ def _write_plan(path: Path, *sources: str) -> Path:
 
 @pytest.mark.parametrize("url", ["http://127.0.0.1:8000/", "http://localhost:3000/a", "http://app.localhost/",
                                  "http://10.0.0.5/", "http://192.168.1.20:8080/", "http://172.16.4.1/",
-                                 "http://[::1]:8000/", "file:///tmp/page.html"])
+                                 "http://[::1]:8000/"])
 def test_loopback_and_private_addresses_need_no_flag(url: str) -> None:
     assert HostPolicy(public=False, plan=None).refusal(url) is None
+
+
+ONE_LINE = ("render check takes an http or https URL; serve the folder on loopback, for example "
+            "`python3 -m http.server 8000 --bind 127.0.0.1`, and check `http://127.0.0.1:8000/`")
+
+
+@pytest.mark.parametrize("url", ["data:text/html,<p>x</p>", "about:blank", "ftp://127.0.0.1/page.html",
+                                 "localhost:3000", "127.0.0.1:8000/a"])
+def test_only_http_and_https_pages_are_captured_whatever_the_host(url: str) -> None:
+    # A local HTML file (path or file:// URL) never reaches the policy: local_site serves its folder first.
+    for policy in (HostPolicy(public=False, plan=None), HostPolicy(public=True, plan=None)):
+        assert policy.refusal(url) == ONE_LINE
+        with pytest.raises(WrongScheme) as refused:
+            policy.check(url)
+        assert str(refused.value) == ONE_LINE                    # no `lazuli ref capture` advice: there is no host
 
 
 def test_public_host_needs_the_public_flag() -> None:

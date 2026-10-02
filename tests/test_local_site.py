@@ -9,7 +9,9 @@ from urllib.parse import urlsplit
 
 import pytest
 
+from lapis_design import behavior_check as behavior_module
 from lapis_design import local_site
+from lapis_design import render as render_module
 from lapis_design.behavior_check import main as behavior_main
 from lapis_design.render import main as render_main
 
@@ -179,3 +181,22 @@ def test_a_check_given_a_missing_file_stops_before_any_run(tmp_path: Path, capsy
     with pytest.raises(SystemExit) as exit_:
         behavior_main(["file:///no/such/page.html", "--task", "t", "--stub", "missing.stub.yaml"])
     assert exit_.value.code == 2 and "no such file" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("target", ["data:text/html,<p>x</p>", "about:blank", "ftp://127.0.0.1/page.html", "localhost:3000"])
+def test_a_target_that_is_neither_http_nor_a_local_file_is_refused_in_one_line_before_a_browser(
+        target: str, tmp_path: Path, monkeypatch, capsys):
+    def no_browser():
+        raise AssertionError("a browser was started")
+
+    monkeypatch.setattr(render_module, "sync_playwright", no_browser)
+    monkeypatch.setattr(behavior_module, "sync_playwright", no_browser)
+    monkeypatch.chdir(tmp_path)
+    advice = ("{} takes an http or https URL; serve the folder on loopback, for example "
+              "`python3 -m http.server 8000 --bind 127.0.0.1`, and check `http://127.0.0.1:8000/`")
+    assert render_main([target, "--out", "unused.json"]) == 2
+    assert capsys.readouterr().err == advice.format("render check") + "\n"
+    with pytest.raises(SystemExit) as exit_:
+        behavior_main([target, "--task", "t", "--stub", "missing.stub.yaml", "--out", "unused.json"])
+    assert exit_.value.code == 2 and advice.format("behavior check") in capsys.readouterr().err
+    assert not (tmp_path / "unused.json").exists()

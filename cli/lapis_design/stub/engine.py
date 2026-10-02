@@ -17,6 +17,25 @@ from jsonschema import Draft202012Validator
 from lapis_design import shared_dir
 
 
+def _stub_schema() -> dict:
+    return yaml.safe_load((shared_dir() / "behavior" / "stub.schema.yaml").read_text(encoding="utf-8"))
+
+
+def check_value_ids(fixture: dict, schema: dict | None = None) -> None:
+    """A value id is what a session records as `value_id`, so a fixture names its values v1, v2, … and an account
+    names two of them. Say which names are not ids and how to fix them; the schema alone would dump its own text."""
+    pattern = re.compile((schema or _stub_schema())["properties"]["values"]["propertyNames"]["pattern"])
+    values, accounts = fixture.get("values"), fixture.get("accounts")
+    keys = [repr(key) for key in values if not pattern.fullmatch(str(key))] if isinstance(values, dict) else []
+    fields = [f"accounts.{field} {accounts[field]!r}" for field in ("username", "password")
+              if isinstance(accounts, dict) and field in accounts and not pattern.fullmatch(str(accounts[field]))]
+    if keys or fields:
+        named = ([f"values key{'s' if len(keys) > 1 else ''} {', '.join(keys)}"] if keys else []) + fields
+        verb = "is not a value id" if len(keys) + len(fields) == 1 else "are not value ids"
+        raise ValueError(f"stub fixture: {', '.join(named)} {verb}; value ids are v1, v2, … "
+                         "(rename the keys under values and the accounts entries that name them)")
+
+
 class SessionClock:
     def __init__(self, start_ms: int):
         self.start_ms = start_ms
@@ -78,6 +97,7 @@ class StubEngine:
     """Fixture state belongs to this engine, not to individual browser contexts."""
 
     def __init__(self, fixture: dict, *, variant: str | None = None, clock: SessionClock | None = None):
+        check_value_ids(fixture)
         self.fixture = fixture
         self.clock = clock or SessionClock(_epoch_ms(fixture["clock"]["start"]))
         self._lock = threading.RLock()
@@ -100,8 +120,9 @@ class StubEngine:
 
     @classmethod
     def load(cls, path: Path, *, variant: str | None = None, clock: SessionClock | None = None) -> StubEngine:
-        fixture = yaml.safe_load(path.read_text(encoding="utf-8"))
-        schema = yaml.safe_load((shared_dir() / "behavior" / "stub.schema.yaml").read_text(encoding="utf-8"))
+        fixture, schema = yaml.safe_load(path.read_text(encoding="utf-8")), _stub_schema()
+        if isinstance(fixture, dict):
+            check_value_ids(fixture, schema)       # before the schema, whose own message for a bad key names neither the fix nor all keys
         Draft202012Validator(schema).validate(fixture)
         return cls(fixture, variant=variant, clock=clock)
 

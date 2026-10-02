@@ -7,7 +7,7 @@ from pathlib import Path
 
 import yaml
 
-from lapis_design import local_site, ours
+from lapis_design import chromium, local_site, ours
 from lapis_design.render import hosts
 from lapis_design.sig_key import load_key
 
@@ -78,7 +78,7 @@ def _capture(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
         signature = ((plan or {}).get("layout") or {}).get("signature")
         key = load_key()
         with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(args=launch_args([pin] if pin else []))
+            browser = chromium.launch(playwright, launch_args([pin] if pin else []))
             guard = hosts.GuardedBrowser(browser, policy)
             try:
                 dark = has_dark_theme(guard, url)
@@ -104,9 +104,10 @@ def _capture(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
             for problem in problems:
                 print(f"render extract invalid: {problem}", file=sys.stderr)
             return 2
-    except (hosts.Refused, OSError, ValueError, PlaywrightError, yaml.YAMLError) as exc:
+    except (hosts.Refused, chromium.BrowserUnavailable, OSError, ValueError, PlaywrightError, yaml.YAMLError) as exc:
         # a navigation the guard blocked surfaces as a Playwright error; report the refusal instead
-        print(f"render check: {guard.refused if guard and guard.refused else exc}", file=sys.stderr)
+        refused = guard.refused if guard and guard.refused else exc
+        print(refused if isinstance(refused, hosts.WrongScheme) else f"render check: {refused}", file=sys.stderr)
         return 2
     print(f"{len(viewports)} viewports, {sum(len(v['boxes']) for v in viewports)} boxes, "
           f"{sum(len(v['text']) for v in viewports)} runs -> {out}")

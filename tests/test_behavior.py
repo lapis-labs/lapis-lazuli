@@ -252,6 +252,10 @@ def test_hidden_subscription_terms():
     optional = shown + [{"kind": "cancellation-terms", "step": 0, "placement": "collapsed", "at_commit": False}]
     assert flow_derived(_run(monthly, commit_step=0, disclosures=optional))["hidden_terms"] == []
     assert flow_derived(_run([{"step": 0, "currency": "USD", "components": [_c("mug", "item", amount=30)]}]))["hidden_terms"] == []
+    # No commit step, no point where terms are due: nothing is hidden, whatever was disclosed, whatever the kind.
+    for kind in ("primary", "purchase", "subscribe"):
+        assert flow_derived(_run(monthly, kind=kind))["hidden_terms"] == []
+        assert flow_derived(_run(monthly, kind=kind, disclosures=tucked, trial=True))["hidden_terms"] == []
 
 
 def test_exit_effort_against_the_pair():

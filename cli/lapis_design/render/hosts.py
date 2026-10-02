@@ -1,10 +1,12 @@
-"""Which hosts `render check` may capture (render/DERIVED.md, Capture, **Target hosts.**).
+"""Which pages `render check` may capture (render/DERIVED.md, Capture, **Target hosts.**).
 
-Literal local hosts and a verified starting `.test` name are ours. A public host needs `--public`;
-public source-registry and plan-reference hosts stay refused. The same policy holds for every document
-request of the captured page's main frame (including redirects and script navigations), and for
-pages it opens before their first request. Refused opened pages are closed and noted without ending
-the capture. Pages that are not ours are captured only with `lazuli ref capture`.
+Only `http` and `https` pages are captured; a `data:` or `about:` URL is refused, and a local HTML file is
+served on loopback before it gets here (`local_site`). Literal local hosts and a verified starting `.test`
+name are ours. A public host needs `--public`; public source-registry and plan-reference hosts stay
+refused. The same policy holds for every document request of the captured page's main frame (including
+redirects and script navigations), and for pages it opens before their first request. Refused opened pages
+are closed and noted without ending the capture. Pages that are not ours are captured only with
+`lazuli ref capture`.
 """
 from __future__ import annotations
 
@@ -15,7 +17,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from urllib.parse import urlsplit
 
-from lapis_design import ours
+from lapis_design import local_site, ours
 from lapis_design.plan_check import read_plan_or_raise
 from lazuli import sources
 from lazuli.catalog.net import InvalidURL
@@ -26,6 +28,12 @@ if TYPE_CHECKING:
 # A reference written without a scheme ("example.com/archive") still names a host.
 _BARE_HOST = re.compile(r"(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,63}(?::\d+)?(?:/\S*)?", re.I)
 
+WRONG_SCHEME = local_site.http_only("render check")
+
+
+def _is_web(url: str) -> bool:
+    return urlsplit(url).scheme in ("http", "https")      # urlsplit lowercases the scheme
+
 
 class Refused(Exception):
     """render check may not capture this page; the message names `lazuli ref capture` instead."""
@@ -34,6 +42,15 @@ class Refused(Exception):
         super().__init__(f"refused {url}: {reason}. Pages that are not ours are captured only with "
                          f"`lazuli ref capture {url} --rights <own|licensed|reference-only>`")
         self.url, self.reason = url, reason
+
+
+class WrongScheme(Refused):
+    """The page is not an http(s) URL. The message is the whole advice: a page with no host is not one
+    `lazuli ref capture` could take either."""
+
+    def __init__(self, url: str):
+        Exception.__init__(self, WRONG_SCHEME)
+        self.url, self.reason = url, WRONG_SCHEME
 
 
 def plan_path(plan: Path | None, task: str | None) -> Path | None:
@@ -81,6 +98,8 @@ class HostPolicy:
 
     def refusal(self, url: str) -> str | None:
         """Why the page at `url` may not be captured, or None when it may."""
+        if not _is_web(url):
+            return WRONG_SCHEME
         host = urlsplit(url).hostname
         if not host:
             return None
@@ -101,9 +120,15 @@ class HostPolicy:
             return f"{host} is a host in the plan's references ({ref['id']}: {ref['url']})"
         return None
 
+    def refused(self, url: str) -> Refused | None:
+        """The error that says why `url` may not be captured, or None when it may."""
+        if (reason := self.refusal(url)) is None:
+            return None
+        return Refused(url, reason) if _is_web(url) else WrongScheme(url)
+
     def check(self, url: str) -> None:
-        if reason := self.refusal(url):
-            raise Refused(url, reason)
+        if (refused := self.refused(url)) is not None:
+            raise refused
 
 
 class GuardedBrowser:
@@ -129,11 +154,11 @@ class GuardedBrowser:
 
         def paused(event: dict) -> None:
             url = event["request"]["url"]
-            reason = self.policy.refusal(url) if event.get("frameId") == main_frame else None
-            if reason and self.refused is None:
-                self.refused = Refused(url, reason)
+            refused = self.policy.refused(url) if event.get("frameId") == main_frame else None
+            if refused and self.refused is None:
+                self.refused = refused
             with contextlib.suppress(PlaywrightError):     # the page may close while a request waits
-                if reason:
+                if refused:
                     cdp.send("Fetch.failRequest", {"requestId": event["requestId"], "errorReason": "BlockedByClient"})
                 else:
                     cdp.send("Fetch.continueRequest", {"requestId": event["requestId"]})
@@ -154,9 +179,9 @@ class GuardedBrowser:
             if main:
                 route.continue_()  # CDP checks main-frame document requests and redirect hops
                 return
-            reason = self.policy.refusal(request.url)
-            if reason:
-                print(f"render check: {Refused(request.url, reason)} (opened page)", file=sys.stderr)
+            refused = self.policy.refused(request.url)
+            if refused:
+                print(f"render check: {refused} (opened page)", file=sys.stderr)
                 route.abort("blockedbyclient")
             else:
                 route.continue_()

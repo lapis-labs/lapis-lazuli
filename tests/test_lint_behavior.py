@@ -520,6 +520,14 @@ def test_hidden_subscription_needs_a_commit_to_judge_terms_at():
     # A flow declared as a subscription that reached no commit is not verified rather than passed.
     join = run("ux.hidden-subscription", session(flows=[flow("join", "subscribe", prices=prices)]))
     assert join.hits == [] and "join" in join.skipped and "reached no commit" in join.skipped
+    # Pins existing behavior: the note is kept for purchase and subscribe runs whatever their status, never for other kinds.
+    for kind in ("purchase", "subscribe"):
+        for status in ("completed", "blocked", "abandoned", "dead-end"):
+            ended = run("ux.hidden-subscription", session(flows=[flow("join", kind, status=status, prices=prices)]))
+            assert ended.hits == [] and "recurring terms not verified" in ended.skipped
+    for status in ("completed", "blocked", "abandoned", "dead-end"):
+        other = run("ux.hidden-subscription", session(flows=[flow("join", "primary", status=status, prices=prices)]))
+        assert other.hits == [] and other.skipped is None
 
 
 def test_obstructed_exit_compares_effort_with_the_join_flow_at_the_bound():

@@ -5,7 +5,8 @@ HTML file. A file URL has no host, so a behavior session cannot record it as `so
 (behavior/DERIVED.md, Scope and safety), and a page that links `/app.css`, loads modules, or fetches
 JSON does not behave from `file:` as it does when served. For a file, the checks serve its folder on
 127.0.0.1 for the length of the run and start from `http://127.0.0.1:<port>/<file>`; any other target
-passes through untouched.
+passes through untouched, and the check then takes only an http(s) URL (`http_only` is what it says to
+`data:`, `about:`, `ftp:`).
 
 The server answers GET and HEAD only, and only for what lies under the folder: a path whose real
 location (links followed) is outside it, a name that starts with a dot (`.env`, `.git`, `.lapis`),
@@ -32,6 +33,12 @@ INDEX_FILES = ("index.html", "index.htm")
 
 class NotServable(ValueError):
     """The target names a local file the checks cannot serve."""
+
+
+def http_only(check: str) -> str:
+    """What a check says to a target that is neither an http(s) URL nor a local HTML file (`data:`, `about:`, `ftp:`)."""
+    return (f"{check} takes an http or https URL; serve the folder on loopback, for example "
+            "`python3 -m http.server 8000 --bind 127.0.0.1`, and check `http://127.0.0.1:8000/`")
 
 
 def _segments(url_path: str) -> list[str]:
