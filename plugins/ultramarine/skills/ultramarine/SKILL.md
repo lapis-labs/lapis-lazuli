@@ -4,7 +4,7 @@ description: Checks interfaces that exist - render capture at every width, behav
 license: MIT AND CC-BY-4.0
 metadata:
   plugin: ultramarine
-  version: 0.1.4
+  version: 0.2.0
 ---
 
 # ultramarine

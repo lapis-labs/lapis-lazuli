@@ -8,7 +8,7 @@ Claude Code, Codex, Oh-My-Pi 같은 하네스로 웹 화면을 만드는 개발�
 
 ```console
 $ lapis-design plan check docs/examples/site-booking-ko.yaml
-plan_check 0.1.4: 2 blocking, 7 total, 3 skipped: not judged
+plan_check 0.2.0: 2 blocking, 7 total, 3 skipped: not judged
   [WARN] copy.buzzwords content.key_copy[*].text — "최적의" (buzzwords) in the headline key copy: "최적의 캠핑 경험을 선사합니다"; "경험을 선사" (buzzwords) in the headline key copy: "최적의 캠핑 경험을 선사합니다"
           fix: Add a defaults entry for copy.buzzwords (keep or reject with a reason). Name the user action, the handoff removed, or the verifiable capability
   [BLOCK] copy.vague-cta content.key_copy[?slot=cta].text — "계속하기" (vague_cta) in the cta key copy: "계속하기"

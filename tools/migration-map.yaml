@@ -1,7 +1,7 @@
 # LapisLazuli 도메인 이관 지도 — 기계용 v0 (문서 "도메인 이관 지도"에서 생성)
 version: 0
 generated: '2026-09-24'
-updated: '2026-10-01'   # 알리기 전 참조 네 편 반영(ultramarine inspection-and-evidence.md, lapis motion.md·data-viz.md, lps-ux forms-and-recovery.md)과 행선지 없던 18개의 Q30 결정(빼기 10개는 dest [drop]·done·target null). 그 전: lps-copy 참조 interface-copy.md 반영(원본 8개; 다른 2개는 일부만 옮겨 todo 유지). 그 전: lps-system 참조 tokens.md·theming.md, lps-ux 참조 navigation.md, ulm-release 참조 visual-regression.md 반영(원본 8개). 그 전: lapis 참조 layout.md·archetypes.md 반영(원본 20개)
+updated: '2026-10-02'   # Q44: lapis form-levers.md·style-bento-and-modern-saas.md·style-minimalism-and-editorial.md, type.md의 폰트 고르기 절, ultramarine repair-loop.md·check-bounds.md 반영과 본문 방향 원칙. 그 전(2026-10-01): 알리기 전 참조 네 편 반영(ultramarine inspection-and-evidence.md, lapis motion.md·data-viz.md, lps-ux forms-and-recovery.md)과 행선지 없던 18개의 Q30 결정(빼기 10개는 dest [drop]·done·target null). 그 전: lps-copy 참조 interface-copy.md 반영(원본 8개; 다른 2개는 일부만 옮겨 todo 유지). 그 전: lps-system 참조 tokens.md·theming.md, lps-ux 참조 navigation.md, ulm-release 참조 visual-regression.md 반영(원본 8개). 그 전: lapis 참조 layout.md·archetypes.md 반영(원본 20개)
 status_legend:
   todo: 시작 전
   partial: 일부 행선지 완료 (done에 적은 것)

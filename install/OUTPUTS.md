@@ -44,7 +44,7 @@ never merges, and Oh-My-Pi never reads the Codex one.
 `plugins/<plugin>/.claude-plugin/plugin.json` (Claude Code, Oh-My-Pi):
 
 ```json
-{ "name": "lapis", "version": "0.1.4", "description": "…",
+{ "name": "lapis", "version": "0.2.0", "description": "…",
   "author": { "name": "lapis-labs" }, "homepage": "https://github.com/lapis-labs/lapis-lazuli",
   "repository": "https://github.com/lapis-labs/lapis-lazuli", "license": "MIT AND CC-BY-4.0",
   "hooks": { "PermissionRequest": [ { "matcher": "ExitPlanMode", "hooks": [
@@ -60,7 +60,7 @@ with a warning, so none are added.
 Codex manifest's `hooks` replaces the default file rather than adding to it:
 
 ```json
-{ "name": "lazuli", "version": "0.1.4", "description": "…", "license": "MIT AND CC-BY-4.0",
+{ "name": "lazuli", "version": "0.2.0", "description": "…", "license": "MIT AND CC-BY-4.0",
   "skills": "./skills/", "hooks": "./hooks/hooks.json", "mcpServers": "./.mcp.json",
   "interface": { "displayName": "Lazuli", "shortDescription": "…", "developerName": "lapis-labs" } }
 ```

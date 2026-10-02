@@ -4,7 +4,7 @@ description: Turns a plan's decisions into a design system - color ramps and sem
 license: MIT AND CC-BY-4.0
 metadata:
   plugin: lapis
-  version: 0.1.4
+  version: 0.2.0
 ---
 
 # lps-system

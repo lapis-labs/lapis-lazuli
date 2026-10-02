@@ -5,6 +5,54 @@ All notable changes are recorded here. The format follows
 [Semantic Versioning](https://semver.org/) once 1.0 is released. Before then, contracts are
 `version: 0` drafts and may change between minor versions.
 
+## 0.2.0 (2026-10-02)
+
+Direction: the plan's form levers must be tied to the subject, a font left to the platform counts as a
+choice, and the repair loop has an end. Five new references and one new rule.
+
+### Contracts
+
+- Contract diff 6: the rule `layout.unanchored-lever` and its detector `plan-anchored-text` (185 rules,
+  90 detectors), the plan schema's direction fields, the generic families in `fonts/system-fonts.yaml`,
+  and the example plan.
+
+### Added
+
+- `layout.unanchored-lever`: in create mode, a `direction.levers` sentence that shares no word with
+  `world_materials` or `layout.signature` blocks the plan; no levers at all also blocks unless the
+  surface only operates. Redesign, repair, and `style_frame: inherit` are skipped, and a `defaults` entry
+  lifts the block. `plan check --summary` prints the concept and each lever.
+- `lapis/references/form-levers.md`, the direction principles, and new step 3 and 4 sentences in the
+  `lapis` skill.
+- `lapis/references/style-bento-and-modern-saas.md` and `style-minimalism-and-editorial.md`: what each
+  style assumes about the content, mapped to plan fields and checks.
+- `type.md`: "Choosing a face for each role", including activated Adobe Fonts as candidates (locked
+  with `adobe-web-project` for the web).
+- `ultramarine/references/repair-loop.md`: bounded repair rounds per task, per finding, and for the
+  critic; one cause per change with its own recheck; a final full run after narrowed runs; what a host
+  browser can stand for.
+- `ultramarine/references/check-bounds.md`: the thresholds and word lists the checks use. The generating
+  references (`motion.md`, `data-viz.md`, `forms-and-recovery.md`) now describe in words what the checks
+  read and leave out.
+
+### Changed
+
+- A role set to a generic family (`system-ui`, `sans-serif`) counts as the platform's own neutral
+  grotesque, read from one generic-family table in the plan, source, and render checks. A web plan
+  whose text roles are all generic now meets `type.overused-neutral-grotesque` and
+  `type.single-neutral-sans` instead of an INFO that the family was not measured. `font.no-lock` names
+  the faces to lock.
+- A plan with `style_frame: named` and no `style_name`, or a role `family` holding a comma-separated
+  stack, fails the schema; fallbacks go in the fonts lock. The plan version stays `0`.
+
+### Known limits
+
+- `layout.unanchored-lever` blocks a concrete lever that names no material ("asymmetric two-column split
+  with a narrow left rail"), and an English lever against Korean materials; tie it to a material, move it
+  to the layout procedure, or record a keep. It passes a vague lever that shares one word with a material,
+  and it shows only that a lever names a material, not that the lever is good; the critic judges that.
+- `src/shared/index.yaml` still says 184 rules; the count changes with the next contract diff.
+
 ## 0.1.4 (2026-10-02)
 
 The behavior probes read wording, choices, exits, urgency, and quotations as contract diff 5 says; the flow

@@ -1,6 +1,6 @@
 {
   "name": "lazuli",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "description": "Local fonts and colors, catalogs, references, and the lazuli CLI",
   "author": {
     "name": "lapis-labs"
