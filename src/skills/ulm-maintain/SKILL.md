@@ -37,22 +37,24 @@ resolving only to them), then:
    `.lapis/renders/<task>-before.shots/`.
 2. If interactive, `lapis-design behavior check <url> --task <task>-before --stub .lapis/stub.yaml
    --build <commit>`, plus `--plan .lapis/plans/<task>.yaml` when a plan exists (the flows probe
-   reads its flows), with a `--probe` per area the change touches; or `--backend local-dev
-   --outbound none --values <file>` with synthetic values. Never real accounts or payment methods.
-   Without either, behavior is not checked.
+   reads its flows), with a `--probe` per area the change touches, which makes it write
+   `.lapis/behavior/<task>-before.narrow.json` instead of `<task>-before.json`; or `--backend
+   local-dev --outbound none --values <file>` with synthetic values. Never real accounts or payment
+   methods. Without either, behavior is not checked.
 3. `lapis-design slop lint --source . --extract .lapis/renders/<task>-before.json --mode review
-   -o .lapis/lint/<task>-before.json`, plus `--session .lapis/behavior/<task>-before.json` when step
-   2 ran and `--plan` when a plan exists. Without the extract and session, source matches stay
-   unconfirmed leads.
+   -o .lapis/lint/<task>-before.json`, plus `--session` with the file step 2 wrote and `--plan` when
+   a plan exists. Without the extract and session, source matches stay unconfirmed leads.
 4. The project's own build, type checks, and tests; note what already fails.
 
 ## Work in small steps
 
 - One thing per step, undone by reversing only your own edits. Never discard work you did not make.
 - After each step, run the build, tests, and the narrowest check that sees it: `render check` with
-  `--width <px>`, `behavior check` with `--probe <name>`, or lint with `--rule <id>`.
+  `--width <px>`, `behavior check` with `--probe <name>` (and `--box <id>` for one control), or lint
+  with `--rule <id>`.
 - Finally, rerun the baseline set under `--task <task>` with the same widths, probes, data, and
-  stub.
+  stub. Narrowed runs write `<task>.narrow.json`; the release gate reads only the full reports
+  `ulm-release` makes.
 
 ## Compare two captures
 

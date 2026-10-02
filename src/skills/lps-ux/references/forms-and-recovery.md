@@ -148,7 +148,8 @@ lapis-design behavior check <url> --task <task> --plan .lapis/plans/<task>.yaml 
 ```
 
 Without `flows`, `forms`, `commits`, and `time_limits` lose what comes from flow runs (repeated entry,
-commit steps, limits met during a flow).
+commit steps, limits met during a flow). The run writes `.lapis/behavior/<task>.narrow.json`, because
+`--probe` narrows it; the full session at `<task>.json` is the release gate's.
 
 | Probe | Records | Rules |
 |---|---|---|

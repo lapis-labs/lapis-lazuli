@@ -29,7 +29,8 @@ writes `.lapis/release/<task>.json`.
 ## Run the full set
 
 Run these in order from the project root, on the build that will ship, into fresh reports.
-Nothing here uses `--width`, `--probe`, `--layer`, or `--rule`; the gate needs everything.
+Nothing here uses `--width`, `--probe`, `--context`, `--box`, `--limit`, `--layer`, or `--rule`; the
+gate needs everything, and it never reads the `<task>.narrow.json` files that narrowed runs write.
 
 1. **Render.** `lapis-design render check <url> --task <task>` - every width, and dark where the
    page has a dark theme.

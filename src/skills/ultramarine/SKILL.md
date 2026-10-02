@@ -57,22 +57,32 @@ accessibility or legal conformance. The full pre-ship gate is `ulm-release`.
 
 Every report follows `shared/slop/finding.schema.yaml`.
 
+A narrowed run (below) writes `<task>.narrow.json` beside its full report, and its screenshots to
+`<task>.narrow.shots/`. The release gate reads only the paths above, so a narrowed run never stands
+for a full one and never overwrites it.
+
 ## Run the checks
 
 1. **Render.** `lapis-design render check <url> --task <task>` captures 320, 390, 768, and 1440
    px in light, and the wider widths in dark when the page has a dark theme. While iterating on one
-   layout, add `--width <px>`; the release gate needs them all. For a page of plain files, `<url>`
-   may be the HTML file's path; render and behavior check serve its folder on 127.0.0.1 for the run.
+   layout, add `--width <px>`: the run writes `.lapis/renders/<task>.narrow.json`, and the release gate
+   still needs the full one. For a page of plain files, `<url>` may be the HTML file's path; render
+   and behavior check serve its folder on 127.0.0.1 for the run.
 2. **Behavior**, for anything interactive. `lapis-design behavior check <url> --task <task> --plan
-   .lapis/plans/<task>.yaml --stub .lapis/stub.yaml`. Every probe runs by default; `--probe <name>`
-   narrows it while iterating. Without a stub, write the minimal one that
+   .lapis/plans/<task>.yaml --stub .lapis/stub.yaml`. Every probe runs by default; `--probe <name>`,
+   `--context m|d`, `--box <id>` (a box id from the session's `nodes`), and `--limit <n>` narrow it
+   while iterating, and the run writes `.lapis/behavior/<task>.narrow.json`. `--box` and `--limit`
+   narrow `controls` and `pointer`, which exercise one box at a time (and `commits`, which works from
+   the controls that ran): their coverage is `partial`, and the reason counts the boxes left out.
+   Without a stub, write the minimal one that
    `shared/behavior/stub.schema.yaml` allows (version, clock, empty routes, collections, values,
    and `empty` and `partial` variants) and tell the maker to complete it.
 3. **Lint.** `lapis-design slop lint --plan .lapis/plans/<task>.yaml --extract
    .lapis/renders/<task>.json --session .lapis/behavior/<task>.json --source . --ledger
    .lapis/assets.ledger.json --lock .lapis/fonts.lock.json -o .lapis/lint/<task>.json`. Leave out
    inputs that do not exist yet, add `--ref .lapis/refs/<slug>.json` for each reference the plan
-   borrows from, and add `--mode review` for an existing surface.
+   borrows from, and add `--mode review` for an existing surface. Lint narrowed by `--layer` or
+   `--rule`, or run over a narrowed extract or session, takes `-o .lapis/lint/<task>.narrow.json`.
 4. **Critic**, below.
 
 If a sandbox or permission prevents a check from starting Chromium or reading lazuli's user cache,
@@ -124,8 +134,9 @@ The critic judges in a context that did not make the design, reading only the in
 4. Before the first fix, write down the finding, the check and condition that will show it is gone,
    and what must stay unchanged; if no check you can run observes it, make one fix, list it as not
    verified, and do not loop.
-5. After a fix, rerun only that width, probe, or lint layer; run the full set once, in order, when
-   the last round ends, because a narrowed run leaves the other widths and probes without evidence.
+5. After a fix, rerun only that width, probe, box, or lint layer, into the `.narrow.json` reports. A
+   narrowed run leaves the other widths and probes without evidence, so run the full set once, in
+   order, when the last round ends; it writes the full reports.
 6. A finding that is still open after two fixes goes to the user with both attempts and the cause
    you now suspect; do not try a third variation of the same change.
 7. Stop when the target finding is gone and nothing that was passing now blocks, when the rounds

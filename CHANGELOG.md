@@ -5,6 +5,27 @@ All notable changes are recorded here. The format follows
 [Semantic Versioning](https://semver.org/) once 1.0 is released. Before then, contracts are
 `version: 0` drafts and may change between minor versions.
 
+## Unreleased
+
+### Added
+
+- `behavior check --box ID` (repeatable) and `--limit N` narrow the per-box probes, `controls` and `pointer`,
+  to the named boxes, or to the first N boxes of each context in document order. A probe that leaves boxes
+  out has `partial` coverage whose reason says how many (and names any `--box` id that matched nothing);
+  `commits`, which works from the controls that ran, says the same. `--box` takes ids from the session's
+  `nodes`, and a control that only an action reveals is reached when the control that reveals it is named too.
+
+### Changed
+
+- A narrowed run writes beside the full report and no longer replaces it. `render check --width` writes
+  `.lapis/renders/<task>.narrow.json` with its screenshots in `<task>.narrow.shots/`, and `behavior check` with
+  `--probe`, `--context`, `--box`, or `--limit` writes `.lapis/behavior/<task>.narrow.json`; full runs keep
+  `<task>.json`. A narrowed run given the full path with `--out` is refused (exit 2) before anything starts,
+  because the release gate reads that path as the evidence of a full run; any other `--out` still wins.
+  `slop lint --layer` and `--rule` have no task-derived path, so write them with
+  `-o .lapis/lint/<task>.narrow.json`. The release gate reads only the full paths. The repair loop, the
+  `lapis`, `ultramarine`, `ulm-maintain`, and `ulm-release` skills, and `--help` say so.
+
 ## 0.2.0 (2026-10-02)
 
 Direction: the plan's form levers must be tied to the subject, a font left to the platform counts as a

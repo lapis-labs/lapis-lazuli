@@ -243,16 +243,19 @@ When repeating a repair, follow the bounds and final full run in `ultramarine`'s
 1. `lapis-design slop lint --plan .lapis/plans/<task>.yaml --source <source dir> -o .lapis/lint/<task>.json`.
    It needs no browser, so run it after every change to styles or markup: it finds literal colors,
    off-scale spacing, and bypassed primitives in the code (`system.*`) while they are cheap to fix.
-2. `lapis-design render check <url> --task <task> --width 390`, then rerun the lint with
-   `--extract .lapis/renders/<task>.json` added. A page of plain files needs no server: give the
+2. `lapis-design render check <url> --task <task> --width 390`, which writes
+   `.lapis/renders/<task>.narrow.json` and leaves the full extract alone, then rerun the lint with
+   `--extract .lapis/renders/<task>.narrow.json` added and `-o .lapis/lint/<task>.narrow.json`.
+   A page of plain files needs no server: give the
    HTML file's path (or a `file://` URL) as `<url>`, and both checks serve its folder on 127.0.0.1
    for the run, with that folder as the site root. When the render cannot run, keep the
    source-layer lint and list the render check among the checks that did not run.
 3. Only when the change touched behavior: `lapis-design behavior check <url> --task <task>
    --plan .lapis/plans/<task>.yaml --stub .lapis/stub.yaml --probe <probe>`, one `--probe` per
-   area you changed (forms, dialogs, choices, flows, keyboard, ...), then rerun the lint with
-   `--session .lapis/behavior/<task>.json` added to the same command, so the report keeps every
-   layer that has run.
+   area you changed (forms, dialogs, choices, flows, keyboard, ...); for one control add
+   `--box <id>`, with the id from the session's `nodes`. It writes `.lapis/behavior/<task>.narrow.json`.
+   Then rerun the lint with `--session .lapis/behavior/<task>.narrow.json` added to the same command,
+   so the report keeps every layer that has run.
 4. Hand the plan, extract, and lint report to the separate critic (the `ultramarine` skill runs it).
    You wrote the design, so you do not judge it. When `ultramarine` is not installed, tell the user
    that no independent review ran and list it among the checks that did not run.

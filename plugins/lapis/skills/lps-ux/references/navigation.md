@@ -279,7 +279,8 @@ unresolved delivery regions add a step, reserving moves to its own route (`/piec
 After changing navigation, run `lapis-design behavior check <url> --task <task> --plan
 .lapis/plans/<task>.yaml --stub .lapis/stub.yaml --probe history --probe keyboard --probe dialogs
 --probe controls --probe flows --probe pointer` (`flows` for a sheet that holds several steps,
-`pointer` for content shown only on hover).
+`pointer` for content shown only on hover). A run with `--probe` writes
+`.lapis/behavior/<task>.narrow.json`; the full session at `<task>.json` is the release gate's.
 
 | Probe | Records | Rules | By hand |
 |---|---|---|---|

@@ -1959,6 +1959,9 @@ references:
     measuring rule. The reference describes the failure mode without naming either demonstration.'
   - 'Narrowed rechecks replace full task reports; the final applicable render, behavior, lint and critic
     chain runs once without narrowing. No separate narrow report path is introduced.'
+  - 'Superseded later on 2026-10-02 by the maintainer: narrowed runs write <task>.narrow.json beside the full
+    report (render and behavior by default, lint through -o) and are refused the full path; the final full run
+    writes the full reports, and the release gate reads only those. The reference text follows this item.'
   inspected_2026_10_02:
   - 'release_check.py: dependency modification times for input-stale; extract viewports for width-missing;
     session coverage for probe-incomplete; lint targets, layers, rule narrowing and unread links for

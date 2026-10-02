@@ -43,9 +43,13 @@ uv run lapis-design rights check --ledger src/shared/assets/example.assets.ledge
 uv run lapis-design render check http://127.0.0.1:8000/ --task demo   # -> .lapis/renders/demo.json
 uv run lapis-design behavior check http://127.0.0.1:8000/ --task demo --plan .lapis/plans/demo.yaml \
   --stub .lapis/stub.yaml                 # -> .lapis/behavior/demo.json
+uv run lapis-design render check http://127.0.0.1:8000/ --task demo --width 390   # narrowed -> .lapis/renders/demo.narrow.json
+uv run lapis-design behavior check http://127.0.0.1:8000/ --task demo --stub .lapis/stub.yaml \
+  --probe controls --box b0123456789ab    # narrowed -> .lapis/behavior/demo.narrow.json (--limit N caps boxes)
 uv run lapis-design stub serve .lapis/stub.yaml --port 8787   # same stub over HTTP, for server-rendered apps
 uv run lapis-design slop lint --plan .lapis/plans/demo.yaml --extract .lapis/renders/demo.json \
   --session .lapis/behavior/demo.json -o .lapis/lint/demo.json   # every layer whose input is given
+# a lint run narrowed by --layer or --rule goes to -o .lapis/lint/demo.narrow.json
 uv run lapis-design release check --task demo   # the release gate (src/shared/release/GATE.md) -> .lapis/release/demo.json
 uv run lazuli local fonts --summary       # read-only font scan and measurement into the user cache
 uv run lazuli doctor
@@ -208,14 +212,19 @@ files beside it; the database file itself does not change.
   Text signatures use the per-user key from `cli/lapis_design/sig_key.py` (user cache, or
   `LAPIS_SIG_KEY_FILE`); tests always point that variable at a temporary file.
 - `behavior check` lives in `cli/lapis_design/behavior_check/`: the driver core (`session.py`,
-  `driver.py`, `network.py`, `settle.py`, `nodes.py`, `redact.py`) and probe modules in `probes/`
-  (`NAMES` and `run(session, open_driver)`), registered in order in `probes/__init__.py`. Derived
+  `driver.py`, `network.py`, `settle.py`, `nodes.py`, `redact.py`, `scope.py`) and probe modules in
+  `probes/` (`NAMES` and `run(session, open_driver)`), registered in order in `probes/__init__.py`. Derived
   values come only from `lapis_design/behavior.py` (`derive_session`). The stub backend is
   `cli/lapis_design/stub/`: one engine, answered in the browser through Playwright routing by
   default, or over HTTP with `stub serve` (admin endpoints under `/__lapis/`, driven by `--stub-url`).
   Its fixture format is `src/shared/behavior/stub.schema.yaml`. With `--backend local-dev`, the
   driver takes synthetic values only from `--values FIXTURE` and never injects failures or runs
   destructive probes.
+  A narrowed run (`render check --width`; `behavior check` with `--probe`, `--context`, `--box`, or
+  `--limit`) writes `.lapis/<renders|behavior>/<task>.narrow.json` (`lapis_design/narrow.py`) and is refused the
+  full path, which the release gate reads. `--box` and `--limit` narrow the per-box probes (`PER_BOX` in
+  `scope.py`: `controls`, `pointer`) through `session.scope.pick` and `admit`; `Session.cover` then marks a probe
+  that left boxes out `partial` with their count, and `commits` with it, since it works from the controls that ran.
 - `slop lint` lives in `cli/lapis_design/lint/`: `types.py` (the fixed detector interface),
   `engine.py` (rule severity, `defaults` waivers, `locales`, packages, leads, and behavior coverage
   turn detector results into findings), `cli.py` (loads and validates the inputs; also the MCP
