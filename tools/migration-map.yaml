@@ -57,7 +57,7 @@ entries:
   - merge
   target: lapis/references/motion.md
   merge: motion
-  note: 상태 먼저(여섯 질문)·최신 의도 우선·중단 방식 한 문장·초점과 도달 가능성·눌림 피드백·깜박임과 동작 입력 안전을 motion.md '중단과 연출'·'줄인 모션' 절로(2026-10-01). 펼침 예제 코드·오버레이와 경로 코드·상호작용 표·스프링 모델 세부·크기 키우기 중첩 규칙·햅틱·모달 초점 계약은 옮기지 않음
+  note: '상태·최신 의도·초점·피드백·안전을 motion.md로. M1–M2(2026-10-03): 승인된 입력의 응답 대상·중첩 축소 금지·실제 지식과 사용 가능한 맥락에 따른 대기 표시를 반영. 코드·스프링·햅틱·모달 계약은 옮기지 않음'
   status: done
   done: [merge]
 - path: references/animation/scroll-navigation-and-transitions.md
@@ -1584,7 +1584,7 @@ entries:
   - merge
   target: lapis/references/motion.md
   merge: motion
-  note: 기간 범위(중립 행)·이징 역할·목적 표·줄인 모션 계약·로딩 선택을 motion.md 각 절로(2026-10-01). 이름 붙은 시스템의 기간 표와 곡선 값·컴포넌트별 레시피 표·구현 선택 표·검토 신호 목록은 옮기지 않음(검사 표와 카드가 대신함)
+  note: '기간·이징 역할·목적·줄인 모션·대기 선택을 motion.md로. M2(2026-10-03): 실제 지식별 대기 표시 표를 복원하되 보편 지연값은 넣지 않음. 이름 붙은 시스템 값·컴포넌트 레시피·구현 표·검토 목록은 제외'
   status: done
   done: [merge]
 - path: assets/motion-delivery-cheatsheet.md

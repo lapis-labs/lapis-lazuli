@@ -99,9 +99,25 @@ on a long list it makes later content wait, so move the group as one. At 7 or mo
 moment per ordinary surface; only a piece where motion is the medium has several. A gesture starts from the
 current position and velocity and has a button or keyboard route.
 
-**Feedback.** A pressed state acknowledges input, not completion. Use status text for an uncertain wait,
-real progress when known, and a layout-shaped placeholder for incoming content. Keep loading cues
-bounded by the wait and still in the reduced branch; never invent progress.
+**Feedback.** A pressed state acknowledges accepted input, not completion. Respond at the control
+that accepted it. A single-action surface may respond as a whole; a card with open, save, and
+dismiss actions responds only at the invoked target. If scaling a wide row breaks shared
+alignment, compare color or a local content response instead. Do not multiply parent and child
+contractions. Keep selection, warning, and on/off cues intact; under reduced motion retain a
+visible state cue without travel or scale. Use this comparison in the motion `explorations`.
+
+| What is known | Feedback to compare |
+|---|---|
+| a local change has committed | the new state itself |
+| the wait is uncertain | local status, not a page takeover |
+| measured work has a total | determinate progress with its unit |
+| incoming structure is known | a layout-shaped placeholder |
+| old content remains valid during refresh | keep it, labeled as updating |
+| work can continue elsewhere | durable status and a safe way away |
+
+Choose against real latency and consequence, not a universal indicator delay. Keep cues bounded
+by the wait, including the reduced branch. Failure preserves work and exposes recovery;
+animation time never determines completion, and progress is never invented.
 
 ## Scroll, navigation, and transitions
 

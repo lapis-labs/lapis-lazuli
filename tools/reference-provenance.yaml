@@ -1581,10 +1581,10 @@ references:
       never holding the only copy of a state change; focus and reachability as separate from timing, with the opening
       and closing orders; relationships, not decoration; press feedback as acknowledgement with a color baseline;
       loading kept apart from press; reduced motion as a live state; the flashing, motion-as-input, and five-second
-      safety gates; failure and teardown states (folded into the last of the six questions).
+      safety gates; failure and teardown states (folded into the last of the six questions); M1–M2 (2026-10-03), lines 127–160 adds the acknowledgement target, nested-scale exclusion and knowledge/context feedback chooser.
     dropped: 'The dependency-free disclosure example (about 120 lines of HTML, CSS, and script), the overlay and
       route code blocks, the interaction matrix, the pitfalls, the snapshot note, the spring model detail (mass,
-      stiffness, damping against a damping ratio), the scale-target nesting rules, the haptics note, and the
+      stiffness, damping against a damping ratio), the haptics note, and the
       modal focus contract: an implementation artifact that would freeze one code shape, repeated tables, and
       detail that belongs to a component reference.'
   - path: references/technology/animation-and-motion-libraries.md
@@ -1621,7 +1621,7 @@ references:
       keys, the pitfalls, and the matrix: samples and lists that repeat other paragraphs.'
   - path: assets/motion-cheatsheet.md
     taken: The purpose check as the job sentence, the framework-neutral duration ranges, easing roles, the
-      reduced-motion contract, and the loading choice.
+      reduced-motion contract, and the loading choice; M2 (2026-10-03), lines 117–128 restores a compact knowledge-to-feedback table without latency thresholds.
     dropped: 'The published token bands and curve values of a named design system, the component recipe table, the
       implementation table, and the review signals: named product values, and content the timing, layer, and
       checks sections already carry.'
