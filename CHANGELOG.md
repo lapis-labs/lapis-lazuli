@@ -48,6 +48,12 @@ All notable changes are recorded here. The format follows
   supply `image` or `review` evidence but never a render or behavior record; and `LAZULI_DB` is never
   moved into the project. The Codex section gives the 0.159.3 flags and the error a headless
   `codex exec` under `workspace-write` showed in the 2026-10-01 pilot (0.159.2).
+- `behavior check` and `render check` take an HTML file's path or a `file://` URL: they serve that
+  file's folder read-only on 127.0.0.1 for the run (GET and HEAD only; nothing outside the folder, no
+  dot-named files, no listings) and record the loopback address. Before, `behavior check` refused
+  such a target (exit 2), and `render check` loaded it as `file:`, where root-relative links such as
+  `/site.css` did not load and the extract was silently wrong. The `lapis` and `ultramarine` skills
+  say so.
 
 ## 0.1.2 (2026-10-01)
 

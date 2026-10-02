@@ -7,7 +7,7 @@ from pathlib import Path
 
 import yaml
 
-from lapis_design import ours
+from lapis_design import local_site, ours
 from lapis_design.render import hosts
 from lapis_design.sig_key import load_key
 
@@ -41,11 +41,9 @@ def _configs(dark: bool, widths: list[int] | None) -> list[dict]:
 
 
 def main(argv: list[str] | None = None, prog: str = "lapis-design render check") -> int:
-    from playwright.sync_api import Error as PlaywrightError
-    from lapis_design.render.capture import capture, has_dark_theme
-    from lapis_design.render.extract import assemble, write_extract
     parser = argparse.ArgumentParser(prog=prog, description="Capture a rendered page as a render extract.")
-    parser.add_argument("url")
+    parser.add_argument("url", help="the page: an http(s) URL, or a file:// URL or path of an HTML file (its "
+                        "folder is served on 127.0.0.1 for the run, and the extract records that address)")
     parser.add_argument("--task")
     parser.add_argument("--plan", type=Path, help="the task's plan; hosts in its references are never "
                         "captured (default: .lapis/plans/<task>.yaml when it exists)")
@@ -54,6 +52,18 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design render check")
     parser.add_argument("--out", type=Path)
     parser.add_argument("--width", type=int, choices=(320, 390, 768, 1440), action="append")
     args = parser.parse_args(argv)
+    try:
+        with local_site.serve(args.url) as url:
+            args.url = url
+            return _capture(parser, args)
+    except local_site.NotServable as exc:      # raised on entry; the run itself never raises it
+        parser.error(str(exc))
+
+
+def _capture(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
+    from playwright.sync_api import Error as PlaywrightError
+    from lapis_design.render.capture import capture, has_dark_theme
+    from lapis_design.render.extract import assemble, write_extract
     if not args.out and args.task and ("/" in args.task or "\\" in args.task or args.task in (".", "..")):
         parser.error("task must be a filename component when --out is omitted")
     out = args.out or Path(".lapis") / "renders" / f"{args.task or 'render'}.json"

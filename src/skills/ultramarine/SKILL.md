@@ -61,7 +61,8 @@ Every report follows `shared/slop/finding.schema.yaml`.
 
 1. **Render.** `lapis-design render check <url> --task <task>` captures 320, 390, 768, and 1440
    px in light, and the wider widths in dark when the page has a dark theme. While iterating on one
-   layout, add `--width <px>`; the release gate needs them all.
+   layout, add `--width <px>`; the release gate needs them all. For a page of plain files, `<url>`
+   may be the HTML file's path; render and behavior check serve its folder on 127.0.0.1 for the run.
 2. **Behavior**, for anything interactive. `lapis-design behavior check <url> --task <task> --plan
    .lapis/plans/<task>.yaml --stub .lapis/stub.yaml`. Every probe runs by default; `--probe <name>`
    narrows it while iterating. Without a stub, write the minimal one that

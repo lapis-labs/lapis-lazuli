@@ -211,8 +211,10 @@ Checks during work stay small; the full set runs once at the release gate.
    It needs no browser, so run it after every change to styles or markup: it finds literal colors,
    off-scale spacing, and bypassed primitives in the code (`system.*`) while they are cheap to fix.
 2. `lapis-design render check <url> --task <task> --width 390`, then rerun the lint with
-   `--extract .lapis/renders/<task>.json` added. When there is no server, keep the source-layer
-   lint and list the render check among the checks that did not run.
+   `--extract .lapis/renders/<task>.json` added. A page of plain files needs no server: give the
+   HTML file's path (or a `file://` URL) as `<url>`, and both checks serve its folder on 127.0.0.1
+   for the run, with that folder as the site root. When the render cannot run, keep the
+   source-layer lint and list the render check among the checks that did not run.
 3. Only when the change touched behavior: `lapis-design behavior check <url> --task <task>
    --plan .lapis/plans/<task>.yaml --stub .lapis/stub.yaml --probe <probe>`, one `--probe` per
    area you changed (forms, dialogs, choices, flows, keyboard, ...), then rerun the lint with

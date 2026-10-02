@@ -20,7 +20,7 @@ from jsonschema import ValidationError
 from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import sync_playwright
 
-from lapis_design import ours, shared_dir
+from lapis_design import local_site, ours, shared_dir
 from lapis_design.behavior_check import probes, redact
 from lapis_design.behavior_check.driver import Driver, MissingSyntheticValues
 from lapis_design.behavior_check.session import PROBE_NAMES, Session
@@ -37,7 +37,9 @@ def _stub_reference(path: Path) -> str | None:
 
 def main(argv: list[str] | None = None, prog: str = "lapis-design behavior check") -> int:
     parser = argparse.ArgumentParser(prog=prog, description="Exercise a locally served render safely.")
-    parser.add_argument("url")
+    parser.add_argument("url", help="the page: an http(s) URL on a host that is ours, or a file:// URL or path "
+                        "of an HTML file (its folder is served on 127.0.0.1 for the run, and the session "
+                        "records that address)")
     parser.add_argument("--task", required=True)
     parser.add_argument("--plan", type=Path)
     backend = parser.add_mutually_exclusive_group(required=True)
@@ -55,6 +57,15 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design behavior check
                         help="IANA zone the browser contexts run in (default UTC); absolute times without "
                              "a zone are read in it")
     args = parser.parse_args(argv)
+    try:
+        with local_site.serve(args.url) as url:
+            args.url = url
+            return _check(parser, args)
+    except local_site.NotServable as exc:      # raised on entry; the run itself never raises it
+        parser.error(str(exc))
+
+
+def _check(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
     try:
         args.url = ours.canonical_start_url(args.url)
         url = urlsplit(args.url)
