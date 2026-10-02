@@ -44,8 +44,9 @@ properties:
       additionalProperties:
         type: array
         items: { $ref: '#/$defs/record' }
-  values:                            # synthetic input by value id, e.g. v1; never use real people or cards
+  values:                            # synthetic input by value id: v1, v2, ... (the ids a session records); never use real people or cards
     type: object
+    propertyNames: { pattern: '^v[0-9]+$' }   # a session's value_id has this shape, so a fixture key must too
     additionalProperties:
       type: object
       additionalProperties: false
@@ -72,8 +73,8 @@ properties:
     additionalProperties: false
     required: [username, password]
     properties:
-      username: { type: string, minLength: 1 } # id of the login identifier value
-      password: { type: string, minLength: 1 } # id of the login secret value
+      username: { type: string, pattern: '^v[0-9]+$' } # id of the login identifier value
+      password: { type: string, pattern: '^v[0-9]+$' } # id of the login secret value
   auth:                              # sign-in endpoint sets a session cookie on successful credentials
     type: object
     additionalProperties: false

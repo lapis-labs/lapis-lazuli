@@ -193,9 +193,14 @@ with a live default, so an inner `aria-live="off"`, `timer`, or `marquee` silenc
 an `aria-hidden` subtree is not announced.
 
 **Wording.** Every probe that reads wording reads labels, dialog text, and messages in English and
-Korean, except that the forms probe reads the kind of form (sign-in, sign-up, checkout, and the
-like), error reasons, sign-in alternatives, cleared-field explanations, and same-as-offered text in
-English only, and the media probe reads its controls in English only. A plan goal matches page text
+Korean, except these, which are read in English only: in forms, the kind of form (sign-in, sign-up,
+checkout, and the like), a format or length rule in an error, cognitive tests and sign-in
+alternatives, cleared-field explanations, same-as-offered text, and the reason shown for a disabled
+submit; in media, the control that starts a sound; in the settle window, the words that make a
+changed box a status (cart, items, results, saved, added, sent, reserved); in flows, the email-only
+exit channel and a flow kind's own vocabulary (for `purchase`: buy, checkout, continue, pay, place,
+order), so a Korean plan carries its words in its goal; in choices, an option's price (`$`, `€`,
+`£`, or USD, EUR, GBP before the amount) and its period. A plan goal matches page text
 through its words of five or more letters, or two or more Hangul syllables. Each kind of wording
 (confirm, agree, cancel, close, decline, refuse, put off, remind, retry, a problem, and each commit
 result) has one shared list holding both languages, which every probe judging that kind reads, so a
@@ -269,7 +274,10 @@ and `commits` coverage is `partial`. For each commit control:
   withdraw, such as unsubscribed, 해지됐어요, 탈퇴했어요), `failure` (failed, not saved, try again), `pending`
   (in progress), `unknown` (the page says it is checking or cannot confirm), `saved-locally` (the
   page says the change is kept on this device), `none` (nothing said). Only text the region did not
-  show before the commit is read, so a standing note ("this cannot be undone") is not a claim. A
+  show before the commit is read, so a standing note ("this cannot be undone") is not a claim. An
+  exit commit is the commit of an exit flow, a commit of kind `cancel` or `delete`, or one whose
+  control is named for the exit action (Unsubscribe, Withdraw, Stop, Delete, 해지, 탈퇴, 철회, 수신 거부),
+  begins with the word Cancel, or ends with 취소 or 취소하기. A
   negated result reads as a failure (not saved, nothing was saved, cannot be saved, not all items
   were saved, 저장하지 않았어요, 결제를 완료하지 않았어요), unless it says the result cannot be confirmed (could not
   confirm, cannot be confirmed, 확인하지 못했어요), which is `unknown`; a conditional or future one (once
@@ -557,7 +565,9 @@ page ends the session, releases a hold, or discards input. `limit_s` is when tha
 `warned` when a warning appeared before it, `warn_lead_s` how long before, `extendable` when the
 warning offered a simple way to extend, `extensions` how many times extension worked (tried up to
 ten), `turn_off` and `adjustable` when settings reached before the limit let the user switch it off
-or lengthen it at least tenfold, `input_after_expiry` what happened to entered values.
+or lengthen it at least tenfold, `input_after_expiry` what happened to entered values. Each step of
+a recorded run is reached by the actions of the steps before it: on the same page while the probe
+has neither typed there nor advanced the clock, and otherwise after a fresh load that replays them.
 
 ## History
 
@@ -600,7 +610,10 @@ or lengthen it at least tenfold, `input_after_expiry` what happened to entered v
 - **`hover_media`**: images and videos hovered, and how many of them transform on hover.
 - **`scroll_reveal`**: boxes hidden at rest (opacity near 0 or clipped) until scrolled into view,
   and the delay between entering the viewport and becoming readable.
-- **`input_blocked_ms`**: the longest time an input was ignored while an animation ran.
+- **`input_blocked_ms`**: how long one ArrowDown took to scroll the page while an animation ran,
+  read once after the motion window: 0 when the page moved within 100 ms, 2000 when it had not
+  moved after 2 s, the measured time otherwise; absent when no CSS or Web animation was running or
+  fewer than 120 px were left to scroll. Recorded only; no rule reads it in v0.
 - **Scroll probe**: runs with no dialog open and at least three times the expected distance left to
   scroll. Three inputs of one kind (wheel 100 px, Space, ArrowDown, or a touch flick). `expected_px`
   is what the browser scrolls by default for those inputs: the driver replays the same three inputs,
@@ -735,7 +748,9 @@ without hints.
   only within one currency.
 - **`sneaked`**: cart lines added by `system` with an amount above zero.
 - **`hidden_terms`**: only for flows with a recurring charge (a `recurring` component or a cadence
-  other than once). Required terms are renewal price, cadence, and cancellation method, plus trial
+  other than once) whose run has a `commit_step`. A run without one has no point where terms are
+  due, so its `hidden_terms` is empty; a `purchase` or `subscribe` run that showed a recurring charge
+  and reached no commit is reported as not verified, not as hiding terms. Required terms are renewal price, cadence, and cancellation method, plus trial
   end and trial conversion when `trial` is true. Renewal price, cadence, and the trial terms are
   hidden unless `at_commit`; the cancellation method is hidden unless shown (near-commit, primary, or
   secondary) at or before the commit step. Other disclosure kinds are recorded but not required.

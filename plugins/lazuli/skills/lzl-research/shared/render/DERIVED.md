@@ -32,7 +32,10 @@ a 390 × 844 layout viewport, so `vh` units resolve against 844 px, while only t
 visible and `height` records 664. A full-height shell whose controls sit below 664 px is what
 `code.mobile-100vh` looks for.
 
-**Target hosts.** Hosts that are ours (defined below) are captured without a flag. A public host is
+**Target hosts.** The page URL uses `http` or `https`. Any other scheme (`file:`, `data:`, `about:`)
+is refused: a page opened from a file does not load modules or root-relative paths the way a served
+page does, and its URL carries a local path. Serve the folder on loopback instead. Hosts that are
+ours (defined below) are captured without a flag. A public host is
 captured only with `--public`. Even then, every host in the source registry
 (`sources/registry.yaml`), whatever its access policy, and every host in the plan's `references` is
 refused, including when a redirect lands there. `render check` takes an optional `--plan PATH`;
