@@ -26,7 +26,7 @@ A concept is a relation that changes order, emphasis, or labels, not a mood or a
 
 When the relation will not come, reframe the unit (not a card per sailing but the interval between tides), reverse a convention to see what it hides, or transfer a relation from another field and leave its props: a tide table sets each time beside the condition that governs it, which travels to a timetable without a wave graphic. Say where the analogy stops.
 
-A concept earns its place when it changes a consequential choice. Write two that differ in what governs order or emphasis, not in palette, choose one, and record the loser and the reason in `claims.proposed`; this is not checked. Invent no history to make a concept sound deep; a guess about the subject goes in `claims.proposed` too.
+A concept earns its place when it changes a consequential choice. Write two that differ in what governs order or emphasis, not in palette, choose one, and record the loser and the reason in `explorations` (decision `direction`); `plan.uncompared-decision` reads that both are recorded, not whether the concept is good. Invent no history to make a concept sound deep; a guess about the subject goes in `claims.proposed`.
 
 ## Allocate the levers
 

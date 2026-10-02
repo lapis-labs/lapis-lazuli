@@ -1,6 +1,6 @@
 ---
 name: lapis
-description: Plans new interfaces, redesigns, and visual direction before code - brief, world materials, type and color roles, layout, key copy, and keep-or-reject decisions on named defaults - in a plan file that lapis-design checks. Use for landing pages, app screens, dashboards, restyles, and "this looks generic".
+description: Plans new interfaces, redesigns, and visual direction before code - brief, world materials, type and color roles, layout, key copy, the candidates compared for each open decision, and keep-or-reject decisions on named defaults - in a plan file that lapis-design checks. Use for landing pages, app screens, dashboards, restyles, and "this looks generic".
 license: MIT AND CC-BY-4.0
 metadata:
   plugin: lapis
@@ -48,7 +48,7 @@ A small edit inside an established system needs no plan. Say so and make the edi
 
 ## Direction principles
 
-Four principles steer the direction steps below. Each names the plan field that holds it and what,
+Five principles steer the direction steps below. Each names the plan field that holds it and what,
 if anything, checks it.
 
 - `subject-first` - A decision that fits any other subject unchanged is a default: record it in
@@ -61,6 +61,27 @@ if anything, checks it.
 - `mode-sets-the-measure` - Persuade, operate, read, and experience measure different things, so one
   lever fits one mode and misleads in another. Set `direction.read.surface_mode` and
   `direction.dials` for each screen. The critic's vision check judges it; no rule reads it.
+- `explore-then-choose` - An open decision is made between candidates: two or more, compared on the
+  page's own content, before one wins. `explorations` holds them and `plan.uncompared-decision` reads
+  whether it does. A brief's no-network, no-external-assets, or offline line limits what the page
+  ships and loads, never what you explore: read the local inventory and the catalogs whatever the
+  brief says.
+
+## Explorations
+
+`explorations` holds one entry per open decision: each group of type roles (`covers` lists them), the
+palette, the layout structure, the motion level, the direction, and the headline, subhead, and cta
+(`covers`). An entry has at least two `candidates` (`name`, `source`), `compared_on` (`specimen`: the
+page's real copy set in each candidate; `render`; `sketch`), the `chosen` name, and `runner_up_lost`:
+why the closest alternative lost. A face's `source` is `local`, `catalog:<name>`, `adobe`,
+`commercial:<foundry>`, or `generic` (a generic family); for the other decisions it says what the
+candidate came from: a world material, a reference, a sketch of your own, or `generic`, the stock
+choice for this kind of page.
+
+A decision the contract or the brief fixes is marked `fixed_by: contract` or `brief` with a `reason`
+and needs no candidates. `contract` holds only when `context.design` is set, and the brief fixes
+what the page ships, so "offline" or "no external assets" fixes no face. A create plan whose open
+decision has no comparison, or whose type candidates are all generic families, is blocked.
 
 ## Write the plan
 
@@ -125,9 +146,15 @@ The motion dial has three bands: 1-3 feedback only, 4-6 transitions that explain
 moments. Write the band into `tokens.motion.principles` with a reduced-motion branch for each effect
 (`respect` is the only accepted value for `reduced_motion`). For timing and easing, interruption, scroll and route
 enhancement, choosing between native and library animation, and delivering authored animation, read
-`references/motion.md`.
+`references/motion.md`. Compare the band you pick with the one next to it on one real interaction and
+record the pick (`explorations`, decision `motion`).
 
 ### 4. Concept and signature - `direction.concept`, `direction.levers`, `layout.signature`
+
+Before committing, write two directions that differ in relationship or structure - the page organized
+around a different thing from the subject, not the same layout in another palette - and keep both in
+`explorations` (decision `direction`), each named by its relation. The pick becomes
+`direction.concept`; the other says why it lost.
 
 Write the concept as a relation that changes order, emphasis, or labels, starting from a live tension
 in the subject: a pottery shop's sales page becomes the record of one kiln firing. A mood or a style
@@ -159,16 +186,36 @@ code can seed a value you author, labeled as yours. Never invent a standard's va
 as an answer on each axis, how many colors each role needs, building from world materials, OKLCH
 ramps, themes, data scales, and physical standards, read `references/color.md`.
 
+Build two palettes from different world materials and compare them on the page's real content before
+choosing (`explorations`, decision `palette`).
+
 ### 7. Type - `tokens.type`
 
-Decide roles - display, heading, body, ui, data, code, caption - per script. Get candidates with
-`lazuli search --script <script> --role <role>`, choose, and lock each choice with
-`lazuli lock "<family>" --role <role> --task <task>`, which records source, license, and delivery
-path. Body faces are chosen for reading on the target platform; display faces for the subject's
-voice. For Korean text keep the face's default tracking at body sizes and set `word-break: keep-all`
-on Korean text blocks. For roles per script, choosing a face for each role, pairing Latin with
-Hangul, kana, or Han, CJK line breaking, measure and leading, scale, numerals, and display type,
-read `references/type.md`.
+Decide roles - display, heading, body, ui, data, code, caption - per script, then explore faces before
+choosing one. The brief's no-network, no-external-assets, or offline line limits what the page ships;
+it never limits this exploration, which always runs:
+
+1. Inventory: `lazuli local fonts --summary`; `--family <text>` for one family's faces, scripts, and
+   measurements; `--origin adobe-sync` for the Adobe Fonts activated here.
+2. Candidates: `lazuli search --script <script> --role <role>`, narrowed with `--category`,
+   `--license open`, `--delivery web`, `--installed`, or `--similar-to "<family>"`; run
+   `lazuli catalog sync` when `lazuli catalog status` shows no snapshot. Open-licensed libraries,
+   commercial foundries, and Adobe Fonts are all candidates to explore and brainstorm with; licensing,
+   purchase, or activation goes to the user.
+3. Specimen: set two or three candidates, at least one a named face, in the page's real copy (title,
+   paragraph, control, figures, every locale) on a throwaway page under `.lapis/specimens/`, and look
+   at it: `lapis-design render check .lapis/specimens/<task>.html --task <task>-specimen --width 390`
+   leaves screenshots beside its extract.
+4. Record the comparison in `explorations`; lock each chosen named face with
+   `lazuli lock "<family>" --role <role> --task <task>`, which records source, license, and delivery path.
+
+Offline shipping leaves three outcomes: an installed named face with a fallback stack, OFL files the
+user supplies for the project, or a generic family that won the comparison. A generic family alone is a
+choice that must win it, not a fallback. Body faces are chosen for reading on the target platform;
+display faces for the subject's voice. For Korean text keep the face's default tracking at body sizes
+and set `word-break: keep-all` on Korean text blocks. For roles per script, choosing a face for each
+role, pairing Latin with Hangul, kana, or Han, CJK line breaking, measure and leading, scale, numerals,
+and display type, read `references/type.md`.
 
 ### 8. Layout - `layout.procedure`, `layout.sections`
 
@@ -180,6 +227,9 @@ responsive primitives, density, and what to check after rendering, read `referen
 choosing the screen archetype, section kinds and their order, and what each product frame adds, read
 `references/archetypes.md`.
 
+Sketch two structures that group the content differently and compare them on the real content before
+choosing (`explorations`, decision `layout`).
+
 A chart, map, or other data view inside a section has its own decisions: choosing the form from the
 question, scales and annotation, text and keyboard access to its values, data color, and what an
 implementation must satisfy. For those, read `references/data-viz.md`.
@@ -189,8 +239,9 @@ implementation must satisfy. For those, read `references/data-viz.md`.
 Use real copy, or synthetic content from the domain that is clearly synthetic - long and local
 names included. Set the voice register per surface. Write key copy (headline, subhead, cta, empty
 state, error) in the target locale. Test each key line by swapping the product's name for another
-product's: if it stays true, rewrite it around a fact, number, or world material. Detailed copy
-work belongs to the `lps-copy` skill.
+product's: if it stays true, rewrite it around a fact, number, or world material. Write two candidates
+for the headline, subhead, and cta and keep the stronger (`explorations`, decision `copy`). Detailed
+copy work belongs to the `lps-copy` skill.
 
 ### 10. Flows and stub - `flows`, `.lapis/stub.yaml`
 
@@ -203,14 +254,16 @@ reauthentication requirement. Then write the stub (below). Flow design belongs t
 Walk the cards in `shared/slop/cards.yaml`. For each card whose cue matches the plan or the draft,
 decide each of its rules that applies:
 
-- **keep** with a basis - `brief`, `contract`, or `requirement` - and a reason that names what
-  earns it here. The rule's `keep_when` lines in `shared/slop/rules.yaml` say what usually does.
+- **keep** with a basis - `brief`, `contract`, or `requirement` - a `keep_when` naming one of the
+  rule's ids in `shared/slop/rules.yaml`, and a reason that says how this plan meets that case. A keep
+  whose id is not the rule's waives nothing, a rule that lists no case takes no keep, and no entry
+  lifts `plan.uncompared-decision`.
 - **reject** and take one of the card's routes. A route spends a world material, the signature, or
   a plan decision; it never swaps one card for another (rejecting the dark luminous package by
   switching to the warm editorial one is still a default).
 
-`plan check` asks about the defaults it can see in the plan. Record the others as you meet them;
-a `keep` entry is what stops a later check from gating that default.
+`plan check` asks about the defaults it can see in the plan. Record the others as you meet them; a
+`keep` entry with a fitting `keep_when` is what stops a later check from gating that default.
 
 ### 12. Sources - `sources`
 
@@ -218,8 +271,12 @@ List every document, page, and file the plan relied on.
 
 ## Plan gate
 
-1. Run `lapis-design plan check .lapis/plans/<task>.yaml` and fix every blocking finding.
-2. Run `lapis-design plan check .lapis/plans/<task>.yaml --summary`, show the user the summary and
+1. Read the plan once as a reviewer: for each decision, is it what a page of this kind usually gets -
+   the same type voice, palette, section order, motion level, or headline that would fit another
+   subject? If so, add a candidate from a different source to `explorations`, or write what makes the
+   default win here.
+2. Run `lapis-design plan check .lapis/plans/<task>.yaml` and fix every blocking finding.
+3. Run `lapis-design plan check .lapis/plans/<task>.yaml --summary`, show the user the summary and
    the defaults decisions, and wait for approval before code. In a harness plan mode, embed the
    plan as described in `shared/plan/HARNESS-PLAN-MODES.md`.
 

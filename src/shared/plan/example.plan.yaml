@@ -106,21 +106,86 @@ flows:
     start: /
     done: { text: 알림을 껐어요 }
     pair: firing-notices
+explorations:
+  - decision: type
+    covers: [heading]
+    candidates:
+      - { name: Gowun Batang, source: catalog:google-fonts, note: terminals close to the pen of the firing log }
+      - { name: Noto Serif KR, source: catalog:google-fonts }
+      - { name: system-ui, source: generic }
+    compared_on: [specimen]
+    chosen: Gowun Batang
+    runner_up_lost: Noto Serif KR held the title evenly but read as a newspaper, not as a studio's own log
+  - decision: type
+    covers: [body]
+    candidates:
+      - { name: Pretendard, source: local }
+      - { name: Noto Sans KR, source: catalog:google-fonts }
+    compared_on: [specimen]
+    chosen: Pretendard
+    runner_up_lost: Noto Sans KR set the same measure, but its Latin sat high beside Hangul in the reservation lines
+  - decision: palette
+    candidates:
+      - { name: log-sheet paper and kiln ink, source: firing log sheet }
+      - { name: cream with a terracotta accent, source: generic, note: the stock craft palette }
+    compared_on: [render]
+    chosen: log-sheet paper and kiln ink
+    runner_up_lost: cream with terracotta would compete with the glaze colors the photographs show
+  - decision: layout
+    candidates:
+      - { name: one ruled row per piece, source: firing log sheet }
+      - { name: a photo grid of piece cards, source: generic }
+    compared_on: [sketch]
+    chosen: one ruled row per piece
+    runner_up_lost: the grid hides the glaze number and the kiln position that tell pieces apart
+  - decision: motion
+    candidates:
+      - { name: feedback only, source: generic }
+      - { name: log rows draw in as they scroll into view, source: kiln temperature curve }
+    compared_on: [sketch]
+    chosen: feedback only
+    runner_up_lost: drawing the rows in delays the one thing visitors came for, the list of pieces
+  - decision: direction
+    candidates:
+      - { name: the record of one firing, source: firing log sheet }
+      - { name: a shop shelf of ceramics, source: generic }
+    compared_on: [sketch]
+    chosen: the record of one firing
+    runner_up_lost: a shelf is every pottery shop's page and says nothing about this month's kiln
+  - decision: copy
+    covers: [headline]
+    candidates:
+      - { name: "9월 소성분, 스물네 점이 나왔어요", source: firing log sheet }
+      - { name: "이달의 도자기를 만나보세요", source: generic }
+    compared_on: [specimen]
+    chosen: "9월 소성분, 스물네 점이 나왔어요"
+    runner_up_lost: the second line fits any shop; the first names the month and the count only this firing has
+  - decision: copy
+    covers: [cta]
+    candidates:
+      - { name: 예약하기, source: firing log sheet }
+      - { name: 지금 구매하기, source: generic }
+    compared_on: [specimen]
+    chosen: 예약하기
+    runner_up_lost: 구매하기 promises a checkout, but the studio holds a piece for the visitor to collect
 defaults:
   - id: type.single-neutral-sans
     decision: keep
+    keep_when: platform-body-readability
     basis: brief
     reason: Body text favors mobile readability, so a neutral sans stays
   - id: type.overused-neutral-grotesque
     decision: keep
+    keep_when: won-comparison
     basis: brief
-    reason: Body text favors mobile readability, so a neutral sans stays
+    reason: Pretendard won the body specimen on a phone against Noto Sans KR
   - id: color.warm-editorial
     decision: reject
     basis: brief
     reason: A cream base with terracotta would compete with the glaze colors
   - id: color.cream-base
     decision: keep
+    keep_when: paper-material
     basis: brief
     reason: The field is the paper of the firing log sheet, one of the world materials
 sources:

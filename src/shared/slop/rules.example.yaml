@@ -44,7 +44,9 @@ rules:
     packages: [warm-editorial]
     why: An earthy accent used regardless of the subject
     better: Ground the accent in the subject's world_materials, or choose again using relation vocabulary
-    keep_when: [approved brand color, the subject itself is terracotta]
+    keep_when:
+      - { id: brand-color, when: "an approved brand color" }
+      - { id: clay-subject, when: "the subject itself is terracotta or clay" }
     waiver: { scope: value }
     verify: static
 

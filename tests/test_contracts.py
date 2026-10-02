@@ -173,9 +173,17 @@ FRAGMENT_STARTS = ("such as", "or ", "and ", "where ", "which ", "including ", "
 
 
 def test_keep_when_items_are_whole_conditions():
-    bad = [(r["id"], k) for r in rules_doc()["rules"] for k in r.get("keep_when", [])
-           if k.lower().startswith(FRAGMENT_STARTS) or len(k) < 8]
+    bad = [(r["id"], k["id"]) for r in rules_doc()["rules"] for k in r.get("keep_when", [])
+           if k["when"].lower().startswith(FRAGMENT_STARTS) or len(k["when"]) < 8]
     assert bad == []
+
+
+def test_keep_when_ids_are_unique_within_their_rule():
+    """A plan's keep names an id of the rule it is for; two cases under one id could not be told apart."""
+    repeated = [(r["id"], i) for r in rules_doc()["rules"]
+                for i in {k["id"] for k in r.get("keep_when", [])
+                          if [c["id"] for c in r["keep_when"]].count(k["id"]) > 1}]
+    assert repeated == []
 
 
 def test_every_observed_layer_has_a_detector_except_review():

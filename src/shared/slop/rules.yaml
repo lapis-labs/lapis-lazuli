@@ -20,6 +20,10 @@
 #                alone should force a keep/reject decision; warn when the signal is weak alone, only
 #                matters inside a package, or a detector is statistical (copy families and shells,
 #                embeddings, typicality distance).
+#   keep_when    the cases a `keep` can rely on, each with a stable id (unique within the rule). A plan's
+#                `defaults` keep names one as `keep_when`; the check waives the finding only when the id
+#                is one of that rule's, and a rule that lists none takes no keep. Adding a case is
+#                a contract change: say what the plan has to show, since the check cannot read it.
 #   review severity (P0-P3) starts from the default in the previous repository's checklist (see
 #   Provenance source prefixes). `severity.adjust` lists the conditions that move it; the evaluator
 #   applies the first that matches, otherwise impact decides.
@@ -242,7 +246,7 @@ rules:
     why: A font family outside the design contract gives one region an unrelated typographic voice
     better: Use the contract family for that role, or record a proposed design change with the reason
     keep_when:
-      - "the change is recorded as a proposed design change"
+      - { id: proposed-change, when: "the change is recorded as a proposed design change" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -259,7 +263,7 @@ rules:
     why: Literal colors outside semantic tokens drift into near-duplicate grays and accents
     better: Use the semantic token for the role, or add a token when the value repeats with a real role
     keep_when:
-      - "data or content colors that come from the content itself, such as a product swatch"
+      - { id: content-color, when: "data or content colors that come from the content itself, such as a product swatch" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -277,7 +281,7 @@ rules:
     why: One-off radius, size, or spacing values make equivalent components drift without a role or optical reason
     better: Use the scale step for the same role and condition; document an optical correction when one is needed
     keep_when:
-      - "a documented optical correction, such as balancing an icon inside a round button"
+      - { id: optical-correction, when: "a documented optical correction, such as balancing an icon inside a round button" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -294,11 +298,27 @@ rules:
     why: A component that bypasses the adopted primitives or theme API behaves and styles its states differently from its peers
     better: Build on the adopted primitive and theme API; extend the primitive when it lacks a needed state
     keep_when:
-      - "the primitive cannot express a documented requirement and the gap is recorded"
+      - { id: recorded-primitive-gap, when: "the primitive cannot express a documented requirement and the gap is recorded" }
     waiver: { scope: value }
     verify: review
     provenance:
       - { kind: taxonomy, source: "checklist#SYS-04", note: "fix pointer design-systems/component-architecture.md" }
+
+  # =============================================================== plan (decision evidence)
+
+  - id: plan.uncompared-decision
+    class: quality
+    domain: plan
+    layers: [plan]
+    severity: { create: gate, review: P1 }
+    detect:
+      plan: { detector: plan-candidates, path: explorations, params: { modes: [create], copy_slots: [headline, subhead, cta], min_candidates: 2 } }
+    why: A decision made without a second candidate is the first answer that came to mind, and for most pages that is the default for that kind of page
+    better: Record each open decision in explorations - two or more candidates with their sources, what they were compared on, the chosen one, and why the runner-up lost; a decision the contract or the brief fixes says so with fixed_by
+    waiver: { scope: none }
+    verify: static
+    provenance:
+      - { kind: method, source: "local pilot rollouts 2026-10-02", note: "every font role was set to system-ui and the generic-family rules were kept as INFO; no candidate was recorded for any decision" }
 
   # =============================================================== type
 
@@ -314,8 +334,8 @@ rules:
     why: A high-contrast or italic serif display stands in for premium without any tie to the subject
     better: Choose display type from the product's material, voice, and content; compare a subject-earned serif, sans, and mixed route
     keep_when:
-      - "the brand or contract specifies the face"
-      - "publishing or editorial subjects where the reading sequence earns it"
+      - { id: specified-face, when: "the brand or contract specifies the face" }
+      - { id: editorial-reading, when: "publishing or editorial subjects where the reading sequence earns it" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -333,8 +353,8 @@ rules:
     why: A small tracked uppercase label or index marker repeats before most headings without adding category, scope, state, or sequence
     better: Remove it; when context is needed, write a specific label and let the title carry the proposition
     keep_when:
-      - "the label names a real category or scope that differs between sections"
-      - "the marker numbers a real ordered process"
+      - { id: real-category, when: "the label names a real category or scope that differs between sections" }
+      - { id: ordered-process, when: "the marker numbers a real ordered process" }
     waiver: { scope: rule }
     verify: review
     provenance:
@@ -351,8 +371,8 @@ rules:
     why: A badge chip or status strip above a headline delays the message and can imply a state that does not exist
     better: Keep a real current status beside the object it describes; otherwise omit it
     keep_when:
-      - "the badge reflects authoritative current state"
-      - "the chip filters content or identifies authoritative current state"
+      - { id: current-state, when: "the badge reflects authoritative current state" }
+      - { id: filter-or-state-chip, when: "the chip filters content or identifies authoritative current state" }
     waiver: { scope: value }
     verify: review
     provenance:
@@ -369,7 +389,7 @@ rules:
     why: Every section opens with the same stacked icon tile, heading, and paragraph, so the icon only duplicates the label
     better: Use icons for recognition or actions; let content differences shape each section
     keep_when:
-      - "icons that users need to recognize a category or action"
+      - { id: recognition-icon, when: "icons that users need to recognize a category or action" }
     waiver: { scope: rule }
     verify: static
     provenance:
@@ -387,7 +407,7 @@ rules:
     why: Headline scale grows past the content and viewport need, crowding the task or wrapping awkwardly
     better: Balance title, evidence, and action for the surface; do not force every opening into one viewport
     keep_when:
-      - "an immersive or campaign opening where the title is the content"
+      - { id: title-is-content, when: "an immersive or campaign opening where the title is the content" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -405,7 +425,7 @@ rules:
     why: Tracking tighter than the face tolerates makes letterforms collide and word shapes collapse
     better: Respect the face's spacing; tighten only display sizes where the letterforms survive
     keep_when:
-      - "a display face designed for tight setting at that size"
+      - { id: tight-display-face, when: "a display face designed for tight setting at that size" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -452,7 +472,7 @@ rules:
     why: Paragraphs that run past a comfortable measure make readers lose the next line
     better: Constrain the prose measure; give data its own grid
     keep_when:
-      - "tables and data rows, which follow their own grid"
+      - { id: data-grid, when: "tables and data rows, which follow their own grid" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -486,10 +506,11 @@ rules:
       render: { detector: rendered-family-region, list: overused_type_regions }
     packages: [dark-luminous]
     why: A featureless low-contrast, high-x-height grotesque carries every role with no distinction between product, editorial, and data voices
-    better: Pair type by role, or record a keep decision when body readability or the contract justifies it
+    better: Pair type by role; keep the face only when the contract or platform specifies it, or when it won a recorded comparison on this surface's own copy
     keep_when:
-      - "the contract or platform specifies the face"
-      - "a one-family system with deliberate role variation"
+      - { id: specified-face, when: "the contract or platform specifies the face" }
+      - { id: role-variation, when: "a one-family system with deliberate role variation" }
+      - { id: won-comparison, when: "the face won a side-by-side comparison on this surface's own copy, recorded in explorations" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -507,9 +528,9 @@ rules:
     why: One family, usually a neutral sans, carries every role with no variation in width, optical size, or weight, so consistency turns into monotony
     better: Vary optical size, width, or weight by role, or add a deliberate companion face
     keep_when:
-      - "a one-family system that varies width, optical size, or weight by role"
-      - "body readability on the target platform favors one family"
-      - "the contract specifies one family"
+      - { id: role-variation, when: "a one-family system that varies width, optical size, or weight by role" }
+      - { id: platform-body-readability, when: "body readability on the target platform favors one family" }
+      - { id: specified-family, when: "the contract specifies one family" }
     waiver: { scope: rule }
     verify: static
     provenance:
@@ -527,8 +548,8 @@ rules:
     why: All-caps prose and decorative micro-labels assert importance without adding hierarchy or meaning
     better: Reserve capitals for brief, readable labels whose role or brand earns them
     keep_when:
-      - "short labels whose role is established"
-      - "brand wordmarks"
+      - { id: established-label, when: "short labels whose role is established" }
+      - { id: brand-wordmark, when: "brand wordmarks" }
     waiver: { scope: rule }
     verify: static
     provenance:
@@ -544,7 +565,7 @@ rules:
     why: Miniaturized interface text signals sophistication at the cost of legibility
     better: Use readable sizes and reduce density structurally instead
     keep_when:
-      - "legal or metadata text that has a readable alternative"
+      - { id: legal-metadata, when: "legal or metadata text that has a readable alternative" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -562,8 +583,8 @@ rules:
     why: Monospace is worn as a technical costume on prose and headings instead of marking code, identifiers, or aligned values
     better: Use monospace for semantic code, identifiers, or aligned numbers
     keep_when:
-      - "developer products where the text is code"
-      - "a brand face that happens to be monospaced"
+      - { id: code-product, when: "developer products where the text is code" }
+      - { id: monospaced-brand-face, when: "a brand face that happens to be monospaced" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -608,7 +629,7 @@ rules:
     why: Negative tracking applied to Korean body text out of habit crowds the syllable blocks
     better: Keep Hangul body tracking at the face's default unless a measured face needs a small correction
     keep_when:
-      - "the face's metrics are measured to need it at that size"
+      - { id: measured-correction, when: "the face's metrics are measured to need it at that size" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -642,7 +663,7 @@ rules:
     why: A palette or primary-color swap is the only change to a starter surface, so color is asked to distinguish default type, composition, and components
     better: Derive color roles from the subject, then resolve type, composition, imagery, and states on their own terms
     keep_when:
-      - "the task is only a recolor of an approved system"
+      - { id: recolor-task, when: "the task is only a recolor of an approved system" }
     waiver: { scope: rule }
     verify: review
     provenance:
@@ -662,8 +683,8 @@ rules:
     why: A violet-to-blue gradient supplies the whole mood of an otherwise unchanged composition
     better: Derive color roles from the subject and let a gradient appear only where it encodes something, such as a spectrum
     keep_when:
-      - "an approved brand gradient"
-      - "generative media, or light as the subject"
+      - { id: brand-gradient, when: "an approved brand gradient" }
+      - { id: light-is-subject, when: "generative media, or light as the subject" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -681,7 +702,7 @@ rules:
     why: Gradient text or one accent-colored word is the headline's main emphasis, substituting a color effect for title craft
     better: Write a precise title; use a solid role color or image emphasis only when it clarifies meaning
     keep_when:
-      - "the colored word encodes a real category or state"
+      - { id: encoded-state, when: "the colored word encodes a real category or state" }
     waiver: { scope: value }
     verify: review
     provenance:
@@ -699,7 +720,7 @@ rules:
     why: A radial halo or soft spotlight behind the hero fills space and simulates depth without meaning or a material model
     better: Recompose around content or use subject-specific imagery; keep one consistent light and surface model
     keep_when:
-      - "light itself is the subject, such as a lighting or display product"
+      - { id: light-is-subject, when: "light itself is the subject, such as a lighting or display product" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -718,7 +739,7 @@ rules:
     why: Bright outer glow on dark surfaces is a technical costume that blurs hierarchy and boundaries
     better: Build a functional dark palette with semantic roles; mark focus and state with borders and contrast
     keep_when:
-      - "nightlife, gaming, or display subjects where emitted light is the material"
+      - { id: emitted-light, when: "nightlife, gaming, or display subjects where emitted light is the material" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -751,7 +772,7 @@ rules:
     why: Warm cream, a clay or brass accent, and serif display arrive together as a category-generic premium package
     better: Earn warmth through the subject's materials, imagery, and brand evidence; resolve type and accent separately
     keep_when:
-      - "food, publishing, craft, or material products whose type, imagery, grid, and copy come from the subject"
+      - { id: subject-material, when: "food, publishing, craft, or material products whose type, imagery, grid, and copy come from the subject" }
     waiver: { scope: rule }
     verify: static
     provenance:
@@ -770,8 +791,8 @@ rules:
     why: A warm cream field reads as quiet premium by default; alone it is weak, together with a clay accent and serif display it is a package
     better: Choose the field from the subject's paper, material, or imagery, and check it against the content colors
     keep_when:
-      - "the subject's material is paper or unbleached stock"
-      - "an approved brand field"
+      - { id: paper-material, when: "the subject's material is paper or unbleached stock" }
+      - { id: brand-field, when: "an approved brand field" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -794,8 +815,8 @@ rules:
     why: An earthy accent used regardless of the subject, where one fashionable hue substitutes for identity
     better: Ground the accent in the subject's world_materials, or choose again from the plan's color relations
     keep_when:
-      - "an approved brand color"
-      - "the subject itself is terracotta or clay"
+      - { id: brand-color, when: "an approved brand color" }
+      - { id: clay-subject, when: "the subject itself is terracotta or clay" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -811,8 +832,8 @@ rules:
     why: Several unrelated accent hues compete, so action, focus, status, data, and ornament become ambiguous
     better: Allocate each accent to a role and check its area and repetition; there is no universal accent count
     keep_when:
-      - "categorical data palettes"
-      - "a multi-hue relation chosen in the plan"
+      - { id: categorical-data, when: "categorical data palettes" }
+      - { id: planned-multi-hue, when: "a multi-hue relation chosen in the plan" }
     waiver: { scope: value }
     verify: review
     provenance:
@@ -829,7 +850,7 @@ rules:
     why: Neutrals of different temperatures make components look assembled from different kits
     better: Use one neutral family, or deliberate warm and cool zones with a reason
     keep_when:
-      - "deliberate temperature zones recorded in the plan"
+      - { id: temperature-zones, when: "deliberate temperature zones recorded in the plan" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -846,9 +867,9 @@ rules:
     why: Pure black and white used by habit flatten material relationships
     better: Choose endpoints deliberately while keeping the required contrast
     keep_when:
-      - "high-contrast themes"
-      - "e-ink or print targets"
-      - "an approved brand pair"
+      - { id: high-contrast-theme, when: "high-contrast themes" }
+      - { id: eink-or-print, when: "e-ink or print targets" }
+      - { id: brand-pair, when: "an approved brand pair" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -878,7 +899,7 @@ rules:
     why: Text contrast below the applicable requirement, measured on the actual surface in every theme
     better: Adjust the text or surface role until both themes meet the requirement on the worst backdrop state
     keep_when:
-      - "disabled controls and pure decoration are outside this requirement"
+      - { id: disabled-or-decoration, when: "disabled controls and pure decoration are outside this requirement" }
     waiver: { scope: none }
     verify: static
     provenance:
@@ -896,9 +917,9 @@ rules:
     why: A dark field, violet-to-blue gradients, glow, glass cards, and buzzword copy arrive together as a technical-mood package
     better: Build a functional dark palette with semantic roles and let the product's real output supply any ambient color
     keep_when:
-      - "generative media"
-      - "light or spectral subjects"
-      - "an established brand that uses these materials"
+      - { id: generative-media, when: "generative media" }
+      - { id: light-subject, when: "light or spectral subjects" }
+      - { id: brand-materials, when: "an established brand that uses these materials" }
     waiver: { scope: rule }
     verify: static
     provenance:
@@ -918,8 +939,8 @@ rules:
     why: Translucent glass on most panels stops communicating layering and weakens backdrop contrast
     better: Reserve transparency for real overlays and depth
     keep_when:
-      - "platform materials that the platform itself applies"
-      - "overlays above live content"
+      - { id: platform-material, when: "platform materials that the platform itself applies" }
+      - { id: overlay-on-content, when: "overlays above live content" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -936,8 +957,8 @@ rules:
     why: One large or pill radius on every container erases shape hierarchy
     better: Assign radii by component role and platform
     keep_when:
-      - "a platform convention"
-      - "a brand shape language recorded in the contract"
+      - { id: platform-convention, when: "a platform convention" }
+      - { id: contract-shape-language, when: "a brand shape language recorded in the contract" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -954,7 +975,7 @@ rules:
     why: A colored side border on rounded cards speaks a selected-state language without any state
     better: Show actual selection or hierarchy, or remove the border
     keep_when:
-      - "the border marks real selection, status, or a callout type"
+      - { id: real-selection-or-status, when: "the border marks real selection, status, or a callout type" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -970,7 +991,7 @@ rules:
     why: Borders and shadows disagree in color, direction, or depth with the rest of the surface model
     better: Align boundary and elevation roles to one shared light and depth model
     keep_when:
-      - "a fine border plus soft shadow on an overlay, where both roles are distinct"
+      - { id: distinct-overlay-roles, when: "a fine border plus soft shadow on an overlay, where both roles are distinct" }
     waiver: { scope: value }
     verify: review
     provenance:
@@ -987,7 +1008,7 @@ rules:
     why: A decorative grid or crosshair background adds a designed texture with no product meaning
     better: Derive texture from the subject, or remove it
     keep_when:
-      - "the grid is the subject, such as a drafting, mapping, or measurement product"
+      - { id: grid-is-subject, when: "the grid is the subject, such as a drafting, mapping, or measurement product" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -1004,7 +1025,7 @@ rules:
     why: Thick outlines with hard offset shadows on every card replace one package with another over an unchanged structure
     better: Keep hard edges only where a direct graphic voice is earned, and resolve the structure first
     keep_when:
-      - "games, creator commerce, or a brand with an established direct graphic voice"
+      - { id: graphic-voice, when: "games, creator commerce, or a brand with an established direct graphic voice" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -1020,7 +1041,7 @@ rules:
     why: Offset shadows, costume monospace, capitals, and oversized grotesque arrive together as a hard-edge package
     better: Resolve structure, type roles, and palette from the subject before choosing a graphic voice
     keep_when:
-      - "games, creator commerce, culture, or independent tools with an established direct voice"
+      - { id: graphic-voice, when: "games, creator commerce, culture, or independent tools with an established direct voice" }
     waiver: { scope: rule }
     verify: static
     provenance:
@@ -1039,7 +1060,7 @@ rules:
     why: A centered or split hero shell was chosen before the proposition, evidence, action, and imagery were ranked
     better: Rank the opening's content first, then choose the conventional or unusual composition that expresses that order
     keep_when:
-      - "the ranked content genuinely calls for the conventional shell"
+      - { id: priority-calls-for-shell, when: "the ranked content genuinely calls for the conventional shell" }
     waiver: { scope: rule }
     verify: review
     provenance:
@@ -1056,7 +1077,7 @@ rules:
     why: Feature or pricing cards get equal size and emphasis despite unequal content, flattening priority and recommendation
     better: Let comparison needs and content importance set count, span, order, and emphasis
     keep_when:
-      - "a genuine peer comparison of equal items"
+      - { id: peer-comparison, when: "a genuine peer comparison of equal items" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -1073,7 +1094,7 @@ rules:
     why: Containers stack border on border without distinct ownership or behavior, obscuring relationships
     better: Group with space, rules, or one meaningful surface
     keep_when:
-      - "an inner surface with its own role, such as a chart plot area inside a data card"
+      - { id: inner-role-surface, when: "an inner surface with its own role, such as a chart plot area inside a data card" }
     waiver: { scope: value }
     verify: review
     provenance:
@@ -1091,7 +1112,7 @@ rules:
     why: Section order follows a category landing template, or unrelated sections repeat identical spans, instead of following the questions the reader brings
     better: Order sections by the reader's evaluation or task sequence, and vary structure when the content relation changes
     keep_when:
-      - "the reader's questions genuinely follow that order"
+      - { id: reader-question-order, when: "the reader's questions genuinely follow that order" }
     waiver: { scope: rule }
     verify: static
     provenance:
@@ -1124,7 +1145,7 @@ rules:
     why: Image and text rows alternate by rule without a narrative reason, making distinct ideas look equivalent
     better: Consolidate related content or choose a structure that reflects each relationship
     keep_when:
-      - "a step-by-step narrative where alternation tracks the sequence"
+      - { id: sequence-narrative, when: "a step-by-step narrative where alternation tracks the sequence" }
     waiver: { scope: rule }
     verify: static
     provenance:
@@ -1141,9 +1162,9 @@ rules:
     why: Numbers on non-sequential sections imply progress, sequence, or record identity that does not exist
     better: Number only real steps, ranked items, or records; otherwise use descriptive headings
     keep_when:
-      - "a real ordered process"
-      - "ranked items"
-      - "record identifiers"
+      - { id: ordered-process, when: "a real ordered process" }
+      - { id: ranked-items, when: "ranked items" }
+      - { id: record-identifiers, when: "record identifiers" }
     waiver: { scope: rule }
     verify: review
     provenance:
@@ -1189,7 +1210,7 @@ rules:
     why: Fixed columns overflow at compact width, so text or controls clip, overlap, or force page scrolling
     better: Let columns collapse or reflow at compact widths; scroll only regions whose content needs two dimensions
     keep_when:
-      - "data tables, maps, and diagrams that scroll inside their own region"
+      - { id: scrolling-region, when: "data tables, maps, and diagrams that scroll inside their own region" }
     waiver: { scope: none }
     verify: static
     provenance:
@@ -1221,7 +1242,7 @@ rules:
     why: Cards touch the viewport or scroller edge without a safe inset, so content feels clipped and targets become awkward
     better: Add an intentional inset and a visible scroll affordance
     keep_when:
-      - "full-bleed media that is meant to run to the edge"
+      - { id: full-bleed-media, when: "full-bleed media that is meant to run to the edge" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -1252,7 +1273,7 @@ rules:
     why: A decorative opening stack pushes necessary context or the primary action out of reach
     better: Remove the unearned stack; keep deliberate long-form or immersive openings without enforcing a universal fold
     keep_when:
-      - "a deliberate immersive or long-form opening"
+      - { id: immersive-opening, when: "a deliberate immersive or long-form opening" }
     waiver: { scope: value }
     verify: review
     provenance:
@@ -1282,7 +1303,7 @@ rules:
     why: A decorative layer covers text, hiding content
     better: Reorder the layers or reserve space for the text
     keep_when:
-      - "display type that a layer overlaps partly while every word stays legible"
+      - { id: legible-overlap, when: "display type that a layer overlaps partly while every word stays legible" }
     waiver: { scope: none }
     verify: static
     provenance:
@@ -1298,7 +1319,7 @@ rules:
     why: Cards become the whole page structure, so every item is equal and enclosed
     better: Use rows, groups, sections, or bare content where they express the relation better
     keep_when:
-      - "collections of independent, comparable objects"
+      - { id: independent-objects, when: "collections of independent, comparable objects" }
     waiver: { scope: rule }
     verify: review
     provenance:
@@ -1329,7 +1350,7 @@ rules:
     why: Nearly everything centers on one axis, so the layout expresses no priority through placement
     better: Place content by reading order and weight; keep symmetry where the content is genuinely balanced
     keep_when:
-      - "ceremonial, poster-like, or single-message surfaces"
+      - { id: ceremonial-surface, when: "ceremonial, poster-like, or single-message surfaces" }
     waiver: { scope: rule }
     verify: static
     provenance:
@@ -1361,7 +1382,7 @@ rules:
     why: A lever that names no material of this subject (clean, modern, bold type, more whitespace) would fit any product, so the direction stays a default
     better: Write each lever as one sentence - the lever, what visibly changes, and the world material it comes from, named as world_materials writes it
     keep_when:
-      - "the contract or the brief fixes the form and the plan says so"
+      - { id: form-fixed-by-contract-or-brief, when: "the contract or the brief fixes the form and the plan says so" }
     waiver: { scope: rule }
     verify: static
     provenance:
@@ -1394,7 +1415,7 @@ rules:
     why: Emoji or Unicode glyphs serve as product icons, so weight and style vary by operating system
     better: Use one maintained icon family and label icon-only buttons
     keep_when:
-      - "user-generated content, reactions, or a brand voice built on emoji"
+      - { id: emoji-content, when: "user-generated content, reactions, or a brand voice built on emoji" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -1412,7 +1433,7 @@ rules:
     why: Hand-authored SVG paths for standard actions reinvent tested geometry and drift from the library icons beside them
     better: Use the project icon family for standard actions; draw custom icons only for subject-specific concepts
     keep_when:
-      - "custom icons for concepts the family does not cover, drawn on the family's grid and stroke"
+      - { id: uncovered-concept, when: "custom icons for concepts the family does not cover, drawn on the family's grid and stroke" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -1445,7 +1466,7 @@ rules:
     why: Decorative divs mimic an app window or data, replacing real product evidence with a facsimile
     better: Use a real capture or a clearly labeled illustrative slot
     keep_when:
-      - "a labeled illustration where no product exists yet"
+      - { id: labeled-illustration, when: "a labeled illustration where no product exists yet" }
     waiver: { scope: value }
     verify: review
     provenance:
@@ -1477,7 +1498,7 @@ rules:
     why: The component library's starter styling has become the brand even though its behavior is sound
     better: Keep the useful primitives, then define type, color roles, radius, spacing, states, and composition from the product
     keep_when:
-      - "internal tools where the library's system is the adopted contract"
+      - { id: adopted-library-system, when: "internal tools where the library's system is the adopted contract" }
     waiver: { scope: rule }
     verify: static
     provenance:
@@ -1527,10 +1548,10 @@ rules:
     why: A pointer target is smaller than 24 by 24 CSS px and has too little clear space around it, so it is easy to miss or to hit a neighbor
     better: Make targets at least 24 px, or keep clear space around small ones; touch-first surfaces are easier at 44 px
     keep_when:
-      - "links inside a sentence"
-      - "controls left at the size the browser gives them"
-      - "a control whose function a full-size control on the same page also offers"
-      - "targets whose size carries information, such as map pins at their true positions"
+      - { id: inline-link, when: "links inside a sentence" }
+      - { id: browser-default-size, when: "controls left at the size the browser gives them" }
+      - { id: equivalent-full-size-control, when: "a control whose function a full-size control on the same page also offers" }
+      - { id: size-carries-information, when: "targets whose size carries information, such as map pins at their true positions" }
     waiver: { scope: none }
     verify: static
     provenance:
@@ -1549,8 +1570,8 @@ rules:
     why: A modal handles routine navigation or a long task, interrupting context without a protected-focus need
     better: Use a page, sheet, inline edit, or disclosure as the task requires
     keep_when:
-      - "confirmation of a destructive action"
-      - "a short task that must block the rest of the screen"
+      - { id: destructive-confirmation, when: "confirmation of a destructive action" }
+      - { id: blocking-short-task, when: "a short task that must block the rest of the screen" }
     waiver: { scope: value }
     verify: runtime
     provenance:
@@ -1571,7 +1592,7 @@ rules:
     why: An element that looks interactive does nothing, or a runtime error or cosmetic result stands in for the promised state or data outcome
     better: Exercise the consequential path and make the control produce the state or data it promises
     keep_when:
-      - "a local prototype whose stated scope excludes the backend, where the control says so"
+      - { id: prototype-scope, when: "a local prototype whose stated scope excludes the backend, where the control says so" }
     waiver: { scope: none }
     verify: runtime
     provenance:
@@ -1588,7 +1609,7 @@ rules:
     why: A polished resting frame hides missing states that the task can reach - empty, loading, error, offline, success, or recovery
     better: Design and exercise every relevant state, including recovery
     keep_when:
-      - "states the surface cannot reach, such as offline on a static page"
+      - { id: unreachable-state, when: "states the surface cannot reach, such as offline on a static page" }
     waiver: { scope: none }
     verify: runtime
     provenance:
@@ -1614,7 +1635,7 @@ rules:
     why: An optional extra, a consent, or a costlier plan is already selected, so doing nothing becomes agreement
     better: Start optional choices unselected and let the user opt in; show plans side by side without a default pick
     keep_when:
-      - "a free, reversible default that is neither a consent nor a charge, such as standard delivery"
+      - { id: free-reversible-default, when: "a free, reversible default that is neither a consent nor a charge, such as standard delivery" }
     waiver: { scope: none }
     verify: runtime
     provenance:
@@ -1634,7 +1655,7 @@ rules:
     why: Required fees, shipping, or taxes first appear, or the price rises or loses a discount, after the price the user compared, so the price shown is not the price paid
     better: Show the total the user must pay where the price first appears, or name each required charge there as still to be calculated, and keep it unless the user changes something
     keep_when:
-      - "a charge that depends on input given later, such as a delivery address, named as pending where the price first appears"
+      - { id: pending-input-charge, when: "a charge that depends on input given later, such as a delivery address, named as pending where the price first appears" }
     waiver: { scope: none }
     verify: runtime
     provenance:
@@ -1721,7 +1742,7 @@ rules:
     why: The option that serves the business far outweighs the refusal - a large filled button against small, faint, or unstyled text
     better: Give accepting and declining comparable size, contrast, and styling, and let the labels explain the difference
     keep_when:
-      - "choices without a business-favored side, such as confirming the user's own action"
+      - { id: no-favored-side, when: "choices without a business-favored side, such as confirming the user's own action" }
     waiver: { scope: none }
     verify: runtime
     provenance:
@@ -1794,7 +1815,7 @@ rules:
     why: The flow demands something the goal does not need - an account, an optional consent, a permission, a share, an app install, or a survey - before the user can continue
     better: Ask only for what the task needs; offer a guest path and make optional steps skippable
     keep_when:
-      - "prerequisites the plan flow lists under requires with a reason, such as an account for a service that keeps the user's data"
+      - { id: listed-prerequisite, when: "prerequisites the plan flow lists under requires with a reason, such as an account for a service that keeps the user's data" }
     waiver: { scope: none }
     verify: runtime
     provenance:
@@ -1911,7 +1932,7 @@ rules:
     why: Sighted keyboard users tab through a long repeated header on every page, or a skip link is present but leaves focus where it was
     better: Make the first stop a skip link that becomes visible on focus and moves focus into the main content
     keep_when:
-      - "a short header whose few stops are the page's main task"
+      - { id: short-header, when: "a short header whose few stops are the page's main task" }
     waiver: { scope: value }
     verify: runtime
     provenance:
@@ -1976,7 +1997,7 @@ rules:
     why: A session or hold expires without warning or a simple way to extend it, and entered work can be lost
     better: Warn before the limit with at least 20 seconds to extend in one action, or remove the limit
     keep_when:
-      - "limits that are essential or tied to a real-time event, such as an auction closing"
+      - { id: essential-limit, when: "limits that are essential or tied to a real-time event, such as an auction closing" }
     waiver: { scope: none }
     verify: runtime
     provenance:
@@ -1993,7 +2014,7 @@ rules:
     why: Reordering, sliding, swiping, or zooming works only with a drag or a multi-finger gesture
     better: Offer a single-tap alternative such as move buttons, a menu, or a value input, alongside keyboard support
     keep_when:
-      - "gestures that are the task itself, such as freehand drawing"
+      - { id: gesture-is-task, when: "gestures that are the task itself, such as freehand drawing" }
     waiver: { scope: none }
     verify: runtime
     provenance:
@@ -2061,8 +2082,8 @@ rules:
     why: A later step asks again for information the user already gave, without prefilling it or offering to reuse it
     better: Carry values forward within the flow, or offer a same-as option
     keep_when:
-      - "re-entry that protects security, such as confirming a new password"
-      - "information that is no longer valid, such as an expired code"
+      - { id: security-reentry, when: "re-entry that protects security, such as confirming a new password" }
+      - { id: expired-information, when: "information that is no longer valid, such as an expired code" }
     waiver: { scope: none }
     verify: runtime
     provenance:
@@ -2111,7 +2132,7 @@ rules:
     why: A purchase or other binding commitment is made in one action, with no step that shows the total and the choices and lets the user change them, and no way to undo it
     better: Show a review with the total, items, and terms and a way to edit them before the commit, or let the user cancel it afterward
     keep_when:
-      - "commitments with no money or legal effect, such as saving a draft"
+      - { id: no-money-or-legal-effect, when: "commitments with no money or legal effect, such as saving a draft" }
     waiver: { scope: none }
     verify: runtime
     provenance:
@@ -2180,7 +2201,7 @@ rules:
     why: A destructive action runs with neither a confirmation that names what is lost nor a working undo, or its undo does not bring the object back
     better: Confirm irreversible actions with the object's name and consequence, or act at once with an undo that restores it
     keep_when:
-      - "removing something the user can recreate in one step, such as a search filter"
+      - { id: one-step-recreate, when: "removing something the user can recreate in one step, such as a search filter" }
     waiver: { scope: none }
     verify: runtime
     provenance:
@@ -2214,7 +2235,7 @@ rules:
     why: The browser asks for notifications, location, or the camera before the user has done anything that needs it, so the request has no context and a refusal sticks
     better: Ask when a feature needs the permission, from a user action, after saying why
     keep_when:
-      - "a page whose one job needs the permission at once, such as a scanner the user opened"
+      - { id: permission-is-job, when: "a page whose one job needs the permission at once, such as a scanner the user opened" }
     waiver: { scope: value }
     verify: runtime
     provenance:
@@ -2233,7 +2254,7 @@ rules:
     why: A modal or sheet interrupts before the user has done anything - on load, on a timer, on scroll, or on the way out - to ask for something the page's job does not need
     better: Place the offer inline where it is relevant, or ask after the user shows interest
     keep_when:
-      - "a decision required before content can be shown, with accepting and declining equally easy"
+      - { id: equal-ease-decision, when: "a decision required before content can be shown, with accepting and declining equally easy" }
     waiver: { scope: value }
     verify: runtime
     provenance:
@@ -2268,7 +2289,7 @@ rules:
     why: A flow takes more steps than its plan allows, or splits a short form into one-field screens
     better: Group related fields into steps that each settle a decision, and cut steps that decide nothing
     keep_when:
-      - "one-field steps at a branch, a verification boundary, or a save-and-resume point"
+      - { id: boundary-step, when: "one-field steps at a branch, a verification boundary, or a save-and-resume point" }
     waiver: { scope: value }
     verify: runtime
     provenance:
@@ -2285,7 +2306,7 @@ rules:
     why: Errors appear while the user is still typing, or on untouched fields as the page loads
     better: Validate on blur or submit, and clear an error as soon as the value becomes valid
     keep_when:
-      - "live feedback that helps while typing, such as password strength or characters remaining"
+      - { id: helpful-live-feedback, when: "live feedback that helps while typing, such as password strength or characters remaining" }
     waiver: { scope: value }
     verify: runtime
     provenance:
@@ -2317,7 +2338,7 @@ rules:
     why: The page takes over scrolling - snapping between sections, changing how far a scroll moves, or holding it while an animation plays - so users lose control of their position
     better: Keep native scrolling and tie effects to scroll position without changing the distance moved
     keep_when:
-      - "a full-screen presentation mode the user entered on purpose"
+      - { id: entered-presentation-mode, when: "a full-screen presentation mode the user entered on purpose" }
     waiver: { scope: value }
     verify: runtime
     provenance:
@@ -2383,8 +2404,8 @@ rules:
     why: An infinitely pulsing status dot performs liveness without any changing status
     better: Use a stable status or real progress
     keep_when:
-      - "the dot reflects live status that changes"
-      - "a skeleton placeholder while loading"
+      - { id: live-status, when: "the dot reflects live status that changes" }
+      - { id: loading-skeleton, when: "a skeleton placeholder while loading" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -2402,7 +2423,7 @@ rules:
     why: A decorative blinking cursor mimics typing or generation indefinitely
     better: Show the actual input state, or remove it
     keep_when:
-      - "a real text input with focus"
+      - { id: text-input-focus, when: "a real text input with focus" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -2437,8 +2458,8 @@ rules:
     why: Bounce or elastic easing as the global default applies personality indiscriminately and slows tasks
     better: Match easing to direct manipulation, platform, and tone; keep overshoot for moments that earn it
     keep_when:
-      - "playful subjects where overshoot is the brand's motion voice"
-      - "release after a physical drag"
+      - { id: playful-brand-motion, when: "playful subjects where overshoot is the brand's motion voice" }
+      - { id: drag-release, when: "release after a physical drag" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -2457,7 +2478,7 @@ rules:
     why: Routine state changes animate width, height, or position, shifting neighboring content and causing jank
     better: Animate transform and opacity, or use a layout animation tool built for the change
     keep_when:
-      - "a purposeful layout animation handled by a tool that measures and transforms"
+      - { id: measured-layout-animation, when: "a purposeful layout animation handled by a tool that measures and transforms" }
     waiver: { scope: value }
     verify: runtime
     provenance:
@@ -2521,7 +2542,7 @@ rules:
     why: Infinite decorative micro-loops compete with the task for attention
     better: Keep only motion earned by state, expression, or subject, with reading and reduced-motion control preserved
     keep_when:
-      - "expressive or subject-driven motion recorded in the plan's motion dial"
+      - { id: planned-expressive-motion, when: "expressive or subject-driven motion recorded in the plan's motion dial" }
     waiver: { scope: rule }
     verify: static
     provenance:
@@ -2553,10 +2574,10 @@ rules:
     why: Frequent dashes in labels, calls to action, or every paragraph give unrelated messages one cadence and hide whether the relation is cause, contrast, or aside
     better: Use sentence structure and punctuation that state the relation; keep a dash where the relation is clear and matches the voice
     keep_when:
-      - "approved copy"
-      - "exact quotations"
-      - "notation"
-      - "a genuine interruption"
+      - { id: approved-copy, when: "approved copy" }
+      - { id: exact-quotation, when: "exact quotations" }
+      - { id: notation, when: "notation" }
+      - { id: genuine-interruption, when: "a genuine interruption" }
     waiver: { scope: rule }
     verify: review
     provenance:
@@ -2576,8 +2597,8 @@ rules:
     why: Sales words and lexical markers claim improvement, seamlessness, or scale without an observable difference, so the claim fits any product
     better: Name the user action, the handoff removed, or the verifiable capability
     keep_when:
-      - "a governed technical meaning, such as robust error handling"
-      - "an established brand voice paired with specific proof nearby"
+      - { id: governed-term, when: "a governed technical meaning, such as robust error handling" }
+      - { id: brand-voice-with-proof, when: "an established brand voice paired with specific proof nearby" }
     waiver: { scope: value }
     verify: review
     provenance:
@@ -2603,8 +2624,8 @@ rules:
     why: A negative setup that corrects no belief exists only to enlarge the positive claim that follows
     better: Write one direct proposition with the supported capability
     keep_when:
-      - "the contrast carries scope or corrects a real misconception"
-      - "quoted or governed language"
+      - { id: scope-or-misconception, when: "the contrast carries scope or corrects a real misconception" }
+      - { id: quoted-or-governed, when: "quoted or governed language" }
     waiver: { scope: value }
     verify: review
     provenance:
@@ -2622,8 +2643,8 @@ rules:
     why: The text announces a point before making it, or closes by praising what it just said
     better: State the point
     keep_when:
-      - "staging that establishes safety"
-      - "narrative voice"
+      - { id: safety-staging, when: "staging that establishes safety" }
+      - { id: narrative-voice, when: "narrative voice" }
     waiver: { scope: value }
     verify: review
     provenance:
@@ -2639,7 +2660,7 @@ rules:
     why: Ideas are padded into threes, or synonyms pose as separate benefits for symmetry
     better: List the actual parts or actions, however many there are
     keep_when:
-      - "a complete set that truly has three parts"
+      - { id: true-triad, when: "a complete set that truly has three parts" }
     waiver: { scope: value }
     verify: review
     provenance:
@@ -2655,7 +2676,7 @@ rules:
     why: Sentence length barely varies and openings or endings repeat, so the rhythm follows a rule instead of the content
     better: Merge repeated structures and let sentence shape follow the content
     keep_when:
-      - "deliberate anaphora in a speech, quotation, or campaign"
+      - { id: deliberate-anaphora, when: "deliberate anaphora in a speech, quotation, or campaign" }
     waiver: { scope: rule }
     verify: review
     provenance:
@@ -2672,8 +2693,8 @@ rules:
     why: Imported metaphor families unrelated to the subject stand in for plain statements
     better: State the literal proposition first; keep only imagery drawn from the subject's world_materials
     keep_when:
-      - "the metaphor is the argument itself"
-      - "imagery taken from world_materials"
+      - { id: metaphor-is-argument, when: "the metaphor is the argument itself" }
+      - { id: world-material-imagery, when: "imagery taken from world_materials" }
     waiver: { scope: value }
     verify: review
     provenance:
@@ -2690,7 +2711,7 @@ rules:
     why: An ordinary detail is labeled pivotal, transformative, or historic without support
     better: Keep the capability and remove the unsupported significance
     keep_when:
-      - "significance the source supports, such as a stated date, dependency, or cited result"
+      - { id: supported-significance, when: "significance the source supports, such as a stated date, dependency, or cited result" }
     waiver: { scope: value }
     verify: review
     provenance:
@@ -2706,7 +2727,7 @@ rules:
     why: Vague attribution or borrowed authority asserts support that the copy cannot show
     better: Cite supplied, attributable evidence or state the relation the source defines; remove an unsupported authority claim, and never invent a relation
     keep_when:
-      - "the source does not define the relation; keep the vague wording or ask rather than invent one"
+      - { id: undefined-source-relation, when: "the source does not define the relation; keep the vague wording or ask rather than invent one" }
     waiver: { scope: value }
     verify: review
     provenance:
@@ -2751,7 +2772,7 @@ rules:
     why: Formatting follows a rule - bold-labeled bullets, emoji markers, restating headings - instead of the structure readers use
     better: Format only the relationships the content has
     keep_when:
-      - "scan-oriented reference pages that use consistent formatting"
+      - { id: consistent-reference-format, when: "scan-oriented reference pages that use consistent formatting" }
     waiver: { scope: rule }
     verify: review
     provenance:
@@ -2784,8 +2805,8 @@ rules:
     why: Honorific or formality registers mix on one surface
     better: Set the register per surface in the plan and keep it
     keep_when:
-      - "quoted speech"
-      - "legal text with a fixed register"
+      - { id: quoted-speech, when: "quoted speech" }
+      - { id: fixed-legal-register, when: "legal text with a fixed register" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -2817,7 +2838,7 @@ rules:
     why: Vague or duplicate action labels leave the outcome unclear at the decision point
     better: Name the outcome of the action in the label
     keep_when:
-      - "a multi-step flow where the step title states the outcome"
+      - { id: step-title-states-outcome, when: "a multi-step flow where the step title states the outcome" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -2833,7 +2854,7 @@ rules:
     why: Invented metrics, customers, quotes, logos, or credits are presented as real evidence
     better: Use real, permissioned proof, clearly labeled sample data, or structurally neutral placeholders
     keep_when:
-      - "sample or demo data disclosed once where the data is presented"
+      - { id: disclosed-sample-data, when: "sample or demo data disclosed once where the data is presented" }
     waiver: { scope: none }
     verify: review
     provenance:
@@ -2872,8 +2893,8 @@ rules:
     why: Copy addresses the builder, the prompt, or QA instead of the user, or repeats what the hierarchy already says
     better: Keep one decision-relevant message; move implementation and test notes to the developer handoff
     keep_when:
-      - "a consequential disclosure - simulation, non-delivery, privacy, persistence, consent, eligibility, recovery, safety, or legal - placed once at the decision it qualifies"
-      - "a version, build, or environment label where compatibility or availability depends on it"
+      - { id: qualified-disclosure, when: "a consequential disclosure - simulation, non-delivery, privacy, persistence, consent, eligibility, recovery, safety, or legal - placed once at the decision it qualifies" }
+      - { id: compatibility-label, when: "a version, build, or environment label where compatibility or availability depends on it" }
     waiver: { scope: value }
     verify: review
     provenance:
@@ -2896,12 +2917,12 @@ rules:
     why: The same label, separator, and dependent tail recur across unrelated content, flattening a title and its qualifier into peers
     better: Diagnose each side's role, then express the relation with grammar, hierarchy, or clear field syntax while keeping every fact; do not mass-replace separators or force every repair into a two-line heading
     keep_when:
-      - "clear label-value syntax"
-      - "conventional title and subtitle punctuation whose relation is already clear"
-      - "genuine peer metadata and enumerations"
-      - "notation and code"
-      - "exact quotations"
-      - "governed names and approved official copy"
+      - { id: label-value-syntax, when: "clear label-value syntax" }
+      - { id: conventional-title-punctuation, when: "conventional title and subtitle punctuation whose relation is already clear" }
+      - { id: peer-metadata, when: "genuine peer metadata and enumerations" }
+      - { id: notation-or-code, when: "notation and code" }
+      - { id: exact-quotation, when: "exact quotations" }
+      - { id: governed-name, when: "governed names and approved official copy" }
     waiver: { scope: value }
     verify: review
     provenance:
@@ -2919,7 +2940,7 @@ rules:
     why: A middle-dot metadata strip or an ambient locale, weather, demo, or status strip gains prominence without changing any task
     better: Keep real filters and consequential state beside the object they affect; remove or consolidate ornamental strips
     keep_when:
-      - "real metadata the user filters or decides by"
+      - { id: decision-metadata, when: "real metadata the user filters or decides by" }
     waiver: { scope: value }
     verify: review
     provenance:
@@ -2967,7 +2988,7 @@ rules:
     why: CSS primitives assemble a pseudo-illustration from generic shapes that stand in for the subject
     better: Art-direct imagery from real objects, processes, or data
     keep_when:
-      - "abstract geometry that is the brand's established visual language"
+      - { id: brand-geometry, when: "abstract geometry that is the brand's established visual language" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -3019,7 +3040,7 @@ rules:
     why: A content image is broken or an unresolved placeholder, or meaningful image information has no text alternative
     better: Use owned assets or labeled local placeholders and give meaningful images a text alternative
     keep_when:
-      - "decorative images with an empty alt attribute"
+      - { id: empty-alt-decoration, when: "decorative images with an empty alt attribute" }
     waiver: { scope: none }
     verify: static
     provenance:
@@ -3155,7 +3176,7 @@ rules:
     why: Animation imports do not match the installed package or API, or several animation packages are mixed
     better: Verify the project dependency and its supported import; keep one animation stack
     keep_when:
-      - "either import path is fine when it matches the installed package"
+      - { id: matching-import-path, when: "either import path is fine when it matches the installed package" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -3203,7 +3224,7 @@ rules:
     why: Layout structure, palette roles, type fingerprint, and copy are all close to one reference at once
     better: Keep the relations named in the plan's take list and change the rest; borrowing one dimension is structure, not cloning
     keep_when:
-      - "the reference is owned or licensed for this use"
+      - { id: licensed-reference, when: "the reference is owned or licensed for this use" }
     waiver: { scope: value }
     verify: static
     provenance:
@@ -3343,7 +3364,7 @@ rules:
     why: Another party's logo or mark appears without confirmed authorization, or implies a customer, partner, or press relationship that nobody confirmed
     better: Confirm the relationship and use the owner's approved asset and guidelines, or name the other party in plain text
     keep_when:
-      - "a compatibility or integration reference whose owner's guidance allows plain reference, recorded as not-needed"
+      - { id: plain-reference-allowed, when: "a compatibility or integration reference whose owner's guidance allows plain reference, recorded as not-needed" }
     waiver: { scope: none }
     verify: static
     provenance:

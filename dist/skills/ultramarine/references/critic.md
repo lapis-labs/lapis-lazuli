@@ -18,8 +18,9 @@ If the extract or lint report is missing, say which and stop; ask for
 ## Order of authority
 
 Requirements outrank the project's contract (`DESIGN.md`), which outranks platform conventions,
-which outrank named defaults. A default the plan keeps with a basis and reason is earned unless
-the render contradicts the reason. Never call a requirement or contract value a default.
+which outrank named defaults. A default the plan keeps with a basis, one of the rule's `keep_when`
+ids, and a reason is earned unless the render contradicts the reason. Never call a requirement or
+contract value a default.
 
 ## What to judge
 
@@ -41,6 +42,9 @@ Work through these in order. Lint findings already report what they observed; do
    findings that depend on appearance, and check what measurement cannot: whether body faces read
    well at their size, whether a fallback face shows in any script, whether imagery shows the
    subject, whether hierarchy matches the plan's priority. Do this for every body font choice.
+   Hold each `explorations` entry to the render: the chosen candidate is what the page uses, and the
+   runner-up lost for a reason the screenshots or the plan can show. A recorded comparison that the
+   render contradicts is `unearned`.
 6. **Package drift.** When rejected defaults were replaced by another named package - dark and
    luminous traded for warm and editorial, or either for hard edges - report the new package.
 

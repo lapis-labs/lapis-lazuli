@@ -4,20 +4,22 @@
 
 Claude Code, Codex, Oh-My-Pi 같은 하네스로 웹 화면을 만드는 개발자용이에요. 막는 발견마다 규칙 이름과 고칠 방법이 붙어요. [English](README.md)
 
-캠핑장 예약 화면의 [예시 계획](docs/examples/site-booking-ko.yaml)을, 코드가 생기기 전에 lazuli 폰트 DB가 없는 기계에서 검사한 출력이에요(일곱 가지 발견 중 넷은 뺐어요).
+캠핑장 예약 화면의 [예시 계획](docs/examples/site-booking-ko.yaml)을, 코드가 생기기 전에 lazuli 폰트 DB가 없는 기계에서 검사한 출력이에요(여덟 가지 발견 중 넷은 뺐어요).
 
 ```console
 $ lapis-design plan check docs/examples/site-booking-ko.yaml
-plan_check 0.2.0: 2 blocking, 7 total, 3 skipped: not judged
+plan_check 0.2.0: 3 blocking, 8 total, 3 skipped: not judged
+  [BLOCK] plan.uncompared-decision explorations — 7 open decisions with no comparison recorded in explorations: type roles body; palette; layout; motion; direction; copy slots headline, cta
+          fix: Record each open decision in explorations - two or more candidates with their sources, what they were compared on, the chosen one, and why the runner-up lost; a decision the contract or the brief fixes says so with fixed_by
   [WARN] copy.buzzwords content.key_copy[*].text — "최적의" (buzzwords) in the headline key copy: "최적의 캠핑 경험을 선사합니다"; "경험을 선사" (buzzwords) in the headline key copy: "최적의 캠핑 경험을 선사합니다"
-          fix: Add a defaults entry for copy.buzzwords (keep or reject with a reason). Name the user action, the handoff removed, or the verifiable capability
+          fix: Add a defaults entry for copy.buzzwords: reject it with a reason, or keep it naming one keep_when id (governed-term, brand-voice-with-proof). Name the user action, the handoff removed, or the verifiable capability
   [BLOCK] copy.vague-cta content.key_copy[?slot=cta].text — "계속하기" (vague_cta) in the cta key copy: "계속하기"
-          fix: Add a defaults entry for copy.vague-cta (keep or reject with a reason). Name the outcome of the action in the label
+          fix: Add a defaults entry for copy.vague-cta: reject it with a reason, or keep it naming one keep_when id (step-title-states-outcome). Name the outcome of the action in the label
   [BLOCK] font.no-lock tokens.type.lock — type roles are set but no fonts lock was given
           fix: Run `lazuli lock` for each named face: Pretendard.
 ```
 
-`copy.buzzwords`는 `"최적의"`와 `"경험을 선사"`를 경고하고, `copy.vague-cta`는 `"계속하기"`를, `font.no-lock`은 폰트 역할만 정하고 폰트 잠금이 없는 계획을 막아요.
+`plan.uncompared-decision`은 글꼴·팔레트·배치·움직임·방향·핵심 문구를 후보끼리 견주지 않고 정한 계획을 막고, `copy.buzzwords`는 `"최적의"`와 `"경험을 선사"`를 경고하고, `copy.vague-cta`는 `"계속하기"`를, `font.no-lock`은 폰트 역할만 정하고 폰트 잠금이 없는 계획을 막아요.
 
 화면이 localhost에서 돌면 `lapis-design render check`가 너비 320~1440px의 Chromium 캡처를 만들고, `lapis-design behavior check`가 스텁 백엔드에 대한 스크립트 세션을 기록해요. `lapis-design slop lint`는 두 검사의 결과 파일을 읽어요. 예를 들어 `color.text-contrast`(텍스트 대비), `type.ko.keep-all-missing`(한글 본문 줄바꿈), `ux.preselected-option`(미리 체크된 유료 옵션), `ux.false-urgency`(근거 없는 긴급성), `rights.no-provenance`(빠진 출처 기록)를 잡아요.
 
@@ -48,7 +50,7 @@ LapisLazuli는 검사가 찾은 것을 알려 줄 뿐이고, 접근성이나 법
 
 ## 작동 방식
 
-1. 코드를 쓰기 전에 `lapis`가 요청을 계획 파일 `.lapis/plans/<task>.yaml`로 바꿔요. 브리프, 세계 재료, 폰트·색 역할, 레이아웃, 핵심 문구, 이름 붙은 기본값마다 유지·거절 판단이 들어가요. `lapis-design plan check`가 이 계획을 검사해요.
+1. 코드를 쓰기 전에 `lapis`가 요청을 계획 파일 `.lapis/plans/<task>.yaml`로 바꿔요. 브리프, 세계 재료, 폰트·색 역할, 레이아웃, 핵심 문구, 열린 결정마다 견준 후보, 이름 붙은 기본값마다 유지·거절 판단이 들어가요. `lapis-design plan check`가 이 계획을 검사해요.
 2. 구현하는 동안 에이전트는 계획을 따라요. `lps-ux`, `lps-copy`, `lps-system`이 흐름, 문구, 디자인 시스템을 맡아요.
 3. 구현이 끝나면 `ultramarine`이 내 렌더에 `lapis-design`을 돌려요. 최대 아홉 가지 조건(너비 320~1440px, 라이트·다크, 모션 줄이기, 모바일 브라우저 UI)으로 캡처하고, 스텁 백엔드에서 작업 흐름을 끝까지 돌려 보고, 뻔해 보이거나 기만적인 패턴과 빠진 권리 기록을 린트하고, 측정으로 판단할 수 없는 것은 별도의 평가자에게 넘겨요. 마지막 관문은 `ulm-release`예요.
 4. 어느 단계에서든 `lazuli`가 요청할 때 사실을 가져다줘요. 이 컴퓨터의 폰트, 카탈로그의 분류와 라이선스, 색 체계 코드, 페이지 하나, 레퍼런스 프로필이에요.

@@ -1,7 +1,7 @@
 # LapisLazuli plan file schema — v0 draft
 # Location: .lapis/plans/<task-id>.yaml in the project (one file per task)
 # Written by: lapis / Checked by: plan_check (schema validation first, then code checks for
-#   defaults matching, contract consistency, font inventory/delivery, and reference rights)
+#   defaults matching, decision evidence, contract consistency, font inventory/delivery, and reference rights)
 # Status: v0. Fields will be refined through local testing.
 
 $schema: https://json-schema.org/draft/2020-12/schema
@@ -218,6 +218,56 @@ properties:
         properties: { requires: { contains: { enum: [account, identity, reauth] } } }
       then: { required: [requires_reason] }
 
+  # Evidence for each open decision: the candidates that were compared and why the winner won (rule
+  # plan.uncompared-decision reads it). A decision the contract or the brief fixes says so with `fixed_by`
+  # and needs no candidates.
+  #   type                          `covers` lists the roles the entry decides; a candidate's `source` is local
+  #                                 (installed here), adobe, catalog:<name>, commercial:<foundry>, or generic
+  #                                 (a generic family: the platform's own face)
+  #   copy                          `covers` lists the key_copy slots
+  #   palette, layout, motion, direction   one entry each; `source` says where a candidate came from: a world
+  #                                 material, a reference, a sketch of your own, or generic (the default for
+  #                                 this kind of page)
+  explorations:
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [decision]
+      properties:
+        decision: { enum: [type, palette, layout, motion, direction, copy] }
+        covers:
+          type: array
+          minItems: 1
+          items: { enum: [display, heading, body, ui, data, code, caption, headline, subhead, cta, nav, empty-state, error, other] }
+        candidates:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [name, source]
+            properties:
+              name: { type: string, minLength: 1 }       # a family for type, a one-sentence relation for direction
+              source: { type: string, minLength: 1 }
+              note: { type: string }
+        compared_on: { type: array, items: { enum: [specimen, render, sketch] } }   # specimen: the page's real copy set in each candidate
+        chosen: { type: string, minLength: 1 }           # the name of one candidate
+        runner_up_lost: { type: string, minLength: 8 }   # why the closest alternative lost
+        fixed_by: { enum: [contract, brief] }
+        reason: { type: string, minLength: 8 }           # what fixes the decision; required with fixed_by
+      allOf:
+        - if: { required: [decision], properties: { decision: { enum: [type, copy] } } }
+          then: { required: [covers] }
+        - if: { required: [decision], properties: { decision: { const: type } } }
+          then:
+            properties:
+              candidates:
+                items:
+                  properties:
+                    source: { pattern: "^(local|adobe|generic|catalog:[^\\s:]+|commercial:\\S.*)$" }
+        - if: { required: [fixed_by] }
+          then: { required: [reason] }
+
   defaults:                                          # decisions on the named defaults that were hit
     type: array
     items:
@@ -228,6 +278,7 @@ properties:
         id: { type: string, pattern: "^[a-z]+(\\.[a-z0-9-]+)+$" }
         decision: { enum: [keep, reject] }
         basis: { enum: [brief, contract, requirement] }
+        keep_when: { type: string, pattern: "^[a-z0-9]+(-[a-z0-9]+)*$" }   # a keep names one keep_when id of its rule (shared/slop/rules.yaml); the check waives the finding only when it is one
         reason: { type: string, minLength: 8 }
 
   sources:

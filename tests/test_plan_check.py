@@ -103,14 +103,41 @@ def test_unrecorded_default_blocks(tmp_path):
     assert "color.terracotta-accent" in ids(report, blocking=True)
 
 
-def test_recorded_keep_waives_the_default(tmp_path):
+def clay_plan(**keep):
     plan = base_plan()
     plan["tokens"]["color"]["roles"].append({"name": "clay", "role": "identity", "oklch": [0.61, 0.13, 41]})
     plan["defaults"].append({"id": "color.terracotta-accent", "decision": "keep", "basis": "brief",
-                             "reason": "The studio's clay body is this color"})
-    report = run(tmp_path, plan)
+                             "reason": "The studio's clay body is this color", **keep})
+    return plan
+
+
+def clay_finding(report):
+    [found] = [f for f in report["findings"] if f["rule_id"] == "color.terracotta-accent"]
+    return found
+
+
+def test_recorded_keep_naming_a_case_of_the_rule_waives_the_default(tmp_path):
+    report = run(tmp_path, clay_plan(keep_when="clay-subject"))
     assert "color.terracotta-accent" not in ids(report, blocking=True)
-    assert any(f["rule_id"] == "color.terracotta-accent" and f["status"] == "waived" for f in report["findings"])
+    assert (clay_finding(report)["status"], clay_finding(report)["blocking"]) == ("waived", False)
+
+
+@pytest.mark.parametrize("named", [{}, {"keep_when": "paper-material"}, {"keep_when": "clay"}],
+                         ids=["no id", "an id of another rule", "an id nobody lists"])
+def test_a_keep_with_a_reason_but_no_case_of_the_rule_leaves_the_default_blocking(tmp_path, named):
+    found = clay_finding(run(tmp_path, clay_plan(**named)))
+    assert (found["status"], found["blocking"]) == ("open", True)
+    assert "brand-color, clay-subject" in found["observed"]
+    assert "waiver" not in found
+
+
+def test_a_keep_on_a_rule_that_lists_no_case_waives_nothing(tmp_path):
+    plan = base_plan()
+    plan["content"]["key_copy"][0]["text"] = "Best pots in town"
+    plan["defaults"].append({"id": "copy.name-swap", "decision": "keep", "basis": "brief", "keep_when": "anything",
+                             "reason": "The studio wants this line"})
+    found = [f for f in run_real(tmp_path, plan)["findings"] if f["rule_id"] == "copy.name-swap"]
+    assert [f["status"] for f in found] == ["open"] and "lists no keep_when case" in found[0]["observed"]
 
 
 def test_template_sequence_is_detected(tmp_path):
@@ -532,7 +559,7 @@ def test_web_plan_with_every_text_role_on_the_platform_sans_blocks_without_a_fon
         assert finding["status"] == "open" and finding["blocking"] and finding["evidence"] == {"type": "plan"}
     assert [f["rule_id"] for f in report["findings"] if f["rule_id"].startswith("type.") and f["status"] == "skipped"] == []
     plan["defaults"] = [{"id": "type.overused-neutral-grotesque", "decision": "keep", "basis": "brief",
-                         "reason": "An operate screen takes the platform's own face"}]
+                         "keep_when": "specified-face", "reason": "An operate screen takes the platform's own face"}]
     waived = [f for f in run_real(tmp_path, plan)["findings"] if f["rule_id"] == "type.overused-neutral-grotesque"]
     assert [(f["status"], f["blocking"]) for f in waived] == [("waived", False)]
 

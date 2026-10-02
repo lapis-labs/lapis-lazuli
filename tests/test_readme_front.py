@@ -84,7 +84,7 @@ def test_console_excerpt_matches_plan_check_without_database(readme, tmp_path):
     assert result.returncode == 1, result.stderr  # The example deliberately has blocking findings.
     output = result.stdout.splitlines()
     excerpt = [output[0]]
-    selected = {"copy.buzzwords", "copy.vague-cta", "font.no-lock"}
+    selected = {"plan.uncompared-decision", "copy.buzzwords", "copy.vague-cta", "font.no-lock"}
     include = False
     for line in output[1:]:
         finding = re.match(r"\s+\[(?:BLOCK|WARN|INFO)\] (\S+)", line)

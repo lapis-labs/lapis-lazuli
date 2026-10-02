@@ -197,16 +197,37 @@ def plan_with(*defaults: dict) -> dict:
     return {"brief": {"locales": ["en"]}, "defaults": list(defaults)}
 
 
-def test_a_keep_decision_waives_hits_but_never_a_requirement():
-    keep = {"decision": "keep", "basis": "brief", "reason": "The subject's paper is cream"}
+CREAM_CASES = [{"id": "paper-material", "when": "the subject's material is paper"},
+               {"id": "brand-field", "when": "an approved brand field"}]
+
+
+def test_a_keep_decision_waives_hits_that_name_a_case_of_the_rule_but_never_a_requirement():
+    keep = {"decision": "keep", "basis": "brief", "keep_when": "paper-material", "reason": "The subject's paper is cream"}
     plan = plan_with({"id": "color.cream", **keep}, {"id": "a11y.contrast", **keep})
-    findings = lint([rule("color.cream", {"render": det("test-echo", "cream field")}),
-                     rule("a11y.contrast", {"render": det("test-echo", "contrast 2.1:1")}, cls="requirement")],
+    findings = lint([rule("color.cream", {"render": det("test-echo", "cream field")}, keep_when=CREAM_CASES),
+                     rule("a11y.contrast", {"render": det("test-echo", "contrast 2.1:1")}, cls="requirement",
+                          keep_when=CREAM_CASES)],
                     plan=plan)
     cream, contrast = findings
     assert (cream["status"], cream["blocking"]) == ("waived", False)
     assert cream["waiver"] == "keep (brief): The subject's paper is cream"
     assert (contrast["status"], contrast["blocking"]) == ("open", True)
+
+
+@pytest.mark.parametrize("named", [{}, {"keep_when": "cream-everywhere"}], ids=["no id", "an id the rule does not list"])
+def test_a_keep_that_names_no_case_of_the_rule_leaves_the_hit_open_and_lists_the_cases(named):
+    plan = plan_with({"id": "color.cream", "decision": "keep", "basis": "brief", **named,
+                      "reason": "The subject's paper is cream"})
+    [f] = lint([rule("color.cream", {"render": det("test-echo", "cream field")}, keep_when=CREAM_CASES)], plan=plan)
+    assert (f["status"], f["blocking"], f["context"]["verdict"]) == ("open", True, "unearned")
+    assert "paper-material, brand-field" in f["context"]["basis"]
+
+
+def test_a_keep_on_a_rule_that_lists_no_case_leaves_the_hit_open():
+    plan = plan_with({"id": "color.cream", "decision": "keep", "basis": "brief", "keep_when": "paper-material",
+                      "reason": "The subject's paper is cream"})
+    [f] = lint([rule("color.cream", {"render": det("test-echo", "cream field")})], plan=plan)
+    assert (f["status"], f["blocking"]) == ("open", True) and "lists no keep_when case" in f["context"]["basis"]
 
 
 def test_a_reject_decision_leaves_the_hit_open():

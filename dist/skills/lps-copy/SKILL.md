@@ -69,6 +69,9 @@ before code, one entry per slot and locale.
    clicking. Two actions with different outcomes never share a label.
 4. **Keep the strength.** Do not raise a claim's strength while editing; keep the facts, numbers,
    and certainty as the source has them.
+5. **Two candidates.** For the headline, subhead, and cta, write a second line that comes from a
+   different material or fact and set both in the real layout. Record the pair and why the loser lost
+   in `explorations` (decision `copy`, `covers` the slot); `plan.uncompared-decision` reads that it is there.
 
 ## Interface text
 

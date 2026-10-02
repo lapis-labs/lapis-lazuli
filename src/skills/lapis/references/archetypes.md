@@ -17,8 +17,8 @@ alike.
    firing's pieces and reserve one" is `list-detail` with persuading sections inside it, not `landing`.
 2. Name the content relationship and the primary task, and find the row below. Never choose an
    archetype because a screenshot of it has the look you want.
-3. Compare the choice with the neighbor in the last column, and write in `claims.proposed` why the
-   neighbor lost, so it does not return unexamined.
+3. Compare the choice with the neighbor in the last column, and write in `explorations` (decision
+   `layout`) why the neighbor lost, so it does not return unexamined.
 4. Write one id in `layout.procedure.archetype`. A screen has one primary archetype; combine others
    only at a task seam, and describe secondary regions in `layout.procedure.relationships`.
 5. Check the entry's **Needs** against `layout.procedure.content_inventory`. What is missing becomes an

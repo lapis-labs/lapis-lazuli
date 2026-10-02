@@ -7,15 +7,17 @@ For developers who build web interfaces with Claude Code, Codex, Oh-My-Pi, or an
 harness and want each blocking finding tied to a named rule and a fix. [한국어](README.ko.md)
 
 An [example plan for a campsite booking page](docs/examples/site-booking-en.yaml), checked before any
-code exists, on a machine without a lazuli font database (four of seven findings left out):
+code exists, on a machine without a lazuli font database (four of eight findings left out):
 
 ```console
 $ lapis-design plan check docs/examples/site-booking-en.yaml
-plan_check 0.2.0: 2 blocking, 7 total, 3 skipped: not judged
+plan_check 0.2.0: 3 blocking, 8 total, 3 skipped: not judged
+  [BLOCK] plan.uncompared-decision explorations — 7 open decisions with no comparison recorded in explorations: type roles body; palette; layout; motion; direction; copy slots headline, cta
+          fix: Record each open decision in explorations - two or more candidates with their sources, what they were compared on, the chosen one, and why the runner-up lost; a decision the contract or the brief fixes says so with fixed_by
   [WARN] copy.buzzwords content.key_copy[*].text — "elevate" (buzzwords) in the headline key copy: "Elevate your camping experience"
-          fix: Add a defaults entry for copy.buzzwords (keep or reject with a reason). Name the user action, the handoff removed, or the verifiable capability
+          fix: Add a defaults entry for copy.buzzwords: reject it with a reason, or keep it naming one keep_when id (governed-term, brand-voice-with-proof). Name the user action, the handoff removed, or the verifiable capability
   [BLOCK] copy.vague-cta content.key_copy[?slot=cta].text — "continue" (vague_cta) in the cta key copy: "Continue"
-          fix: Add a defaults entry for copy.vague-cta (keep or reject with a reason). Name the outcome of the action in the label
+          fix: Add a defaults entry for copy.vague-cta: reject it with a reason, or keep it naming one keep_when id (step-title-states-outcome). Name the outcome of the action in the label
   [BLOCK] font.no-lock tokens.type.lock — type roles are set but no fonts lock was given
           fix: Run `lazuli lock` for each named face: Pretendard.
 ```
@@ -60,8 +62,8 @@ need the CLI on your PATH (see [CLI and optional components](INSTALLATION.md#cli
 ## How it works
 
 1. Before any code, `lapis` turns a request into a plan file, `.lapis/plans/<task>.yaml`: brief,
-   world materials, type and color roles, layout, key copy, and a keep-or-reject decision on every
-   named default. `lapis-design plan check` validates it.
+   world materials, type and color roles, layout, key copy, the candidates compared for each open
+   decision, and a keep-or-reject decision on every named default. `lapis-design plan check` validates it.
 2. While the agent builds, it follows the plan; `lps-ux`, `lps-copy`, and `lps-system` cover flows,
    copy, and the design system.
 3. After it builds, `ultramarine` runs `lapis-design` on your own render: capture under up to nine

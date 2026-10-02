@@ -64,8 +64,9 @@ not that a click will.
 | 예 (in a confirmation) | 예약 취소 | which action a "yes" commits |
 
 `copy.vague-cta` (a gate at P1) reads a whole control label: "계속" alone is vague and "예약 내용 확인"
-names its outcome. A plain "계속" beside a step title that states the outcome is a `keep_when` case the
-check cannot see, so record a `keep` in the plan's `defaults` with that reason. The same rule reads
+names its outcome. A plain "계속" beside a step title that states the outcome is a `keep_when` case
+(`step-title-states-outcome`) the check cannot see, so record a `keep` in the plan's `defaults` with
+that id and reason. The same rule reads
 duplicate labels. Two actions with different outcomes never share one: on a piece card 작품 보기
 opens the piece, and 예약하기 on the sheet commits.
 
@@ -210,7 +211,8 @@ A confirmation names the object and the consequence, and each button names its o
 - Friendly wording does not make consent valid, and legal text is a qualified reviewer's. Keep the force
   and scope words exactly (must, may, the period, the exceptions), list wording that needs review as
   unresolved, and never soften a term to fit a button. Legal text may keep its own fixed register, but
-  `copy.register-mix` cannot tell it from a slip, so record a `keep` with that reason. Payment and account
+  `copy.register-mix` cannot tell it from a slip, so record a `keep` with
+  `keep_when: fixed-legal-register` and that reason. Payment and account
   text more often take the product's formal register, named per surface in `content.voice.notes` (a note
   for writers and reviewers; no check reads it).
 
@@ -271,7 +273,8 @@ After:  사진 12장 중 7장을 올렸어요. 8번째 파일이 크기 제한�
 The edit adds detail only because the product state supplies it, and it fixes the mixed endings on the
 way. Leave copy alone when it is already exact: a real contrast that corrects a likely misreading
 (보관하면 사이드바에서만 사라지고, 기록은 그대로 남아요.; if `copy.contrast-frame` counts a contrast
-like it, record a `keep` with the reason that it carries scope), a precise term for its audience, legal
+like it, record a `keep` with `keep_when: scope-or-misconception` and the reason that it carries
+scope), a precise term for its audience, legal
 scope with its exception, and a short true consequence such as 삭제하면 되돌릴 수 없어요.
 
 ## Register and language
@@ -282,7 +285,8 @@ register and never the notes, so a split lives with the writer and the reviewer.
 warns at P2 when honorific or formality registers mix on one surface; it reads the sentence endings of
 each locale against the plan's register, and does not classify compact labels that carry no ending or a
 sentence that opens with a quotation mark. It does not know legal text or a surface whose register the
-notes change, and flags their endings against the plan's register: record a `keep` with the reason.
+notes change, and flags their endings against the plan's register: for legal text record a `keep` with
+`keep_when: fixed-legal-register`, and name any other surface that sets its own register in the notes.
 Register follows the product, the surface, and the reader, never a nationality. Read the notes below
 as decisions to confirm, not settled style: a reader proficient in the locale confirms product terms
 and tone, and the report says so when none has.
@@ -465,7 +469,7 @@ entry for `copy.meta-text`, `copy.placeholder-content`, and `copy.buzzwords`. `l
 with a render extract, which the `ultramarine` skill runs, reads the rendered copy: register,
 translationese, rhetorical habits, proof, and repeated notices. The P3 copy rules warn; walk each card
 and keep or reject it with a reason. The `keep_when` cases of a rule, such as a legal register or a
-contrast that carries scope, are decisions the check cannot see: record each `keep` with its reason.
+contrast that carries scope, are decisions the check cannot see: record each `keep` with its id and reason.
 
 Error, offline, and empty states are read from a behavior session. `behavior check` with the `states`
 probe induces them from the stub and records whether each says what went wrong and offers a way forward;

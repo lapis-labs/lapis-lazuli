@@ -84,6 +84,13 @@ detectors:
     params: { anchors: "plan paths whose words count as anchors", modes: "plan modes the check applies to", empty: "hit-unless-operate-only: when `path` resolves to nothing, hit unless direction.read.surface_mode is operate alone", skip_style_frames: "direction.read.style_frame values the check leaves alone" }
     output: "strings that share no word with any anchor. Words of three or more letters are compared by their first five letters, common function words (the, and, for, with, and the like) left out; Hangul, kana, and Han text is compared by runs of two characters"
     status: implemented
+  - name: plan-candidates
+    layers: [plan]
+    input: "the plan's `explorations`, and the decisions that are open in the rest of the plan: each role of tokens.type.roles, tokens.color.roles, layout, direction.dials.motion, direction.concept or levers, and the key copy slots"
+    params: { modes: "plan modes the check applies to", copy_slots: "key_copy slots whose wording is an open decision", min_candidates: "candidates a comparison needs (default 2)" }
+    output: "open decisions whose exploration entry is missing or incomplete (fewer candidates than the minimum, a chosen name that is not a candidate, no basis of comparison, no reason the runner-up lost), type decisions with no non-generic candidate or not compared on a specimen or render, and fixed_by entries that do not hold (contract without context.design, no reason). A type role with source contract and a declared context.design is fixed by the contract"
+    reads_plan: ["explorations[*]", "tokens.type.roles[*]", "tokens.color.roles[*]", "layout.sections[*]", "direction.dials.motion", "direction.concept", "direction.levers", "content.key_copy[*].slot", "context.design"]
+    status: implemented
   - name: package-hit
     layers: [plan, render, behavior]
     input: "hits of the package's member rules at the same layer, within the package's structure scope"

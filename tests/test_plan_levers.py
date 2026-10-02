@@ -150,6 +150,11 @@ def pilot_shaped_plan():
     plan["tokens"]["type"]["roles"] = [
         {"role": role, "family": "system-ui", "weights": [400, 600], "scripts": ["latn"], "source": "inventory"}
         for role in ("display", "heading", "body", "ui")]
+    plan["explorations"] = [e for e in plan["explorations"] if e["decision"] != "type"] + [
+        {"decision": "type", "covers": ["display", "heading", "body", "ui"],
+         "candidates": [{"name": "system-ui", "source": "generic"}, {"name": "Pretendard", "source": "local"}],
+         "compared_on": ["specimen"], "chosen": "system-ui",
+         "runner_up_lost": "Pretendard read the same on the phone and needs a file to ship"}]
     plan["layout"]["sections"] = [
         {"id": name, "archetype": name, "answers": "What do I need to know here"}
         for name in ("opening", "features", "plans", "questions", "closing")]
@@ -173,7 +178,8 @@ def test_a_lever_that_names_its_material_unblocks_the_pilot_shaped_plan(tmp_path
 @pytest.mark.parametrize("decision,status", [("keep", "waived"), ("reject", "open")])
 def test_a_defaults_entry_for_the_rule_stops_the_block(tmp_path, decision, status):
     plan = pilot_shaped_plan()
-    plan["defaults"].append({"id": RULE_ID, "decision": decision, "basis": "brief",
+    entry = {"keep_when": "form-fixed-by-contract-or-brief"} if decision == "keep" else {}
+    plan["defaults"].append({"id": RULE_ID, "decision": decision, "basis": "brief", **entry,
                              "reason": "The contract fixes the form and says so"})
     report = run_real(tmp_path, plan)
     found = next(f for f in report["findings"] if f["rule_id"] == RULE_ID)

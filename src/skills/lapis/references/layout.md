@@ -148,12 +148,12 @@ Choose by the shape of the task (compare, monitor, browse and inspect, edit reco
 create, commit), never by visual style. Take the simplest archetype that supports the first priority,
 and combine two only at a clear boundary, such as an overview that leads to a separate record view.
 `archetypes.md` describes each screen archetype and the section archetypes that
-`layout.sections` uses. Record the runner-up and why it lost in `claims.proposed`, so the same
-structure does not return under another name.
+`layout.sections` uses. Record the runner-up and why it lost in `explorations` (decision `layout`),
+so the same structure does not return under another name.
 
 ```yaml
 archetype: list-detail
-# claims.proposed: "A shop-grid landing lost: it hides the log and puts reserving behind a shell"
+# explorations: layout, chosen "one ruled row per piece"; runner-up "a photo grid of piece cards" lost: it hides the glaze number
 ```
 
 ### 7. Grid - `grid`

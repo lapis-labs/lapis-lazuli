@@ -7,8 +7,30 @@ All notable changes are recorded here. The format follows
 
 ## Unreleased
 
+### Contracts
+
+Local contract changes, made here and not from a kit diff; the handoff records each one with its before and
+after text.
+
+- `slop/rules.yaml` (186 rules, 91 detectors): every `keep_when` entry is `{ id, when }` with an id that is unique
+  within its rule (140 entries in 99 rules); `type.overused-neutral-grotesque` gains the case `won-comparison`; the
+  new rule `plan.uncompared-decision` (domain `plan`, quality, gate in create mode, no waiver) and its detector
+  `plan-candidates`. `slop/rules.schema.yaml` takes the new `keep_when` shape and the domain `plan`.
+- `plan/schema.yaml`: the top-level `explorations` and `keep_when` on a `defaults` entry; `plan/example.plan.yaml`
+  records both, and `docs/examples` stay unfinished on purpose.
+
 ### Added
 
+- `explorations` in the plan records, for each open decision, two or more candidates with their sources (for type:
+  `local`, `catalog:<name>`, `adobe`, `commercial:<foundry>`, `generic`), what they were compared on (`specimen`,
+  `render`, `sketch`), the chosen one, and why the runner-up lost. A decision the contract or the brief fixes is
+  marked `fixed_by`; `contract` holds only when `context.design` is set, and a type role whose `source` is
+  `contract` is exempt only then too.
+- `plan.uncompared-decision`: in a create plan, an open decision with no such comparison blocks. The open decisions
+  are each type role, the palette, the layout, the motion dial, the direction, and the headline, subhead, and cta.
+  For type it also blocks when every candidate is a generic family (`system-ui` and the other generic names, or
+  source `generic`), or when the face was never compared on a specimen or a render. A `defaults` entry cannot lift it.
+  `plan check --summary` prints each comparison and each decision the contract or the brief fixes.
 - `behavior check --box ID` (repeatable) and `--limit N` narrow the per-box probes, `controls` and `pointer`,
   to the named boxes, or to the first N boxes of each context in document order. A probe that leaves boxes
   out has `partial` coverage whose reason says how many (and names any `--box` id that matched nothing);
@@ -17,6 +39,16 @@ All notable changes are recorded here. The format follows
 
 ### Changed
 
+- A `defaults` keep waives a finding only when its `keep_when` names one of the rule's ids, in `plan check` and in
+  `slop lint`. A keep with no id, an id of another rule, or an id nobody lists leaves the finding at its severity,
+  and the message lists the accepted ids. A rule that lists no `keep_when` case takes no keep (47 rules that are not
+  requirements list none), and a requirement or a rule whose waiver scope is `none` takes no entry at all: a reject
+  no longer lowers such a plan finding to INFO. The `fix` text of an undecided finding lists the ids.
+- The `lapis` skill and `type.md` say that a brief's no-network, no-external-assets, or offline line limits what the
+  page ships, never what is explored. Type has explicit exploration steps (`lazuli local fonts`, `lazuli search`,
+  `lazuli catalog sync`, a specimen of the page's real copy captured with `render check`), a generic family is a
+  choice that must win a comparison, and direction, palette, layout, motion, and key copy each get a comparison
+  step, a self-review pass at the plan gate, and a line in the critic's vision check.
 - A narrowed run writes beside the full report and no longer replaces it. `render check --width` writes
   `.lapis/renders/<task>.narrow.json` with its screenshots in `<task>.narrow.shots/`, and `behavior check` with
   `--probe`, `--context`, `--box`, or `--limit` writes `.lapis/behavior/<task>.narrow.json`; full runs keep

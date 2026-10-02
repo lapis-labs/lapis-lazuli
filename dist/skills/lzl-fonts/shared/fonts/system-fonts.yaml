@@ -27,10 +27,10 @@
 # `web`, the plan has at least one `display`, `heading`, `body`, or `ui` role, and every such role's
 # `family` is a `platform_sans` name, `type.overused-neutral-grotesque` reports "no face chosen:
 # each platform substitutes its own sans" at the plan layer with evidence `plan`; it is a finding
-# about the plan, not a measurement of a font. A `defaults` entry for that rule waives it, as for
-# any default-class rule. The rule does not fire this way when any of those roles names a face or
-# when `brief.platform` has no `web`. The other generic keywords are never counted as a neutral
-# sans. A system face this table lists by name (Apple SD Gothic Neo, Malgun Gothic) is a named face
+# about the plan, not a measurement of a font. A `defaults` keep waives it when it names one of that
+# rule's `keep_when` ids, as for any default-class rule. The rule does not fire this way when any of
+# those roles names a face or when `brief.platform` has no `web`. The other generic keywords are never
+# counted as a neutral sans. A system face this table lists by name (Apple SD Gothic Neo, Malgun Gothic) is a named face
 # with delivery `system-only`: on a `web` plan it belongs in a fallback, and a role that relies on
 # such faces is written `system-ui`. The detectors that apply this are `plan-font-region` and
 # `plan-distinct-values` (slop/detectors.yaml).

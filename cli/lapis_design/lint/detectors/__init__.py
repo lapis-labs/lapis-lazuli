@@ -9,6 +9,7 @@ import importlib
 # speed: the engine loads every module before it calls a name unregistered.
 MODULES: dict[str, tuple[str, ...]] = {
     "font_regions": ("plan",),
+    "plan_candidates": ("plan",),
     "copy": ("plan", "render", "review"),
     "source": ("source",),
     "render_type": ("render",),

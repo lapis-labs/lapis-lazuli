@@ -30,7 +30,7 @@ status text does what both would; status, meaning, and completion stay understan
 | 4-6 | Transitions that explain a change: an overlay related to its origin, one region replacing another, a layout change that would lose identity. Nothing moves only to be seen: a fade-up on every section as it scrolls in explains no change, so a marketing page at 6 does not owe one |
 | 7-10 | Authored moments made for the subject. Each has a complete static composition, a pause or skip, and a reduced branch, and reading or operating never waits for a scene |
 
-Pick the band the surface needs, then write what it means here as a `principles` line, as the example does.
+Pick the band the surface needs, compare it with the band next to it on one real interaction and record the comparison in `explorations` (decision `motion`), then write what it means here as a `principles` line, as the example does.
 The dial is a proposal that the brief and an existing design override, and no value relaxes the
 reduced-motion requirement, status clarity, or interruption. An `operate` surface values latency over
 staging and gives data no entrance animation; on a `read` surface, motion between the reader and the text

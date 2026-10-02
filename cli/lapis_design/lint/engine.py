@@ -7,8 +7,9 @@ the run (slop/rules.yaml header, behavior/DERIVED.md "Coverage"):
 - each hit           one finding with the rule's class and create severity; the review severity is
                      that of the first `severity.adjust` whose `when` the hit satisfies, else the
                      rule's; blocking on create `gate` in create mode, on review P0/P1 in review mode
-- plan `defaults`    a `keep` entry waives the rule's hits, except for requirement rules and rules
-                     whose waiver scope is `none`
+- plan `defaults`    a `keep` entry waives the rule's hits when it names one of the rule's `keep_when` ids
+                     (`plan_check.default_verdict`), except for requirement rules and rules whose waiver
+                     scope is `none`
 - rule `locales`     the rule runs only when the plan's brief.locales or the extract's text runs
                      include one of them; detectors restrict their own text runs (`in_locales`)
 - package-hit        hits when at least `hit_when.min_members` member rules hit at the same layer
@@ -367,13 +368,15 @@ class _Run:
             f["distance"] = hit.distance
         f["evidence"] = {"type": hit.evidence, **({"refs": list(hit.refs)} if hit.refs else {})}
         decision = self.decisions.get(rule["id"])
-        waivable = rule.get("class") != "requirement" and (rule.get("waiver") or {}).get("scope") != "none"
-        if decision and decision.get("decision") == "keep" and waivable:
-            f["context"] = {"verdict": "earned", "basis": f"plan defaults entry ({decision.get('basis')})"}
+        waived, unfit = plan_check.default_verdict(rule, decision)
+        if waived:
+            f["context"] = {"verdict": "earned", "basis": f"plan defaults entry ({decision.get('basis')}, {decision.get('keep_when')})"}
             f.update(blocking=False, status="waived",
                      waiver=f"{decision['decision']} ({decision.get('basis')}): {decision.get('reason')}")
             return f
-        if decision and decision.get("decision") == "reject":
+        if unfit:
+            context = {"verdict": "unearned", "basis": f"the plan's defaults entry does not apply: {unfit}"}
+        elif decision and decision.get("decision") == "reject":
             context = {"verdict": "unearned",
                        "basis": f"the plan rejects this default ({decision.get('basis')}): {decision.get('reason')}"}
         if context:

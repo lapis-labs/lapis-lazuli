@@ -1,8 +1,22 @@
 # Type
 
 This file backs plan step 7. The plan holds `tokens.type.roles` (role, family, weights, scripts,
-source), `tokens.type.scale` (`base_px`, `ratio`), and `tokens.type.lock`; measure, leading,
-tracking, numerals, and font stacks become implementation tokens.
+source), `tokens.type.scale` (`base_px`, `ratio`), `tokens.type.lock`, and the comparison behind each
+choice in `explorations`; measure, leading, tracking, numerals, and font stacks become implementation
+tokens.
+
+## Exploring and shipping
+
+A brief's no-network, no-external-assets, or offline line limits what the page ships and loads. It
+never limits what you explore. Always read the local inventory and the catalogs, and take
+open-licensed libraries, commercial foundries, and Adobe Fonts as candidates to explore and
+brainstorm with. Their licensing, purchase, or activation goes to the user for approval; nothing is
+bought, downloaded, or activated for them.
+
+Offline shipping leaves three outcomes: an installed named face with a fallback stack, OFL files the
+user supplies for the project, or a generic family that won a recorded comparison against a named
+face. A generic family alone is a choice, not a fallback: it has to win the comparison in
+`explorations`.
 
 ## Roles per script
 
@@ -52,13 +66,21 @@ Work down the rows. "Not checked" means only the report shows the work.
 | Decision | Plan field | Checked by |
 |---|---|---|
 | Character first: each role's job, the real text per locale, what the world materials suggest. A tide table needs aligned figures; a letterpress shop can take its voice from its proof sheets | `world_materials`, `brief.locales`, `brief.platform`, `claims.proposed` | not checked |
-| Candidates: installed and catalog families from `lazuli search --script <code> --role <role>`, plus activated Adobe Fonts (`lazuli local fonts --origin adobe-sync`) | none | not checked |
-| For each open role, compare two or three candidates on measured facts (`why`, class, weights, scripts, delivery) and draw each with one specimen per locale: heading, paragraph, control, error, figures. Record the loser's reason | `claims.proposed` | not checked |
+| Candidates: installed families (`lazuli local fonts --summary`, and `--origin adobe-sync` for activated Adobe Fonts), catalog families (`lazuli search --script <code> --role <role>`, after `lazuli catalog sync` when `lazuli catalog status` shows none), and foundry or commercial faces named for exploration. At least one is a named face, whatever the delivery | `explorations[*].candidates` | `plan.uncompared-decision` reads two or more candidates, at least one not a generic family |
+| For each open role group, set two or three candidates in the real copy of every locale (see Specimen below), read their measured facts (`why`, class, weights, scripts, delivery), and record the choice and why the runner-up lost | `explorations[*]`: `compared_on`, `chosen`, `runner_up_lost` | the same rule reads a `chosen` among the candidates, a specimen or render in `compared_on`, and a `runner_up_lost` |
 | Hangul and Latin: one face that draws both, or a Hangul face with a Latin companion as two entries | `tokens.type.roles[*].scripts` | `type.font-fallback` reads a rendered page for text drawn in a face other than the requested one. `scripts` also limits the neutral-grotesque region to Latin |
 | Record each choice: `role`, one `family` name, `weights`, `scripts`, `source` | `tokens.type.roles[*]` | the schema; `type.single-neutral-sans` reads whether two or more roles all name one family; `type.overused-neutral-grotesque`, `type.serif-luxury-display`, and `type.costume-monospace` read measured features, so they need the lazuli database |
 | Lock with the delivery path: `lazuli lock "<family>" --role <role> --task <task>`. An Adobe face on a web plan adds `--source adobe-sync --delivery adobe-web-project` | `tokens.type.lock` | `font.no-lock` (no lock given), `font.not-locked` (a family missing from it), `font.no-web-delivery` (no web delivery path), `font.channel-mismatch` (files from a source that cannot ship them), `font.use-unknown` (no recorded grant for a planned use) |
-| An intended `system-ui` (an operate screen, a tight budget, email), chosen after seeing it on each platform in `brief.platform` | `defaults`: `type.overused-neutral-grotesque`, `keep`, a `basis`, and a `reason` naming the platforms seen | the generic-family finding below |
-| No database: set `LAZULI_DB` to a writable path, run `lazuli local fonts` and `lazuli catalog sync`, then `lazuli search --license open --delivery web`, and lock a family the user or `DESIGN.md` names with `--source`, `--delivery`, `--postscript`. With nothing to name, use `system-ui`, add one `claims.unresolved` line, report it first, and write no keep or reject entry | `claims.unresolved` | on a web plan the finding below stays open |
+| An intended `system-ui` (an operate screen, a tight budget, email) is a candidate like any other: it wins by comparison on each platform in `brief.platform`, against a named face | `explorations` (`chosen: system-ui`); `defaults`: `type.overused-neutral-grotesque`, `keep`, `keep_when: won-comparison`, a `basis`, and a `reason` naming the platforms seen | the generic-family finding below |
+| No database: set `LAZULI_DB` to a writable path, run `lazuli local fonts` and `lazuli catalog sync`, then `lazuli search --license open --delivery web`, and lock a family the user or `DESIGN.md` names with `--source`, `--delivery`, `--postscript`. With nothing to name, use `system-ui`, add one `claims.unresolved` line, report it first, and ask the user to name a face or to fix the platform's own face in the brief (`fixed_by: brief`) | `claims.unresolved` | `plan.uncompared-decision` and the finding below stay open until then |
+
+**Specimen.** One throwaway page per task under `.lapis/specimens/`, never shipped. For each
+candidate, one column with the page's own title, a real paragraph, a control, an error line, and the
+figures, in every locale of `brief.locales`, at the sizes the roles will use; keep the system face or
+the current face as a control. Installed faces draw by name. A catalog face that is not installed
+cannot be drawn without fetching it, so compare it on `lazuli search` evidence and let `compared_on`
+cover only what was drawn. Capture it with `lapis-design render check .lapis/specimens/<task>.html
+--task <task>-specimen --width 390` and view the screenshots beside the extract at size.
 
 Before changing a face over a complaint, sort it into one of five conditions.
 
@@ -68,10 +90,10 @@ Before changing a face over a complaint, sort it into one of five conditions.
 | A face that does not suit its role, like monospace on prose | the entry's `role` | `type.costume-monospace` |
 | A signal the subject has not earned | `world_materials` | `type.serif-luxury-display`; otherwise the critic |
 | Sameness across the whole system | `tokens.type.roles`, `direction.levers` | `type.single-neutral-sans`, `type.overused-neutral-grotesque` |
-| A kept convention or a missing file | a `defaults` entry's `basis`; `claims.unresolved` | the waiver; `font.not-locked` |
+| A kept convention or a missing file | a `defaults` entry's `basis` and `keep_when`; `claims.unresolved` | the waiver; `font.not-locked` |
 
 A familiar family is not a defect by its name; write the convention that keeps it (the brief, the
-contract, a requirement) as the `basis` of its `defaults` entry.
+contract, a requirement) as the `basis` of its `defaults` entry, with the rule's `keep_when` id.
 
 **Generic families.** A role's `family` is one name: the schema refuses a comma, and fallbacks go in
 the lock (`--fallback`) and the implementation tokens. CSS keywords and the vendor aliases of the
@@ -79,7 +101,9 @@ system UI face name no face. They need no lock entry, are never looked up in the
 in any letter case. Five of them, `system-ui` and `sans-serif` among them, resolve to a sans the
 platform picks, and `type.single-neutral-sans` counts those as one family. When a web plan's
 display, heading, body, and ui roles all use them, `type.overused-neutral-grotesque` reports that no
-face was chosen, a finding about the plan rather than a measurement.
+face was chosen, a finding about the plan rather than a measurement. A generic family can win a
+comparison; it is never the answer for lack of one, and with no named face among the candidates
+`plan.uncompared-decision` blocks the plan.
 
 Fonts the user is licensed for are candidates like any other, Adobe Fonts included: recommend,
 compare, choose, and lock them. On the web an Adobe face is delivered through the user's own Adobe
@@ -134,8 +158,8 @@ featureless grotesque carries every role with the same habits, walk the `one-neu
 
 For each open role, compare two or three materially different candidates, one of which can be the
 existing or system face, with the same real content, size, and state in every locale. Stop when each
-role has a winner or a named blocker, and record in `claims.proposed` why the runner-up lost, so
-the same default does not return under another name.
+role has a winner or a named blocker, and record in `explorations` why the runner-up lost, so the
+same default does not return under another name.
 
 ### Matching Latin with Hangul, kana, and Han
 

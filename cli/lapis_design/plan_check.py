@@ -2,9 +2,10 @@
 
 Checks, in order:
   1. schema     JSON Schema validation against src/shared/plan/schema.yaml
-  2. defaults   evaluate plan-layer detectors from rules.yaml; every hit needs a `defaults` entry.
-                Detectors this module does not implement run from the slop_lint registry
-                (cli/lapis_design/lint), with the lazuli database for font features.
+  2. defaults   evaluate plan-layer detectors from rules.yaml; every hit needs a `defaults` entry. A keep
+                waives a hit only when it names, as `keep_when`, one of the ids the rule lists; a rule that
+                lists none takes no keep. Detectors this module does not implement run from the slop_lint
+                registry (cli/lapis_design/lint), with the lazuli database for font features.
   3. contract   when DESIGN.md is declared, token values must come from it or be proposed changes
   4. fonts      every type role must be in the fonts lock with a delivery path for the platform, files
                 from a channel that may ship them, and a recorded grant for each planned use
@@ -465,6 +466,47 @@ def evaluate_package(plan: dict, package: str | None, rules: dict, ctx: Any = No
     return (False, "")
 
 
+def keep_ids(rule: dict) -> list[str]:
+    """The ids of the cases a rule's `keep_when` lists."""
+    return [case["id"] for case in rule.get("keep_when") or [] if isinstance(case, dict) and "id" in case]
+
+
+def default_verdict(rule: dict, decision: dict | None) -> tuple[bool, str | None]:
+    """Whether a plan's `defaults` entry waives a hit of `rule`, and why an entry that cannot does not apply.
+    A rule that is a requirement or whose waiver scope is none takes no entry. A keep waives only when the
+    entry names one of the ids the rule lists as `keep_when`; a rule that lists none takes no keep. A reject,
+    or no entry, is (False, None): the finding stays as it was."""
+    if not decision:
+        return False, None
+    name = rule.get("id")
+    if rule.get("class") == "requirement" or (rule.get("waiver") or {}).get("scope") == "none":
+        return False, f"{name} takes no defaults entry"
+    if decision.get("decision") != "keep":
+        return False, None
+    ids = keep_ids(rule)
+    named = decision.get("keep_when")
+    if named in ids:
+        return True, None
+    if not ids:
+        return False, f"{name} lists no keep_when case, so no keep fits it"
+    accepted = ", ".join(ids)
+    if named is None:
+        return False, f"the keep names no keep_when id; {name} accepts: {accepted}"
+    return False, f"keep_when {named!r} is not one of {name}'s ids; it accepts: {accepted}"
+
+
+def _defaults_fix(rule: dict) -> str:
+    """What to write in `defaults` for a hit nothing has decided yet."""
+    better = rule.get("better") or ""
+    if rule.get("class") == "requirement" or (rule.get("waiver") or {}).get("scope") == "none":
+        return better
+    ids = keep_ids(rule)
+    if not ids:
+        return f"Add a defaults entry for {rule['id']} that rejects it with a reason; it lists no keep_when case. {better}".rstrip()
+    return (f"Add a defaults entry for {rule['id']}: reject it with a reason, or keep it naming one keep_when id "
+            f"({', '.join(ids)}). {better}").rstrip()
+
+
 def check_defaults(plan: dict, rules: dict, plan_file: str, lazuli_db: Path | None = None) -> list[dict]:
     """Plan-layer rules; registry detectors share one context, with the lazuli DB for font features."""
     names = {det.get("detector") for r in rules.get("rules", []) if (det := (r.get("detect") or {}).get("plan"))}
@@ -503,18 +545,18 @@ def _check_defaults(plan: dict, rules: dict, plan_file: str, ctx: Any) -> list[d
         if not hit:
             continue
         decision = decided.get(rule["id"])
-        if decision:
+        waived, unfit = default_verdict(rule, decision)
+        if waived or (decision and decision["decision"] == "reject" and unfit is None):
             out.append(finding(rule["id"], rule["class"], detail, blocking=False, create="info",
-                               status="waived" if decision["decision"] == "keep" else "open",
+                               status="waived" if waived else "open",
                                waiver=f'{decision["decision"]} ({decision["basis"]}): {decision["reason"]}',
                                path=det.get("path"), file=plan_file))
         else:
             blocking = sev.get("create") == "gate"
-            out.append(finding(rule["id"], rule["class"], detail, blocking=blocking,
-                               create=sev.get("create", "warn"), review=sev.get("review"),
-                               path=det.get("path"), file=plan_file,
-                               fix=f"Add a defaults entry for {rule['id']} (keep or reject with a reason). "
-                                   + (rule.get("better") or "")))
+            out.append(finding(rule["id"], rule["class"], f"{detail}; the plan's defaults entry does not apply: {unfit}" if unfit
+                               else detail, blocking=blocking, create=sev.get("create", "warn"),
+                               review=sev.get("review"), path=det.get("path"), file=plan_file,
+                               fix=_defaults_fix(rule)))
     return out
 
 
@@ -723,11 +765,20 @@ def summarize(plan: dict) -> str:
         lines.append(f"- **Signature:** {sig}")
     for r in resolve(plan, "tokens.type.roles[*]"):
         lines.append(f"- **Type ({r.get('role')}):** {r.get('family')}")
+    for ex in plan.get("explorations") or []:
+        subject = " ".join([str(ex.get("decision")), *(ex.get("covers") or [])])
+        if ex.get("fixed_by"):
+            lines.append(f"- **Fixed ({subject}):** by the {ex['fixed_by']} — {ex.get('reason', '')}")
+            continue
+        options = ", ".join(f"{c.get('name')} ({c.get('source')})" for c in ex.get("candidates") or [])
+        lines.append(f"- **Compared ({subject}):** {options}; chose {ex.get('chosen')}; "
+                     f"runner-up lost: {ex.get('runner_up_lost')}")
     for ref in plan.get("references", []) or []:
         lines.append(f"- **Reference:** {ref.get('source')} — {ref.get('rights')}, {ref.get('mode')}; "
                      f"take {', '.join(ref.get('take', []))}")
     for dft in plan.get("defaults", []) or []:
-        lines.append(f"- **Default {dft.get('id')}:** {dft.get('decision')} — {dft.get('reason')}")
+        kept = f" ({dft['keep_when']})" if dft.get("keep_when") else ""
+        lines.append(f"- **Default {dft.get('id')}:** {dft.get('decision')}{kept} — {dft.get('reason')}")
     return "\n".join(lines)
 
 
