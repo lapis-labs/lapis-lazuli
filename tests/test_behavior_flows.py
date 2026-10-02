@@ -140,7 +140,8 @@ def test_pottery_flows_report_drip_system_line_phone_exit_and_pair(browser, any_
         assert "gates" not in subscribe and not subscribe.get("cart")
     assert effects == 3  # reserve, subscribe, cancel; stub reset per context
     assert "hint_mismatch" not in json.dumps(document)   # the fixture's hints agree with the page
-    for secret in ("10 Fictional Street", "potter@example.com", "4242"):
+    # The whole card number: a fragment such as "4242" can occur in a random loopback port (127.0.0.1:42421).
+    for secret in ("10 Fictional Street", "potter@example.com", "4242 4242 4242 4242", "4242424242424242"):
         assert secret not in json.dumps(document)
     print(f"{mode} pottery flows 2 contexts, 3 runs each: {runtime:.2f}s")
 
