@@ -162,6 +162,8 @@ class Driver:
         self.network = None
         self._loaded = False
         self._acted = False
+        self._boxes = None                 # what the last snapshot saw, and the mutations it added to the page's count
+        self.snapshot_mutations = 0
         self._start = monotonic()
         self._popups = 0
         self._downloads = 0
@@ -251,14 +253,20 @@ class Driver:
             self.boxes()
 
     def boxes(self) -> list[dict]:
-        return nodes.snapshot(self)
+        self._boxes, self.snapshot_mutations = nodes.snapshot(self)
+        return self._boxes
 
-    def locate(self, box_id):
-        self.boxes()
+    def locate(self, box_id, *, stamped=False):
+        """The element a box id stands for. `stamped`: the caller snapshotted a moment ago and nothing ran since."""
+        if not stamped:
+            self.boxes()
         return self.page.locator(f'[data-lapis-box="{box_id}"]').first
 
-    def interactive(self) -> list[dict]:
-        boxes = self.boxes()
+    def interactive(self, *, reuse=False) -> list[dict]:
+        """The visible enabled controls. `reuse`: nothing ran since the last snapshot (a load or an action ends
+        with one), so take its boxes instead of snapshotting again, unless that snapshot adds mutations to the
+        page's count (see `act`): the count a navigation is recorded against includes every snapshot before it."""
+        boxes = self._boxes if reuse and self._boxes is not None and not self.snapshot_mutations else self.boxes()
         focusable = [box["id"] for box in boxes if box["focusable"] and box["interactive"] and box["enabled"]]
 
         def delegated(box):
@@ -377,9 +385,9 @@ class Driver:
         except PlaywrightTimeout:
             return None
 
-    def _perform(self, action):
+    def _perform(self, action, *, stamped=False):
         kind = action["kind"]
-        target = self.locate(action["target"]) if "target" in action else None
+        target = self.locate(action["target"], stamped=stamped) if "target" in action else None
         if kind in ("click", "tap"):
             self._pointer(target, kind)
         elif kind == "key":
@@ -458,6 +466,11 @@ class Driver:
 
     def act(self, action: dict) -> dict:
         self.boxes()
+        # A snapshot of a page whose text has `line-height: normal` measures with probe nodes, and the page's
+        # mutation count includes them: `dom_mutations` is read from that count (a navigation, against everything the
+        # last document counted). Such a page keeps every snapshot it was always given; on any other page the
+        # repeat snapshot changes nothing and is skipped.
+        stamped = self.snapshot_mutations == 0
         before = self.page.evaluate(OBSERVE)
         req_start = len(self.network.entries)
         console_start = len(self.session.console_entries)
@@ -467,7 +480,7 @@ class Driver:
         action["t_ms"] = self.t_ms()
         self.page.evaluate(settle.START_LAYOUT_ANIMATIONS)
         try:
-            self._perform(action)
+            self._perform(action, stamped=stamped)
         except Exception:
             if not self.network.external:
                 raise

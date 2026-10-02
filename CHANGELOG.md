@@ -54,6 +54,12 @@ All notable changes are recorded here. The format follows
   such a target (exit 2), and `render check` loaded it as `file:`, where root-relative links such as
   `/site.css` did not load and the extract was silently wrong. The `lapis` and `ultramarine` skills
   say so.
+- `behavior check` runs the controls probe about three times faster with the same observations (211 s
+  to 65 s on a 34-control demo page): a snapshot reads every box in a few browser calls instead of
+  several per box, an unchanged page is not snapshotted again, and the quiet rest of a settle window
+  advances the page's controlled clock frame by frame instead of waiting 500 ms of real time. Real
+  time is still followed while a request is pending, an animation or media element runs, the document
+  loads, or the page changed in the last 100 ms.
 
 ## 0.1.2 (2026-10-01)
 
