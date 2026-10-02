@@ -156,7 +156,7 @@ Glow and halos are not dark-theme materials; mark focus and state with borders a
 
 ## Data scales
 
-Choose each scale from what the data means, list it in `data_scales`, and run its check.
+Choose each scale from what the data means, list it in `data_scales`, and do its check by hand; no check runs it.
 
 | Scale | Data | Build | Check |
 |---|---|---|---|

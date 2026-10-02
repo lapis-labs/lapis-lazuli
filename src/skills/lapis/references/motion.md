@@ -1,7 +1,7 @@
 # Motion
 
 This file backs the plan's motion decisions: the motion dial in `direction.dials`, and `tokens.motion`,
-where `reduced_motion: respect` is required and `principles` holds one string per decision. `lps-system`
+where `respect` is the only accepted value for `reduced_motion` and `principles` holds one string per decision. `lps-system`
 turns the principles into duration, easing, and distance tokens; this file decides what they say, what
 happens around them, and what the checks can tell you.
 
@@ -129,7 +129,7 @@ list shows its earlier position at once), and enable smooth scrolling only under
 content, and motion arrives only inside both guards:
 
 ```css
-.log-row { opacity: 1; transform: none; }
+.log-row { transform: none; opacity: 1; }
 
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
@@ -159,7 +159,7 @@ history, title, loading and error state, focus and announcements, or scroll rest
 
 ## Reduced motion
 
-`reduced_motion: respect` is a requirement, never traded for the dial, the brief, or a signature. It covers
+`respect` is the only accepted value for `reduced_motion`, never traded for the dial, the brief, or a signature. It covers
 every shipped effect that is not essential, meaning motion that is itself the content, such as a chart
 drawn from live data. Decide the reduced branch when you decide the effect.
 

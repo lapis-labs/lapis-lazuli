@@ -1423,6 +1423,7 @@ entries:
   words: 1118
   dest:
   - card
+  target: lzl-color
   note: card 행선지는 lzl-color 본문. 프로필을 추측하지 않고 인쇄소가 이름 붙인 출력 조건을 요구(2026-09-28). 같은 규칙이 lapis 색 참조에도 있음. Q30에서 docs·rule 행선지를 뺌(검사가 찾을 것이 없음)
   status: done
   done: [card]
@@ -1694,7 +1695,7 @@ entries:
   note: Q30. 빼기. 저장소 README를 새로 씀(INSTALLATION.md 연결)
   status: done
 - path: README.ko.md
-  words: 727
+  words: 1808
   dest:
   - drop
   target: null

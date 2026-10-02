@@ -58,8 +58,8 @@ accurately. Remove, defer, prefill, or explain it accordingly.
   the backend confirmed; "saved on this device" is true of storage, not page memory.
 - A multi-step form, or one that promises a draft, keeps entries through reload, Back, and signing in
   again.
-- A session or hold that can end warns at least 20 seconds ahead and extends in one action, or does not
-  end while work is unsaved (`ux.timeout-without-warning`).
+- A session or hold that can end either warns at least 20 seconds ahead and supports repeated one-action
+  extensions, can be turned off, or can be lengthened substantially (`ux.timeout-without-warning`).
 
 ## Review and consent
 
@@ -86,18 +86,22 @@ Defaults for a Korean service; a reader of Korean settles what the audience expe
 - **Address:** a 우편번호 찾기 button opens an address search; a result fills the 우편번호 and the
   road-name address, then focus moves to a separate 상세 주소 field. Offer direct entry when the search
   finds nothing. A search in a layer is a dialog (`ux.dialog-focus`).
-- **Dates:** show the weekday with the date, 9월 27일(토), in choices and in the review. Set `lang="ko"`;
+- **Dates:** show the weekday with the date, 9월 26일(토), in choices and in the review. Set `lang="ko"`;
   store ISO values.
 - **Required and optional:** mark every consent item [필수] or [선택]; elsewhere mark only the optional
   fields (선택) and set `required` on the rest.
 - **Consent list:** [필수] 이용약관 동의, [필수] 개인정보 수집·이용 동의, [선택] 마케팅 정보 수신 동의,
-  each channel (email, text message, push) its own box. 전체 동의 comes first as the shortcut; each item
-  has a 보기 that opens its text in place.
-- **Identity verification (본인 확인):** only when the goal needs it, such as an age limit or a financial
-  step; a reservation needs a name and a working number. Declare `requires: [identity]` with a reason
-  and give people without the supported device a path. The code field takes
-  `autocomplete="one-time-code"`, `inputmode="numeric"`, and paste, and shows a real expiry and a
-  resend. When age is the need, ask a birth date.
+  each channel (email, text message, push) its own box. 전체 동의 comes first as the shortcut and includes
+  optional items too; each item has a 보기 that opens its text in place.
+- **Identity verification (본인인증):** use it only when the goal needs verified identity, such as an age
+  limit or a financial step. The verification provider's window returns the confirmed name and birth date.
+  Declare `requires: [identity]` with a reason and give people without the supported device a path.
+  Unless the law requires a resident registration number (주민등록번호), ask for a birth date (생년월일)
+  instead.
+- **Phone-number verification (번호 인증):** a text-message code confirms only that the person can receive
+  messages at that number, not their identity. A reservation needs a name and a working number, not
+  identity verification by default. The code field takes `autocomplete="one-time-code"`,
+  `inputmode="numeric"`, and paste, and shows a real expiry and a resend.
 - **Typing:** validate and reformat Korean text after `compositionend` or when the person leaves the
   field, not while it composes (`navigation.md`, Korean input).
 
@@ -129,7 +133,8 @@ search or identity service.
 
 ```text
 lapis-design behavior check <url> --task <task> --plan .lapis/plans/<task>.yaml --stub .lapis/stub.yaml \
-  --probe flows --probe forms --probe commits --probe states --probe time_limits
+  --probe flows --probe forms --probe commits --probe states --probe time_limits \
+  --probe choices --probe history --probe controls --probe dialogs
 ```
 
 Without `flows`, `forms`, `commits`, and `time_limits` lose what comes from flow runs (repeated entry,
@@ -146,10 +151,11 @@ commit steps, limits met during a flow).
 What no check does:
 
 - The forms probe reads the kind of form, error reasons, sign-in alternatives, explanations of cleared
-  fields, and "same as" text in English only. A form whose id, name, and opening text hold no English
-  word is recorded without a kind; its fields, errors, and kept entries are still checked.
-- The flow driver types into fields and selects but never ticks a checkbox, so a required terms
-  checkbox ends the run `blocked`; report that flow as not run.
+  fields, "same as" text, disabled-submit reasons, and cognitive-test wording in English only. A form whose
+  id, name, and opening text hold no English word is recorded without a kind; its fields, errors, and kept
+  entries are still checked.
+- The flow driver types into fields and selects but never activates a checkbox, radio, or switch, so a
+  required terms checkbox ends the run `blocked`; report that flow as not run.
 - An announcement is text entering a live region, an alert appearing, or focus moving there; no screen
   reader output is checked. Address search and identity verification are never called, and failure
   injection runs only on the stub.

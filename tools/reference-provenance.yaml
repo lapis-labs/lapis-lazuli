@@ -296,6 +296,9 @@ references:
   - The enhanced contrast level for a high-contrast theme is a decision rule; kept.
   - Verify forced-colors, increased-contrast, and reduced-transparency wording against platform support
     before release.
+  resolved_2026_10_02:
+  - 'Data-scale checks are manual: no CLI reader of tokens.color.data_scales exists. The Data scales opening
+    now makes that limit explicit, matching the data-viz reference.'
 - reference: lapis/references/layout.md
   sources:
   - path: references/layout/layout-decision-procedure.md
@@ -811,6 +814,13 @@ references:
   - 'Consistency with color.md: the four scale kinds, highlight as a treatment and not a fifth kind, selection and status
     kept out of series colors, and forced colors read through labels and patterns. The data-viz.md sentences about the
     reduced-motion branch for a decorative draw-in match the motion probe''s treatment of a canvas presented as content.'
+  resolved_2026_10_02:
+  - 'G113: source inspection of render/capture.py confirms SVG text foreground comes from computed CSS color,
+    not SVG fill. The contrast row now calls for fill: currentColor or a manual label check. Inspection of
+    behavior_check/probes/pointer.py confirms native range inputs are dragged sideways and other targets
+    straight down; the gesture row now explicitly excludes horizontal brushes.'
+  - 'G116: the missing-value guidance was rephrased to remove its overlap with color.md while retaining
+    separate legend symbols for absence, suppression, detection limits, and values beyond the domain.'
 - reference: lps-system/references/tokens.md
   sources:
   - path: references/design-systems/design-tokens.md
@@ -1628,7 +1638,7 @@ references:
     used_for: The layer sentence and the representation table rows, rewritten as criteria
   skill_body_pointer: 'The motion dial has three bands: 1-3 feedback only, 4-6 transitions that explain a change,
     7-10 authored moments. Write the band into `tokens.motion.principles` with a reduced-motion branch for each
-    effect (`reduced_motion: respect` is required). For timing and easing, interruption, scroll and route
+    effect (`respect` is the only accepted value for `reduced_motion`). For timing and easing, interruption, scroll and route
     enhancement, choosing between native and library animation, and delivering authored animation, read
     `references/motion.md`.'
   resolved_2026_10_01:
@@ -1715,6 +1725,10 @@ references:
   - 'Source files: check_source_drift.py against the live checkout reported 223 of 223 files unchanged from the frozen
     snapshot. A 7-word run comparison of motion.md (code blocks left out) against the seven source files found no run
     of 6 or more words in common.'
+  resolved_2026_10_02:
+  - 'G116: reduced_motion is not a required field; respect is its only accepted value. Both reference
+    sentences and the skill-body pointer now distinguish those facts. The base CSS declaration order was
+    changed to remove a source overlap without changing its effect.'
 - reference: lps-ux/references/forms-and-recovery.md
   sources:
   - path: references/product-types/forms-onboarding-and-checkout.md
@@ -1796,9 +1810,9 @@ references:
       shown as separate items marked 필수 and 선택, with a select-all box and marketing consent per channel'
     used_for: The consent list. Added while drafting; the text states no law.
   - kind: practice
-    name: Korean identity-verification services reached through a mobile carrier or a government-linked app (no product
-      named in the text)
-    used_for: The identity verification bullet. Added while drafting.
+    name: Korean identity-verification providers returning a confirmed name and birth date through their own window
+      (no product named in the text); text-message codes that confirm access to a phone number, not identity
+    used_for: The separate identity-verification and phone-number-verification bullets. Added while drafting.
   skill_body_pointer: 'When a flow collects input or can fail partway - a form, sign-up, booking, checkout, a slow or
     unanswered request - read `references/forms-and-recovery.md` (SKILL.md, At the start, step 4).'
   left_for_later:
@@ -1812,13 +1826,12 @@ references:
   - 'checkout detail (order model, guest checkout, address and payment) in the e-commerce archetype or a later
     reference; platforms reference: native form controls and autofill.'
   verify_before_release:
-  - 'Korean forms section (new writing; no source has a Korean form) confirmed on 2026-10-01 by the maintainer, a native
-    Korean reader: one name field with no length cap and a legal name only for verification; a single phone field that
-    accepts 010-1234-5678 and 01012345678 (landline and foreign numbers are not covered); the address flow (five-digit
-    postal code, road-name address, separate detail field, direct entry); the weekday after the date, 9월 27일(토); the
-    필수 and 선택 marks; the consent list items and marketing consent per channel; 본인 확인 only for an age limit or a
-    financial step, with a birth date instead of a resident registration number; the SMS code field. Whether the consent
-    items named are what a Korean service must show is a legal question the text does not settle.'
+  - 'The Korean forms section was confirmed by the maintainer on 2026-10-01 before the G115 correction.
+    The 2026-10-02 wording awaits a new native-reader check: 9월 26일(토), 전체 동의 including optional items,
+    본인인증 returning a provider-confirmed name and birth date, 번호 인증 confirming only access to the
+    phone number, and 생년월일 instead of 주민등록번호 unless the law requires the latter. The unchanged
+    name, phone, address, 필수 and 선택, and per-channel consent conventions retain the earlier confirmation.
+    Whether the consent items or collection of an identifier are legally required is not settled here.'
   - 'Checker behavior quoted in the text (behavior/DERIVED.md Forms, Commits, Flows, States, Time limits; the forms,
     flows, commits, states, and time_limits probes): the English-only reading list of the forms probe; a form kind
     read from its id, accessible name, and opening text; flows starting at the plan start route, not the URL given;
@@ -1853,3 +1866,12 @@ references:
   - 'Source files: check_source_drift.py against the live checkout reported 223 of 223 files unchanged from the frozen
     snapshot. A 7-word run comparison of forms-and-recovery.md (code blocks left out) against the four source files
     found no run of 5 or more words in common.'
+  resolved_2026_10_02:
+  - 'G113: inspected forms.py for its English-only disabled-submit reason and cognitive-test patterns;
+    both now appear in the limitation list. Inspected the time-limit detector and probe: repeated simple
+    extensions, turning off the limit, or a substantial adjustment are the alternatives now described.'
+  - 'G115: split identity verification from phone-number verification, corrected the date to 9월 26일(토),
+    stated that 전체 동의 includes optional items, and made the birth-date versus resident-registration-number
+    guidance explicit. The revised Korean labels and their surrounding English prose await reader review.'
+  - 'G116: added choices, history, controls, and dialogs to the example probe command, and named radio and
+    switch alongside checkbox in the flow-driver limitation. These are documentation corrections, not probe changes.'

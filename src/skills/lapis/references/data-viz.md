@@ -57,7 +57,7 @@ Readers judge positions along a shared scale more accurately than area, angle, o
 - Put units in axis titles, headers, or values, and round to the precision the collection supports. Label directly when that saves a legend lookup.
 - Annotate a change with its evidence: an event, a threshold, a policy, a data caveat. A decorative arrow is not evidence.
 - Tell actual, forecast, target, and scenario apart with more than color: line style, a label, a region.
-- Label missing as missing. Missing, suppressed, below-detection, and out-of-range values each get their own mark and legend entry; a missing value plotted as zero, or dropped silently, is a false statement.
+- Distinguish absent observations, suppressed results, readings below detection, and values beyond the plotted domain with separate symbols explained in the legend. Never turn absence into zero or omit it without disclosure.
 - Say how uncertain the data is in terms readers can use: an interval, the sample size, a suppression threshold, how late and how complete the data is, what changed when a value was revised. A "live" badge means a defined freshness window from a named source.
 
 Chart copy names the population and the measure, and keeps "no events", "filtered out", "too small a sample", "no permission", and "query failed" as separate messages.
@@ -111,7 +111,7 @@ Checks read boxes, text, source, and behavior; none reads a chart's meaning.
 
 | Check | Reads | Leaves out |
 |---|---|---|
-| `color.text-contrast` | text against its surface in each theme and state, labels inside an `svg` included | marks, gridlines, the 3:1 for graphics, color-vision differences |
+| `color.text-contrast` | text against its surface in each theme and state, including `svg` labels measured from CSS `color`, not SVG `fill`; use `fill: currentColor` or check the labels by hand | marks, gridlines, the 3:1 for graphics, color-vision differences |
 | `component.small-target` | buttons, links, and inputs under 24 px with neighbors in reach; a mark given a button role counts | a mark with no role |
 | `imagery.missing-content-image` | an `img` or `picture` with neither `alt` nor an accessible name | an inline `svg` or a `canvas`, named or not; whether an alternative says enough |
 | `layout.compact-overflow` | sideways page scroll, clipped text, overlapping controls at 320 and 390 px | a chart that scrolls in a region of its own passes; a fixed-width graphic wider than the page fails |
@@ -121,7 +121,7 @@ Checks read boxes, text, source, and behavior; none reads a chart's meaning.
 | `code.unvirtualized-list` | more than 500 direct children of a scrolling box, or of a list taller than three viewport heights | a `table`: its rows sit in a `tbody`, so they are not counted |
 | `ux.status-not-announced` | after a control is pressed, changed text that reports a result (in a status, alert, live region, output, toast, or snackbar, or containing cart, items, results, saved, added, sent, or reserved) with no announcement and no move of focus | a summary such as "72 pieces in 4 firings"; any announcement in the same action clears every result in it; the controls probe presses controls and never picks another option in a `select` |
 | `ux.hover-content` | what an interactive box reveals when hovered at its center: shown on focus too, kept when the pointer moves onto it, held while hovered, closed by Escape when it covers content | a tooltip on marks inside an `svg`, which are boxes only with a role |
-| `ux.gesture-only` | a drag on a recognized target (draggable, range input, slider, grab or resize cursor, or a `touch-action: none` target that is named, focusable, or a canvas): is a step button, menu, or other input beside it? | a brush whose result appears outside the dragged target's own group |
+| `ux.gesture-only` | a drag on a recognized target (draggable, range input, slider, grab or resize cursor, or a `touch-action: none` target that is named, focusable, or a canvas): is a step button, menu, or other input beside it? Native range inputs are dragged sideways; other targets are dragged straight down | horizontal brushes are not exercised; a brush whose result appears outside the dragged target's own group |
 | `motion.reduced-motion-missing` | under reduced motion, boxes that still move by transform (a fade that slides counts), scroll-linked animation, video, and canvas that is not essential | a fade in place; shapes that animate inside an `svg` (bars growing, a stroke drawing in), since only the `svg` box is watched; a canvas presented as content passes (in a `figure`, with a role and a name, or named as a chart, graph, plot, or map) |
 
 The render guesses a color's role from the box that paints it. A box whose own `class`, `id`, or `role` attribute contains chart, graph, plot, or sparkline paints `data`, and table cells do too; put the word on the `svg` or `canvas` that draws the marks, since a wrapper does not count. An unnamed `svg` reads as identity ink, and three hues in it can trip `color.competing-accents`; an `svg` with `role="img"` reads as content, which that rule ignores.
