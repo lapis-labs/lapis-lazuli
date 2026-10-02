@@ -12,7 +12,7 @@
       "name": "lapis",
       "source": "./plugins/lapis",
       "description": "Design direction, plans, and named defaults for new UI and redesigns",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "category": "design",
       "policy": {
         "installation": "AVAILABLE",
@@ -23,7 +23,7 @@
       "name": "ultramarine",
       "source": "./plugins/ultramarine",
       "description": "Render checks, slop and rights review, and a separate critic",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "category": "design",
       "policy": {
         "installation": "AVAILABLE",
@@ -34,7 +34,7 @@
       "name": "lazuli",
       "source": "./plugins/lazuli",
       "description": "Local fonts and colors, catalogs, references, and the lazuli CLI",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "category": "design",
       "policy": {
         "installation": "AVAILABLE",

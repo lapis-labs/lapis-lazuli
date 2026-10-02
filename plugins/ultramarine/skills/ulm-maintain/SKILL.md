@@ -4,7 +4,7 @@ description: Maintains an existing frontend - behavior-preserving refactors and 
 license: MIT AND CC-BY-4.0
 metadata:
   plugin: ultramarine
-  version: 0.1.2
+  version: 0.1.3
 ---
 
 # ulm-maintain

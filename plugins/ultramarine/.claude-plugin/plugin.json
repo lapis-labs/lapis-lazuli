@@ -1,6 +1,6 @@
 {
   "name": "ultramarine",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Render checks, slop and rights review, and a separate critic",
   "author": {
     "name": "lapis-labs"

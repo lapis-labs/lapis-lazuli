@@ -5,7 +5,20 @@ All notable changes are recorded here. The format follows
 [Semantic Versioning](https://semver.org/) once 1.0 is released. Before then, contracts are
 `version: 0` drafts and may change between minor versions.
 
-## Unreleased
+## 0.1.3 (2026-10-02)
+
+Adobe Fonts wording that reads as "usable, not reachable by file", fixes to the probes and renders the demo
+pilot found, local HTML files served on loopback, clearer sandbox guidance, and contract diff 4. The probe
+wording regressions listed under Known limits are fixed in 0.1.4.
+
+### Contracts
+
+- `behavior/DERIVED.md`: the wording exceptions, the exit-commit definition, `hidden_terms` of a run with
+  no commit, `input_blocked_ms` recorded only, and how time limits reach a step. `render/DERIVED.md`:
+  the page URL uses `http` or `https`. `slop/detectors.yaml`: the source-layer wording matches the
+  engine. `behavior/stub.schema.yaml`: value ids are `v1`, `v2`, ….
+
+### Added and fixed
 
 - The Korean section of `lps-ux/references/forms-and-recovery.md` was confirmed by a native Korean
   reader on 2026-10-01 and again on 2026-10-02 after the identity, phone-number, and birth-date bullets

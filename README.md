@@ -11,7 +11,7 @@ code exists, on a machine without a lazuli font database (four of seven findings
 
 ```console
 $ lapis-design plan check docs/examples/site-booking-en.yaml
-plan_check 0.1.2: 2 blocking, 7 total
+plan_check 0.1.3: 2 blocking, 7 total
   [WARN] copy.buzzwords content.key_copy[*].text — "elevate" (buzzwords) in the headline key copy: "Elevate your camping experience"
           fix: Add a defaults entry for copy.buzzwords (keep or reject with a reason). Name the user action, the handoff removed, or the verifiable capability
   [BLOCK] copy.vague-cta content.key_copy[?slot=cta].text — "continue" (vague_cta) in the cta key copy: "Continue"

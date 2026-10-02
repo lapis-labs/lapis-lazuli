@@ -1,4 +1,4 @@
-<!-- lapis-lazuli 0.1.2, from dist/AGENTS.snippet.md -->
+<!-- lapis-lazuli 0.1.3, from dist/AGENTS.snippet.md -->
 ## LapisLazuli design skills
 
 - At the start of a design task, run `lazuli local fonts --summary` and read the local font inventory summary it prints before choosing fonts.
