@@ -103,13 +103,12 @@ READ_REVEAL = r"""el => {
       document.getAnimations().some(a=>a.playState==='running' && chain.includes(a.effect?.target))};
 }"""
 
-# A frame the browser renders after the scroll runs what only a frame delivers: intersection observers, scroll events.
-# The flag is read from outside, so a page that renders no frame costs the wait below and no more.
-FRAME_PASSED = """() => {
-  window.__lapisFrame = false;
-  const observer = new IntersectionObserver(() => { window.__lapisFrame = true; observer.disconnect(); });
+# Wait for a rendered frame after scrolling: scroll events and intersection observers need that real frame before
+# the quiet ticks can advance page time. requestAnimationFrame cannot fence it: the installed clock controls rAF.
+AFTER_SCROLL_FRAME = """() => new Promise(resolve => {
+  const observer = new IntersectionObserver(() => { observer.disconnect(); resolve(); });
   observer.observe(document.documentElement);
-}"""
+})"""
 
 
 def _frame(driver):
@@ -127,12 +126,9 @@ def _tick(driver, ms=100, *, real=True):
     driver.advance_clock(max(ms, round((monotonic()-started)*1000)))
 
 
-def _after_a_frame(driver, wait=.1):
-    """Wait, up to `wait` real seconds, for the browser to render one frame."""
-    driver.page.evaluate(FRAME_PASSED)
-    deadline = monotonic() + wait
-    while monotonic() < deadline and not driver.page.evaluate("window.__lapisFrame"):
-        sleep(.004)
+def _after_a_frame(driver):
+    """Fence the scroll's rendered frame without fixed sleeps or moving the controlled clock."""
+    driver.page.evaluate(AFTER_SCROLL_FRAME)
 
 
 def _measure(driver, duration_ms=5000):

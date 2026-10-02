@@ -296,7 +296,7 @@ def test_a_box_revealed_by_a_timer_reads_the_timers_delay(opened, monkeypatch):
     rows = motion._scroll_reveal(driver)
     assert [row["hidden_at_rest"] for row in rows] == [True]
     assert 900 <= rows[0]["reveal_delay_ms"] <= 1100
-    assert sum(naps) < 0.5                          # the timer is on the controlled clock: no real waiting for it
+    assert naps == []                               # the timer is on the controlled clock: no real sleeps for it
 
 
 def test_a_box_that_nothing_reveals_costs_its_page_time_and_no_real_waiting(opened, monkeypatch):
@@ -307,7 +307,7 @@ def test_a_box_that_nothing_reveals_costs_its_page_time_and_no_real_waiting(open
     rows = motion._scroll_reveal(driver)
     assert len(rows) == 1 and "reveal_delay_ms" not in rows[0]
     assert session.clock.now_ms() - before >= 5100  # the page lived through the whole 5.1 s
-    assert sum(naps) < 0.5                          # 51 real ticks would be 5.1 s
+    assert naps == []                               # no real sleeps in any of the 51 quiet ticks
 
 
 def test_a_transition_a_timer_starts_is_waited_for_in_real_time(opened, monkeypatch):
