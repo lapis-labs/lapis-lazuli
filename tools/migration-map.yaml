@@ -919,10 +919,11 @@ entries:
   dest:
   - rule
   - card
-  target: slop rules + lapis
-  note: 카탈로그 107행 → rules.yaml (추적표 tools/slop-id-trace.yaml). 판정 네 질문·거절 기준·수리 순서는 카드로
+  - reference
+  target: slop rules + lapis + ultramarine/references/critic.md
+  note: '카탈로그 107행 → rules.yaml (추적표 tools/slop-id-trace.yaml). 판정 네 질문·거절 기준·수리 순서는 카드로. Q1–Q2(2026-10-03): 근거 있는 카드·표제 라벨의 보존/거절 쌍과 외양만 바꾼 대체 패키지 진단을 src/agents/critic.md로 반영. 카드 행선지는 남음'
   status: partial
-  done: [rule]
+  done: [rule, reference]
 - path: references/quality/critique-and-feedback.md
   words: 2813
   dest:

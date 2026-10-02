@@ -39,6 +39,8 @@ after text.
 
 ### Changed
 
+- The critic gains paired earned/unearned grouping examples and a content-level test for replacement-package repairs.
+
 - A `defaults` keep waives a finding only when its `keep_when` names one of the rule's ids, in `plan check` and in
   `slop lint`. A keep with no id, an id of another rule, or an id nobody lists leaves the finding at its severity,
   and the message lists the accepted ids. A rule that lists no `keep_when` case takes no keep (47 rules that are not

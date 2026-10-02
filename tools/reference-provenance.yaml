@@ -2124,3 +2124,8 @@ references:
   - 'The four example levers were run through the plan-anchored-text detector with their stated materials and none was reported.'
   left_for_later:
   - 'Proposed decision changes, content left out because no plan field or check reads it: evidence-class and art-status discussion; study, trial, and discard record formats; haptics and sound; contribution and co-production governance (ownership, persistence, moderation); cultural and ritual pacing authority; point, line, and plane vocabulary. Each needs a field or a check before it can enter a generating reference.'
+- reference: ultramarine/references/critic.md
+  sources:
+  - path: references/quality/anti-slop.md
+    taken: 'Q1–Q2 (2026-10-03), lines 64–87, 103–113, 148–157: paired earned/unearned cards and heading labels; compare content relations beneath a replacement finish. Adapted in src/agents/critic.md, which builds this reference.'
+    dropped: Scores, quotas, named package bans, prevalence and authorship claims; the existing findings and repair contracts remain authoritative.

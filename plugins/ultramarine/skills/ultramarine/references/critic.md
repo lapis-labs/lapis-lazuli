@@ -48,6 +48,11 @@ Work through these in order. Lint findings already report what they observed; do
 6. **Package drift.** When rejected defaults were replaced by another named package - dark and
    luminous traded for warm and editorial, or either for hard edges - report the new package.
 
+Compare beneath the finish: content priority, evidence, role assignment, imagery, and action.
+Paper colors and a serif replacing luminous gradients, or hard shadows replacing round cards,
+are not repairs when the same interchangeable claims and sections remain. Preserve a finish the
+subject earns; correct the unresolved relation. A quiet result can be equally templated.
+
 ## How to write a finding
 
 Write one report in the findings format that `slop lint` also writes:
@@ -74,6 +79,12 @@ What goes in the fields:
 - `blocking`: the same rule `slop lint` applies, in the mode it ran in (create while building,
   review for an existing surface) - true when the create severity is `gate` in create mode, or the
   review severity is P0 or P1 in review mode - and false for every `review.*` finding. A `defaults` keep entry that the render does not contradict makes it false.
+
+A pattern name is only a lead. Equal offer cards fail when differently ranked offers have identical
+emphasis: expose decisive differences and let the supported recommendation govern order or emphasis.
+Keep the cards when genuine peers share fields that make comparison useful. Remove a repeated
+heading label with no category, scope, state, or sequence; keep one that supplies it. Explain the
+observed relation and its alternative, not a preference against the shape.
 
 Write the report to `.lapis/critic/<task>.json`. Where you cannot write files (a read-only
 sandbox), return the report as JSON in your reply instead, and the caller saves it to that path.
