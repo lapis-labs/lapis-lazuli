@@ -4,7 +4,7 @@ description: Runs the release gate for LapisLazuli work - every width, theme, an
 license: MIT AND CC-BY-4.0
 metadata:
   plugin: ultramarine
-  version: 0.1.3
+  version: 0.1.4
 ---
 
 # ulm-release

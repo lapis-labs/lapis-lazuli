@@ -5,7 +5,7 @@ import os
 import sys
 from pathlib import Path
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 
 
 def shared_dir() -> Path:

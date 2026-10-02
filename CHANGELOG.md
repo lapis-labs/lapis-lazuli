@@ -5,6 +5,113 @@ All notable changes are recorded here. The format follows
 [Semantic Versioning](https://semver.org/) once 1.0 is released. Before then, contracts are
 `version: 0` drafts and may change between minor versions.
 
+## 0.1.4 (2026-10-02)
+
+The behavior probes read wording, choices, exits, urgency, and quotations as contract diff 5 says; the flow
+driver makes the choices a screen requires; the release gate tells defects from missing evidence.
+
+### Contracts
+
+- Contract diff 5: wording and urgency rules, the flow driver's choices of required radios and terms
+  checkboxes, kinds and outcomes, status text, unread links in the report scope, and the release gate's
+  `defects`, `no_evidence`, `to_confirm`, and `not_run` counts.
+
+### Changed
+
+- The flow driver makes the choices a screen needs. After it has tried every forward control, it ticks
+  each required terms, privacy, or age-confirmation checkbox and answers each required radio group, in
+  document order, then tries the screen's controls again. A group that asks for agreement gets the
+  agreeing option; any other gets the first option that turns the offer down, else the first with no
+  amount above zero, else the cheapest. Optional items, select-all checkboxes, switches, and checkboxes
+  whose name carries marketing, an add-on, or an amount are left alone. Each choice is a `check` action
+  with `choice` set and is replayed with the step.
+- `slop lint` does not follow folder links in the source tree either, and lists them with file links in
+  the report's `scope.unread_links` (`source`, `corpus`; a folder ends with `/`). The release gate raises
+  `release.layer-missing` when `unread_links.source` is not empty. The MCP `slop_lint` result carries the
+  same field.
+- The release gate's summary counts `defects`, `no_evidence`, `to_confirm`, and `not_run`
+  (`blocking = defects + no_evidence`, `total = blocking + to_confirm`), and its output says defects and
+  missing evidence apart and names what did not run. `plan check` and `slop lint` summaries gain
+  `skipped`; their output line adds `N skipped: not judged` when there are any.
+- A bare `mm:ss` is an urgency claim only when its value falls between the load and the later reading;
+  with no claim left, `urgency` coverage is `not-applicable`.
+- With a plan, colors the render guesses as `data` count as accents for `color.competing-accents` unless
+  the plan lists `data_scales` or a `role: data` color.
+
+### Fixed
+
+- Wording: "You are no longer subscribed" and "Order no 1234 confirmed" are no longer failures. Refusing
+  consent (do not agree, I don't agree, disagree, deny, do not allow, continue without accepting, 동의 안 함,
+  동의하지 않고 계속, 필수 항목만 동의, allow necessary cookies) is a decline and earns no agree points, so
+  the driver agrees to terms. A whole-name No, Never, 아니요, 싫어요, 안 할래요, or 나가기 is a decline,
+  except in a dialog that asks about leaving itself. A required mark counts only on an agreement item.
+  Put-offs are read by their shape (Ask me later and 나중에 볼게요 put off; Pay later and 나중에 결제 do not).
+- Exits: in an exit flow, names that negate leaving (Don't cancel, Keep my plan, 해지 취소, 취소 안 함,
+  유지할게요) back out and are not exit commits, and a dialog whose question is the exit itself no longer
+  gets its stay side pressed. Unsubscribe, 구독 해지, and 주문 취소 commits are cancels; 수신 거부되었습니다
+  and 삭제됨 complete an exit; "An unknown error occurred" is a failure; 알림 허용 안내 is not a refusal.
+- Prices: flow and choice prices share one reader for `$`, `€`, `£`, `₩`, `원`, and `USD`, `EUR`, `GBP`,
+  `KRW` before or after the amount, and for 월/연 before a price (`월 9,900원`) as well as `/월`, `매월`, and
+  English periods. A fee that appears with a ticked terms checkbox is not `user_caused`.
+- Labels with a link or button inside are pressed beside it, one press at a time; a press that leaves
+  the page is not a check. A control the driver could not press is named in the flows coverage reason
+  even when the run finishes, and an error after a press is no longer called unreachable.
+- `ux.status-not-announced` reads only the text a box gained, and Korean results and counts; an
+  always-visible label such as "Cart" no longer makes every change a status.
+- Urgency: clock-time words count only next to the time (at, from, until, by before it; 부터, 까지 after
+  it); 마감까지, 종료까지, and 만료까지 mean time is running out. Steps, characters, attempts, questions,
+  tasks, and "left a/the" are not stock. Korean demand and activity need their subject (명이, 분이, a
+  buyer). "for the next N hours", "2일 후 마감", and "마감까지 3일" are read; payment, cancellation, and
+  refund periods are not. Numbers with commas are read whole, and Korean stock wording ("3명 남았어요",
+  "잔여 좌석 2석", "재고 3개") is read.
+- `copy.fabricated-proof`: after a quotation, a blank leads to an attribution only when what follows is
+  name-shaped (a name, a name and place in brackets, or 2–4 Hangul syllables with 님, 고객님, or 씨); a
+  Korean particle after the blank continues the sentence.
+- `render check`: a run whose text still paints while the backdrop render hides text (an `!important`
+  fill or stroke, a shadow tree's `::slotted` rule, an SVG fill) is left without a `backdrop` instead of
+  one holding its own ink, for states too. `color(a98-rgb 1 1 1)` is a neutral white. The palette
+  `data` role matches chart, graph, plot, and sparkline as whole words of the box's own class or id
+  (`MuiTypography-root`, `paragraph`, and `hero-graphic` are not data) and reads an `svg` or `canvas` of
+  48 px or more as a chart by role and accessible name, or by repeated marks with text labels. The
+  `data-viz` and `motion` references no longer suggest naming elements to change a result.
+- A source folder replaced by a link no longer passes lint with exit 0 and no warning.
+
+### Evaluation kit
+
+- `share.py` builds every exported file again from an allow-list of fields and field types instead of
+  copying records and scrubbing known shapes; a field, key, or value outside the list never leaves.
+  Reasons become `code` words, errors and file names become counts, `thread_id`, `pid`, and the Codex
+  executable are dropped, and `prompt.txt` becomes `Task id: <id>` when it is the kit's own prompt.
+- A `score.json` without a `font_db` record counts as not scored; `score.py --summary-only`,
+  `share.py`, and `review.py` refuse it.
+- `score.py` gives `slop lint` the plan and the fonts lock only when they resolve inside the project,
+  and leaves the source layer unscored when the lint reports unread source links.
+- `run.py` passes `-c features.apps=false` in every run, and `score.py` starts its checkers with the
+  agents' environment allow-list.
+- The evaluation wording test also reads code blocks, table rows, and `docs/eval/README.md`, and
+  catches figures beside runs, tasks, findings, or tokens, "N of M", factors, and comparisons.
+
+### Known limits
+
+- A count of minutes or seconds alone ("5 minutes left", "5분 남았어요") and a time-of-day deadline
+  without a date ("Sale ends 11:59 PM tonight", "오늘 23:59까지 주문") are not read. Korean stock with a
+  unit outside the list (2대, 3벌, 5권) is not read.
+- After a quotation, a dash, bar, or comma is still read as leading to an attribution
+  (`“Export” — CSV, JSON, or PDF`).
+- The flow driver ticks only required terms, privacy, and age checkboxes and answers required radio
+  groups; a flow that needs an optional, marketing, or add-on item, a select-all box, or a switch ends
+  `blocked`, and so does a group that asks for agreement but offers no agreeing option. Currency codes
+  other than USD, EUR, GBP, and KRW are not read.
+- The forms probe reads the kind of form, sign-in text, error reasons, cleared-field explanations, and
+  same-as-offered text in English only; the media probe reads the control that starts a sound in English
+  only; a flow kind's own vocabulary is English.
+- A `primary` flow run that commits only on the client has no `commit_step`, so its recurring terms are
+  neither judged nor reported as not verified.
+- If Playwright's driver itself cannot start, the checks still print Playwright's error.
+- The source registry's Adobe reasons and the comment of migration 0004 still state Adobe's terms as
+  facts; they change with a later contract diff.
+- `tools/reference-provenance.yaml` still lists 31 `verify_before_release` items.
+
 ## 0.1.3 (2026-10-02)
 
 Adobe Fonts wording that reads as "usable, not reachable by file", fixes to the probes and renders the demo

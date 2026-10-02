@@ -4,7 +4,7 @@ description: Writes and edits interface copy - headlines, calls to action, label
 license: MIT AND CC-BY-4.0
 metadata:
   plugin: lapis
-  version: 0.1.3
+  version: 0.1.4
 ---
 
 # lps-copy
