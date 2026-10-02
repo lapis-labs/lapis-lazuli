@@ -812,7 +812,7 @@ entries:
   dest:
   - reference
   target: lps-ux/references/forms-and-recovery.md + ultramarine/references/check-bounds.md
-  note: 폼 구조, 검증 시점, 서버 응답 읽기, 확정 전 검토, 폼 안의 동의를 forms-and-recovery.md로. 한국형 폼 절은 원본에 한국어 양식이 없어 새로 씀(원어민 확인은 provenance의 verify_before_release). 온보딩·학습 보조 절, 체크아웃 주문 모델, 지표는 옮기지 않음(2026-10-01)
+  note: '폼 구조·검증·응답·검토·동의는 forms-and-recovery.md로. F2–F3(2026-10-03): 복합 필드의 별도 대상·단계의 의존/분기/검증/재개 이유·불확실한 진행을 추가. F1 값/즉시 저장 모델은 계약 충돌로 반영하지 않음. 온보딩·체크아웃 모델·지표는 제외'
   status: done
   done: [reference]
 - path: references/product-types/games-and-entertainment.md

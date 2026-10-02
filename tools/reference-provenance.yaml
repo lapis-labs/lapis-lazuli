@@ -1781,8 +1781,8 @@ references:
       ones; validation after leaving a field or on submit, never on load; the four-part error and the summary with
       focus; entries kept after a server failure; a review before commitment and a success message that says what
       happens next; required terms and optional consent kept apart; locale-dependent name, address, phone, and date
-      assumptions (rewritten as the Korean section, because the source has no Korean form).'
-    dropped: 'The field and compound-control regions, the value-model table of radios, checkboxes, switches, selects,
+      assumptions (rewritten as the Korean section, because the source has no Korean form); F2–F3 (2026-10-03), lines 41–53, 96–108 recovers compound target ownership and dependency/branching/external-verification/resume stage choices.'
+    dropped: 'The value-model table of radios, checkboxes, switches, selects,
       sliders, and steppers with the commit boundary of pickers, the flow-state list, action naming (owned by
       interface-copy.md), the Onboarding and learning section apart from the real-prerequisite test (learning
       vehicles, retirement, novice-to-expert movement, the comparative case), the checkout order model, guest

@@ -13,6 +13,12 @@ Start from the goal, not the data model. For each field ask whether the goal fai
 it must be asked now, whether the product already knows it, and whether the person can supply it
 accurately. Remove, defer, prefill, or explain it accordingly.
 
+A compound field keeps a persistent question, value or picker trigger, and associated help/error.
+Unit, reveal, clear, and attachment-retry controls are separate named targets with their own states.
+Group labels identify the question; option labels identify answers. A checkbox row may toggle one
+choice, but its "Read terms" link opens terms without toggling it. Do not enclose unrelated actions
+in one input-shaped surface. A count belongs only where the product has a real limit.
+
 - Ask only for what the goal needs. A step that demands an account, an optional consent, a permission, a
   share, an install, or a survey before the person can continue is `ux.forced-action`. Only an account
   can be declared, in `requires` with `requires_reason`; the rest must be skippable. An identity check
@@ -25,9 +31,11 @@ accurately. Remove, defer, prefill, or explain it accordingly.
   code fields included (`ux.inaccessible-auth`).
 - Changing a select, radio, checkbox, or switch does not navigate, submit, open a dialog, or move focus
   before the person submits (`ux.unexpected-context-change`).
-- Split into steps only when the steps differ (contact, delivery, payment), never one field per step
-  (`ux.excess-steps`, with `max_steps`). Name the steps, keep entries on Back, and warn before an
-  earlier answer clears later ones.
+- Compare a single path with stages only when tasks, dependency, branching, external verification,
+  or resuming change the work; never one field per step (`ux.excess-steps`, with `max_steps`).
+  Name stages for tasks. If branching changes what remains, show the known stage and uncertainty,
+  not an invented completion percentage. Keep entries on Back and warn before an earlier answer
+  clears later ones. Preserve a short coherent form when splitting adds only navigation.
 
 ## Checking and messages
 

@@ -41,6 +41,8 @@ after text.
 
 ### Changed
 
+- Forms guidance gains compound-field target ownership and dependency-led stages with honest branch progress; the immediate-switch commitment proposal remains outside the contract.
+
 - Copy guidance routes complaints to wording, order, placement, or visual treatment before editing and frontloads differentiators without imposing English grammar.
 
 - Layout and token guidance gains conflict-led grouping comparisons, bounded contour construction, and structural separation choices rather than blanket cards, shadows, or flatness.
