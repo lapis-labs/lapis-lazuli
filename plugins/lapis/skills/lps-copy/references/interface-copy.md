@@ -54,6 +54,12 @@ when that is true.
 
 ## Labels, buttons, and fields
 
+Read neighboring headings or result titles without paragraphs. Put differentiating words early
+where the language allows: "Delayed transfers" distinguishes sooner than "Information about
+delayed transfers." Support returning readers as well as first-pass scanning. Preserve natural
+grammar, governed terms, and locale information order; never frontload away a qualification or
+shorten a heading into a noun pile.
+
 **Actions name outcomes.** A verb and its object, or the destination: the label says what will happen,
 not that a click will.
 
@@ -241,6 +247,13 @@ surprise. Drop internal release labels unless availability changes the decision 
   domain with long and local names (`copy.placeholder-content`, the `generic-content` card).
 
 ## Preserve the proposition when editing
+
+Route the complaint before rewriting. Restore a missing actor, action, or state from evidence;
+change order for a buried fact, placement for a distant consequence, and the label for an
+unpredictable outcome. Keep sound wording when wrapping, clipping, or hierarchy needs type or
+layout repair. Existing string ownership settles duplication. Rewrite stock rhythm at paragraph
+level, not through flagged-word swaps. For open key copy, compare candidates against the diagnosed
+failure in the copy `explorations`.
 
 Before changing existing copy, list what must survive; afterward, compare.
 

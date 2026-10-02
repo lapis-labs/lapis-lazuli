@@ -1336,12 +1336,12 @@ references:
       links, names) as one table; the added, dropped, and changed comparison; strongest problems first; the
       deletion guardrails and moving hierarchy instead of meaning; the visible label starting the accessible
       name; the worked edits (partial failure with kept work, destructive action, an estimate) rewritten in
-      Korean; the no-edit cases (a real contrast, a governed term, legal scope).'
-    dropped: 'The context-capture card (the plan''s brief and content hold it), the diagnosis table, the
+      Korean; the no-edit cases (a real contrast, a governed term, legal scope); CO1 (2026-10-03), lines 113–149 adds complaint routing to wording/order/placement/type/layout and comparison against the diagnosed failure.'
+    dropped: 'The context-capture card (the plan''s brief and content hold it), the full diagnosis table format, the
       seven-step loop wording, the report template (the skill''s Reporting covers it), and the plain-data
       audit fixture: duplicated by plan fields or the skill body, or test material.'
   - path: references/typography/paragraphs-and-reading.md
-    taken: 'T4 (2026-10-03), lines 30–43, 150–172, 187–200: meaning before typesetting, peer/step lists, semantic emphasis, sourced quotations, and nonvisual pull-quote deduplication.'
+    taken: 'T4/CO2 (2026-10-03), lines 30–81, 150–172, 187–200: meaning before typesetting, peer/step lists, semantic emphasis, sourced quotations, nonvisual pull-quote deduplication, and differentiators early without imposing English grammar.'
     dropped: HTML specimens and long-form page recipes; rendered measure and alignment stay with type and layout.
   - path: references/readability/korean-editing.md
     taken: 'The three registers with recognition cues; compact labels against sentences and label against

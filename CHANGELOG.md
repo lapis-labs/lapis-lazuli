@@ -39,6 +39,8 @@ after text.
 
 ### Changed
 
+- Copy guidance routes complaints to wording, order, placement, or visual treatment before editing and frontloads differentiators without imposing English grammar.
+
 - Layout and token guidance gains conflict-led grouping comparisons, bounded contour construction, and structural separation choices rather than blanket cards, shadows, or flatness.
 
 - Motion guidance chooses acknowledgement targets and waiting feedback from accepted input, measured work, and usable context, with reduced-motion cues preserved.

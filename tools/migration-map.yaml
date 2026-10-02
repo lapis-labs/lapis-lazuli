@@ -973,7 +973,7 @@ entries:
   - reference
   target: lps-copy/references/interface-copy.md
   merge: copy
-  note: 보존 목록, 추가·삭제·변경 비교, 삭제 금지 목록, 이름 일치, 고치기 예시를 interface-copy.md로. 맥락 카드·진단표·보고 양식·검증용 표는 옮기지 않음
+  note: '보존 목록·추가/삭제/변경 비교·삭제 금지·이름 일치·예시는 interface-copy.md로. CO1(2026-10-03): 의미·순서·배치·라벨·시각 처리 중 담당 층을 고르는 진단을 copy explorations에 연결. 새 맥락 카드·보고 양식·검증 표는 제외'
   status: done
   done: [reference]
 - path: references/readability/interface-copy-and-meta-text.md
@@ -1232,7 +1232,7 @@ entries:
   - reference
   - rule
   target: lapis/references/type.md + lps-copy/references/interface-copy.md
-  note: 'T4(2026-10-03): 의미와 조판의 구분·목록·강조·인용 의미는 interface-copy.md, 렌더 블록 점검은 type.md로 반영. 검사 규칙 행선지는 남음'
+  note: 'T4/CO2(2026-10-03): 의미와 조판 구분·목록·강조·인용 의미·언어별 차이를 지키는 표제 구별어는 interface-copy.md, 렌더 블록 점검은 type.md로. 검사 규칙 행선지는 남음'
   status: partial
   done: [reference]
 - path: references/typography/responsive-typesetting.md
