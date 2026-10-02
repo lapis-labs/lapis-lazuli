@@ -34,7 +34,10 @@ def slop_lint(plan: str | None = None, extract: str | None = None, session: str 
     is given; an explicitly selected layer without its input is an error. `rule_ids` takes rule ids
     or glob patterns. `lock` defaults to ./.lapis/fonts.lock.json when present; `lazuli_db` defaults
     to $LAZULI_DB, else the user cache database if present. Explicit paths win. Blocking findings
-    have `blocking: true`; `summary.blocking` counts them.
+    have `blocking: true`; `summary.blocking` counts them; `summary.skipped` counts the findings that
+    were not judged. A source file that is a link out of the tree, and a folder that is a link, is
+    never read; `scope.unread_links` lists them (a folder with a trailing `/`), so a clean report
+    does not cover them.
     """
     from lapis_design.lint import cli   # the detectors load only when the tool runs
 

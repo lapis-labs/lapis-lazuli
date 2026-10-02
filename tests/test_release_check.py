@@ -1050,3 +1050,174 @@ def test_behavior_stub_path_is_empty_when_relpath_cannot_be_computed(monkeypatch
         os.path.relpath(tmp_path / "stub.yaml", Path.cwd())).as_posix()
     monkeypatch.setattr(os.path, "relpath", lambda *args: (_ for _ in ()).throw(ValueError("different drive")))
     assert _stub_reference(tmp_path / "stub.yaml") is None
+
+
+def settle(root):
+    """Put the inputs' modification times back in dependency order after a test edited them."""
+    names = ("plans/kiln-shop-landing.yaml", "renders/kiln-shop-landing.json", "fonts.lock.json",
+             "assets.ledger.json", "behavior/kiln-shop-landing.json", "lint/kiln-shop-landing.json",
+             "critic/kiln-shop-landing.json")
+    for index, name in enumerate(names):
+        if (root / ".lapis" / name).exists():
+            os.utime(root / ".lapis" / name, (100 + index, 100 + index))
+
+
+def set_unread_links(root, **links):
+    update(root, "lint/kiln-shop-landing.json", lambda d: d["scope"].update(unread_links=links))
+    settle(root)
+
+
+def test_unread_source_links_in_the_lint_scope_are_a_missing_layer(project):
+    set_unread_links(project, source=["pages/", "src/secret.css"])
+    code, result = gate(project, "--static")
+    [missing] = [f for f in result["findings"] if f["rule_id"] == "release.layer-missing"]
+    assert code == 1
+    assert "pages/" in missing["observed"] and "src/secret.css" in missing["observed"]
+    assert_gate_fields(missing, "review")
+    update(project, "lint/kiln-shop-landing.json", lambda d: d["scope"].pop("unread_links"))
+    settle(project)
+    assert gate(project, "--static")[0] == 0
+
+
+def test_unread_corpus_links_alone_do_not_block_the_gate(project):
+    set_unread_links(project, corpus=["defaults/x.json"])
+    code, result = gate(project, "--static")
+    assert code == 0 and result["findings"] == []
+
+
+def test_cli_lint_that_passed_over_a_folder_link_is_blocked_at_release_gate(project, tmp_path_factory):
+    from lapis_design.lint.cli import main as lint_main
+
+    outside = tmp_path_factory.mktemp("outside")
+    (project / "pages").symlink_to(outside, target_is_directory=True)
+    root = project / ".lapis"
+    out = root / "lint/kiln-shop-landing.json"
+    assert lint_main(["--plan", str(root / "plans/kiln-shop-landing.yaml"),
+                      "--extract", str(root / "renders/kiln-shop-landing.json"),
+                      "--source", str(project), "--ledger", str(root / "assets.ledger.json"),
+                      "--lock", str(root / "fonts.lock.json"), "-o", str(out)]) in (0, 1)
+    assert json.loads(out.read_text(encoding="utf-8"))["scope"]["unread_links"] == {"source": ["pages/"]}
+    settle(project)
+    code, result = gate(project, "--static")
+    [missing] = [f for f in result["findings"] if f["rule_id"] == "release.layer-missing"]
+    assert code == 1 and "pages/" in missing["observed"]
+    assert result["summary"]["not_run"]["layers"] == 1
+
+
+@pytest.mark.parametrize("rule, key, mutate, flags", [
+    ("release.input-missing", "inputs", lambda p: (p / ".lapis/renders/kiln-shop-landing.json").unlink(), ("--static",)),
+    ("release.input-stale", "stale", lambda p: os.utime(p / ".lapis/lint/kiln-shop-landing.json", (1, 1)), ("--static",)),
+    ("release.width-missing", "widths", lambda p: update(p, "renders/kiln-shop-landing.json", lambda d: d["viewports"].pop()), ("--static",)),
+    ("release.theme-missing", "themes", lambda p: update(p, "renders/kiln-shop-landing.json", lambda d: d["meta"].update(dark_theme=True)), ("--static",)),
+    ("release.layer-missing", "layers", lambda p: update(p, "lint/kiln-shop-landing.json", lambda d: d["target"].pop("source")), ("--static",)),
+    ("release.requirement-unverified", "requirements", lambda p: update(p, "lint/kiln-shop-landing.json", lambda d: d["findings"].append(finding("ux.missing", status="skipped", blocking=False, observed="reviewer must decide"))), ("--static",)),
+    ("release.critic-missing", "critic", lambda p: (p / ".lapis/critic/kiln-shop-landing.json").unlink(), ("--static",)),
+    ("release.license-unchecked", "licenses", lambda p: update(p, "fonts.lock.json", lambda d: d["fonts"].append(font("fontsource", family="Not In Snapshot"))), ("--static",)),
+    ("release.probe-incomplete", "probes", lambda p: update(p, "behavior/kiln-shop-landing.json", lambda s: s["coverage"][0].update(status="partial")), ()),
+    ("release.backend-insufficient", "backend", lambda p: update(p, "behavior/kiln-shop-landing.json", lambda s: s["meta"].update(backend="local-dev", outbound="none")), ()),
+])
+def test_a_check_that_did_not_run_is_counted_without_evidence_under_its_own_key(project, rule, key, mutate, flags):
+    if not flags:
+        interactive(project)
+    mutate(project)
+    code, result = gate(project, *flags)
+    summary = result["summary"]
+    assert code == 1 and rule in ids(result)
+    assert summary["not_run"][key] == ids(result).count(rule)
+    assert summary["no_evidence"] == sum(summary["not_run"].values())
+    assert summary["blocking"] == summary["defects"] + summary["no_evidence"]
+    assert summary["total"] == summary["blocking"] + summary["to_confirm"]
+    assert 0 not in summary["not_run"].values()
+
+
+@pytest.mark.parametrize("rule, mutate", [
+    ("release.study-reference", lambda p: update(p, "plans/kiln-shop-landing.yaml", lambda d: d.update(references=[{"source": "https://example.com/", "kind": "site", "rights": "reference-only", "mode": "study", "take": ["layout rhythm"], "leave": ["copy"]}]))),
+    ("ux.example", lambda p: update(p, "lint/kiln-shop-landing.json", lambda d: d["findings"].append(finding("ux.example")))),
+    ("review.counterfactual", lambda p: update(p, "critic/kiln-shop-landing.json", lambda d: d["findings"].append(finding("review.counterfactual")))),
+    ("schema.invalid", lambda p: update(p, "plans/kiln-shop-landing.yaml", lambda d: d["task"].pop("title"))),
+])
+def test_a_blocking_finding_that_is_not_missing_evidence_is_a_defect(project, rule, mutate):
+    mutate(project)
+    settle(project)
+    code, result = gate(project, "--static")
+    summary = result["summary"]
+    assert code == 1 and rule in ids(result)
+    assert summary["no_evidence"] == 0 and summary["not_run"] == {}
+    assert summary["defects"] == summary["blocking"] == sum(f["blocking"] for f in result["findings"])
+
+
+@pytest.mark.parametrize("rule, mutate", [
+    ("release.license-unconfirmed", lambda p: update(p, "fonts.lock.json", lambda d: d["fonts"].append(font("noonnu")))),
+    ("release.theme-unchecked", lambda p: update(p, "plans/kiln-shop-landing.yaml", lambda d: d["tokens"]["color"].update(themes=["light", "high-contrast"]))),
+])
+def test_a_finding_that_does_not_block_is_to_confirm(project, rule, mutate):
+    mutate(project)
+    settle(project)
+    code, result = gate(project, "--static")
+    assert code == 0 and rule in ids(result)
+    assert result["summary"] == {"blocking": 0, "total": 1, "defects": 0, "no_evidence": 0, "to_confirm": 1,
+                                 "not_run": {}}
+
+
+def mixed_project(root):
+    """Two defects, thirteen blocking findings without evidence, two findings to confirm."""
+    interactive(root)
+    update(root, "behavior/kiln-shop-landing.json", lambda s: (
+        s["coverage"][0].update(status="partial"), s["coverage"][1].update(status="skipped"),
+        s["meta"].update(backend="local-dev", outbound="none")))
+    update(root, "renders/kiln-shop-landing.json",
+           lambda d: (d["viewports"].pop(), d["meta"].update(dark_theme=True)))
+    update(root, "plans/kiln-shop-landing.yaml", lambda d: (
+        d.update(references=[{"source": "https://example.com/", "kind": "site", "rights": "reference-only",
+                              "mode": "study", "take": ["layout rhythm"], "leave": ["copy"]}]),
+        d["tokens"]["color"].update(themes=["light", "high-contrast"])))
+    update(root, "lint/kiln-shop-landing.json", lambda d: (
+        d["findings"].extend([finding("ux.example"), finding("ux.missing", status="skipped", blocking=False,
+                                                              observed="reviewer must decide")]),
+        d["scope"].update(layers=["plan", "source", "render", "behavior"],
+                          unread_links={"source": ["pages/", "src/a.css"]})))
+    update(root, "fonts.lock.json", lambda d: d["fonts"].extend(
+        [font("noonnu"), font("fontsource", family="Not In Snapshot")]))
+    (root / ".lapis/critic/kiln-shop-landing.json").unlink()
+    (root / ".lapis/assets.ledger.json").unlink()
+    settle(root)
+    os.utime(root / ".lapis/behavior/kiln-shop-landing.json", (99, 99))     # older than the plan
+
+
+def test_summary_gives_defects_and_missing_evidence_apart_with_each_cause(project):
+    mixed_project(project)
+    code, result = gate(project)
+    assert code == 1
+    assert result["summary"] == {
+        "blocking": 15, "total": 17, "defects": 2, "no_evidence": 13, "to_confirm": 2,
+        "not_run": {"inputs": 1, "stale": 1, "widths": 1, "themes": 3, "probes": 2, "backend": 1, "layers": 1,
+                    "requirements": 1, "critic": 1, "licenses": 1}}
+    defects = [f["rule_id"] for f in result["findings"] if f["blocking"] and not f["rule_id"] in (
+        "release.input-missing", "release.input-stale", "release.width-missing", "release.theme-missing",
+        "release.probe-incomplete", "release.backend-insufficient", "release.layer-missing",
+        "release.requirement-unverified", "release.critic-missing", "release.license-unchecked")]
+    assert sorted(defects) == ["release.study-reference", "ux.example"]
+    assert sorted(f["rule_id"] for f in result["findings"] if not f["blocking"]) == [
+        "release.license-unconfirmed", "release.theme-unchecked"]
+
+
+def test_printed_result_gives_both_parts_then_names_what_did_not_run(project, capsys):
+    mixed_project(project)
+    capsys.readouterr()
+    gate(project)
+    output = project / ".lapis/release/kiln-shop-landing.json"
+    assert capsys.readouterr().out.splitlines() == [
+        f"release_gate: 15 blocking = 2 defects + 13 without evidence, 17 findings -> {output}",
+        "  without evidence: 1 inputs missing, 1 inputs stale, 1 widths not captured, 3 themes not captured, "
+        "2 probes incomplete, 1 backend insufficient, 1 lint layers not run, 1 requirements not verified, "
+        "1 critic reports missing, 1 licenses unchecked"]
+
+
+def test_printed_result_without_missing_evidence_has_one_line(project, capsys):
+    update(project, "plans/kiln-shop-landing.yaml", lambda d: d["tokens"]["color"].update(themes=["light", "high-contrast"]))
+    settle(project)
+    capsys.readouterr()
+    gate(project, "--static")
+    output = project / ".lapis/release/kiln-shop-landing.json"
+    assert capsys.readouterr().out.splitlines() == [
+        f"release_gate: 0 blocking = 0 defects + 0 without evidence, 1 findings -> {output}"]

@@ -829,3 +829,37 @@ def test_flow_pairs_are_checked(tmp_path):
     plan = base_plan()
     plan["flows"][1]["id"] = "reserve-piece"
     assert "flow.duplicate-id" in ids(run(tmp_path, plan), blocking=True)
+
+
+def check_text(tmp_path, monkeypatch, capsys, *options):
+    from lazuli import paths
+
+    monkeypatch.setattr(paths, "cache_dir", lambda: tmp_path / "empty-cache")
+    monkeypatch.delenv("LAZULI_DB", raising=False)
+    monkeypatch.chdir(tmp_path)
+    plan = write_plan(tmp_path, base_plan())
+    code = cli.main(["plan", "check", str(plan), "--lock", str(LOCK), *options])
+    return code, capsys.readouterr().out
+
+
+def test_summary_counts_skipped_findings_and_the_text_line_says_they_were_not_judged(tmp_path, monkeypatch, capsys):
+    code, text = check_text(tmp_path, monkeypatch, capsys, "--format", "json")
+    report = json.loads(text)
+    skipped = [f for f in report["findings"] if f["status"] == "skipped"]
+    assert skipped and report["summary"]["skipped"] == len(skipped)
+    assert all(not f["blocking"] for f in skipped)
+    code, text = check_text(tmp_path, monkeypatch, capsys)
+    summary = report["summary"]
+    assert text.splitlines()[0] == (f"plan_check {plan_check.VERSION}: {summary['blocking']} blocking, "
+                                    f"{summary['total']} total, {len(skipped)} skipped: not judged")
+
+
+def test_text_line_leaves_out_skipped_when_no_finding_was_skipped(tmp_path, monkeypatch, capsys):
+    rules = tmp_path / "rules.yaml"
+    rules.write_text(yaml.safe_dump({"version": 0, "as_of": "2026-09", "rules": []}), encoding="utf-8")
+    code, text = check_text(tmp_path, monkeypatch, capsys, "--rules", str(rules), "--format", "json")
+    summary = json.loads(text)["summary"]
+    assert summary["skipped"] == 0 and summary["total"] > 0
+    code, text = check_text(tmp_path, monkeypatch, capsys, "--rules", str(rules))
+    assert text.splitlines()[0] == (f"plan_check {plan_check.VERSION}: {summary['blocking']} blocking, "
+                                    f"{summary['total']} total")

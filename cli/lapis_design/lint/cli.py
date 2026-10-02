@@ -10,8 +10,9 @@ in review mode when a plan or an extract was given.
 
 Output follows src/shared/slop/finding.schema.yaml with tool `slop_lint`: to --out, or stdout.
 When an optional CJK analyzer runs, `analyzers` names its locale and installed version.
-A source or corpus file that is a link resolving outside the folder it was found in is not read; a
-warning on stderr lists such links.
+A source or corpus file that is a link resolving outside the folder it was found in is not read, and a
+folder that is a link in the source tree is never followed; the report's `scope.unread_links` lists
+them (a folder with a trailing `/`) and a warning on stderr names them.
 Exit code 1 when any finding is blocking, 2 when an input cannot be used.
 
 Usage:
@@ -38,7 +39,7 @@ from lapis_design import shared_dir
 from lapis_design.lint import engine
 from lapis_design.lint.types import Context
 from lapis_design.plan_check import (default_lazuli_db, default_lock, expansion_problem, non_string_key_paths,
-                                     read_plan)
+                                     read_plan, skipped_note)
 
 SCHEMAS = {
     "rules": ("slop", "rules.schema.yaml"),
@@ -125,11 +126,12 @@ def _corpus(path: Path, skipped: list[str]) -> list[dict]:
 
 
 def _warn_links(kind: str, skipped: list[str], folder: Path | None) -> None:
-    """Say on stderr which files were passed over because they are links leading out of `folder`."""
+    """Say on stderr which links were passed over: a file link leading out of `folder`, or a folder link
+    (ending in `/`), which is never followed."""
     if skipped:
         shown = ", ".join(skipped[:5]) + (f" (and {len(skipped) - 5} more)" if len(skipped) > 5 else "")
-        print(f"warning: {len(skipped)} {kind} file(s) in {folder} are links that point outside it and were "
-              f"not read: {shown}", file=sys.stderr)
+        print(f"warning: {len(skipped)} {kind} link(s) in {folder} were not read: file links that point "
+              f"outside it and folder links (ending in /) are not followed: {shown}", file=sys.stderr)
 
 
 def default_layers(*, plan: bool, source: bool, extract: bool, session: bool, mode: str) -> list[str]:
@@ -212,8 +214,10 @@ def run(*, rules: Path | None = None, plan: Path | None = None, extract: Path | 
     finally:
         if ctx.lazuli is not None:
             ctx.lazuli.close()
-    _warn_links("source", ctx.cache.get("source.skipped_links") or [], source)
-    _warn_links("corpus", corpus_links, corpus)
+    unread = {kind: sorted(set(links)) for kind, links in
+              (("source", ctx.cache.get("source.skipped_links") or []), ("corpus", corpus_links)) if links}
+    _warn_links("source", unread.get("source", []), source)
+    _warn_links("corpus", unread.get("corpus", []), corpus)
     report = engine.report(ctx, findings, ledger_path=str(ledger) if ledger else None,
                            lock_path=str(lock) if lock else None)
     report["scope"] = {"layers": layers}
@@ -221,6 +225,8 @@ def run(*, rules: Path | None = None, plan: Path | None = None, extract: Path | 
         report["scope"]["rules"] = rule_ids
     if rules is not None and rules.resolve() != (shared_dir() / "slop" / "rules.yaml").resolve():
         report["scope"]["rules_file"] = str(rules)
+    if unread:
+        report["scope"]["unread_links"] = unread
     found = problems(report, "report")
     if found:
         raise LintError("the report does not match slop/finding.schema.yaml: " + "; ".join(found[:5]))
@@ -258,7 +264,8 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design slop lint") ->
         print(f"slop lint: {exc}", file=sys.stderr)
         return 2
     s = report["summary"]
-    print(f"slop_lint: {s['blocking']} blocking, {s['total']} findings -> {args.out}" if args.out else text)
+    print(f"slop_lint: {s['blocking']} blocking, {s['total']} findings{skipped_note(s)} -> {args.out}"
+          if args.out else text)
     return 1 if s["blocking"] else 0
 
 

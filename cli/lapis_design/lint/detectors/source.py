@@ -480,7 +480,8 @@ def _source_name(name: str) -> bool:
 
 def _tree(ctx: Context) -> _Tree | str:
     """The source tree, read once per run; a string says why it cannot be read. A file that is a link
-    resolving outside the source root is not read; its path is listed in `ctx.cache["source.skipped_links"]`."""
+    resolving outside the source root is not read, and a folder that is a link is never followed; their
+    paths (a folder's with a trailing `/`) are listed in `ctx.cache["source.skipped_links"]`."""
     root = ctx.source_root
     if root is None:
         return "no source tree given"
@@ -495,8 +496,10 @@ def _tree(ctx: Context) -> _Tree | str:
     locks: dict[str, set[str] | None] = {}
     skipped: list[str] = ctx.cache.setdefault("source.skipped_links", [])
     real_root = root.resolve()
-    for dirpath, dirnames, filenames in os.walk(root):
+    for dirpath, dirnames, filenames in os.walk(root):      # a link to a folder is listed in dirnames, not entered
         dirnames[:] = sorted(d for d in dirnames if not d.startswith(".") and d not in _SKIP_DIRS)
+        skipped += [(Path(dirpath) / d).relative_to(root).as_posix() + "/"
+                    for d in dirnames if (Path(dirpath) / d).is_symlink()]
         for name in sorted(filenames):
             if not _source_name(name):
                 continue

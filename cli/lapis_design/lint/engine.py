@@ -418,7 +418,8 @@ def report(ctx: Context, findings: list[dict], *, ledger_path: str | None = None
         "version": 0,
         "tool": {"name": "slop_lint", "version": VERSION},
         "target": target,
-        "summary": {"blocking": sum(1 for f in findings if f["blocking"]), "total": len(findings)},
+        "summary": {"blocking": sum(1 for f in findings if f["blocking"]), "total": len(findings),
+                    "skipped": sum(1 for f in findings if f["status"] == "skipped")},
         "findings": findings,
     }
     if ctx.cache.get("analyzers"):

@@ -752,14 +752,21 @@ def run(plan_path: Path | None, rules_path: Path | None, lock_path: Path | None,
         "version": 0,
         "tool": {"name": "plan_check", "version": VERSION},
         "target": {"plan": plan_file, **_target_task(plan)},
-        "summary": {"blocking": blocking, "total": len(findings)},
+        "summary": {"blocking": blocking, "total": len(findings),
+                    "skipped": sum(1 for f in findings if f["status"] == "skipped")},
         "findings": findings,
     }
 
 
+def skipped_note(summary: dict) -> str:
+    """`, 21 skipped: not judged` for a summary with skipped findings, else nothing: a skipped finding
+    was not judged and is never a defect."""
+    return f", {summary['skipped']} skipped: not judged" if summary.get("skipped") else ""
+
+
 def _format_text(report: dict) -> Iterable[str]:
     s = report["summary"]
-    yield f"plan_check {report['tool']['version']}: {s['blocking']} blocking, {s['total']} total"
+    yield f"plan_check {report['tool']['version']}: {s['blocking']} blocking, {s['total']} total{skipped_note(s)}"
     for f in report["findings"]:
         mark = "BLOCK" if f["blocking"] else f["severity"]["create"].upper()
         where = f.get("location", {}).get("path", "")

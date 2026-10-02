@@ -27,6 +27,21 @@ CATALOGS = {"google-fonts", "fontsource", "fontshare", "sandoll"}
 UNCONFIRMED = {"adobe-sync", "user-installed", "foundry-purchase", "open-source-other", "noonnu"}
 LICENSE_KINDS = {"OFL-1.1": "ofl", "Apache-2.0": "apache", "KOGL-1": "kogl-1", "system": "system",
                  "commercial": ("commercial-subscription", "commercial-perpetual")}
+# The gate's own blocking findings that report a check that did not run or an input that is missing
+# (release/GATE.md): rule -> (key in `summary.not_run`, how the printed result names it). The rest of
+# the blocking findings are defects.
+NO_EVIDENCE = {
+    "release.input-missing": ("inputs", "inputs missing"),
+    "release.input-stale": ("stale", "inputs stale"),
+    "release.width-missing": ("widths", "widths not captured"),
+    "release.theme-missing": ("themes", "themes not captured"),
+    "release.probe-incomplete": ("probes", "probes incomplete"),
+    "release.backend-insufficient": ("backend", "backend insufficient"),
+    "release.layer-missing": ("layers", "lint layers not run"),
+    "release.requirement-unverified": ("requirements", "requirements not verified"),
+    "release.critic-missing": ("critic", "critic reports missing"),
+    "release.license-unchecked": ("licenses", "licenses unchecked"),
+}
 
 
 def _finding(rule: str, observed: str, *, layer: str = "review", refs: tuple[str, ...] = (),
@@ -165,12 +180,34 @@ def _licenses(fonts: list[dict], offline: bool) -> list[dict]:
     return output
 
 
+def _summary(findings: list[dict]) -> dict:
+    """`blocking` is `defects` + `no_evidence`; `total` is `blocking` + `to_confirm`; `not_run` breaks
+    `no_evidence` down by cause, leaving out zero counts."""
+    blocking = [f for f in findings if f["blocking"]]
+    not_run = {key: count for rule, (key, _) in NO_EVIDENCE.items()
+               if (count := sum(f["rule_id"] == rule for f in blocking))}
+    no_evidence = sum(not_run.values())
+    return {"blocking": len(blocking), "total": len(findings), "defects": len(blocking) - no_evidence,
+            "no_evidence": no_evidence, "to_confirm": len(findings) - len(blocking), "not_run": not_run}
+
+
+def _result_lines(summary: dict, output: Path) -> list[str]:
+    """The printed result: the counts in two parts, then what did not run, so a reader can tell a check
+    to run from a defect to repair."""
+    lines = [f"release_gate: {summary['blocking']} blocking = {summary['defects']} defects + "
+             f"{summary['no_evidence']} without evidence, {summary['total']} findings -> {output}"]
+    if summary["no_evidence"]:
+        causes = [f"{summary['not_run'][key]} {name}" for key, name in NO_EVIDENCE.values()
+                  if key in summary["not_run"]]
+        lines.append(f"  without evidence: {', '.join(causes)}")
+    return lines
+
+
 def _report(paths: dict[str, Path], task: str, interactive: bool, findings: list[dict]) -> dict:
     report = {"version": 0, "tool": {"name": "release_gate", "version": __version__},
               "target": {"plan": str(paths["plan"]), "extract": str(paths["extract"]),
                          **({"session": str(paths["session"])} if interactive else {}), "task": task},
-              "findings": findings, "summary": {"blocking": sum(f["blocking"] for f in findings),
-                                                 "total": len(findings)}}
+              "findings": findings, "summary": _summary(findings)}
     if errors := problems(report, "report"):
         raise ValueError("release report invalid: " + "; ".join(errors[:5]))
     return report
@@ -279,6 +316,10 @@ def run(root: Path, task: str, *, static: bool = False, offline: bool = False) -
                 if narrow in scope:
                     findings.append(_finding("layer-missing", f"lint scope was narrowed by {narrow}",
                                              refs=(str(paths["lint"]),)))
+            if unread := (scope.get("unread_links") or {}).get("source"):
+                shown = ", ".join(unread[:5]) + (f" (and {len(unread) - 5} more)" if len(unread) > 5 else "")
+                findings.append(_finding("layer-missing", f"lint did not read {len(unread)} source link(s): {shown}",
+                                         refs=(str(paths["lint"]),)))
         findings.extend(_copy_blocking(lint, paths["lint"]))
     extract = docs.get("extract")
     colors = ((plan.get("tokens") or {}).get("color") or {})
@@ -402,7 +443,7 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design release check"
             pass  # Preserve the original failure as the single actionable reason.
         print(f"release check: {str(exc) or type(exc).__name__}", file=sys.stderr)
         return 2
-    print(f"release_gate: {result['summary']['blocking']} blocking, {result['summary']['total']} findings -> {output}")
+    print("\n".join(_result_lines(result["summary"], output)))
     return 1 if result["summary"]["blocking"] else 0
 
 

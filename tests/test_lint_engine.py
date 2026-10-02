@@ -394,7 +394,7 @@ def test_the_command_writes_a_schema_valid_report_and_exits_1_on_blocking(tmp_pa
     assert list(Draft202012Validator(FINDING_SCHEMA).iter_errors(report)) == []
     assert report["tool"]["name"] == "slop_lint" and report["target"]["task"] == "kiln-shop-landing"
     assert [f["rule_id"] for f in report["findings"]] == ["layout.plan"]    # no extract: no render layer
-    assert report["summary"] == {"blocking": 1, "total": 1}
+    assert report["summary"] == {"blocking": 1, "total": 1, "skipped": 0}
     assert "1 blocking" in capsys.readouterr().out
 
 
@@ -412,7 +412,26 @@ def test_the_command_exits_0_without_blocking_findings(tmp_path, capsys):
     rules = write_rules(tmp_path, [rule("layout.plan", {"plan": det("test-echo", "hero outranks the task")},
                                         create="warn")])
     assert lint_cli.main(["--rules", str(rules), "--plan", str(SHARED / "plan/example.plan.yaml")]) == 0
-    assert json.loads(capsys.readouterr().out)["summary"] == {"blocking": 0, "total": 1}
+    assert json.loads(capsys.readouterr().out)["summary"] == {"blocking": 0, "total": 1, "skipped": 0}
+
+
+def test_the_summary_counts_skipped_findings_and_the_printed_line_says_they_were_not_judged(tmp_path, capsys):
+    rules = write_rules(tmp_path, [rule("layout.a", {"plan": det("test-echo", "hero outranks the task")}),
+                                   rule("layout.b", {"plan": det(skipped="no extract given")}),
+                                   rule("layout.c", {"plan": det(skipped="no lock given")})])
+    out = tmp_path / "lint.json"
+    assert lint_cli.main(["--rules", str(rules), "--plan", str(SHARED / "plan/example.plan.yaml"),
+                          "-o", str(out)]) == 1
+    assert json.loads(out.read_text(encoding="utf-8"))["summary"] == {"blocking": 1, "total": 3, "skipped": 2}
+    assert capsys.readouterr().out.splitlines() == [
+        f"slop_lint: 1 blocking, 3 findings, 2 skipped: not judged -> {out}"]
+
+
+def test_the_printed_line_leaves_out_skipped_when_nothing_was_skipped(tmp_path, capsys):
+    rules = write_rules(tmp_path, [rule("layout.a", {"plan": det("test-echo", "hero outranks the task")})])
+    out = tmp_path / "lint.json"
+    lint_cli.main(["--rules", str(rules), "--plan", str(SHARED / "plan/example.plan.yaml"), "-o", str(out)])
+    assert capsys.readouterr().out.splitlines() == [f"slop_lint: 1 blocking, 1 findings -> {out}"]
 
 
 def test_unusable_inputs_exit_2(tmp_path, capsys):
