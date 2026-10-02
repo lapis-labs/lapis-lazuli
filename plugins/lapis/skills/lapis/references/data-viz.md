@@ -111,19 +111,25 @@ Checks read boxes, text, source, and behavior; none reads a chart's meaning.
 
 | Check | Reads | Leaves out |
 |---|---|---|
-| `color.text-contrast` | text against its surface in each theme and state, including `svg` labels measured from CSS `color`, not SVG `fill`; use `fill: currentColor` or check the labels by hand | marks, gridlines, the 3:1 for graphics, color-vision differences |
-| `component.small-target` | buttons, links, and inputs under 24 px with neighbors in reach; a mark given a button role counts | a mark with no role |
-| `imagery.missing-content-image` | an `img` or `picture` with neither `alt` nor an accessible name | an inline `svg` or a `canvas`, named or not; whether an alternative says enough |
-| `layout.compact-overflow` | sideways page scroll, clipped text, overlapping controls at 320 and 390 px | a chart that scrolls in a region of its own passes; a fixed-width graphic wider than the page fails |
-| `layout.shrunk-desktop`, `layout.bento-filler`, `layout.card-everything` | the page's boxes: the same columns at 390 and 1440 px, a cell that only fills the grid, cards holding most of the content | whether a module answers a question |
-| `copy.placeholder-content` | stock placeholder names and companies in key copy and rendered text | whether sample rows fit the domain |
-| `code.locale-time-rendering` | source: `toLocale*String` and `Intl` calls with no locale or one outside the plan's locales, hard-coded dates, hand-formatted numbers; runtime: hydration mismatches | the zone an axis reads times in |
-| `code.unvirtualized-list` | more than 500 direct children of a scrolling box, or of a list taller than three viewport heights | a `table`: its rows sit in a `tbody`, so they are not counted |
-| `ux.status-not-announced` | after a control is pressed, changed text that reports a result (in a status, alert, live region, output, toast, or snackbar, or text the box gained that names a result, such as saved, added, sent, 저장했어요, or a count of results or a cart, such as 12 results, 검색 결과 12개) with no announcement and no move of focus | a summary that names neither, such as "72 pieces in 4 firings", since a number that changes alone is not a result; text the box showed before the press; any announcement in the same action clears every result in it; the controls probe presses controls and never picks another option in a `select` |
-| `ux.hover-content` | what an interactive box reveals when hovered at its center: shown on focus too, kept when the pointer moves onto it, held while hovered, closed by Escape when it covers content | a tooltip on marks inside an `svg`, which are boxes only with a role |
-| `ux.gesture-only` | a drag on a recognized target (draggable, range input, slider, grab or resize cursor, or a `touch-action: none` target that is named, focusable, or a canvas): is a step button, menu, or other input beside it? Native range inputs are dragged sideways; other targets are dragged straight down | horizontal brushes are not exercised; a brush whose result appears outside the dragged target's own group |
-| `motion.reduced-motion-missing` | under reduced motion, boxes that still move by transform (a fade that slides counts), scroll-linked animation, video, and canvas that is not essential | a fade in place; shapes that animate inside an `svg` (bars growing, a stroke drawing in), since only the `svg` box is watched; a canvas presented as content passes (in a `figure`, with a role and a name, or named as a chart, graph, plot, or map) |
+| `color.text-contrast` | text color against the weakest captured backdrop, including vector labels | graphic marks, color-vision differences, and labels whose fill differs from their text color |
+| `component.small-target` | interactive boxes and their spacing from neighbors | marks with no interactive role; declared exceptions still need review |
+| `imagery.missing-content-image` | raster image alternatives | inline vector or canvas names, and whether any alternative explains enough |
+| `layout.compact-overflow` | page overflow, clipped text, and overlapping controls at compact widths | overflow contained within a chart's own region |
+| `layout.shrunk-desktop`, `layout.bento-filler`, `layout.card-everything` | column persistence, empty grid cells, and content enclosed in cards | whether a module answers a useful question |
+| `copy.placeholder-content` | placeholder entities in planned and rendered copy | domain fit of synthetic rows |
+| `code.locale-time-rendering` | locale and number-format choices in source, and runtime hydration mismatches | the time zone a chart should use |
+| `code.unvirtualized-list` | direct children in a scrolling or unusually tall list | table rows nested within a body |
+| `ux.status-not-announced` | newly reported results after an action, announcements, and focus movement | a changing measurement alone, previous text, or whether the announcement describes every result |
+| `ux.hover-content` | revealed content at an interactive box's center and its focus, persistence, and dismissal behavior | unrecognized marks within a graphic |
+| `ux.gesture-only` | recognized drag targets and nearby alternatives | unexercised gesture directions or changes outside the target's group |
+| `motion.reduced-motion-missing` | nonessential spatial or media movement under the reduced preference | stationary fades, animated child shapes, and content the probe classifies as essential |
 
-The render guesses a color's role from the box that paints it. A chart that is named for what it shows (role `img` and an accessible name), or drawn as repeated marks with text labels, paints `data`, and table cells do too. The guess exempts nothing by itself: data hues stay out of `color.competing-accents` only when the plan lists them (`role: data`, `data_scales`). When a real chart is still reported, record a `defaults` keep with the reason; do not rename elements to change the guess.
+Color-role extraction reads the painting box's presentation and structure; it does not understand the
+data. `color.competing-accents` also reads declared data colors in `tokens.color.roles` and
+`tokens.color.data_scales`. Record an earned exception in `defaults`, rather than changing names to
+influence extraction. Sampling bounds and recognition lists belong to the check-bounds reference.
 
-No check compares a chart with its table, reads series colors against the plot surface, simulates color vision, judges a summary, or reads a chart's form, axis, or scale, and nothing reads `tokens.color.data_scales` (the vocabulary names a check for each scale; no detector runs it). Do those by hand: render the chart in each theme and width, operate it with the keyboard alone, read the table against the graphic, and report what you did not test.
+No check compares a chart with its table, tests series colors against the plot surface, simulates color
+vision, or judges its summary, form, axes, or scale. Declaring `tokens.color.data_scales` informs palette
+analysis but does not run the per-scale checks named in the vocabulary. Inspect those by hand across
+themes and widths, use the keyboard, compare table and graphic, and report unexercised paths.

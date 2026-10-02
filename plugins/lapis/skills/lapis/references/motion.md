@@ -58,11 +58,10 @@ Frame rate, distance, size, input method, and the product's character move them.
 
 An arrival decelerates, so most of its travel happens early; a departure accelerates; a state change takes
 a balanced curve; `linear` fits progress tied to time or input. Name curves by role (enter, exit, standard)
-in `principles`, author the control points for this subject, and judge them on the rendered result. Keep
-the vertical control values between 0 and 1 unless overshoot is a decision. Overshoot, spring, and bounce
-are voices, not defaults: they fit a release after a physical drag or a playful subject, not routine
-destructive, financial, medical, or frequent actions. When the subject earns one, keep
-`motion.bounce-default` in `defaults` with the reason.
+in `principles`, author the control points for this subject, and judge them on the rendered result.
+Keep overshoot deliberate rather than inheriting it from a preset. Spring and bounce can fit a physical
+release or a playful subject, but not every routine action. Record an earned exception to
+`motion.bounce-default` in `defaults`, with its reason.
 
 - **Transition or keyframes.** A transition takes one state to the next when the person acts; keyframes
   suit a bounded authored sequence. Name every property you animate: `transition: all` animates whatever a
@@ -91,23 +90,18 @@ continuity adds nothing, and queue only a rare authored narrative. A `transition
 animation promise never holds the only copy of a state change: a cancelled, reduced, hidden-tab, or
 zero-duration animation may never complete.
 
-**Focus follows the interaction's semantics, not the visual timeline.** Opening: commit the open state,
-put the destination in the accessibility tree, move focus where the pattern needs it, then animate.
-Closing: move focus out of content about to become unavailable, commit the closed state, stop that content
-from taking input (`inert` or the pattern's equivalent), run the optional exit, then hide or unmount with a
-fallback that survives cancellation. An entrance never blocks Escape or Back, and an error announcement
-never waits for a fade.
+**Focus follows meaning.** Make the destination accessible and place focus before its entrance; on
+closing, return focus and remove departing content from input before its optional exit. Cancellation
+must still reach the stable state. Neither dismissal nor an error announcement waits for animation.
 
 **Sequence** only when the order explains cause or grouping. A stagger of 50-100 ms can group a small set;
 on a long list it makes later content wait, so move the group as one. At 7 or more, allow one authored
 moment per ordinary surface; only a piece where motion is the medium has several. A gesture starts from the
 current position and velocity and has a button or keyboard route.
 
-**Feedback.** A press acknowledges accepted input briefly; it is neither the new state nor proof that async
-work succeeded, and a surface color change is its robust baseline. Match loading feedback to what is known:
-inline status for a short wait, a labeled determinate indicator for known progress, a skeleton shaped like
-the final layout for structured content. Never show a made-up percentage. A skeleton that pulses across the
-screen forever is ambient motion: limit it to the wait, and make it still under reduced motion.
+**Feedback.** A pressed state acknowledges input, not completion. Use status text for an uncertain wait,
+real progress when known, and a layout-shaped placeholder for incoming content. Keep loading cues
+bounded by the wait and still in the reduced branch; never invent progress.
 
 ## Scroll, navigation, and transitions
 
@@ -131,8 +125,8 @@ content, and motion arrives only inside both guards:
 ```css
 .log-row { transform: none; opacity: 1; }
 
-@media (prefers-reduced-motion: no-preference) {
-  @supports (animation-timeline: view()) {
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
     .log-row {
       animation: settle linear both;
       animation-timeline: view();        /* after the shorthand, which resets it */
@@ -153,9 +147,8 @@ is what `motion.scroll-gated-content` reports. Tie scroll to reading progress or
 nonessential content, never to hiding essential copy. A pinned sequence earns its place by relating to
 the content, such as a legend beside its chart, and releases before it covers later content.
 
-**View transitions.** Detect support before wrapping a DOM update, let the fallback commit the same update
-directly, and skip or simplify the transition under reduced motion. The transition owns none of URL and
-history, title, loading and error state, focus and announcements, or scroll restoration.
+**View transitions** enhance an update that already works. Guard support and the reduced preference;
+navigation, focus, history, and failure handling remain the application's responsibility.
 
 ## Reduced motion
 
@@ -181,36 +174,24 @@ drawn from live data. Decide the reduced branch when you decide the effect.
 - Support two moments: at load, and when the setting changes while the page is open. A CSS media query
   follows both; script-owned animations and player runtimes must observe the change and settle, with the
   preference branch in one place.
-- Nothing may flash more than three times in a second unless it stays within the general and red flash
-  limits, decorative content included. Motion as input (tilt, shake) needs a conventional control and a
-  way to turn it off. Anything that moves by itself for more than five seconds needs a way to pause, stop,
-  or hide it.
 
-**What the tools observe.** State only this in a report.
+Flashing must stay within the applicable flash-safety limits. Motion input needs an ordinary control
+and a way to disable it; continued automatic movement needs a pause, stop, or hide route. Record these
+safety decisions in `tokens.motion.principles`. Flashing and motion-input safety are not checked;
+`motion.uncontrolled-marquee` reads continued movement and whether a pause control is reachable.
 
-- `render check` takes one extra capture at 390 px, light theme, with reduced motion emulated (its
-  screenshot name ends `-reduced`). The motion rules read the plain capture at each width, so none compares
-  the two. Screenshots come after finite animations end and endless ones are paused at their start, so none
-  shows timing or easing.
-- `behavior check --probe motion` runs in each base context and in a twin with reduced motion emulated. In
-  each it watches five seconds after load with no input and lists the elements that moved, by kind:
-  `transform`, `opacity`, `scroll-linked`, `video`, `canvas`, or `other`. An element whose position or
-  transform changed is `transform` even while it also fades; `opacity` is a fade that stays in place.
-  `motion.reduced-motion-missing` gates when, in the twin, an element that is not essential still moves by
-  `transform`, a scroll-linked animation, `video`, or `canvas`. A canvas is essential when it is presented
-  as content and is not decorative: inside a figure, or with a role of `img`, `figure`, or `application` and
-  an accessible name, or with a name that says what it shows (chart, graph, plot, map, visualization, or
-  diagram); one hidden from assistive technology or covered at its center never is. Name a canvas for what
-  it shows, not to change this result. A video in that window never is, because no one has acted.
-- Not observed: a transition that a hover, press, or open starts; movement a script produces by rewriting
-  styles every frame (the window lists elements with a running CSS or Web animation, and canvas, video, and
-  image changes); shapes animated inside an `svg` (an `svg` element that itself moves is listed, its child
-  paths and rects are not); whether focus and status survive the reduced branch; a setting change while the
-  page is open; flashing. A fade that stays in place does not gate. No source rule looks for a
-  reduced-motion media query, and one in the source proves nothing.
-- Without a behavior session the requirement is not checked. Say so, and list it among the checks that did
-  not run. After a motion change, run `lapis-design behavior check <url> --task <task> --plan
-  .lapis/plans/<task>.yaml --stub .lapis/stub.yaml --probe motion`, then lint again with `--session`.
+**What the checks observe.** Render captures show settled appearances, including a reduced-preference
+capture, not timing or easing. The behavior motion probe records movement at rest in ordinary contexts
+and their reduced-preference counterparts. `motion.reduced-motion-missing` reads spatial movement and
+moving media that the probe does not classify as essential content. Content presentation and decoration
+affect that classification; an accessible name is not proof that motion is necessary.
+
+The probe does not exercise an entrance triggered by a control, inspect animated shapes within a
+graphic, establish focus or status preservation, or change the preference mid-interaction. A stationary
+fade does not establish spatial movement. A source preference guard proves no rendered behavior.
+Without the behavior session, report the requirement as not checked. After changing motion, rerun its
+behavior probe and lint with that session. Exact sampling bounds and recognition patterns belong to
+`ultramarine`'s check-bounds reference, not to the motion decision.
 
 Exercise the rest by hand: load with the preference on, switch it while a sheet is open and moving, and
 repeat the interaction quickly.
@@ -228,29 +209,18 @@ precise order; a player when a designer-authored asset is the deliverable. Befor
 answer what the native layer failed to do, who owns the state, which cleanup removes its handles on
 unmount, where the one reduced branch lives, and what it adds in bytes and long tasks.
 
-An animation file does not settle how to ship it. Decide the job and the control it needs, then take the
-smallest representation that keeps the job.
+Choose an asset representation by its job: semantic UI for controls, vector markup for diagrams with
+live labels, footage for recorded scenes, a still for decoration, or procedural drawing with a text or
+table alternative. Keep messages and controls outside opaque assets.
 
-| Representation | Choose it for | Fallback |
-|---|---|---|
-| CSS on real UI | state feedback and simple geometry | the final state, shown directly |
-| SVG animated by CSS or script | diagrams and icons with live text | a static SVG |
-| exported vector sequence or state machine | a designer-authored flourish, or a control whose states are the deliverable | a poster, or semantic UI |
-| video | footage, cinematic sequences, complex raster effects | poster and transcript |
-| animated image | a small, non-interactive loop | the first frame |
-| canvas or WebGL | procedural or high-volume drawing | semantic DOM, a still, or a data table |
+For each asset, record its trigger, reserved dimensions, playback controls, behavior while hidden,
+and outcomes when loading or script fails. `code.image-dimensions` reads reserved image dimensions;
+the other delivery decisions are not checked here. The reduced branch must remain useful without
+starting the normal animation runtime.
 
-"Vector" does not mean small or fast: measure the artifact. A real control or message never lives inside an
-asset. For each asset write its trigger (eager, visible, user-started), its reserved box (a missing one
-causes layout shift, which `code.image-dimensions` reads), autoplay and loop, whether it pauses when
-hidden, and the no-script and load-error result. Under reduced motion serve a still instead of starting a
-heavy runtime. The checks measure none of frame pacing, long tasks, or bytes, so a claim of smoothness
-needs a trace.
-
-Rights are separate records for the editor and exporter terms, the runtime's license, the artwork, each
-embedded font, image, and audio clip, and the approval for this product. Record the artwork in the asset
-ledger and its fonts in the fonts lock. The scan of shipped files matches known image, video, audio, and 3D
-extensions, so an animation file with another extension needs its ledger entry by hand.
+Rights remain separate for the artwork, its embedded media and fonts, the editor and exporter, and
+the runtime. Put shipped artwork in the asset ledger and fonts in the lock. The rights scan recognizes
+file types rather than all animation formats, so record unrecognized assets explicitly.
 
 ## What the checks read
 
@@ -262,18 +232,18 @@ earned by the subject, from the plan and still screenshots, and sees no timing.
 
 | Rule | Reads |
 |---|---|
-| `motion.pulse-without-status` | source: pulse and ping utility class names, with a skeleton placeholder as the rule's keep case; render: an element of 32 px or less with an endless pulse in opacity, transform, scale, shadow, or filter |
-| `motion.decorative-cursor` | source: blink class and keyframe names; render: an endless stepped or blink-named animation |
-| `motion.uncontrolled-marquee` | render: an element that moves on its own between 0 and 2 s after load (a lead until the behavior layer agrees); behavior: content still moving after 5 s with no reachable button, beside it or naming it in `aria-controls`, whose accessible name says pause or stop (English or Korean words) |
-| `motion.bounce-default` | source: bounce, elastic, and back easing names, and curve control values outside 0 to 1; render: such curves on more than half of the animated elements |
-| `motion.transition-all` | source: `transition: all`; render: a running transition of all properties |
-| `motion.layout-property-animation` | source: transitions naming layout properties; render: computed transitions and keyframes on them; behavior: activating a control animates geometry through such a property for 50 ms or longer |
-| `motion.hover-zoom-everything` | behavior, fine-pointer context: more than four in five images and videos change `transform` on hover |
-| `motion.ambient-loops` | render: more than one element with an endless animation |
-| `motion.scroll-gated-content` | behavior: elements below the first viewport that start nearly invisible, clipped away, or hidden, and the time each takes to become readable once scrolled into view |
-| `ux.scroll-hijack` | behavior: three scroll inputs of one kind against what the browser scrolls by default; flagged when the distance is under half or over twice that, when the page did not move, or when the document snapped to sections |
-| `code.continuous-value-in-state` | source: a state hook's setter called inside a pointer-move, touch-move, scroll, wheel, or drag handler |
-| `code.animation-package-mismatch` | source: imports of the animation packages it knows, against `package.json`, lockfiles, and the installed package's exports; and two animation stacks imported together |
+| `motion.pulse-without-status` | source: utility signals for pulsing; render: small boxes with continuous non-stepped pulsing properties; neither reads whether the status is true |
+| `motion.decorative-cursor` | source: blinking signals; render: continuous stepped or cursor-like animations; neither establishes a real input caret |
+| `motion.uncontrolled-marquee` | render: movement at rest; behavior: continued automatic movement without a reachable pause control |
+| `motion.bounce-default` | source: preset easing signals; render: how widely easing overshoots across animated boxes |
+| `motion.transition-all` | source declarations and computed transitions that leave their properties unrestricted |
+| `motion.layout-property-animation` | source and render: layout-affecting properties; behavior: animated geometry after a control action |
+| `motion.hover-zoom-everything` | behavior with a fine pointer: the share of hovered media whose transform changes |
+| `motion.ambient-loops` | render: how many boxes animate continuously; not whether their purpose is earned |
+| `motion.scroll-gated-content` | behavior: hidden content below the opening viewport and its readability after scrolling |
+| `ux.scroll-hijack` | behavior: input distance against native scrolling, blocked movement, and section snapping |
+| `code.continuous-value-in-state` | source: state updates inside continuous-input handlers; not their runtime cost |
+| `code.animation-package-mismatch` | source imports against declared and installed dependencies; not whether the chosen layer fits the interaction |
 
 ## Handoff to lps-system
 

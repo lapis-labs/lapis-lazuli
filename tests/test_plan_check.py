@@ -495,6 +495,48 @@ def test_single_family_is_detected(tmp_path):
     assert "type.single-neutral-sans" in ids(report, blocking=True)
 
 
+@pytest.mark.parametrize("families", [("system-ui", "sans-serif", "-apple-system"), ("System-UI", "system-ui"),
+                                      ("Pretendard", "pretendard")])
+def test_single_family_counts_letter_case_and_platform_sans_names_as_one_value(tmp_path, families):
+    plan = base_plan()
+    plan["tokens"]["type"]["roles"] = [{"role": role, "family": family}
+                                       for role, family in zip(("heading", "body", "ui"), families)]
+    plan["defaults"] = [d for d in plan["defaults"] if d["id"] != "type.single-neutral-sans"]
+    assert "type.single-neutral-sans" in ids(run_real(tmp_path, plan), blocking=True)
+
+
+@pytest.mark.parametrize("families", [("system-ui", "ui-monospace"), ("system-ui", "Pretendard")])
+def test_single_family_keeps_other_generic_keywords_and_named_faces_apart(tmp_path, families):
+    plan = base_plan()
+    plan["tokens"]["type"]["roles"] = [{"role": role, "family": family}
+                                       for role, family in zip(("body", "code"), families)]
+    plan["defaults"] = [d for d in plan["defaults"] if d["id"] != "type.single-neutral-sans"]
+    assert "type.single-neutral-sans" not in ids(run_real(tmp_path, plan))
+
+
+def test_single_family_reads_the_platform_sans_names_from_the_font_table(tmp_path, house_generics):
+    plan = base_plan()
+    plan["tokens"]["type"]["roles"] = [{"role": "heading", "family": house_generics["sans"]},
+                                       {"role": "body", "family": "system-ui"}]
+    plan["defaults"] = [d for d in plan["defaults"] if d["id"] != "type.single-neutral-sans"]
+    assert "type.single-neutral-sans" in ids(run_real(tmp_path, plan), blocking=True)
+
+
+def test_web_plan_with_every_text_role_on_the_platform_sans_blocks_without_a_font_database(tmp_path):
+    plan = base_plan()
+    plan["tokens"]["type"]["roles"] = [{"role": role, "family": "system-ui"} for role in ("heading", "body", "ui")]
+    plan["defaults"] = [d for d in plan["defaults"] if not d["id"].startswith("type.")]
+    report = run_real(tmp_path, plan)
+    for rule_id in ("type.overused-neutral-grotesque", "type.single-neutral-sans"):
+        [finding] = [f for f in report["findings"] if f["rule_id"] == rule_id]
+        assert finding["status"] == "open" and finding["blocking"] and finding["evidence"] == {"type": "plan"}
+    assert [f["rule_id"] for f in report["findings"] if f["rule_id"].startswith("type.") and f["status"] == "skipped"] == []
+    plan["defaults"] = [{"id": "type.overused-neutral-grotesque", "decision": "keep", "basis": "brief",
+                         "reason": "An operate screen takes the platform's own face"}]
+    waived = [f for f in run_real(tmp_path, plan)["findings"] if f["rule_id"] == "type.overused-neutral-grotesque"]
+    assert [(f["status"], f["blocking"]) for f in waived] == [("waived", False)]
+
+
 def test_flat_scale_is_detected(tmp_path):
     plan = base_plan()
     plan["tokens"]["type"]["scale"]["ratio"] = 1.05
@@ -509,7 +551,8 @@ def test_missing_signature_warns_in_create_mode(tmp_path):
     assert "layout.missing-signature" in ids(report, blocking=False)
 
 
-@pytest.mark.parametrize("family", ["system-ui", "ui-monospace", "System-UI"])
+@pytest.mark.parametrize("family", ["system-ui", "ui-monospace", "System-UI", "sans-serif", "-apple-system",
+                                    "BLINKMACSYSTEMFONT"])
 def test_web_generic_font_needs_no_lock_or_delivery(tmp_path, family):
     plan = base_plan()
     plan["tokens"]["type"]["roles"] = [
@@ -557,6 +600,25 @@ def test_unlocked_font_blocks(tmp_path):
 def test_missing_lock_blocks(tmp_path):
     report = run(tmp_path, base_plan(), lock=tmp_path / "absent.json")
     assert "font.no-lock" in ids(report, blocking=True)
+
+
+def test_missing_lock_fix_names_the_faces_to_lock_not_the_generic_keyword(tmp_path):
+    plan = base_plan()
+    plan["tokens"]["type"]["roles"] = [{"role": "heading", "family": "Gowun Batang"},
+                                       {"role": "body", "family": "Pretendard"},
+                                       {"role": "ui", "family": "System-UI"},
+                                       {"role": "code", "family": "Pretendard"}]
+    report = run(tmp_path, plan, lock=tmp_path / "absent.json")
+    [finding] = [f for f in report["findings"] if f["rule_id"] == "font.no-lock"]
+    assert "Gowun Batang, Pretendard" in finding["fix"]
+    assert "system-ui" not in finding["fix"].casefold()
+
+
+def test_generic_family_table_decides_which_roles_need_a_lock(tmp_path, house_generics):
+    plan = base_plan()
+    plan["tokens"]["type"]["roles"] = [{"role": "body", "family": house_generics["generic"].upper()}]
+    report = run(tmp_path, plan, lock=tmp_path / "absent.json")
+    assert [f for f in report["findings"] if f["rule_id"].startswith("font.")] == []
 
 
 def edited_lock(tmp_path, **changes):

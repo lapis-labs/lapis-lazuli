@@ -73,16 +73,19 @@ entries:
   words: 6970
   dest:
   - reference
-  target: lapis
-  note: 표현 레퍼토리 표로 압축
-  status: todo
+  target: lapis/references/form-levers.md
+  note: Q44 — 허락·배치·재료·범위·강도의 네 결정, 척도·여백·밀도·반복·재료 흔적·순서·반응이라는 레버, 절제를 수정으로 보는 것을 form-levers.md 절로 계획 필드와 검사에 연결. 회사 이름이 든 동종 연구·가상 상황 A–D·강도 비교 사례·검토 질문 목록·결정 표는 필드도 검사도 없어 옮기지 않음
+  status: partial
+  done: [reference]
 - path: references/art-direction/concept-development.md
   words: 3103
   dest:
   - card
   - reference
-  target: lapis
-  status: todo
+  target: lapis/references/form-levers.md + lapis card
+  note: Q44 — 살아 있는 긴장에서 관계로 쓰는 개념·분위기와 스타일 낱말은 개념이 아님·소품이 아니라 관계를 옮기기·결과를 바꾸는 개념만 남기기를 form-levers.md와 본문 4단계 문장·방향 원칙으로. 개념 문장 틀·반전과 우연의 방법·작업 사례·폐기 기록은 필드도 검사도 없어 옮기지 않음(둘 쓰고 고르기는 claims.proposed 한 문장)
+  status: partial
+  done: [card, reference]
 - path: references/art-direction/direction-to-implementation.md
   words: 3717
   dest:
@@ -111,7 +114,9 @@ entries:
   - docs
   target: lapis/references/form-levers.md
   merge: form-levers
-  status: todo
+  note: Q44 — 관계로 읽기(부분과 전체·반복과 변화)·과업 계약과 경험층의 분리·뜻은 열고 결과는 고정을 form-levers.md의 레버 나누기·밀도·열린 뜻 절로. 증거 등급 표·예술 여부 논의·점선면 어휘·습작 기록 양식은 필드도 검사도 없어 옮기지 않음(docs 몫)
+  status: partial
+  done: [merge]
 - path: references/artistic-methods/metaphor-motif-and-symbol.md
   words: 3687
   dest:
@@ -119,7 +124,9 @@ entries:
   - docs
   target: lapis/references/form-levers.md
   merge: form-levers
-  status: todo
+  note: Q44 — 관계만 옮기고 소품은 두기·모티프의 변수와 고정할 것·상징은 상황에 따라 읽힘·뜻은 열고 조작은 분명히를 개념·모티프·열린 뜻 절로. 증거 등급 표·시각 은유 유형 분류·이론 요약은 옮기지 않음(docs 몫)
+  status: partial
+  done: [merge]
 - path: references/artistic-methods/participation-and-interaction.md
   words: 3587
   dest:
@@ -127,7 +134,9 @@ entries:
   - docs
   target: lapis/references/form-levers.md
   merge: form-levers
-  status: todo
+  note: Q44 — 반응과 행위 주체성의 구분·행동과 반응을 짝지어 쓰기·되돌릴 수 있는 시험을 '반응이라는 레버' 절로(experience 모드만). 기여와 공동 제작의 권한·지속·검토 표·규칙 실행과 저작의 구분·운영 계약은 필드도 검사도 없어 옮기지 않음(docs 몫)
+  status: partial
+  done: [merge]
 - path: references/artistic-methods/rhythm-time-and-narrative.md
   words: 3017
   dest:
@@ -135,7 +144,9 @@ entries:
   - docs
   target: lapis/references/form-levers.md
   merge: form-levers
-  status: todo
+  note: Q44 — 정적 쪽에도 시간이 있음·반복에서 고정할 것과 달라질 것·서사는 선택이라는 점을 리듬과 순서 절로. 시간 관계 표·네 시간 구조·재방문 표·중단 정의·문화적 속도 논의는 옮기지 않음(모션 계약은 motion.md 몫, 나머지는 docs 몫)
+  status: partial
+  done: [merge]
 - path: references/artistic-methods/tension-balance-and-asymmetry.md
   words: 3466
   dest:
@@ -143,7 +154,9 @@ entries:
   - docs
   target: lapis/references/form-levers.md
   merge: form-levers
-  status: todo
+  note: Q44 — 지각된 균형·무게 변수와 의미의 무게·축을 일부러 고르기·힘의 닫힘·자르기와 겹침을 긴장과 비대칭 절로. 실험 증거 요약·변수 표·축 연구 목록은 옮기지 않음(docs 몫)
+  status: partial
+  done: [merge]
 - path: references/artistic-methods/texture-materiality-and-tactility.md
   words: 3463
   dest:
@@ -151,7 +164,9 @@ entries:
   - docs
   target: lapis/references/form-levers.md
   merge: form-levers
-  status: todo
+  note: Q44 — 변수로 말하기·소재의 흔적과 덧씌움·기록·출처 구분·장식에도 일을 적기를 재료와 질감 절로. 증거 등급 표·네 용어 구분·재료 정합 지도·햅틱은 옮기지 않음(docs 몫)
+  status: partial
+  done: [merge]
 - path: references/artistic-methods/typography-as-form.md
   words: 4418
   dest:
@@ -159,7 +174,9 @@ entries:
   - docs
   target: lapis/references/form-levers.md
   merge: form-levers
-  status: todo
+  note: Q44 — 크기만 키운 것은 형태가 아님·형태를 다루는 수준 고르기·실제 글로 시험·쪼갬 제한을 형태로서의 글자 절로. 두 전통 비교·글리프 해부·시간 리듬 절은 옮기지 않음(서체 선택은 type.md 몫, 나머지는 docs 몫)
+  status: partial
+  done: [merge]
 - path: references/color/color-spaces-and-management.md
   words: 3187
   dest:
@@ -257,9 +274,11 @@ entries:
   words: 2834
   dest:
   - merge
-  target: ultramarine
+  target: ultramarine/references/repair-loop.md
   merge: review-and-repair
-  status: todo
+  note: 피드백을 원인 하나와 같은 조건의 재확인으로 묶는 것·보호할 결정·실패한 후보의 처리를 repair-loop.md로. 대안의 표시 형태·단계별 절차·비교 예·상한 없는 순환은 옮기지 않음
+  status: done
+  done: [merge]
 - path: references/creative-workflows/user-agent-collaboration.md
   words: 2946
   dest:
@@ -271,9 +290,11 @@ entries:
   dest:
   - card
   - reference
-  target: ultramarine
+  target: ultramarine card + ultramarine/references/repair-loop.md
   merge: review-and-repair
-  status: todo
+  note: 수리 권한·관찰 가능한 조건·먼저 고정할 기록·원인별 후보·자기 편집만 되돌리기·정체와 오락가락·종료와 넘기기를 본문 여섯 문장과 repair-loop.md로. 예산은 이번 결정에 따르고, 단계별 표·점수·예·중복 기록은 옮기지 않음
+  status: done
+  done: [card, reference]
 - path: references/design-feedback/comparison-and-regression.md
   words: 3399
   dest:
@@ -287,9 +308,11 @@ entries:
   words: 3155
   dest:
   - merge
-  target: ultramarine
+  target: ultramarine/references/repair-loop.md
   merge: review-and-repair
-  status: todo
+  note: 증상과 원인의 구분·원인을 가르는 최소 관찰·소유한 자리에서의 수리·관계 보존·실행으로 확인한 범위와 넘기기를 repair-loop.md로. 넓은 이관 절차·예술 논의·예·중복 점검표는 옮기지 않음
+  status: done
+  done: [merge]
 - path: references/design-feedback/inspection-and-evidence.md
   words: 3801
   dest:
@@ -382,8 +405,11 @@ entries:
   dest:
   - rule
   - card
-  target: slop rules + lapis
-  status: todo
+  - reference
+  target: lapis/references/type.md + slop rules + lapis
+  note: Q44 — 불만을 다섯 조건(측정된 결함·역할에 맞지 않는 페이스·주제가 얻지 못한 신호·체계 전체의 같음·지킨 관습이나 없는 파일)으로 가르고 조건마다 필드와 검사를 잇는 표, 낯익은 패밀리는 이름만으로 결함이 아니라는 문장과 keep 항목의 basis를 type.md '글꼴 고르기' 절로. 증거 규약·심각도 배정·전후 예시·임상 주장·이름 블랙리스트 목록은 옮기지 않음
+  status: partial
+  done: [reference]
 - path: references/fonts/installed-font-discovery.md
   words: 3808
   dest:
@@ -434,7 +460,7 @@ entries:
   - card
   - reference
   target: lapis/references/type.md
-  note: 글꼴 역할·짝짓기 참조에 반영. 카드 본문 행선지는 별도 이관
+  note: 글꼴 역할·짝짓기 참조에 반영. Q44 — 열린 역할의 후보 비교, 시스템 우선은 대상 플랫폼에서 본 뒤 고르기, 진 쪽의 까닭 기록을 type.md '글꼴 고르기' 절로. 카드 본문 행선지는 별도 이관
   status: partial
   done: [reference]
 - path: references/frontend-maintenance/code-health-and-ownership.md
@@ -485,7 +511,9 @@ entries:
   - merge
   target: lapis card
   merge: engine-principles
-  status: todo
+  note: Q44 — 본문에 이미 있는 '역할 먼저, 값은 나중'(색 단계)과 방향 원칙 네 문장이 card 행선지를 닫음. 색 이론·OKLCH·대비·다크 모드 세부는 color.md 쪽 원천이 받으므로 여기서 새로 옮기지 않음
+  status: done
+  done: [merge]
 - path: references/fundamentals/iconography-and-imagery.md
   words: 2334
   dest:
@@ -498,7 +526,7 @@ entries:
   dest:
   - reference
   - merge
-  target: lapis/references/motion.md + lapis card
+  target: lapis/references/motion.md + lapis card + ultramarine/references/check-bounds.md
   merge: engine-principles
   note: 목적 순서·기간 범위·이징 역할·전환 대 키프레임·속성 선택·중단·연출·로딩·줄인 모션·모션 경고 신호를 motion.md로 옮김(2026-10-01). 이름 붙은 시스템의 기간 표와 곡선 값·작업 패널 예제·결정 표는 뺌. lapis 카드(SKILL.md 본문)에는 다이얼 세 단계와 motion.md 포인터가 있음. 목적 순서 한 줄을 카드에 올릴지는 engine-principles 이관 때 결정
   status: partial
@@ -531,7 +559,9 @@ entries:
   - merge
   target: lapis card
   merge: engine-principles
-  status: todo
+  note: Q44 — 본문에 이미 있는 '역할 먼저, 값은 나중'(글자 단계)과 방향 원칙 네 문장이 card 행선지를 닫음. 글자 이론·척도·짝짓기 세부는 type.md 쪽 원천이 받으므로 여기서 새로 옮기지 않음
+  status: done
+  done: [merge]
 - path: references/fundamentals/ux-writing-and-microcopy.md
   words: 2374
   dest:
@@ -557,7 +587,9 @@ entries:
   - docs
   target: lapis card
   merge: engine-principles
-  status: todo
+  note: Q44 — 주제 우선(subject-first)과 관계 우선(relation-not-mood)을 방향 원칙 문장으로. 분야 경계·작업 방식 설명·사례는 옮기지 않음(docs 행선지가 남음)
+  status: partial
+  done: [merge]
 - path: references/interop/adobe-xd.md
   words: 2711
   dest:
@@ -738,7 +770,7 @@ entries:
   words: 3334
   dest:
   - merge
-  target: lapis/references/data-viz.md
+  target: lapis/references/data-viz.md + ultramarine/references/check-bounds.md
   merge: data-viz
   note: 질문에서 차트 고르기·정직한 척도·주석과 불확실성·구역별 일과 폭별 결정·접근 계층과 동등성·키보드와 갱신을 data-viz.md로(2026-10-01). 분석 뷰 구역 순서는 archetypes.md 원형 절에 이미 있어 가리키기만. dials·지표·함정·매트릭스·합성 Design Read 예시·선택 분기 계약 예시는 옮기지 않음
   status: done
@@ -774,7 +806,7 @@ entries:
   words: 4635
   dest:
   - reference
-  target: lps-ux/references/forms-and-recovery.md
+  target: lps-ux/references/forms-and-recovery.md + ultramarine/references/check-bounds.md
   note: 폼 구조, 검증 시점, 서버 응답 읽기, 확정 전 검토, 폼 안의 동의를 forms-and-recovery.md로. 한국형 폼 절은 원본에 한국어 양식이 없어 새로 씀(원어민 확인은 provenance의 verify_before_release). 온보딩·학습 보조 절, 체크아웃 주문 모델, 지표는 옮기지 않음(2026-10-01)
   status: done
   done: [reference]
@@ -895,16 +927,20 @@ entries:
   words: 2813
   dest:
   - reference
-  target: ultramarine agents/critic.md
+  target: ultramarine agents/critic.md + ultramarine/references/repair-loop.md
   merge: review-and-repair
-  status: todo
+  note: 근거 있는 발견과 취향의 구분·보존할 관계·원인 하나로 묶기·관찰하지 않은 평가를 통과로 말하지 않기를 repair-loop.md로. 평가자용 의도와 구현 비교·반사실 시험·비평 절차는 agents/critic.md 행선지에 남음
+  status: partial
+  done: [reference]
 - path: references/quality/improvement-playbook.md
   words: 2274
   dest:
   - merge
-  target: ultramarine
+  target: ultramarine/references/repair-loop.md
   merge: review-and-repair
-  status: todo
+  note: 원인별 변경·같은 후보에 필요한 보조 편집만 넣기·보존과 종료 조건을 repair-loop.md로. 동사별 조리법·모드 기본값·수치 제안·예는 옮기지 않음
+  status: done
+  done: [merge]
 - path: references/quality/ui-audit-procedure.md
   words: 2637
   dest:
@@ -922,7 +958,9 @@ entries:
   - docs
   target: lapis card
   merge: engine-principles
-  status: todo
+  note: Q44 — 주제에서 나온 차별성(subject-first)과 표면 모드에 따라 재는 것이 달라진다는 점(mode-sets-the-measure)을 방향 원칙 문장으로. 품질 등급·점수·증거 사다리는 본문에 넣지 않음(docs 행선지가 남음)
+  status: partial
+  done: [merge]
 - path: references/readability/diagnosis-and-editing.md
   words: 2542
   dest:
@@ -1032,8 +1070,9 @@ entries:
   dest:
   - reference
   target: lapis/references/style-bento-and-modern-saas.md
-  note: 공통 틀로 압축
-  status: todo
+  note: Q44 — 내용 관계·표면 모드·기본값·주제별 결정과 검사 범위를 계획 필드에 연결; 회사 예·연대·수치·범주 틀 제거
+  status: done
+  done: [reference]
 - path: references/styles/brutalism-and-neo-brutalism.md
   words: 1893
   dest:
@@ -1067,8 +1106,9 @@ entries:
   dest:
   - reference
   target: lapis/references/style-minimalism-and-editorial.md
-  note: 공통 틀로 압축
-  status: todo
+  note: Q44 — 절제·출판 단위·글자 역할·정보 라벨과 검사 범위를 계획 필드에 연결; 지역 절제는 별도 원천으로 미루고 회사 예·수치 제거
+  status: done
+  done: [reference]
 - path: references/styles/modernist-swiss-and-international.md
   words: 1975
   dest:
@@ -1418,7 +1458,9 @@ entries:
   - merge
   - rule
   target: lapis card
-  status: todo
+  note: Q44 — 본문에 이미 있는 색 역할 먼저를 쓰고 새 문장은 없음. 대비 문턱값은 본문에 넣지 않음(rule 행선지가 남음)
+  status: partial
+  done: [merge]
 - path: assets/color-profile-decision-card.md
   words: 1118
   dest:
@@ -1471,9 +1513,11 @@ entries:
   words: 981
   dest: &id011
   - reference
-  target: ultramarine
+  target: ultramarine/references/repair-loop.md
   merge: review-and-repair
-  status: todo
+  note: 증상을 원인으로 단정하지 않고 원인을 가르는 관찰을 할 수 있을 때만 순환하기를 repair-loop.md로. 증상별 목록·수치·구체적인 모양 처방·반복 보고 형식은 옮기지 않음
+  status: done
+  done: [reference]
 - path: assets/display-type-selection-card.md
   words: 1293
   dest: &id010
@@ -1552,8 +1596,11 @@ entries:
   dest:
   - shared
   - lazuli
-  target: src/shared/fonts/system-fonts.yaml
-  status: todo
+  - reference
+  target: src/shared/fonts/system-fonts.yaml + lapis/references/type.md
+  note: Q44 — 로캘마다 견본 하나(제목·본문·컨트롤·오류·데이터)와, 이름 붙일 페이스가 없을 때 system-ui로 두는 순서를 type.md '글꼴 고르기' 절로. CSS 스택 예·측정 문자열·브라우저 글꼴 증거·진단 흐름·QA 목록은 옮기지 않음. shared·lazuli 행선지는 별도 이관
+  status: partial
+  done: [reference]
 - path: assets/notification-and-attention-card.md
   words: 2076
   dest: *id005
@@ -1580,7 +1627,9 @@ entries:
   - merge
   target: lapis card
   merge: engine-principles
-  status: todo
+  note: Q44 — 보고 형식은 본문 보고 절에 이미 있어 새 문장 없이 card 행선지를 닫음. 답변 서식 열여섯 개는 옮기지 않음
+  status: done
+  done: [merge]
 - path: assets/session-brief-and-decision-log.md
   words: 801
   dest: *id007
@@ -1638,9 +1687,11 @@ entries:
 - path: assets/ui-audit-rubric.md
   words: 1126
   dest: *id011
-  target: ultramarine
+  target: ultramarine/references/repair-loop.md
   merge: review-and-repair
-  status: todo
+  note: 발견의 자리·상태·근거·실제 재확인과 미확인 범위를 종료 보고에 남기기를 repair-loop.md로. 점수표·합계·평가 축·비평 척도는 옮기지 않음
+  status: done
+  done: [reference]
 - path: assets/web-search-cheatsheet.md
   words: 680
   dest: *id002

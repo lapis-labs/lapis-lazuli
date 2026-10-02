@@ -10,7 +10,9 @@ references:
   - path: references/fonts/pairing-and-role-systems.md
     taken: Roles before families, the four system shapes, same-content comparison of distinct candidates,
       the optical matching steps (apparent size, baseline and line box, stroke weight, width, punctuation
-      and figures), synthesis caution, per-locale stacks through :lang().
+      and figures), synthesis caution, per-locale stacks through :lang(). The 'Choosing a face for each
+      role' section (Q44, 2026-10-02) also takes comparing two or three candidates with one specimen per
+      locale, recording the loser's reason, and choosing a system face only after seeing the target platforms.
     dropped: 'Loaded-versus-rendered evidence bookkeeping, math, emoji, and brand-mark roles, variable-axis
       token examples, the delivery budget chain, the QA matrix, and every named family: outside the plan''s
       seven roles, owned by checks or lzl-fonts, or product names.'
@@ -75,6 +77,20 @@ references:
       for data already taken from the files above.
     dropped: Basics that merge into SKILL.md (engine principles), the pairing table of named families,
       the dashboard worked example, and author citations.
+  - path: references/fonts/font-fit-and-overuse.md
+    taken: The five conditions behind a complaint about type (measured defect, wrong role, unearned signal,
+      sameness across the system, kept convention or missing file), each tied to the plan field that records
+      the response and the rule that checks it; a familiar family is not a defect by its name, and the
+      convention that keeps it goes in the basis of a defaults entry.
+    dropped: 'The evidence protocol and its sample findings, severity assignment, the before and after
+      examples, the prevalence discussion, the clinical-claims caution, and the name blacklist list: no plan
+      field or check reads them, or they repeat the critic and the anti-slop cards.'
+  - path: assets/multilingual-font-stacks.md
+    taken: One specimen per locale with a heading, a paragraph, a control, an error, and figures; system-ui
+      as the stated fallback when no family can be named.
+    dropped: 'The CSS locale stacks, conditional measure, candidate source leads, stress strings, browser
+      font evidence, the diagnostic flow, and the QA list: implementation detail, product names, or checks
+      owned by lzl-fonts and ultramarine.'
   external:
   - kind: standard
     name: OpenType specification (feature tags tnum, pnum, lnum, onum, locl, vert, titl; registered axes
@@ -126,8 +142,9 @@ references:
     name: KS X 1001 (2,350 Hangul syllables) and the Unicode Hangul Syllables block (11,172)
     used_for: Coverage bullet in Roles per script. Taken from vocab/type.yaml and the Unicode Standard,
       not from the sources.
-  skill_body_pointer: For roles per script, pairing Latin with Hangul, kana, or Han, CJK line breaking,
-    measure and leading, scale, numerals, and display type, read `references/type.md`.
+  skill_body_pointer: For roles per script, choosing a face for each role, pairing Latin with Hangul,
+    kana, or Han, CJK line breaking, measure and leading, scale, numerals, and display type, read
+    `references/type.md`.
   resolved_2026_09_27:
   - 'keep-all: type.md follows the contract (keep-all on Korean text blocks, layout fixes for narrow controls).
     No keep_when added (cloud decision 2026-09-27).'
@@ -142,6 +159,19 @@ references:
   - 'Backlog (lzl-fonts): an evidence line or filter for full 11,172-syllable Hangul coverage.'
   - 'Backlog (rules): whether premium-serif should name high-contrast bu-ri display explicitly.'
   - 'Backlog (rules): a render-layer requirement rule for text spacing overrides.'
+  resolved_2026_10_02:
+  - 'Choosing a face for each role (Q44): every rule id and what it reads was checked against the code on
+    2026-10-02 (plan_check.check_fonts for the font.* findings, lint/detectors/font_regions.py for the
+    measured regions and the no-face finding, render_type.py for font-fallback and synthetic-style,
+    plan_check.distinct_families for single-neutral-sans). The Adobe Fonts paragraph is the maintainer''s
+    wording from the direction outline (not legal advice).'
+  - 'Overlap: no 7-word span shared with any of the 216 Markdown files of the snapshot (lowercase letters,
+    digits, and Hangul as tokens, code blocks included); the longest shared runs are four words.'
+  - 'Proposed decision changes, content left out because no plan field or check reads it: a missing-glyph
+    rule (type.font-fallback reads only text drawn in another face); a report shape for a font critique and
+    a caution against clinical claims about a family; math, emoji, and brand-mark roles (the plan has seven
+    roles); the step 8 question of keep or reject when no face can be named, since a reject entry leaves
+    the finding open but not blocking and the release gate copies only blocking plan findings.'
 - reference: lapis/references/color.md
   sources:
   - path: references/color/palette-art-direction.md
@@ -1879,3 +1909,215 @@ references:
     guidance explicit. The revised Korean labels and their surrounding English prose await reader review.'
   - 'G116: added choices, history, controls, and dialogs to the example probe command, and named radio and
     switch alongside checkbox in the flow-driver limitation. These are documentation corrections, not probe changes.'
+- reference: ultramarine/references/repair-loop.md
+  sources:
+  - path: references/design-feedback/bounded-closed-loop.md
+    taken: 'Repair authority, an observable post-edit condition, a fixed target and protected relationships,
+      a pre-edit record, a coherent candidate for one cause, attributable reversal, plateau and oscillation,
+      and truthful stop and handoff outcomes. The skill body carries the operational stopping contract.'
+    dropped: 'The separate ledger, stage table, candidate scoring, worked examples, and source boilerplate.
+      The source has no universal round count; the new bounds follow the direction outline decision.'
+  - path: references/creative-workflows/revision-and-feedback-loops.md
+    taken: 'One causal question per revision, protected decisions, matched comparison conditions, and
+      distinguishing a preference from an observed defect or unresolved goal conflict.'
+    dropped: 'Dial recipes, persistent alternative identifiers and presentation formats, stage tables,
+      document-editor cases, worked examples, and boilerplate.'
+  - path: references/design-feedback/diagnosis-and-repair.md
+    taken: 'A symptom is not a supported cause; choose the observation that distinguishes possible causes,
+      correct the owning decision, protect meaningful relationships, and bound claims to actual inspection.'
+    dropped: 'The broad migration procedure, artistic discussion, risk matrix, source examples, duplicate
+      records, and boilerplate.'
+  - path: references/quality/critique-and-feedback.md
+    taken: 'Evidence-grounded findings apart from taste, useful preserve conditions, grouping by cause,
+      and no pass claim for an unobserved outcome.'
+    dropped: 'Scoring and source report templates are omitted. Intent versus execution and the wider
+      critique procedure remain for the critic destination; the migration map therefore remains partial.'
+  - path: references/quality/improvement-playbook.md
+    taken: 'A repair batch changes one supported cause with only necessary supporting edits, protects
+      settled decisions, names the after-condition, and ends when that condition is actually observed.'
+    dropped: 'The verb-by-verb recipes, mode defaults, dial arithmetic, worked examples, and boilerplate.'
+  - path: assets/diagnostic-checklists.md
+    taken: 'Symptoms are hypotheses to inspect, not permission for a restyle; stop inspecting when the
+      evidence identifies the cause and preserve project decisions during a correction.'
+    dropped: 'Symptom-specific lists, numerical checks, aesthetic prescriptions, triage table, and links.'
+  - path: assets/ui-audit-rubric.md
+    taken: 'Location, state, evidence, actual post-check and unobserved limits retained in the final handoff.'
+    dropped: 'All scores, totals, editorial axes, heuristic scales, source finding template and report skeleton.'
+  - path: references/quality/ui-audit-procedure.md
+    taken: 'Repair paragraphs: group by supported cause, change only the authorized owner, recheck the
+      same state and property plus protected neighbors, and finish source work without claiming a closed
+      loop when runtime evidence is unavailable. This adds to its inspection-and-evidence contribution;
+      its existing partial migration status and outstanding card destination are unchanged.'
+    dropped: 'The nine audit passes, scores, worked examples, general audit contract and boilerplate.'
+  skill_body_pointer: 'Before repeating a repair, read `references/repair-loop.md` for the finding record,
+    observing check, critic bound, candidate disposition, and final full run.'
+  resolved_2026_10_02:
+  - 'Direction outline section 6 supplies the bounds: three task rounds, two fixes per finding, at most
+    two critic calls, with a user-specified bound taking precedence. These are operational limits,
+    not measured quality or performance claims.'
+  - 'The pilot review G124 records four critic/fix/recheck rounds on enlarged-text wrapping without a
+    measuring rule. The reference describes the failure mode without naming either demonstration.'
+  - 'Narrowed rechecks replace full task reports; the final applicable render, behavior, lint and critic
+    chain runs once without narrowing. No separate narrow report path is introduced.'
+  inspected_2026_10_02:
+  - 'release_check.py: dependency modification times for input-stale; extract viewports for width-missing;
+    session coverage for probe-incomplete; lint targets, layers, rule narrowing and unread links for
+    layer-missing. lint/engine.py creates skipped findings with not-verified evidence and skip_cause.'
+  - 'render/__init__.py selects widths and writes the task extract; behavior_check/__init__.py selects
+    probes and the task session; lint/cli.py records narrowed scope and replaces its output file.
+    src/agents/critic.md requires extract and lint, uses image or review evidence and reads screenshots.'
+  - 'plan/schema.yaml provides mode, brief.constraints and claims.unresolved; finding.schema.yaml
+    provides scope.layers, status, skip_cause and image/review evidence; session.schema.yaml provides coverage.
+    No schema field enforces a loop budget, acceptance record or candidate disposition.'
+  verified_2026_10_02:
+  - 'The source drift checker reported all 223 frozen files unchanged. A lowercase alphanumeric-and-Hangul
+    token comparison, including fenced content, found no seven-token overlap between repair-loop.md and
+    any of the 216 original Markdown files. The reference is 1,204 words by wc -w.'
+  - 'The new repair migration tracking test first failed on its absent provenance entry, then passed
+    after the map and provenance edits; the existing inspection tracking test also passed.'
+  - 'A throwaway CLI smoke run with an isolated empty user cache wrote plan-only, rule-narrowed lint
+    scope to one report, then rewrote that path with full applicable plan/source scope and no rule
+    filter. Both commands exited zero; temporary reports were removed. Render width/probe behavior
+    and browser fallback are source-inspected only, not browser-runtime verified in this slice.'
+- reference: lapis/references/style-bento-and-modern-saas.md
+  sources:
+  - path: references/styles/bento-and-modern-saas.md
+    taken: Content-qualified modular composition, distinct composition/theme/tool decisions, operating versus
+      explaining surfaces, real product evidence, task-derived density, independently resolved themes,
+      responsive reading order, role-based surfaces and bounded influence ownership; rewritten as plan
+      decisions with checker inputs and limits.
+    dropped: Named companies, products, identities and examples; historical periodization and causal accounts;
+      prescribed span diagrams and numerical metrics; proprietary-system study notes; boilerplate matrices
+      and pitfalls; references to unmigrated source files.
+  - path: assets/style-cards.md
+    taken: Content premises of the bento and dark professional-tool cards and the bounded-ownership principle.
+    dropped: The other cards, named examples, dates, palettes and type prescriptions; the complete style-card
+      destination remains todo.
+  design_basis: Q44 direction-outlines.md section 4; shared default cards supply the named inspection prompts,
+    not style presets.
+  migration_status: The style source has only a reference destination, now done; style-cards stays todo.
+  inspected_2026_10_02:
+  - 'plan/schema.yaml: direction read and density, product_frame, layout procedure and section answers,
+    signature, defaults, claims and role-based color, surface and shape fields.'
+  - 'rules.yaml and plan_check.py: archetype sequences, family counts and defaults decisions; render_layout.py:
+    sibling similarity against plan priority text, cells without meaningful content, scaled columns and
+    constructed window controls or textless bars; render_visual.py: paired theme inversion, container radii
+    and corpus comparison; engine.py: package findings combine members at the same layer.'
+  - 'layout.typical-composition and component.library-default-theme are creation warnings; the critic owns
+    counterfactual, material trace, vision and package drift. No check verifies task suitability or authenticity.'
+  verified_2026_10_02:
+  - 'Read-only source drift comparison: all snapshot files unchanged. Lowercase alphanumeric plus Hangul
+    token comparison, code blocks included, against every original Markdown file found no shared seven-token run.'
+  - 'Length: 1389 words by wc -w, including table punctuation, within the requested 900–1400 words.
+    Examples span marine surveying, costume rental, rehearsal planning, laboratory maintenance and repair;
+    neither demonstration subject appears.'
+  left_for_later:
+  - 'Historical and market-causation accounts have no plan field or checker and were omitted rather than
+    turned into generation instructions. A separate history-research decision would be needed to restore them.'
+- reference: lapis/references/style-minimalism-and-editorial.md
+  sources:
+  - path: references/styles/minimalism-and-editorial.md
+    taken: Task priority without missing states, publication units and reading relationships, roles before
+      families, caption purpose, subject evidence instead of a premium package, compact reading order,
+      readable quietness and bounded ownership; rewritten as plan decisions and check scopes.
+    dropped: Named companies, products, people and publications; movement histories and regional-restraint
+      sections; numerical type, spacing, grid and measure recipes; seed-library and billing examples;
+      performance language and generic decision matrices.
+  - path: assets/style-cards.md
+    taken: The editorial card's content premise and the rule that primary and secondary influences own
+      different variables.
+    dropped: All other card content, named examples, dates and appearance recipes; the complete style-card
+      destination remains todo.
+  design_basis: Q44 direction-outlines.md section 4; regional histories wait for regional-design-cultures.
+  migration_status: The style source has only a reference destination, now done; style-cards stays todo.
+  inspected_2026_10_02:
+  - 'plan/schema.yaml: named style requirement, claims, inventory/priority/relationships/grid, section answers,
+    key_copy other slot, type roles and scale, role colors and defaults. Publication unit and line measure have
+    no dedicated fields; prose is recorded in existing inventory and grid strings, with adequacy left to the critic.'
+  - 'rules.yaml, plan_check.py, font_regions.py and render_type.py: palette and family regions, package members,
+    distinct family counts, scale ratio and rendered heading/body size/weight/contrast, heading lead-ins,
+    index order and cross-section numbering, text/backdrop pairs by state and theme, text sizes by script.
+    render_layout.py reads axis symmetry; render_visual.py reads exact endpoints and container radii.'
+  - 'type.tiny-ui-text, layout.symmetry-excess and color.cream-base are warnings. Region checks need measured
+    features; neither label detector evaluates meaning. The critic owns the counterfactual and material fit.'
+  verified_2026_10_02:
+  - 'Read-only source drift comparison: all snapshot files unchanged. Lowercase alphanumeric plus Hangul
+    token comparison, code blocks included, against every original Markdown file found no shared seven-token run.'
+  - 'Length: 1383 words by wc -w, including table punctuation, within the requested 900–1400 words.
+    Examples span geological reporting, instrument repair, textile collections, membership settings and dance
+    archives; neither demonstration subject appears.'
+  left_for_later:
+  - 'Regional-restraint history, cultural-authenticity claims and historical names have no decision/check
+    mapping here and were omitted; their separately deferred source needs a research contract before migration.'
+- reference: ultramarine/references/check-bounds.md
+  sources:
+  - path: references/fundamentals/motion.md
+    taken: Purpose and safety scope as context for interpreting motion evidence; executable observation bounds moved from motion.md.
+    dropped: Preset duration and curve tables, worked task panel, and vendor references; not detector definitions.
+  - path: references/product-types/data-visualization.md
+    taken: Data-region questions and nonvisual equivalence as context for explaining what geometry and contrast checks leave out.
+    dropped: Chart selection recipes and scale construction; retained in data-viz.md rather than repeated here.
+  - path: references/product-types/forms-onboarding-and-checkout.md
+    taken: Recovery, warning, and commitment decisions as context for interpreting the form observations.
+    dropped: Field and onboarding design recipes; retained in forms-and-recovery.md rather than repeated here.
+  external: []
+  skill_body_pointer: For numerical bounds, recognition vocabulary, and what a missed match cannot establish in motion, data regions, and forms, read `references/check-bounds.md`.
+  inspected_2026_10_02:
+  - 'Actual detector values come from src/shared/slop/rules.yaml and cli/lapis_design, not source-reference numbers: pulse 32 px; bounce share above 0.5; hover share above 0.8; loops above 1; scroll ratios outside 0.5–2; normal/large contrast 4.5/3 with 24 px or 18.66 px bold at weight 700; 500 direct children; warning lead 20 s and 10 extensions.'
+  - 'Recognition and sampling were read in behavior_check/probes/{motion,_decision,forms,time_limits,urgency,commits,scroll}.py, behavior_check/{driver,settle}.py, render/{__init__,fields/palette,fields/interaction}.py, and lint/detectors/{behavior,copy,render_type,render_layout}.py. Urgency uses scoped time wording, not any span; standalone quotes in interface roles remain proof leads.'
+  - 'Generating references retain words-only checker descriptions. Motion timing proposals, dial bands, CSS specimen values, protocol status codes, and synthetic form values are design/example data, not detector thresholds or recognition lists.'
+  verified_2026_10_02:
+  - 'Read-only source drift check: all 223 frozen files match. Lowercase alphanumeric-and-Hangul seven-token shingles, including code fences, found no overlap for the new check-bounds reference against any original Markdown file. The same scan of the three edited generating references found none after reordering the motion specimen guards without changing their conjunction.'
+  - 'Throwaway Python smoke exercised boundaries for large text, easing overshoot, scoped urgency, clock exclusion, status recognition, quote continuation/attribution and the reduced capture matrix. build.collect emitted check-bounds and its pointer in both install surfaces. The new migration tracking test passed; final project-wide acceptance checks belong to the integration owner.'
+- reference: lapis/references/form-levers.md
+  sources:
+  - path: references/art-direction/concept-development.md
+    taken: A concept as an organizing relation rather than a theme; starting from a tension found in the brief and supplied material; reframing the unit, reversing a convention, and transferring a relation without its props as ways in; a concept earns its place by changing a consequential choice; two concepts that differ in governing relation, with the loser recorded; scope follows permission; no invented history.
+    dropped: The statement template, the blocked-question method table, the chance and emergent-form method, the relation-map and inversion record formats, both worked progressions, the readiness list for formal studies, the critique outcome list, and the rejected-concept log; they have no plan field and no check.
+  - path: references/art-direction/bold-expression-and-restraint.md
+    taken: Placement, material, coverage, and intensity as independent decisions; strength described by what a reader sees and not by an expression score; scale and negative space, density, rhythm and sequence, disrupted grids, material traces, and playful response as levers with their failure cases; restraint as redistribution; a request for bolder or quieter as a change to name; meaning open and consequences fixed.
+    dropped: The six named peer studies with company and product names, the four hypothetical allocation situations, the per-technique low, high, too-far, and quiet-counterpart ladders, the review question list, the pitfall list, and the quick decision matrix; no plan field or check reads them, and the studies name companies.
+  - path: references/artistic-methods/form-meaning-and-experience.md
+    taken: Form read as relations (part and whole, similar and different, dense and sparse, visible and absent); a formal finding kept apart from task proof; interpretation as hypothesis; experience broader than task efficiency with consequences kept explicit.
+    dropped: The evidence-class table, the art-status discussion, the point, line, and plane vocabulary, the silhouette study method, the worked contrasts, and the study-record formats; classification of evidence and of art status has neither field nor check.
+  - path: references/artistic-methods/metaphor-motif-and-symbol.md
+    taken: Taking a mapped relation and leaving the source domain's props; saying what a borrowed relation falsely implies; motif as recurrence with memory and its variables; fixing what stays and what may vary; symbols as situated, with no universal readings; ambiguity of interpretation kept apart from clarity of operation.
+    dropped: The evidence-class table, the pictorial metaphor typology, the metaphor, metonymy, and simile comparison table, the source-domain table, and the worked costume-versus-relation study.
+  - path: references/artistic-methods/participation-and-interaction.md
+    taken: Response is not agency; a lever only when an action changes something perceivable through a learnable relation; writing what the visitor can do, what the work changes, and what it does not do; reversible trials.
+    dropped: The seven-condition response table, mapping-quality table, contribution and co-production governance, the instruction and interpreter roles, discovery cues, and the authored-rule precedent; they need fields for ownership, persistence, and moderation that the plan does not have.
+  - path: references/artistic-methods/rhythm-time-and-narrative.md
+    taken: A still page has time through order, density alternation, and recurring formats; variation registers only against recurrence; narrative is available, not required; what is stable, what varies, and when repetition stops.
+    dropped: The temporal-relation table, the four temporal structures, the return-use table, interruption definitions, the slowness-versus-waiting cases, and cultural pacing discussion; motion contracts belong to motion.md and the rest has no field or check.
+  - path: references/artistic-methods/tension-balance-and-asymmetry.md
+    taken: Balance as perceived relation and not a computed center or mirror symmetry; weight rising and falling with contrast, isolation, edge, and specificity; semantic weight of price, warning, and selected state; choosing an axis on purpose; force that must be received, redirected, released, or suspended; crop and overlap limits.
+    dropped: The force vocabulary glossary, the bounded-evidence summary of the balance study, the weight-variable table, the axis study list, the density and void control lists, and the worked comparisons.
+  - path: references/artistic-methods/texture-materiality-and-tactility.md
+    taken: Naming what varies in a texture; cues that agree on light, substrate, and depth; subject traces over overlays; documented, commissioned, or purely graphic origin; no implied age or provenance; removing the texture as a test; a treatment states its job.
+    dropped: The evidence-class table, the four-term distinction between visual texture and haptics, the variable table with low and high ends, the light, roughness, depth, and process question lists, the material coherence map, and all haptic content.
+  - path: references/artistic-methods/typography-as-form.md
+    taken: Size alone is hierarchy and not form; the level at which type is treated (glyph, word, block, sequence); testing with real text in every locale; never splitting a label that carries a price, status, or action; a complete text route for broken words.
+    dropped: The two-tradition comparison, the glyph and counterform anatomy, the break-and-join rules beyond the label limit, the text-block variable list, the spatial and temporal rhythm sections, and the worked studies; face choice stays in type.md.
+  design_basis: Q44 direction-outlines.md section 1; every section carries a decision, a plan field, and what checks it. The direction-principles block and the step 4 sentence in the lapis body close the card destination of concept-development.
+  migration_status: The seven artistic-methods sources and bold-expression-and-restraint keep their docs or unmoved parts, so they stay partial; concept-development has its card and reference destinations done and stays partial for the unmoved parts.
+  external:
+  - kind: study
+    name: A study of perceived balance in calligraphy images (Gershoni and Hochstein), as cited in the source
+    used_for: Balance as a perceived relation and not a computed center of mass or mirror symmetry
+  - kind: theory
+    name: Pictorial and multimodal metaphor in advertising (Forceville), as cited in the source
+    used_for: Taking a mapped relation and leaving the source domain's props; saying what a borrowed relation falsely implies
+  - kind: practice
+    name: A practitioner account of interactive installations (Rokeby), as cited in the source
+    used_for: A response lever must change something perceivable through a relation the visitor can learn
+  skill_body_pointer: For how each lever works and where it lands in the plan, read `references/form-levers.md`.
+  inspected_2026_10_02:
+  - 'Plan fields were read in plan/schema.yaml: direction (concept, levers, dials, read.surface_mode), tokens.type.scale, tokens.surface.treatments (name and job required, where), tokens.shape.rule, tokens.motion.principles, layout.procedure fields, layout.sections, layout.signature, brief.constraints and brief.locales, claims.proposed.'
+  - 'Rule readings were checked in rules.yaml, detectors.yaml, and the detector code: layout.unanchored-lever (lint/detectors/copy.py plan-anchored-text), type.flat-hierarchy and type.oversized-display (render_type.py type_hierarchy: oversized reads display-role runs only), layout.card-everything and layout.monotonous-spacing and layout.zigzag and layout.equal-siblings and layout.symmetry-excess (render_layout.py), surface.decorative-grid-texture and surface.glass-everywhere (render_visual.py surface_effects and the source-pattern detector), type.caps-prose (text-metrics with no role filter), type.costume-monospace (plan roles display, heading, body, ui through the lazuli database), layout.missing-signature (plan-missing in create mode; render derived.py marked element or plan signature text as not-verified), the behavior rules, and the rights rules through the asset ledger.'
+  - 'The critic stages named in the reference (counterfactual test, world materials trace, vision check) were read in agents/critic.md.'
+  verified_2026_10_02:
+  - 'Read-only source drift comparison: all snapshot files unchanged. Lowercase alphanumeric plus Hangul token comparison, code blocks included, against every original Markdown file found no shared seven-token run.'
+  - 'Length: 2664 words by wc -w including table punctuation and 2437 without table pipes, against about 2350 in the outline. Examples span a ferry timetable, a seed library, and a lighthouse museum; neither demonstration subject appears.'
+  - 'The four example levers were run through the plan-anchored-text detector with their stated materials and none was reported.'
+  left_for_later:
+  - 'Proposed decision changes, content left out because no plan field or check reads it: evidence-class and art-status discussion; study, trial, and discard record formats; haptics and sound; contribution and co-production governance (ownership, persistence, moderation); cultural and ritual pacing authority; point, line, and plane vocabulary. Each needs a field or a check before it can enter a generating reference.'

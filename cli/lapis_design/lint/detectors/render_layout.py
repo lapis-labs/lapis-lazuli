@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from itertools import combinations
 from typing import Any, Callable, Iterable
 
+from lapis_design import system_fonts
 from lapis_design.lint.types import Context, Hit, Result, detector
 from lapis_design.render.color import delta_e_ok
 
@@ -30,10 +31,6 @@ _FULL_SPAN = 0.9             # boxes this wide relative to their section say not
 _CENTERED = 0.9              # hero shape "centered" when content symmetry exceeds this (no threshold)
 _SCALED_TOLERANCE = 0.05     # responsive-structure: normalized x and width kept within this
 _SCALED_SHARE = 0.8          # responsive-structure: share of side-by-side boxes that must keep columns
-_GENERIC_FAMILIES = frozenset({
-    "serif", "sans-serif", "monospace", "cursive", "fantasy", "system-ui", "ui-serif",
-    "ui-sans-serif", "ui-monospace", "ui-rounded", "math", "emoji", "fangsong", "-apple-system",
-    "blinkmacsystemfont"})
 _TRANSFORMS = frozenset({"transform", "translate", "scale", "rotate"})
 _PULSE = frozenset({"opacity", "transform", "scale", "box-shadow", "filter"})
 _METRIC = re.compile(
@@ -1262,7 +1259,7 @@ def _family(name: str) -> str:
 def _contract_families(ctx: Context) -> tuple[dict[str, str], set[str]]:
     """Contract families (folded name -> name as written) and the allowed fallbacks."""
     names = [r["family"] for r in _dig(ctx.plan, "tokens", "type", "roles") or () if r.get("family")]
-    fallback = set(_GENERIC_FAMILIES)
+    fallback = set(system_fonts.generic_families())
     for font in (ctx.lock or {}).get("fonts") or ():
         if font.get("family"):
             names.append(font["family"])

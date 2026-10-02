@@ -14,7 +14,7 @@ plan_check 0.1.4: 2 blocking, 7 total, 3 skipped: not judged
   [BLOCK] copy.vague-cta content.key_copy[?slot=cta].text — "계속하기" (vague_cta) in the cta key copy: "계속하기"
           fix: Add a defaults entry for copy.vague-cta (keep or reject with a reason). Name the outcome of the action in the label
   [BLOCK] font.no-lock tokens.type.lock — type roles are set but no fonts lock was given
-          fix: Run `lazuli lock` after choosing fonts.
+          fix: Run `lazuli lock` for each named face: Pretendard.
 ```
 
 `copy.buzzwords`는 `"최적의"`와 `"경험을 선사"`를 경고하고, `copy.vague-cta`는 `"계속하기"`를, `font.no-lock`은 폰트 역할만 정하고 폰트 잠금이 없는 계획을 막아요.
@@ -141,9 +141,9 @@ Markdown 파일을 다시 쓸 때는 출처를 밝히고, 라이선스 링크를
 | `behavior/session.schema.yaml`, `behavior/DERIVED.md`, `behavior/example.session.json` | 동작 세션 기록 형식 v0, 관찰·파생 값 정의, 예시 세션. 루프백·사설 주소의 내 렌더만 구동하고(다른 호스트 요청은 차단, 스텁 백엔드 또는 격리된 로컬 백엔드, 합성 데이터), 입력값·질의 문자열·요청 본문은 남기지 않아요. 경로의 ID 같은 조각은 `:id`로 바꿔요. 예시에는 탐지기가 잡을 문제 두 가지(타이머 팝업의 거절 링크, 거절 뒤 재등장)를 일부러 넣었어요 |
 | `behavior/stub.schema.yaml`, `behavior/example.stub.yaml` | 스텁 백엔드 픽스처 형식 v0(2026-09-26 추가). 경로, 상태 있는 컬렉션과 효과 수, 상태 탐침용 변형(`empty`·`partial`), 합성 입력값, 합성 계정, 긴급성 근거(마감·재고·수요·활동), 외부 서비스 대체 응답을 적어요. 예시는 도자기 공방 계획에 맞췄어요 |
 | `render/extract.schema.yaml`, `render/DERIVED.md`, `render/example.extract.json` | 렌더 추출·레퍼런스 프로필 공통 형식 v1, 측정·파생 값 정의, 예시 추출. 레퍼런스 전용 캡처는 문구·대체 텍스트·접근 이름·스크린숏 없이 키 서명만 저장 |
-| `slop/rules.yaml` | 규칙 184개, 묶음 6개, 목록 16개. 이전 저장소의 체크리스트 73개와 anti-slop 카탈로그 107행에서 옮긴 규칙 125개에 동작 층 규칙 44개(기만·강요 패턴 12, 동작 접근성 17, 상태·복구·마찰 12, 동작 묶음 3), 렌더 층 대상 크기 규칙 1개, 권리 규칙 14개(`rights.*`: 출처 기록, 라이선스 범위·만료, 크레딧·고지, 예약 폰트 이름, 타사 표장, 생성 매체, 초상·재산 동의)를 더했어요. 경계값과 목록 값은 v0 씨앗 |
+| `slop/rules.yaml` | 규칙 185개, 묶음 6개, 목록 16개. 이전 저장소의 체크리스트 73개와 anti-slop 카탈로그 107행에서 옮긴 규칙 125개에 동작 층 규칙 44개(기만·강요 패턴 12, 동작 접근성 17, 상태·복구·마찰 12, 동작 묶음 3), 렌더 층 대상 크기 규칙 1개, 계획 층 레버 규칙 1개(`layout.unanchored-lever`), 권리 규칙 14개(`rights.*`: 출처 기록, 라이선스 범위·만료, 크레딧·고지, 예약 폰트 이름, 타사 표장, 생성 매체, 초상·재산 동의)를 더했어요. 경계값과 목록 값은 v0 씨앗 |
 | `slop/rules.schema.yaml`, `slop/rules.example.yaml` | 규칙 파일 스키마(출처 종류에 `regulation` 추가), 그리고 `plan_check` 단위 테스트용 부분집합 7개 |
-| `slop/detectors.yaml` | 탐지기 89개 등록부(모두 구현, 코드와 등록부가 어긋나면 테스트가 실패해요), 규칙이 쓰는 모든 `params`·`threshold` 키 선언, 렌더 탐지기가 읽는 추출 필드(`reads`), 동작 탐지기가 읽는 세션 필드(`reads_session`), 자산 원장·폰트 잠금 필드(`reads_ledger`, `reads_lock`), 계획 경로식 문법 |
+| `slop/detectors.yaml` | 탐지기 90개 등록부(모두 구현, 코드와 등록부가 어긋나면 테스트가 실패해요), 규칙이 쓰는 모든 `params`·`threshold` 키 선언, 렌더 탐지기가 읽는 추출 필드(`reads`), 동작 탐지기가 읽는 세션 필드(`reads_session`), 자산 원장·폰트 잠금 필드(`reads_ledger`, `reads_lock`), 계획 경로식 문법 |
 | `slop/finding.schema.yaml` | 발견 보고 형식 (behavior_check·rights_check, 세션·원장 경로, 문맥·흐름·단계·자산 위치 포함) |
 | `fonts/lock.schema.yaml`, `fonts/example.fonts.lock.json` | 폰트 잠금 파일 (프로젝트 단위, 폰트마다 사용 작업 목록, 용도별 허가(`uses`), 배포 파일·변형·예약 이름·고지) |
 | `assets/ledger.schema.yaml`, `assets/CHECKS.md`, `assets/example.assets.ledger.json` | 자산 원장 v0 (`.lapis/assets.ledger.json`, 폰트 밖 매체의 출처·라이선스·용도·크레딧·고지·표장·생성 기록), 권리 검사 정의, 예시 원장. 법적 판단이 아니라 기록 대조만 해요 |

@@ -46,6 +46,22 @@ A small edit inside an established system needs no plan. Say so and make the edi
 4. Ask only questions whose answers change the plan, as the smallest independent set. Otherwise
    write a reversible assumption into `claims.proposed` and continue.
 
+## Direction principles
+
+Four principles steer the direction steps below. Each names the plan field that holds it and what,
+if anything, checks it.
+
+- `subject-first` - A decision that fits any other subject unchanged is a default: record it in
+  `defaults` with a reason, or change it from a `world_materials` entry. The critic's counterfactual
+  test judges it; `copy.name-swap` reads key copy for a material, term, number, or name of this subject.
+- `relation-not-mood` - `direction.concept` states a relation that changes order, emphasis, or labels.
+  A mood or a style word is not one. The critic judges it; `plan check` does not.
+- `lever-has-address` - Each entry of `direction.levers` says what changes, from which material, and
+  where it lands. `layout.unanchored-lever` reads whether the sentence shares a word with a material.
+- `mode-sets-the-measure` - Persuade, operate, read, and experience measure different things, so one
+  lever fits one mode and misleads in another. Set `direction.read.surface_mode` and
+  `direction.dials` for each screen. The critic's vision check judges it; no rule reads it.
+
 ## Write the plan
 
 Work in this order; each step fills the named plan fields. The schema is
@@ -96,6 +112,15 @@ Starting points, which the brief and existing designs override:
 
 "Premium" in a brief is not a style. Never turn it silently into low density, cream, and serif.
 
+When the request names a look - modern, professional, minimal, clean, editorial, bento, or another
+style word - set `style_frame: named`, write the word in `direction.read.style_name`, and keep it in
+`claims.declared`. When a style file matches, read it before step 4:
+`references/style-bento-and-modern-saas.md` when the word is bento, or modern or professional for a
+software product's page or tool; `references/style-minimalism-and-editorial.md` when it is minimal,
+clean, or editorial. When none matches, write in `direction.read.text` what the word assumes about
+the content. A style file says what the style assumes about the content and which plan fields make it
+this subject's; it is not a look to reproduce.
+
 The motion dial has three bands: 1-3 feedback only, 4-6 transitions that explain a change, 7-10 authored
 moments. Write the band into `tokens.motion.principles` with a reduced-motion branch for each effect
 (`respect` is the only accepted value for `reduced_motion`). For timing and easing, interruption, scroll and route
@@ -104,11 +129,15 @@ enhancement, choosing between native and library animation, and delivering autho
 
 ### 4. Concept and signature - `direction.concept`, `direction.levers`, `layout.signature`
 
-Start the concept from a live tension in the subject: a pottery shop's sales page can become the
-record of one kiln firing. Name the form levers you will pull: scale contrast, density, rhythm,
-tension and asymmetry, material and texture, type as form, or a motif from the subject. The signature
-is the one element only this task has, built from a world material; the page is organized around it,
-not around a hero shell.
+Write the concept as a relation that changes order, emphasis, or labels, starting from a live tension
+in the subject: a pottery shop's sales page becomes the record of one kiln firing. A mood or a style
+word is not a concept. Write each lever as one sentence: the lever (scale, density, rhythm, tension,
+material, type as form, or motif), what visibly changes, and the world material it comes from, named
+as it is written in `world_materials`. A lever's bare name, or words such as clean, modern, and bold,
+are not levers; `plan check` blocks a lever that names no world material. For how each lever works
+and where it lands in the plan, read `references/form-levers.md`. The signature is the one element
+only this task has, built from a world material; the page is organized around it, not around a hero
+shell.
 
 
 ### 5. References - `references`
@@ -137,8 +166,9 @@ Decide roles - display, heading, body, ui, data, code, caption - per script. Get
 `lazuli lock "<family>" --role <role> --task <task>`, which records source, license, and delivery
 path. Body faces are chosen for reading on the target platform; display faces for the subject's
 voice. For Korean text keep the face's default tracking at body sizes and set `word-break: keep-all`
-on Korean text blocks. For roles per script, pairing Latin with Hangul, kana, or Han, CJK line
-breaking, measure and leading, scale, numerals, and display type, read `references/type.md`.
+on Korean text blocks. For roles per script, choosing a face for each role, pairing Latin with
+Hangul, kana, or Han, CJK line breaking, measure and leading, scale, numerals, and display type,
+read `references/type.md`.
 
 ### 8. Layout - `layout.procedure`, `layout.sections`
 
@@ -206,6 +236,9 @@ List every document, page, and file the plan relied on.
 ## Check while working
 
 Checks during work stay small; the full set runs once at the release gate.
+When repeating a repair, follow the bounds and final full run in `ultramarine`'s
+`repair-loop.md` reference; do not turn a missing check into another edit.
+
 
 1. `lapis-design slop lint --plan .lapis/plans/<task>.yaml --source <source dir> -o .lapis/lint/<task>.json`.
    It needs no browser, so run it after every change to styles or markup: it finds literal colors,
@@ -229,9 +262,11 @@ All widths, all probes, the rights check, and fresh license lookups belong to th
 
 If a sandbox or permission prevents a check from starting Chromium or reading lazuli's user cache,
 ask the user for permission once; if refused or impossible, list the check as not run with the exact
-error. The host's own browser tool may supply `image` or `review` evidence of what you saw, never a
-render or behavior record; never move `LAZULI_DB` into the project to bypass the restriction, and if
-a project-local database is unavoidable, keep it outside version control and tell the user.
+error. When the bundled browser cannot start and the host has its own way to view the page, view it
+there, record what you saw as `image` or `review` evidence, and keep render check on the list of
+checks that did not run; this is never a render or behavior record. Never move `LAZULI_DB` into the
+project to bypass the restriction, and if a project-local database is unavoidable, keep it outside
+version control and tell the user.
 
 Render and behavior checks capture web pages; for a native screen they and the critic do not run, so
 list them as not run.

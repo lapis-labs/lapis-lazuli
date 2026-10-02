@@ -577,6 +577,11 @@ def test_font_outside_contract_hits_requested_families_outside_plan_lock_and_fal
                 plan=TOKENS_PLAN, lock=LOCK).hits == []
 
 
+def test_font_outside_contract_allows_the_generic_families_of_the_font_table(house_generics):
+    assert lint("system.font-outside-contract", extract=families("house-stack", "HOUSE-Stack"),
+                plan=TOKENS_PLAN, lock=LOCK).hits == []
+
+
 def test_literal_color_hits_colors_farther_than_delta_e_ok_max_from_every_token():
     page = extract(viewport(390, [box(1, "section", 0, 0, 390, 400, style={"background": [0.97, 0.01, 85]}),
                                   box(2, "text", 0, 0, 300, 30, parent=1)],

@@ -1,4 +1,4 @@
-"""Shared test fixtures: isolated user cache, no installed fonts, browser loopback server, and browser/CJK markers."""
+"""Shared test fixtures: isolated user cache, no installed fonts, a font table with extra generic families, browser loopback server, and browser/CJK markers."""
 from __future__ import annotations
 
 import importlib.util
@@ -59,6 +59,28 @@ def no_installed_fonts(tmp_path_factory, monkeypatch):
     sets its own roots (over this) or removes the variable (and then fakes the font list)."""
     empty = tmp_path_factory.mktemp("no-fonts")
     monkeypatch.setenv("LAZULI_FONT_ROOTS", f"user={empty}")
+
+
+@pytest.fixture
+def house_generics(tmp_path, monkeypatch):
+    """The shared contracts with one more generic family (`house-stack`) and one more name the platform
+    answers with its own sans (`house-sans`) in fonts/system-fonts.yaml, set as $LAPIS_SHARED. A check
+    that treats them as generic reads the table; one that keeps its own list does not."""
+    import shutil
+
+    import yaml
+
+    shared = tmp_path / "shared-with-house-families"
+    shutil.copytree(Path(__file__).resolve().parents[1] / "src" / "shared", shared)
+    table = shared / "fonts" / "system-fonts.yaml"
+    doc = yaml.safe_load(table.read_text(encoding="utf-8"))
+    for family in ("house-stack", "house-sans"):
+        doc["fonts"].append({"family": family, "platforms": ["all"], "scripts": ["all"], "class": "generic",
+                             "verified": "keyword", "note": "test keyword"})
+    doc["platform_sans"].append("house-sans")
+    table.write_text(yaml.safe_dump(doc, allow_unicode=True), encoding="utf-8")
+    monkeypatch.setenv("LAPIS_SHARED", str(shared))
+    return {"generic": "house-stack", "sans": "house-sans"}
 
 
 def pytest_collection_modifyitems(items):

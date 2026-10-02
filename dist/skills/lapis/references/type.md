@@ -45,6 +45,52 @@ What `lazuli search --script <code> --role <role>` coverage means:
   and so on) and `--license open` to open licenses. When the user classes a face differently,
   `lazuli class set "<family>" --genre <id>` records their class, which outranks catalogs.
 
+## Choosing a face for each role
+
+Work down the rows. "Not checked" means only the report shows the work.
+
+| Decision | Plan field | Checked by |
+|---|---|---|
+| Character first: each role's job, the real text per locale, what the world materials suggest. A tide table needs aligned figures; a letterpress shop can take its voice from its proof sheets | `world_materials`, `brief.locales`, `brief.platform`, `claims.proposed` | not checked |
+| Candidates: installed and catalog families from `lazuli search --script <code> --role <role>`, plus activated Adobe Fonts (`lazuli local fonts --origin adobe-sync`) | none | not checked |
+| For each open role, compare two or three candidates on measured facts (`why`, class, weights, scripts, delivery) and draw each with one specimen per locale: heading, paragraph, control, error, figures. Record the loser's reason | `claims.proposed` | not checked |
+| Hangul and Latin: one face that draws both, or a Hangul face with a Latin companion as two entries | `tokens.type.roles[*].scripts` | `type.font-fallback` reads a rendered page for text drawn in a face other than the requested one. `scripts` also limits the neutral-grotesque region to Latin |
+| Record each choice: `role`, one `family` name, `weights`, `scripts`, `source` | `tokens.type.roles[*]` | the schema; `type.single-neutral-sans` reads whether two or more roles all name one family; `type.overused-neutral-grotesque`, `type.serif-luxury-display`, and `type.costume-monospace` read measured features, so they need the lazuli database |
+| Lock with the delivery path: `lazuli lock "<family>" --role <role> --task <task>`. An Adobe face on a web plan adds `--source adobe-sync --delivery adobe-web-project` | `tokens.type.lock` | `font.no-lock` (no lock given), `font.not-locked` (a family missing from it), `font.no-web-delivery` (no web delivery path), `font.channel-mismatch` (files from a source that cannot ship them), `font.use-unknown` (no recorded grant for a planned use) |
+| An intended `system-ui` (an operate screen, a tight budget, email), chosen after seeing it on each platform in `brief.platform` | `defaults`: `type.overused-neutral-grotesque`, `keep`, a `basis`, and a `reason` naming the platforms seen | the generic-family finding below |
+| No database: set `LAZULI_DB` to a writable path, run `lazuli local fonts` and `lazuli catalog sync`, then `lazuli search --license open --delivery web`, and lock a family the user or `DESIGN.md` names with `--source`, `--delivery`, `--postscript`. With nothing to name, use `system-ui`, add one `claims.unresolved` line, report it first, and write no keep or reject entry | `claims.unresolved` | on a web plan the finding below stays open |
+
+Before changing a face over a complaint, sort it into one of five conditions.
+
+| Condition | Where the response goes | Checked by |
+|---|---|---|
+| A measured defect: fallback text, a synthesized weight | the role's entry | `type.font-fallback`, `type.synthetic-style` |
+| A face that does not suit its role, like monospace on prose | the entry's `role` | `type.costume-monospace` |
+| A signal the subject has not earned | `world_materials` | `type.serif-luxury-display`; otherwise the critic |
+| Sameness across the whole system | `tokens.type.roles`, `direction.levers` | `type.single-neutral-sans`, `type.overused-neutral-grotesque` |
+| A kept convention or a missing file | a `defaults` entry's `basis`; `claims.unresolved` | the waiver; `font.not-locked` |
+
+A familiar family is not a defect by its name; write the convention that keeps it (the brief, the
+contract, a requirement) as the `basis` of its `defaults` entry.
+
+**Generic families.** A role's `family` is one name: the schema refuses a comma, and fallbacks go in
+the lock (`--fallback`) and the implementation tokens. CSS keywords and the vendor aliases of the
+system UI face name no face. They need no lock entry, are never looked up in the database, and match
+in any letter case. Five of them, `system-ui` and `sans-serif` among them, resolve to a sans the
+platform picks, and `type.single-neutral-sans` counts those as one family. When a web plan's
+display, heading, body, and ui roles all use them, `type.overused-neutral-grotesque` reports that no
+face was chosen, a finding about the plan rather than a measurement.
+
+Fonts the user is licensed for are candidates like any other, Adobe Fonts included: recommend,
+compare, choose, and lock them. On the web an Adobe face is delivered through the user's own Adobe
+web project (`--delivery adobe-web-project`). What is limited is how font data is reached, not which
+fonts are used: lazuli lists and measures an activated face through the operating system's font
+interface and stores names, the metadata the system reports, and measured numbers. It does not open
+synced font files by path, extract or store outlines or tables, send font files or font data
+anywhere (a family name sent to a catalog lookup is not font data), commit or self-host the files,
+or collect anything from Adobe's sites, and nothing derived from an Adobe face is used to train,
+evaluate, calibrate, or test. This is lazuli's reading of the terms, not legal advice.
+
 ## Reading faces and voice faces
 
 A reading face (body, ui, caption, usually data) is chosen for reading on the target platform, a

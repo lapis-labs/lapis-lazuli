@@ -1,6 +1,7 @@
 """Copy detectors: word families, rhetorical shells, constructions, punctuation, rhythm, formatting
-residue, separator shapes, register, placeholder and proof content, meta text, and the review-layer
-name-swap and counterfactual tests.
+residue, separator shapes, register, placeholder and proof content, meta text, the review-layer
+name-swap and counterfactual tests, and plan-anchored-text, which keeps form levers tied to the plan's
+world materials.
 
 Where copy comes from
   render  the text runs of one viewport of the extract: the one with the most text, ties to the
@@ -31,6 +32,10 @@ Evidence: plan hits are `plan`, render hits `measurement`. Fabricated-proof hits
 content the plan's claims do not back, so they carry `not-verified`: the detector cannot tell
 invented proof from real proof. The review layer of name-swap-test and counterfactual-test is a
 reviewer's judgement, so those skip with a reason that says what to judge.
+
+plan-anchored-text compares strings, not copy: the plan strings at `path` against the strings at each
+anchor path. Latin-script words of three or more letters match by their first five letters once common
+function words are removed; Hangul, kana, and Han text matches by runs of two characters.
 """
 from __future__ import annotations
 
@@ -1780,6 +1785,87 @@ def name_swap_test(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
                      "proper name, so nothing in it depends on this product",
             location=dict(s.loc), evidence="plan")
         for s in keyed if not _anchored(s, stems, bigrams, title)])
+
+
+# ---------------------------------------------------------------- plan-anchored-text
+
+# Function words the lever check leaves out, on top of _STOPWORDS: they carry no subject.
+_FUNCTION_WORDS = frozenset(
+    "the and for nor but yet not are was were been being has had does did can may might must shall should would "
+    "could its our out off per via onto upon than then these those whom whose who how why you any all both own "
+    "one two".split())
+_LETTER_WORD = re.compile(r"[^\W\d_]+")
+
+
+def _anchor_words(text: str) -> tuple[set[str], set[str]]:
+    """The comparable words of a plan string: the first five letters of each word of three or more letters
+    outside the function words, and the runs of two characters of Hangul, kana, and Han text."""
+    folded = _fold(text)
+    stems = {w[:5] for w in _LETTER_WORD.findall(_CJK_TOKEN.sub(" ", folded))
+             if len(w) >= 3 and w not in _STOPWORDS and w not in _FUNCTION_WORDS}
+    return stems, _bigrams(folded)
+
+
+def _strings(value: object) -> list[str]:
+    if isinstance(value, str):
+        return [value]
+    return [s for item in value for s in _strings(item)] if isinstance(value, list) else []
+
+
+@detector("plan-anchored-text", layers=("plan",))
+def plan_anchored_text(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
+    """Strings at the rule's path that share no word with any anchor path (layout.unanchored-lever: a form
+    lever that names no world material or signature word). Runs only in the plan modes the rule lists and
+    skips the listed style frames. When the path resolves to no string, `empty: hit-unless-operate-only`
+    hits unless the surface mode is operate alone: a working surface may go without levers."""
+    if ctx.plan is None:
+        return Result(skipped="no plan given")
+    path = det.get("path")
+    if not path:
+        return Result(skipped="the rule sets no plan path")
+    from lapis_design.plan_check import resolve   # plan_check imports the lint registry
+    params = det.get("params") or {}
+    plan = ctx.plan
+    if params.get("modes") and plan.get("mode") not in params["modes"]:
+        return Result()
+    skip = params.get("skip_style_frames") or ()
+    if any(frame in skip for frame in resolve(plan, "direction.read.style_frame")):
+        return Result()
+    base = path[:-3] if path.endswith("[*]") and "[" not in path[:-3] else None
+    if base is None:
+        found = [(path, value) for value in resolve(plan, path)]
+    else:
+        found = [(f"{base}[{i}]", value) for node in resolve(plan, base) if isinstance(node, list)
+                 for i, value in enumerate(node)]
+    found = [(at, text) for at, text in found if isinstance(text, str) and text.strip()]
+    here = {"file": ctx.plan_path} if ctx.plan_path else {}
+    if not found:
+        if params.get("empty") != "hit-unless-operate-only":
+            return Result()
+        modes = {m for value in resolve(plan, "direction.read.surface_mode") if isinstance(value, list)
+                 for m in value}
+        if modes == {"operate"}:
+            return Result()
+        return Result(hits=[Hit(observed=f"the plan writes nothing at {base or path}, and its surface is not "
+                                         "operate alone", location={**here, "path": base or path},
+                                evidence="plan")])
+    anchors = params.get("anchors") or ()
+    stems: set[str] = set()
+    grams: set[str] = set()
+    for anchor in anchors:
+        for value in resolve(plan, anchor):
+            for text in _strings(value):
+                s, g = _anchor_words(text)
+                stems |= s
+                grams |= g
+    hits = []
+    for at, text in found:
+        s, g = _anchor_words(text)
+        if not (s & stems or g & grams):
+            hits.append(Hit(observed=f'"{_clip(text, 60)}" shares no word with {" or ".join(anchors)}, so it '
+                                     "would fit any subject",
+                            location={**here, "path": at}, evidence="plan"))
+    return Result(hits=hits)
 
 
 @detector("counterfactual-test", layers=("review",))

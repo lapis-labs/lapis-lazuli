@@ -80,9 +80,11 @@ Every report follows `shared/slop/finding.schema.yaml`.
 
 If a sandbox or permission prevents a check from starting Chromium or reading lazuli's user cache,
 ask the user for permission once; if refused or impossible, list the check as not run with the exact
-error. The host's own browser tool may supply `image` or `review` evidence of what you saw, never a
-render or behavior record; never move `LAZULI_DB` into the project to bypass the restriction, and if
-a project-local database is unavoidable, keep it outside version control and tell the user.
+error. When the bundled browser cannot start and the host has its own way to view the page, view it
+there, record what you saw as `image` or `review` evidence, and keep render check on the list of
+checks that did not run; this is never a render or behavior record. Never move `LAZULI_DB` into the
+project to bypass the restriction, and if a project-local database is unavoidable, keep it outside
+version control and tell the user.
 
 ## Read the findings
 
@@ -96,6 +98,8 @@ a project-local database is unavoidable, keep it outside version control and tel
   `shared/slop/rules.yaml`, and a default rule belongs to one card in `shared/slop/cards.yaml`,
   whose routes are the ways out.
 - Several findings on one package are one decision, not several fixes.
+- For numerical bounds, recognition vocabulary, and what a missed match cannot establish in motion,
+  data regions, and forms, read `references/check-bounds.md`.
 
 ## Run the critic
 
@@ -117,10 +121,24 @@ The critic judges in a context that did not make the design, reading only the in
    skill in repair mode), then the code.
 2. Each fix spends a world material, the signature, or a plan decision. A different named default
    is not a fix.
-3. Rerun only what the fix touched - that width, that probe, that layer - then lint again, then
-   the critic on the changed parts.
-4. Stop when nothing blocks and every open finding is fixed, kept in `defaults` with a reason, or
-   accepted by the user.
+3. A repair loop is three rounds at most per task unless the user set another number; a round is
+   one diagnosis, one fix for one cause, and one rerun of the narrowest check that can observe that
+   finding.
+4. Before the first fix, write down the finding, the check and condition that will show it is gone,
+   and what must stay unchanged; if no check you can run observes it, make one fix, list it as not
+   verified, and do not loop.
+5. After a fix, rerun only that width, probe, or lint layer; run the full set once, in order, when
+   the last round ends, because a narrowed run leaves the other widths and probes without evidence.
+6. A finding that is still open after two fixes goes to the user with both attempts and the cause
+   you now suspect; do not try a third variation of the same change.
+7. Stop when the target finding is gone and nothing that was passing now blocks, when the rounds
+   are spent, or when a check cannot run; unused rounds are not a reason to keep polishing.
+8. End by sorting the report into defects that remain, checks that did not run with the reason for
+   each, and items the user must decide; a check that did not run is never reported as passed, and
+   missing evidence is not a defect to repair.
+
+Before repeating a repair, read `references/repair-loop.md` for the finding record, observing check,
+critic bound, candidate disposition, and final full run.
 
 ## Reporting
 

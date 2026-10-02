@@ -111,6 +111,14 @@ def test_font_fallback_ignores_generic_families_and_emoji():
     no_hits(lint("type.font-fallback", extract(page)))
 
 
+def test_font_fallback_ignores_the_generic_families_of_the_font_table(house_generics):
+    page = Page()
+    para = page.box("text", (0, 0, 300, 40))
+    page.run(para, "Plain", family=house_generics["generic"], rendered="Platform Sans", font={"fallback": True})
+    page.run(para, "Mixed case", family="House-Stack", rendered="Platform Sans", font={"fallback": True})
+    no_hits(lint("type.font-fallback", extract(page)))
+
+
 def test_font_fallback_skips_without_text_or_extract():
     assert lint("type.font-fallback", None).skipped == "no render extract given"
     assert "no text runs" in lint("type.font-fallback", extract(Page())).skipped
@@ -480,6 +488,11 @@ def test_rendered_family_region_skips_unmeasured_families_and_without_a_database
     assert "lazuli database" in lint("type.overused-neutral-grotesque", doc).skipped
 
 
+def test_rendered_family_region_never_looks_up_a_generic_family(house_generics, lazuli):
+    no_hits(lint("type.overused-neutral-grotesque",
+                 extract(family_page((house_generics["generic"], {}), ("SYSTEM-UI", {}))), lazuli=lazuli))
+
+
 def font_plan(locales: list[str], *roles: dict) -> dict:
     return {"brief": {"locales": locales}, "tokens": {"type": {"roles": list(roles)}}}
 
@@ -506,12 +519,51 @@ def test_plan_font_region_skips_without_measurements(lazuli):
     assert lint("type.overused-neutral-grotesque", layer="plan").skipped == "no plan given"
 
 
+def web_plan(*roles: dict, platform: tuple[str, ...] = ("web",)) -> dict:
+    return {"brief": {"platform": list(platform), "locales": ["en-US"]}, "tokens": {"type": {"roles": list(roles)}}}
+
+
+def test_plan_font_region_reports_no_face_chosen_when_every_text_role_is_a_platform_sans(lazuli):
+    roles = ({"role": "heading", "family": "System-UI"}, {"role": "body", "family": "sans-serif"},
+             {"role": "ui", "family": "-apple-system"}, {"role": "code", "family": "Unmeasured Test"})
+    for given in ({}, {"lazuli": lazuli}):                       # nothing is measured, so no database is needed
+        hit = one_hit(lint("type.overused-neutral-grotesque", layer="plan", plan=web_plan(*roles), **given))
+        assert hit.observed.startswith("no face chosen: each platform substitutes its own sans")
+        assert hit.evidence == "plan" and hit.location == {"path": "tokens.type.roles[*].family"}
+
+
+def test_plan_font_region_does_not_report_a_missing_face_when_a_role_names_one(lazuli):
+    system = {"role": "body", "family": "system-ui"}
+    rule = "type.overused-neutral-grotesque"
+    no_hits(lint(rule, layer="plan", plan=web_plan(system, {"role": "heading", "family": "Oldstyle Test"}),
+                 lazuli=lazuli))
+    no_hits(lint(rule, layer="plan", plan=web_plan(system, {"role": "ui", "family": "ui-monospace"}),
+                 lazuli=lazuli))                                 # a generic keyword that is not a sans counts as no sans
+    no_hits(lint(rule, layer="plan", plan=web_plan(system, platform=("ios", "android")), lazuli=lazuli))
+    no_hits(lint(rule, layer="plan", plan=web_plan({"role": "code", "family": "system-ui"}), lazuli=lazuli))
+
+
+def test_plan_font_region_never_looks_up_a_generic_family(lazuli):
+    plan = web_plan({"role": "heading", "family": "system-ui"}, {"role": "body", "family": "monospace"})
+    for rule in ("type.serif-luxury-display", "type.costume-monospace"):
+        no_hits(lint(rule, layer="plan", plan=plan, lazuli=lazuli))
+
+
+def test_plan_font_region_reads_the_platform_sans_names_from_the_font_table(house_generics, lazuli):
+    rule = "type.overused-neutral-grotesque"
+    plan = web_plan({"role": "body", "family": house_generics["sans"]}, {"role": "ui", "family": "SYSTEM-UI"})
+    assert one_hit(lint(rule, layer="plan", plan=plan, lazuli=lazuli)).observed.startswith("no face chosen")
+    no_hits(lint(rule, layer="plan", plan=web_plan({"role": "body", "family": house_generics["generic"]}),
+                 lazuli=lazuli))                                 # generic, but not a sans: never looked up
+
+
 def test_font_feature_regions_are_read_from_the_type_vocabulary(lazuli, tmp_path, monkeypatch):
     vocab = yaml.safe_load((shared_dir() / "vocab" / "type.yaml").read_text(encoding="utf-8"))
     region = next(r for r in vocab["font_feature_regions"] if r["id"] == "neutral-grotesque-low-contrast-high-xheight")
     region["when"]["x_height_size"] = "small"                    # a definition Grotesk Test no longer meets
     shared = tmp_path / "shared"
     for rel, text in (("plan/schema.yaml", (shared_dir() / "plan" / "schema.yaml").read_text(encoding="utf-8")),
+                      ("fonts/system-fonts.yaml", (shared_dir() / "fonts" / "system-fonts.yaml").read_text(encoding="utf-8")),
                       ("vocab/type.yaml", yaml.safe_dump(vocab, allow_unicode=True))):
         (shared / rel).parent.mkdir(parents=True, exist_ok=True)
         (shared / rel).write_text(text, encoding="utf-8")

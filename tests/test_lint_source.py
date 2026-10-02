@@ -184,6 +184,26 @@ def test_css_generic_keywords_are_case_insensitive(tmp_path):
     assert result.hits == [] and result.skipped is None
 
 
+def test_css_generic_keywords_are_those_of_the_font_table(tmp_path, house_generics):
+    root = project(tmp_path / "app", {"src/app.css": """
+        body { font-family: Pretendard, House-Stack; }
+        h1 { font: 700 2rem/1.2 'Gowun Batang', HOUSE-STACK; }
+        code { font: house-stack; }
+        """})
+    result = lint("system.font-outside-contract", root, plan=PLAN, lock=LOCK)
+    assert result.hits == [] and result.skipped is None
+
+
+def test_css_wide_keywords_are_not_font_families(tmp_path):
+    root = project(tmp_path, {"src/app.css": """
+        body { font-family: Pretendard, Inherit; }
+        h1 { font: INHERIT; }
+        h2 { font: 700 2rem/1.2 'Gowun Batang', revert-layer; }
+        """})
+    result = lint("system.font-outside-contract", root, plan=PLAN, lock=LOCK)
+    assert result.hits == [] and result.skipped is None
+
+
 def test_font_outside_contract_in_every_declaration_form(tmp_path):
     root = project(tmp_path, {
         "src/app.css": ":root { --font-sans: 'Space Grotesk', sans-serif; }\n.a { font: 600 1rem/1.5 Manrope, sans-serif; }\n",

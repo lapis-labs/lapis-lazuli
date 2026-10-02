@@ -17,7 +17,7 @@ plan_check 0.1.4: 2 blocking, 7 total, 3 skipped: not judged
   [BLOCK] copy.vague-cta content.key_copy[?slot=cta].text — "continue" (vague_cta) in the cta key copy: "Continue"
           fix: Add a defaults entry for copy.vague-cta (keep or reject with a reason). Name the outcome of the action in the label
   [BLOCK] font.no-lock tokens.type.lock — type roles are set but no fonts lock was given
-          fix: Run `lazuli lock` after choosing fonts.
+          fix: Run `lazuli lock` for each named face: Pretendard.
 ```
 
 Once the page runs on localhost, `lapis-design render check` captures it in Chromium from 320 to

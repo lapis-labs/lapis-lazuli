@@ -46,7 +46,7 @@ from typing import Any, Iterable
 import yaml
 from jsonschema import Draft202012Validator
 
-from lapis_design import __version__, shared_dir
+from lapis_design import __version__, shared_dir, system_fonts
 
 _YAML_LOADER = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
 
@@ -371,6 +371,18 @@ PLAN_DETECTORS = frozenset({"plan-distinct-values", "plan-value-range", "plan-mi
                             "plan-palette-region", "plan-section-sequence"})
 
 
+def distinct_families(families: list[str]) -> list[str]:
+    """The distinct values among family names, one entry each: letter case is ignored, and the names
+    the platform answers with its own sans (fonts/system-fonts.yaml `platform_sans`) are one value,
+    shown with the spellings the plan used."""
+    sans = system_fonts.platform_sans()
+    groups: dict[str | None, dict[str, str]] = {}
+    for family in families:
+        name = family.strip()
+        groups.setdefault(None if name.casefold() in sans else name.casefold(), {}).setdefault(name.casefold(), name)
+    return sorted("/".join(spellings.values()) for spellings in groups.values())
+
+
 def evaluate_plan_detector(plan: dict, det: dict, rules: dict | None = None, *, rule: dict | None = None,
                            ctx: Any = None) -> tuple[bool | None, str]:
     """Return (hit, detail). hit is None when the detector cannot run here. Names outside
@@ -382,7 +394,7 @@ def evaluate_plan_detector(plan: dict, det: dict, rules: dict | None = None, *, 
     params = det.get("params") or {}
     if name == "plan-distinct-values":
         values = [str(v) for v in resolve(plan, path)]
-        distinct = sorted(set(values))
+        distinct = distinct_families(values) if str(path).endswith(".family") else sorted(set(values))
         hit = len(values) >= params.get("min_items", 1) and len(distinct) < threshold.get("distinct_min", 2)
         return (hit, f"{len(values)} values, {len(distinct)} distinct: {distinct}" if hit else "")
     if name == "plan-value-range":
@@ -538,20 +550,23 @@ def check_fonts(plan: dict, lock: dict | None, plan_file: str) -> list[dict]:
     roles = resolve(plan, "tokens.type.roles[*]")
     if not roles:
         return []
-    system_fonts = load_yaml(shared_dir() / "fonts" / "system-fonts.yaml")
-    generic_families = {font["family"].casefold() for font in system_fonts["fonts"]
-                        if font.get("class") == "generic"}
-    if all(role.get("family", "").casefold() in generic_families for role in roles):
+    families = [role.get("family", "") for role in roles]
+    generic = [system_fonts.is_generic(family) for family in families]
+    named = list(dict.fromkeys(family for family, is_keyword in zip(families, generic) if not is_keyword))
+    if not named:
         return []
     task = plan.get("task", {}).get("id")
     platforms = set(plan.get("brief", {}).get("platform", []))
     if lock is None:
+        fix = f"Run `lazuli lock` for each named face: {', '.join(named)}."
+        if any(generic):
+            fix += " A generic keyword in a role needs no lock entry."
         return [finding("font.no-lock", "requirement", "type roles are set but no fonts lock was given",
                         blocking=True, create="gate", review="P1", path="tokens.type.lock", file=plan_file,
-                        fix="Run `lazuli lock` after choosing fonts.")]
+                        fix=fix)]
     out = []
     for i, role in enumerate(roles):
-        if role.get("family", "").casefold() in generic_families:
+        if generic[i]:
             continue
         entries = [f for f in lock.get("fonts", []) if f.get("family") == role.get("family")]
         where = f"tokens.type.roles[{i}]"
@@ -699,6 +714,10 @@ def summarize(plan: dict) -> str:
         lines.append("- **Dials:** " + ", ".join(f"{k} {v}" for k, v in dials.items()))
     if plan.get("world_materials"):
         lines.append("- **World materials:** " + ", ".join(plan["world_materials"]))
+    if d.get("concept"):
+        lines.append(f"- **Concept:** {d['concept']}")
+    for lever in d.get("levers") or []:
+        lines.append(f"- **Lever:** {lever}")
     sig = (plan.get("layout") or {}).get("signature")
     if sig:
         lines.append(f"- **Signature:** {sig}")

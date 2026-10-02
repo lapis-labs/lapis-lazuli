@@ -7,6 +7,10 @@ cli/lazuli/measure.py), and `judge` reads that definition. List scopes map to sc
 applies to Latin text, `all` to any. Reports name the family and its measured classes, never a local
 font's file or PostScript name.
 
+A generic family (fonts/system-fonts.yaml, class generic) names no face, so plan-font-region never looks
+it up. For type.overused-neutral-grotesque a web plan whose display, heading, body, and ui roles are all
+platform_sans names gets the plan-layer finding "no face chosen", which needs no database.
+
 This module imports no render code, so a plan-layer run (the exit-plan hook) loads it without the
 render detector modules.
 """
@@ -22,7 +26,7 @@ from typing import Iterable
 
 import yaml
 
-from lapis_design import shared_dir
+from lapis_design import shared_dir, system_fonts
 from lapis_design.lint.types import Context, Hit, Result, detector
 from lapis_design.plan_check import resolve
 from lazuli.scan import norm as family_norm
@@ -176,6 +180,28 @@ def locale_scripts(locales: Iterable[str]) -> set[str]:
     return scripts
 
 
+NO_FACE_RULE = "type.overused-neutral-grotesque"
+NO_FACE_ROLES = ("display", "heading", "body", "ui")
+
+
+def no_face_chosen(plan: dict, path: str) -> Hit | None:
+    """The plan-layer finding for a web plan that names no face: it has a display, heading, body, or ui
+    role, and every such role's family is a `platform_sans` name (fonts/system-fonts.yaml), so each
+    platform substitutes its own sans. A finding about the plan; nothing is measured."""
+    if "web" not in ((plan.get("brief") or {}).get("platform") or ()):
+        return None
+    roles = [r for r in resolve(plan, "tokens.type.roles[*]") if isinstance(r, dict) and r.get("role") in NO_FACE_ROLES]
+    sans = system_fonts.platform_sans()
+    if not roles or not all(isinstance(r.get("family"), str) and r["family"].strip().casefold() in sans for r in roles):
+        return None
+    by_family: dict[str, list[str]] = {}
+    for r in roles:
+        by_family.setdefault(r["family"].strip(), []).append(r["role"])
+    names = ", ".join(f"'{family}' ({', '.join(dict.fromkeys(owners))})" for family, owners in by_family.items())
+    return Hit(observed=f"no face chosen: each platform substitutes its own sans: {names}",
+               location={"path": path}, evidence="plan")
+
+
 @detector("plan-font-region", layers=("plan",))
 def plan_font_region(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
     if ctx.plan is None:
@@ -183,12 +209,19 @@ def plan_font_region(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
     regions, problem = region_list(ctx, det)
     if problem:
         return Result(skipped=problem)
-    if ctx.lazuli is None:
-        return Result(skipped="no lazuli database given, so planned families have no measured features")
     path = det.get("path")
+    values = [v for v in resolve(ctx.plan, path) if isinstance(v, str) and v.strip()] if path else []
+    generic = system_fonts.generic_families()
+    families = [v for v in values if v.strip().casefold() not in generic]
+    unchosen = no_face_chosen(ctx.plan, path) if path and rule.get("id") == NO_FACE_RULE else None
+    if ctx.lazuli is None:
+        if unchosen:
+            return Result(hits=[unchosen])
+        if values and not families:
+            return Result()                                  # only generic keywords: nothing to look up
+        return Result(skipped="no lazuli database given, so planned families have no measured features")
     if not path:
         return Result(skipped="the rule gives no plan path")
-    families = [v for v in resolve(ctx.plan, path) if isinstance(v, str) and v.strip()]
     owners = resolve(ctx.plan, path.removesuffix(".family")) if path.endswith(".family") else []
     info: dict[str, dict] = {family: {"roles": [], "weights": [], "scripts": set()} for family in families}
     for owner in owners:
@@ -221,4 +254,4 @@ def plan_font_region(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
                         observed=f"'{family}' ({roles}) measures in the feature region {name}: "
                                  f"{describe(face.features)}",
                         location={"path": path})
-    return _finish(list(hits.values()), unjudged)
+    return _finish(([unchosen] if unchosen else []) + list(hits.values()), unjudged)

@@ -40,7 +40,7 @@ from typing import Callable, Iterable, Iterator
 
 import yaml
 
-from lapis_design import shared_dir
+from lapis_design import shared_dir, system_fonts
 from lapis_design.lint.types import Context, Hit, Result, detector
 from lapis_design.plan_check import resolve
 
@@ -629,10 +629,9 @@ _CSS_PROPS = _COLOR_PROPS | _SPACE_PROPS | _RADIUS_PROPS | {"font-family", "font
 
 # ================================================================ css-font-family
 
-_GENERIC_FAMILIES = {"serif", "sans-serif", "monospace", "cursive", "fantasy", "system-ui", "ui-serif",
-                     "ui-sans-serif", "ui-monospace", "ui-rounded", "math", "emoji", "fangsong",
-                     "-apple-system", "blinkmacsystemfont", "inherit", "initial", "unset", "revert",
-                     "revert-layer"}
+# CSS-wide keywords take a value from elsewhere; they are not generic families, so the table in
+# fonts/system-fonts.yaml does not list them.
+_CSS_WIDE_KEYWORDS = frozenset({"inherit", "initial", "unset", "revert", "revert-layer"})
 _EMOJI_FALLBACKS = {"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"}
 _FONT_SYSTEM_KEYWORDS = {"caption", "icon", "menu", "message-box", "small-caption", "status-bar"}
 _FONT_SIZE_TOKEN = re.compile(
@@ -654,6 +653,12 @@ def _family_key(name: str) -> str:
     key = re.sub(r"[\s_-]+", "", name.strip().strip("'\"").casefold())
     stripped = re.sub(r"(?:variable|vf)$", "", key)
     return stripped or key
+
+
+def _names_no_face(name: str) -> bool:
+    """A CSS-wide keyword or a generic family of fonts/system-fonts.yaml: there is no face to check."""
+    folded = name.strip().casefold()
+    return folded in _CSS_WIDE_KEYWORDS or folded in system_fonts.generic_families()
 
 
 def _split_top(value: str, sep: str = ",") -> list[str]:
@@ -687,7 +692,7 @@ def _family_list(value: str) -> list[str] | None:
 
 def _shorthand_families(value: str) -> list[str] | None:
     v = re.sub(r"!\s*important", "", value).strip()
-    if not v or "(" in v or "${" in v or v.lower() in _FONT_SYSTEM_KEYWORDS | _GENERIC_FAMILIES:
+    if not v or "(" in v or "${" in v or v.lower() in _FONT_SYSTEM_KEYWORDS or _names_no_face(v):
         return None
     tokens = list(re.finditer(r"\"[^\"]*\"|'[^']*'|[^\s,]+|,", v))
     for i, t in enumerate(tokens):
@@ -712,7 +717,7 @@ def _family_uses(tree: _Tree) -> list[_FamilyUse]:
 
     def add(f: _File, offset: int, families: list[str] | None, loaded: bool = False) -> None:
         for i, fam in enumerate(families or []):
-            if fam.lower() in _GENERIC_FAMILIES:
+            if _names_no_face(fam):
                 continue
             uses.append(_FamilyUse(f, offset, fam, loaded or i == 0))
 

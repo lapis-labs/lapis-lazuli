@@ -58,8 +58,9 @@ accurately. Remove, defer, prefill, or explain it accordingly.
   the backend confirmed; "saved on this device" is true of storage, not page memory.
 - A multi-step form, or one that promises a draft, keeps entries through reload, Back, and signing in
   again.
-- A session or hold that can end either warns at least 20 seconds ahead and supports repeated one-action
-  extensions, can be turned off, or can be lengthened substantially (`ux.timeout-without-warning`).
+- A session or hold that can expire needs a timely warning and repeatable simple extensions, or a way
+  to remove or substantially adjust its limit. `ux.timeout-without-warning` reads those alternatives,
+  warning lead, and successful extensions; it does not establish that a deadline is essential.
 
 ## Review and consent
 
@@ -153,20 +154,17 @@ commit steps, limits met during a flow).
 |---|---|---|
 | `flows` | each plan flow to its `done`: steps, gates, a review before the commit | `ux.forced-action`, `ux.no-review-before-commit`, `ux.dead-end` |
 | `forms` | labels, the stage of the first error, an invalid submit, entries kept or cleared after it and after a 503, paste, changed choices, a disabled submit | `component.unlabeled-input`, `ux.premature-validation`, `ux.input-error-unidentified`, `ux.lost-input`, `ux.disabled-submit-unexplained`, `ux.redundant-entry`, `ux.preselected-option`, `ux.consent-steering` |
-| `commits` | two activations 80 ms apart, each injected outcome against what the page claims, retry, kept input | `ux.duplicate-submit`, `ux.false-status`, `ux.status-not-announced` |
+| `commits` | rapid repeated activation, each injected outcome against what the page claims, retry, kept input | `ux.duplicate-submit`, `ux.false-status`, `ux.status-not-announced` |
 | `states` | for each surface the page fills from a GET: empty, partial, loading, error, offline, timeout, forbidden, not found, success | `ux.missing-states`, `copy.error-without-recovery` |
 | `time_limits` | idle time until a session, hold, or entry ends, and whether it warned | `ux.timeout-without-warning` |
 
 What no check does:
 
-- The forms probe reads the kind of form, error reasons, sign-in alternatives, explanations of cleared
-  fields, "same as" text, disabled-submit reasons, and cognitive-test wording in English only. A form whose
-  id, name, and opening text hold no English word is recorded without a kind; its fields, errors, and kept
-  entries are still checked.
-- The flow driver types into fields and selects, and ticks only a required terms, privacy, or age checkbox and
-  answers a required radio group; it never ticks an optional item, a select-all checkbox, or a switch, and a
-  required item whose name carries marketing or an add-on is left unticked, so that flow ends `blocked`; report
-  it as not run.
+- Form-purpose and explanation recognition is language-limited. An unrecognized form still has its
+  fields, errors, and retained entries checked; a missing purpose is not proof that its task is absent.
+- The flow driver fills inputs, accepts recognized required consent, and answers required radio groups.
+  It leaves optional and bulk choices, switches, and recognized promotional requirements untouched;
+  when that stops the flow, report the blocked path as not run rather than a completed form check.
 - An announcement is text entering a live region, an alert appearing, or focus moving there; no screen
   reader output is checked. Address search and identity verification are never called, and failure
   injection runs only on the stub.

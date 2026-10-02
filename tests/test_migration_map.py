@@ -239,3 +239,90 @@ def test_build_does_not_read_maintainer_only_tools(tmp_path, monkeypatch):
     monkeypatch.setattr(Path, "open", guarded_open)
     monkeypatch.setattr(Path, "iterdir", guarded_iterdir)
     assert build.collect(test_root, "0.1.0")
+
+
+def test_repair_sources_track_their_reference():
+    assert_sources_track_their_reference({
+        "ultramarine/references/repair-loop.md": {
+            "references/design-feedback/bounded-closed-loop.md": ("done", ["card", "reference"]),
+            "references/creative-workflows/revision-and-feedback-loops.md": ("done", ["merge"]),
+            "references/design-feedback/diagnosis-and-repair.md": ("done", ["merge"]),
+            "references/quality/critique-and-feedback.md": ("partial", ["reference"]),
+            "references/quality/improvement-playbook.md": ("done", ["merge"]),
+            "assets/diagnostic-checklists.md": ("done", ["reference"]),
+            "assets/ui-audit-rubric.md": ("done", ["reference"]),
+        },
+    })
+
+
+def test_bento_and_editorial_sources_track_their_reference():
+    assert_sources_track_their_reference({
+        "lapis/references/style-bento-and-modern-saas.md": {
+            "references/styles/bento-and-modern-saas.md": ("done", ["reference"]),
+        },
+        "lapis/references/style-minimalism-and-editorial.md": {
+            "references/styles/minimalism-and-editorial.md": ("done", ["reference"]),
+        },
+    })
+
+
+def test_check_bounds_tracks_its_split_destinations():
+    root = MAP.parents[1]
+    reference = "ultramarine/references/check-bounds.md"
+    entries = {entry["path"]: entry for entry in yaml.safe_load(MAP.read_text(encoding="utf-8"))["entries"]}
+    provenance = yaml.safe_load((root / "tools/reference-provenance.yaml").read_text(encoding="utf-8"))
+    recorded = next(item for item in provenance["references"] if item["reference"] == reference)
+    sources = {
+        "references/fundamentals/motion.md": "reference",
+        "references/product-types/data-visualization.md": "merge",
+        "references/product-types/forms-onboarding-and-checkout.md": "reference",
+    }
+    assert (root / "src/skills" / reference).is_file()
+    assert set(sources) == {source["path"] for source in recorded["sources"]}
+    for source, destination in sources.items():
+        entry = entries[source]
+        assert reference in entry["target"], source
+        assert entry["status"] in ("partial", "done"), source
+        assert destination in entry["done"], source
+        assert destination in entry["dest"], source
+
+
+def test_form_lever_sources_track_their_reference():
+    assert_sources_track_their_reference({
+        "lapis/references/form-levers.md": {
+            "references/art-direction/bold-expression-and-restraint.md": ("partial", ["reference"]),
+            "references/art-direction/concept-development.md": ("partial", ["card", "reference"]),
+            **{f"references/artistic-methods/{name}.md": ("partial", ["merge"]) for name in (
+                "form-meaning-and-experience", "metaphor-motif-and-symbol", "participation-and-interaction",
+                "rhythm-time-and-narrative", "tension-balance-and-asymmetry",
+                "texture-materiality-and-tactility", "typography-as-form")},
+        },
+    })
+
+
+def test_direction_principle_sources_close_their_card_destination():
+    entries = {entry["path"]: entry for entry in yaml.safe_load(MAP.read_text(encoding="utf-8"))["entries"]}
+    closed = {
+        "references/fundamentals/color.md": "done",
+        "references/fundamentals/typography.md": "done",
+        "assets/response-templates.md": "done",
+        "references/fundamentals/what-design-is.md": "partial",
+        "references/quality/what-good-design-is.md": "partial",
+        "assets/color-and-contrast-cheatsheet.md": "partial",
+    }
+    for path, status in closed.items():
+        entry = entries[path]
+        assert "lapis card" in entry["target"], path
+        assert entry["status"] == status, path
+        assert entry["done"] == ["merge"], path
+        assert (status == "done") == (entry["dest"] == ["merge"]), path
+
+
+def test_font_choice_sources_track_the_type_reference():
+    assert_sources_track_their_reference({
+        "lapis/references/type.md": {
+            "references/fonts/font-fit-and-overuse.md": ("partial", ["reference"]),
+            "references/fonts/pairing-and-role-systems.md": ("partial", ["reference"]),
+            "assets/multilingual-font-stacks.md": ("partial", ["reference"]),
+        },
+    })

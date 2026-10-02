@@ -21,6 +21,7 @@ import re
 from dataclasses import dataclass, field, replace
 from typing import Any, Callable, Iterable
 
+from lapis_design import system_fonts
 from lapis_design.lint.detectors.font_regions import definitions, describe, faces, judge_face, pick, region_list
 from lapis_design.lint.types import Context, Hit, Result, detector
 from lapis_design.render.color import contrast_ratio, delta_e_ok, oklab, to_oklch
@@ -28,9 +29,6 @@ from lazuli.scan import norm as family_norm
 
 HEADINGS = ("display", "heading")
 CONTROLS = ("button", "link", "input")
-GENERIC_FAMILIES = frozenset({
-    "serif", "sans-serif", "monospace", "cursive", "fantasy", "system-ui", "ui-serif", "ui-sans-serif",
-    "ui-monospace", "ui-rounded", "math", "emoji", "fangsong", "-apple-system", "blinkmacsystemfont"})
 SCRIPT_NAMES = {"latn": "Latin", "cyrl": "Cyrillic", "grek": "Greek", "hang": "Hangul", "kana": "Japanese",
                 "hani": "Han", "arab": "Arabic", "hebr": "Hebrew", "thai": "Thai", "mixed": "mixed-script",
                 "other": "other-script"}
@@ -289,6 +287,7 @@ def font_fallback(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
     if missing:
         return Result(skipped=missing)
     hits = Hits()
+    generic = system_fonts.generic_families()
     any_runs = False
     for view in layout_views(all_views):
         groups: dict[tuple, list[dict]] = {}
@@ -296,7 +295,7 @@ def font_fallback(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
             any_runs = True
             font = run.get("font") or {}
             requested, rendered = font.get("requested", ""), font.get("rendered", "")
-            if not requested or requested.casefold() in GENERIC_FAMILIES or is_emoji_family(rendered):
+            if not requested or requested.casefold() in generic or is_emoji_family(rendered):
                 continue
             if font.get("fallback", rendered.casefold() != requested.casefold()):
                 groups.setdefault((requested.casefold(), rendered.casefold(), run.get("script")), []).append(run)
@@ -872,6 +871,7 @@ def rendered_family_region(ctx: Context, det: dict, rule: dict, layer: str) -> R
     include_italic = bool(params.get("include_italic"))
     hits = Hits()
     defined = definitions()
+    generic = system_fonts.generic_families()
     unjudged = [f"feature region {name!r} has no measured definition" for name, _ in regions if name not in defined]
     for view in layout_views(all_views):
         groups: dict[tuple, list[dict]] = {}
@@ -881,7 +881,7 @@ def rendered_family_region(ctx: Context, det: dict, rule: dict, layer: str) -> R
                 continue
             italic = run.get("style", "normal") != "normal"
             family = (run.get("font") or {}).get("rendered", "")
-            if (italic and not include_italic) or not family or family.casefold() in GENERIC_FAMILIES:
+            if (italic and not include_italic) or not family or family.casefold() in generic:
                 continue
             groups.setdefault((family, italic, run.get("weight")), []).append(run)
         for (family, italic, weight), runs in groups.items():
