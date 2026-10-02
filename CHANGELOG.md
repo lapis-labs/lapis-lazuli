@@ -8,7 +8,8 @@ All notable changes are recorded here. The format follows
 ## Unreleased
 
 - The Korean section of `lps-ux/references/forms-and-recovery.md` was confirmed by a native Korean
-  reader on 2026-10-01 (listed under 0.1.2's known limits as awaiting one).
+  reader on 2026-10-01 and again on 2026-10-02 after the identity, phone-number, and birth-date bullets
+  were rewritten.
 - `lzl-fonts/references/adobe-fonts.md` now opens by saying that activated Adobe Fonts are fonts like
   any other to recommend, choose, and lock (web delivery through the user's Adobe web project), and
   that its limits concern how lazuli and the agent reach Adobe's data: no file access, no extracted
@@ -16,10 +17,9 @@ All notable changes are recorded here. The format follows
   lookup still never activates a font; the integration's search and recommendation tools may suggest
   families when the user asks, and a font is activated only on the user's request.
 - `behavior check`: the time-limits probe moves one page forward through a flow run's steps, applying each
-  recorded action once, instead of loading a fresh page and replaying every earlier action for every step
-  (time quadratic in the run: 820 replayed actions per context for a 40-action run, so a full run on a small
-  page with an abandoned flow did not finish in 30 minutes). A page it has idled or typed into is still
-  reloaded for the next step, so the limits found and their numbers are unchanged.
+  recorded action once, instead of loading a fresh page and replaying a growing prefix of the run for
+  every step. A page it has idled or typed into is
+  still reloaded for the next step, so the limits found and their numbers are unchanged.
 - `render check` now measures text backdrops, line ink extents (`density`, `symmetry`), and
   interactive-state colors on pages whose Content-Security-Policy sets `style-src` without
   `'unsafe-inline'`. The text-free render used an injected `<style>` that such a policy silently
@@ -57,6 +57,87 @@ All notable changes are recorded here. The format follows
 - `behavior check` runs the controls probe faster with the same observations: a snapshot reads every
   box in a few browser calls instead of several per box, and an unchanged page is not snapshotted
   again.
+- The README example plans are available in `docs/examples/`; a DB-less CLI check verifies the
+  console excerpts in both READMEs. The introductions distinguish render and behavior capture from
+  linting their result files, and list `git` among the installation requirements.
+- The installation guide explains browser-start and unwritable-cache limits in sandboxed and headless
+  hosts, retains the sandbox permission guidance, and shows loopback serving and local file inputs.
+  Codex's install and update blocks include the critic copy command; its checks also ask whether the
+  installed critic file matches the release.
+- Skill references correct claims about SVG contrast, drag direction, timeout alternatives,
+  English-only form heuristics, and manual data-scale checks; clarify Korean identity and phone-number
+  verification, consent, and date examples; and correct reference overlaps and migration metadata.
+- `NOTICE` narrows the text-comparison claim to material published through 0.1.1; references added in
+  0.1.2 and later were outside that comparison.
+
+### Changed
+
+- Stub value ids must be `v1`, `v2`, …, including values used by synthetic accounts. Other `values`
+  keys (`patient-name`, `a:b`) or account references to them are refused when the stub loads, with the
+  offending names and "value ids are v1, v2, …". Before, the driver received an id the session schema
+  rejects, or a key with a colon failed later with a bare `KeyError`. Rename the keys under `values`
+  and the `accounts` entries that name them.
+- `render check` refuses non-HTTP(S) schemes other than a local HTML file path or `file://` URL,
+  which it serves on loopback. `behavior check` follows the same policy; other schemes (`data:`,
+  `about:`, `ftp:`, or a bare `localhost:3000`) are refused before a browser starts with one line
+  explaining how to serve the folder on loopback. Both checks record only the loopback HTTP URL
+  for local file inputs.
+- `tools/calibration/calibrate.py` no longer prints the three comparison tables against older reports
+  or the values written in its code; those reports counted Adobe Fonts faces. The next report is the
+  new baseline.
+- Wording only: Adobe's terms are written as lazuli reads them (not legal advice) in `AGENTS.md`, the
+  `lzl-fonts` skill, the READMEs, and the `adobe-cjk` catalog message, with the note that the collection
+  limit has nothing to do with recommending, choosing, or locking Adobe Fonts. The Adobe Fonts
+  reference now says that a family name sent to a catalog lookup is not font data, that search and
+  recommendation tools get only what the user said, that a font is activated only when the user asks
+  for it, and that `render check` and `behavior check` do not block a page's own font requests while
+  `lazuli ref capture` and `lazuli read --render` refuse the Adobe and Typekit hosts.
+
+### Fixed
+
+- The `hidden_terms` of a flow run that reached no commit step is empty. Before, the derived value
+  listed every required term as hidden although no point where terms are due existed; the lint rule
+  already skipped such runs, but the recorded session said otherwise. A `purchase` or `subscribe`
+  run that showed a recurring charge and reached no commit is still reported by
+  `ux.hidden-subscription` as not verified.
+- When the browser is missing or cannot start (an agent sandbox, a missing permission), `render check`
+  and `behavior check` print one line of their own and exit 2, instead of Playwright's
+  `playwright install` banner (not on PATH after `uv tool install`) or its launch flags and logs.
+  A missing browser gets the exact install command for the CLI's own Python; a browser that cannot
+  start gets Playwright's first line and the advice to allow it or report the check as not run.
+- A `..` after a symbolic link is judged from where the link leads. Paths were cleaned by text before
+  any link was followed, so `lazuli lock --notice link/../…` could read a file in Adobe's font folders
+  and a `LAZULI_FONT_ROOTS` entry spelled that way was accepted as a `user` root; both are refused now,
+  like the link itself.
+- `lazuli local fonts` stores design metadata again for a row whose `metadata_json` is empty, `{}`,
+  `null`, or has no `axes` key, instead of leaving it to wait for `--rescan`; `measure` no longer fails
+  on a stored `null`, a list, or text that is not JSON, and neither does `lazuli local fonts --family`.
+- `tools/eval/score.py` runs its checkers with `LAZULI_FONT_ROOTS` set to an empty folder in its scratch
+  directory, so no checker lists the fonts on the computer.
+
+### Known limits
+
+- A bare clock time (`09:30`) is read as a countdown.
+- A countdown with time-of-day words, such as "마감까지 02:15:10", is not read.
+- "3 steps left" and "250 characters remaining" are read as stock claims.
+- Interface instructions containing quotations can be read as testimonials.
+- "You are no longer subscribed" is read as a failure.
+- "Ask me later" and "나중에 볼래요" are not read as deferrals.
+- Acting through a label that contains a link can follow that link. The list of unreachable controls
+  is reported only when a run does not finish.
+- "Offer valid for 48 hours only", "Free shipping for the next 3 hours", and "48시간 한정 특가" are
+  not read.
+- The contract's Urgency paragraph will be aligned with the probe code in 0.1.4; urgency, action-choice,
+  flow, and copy probe behavior is unchanged in 0.1.3.
+- `tools/reference-provenance.yaml` still lists 31 `verify_before_release` items that await verification.
+- Only browser launch is caught. If Playwright's driver itself cannot start (no Node binary, a blocked
+  subprocess), the check still prints Playwright's error.
+- A `primary` flow run that commits only on the client (no state-changing request) has no `commit_step`,
+  so its recurring terms are neither judged nor reported as not verified; a `purchase` or `subscribe`
+  run is reported.
+- The source registry's Adobe reasons (`registry.yaml`: Adobe Fonts, Adobe Color, Behance) and the
+  comment of migration 0004 still state Adobe's terms as facts; they are contract and data files and
+  change with a later contract diff.
 
 ## 0.1.2 (2026-10-01)
 
@@ -153,6 +234,8 @@ of calibration and evaluation, and a README that starts with what the tool print
 - The localized-name helper accepts only a language tag (`ko`, `zh-Hans`) as its language.
 - Every test starts with `LAZULI_FONT_ROOTS` set to an empty folder, and a source-level test keeps
   the Core Text calls on the allow-list.
+- The source registry first refused `use.typekit.net`, `p.typekit.net`, and `fonts.typekit.net` in
+  0.1.2. The 0.1.1 entry below is corrected to avoid attributing that refusal to the earlier release.
 
 ### Evaluation kit
 
@@ -247,7 +330,8 @@ install fixes. Contracts are unchanged.
   language; before, only the system language was stored.
 - The `lzl-fonts` reference `adobe-fonts.md` tells agents how to add Adobe Fonts metadata through the
   host's official Adobe integration, for display only; lazuli's font listing and measurement never
-  contact Adobe, and the source registry refuses fonts.adobe.com and the Typekit hosts it lists.
+  contact Adobe, and the source registry refuses fonts.adobe.com. Refusal of the Typekit hosts was
+  added in 0.1.2, not in this release.
 - Adobe Fonts faces with an optical size (`opsz`) axis are no longer measured through Core Text, which
   sets that axis from the point size; they stay unmeasured ("optical size not pinned"), and
   `lazuli local fonts` says so in one line with their count. Files are unaffected.
