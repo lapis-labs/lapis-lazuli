@@ -367,27 +367,17 @@ WORK_OFF_THE_CLOCK = {
     "a worker": "new Worker(URL.createObjectURL(new Blob(['0'])))",
     "a shared worker": "new SharedWorker(URL.createObjectURL(new Blob(['0'])))",
     "WebAssembly": "WebAssembly.instantiate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0]))",
+    "a WebAssembly module": "new WebAssembly.Module(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0]))",
 }
 
 
 @pytest.mark.parametrize("start", WORK_OFF_THE_CLOCK.values(), ids=WORK_OFF_THE_CLOCK)
-def test_a_page_that_starts_work_off_the_controlled_clock_settles_in_real_time(opened, site, monkeypatch, start):
-    site.file("sw.js", "self.addEventListener('fetch', () => {})")
+def test_a_page_that_starts_work_off_the_controlled_clock_settles_in_real_time(opened, monkeypatch, start):
     _, driver = opened("off.html", "<p>nothing happens here</p>")
     driver.page.evaluate(start)
     naps = _settle_naps(monkeypatch)
     assert _settle(driver) >= 500
     assert len(naps) >= 15                          # about twenty-four 16 ms naps and polls for the 500 ms
-
-
-def test_a_page_that_registers_a_service_worker_is_flagged_for_real_time_settling(opened, site):
-    # The registration leaves the worker's script request pending in the driver's network log, which already keeps
-    # a window in real time; the flag is what holds once that request is gone.
-    site.file("sw.js", "self.addEventListener('fetch', () => {})")
-    _, driver = opened("registered.html", "<p>nothing happens here</p>")
-    assert driver.page.evaluate("window.__lapisObserve.offClock") is False
-    driver.page.evaluate("navigator.serviceWorker.register('/sw.js')")
-    assert driver.page.evaluate("window.__lapisObserve.offClock") is True
 
 
 def test_what_a_worker_answers_after_the_quiet_is_still_in_the_window(opened):
@@ -400,9 +390,14 @@ def test_what_a_worker_answers_after_the_quiet_is_still_in_the_window(opened):
     assert driver.page.locator("#out").inner_text() == "answered"
 
 
-def test_real_time_settling_lasts_for_the_rest_of_the_run(opened, site, monkeypatch):
-    session, driver = opened("first.html", "<p>first</p>")
-    driver.page.evaluate("new Worker(URL.createObjectURL(new Blob(['0'])))")
+@pytest.mark.parametrize("start", [
+    "new Worker(URL.createObjectURL(new Blob(['0'])))",
+    "navigator.serviceWorker.register('/sw.js')",
+], ids=["worker", "service-worker"])
+def test_real_time_settling_lasts_for_the_rest_of_the_run(opened, site, monkeypatch, start):
+    site.file("sw.js", "self.addEventListener('fetch', () => {})")
+    _, driver = opened("first.html", "<p>first</p>")
+    driver.page.evaluate(start)
     _settle(driver)
     site("second.html", "<p>nothing happens here</p>")
     driver.open("second.html")

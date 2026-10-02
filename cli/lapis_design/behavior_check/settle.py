@@ -69,7 +69,8 @@ INIT_SCRIPT = """(() => {
       construct(target,args,newTarget){offClock();return Reflect.construct(target,args,newTarget);}});
   };
   watch(window,'Worker'); watch(window,'SharedWorker');
-  for(const name of ['compile','instantiate','compileStreaming','instantiateStreaming']) watch(window.WebAssembly,name);
+  for(const name of ['Module','Instance','compile','instantiate','compileStreaming','instantiateStreaming'])
+    watch(window.WebAssembly,name);
   watch(window.ServiceWorkerContainer?.prototype,'register');
   // What reaches the page without changing a node (a hover reveal, a focus ring, a scroll, a transition) is counted,
   // for the box snapshot to tell that nothing reached it since it was taken (see nodes.UNCHANGED).

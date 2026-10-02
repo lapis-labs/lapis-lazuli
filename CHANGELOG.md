@@ -64,8 +64,8 @@ after text.
   stands while the document, its mutation count, its scroll position, the controlled clock, and the events
   that reached it (input, focus, scroll, transitions, animations, fonts, loads) are all unchanged, so a hover or
   focus reveal with no mutation is still seen. The session JSON is the same as 0.2.0 wrote, apart from timings;
-  on the two pilot pages the full run takes 78% and 84% of the time, `flows` about 62%, and the 500 ms settle
-  windows, which stay in real time, are most of what is left of `controls`.
+  those snapshot changes made the two pilot pages' full runs take 78% and 84% of the time and `flows` about 62%,
+  before the settle-window change below.
 - The motion probe's scroll reveal no longer waits in real time for a box that nothing can reveal. For every box
   hidden at rest it moved the page clock 100 ms and slept 100 ms, up to 51 times; the clinic pilot page has nine
   such boxes that never reveal, in four contexts, and the probe took 253 s. The clock now moves 100 ms a step
@@ -73,6 +73,14 @@ after text.
   and follows real time as before once one does. `reveal_delay_ms` is still the controlled time from the box
   entering the viewport to its being readable, and a box a timer reveals reads the timer's delay. The probe's
   output on the two pilot pages is the same, and the clinic page's takes 48 s.
+- The settle window again measures the page's controlled time: the clock follows real time while a request is
+  pending, an animation or media element runs, the document is loading, or the page changed in the last 100 ms.
+  In the quiet remainder it advances 16 ms per poll without waiting. A page that constructs a Web Worker or
+  SharedWorker, compiles or instantiates WebAssembly (including the synchronous constructors), or registers a
+  service worker keeps real-time settling for the rest of the run; that work finishes on a clock the driver
+  does not control. `settle_ms` records controlled milliseconds, while `t_ms` remains real time since load.
+  On the stillvault and clinic pilot pages, isolated `controls` probes take 133 s and 332 s rather than 266 s
+  and 534 s. The contract wording is proposed separately; `src/shared/behavior/DERIVED.md` is unchanged.
 
 ## 0.2.0 (2026-10-02)
 
