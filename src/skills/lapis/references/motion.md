@@ -198,8 +198,10 @@ drawn from live data. Decide the reduced branch when you decide the effect.
   transform changed is `transform` even while it also fades; `opacity` is a fade that stays in place.
   `motion.reduced-motion-missing` gates when, in the twin, an element that is not essential still moves by
   `transform`, a scroll-linked animation, `video`, or `canvas`. A canvas is essential when it is presented
-  as content (in a figure, or named as a chart, map, or diagram); a video in that window never is, because
-  no one has acted.
+  as content and is not decorative: inside a figure, or with a role of `img`, `figure`, or `application` and
+  an accessible name, or with a name that says what it shows (chart, graph, plot, map, visualization, or
+  diagram); one hidden from assistive technology or covered at its center never is. Name a canvas for what
+  it shows, not to change this result. A video in that window never is, because no one has acted.
 - Not observed: a transition that a hover, press, or open starts; movement a script produces by rewriting
   styles every frame (the window lists elements with a running CSS or Web animation, and canvas, video, and
   image changes); shapes animated inside an `svg` (an `svg` element that itself moves is listed, its child

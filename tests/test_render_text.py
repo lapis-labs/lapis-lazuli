@@ -144,6 +144,38 @@ def test_backdrop_is_measured_on_a_page_whose_csp_blocks_injected_styles(browser
     assert delta_e_ok(button['states']['hover']['color'], to_oklch('rgb(187 6 30)')) < .01   # not mid-transition
 
 
+@pytest.fixture(scope='module')
+def hidden_backdrops(browser, render_server, tmp_path_factory):
+    with pytest.MonkeyPatch.context() as monkeypatch:
+        monkeypatch.setattr(fields, 'FIELD_MODULES', (text,))
+        return capture(browser, f'{render_server}/text-backdrop-hidden.html', _configs(False, [390])[0],
+                       tmp_path_factory.mktemp('backdrop-hidden') / 'hidden.png', bytes(range(32)))
+
+
+@pytest.mark.parametrize('value', ['one', 'two', 'five'])
+def test_backdrop_is_measured_where_the_text_is_hidden(hidden_backdrops, value):
+    """A text color from an `!important` rule hides nothing it paints: the fill stays transparent, so
+    `::first-letter` and utility colors leave the surface alone."""
+    backdrop = _run(hidden_backdrops, value)['backdrop']
+    assert backdrop['kind'] == 'solid'
+    assert backdrop['worst'] == pytest.approx(to_oklch('rgb(190 233 209)'), abs=.01)
+
+
+@pytest.mark.parametrize('value', ['three', 'four', 'six', 'seven'])
+def test_backdrop_is_left_out_where_the_text_is_still_painted(hidden_backdrops, value):
+    """An important fill, a text stroke, a shadow tree's `::slotted` rule, and an SVG fill all beat the
+    page-wide hiding rule, so the screenshot holds the run's own ink: the backdrop is not measured."""
+    assert 'backdrop' not in _run(hidden_backdrops, value)
+
+
+def test_state_backdrop_is_left_out_where_the_state_keeps_the_text_painted(hidden_backdrops):
+    painted, recolored = _run(hidden_backdrops, 'eight'), _run(hidden_backdrops, 'nine')
+    assert painted['states']['hover']['color'] == pytest.approx(to_oklch('rgb(170 0 0)'), abs=.01)
+    assert 'backdrop' not in painted['states']['hover']
+    assert recolored['states']['hover']['backdrop'] == pytest.approx(to_oklch('rgb(190 233 209)'), abs=.01)
+    assert painted['backdrop']['kind'] == 'solid'          # at rest the text is hidden
+
+
 # CSS colors Chromium returns from getComputedStyle, with the 8-bit sRGB it paints for them.
 PAINTED = [
     ('oklch(0.5 0.1 200)', (0, 116, 122)),

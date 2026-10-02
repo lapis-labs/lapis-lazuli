@@ -82,10 +82,10 @@ def rule_det(rule_id: str, **changes) -> dict:
     return det
 
 
-def judge(rule_id: str, doc: dict | None, *, det: dict | None = None, refs=(), corpus=()):
+def judge(rule_id: str, doc: dict | None, *, det: dict | None = None, refs=(), corpus=(), plan=None):
     rule = RULE[rule_id]
     det = det or rule["detect"]["render"]
-    ctx = Context(rules=RULES, extract=doc, refs=list(refs), corpus=list(corpus))
+    ctx = Context(rules=RULES, extract=doc, refs=list(refs), corpus=list(corpus), plan=plan)
     return DETECTORS[det["detector"]].fn(ctx, det, rule, "render")
 
 
@@ -165,6 +165,32 @@ def test_accent_roles_accept_one_accent_family_and_many_status_hues():
 def test_accent_roles_skip_without_role_guesses():
     doc = extract(viewport(palette=palette(([0.5, 0.15, 250], 0.05, None))))
     assert judge("color.competing-accents", doc).skipped
+
+
+DATA_ACCENTS = (([0.5, 0.15, 250], 0.05, "interaction"), ([0.6, 0.15, 140], 0.03, "data"),
+                ([0.65, 0.17, 30], 0.02, "data"))
+
+
+def test_accent_roles_leave_data_colors_out_without_a_plan():
+    doc = extract(viewport(palette=palette(*DATA_ACCENTS)))
+    assert observed(judge("color.competing-accents", doc)) == []
+
+
+@pytest.mark.parametrize("plan", [{}, {"tokens": {"color": {"data_scales": []}}},
+                                  {"tokens": {"color": {"roles": [{"name": "brand", "role": "identity",
+                                                                   "oklch": [0.5, 0.15, 250]}]}}}])
+def test_accent_roles_count_data_colors_as_accents_when_the_plan_does_not_list_data(plan):
+    doc = extract(viewport(palette=palette(*DATA_ACCENTS)))
+    assert "accent colors fall in 3" in observed(judge("color.competing-accents", doc, plan=plan))[0]
+
+
+@pytest.mark.parametrize("color", [
+    {"data_scales": ["categorical"]},
+    {"roles": [{"name": "series", "role": "data", "oklch": [0.6, 0.15, 140]}]},
+])
+def test_accent_roles_exempt_data_colors_the_plan_lists(color):
+    doc = extract(viewport(palette=palette(*DATA_ACCENTS)))
+    assert observed(judge("color.competing-accents", doc, plan={"tokens": {"color": color}})) == []
 
 
 @pytest.mark.parametrize("warm, cool, fires", [(60, 105, False), (60, 106, True), (80, 250, True)])

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><style>
+/* The backdrop pass hides every text color with `* { color: transparent !important; -webkit-text-fill-color: transparent !important }`
+   at specificity 0. Each section below is solid #bee9d1 with heavy text, so text left painted pulls the backdrop median to its ink. */
+* {box-sizing:border-box}
+html,body {margin:0;background:#bee9d1;color:#111;font:900 40px/1.2 Arial,sans-serif}
+section {height:64px;padding:8px 16px;white-space:nowrap}
+p {margin:0}
+/* A utility that sets `color` alone: the fill stays transparent, so the text is hidden. */
+.utility {color:#a00 !important}
+/* A more specific important fill beats the page-wide rule. */
+.painted {color:#a00 !important;-webkit-text-fill-color:#a00 !important}
+.stroked {-webkit-text-stroke:2px #a00}
+/* `::first-letter` takes `color` but ignores the fill, so it stays hidden. */
+.letter::first-letter {color:#a00 !important;-webkit-text-fill-color:#a00 !important}
+svg {display:block}
+/* Links: a hover rule that keeps its fill painted, and one that only changes the color. */
+a {color:#111;text-decoration:none}
+.hover-fill:hover {-webkit-text-fill-color:#a00 !important}
+.hover-color:hover {color:#a00}
+</style></head><body>
+<section><p id="control">MMMMMM one</p></section>
+<section><p id="utility" class="utility">MMMMMM two</p></section>
+<section><p id="painted" class="painted">MMMMMM three</p></section>
+<section><p id="stroked" class="stroked">MMMMMM four</p></section>
+<section><p id="letter" class="letter">MMMMMM five</p></section>
+<section><shadow-card><p id="slotted">MMMMMM six</p></shadow-card></section>
+<section><svg width="358" height="48" role="img" aria-label="Label"><text id="svg-text" x="0" y="38" font-size="34" font-weight="900" fill="#a00">MMMMMM seven</text></svg></section>
+<section><a id="hover-fill" class="hover-fill" href="#fill">MMMMMM eight</a></section>
+<section><a id="hover-color" class="hover-color" href="#color">MMMMMM nine</a></section>
+<script>
+  // An important rule from the shadow tree beats the page's important rule: `::slotted` styles the light-DOM child.
+  const root = document.querySelector('shadow-card').attachShadow({mode: 'open'});
+  root.innerHTML = '<style>::slotted(*) {color:#a00 !important;-webkit-text-fill-color:#a00 !important}</style><slot></slot>';
+</script>
+</body></html>

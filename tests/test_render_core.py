@@ -71,6 +71,12 @@ def test_color_and_key_storage(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) 
     assert contrast_ratio([0, 0, 0], [1, 0, 0]) == pytest.approx(21, rel=1e-5)
 
 
+def test_a98_rgb_neutrals_have_no_chroma() -> None:
+    """The Adobe RGB matrix rows each sum to the D65 white, so white and grays stay neutral."""
+    assert to_oklch("color(a98-rgb 1 1 1)") == to_oklch("rgb(255 255 255)") == [1, 0, 0]
+    assert to_oklch("color(a98-rgb 0.5 0.5 0.5)")[1] == 0
+
+
 def test_invalid_extract_is_not_written(tmp_path: Path) -> None:
     out = tmp_path / "invalid.json"
     assert validate({"version": 1})

@@ -8,6 +8,7 @@ import pytest
 import lapis_design.render.fields as fields
 from lapis_design.render import _configs
 from lapis_design.render.capture import capture
+from lapis_design.render.color import delta_e_ok, to_oklch
 from lapis_design.render.extract import assemble, validate
 from lapis_design.render.fields import visual
 
@@ -47,6 +48,25 @@ def test_palette_from_painted_pixels_and_roles(visual_capture):
                key=lambda item: item["share"])
     assert blue["share"] == pytest.approx(.5, abs=.035)
     assert blue["role_guess"] == "interaction"
+
+
+def test_charts_paint_data_by_role_and_name_or_by_structure(visual_capture):
+    vp = visual_capture("visual-chart-roles.html")
+
+    def guessed(rgb: str) -> str:
+        want = to_oklch(f"rgb({rgb})")
+        entry = min(vp["palette"], key=lambda item: delta_e_ok(item["oklch"], want))
+        assert delta_e_ok(entry["oklch"], want) < .06, rgb
+        return entry["role_guess"]
+
+    assert guessed("220 40 40") == "data"      # role img, aria-label "Revenue chart"
+    assert guessed("240 140 0") == "data"      # role img, <title>Latency graph</title>
+    assert guessed("30 160 60") == "data"      # three bars and two text labels
+    assert guessed("220 0 200") == "data"      # canvas, role img, "Traffic plot"
+    assert guessed("120 60 0") == "data"       # class "bar-chart"
+    assert guessed("30 60 200") == "identity"  # three bars and one label
+    assert guessed("150 30 200") == "content"  # "Sparkline chart" at 40 px
+    assert guessed("230 200 0") == "content"   # role img, "Company logo"
 
 
 def test_css_paint_icon_media_and_hashes(visual_capture):

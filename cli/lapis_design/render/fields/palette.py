@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import math
+import re
 
 import numpy as np
 from PIL import Image
@@ -14,6 +15,42 @@ from lapis_design.render.color import from_oklab
 _ROLES = ("field", "unknown", "identity", "status", "data", "content", "interaction", "foreground")
 _ROLE_INDEX = {role: index for index, role in enumerate(_ROLES)}
 
+
+# A chart is named by a whole word of the box's own class or id, split at whitespace, hyphens, underscores,
+# and case changes: `bar-chart` and `lineChart` name one; `paragraph`, `hero-graphic`, and
+# `MuiTypography-root` do not.
+_CHART_WORDS = frozenset(("chart", "graph", "plot", "sparkline"))
+_WORD_BREAK = re.compile(r"[\s_-]+|(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")
+# An `svg` or `canvas` of at least this many CSS px on its shorter side is a chart when it is presented as
+# one (a role of img, figure, or graphics-document and an accessible name that says chart) or, for an `svg`,
+# is drawn as one (three sibling shapes of one type and two text labels).
+_CHART_MIN_PX = 48
+_CHART_ROLES = frozenset(("img", "figure", "graphics-document"))
+_CHART_NAME = re.compile(r"\b(?:chart|graph|plot|visuali[sz]ation)s?\b|차트|그래프", re.I)
+_CHART_JS = r"""ids => {
+  const shapes = new Set(['rect','circle','ellipse','line','path','polyline','polygon']);
+  const result = {};
+  for (const id of ids) {
+    const element = document.querySelector('[data-lapis-box="' + id + '"]');
+    if (!element) continue;
+    const labelled = (element.getAttribute('aria-labelledby') || '').split(/\s+/).filter(Boolean)
+      .map(ref => document.getElementById(ref)?.textContent || '').join(' ');
+    const title = element.localName === 'svg'
+      ? [...element.children].find(child => child.localName === 'title')?.textContent || '' : '';
+    let siblings = 0;
+    for (const parent of [element, ...element.querySelectorAll('*')]) {
+      const counts = {};
+      for (const child of parent.children)
+        if (shapes.has(child.localName)) counts[child.localName] = (counts[child.localName] || 0) + 1;
+      siblings = Math.max(siblings, ...Object.values(counts));
+    }
+    result[id] = {
+      name: [element.getAttribute('aria-label'), labelled, title, element.getAttribute('title')]
+        .filter(Boolean).join(' '),
+      siblings, labels: [...element.querySelectorAll('text')].filter(text => text.textContent.trim()).length};
+  }
+  return result;
+}"""
 
 _LINEAR = np.array([v / 12.92 if v <= .04045 else ((v + .055) / 1.055) ** 2.4
                     for v in np.arange(256) / 255], dtype=np.float32)
@@ -29,7 +66,29 @@ def _lab(rgb: np.ndarray) -> np.ndarray:
                      .0259040371*l + .7827717662*m - .8086757660*s), axis=-1)
 
 
-def _role(box: dict, meta: dict) -> str:
+def _named_chart(attrs: dict) -> bool:
+    return any(word.lower() in _CHART_WORDS
+               for key in ("class", "id") for word in _WORD_BREAK.split(str(attrs.get(key, ""))))
+
+
+def _chart_boxes(view, boxes: list[dict]) -> set[str]:
+    """Ids of the `svg` and `canvas` boxes that read as charts by role and name or by structure."""
+    candidates = [box["id"] for box in boxes if view.elements[box["id"]]["tag"] in ("svg", "canvas")
+                  and min(box["rect"]["w"], box["rect"]["h"]) >= _CHART_MIN_PX]
+    if not candidates:
+        return set()
+    found = set()
+    for ident, data in view.page.evaluate(_CHART_JS, candidates).items():
+        meta = view.elements[ident]
+        role = str(meta["attrs"].get("role", "")).split()
+        presented = bool(role) and role[0].lower() in _CHART_ROLES and bool(_CHART_NAME.search(data["name"]))
+        drawn = meta["tag"] == "svg" and data["siblings"] >= 3 and data["labels"] >= 2
+        if presented or drawn:
+            found.add(ident)
+    return found
+
+
+def _role(box: dict, meta: dict, charts: frozenset[str] | set[str] = frozenset()) -> str:
     attrs = meta["attrs"]
     hint = " ".join(str(attrs.get(k, "")) for k in ("class", "id", "role")).lower()
     role = box["role"]
@@ -37,7 +96,7 @@ def _role(box: dict, meta: dict) -> str:
         return "interaction"
     if any(word in hint for word in ("alert", "badge", "error", "success", "warning", "status")):
         return "status"
-    if any(word in hint for word in ("chart", "graph", "plot", "sparkline")) or meta["tag"] in ("td", "th"):
+    if _named_chart(attrs) or meta["tag"] in ("td", "th") or box["id"] in charts:
         return "data"
     if role == "media" or "media" in box:
         return "content"
@@ -74,8 +133,9 @@ def _mask(view, vp: dict, shape: tuple[int, int], screenshot_size: tuple[int, in
             destination[:] = _ROLE_INDEX[role]
 
     by_id = {box["id"]: box for box in boxes}
+    charts = _chart_boxes(view, boxes)
     for box in boxes:
-        role = _role(box, view.elements[box["id"]])
+        role = _role(box, view.elements[box["id"]], charts)
         style = box["style"]
         if role == "icon" or box["role"] == "icon":
             parent = by_id.get(box["parent"])
@@ -116,7 +176,7 @@ def _mask(view, vp: dict, shape: tuple[int, int], screenshot_size: tuple[int, in
         elif box["role"] == "heading" and len(run.get("color", ())) >= 3 and run["color"][1] > .05:
             role = "identity"
         else:
-            classified = _role(box, view.elements[box["id"]])
+            classified = _role(box, view.elements[box["id"]], charts)
             role = classified if classified in ("status", "data", "identity") else "foreground"
         glyph_roles[box["id"]] = role
     for rect in rects:

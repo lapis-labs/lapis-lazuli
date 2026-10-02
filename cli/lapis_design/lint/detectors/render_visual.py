@@ -280,17 +280,28 @@ def palette_structure(ctx: Context, det: dict, rule: dict, layer: str) -> Result
     palettes = [(vp, vp["palette"]) for vp in viewports if vp.get("palette")]
     if not palettes:
         return Result(skipped="no capture in the render extract carries a palette")
-    return checks[check](palettes, params, threshold, len(viewports))
+    return checks[check](ctx, palettes, params, threshold, len(viewports))
 
 
-def _accent_roles(palettes: list, params: dict, threshold: dict, total: int) -> Result:
+def _plan_lists_data(plan: dict) -> bool:
+    """Whether the plan names its data colors: a `data_scales` kind or a color role entry with role data."""
+    color = (plan.get("tokens") or {}).get("color") or {}
+    return bool(color.get("data_scales")) or any(
+        isinstance(entry, dict) and entry.get("role") == "data" for entry in color.get("roles") or ())
+
+
+def _accent_roles(ctx: Context, palettes: list, params: dict, threshold: dict, total: int) -> Result:
     """Accents (identity and interaction colors) in three or more unrelated hue families, or
-    interaction colors in two or more: the color of action is no longer one thing."""
+    interaction colors in two or more: the color of action is no longer one thing. With a plan, a
+    color the render guessed to be data is an accent too, unless the plan lists its data colors."""
     if not any(entry.get("role_guess") for _, palette in palettes for entry in palette):
         return Result(skipped="the palette carries no role guesses, so accents cannot be told by role")
+    roles = ACCENT_ROLES
+    if ctx.plan is not None and not _plan_lists_data(ctx.plan):
+        roles += ("data",)
     found = []
     for vp, palette in palettes:
-        accents = [e for e in palette if e.get("role_guess") in ACCENT_ROLES
+        accents = [e for e in palette if e.get("role_guess") in roles
                    and e["oklch"][1] >= ACCENT_MIN_C and not e.get("exact")]
         families = _families(accents, lambda e: e["oklch"][2])
         interaction = _families([e for e in accents if e["role_guess"] == "interaction"],
@@ -313,7 +324,7 @@ def _accent_roles(palettes: list, params: dict, threshold: dict, total: int) -> 
     return Result(hits=_worst(found, total))
 
 
-def _neutral_temperature(palettes: list, params: dict, threshold: dict, total: int) -> Result:
+def _neutral_temperature(ctx: Context, palettes: list, params: dict, threshold: dict, total: int) -> Result:
     bound = threshold.get("hue_spread_deg_max")
     if bound is None:
         return Result(skipped="neutral-temperature needs hue_spread_deg_max")
@@ -332,7 +343,7 @@ def _neutral_temperature(palettes: list, params: dict, threshold: dict, total: i
     return Result(hits=_worst(found, total))
 
 
-def _pure_endpoints(palettes: list, params: dict, threshold: dict, total: int) -> Result:
+def _pure_endpoints(ctx: Context, palettes: list, params: dict, threshold: dict, total: int) -> Result:
     uses = params.get("uses", "exact-palette-entries")
     if uses != "exact-palette-entries":
         return Result(skipped=f"pure-endpoints reads exact palette entries only, not {uses!r}")

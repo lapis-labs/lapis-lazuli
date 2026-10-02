@@ -389,6 +389,34 @@ def _set_backdrop_mode(view: RawView, enabled: bool) -> None:
     }""", [enabled, _BACKDROP_CSS])
 
 
+# The backdrop styles hide text at specificity 0, so a more specific important fill, a stroke, an
+# `::slotted` rule from a shadow tree, or an SVG fill keeps painting. A run whose element still paints
+# has its own ink in the backdrop screenshot: its backdrop is not measured. `color` alone is not read:
+# with the fill transparent a text color from an `!important` rule hides nothing it paints.
+_PAINTED_JS = r"""locators => {
+  const clear = c => c === 'transparent' || /^rgba\([^)]*,\s*0\)$/.test(c) || /\/\s*0(?:\.0*)?%?\s*\)$/.test(c);
+  const seen = new Map();
+  const paints = element => {
+    if (!seen.has(element)) {
+      const s = getComputedStyle(element);
+      seen.set(element, element instanceof SVGElement
+        ? (s.fill !== 'none' && !clear(s.fill)) || (s.stroke !== 'none' && !clear(s.stroke))
+        : !clear(s.webkitTextFillColor) ||
+          (parseFloat(s.webkitTextStrokeWidth) > 0 && !clear(s.webkitTextStrokeColor)));
+    }
+    return seen.get(element);
+  };
+  return Object.entries(locators).filter(([id, index]) =>
+    (window.__lapisRunNodes?.[index] || []).some(node => node.parentElement && paints(node.parentElement)))
+    .map(([id]) => id);
+}"""
+
+
+def _painted(view: RawView, locators: dict[str, int]) -> set[str]:
+    """Ids of the runs whose text is still painted while the backdrop styles are on."""
+    return set(view.page.evaluate(_PAINTED_JS, locators))
+
+
 def apply(view: RawView, vp: dict) -> None:
     """Enrich captured runs and leave the live page/CDP pseudo states as found."""
     if not vp['text']:
@@ -427,6 +455,7 @@ def apply(view: RawView, vp: dict) -> None:
         state_style = True
         _set_backdrop_mode(view, True)
         backdrop_mode = True
+        painted = _painted(view, view.extra['run_locators'])
         base = _pixels(view.page.screenshot(full_page=True))
         original = _pixels(view.screenshot_path.read_bytes())
         view.extra['line_extents'] = {
@@ -434,7 +463,7 @@ def apply(view: RawView, vp: dict) -> None:
             for run in vp['text'] if run['id'] in info}
         for run in vp['text']:
             detail = info.get(run['id'])
-            if not detail:
+            if not detail or run['id'] in painted:
                 continue
             stops = []
             if run['fill'] == 'gradient':
@@ -462,6 +491,7 @@ def apply(view: RawView, vp: dict) -> None:
                 state_geometry = view.page.evaluate(_GEOMETRY, locators)['runs']
                 _set_backdrop_mode(view, True)
                 backdrop_mode = True
+                painted = _painted(view, locators)
                 image = _pixels(view.page.screenshot(full_page=True))
                 for run in active:
                     detail = state_geometry.get(run['id'])
@@ -472,7 +502,7 @@ def apply(view: RawView, vp: dict) -> None:
                         continue
                     entry = {'color': color}
                     sampled, _ = _backdrop(image, detail, color, media, view.config['dpr'])
-                    if sampled:
+                    if sampled and run['id'] not in painted:
                         entry['backdrop'] = sampled['oklch']
                     run.setdefault('states', {})[name] = entry
                 for node in forced:
