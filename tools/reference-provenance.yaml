@@ -2091,11 +2091,11 @@ references:
 - reference: lapis/references/form-levers.md
   sources:
   - path: references/art-direction/concept-development.md
-    taken: A concept as an organizing relation rather than a theme; starting from a tension found in the brief and supplied material; reframing the unit, reversing a convention, and transferring a relation without its props as ways in; a concept earns its place by changing a consequential choice; two concepts that differ in governing relation, with the loser recorded; scope follows permission; no invented history.
-    dropped: The statement template, the blocked-question method table, the chance and emergent-form method, the relation-map and inversion record formats, both worked progressions, the readiness list for formal studies, the critique outcome list, and the rejected-concept log; they have no plan field and no check.
+    taken: A concept as an organizing relation rather than a theme; tension, reframing, inversion and operation transfer; consequential choices and distinct concepts; no invented history. AR1 (2026-10-03), lines 71–83, 129–181 adds a blocked-question method chooser, disposable constraints and a mismatch limit in existing claims.
+    dropped: Statement and record templates, chance/emergent-form method, complete worked progressions and new logs; comparisons use explorations, not claims as a substitute.
   - path: references/art-direction/bold-expression-and-restraint.md
-    taken: Placement, material, coverage, and intensity as independent decisions; strength described by what a reader sees and not by an expression score; scale and negative space, density, rhythm and sequence, disrupted grids, material traces, and playful response as levers with their failure cases; restraint as redistribution; a request for bolder or quieter as a change to name; meaning open and consequences fixed.
-    dropped: The six named peer studies with company and product names, the four hypothetical allocation situations, the per-technique low, high, too-far, and quiet-counterpart ladders, the review question list, the pitfall list, and the quick decision matrix; no plan field or check reads them, and the studies name companies.
+    taken: Placement, material, coverage and intensity; observable levers, failure cases and restraint as redistribution. AR2 (2026-10-03), lines 71–84, 101–144 adds one compact hypothetical expressive/quiet repair-journal comparison with concrete text/locale/navigation failures.
+    dropped: Named peer studies, allocation situations, full technique ladders beyond the recovered example, review lists and aesthetic scores.
   - path: references/artistic-methods/form-meaning-and-experience.md
     taken: Form read as relations (part and whole, similar and different, dense and sparse, visible and absent); a formal finding kept apart from task proof; interpretation as hypothesis; experience broader than task efficiency with consequences kept explicit.
     dropped: The evidence-class table, the art-status discussion, the point, line, and plane vocabulary, the silhouette study method, the worked contrasts, and the study-record formats; classification of evidence and of art status has neither field nor check.
@@ -2106,8 +2106,8 @@ references:
     taken: Response is not agency; a lever only when an action changes something perceivable through a learnable relation; writing what the visitor can do, what the work changes, and what it does not do; reversible trials.
     dropped: The seven-condition response table, mapping-quality table, contribution and co-production governance, the instruction and interpreter roles, discovery cues, and the authored-rule precedent; they need fields for ownership, persistence, and moderation that the plan does not have.
   - path: references/artistic-methods/rhythm-time-and-narrative.md
-    taken: A still page has time through order, density alternation, and recurring formats; variation registers only against recurrence; narrative is available, not required; what is stable, what varies, and when repetition stops.
-    dropped: The temporal-relation table, the four temporal structures, the return-use table, interruption definitions, the slowness-versus-waiting cases, and cultural pacing discussion; motion contracts belong to motion.md and the rest has no field or check.
+    taken: Static order, density and recurrence; narrative optional. AR3 (2026-10-03), lines 30–90, 98–110 adds authored/visitor/condition/static structure selection linked to layout.sections and lever prose.
+    dropped: Temporal-relation and return-use tables, interruption definitions, waiting cases and cultural pacing; motion.md owns motion contracts and no new sensing/feed capability is authorized.
   - path: references/artistic-methods/tension-balance-and-asymmetry.md
     taken: Balance as perceived relation and not a computed center or mirror symmetry; weight rising and falling with contrast, isolation, edge, and specificity; semantic weight of price, warning, and selected state; choosing an axis on purpose; force that must be received, redirected, released, or suspended; crop and overlap limits.
     dropped: The force vocabulary glossary, the bounded-evidence summary of the balance study, the weight-variable table, the axis study list, the density and void control lists, and the worked comparisons.

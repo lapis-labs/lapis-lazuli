@@ -41,6 +41,8 @@ after text.
 
 ### Changed
 
+- Form levers gain blocked-question method selection, one expressive/quiet comparison with concrete failure conditions, and temporal structure choices before motion.
+
 - Inspection guidance gains risk-based manual accessibility samples and task/assistive-technology, zoom, clipping, and keyboard evidence limits; automated release coverage is unchanged.
 
 - Data visualization guidance gains encoding-cost tradeoffs and a selection-by-selection manual equivalence check, without expanding machine coverage claims.

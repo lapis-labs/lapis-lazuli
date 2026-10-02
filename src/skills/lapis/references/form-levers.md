@@ -24,7 +24,11 @@ The comparison is by word, so a lever and a material written in different langua
 
 A concept is a relation that changes order, emphasis, or labels, not a mood or a theme laid over finished styling. Start from what the brief and supplied material already hold: the action the surface must enable, what the reader knows and what stays uncertain, the real sequences, exceptions, and states. State the tension plainly. "The timetable is dense, yet every sailing looks equally urgent" is a tension; "make it feel nautical" is not.
 
-When the relation will not come, reframe the unit (not a card per sailing but the interval between tides), reverse a convention to see what it hides, or transfer a relation from another field and leave its props: a tide table sets each time beside the condition that governs it, which travels to a timetable without a wave graphic. Say where the analogy stops.
+Choose a method for the blocked question: reframe the wrong unit of work; map an unclear relation;
+temporarily invert a convention hiding alternatives; test a disposable brief-linked constraint
+when too many moves compete. Without obvious visual material, transfer an adjacent operation
+such as sorting or repairing, not its props. Stop when it changes order, emphasis, or labels.
+State the mismatch limiting the analogy in `claims.proposed`.
 
 A concept earns its place when it changes a consequential choice. Write two that differ in what governs order or emphasis, not in palette, choose one, and record the loser and the reason in `explorations` (decision `direction`); `plan.uncompared-decision` reads that both are recorded, not whether the concept is good. Invent no history to make a concept sound deep; a guess about the subject goes in `claims.proposed`.
 
@@ -68,6 +72,12 @@ Match density to the task: a reader new to the categories needs explanation besi
 
 Write what is stable (a question, a caption position, an interval), what varies, and when repetition should stop. No field holds these, so they go in the lever sentence and are not checked.
 
+Decide who controls order: an authored sequence, visitor-chosen comparison, a documented external
+condition, or a static field with several entry paths. Each changes adjacency, recurrence, and
+return. Whole/detail order can carry time without motion. Do not invent a triumph narrative for
+an unresolved collection or add sensing/live data for temporal interest. Use only existing
+capabilities and provenance; put order in `layout.sections` and return in the lever sentence.
+
 ## Tension and asymmetry
 
 | Decision | Plan field | What checks it |
@@ -97,6 +107,12 @@ Prefer a trace from the subject to an overlay: a scanned log sheet, a measured m
 Choosing faces is in `type.md` (Display and expressive type). A heading is not type as form because it is larger; that is the scale lever. Form begins when the shape of the word, the proportion of the block, or the order of lines changes. Decide the level: a glyph (a documented alternate cut), a word (a short title against a long one), a block (measure, rag, width contrast between neighbors), or a sequence (a phrase returning in a changed context).
 
 Test with the real text in every locale: shortest and longest titles, numerals, names. A direction built on one short Latin word may vanish in Hangul. Never split a label that carries a price, status, or action, and keep a complete text route for any treatment that breaks words.
+
+Hypothetical comparison: a repair journal aligns its complete title to process-photo edges.
+A stronger version splits a short display word around a documented joint, keeping the full name
+and meaningful order. A quiet version carries modest title-width rhythm into rules and captions.
+Compare that relation on this subject's material in `explorations`, not as a page template.
+Reject missing essential letters, an unreadable translation, or navigation competing at that scale.
 
 ## Motif
 

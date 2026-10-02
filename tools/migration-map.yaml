@@ -74,7 +74,7 @@ entries:
   dest:
   - reference
   target: lapis/references/form-levers.md
-  note: Q44 — 허락·배치·재료·범위·강도의 네 결정, 척도·여백·밀도·반복·재료 흔적·순서·반응이라는 레버, 절제를 수정으로 보는 것을 form-levers.md 절로 계획 필드와 검사에 연결. 회사 이름이 든 동종 연구·가상 상황 A–D·강도 비교 사례·검토 질문 목록·결정 표는 필드도 검사도 없어 옮기지 않음
+  note: 'Q44의 배치·재료·범위·강도와 레버를 유지. AR2(2026-10-03): 수리 저널의 강한/조용한 관계와 구체적 실패를 direction explorations에 연결. 회사명 연구·상황 A–D·전체 기법 사다리·검토 목록은 제외'
   status: partial
   done: [reference]
 - path: references/art-direction/concept-development.md
@@ -83,7 +83,7 @@ entries:
   - card
   - reference
   target: lapis/references/form-levers.md + lapis card
-  note: Q44 — 살아 있는 긴장에서 관계로 쓰는 개념·분위기와 스타일 낱말은 개념이 아님·소품이 아니라 관계를 옮기기·결과를 바꾸는 개념만 남기기를 form-levers.md와 본문 4단계 문장·방향 원칙으로. 개념 문장 틀·반전과 우연의 방법·작업 사례·폐기 기록은 필드도 검사도 없어 옮기지 않음(둘 쓰고 고르기는 claims.proposed 한 문장)
+  note: 'Q44의 긴장·관계·소품 없는 전이·결과를 바꾸는 개념을 유지. AR1(2026-10-03): 막힌 질문별 재구성/관계 지도/임시 반전/제약/인접 조작을 고르는 절차로 보강. 후보와 패자 이유는 explorations, 추론 한계는 claims.proposed. 새 기록 형식·우연 방법·전체 사례는 제외'
   status: partial
   done: [card, reference]
 - path: references/art-direction/direction-to-implementation.md
@@ -146,7 +146,7 @@ entries:
   - docs
   target: lapis/references/form-levers.md
   merge: form-levers
-  note: Q44 — 정적 쪽에도 시간이 있음·반복에서 고정할 것과 달라질 것·서사는 선택이라는 점을 리듬과 순서 절로. 시간 관계 표·네 시간 구조·재방문 표·중단 정의·문화적 속도 논의는 옮기지 않음(모션 계약은 motion.md 몫, 나머지는 docs 몫)
+  note: 'Q44의 정적 시간·반복·서사 선택을 유지. AR3(2026-10-03): 저자/방문자/문서화된 조건/정적 구조의 순서 선택을 layout.sections와 레버 문장에 연결. 새 센싱·실시간 공급·문화적 속도 권한은 제외. docs 행선지는 남음'
   status: partial
   done: [merge]
 - path: references/artistic-methods/tension-balance-and-asymmetry.md
