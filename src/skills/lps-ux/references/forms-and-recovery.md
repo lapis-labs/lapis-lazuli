@@ -92,16 +92,25 @@ Defaults for a Korean service; a reader of Korean settles what the audience expe
   fields (선택) and set `required` on the rest.
 - **Consent list:** [필수] 이용약관 동의, [필수] 개인정보 수집·이용 동의, [선택] 마케팅 정보 수신 동의,
   each channel (email, text message, push) its own box. 전체 동의 comes first as the shortcut and includes
-  optional items too; each item has a 보기 that opens its text in place.
+  optional items too; each item has a 보기 that opens its full text in place or in a scrollable panel.
 - **Identity verification (본인인증):** use it only when the goal needs verified identity, such as an age
-  limit or a financial step. The verification provider's window returns the confirmed name and birth date.
-  Declare `requires: [identity]` with a reason and give people without the supported device a path.
-  Unless the law requires a resident registration number (주민등록번호), ask for a birth date (생년월일)
-  instead.
+  limit or a financial step. The verification provider's window returns the confirmed name and birth date;
+  it is a separate method from phone-number verification, and banking or government steps may require a
+  certificate (공동인증서) or a verification app instead. Declare `requires: [identity]` with a reason and
+  give people without the supported device a path. Unless the law requires a resident registration number
+  (주민등록번호), ask for a birth date (생년월일) instead; the steps that need the full number (government,
+  banking, payment) usually hand it to a certificate or a verification app rather than a form field.
+- **Birth date:** two forms are common. The resident-number style is YYMMDD with the gender digit in a
+  separate box (YYMMDD-X); ask for it only where the service's own rules need that digit. The calendar
+  style is YYYY-MM-DD, as one field that accepts 19950315 and 1995-03-15 alike, or year, month, and day
+  dropdowns.
 - **Phone-number verification (번호 인증):** a text-message code confirms only that the person can receive
   messages at that number, not their identity. A reservation needs a name and a working number, not
   identity verification by default. The code field takes `autocomplete="one-time-code"`,
   `inputmode="numeric"`, and paste, and shows a real expiry and a resend.
+- **Simple authentication (간편인증):** a messenger, carrier, or bank app that the person approves on their
+  phone. Providers offer it for both identity and phone-number verification; say which one the step needs,
+  and offer it beside the text-message code rather than in place of it.
 - **Typing:** validate and reformat Korean text after `compositionend` or when the person leaves the
   field, not while it composes (`navigation.md`, Korean input).
 

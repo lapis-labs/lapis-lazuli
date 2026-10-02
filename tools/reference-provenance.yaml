@@ -1826,12 +1826,13 @@ references:
   - 'checkout detail (order model, guest checkout, address and payment) in the e-commerce archetype or a later
     reference; platforms reference: native form controls and autofill.'
   verify_before_release:
-  - 'The Korean forms section was confirmed by the maintainer on 2026-10-01 before the G115 correction.
-    The 2026-10-02 wording awaits a new native-reader check: 9월 26일(토), 전체 동의 including optional items,
-    본인인증 returning a provider-confirmed name and birth date, 번호 인증 confirming only access to the
-    phone number, and 생년월일 instead of 주민등록번호 unless the law requires the latter. The unchanged
-    name, phone, address, 필수 and 선택, and per-channel consent conventions retain the earlier confirmation.
-    Whether the consent items or collection of an identifier are legally required is not settled here.'
+  - 'The Korean forms section was confirmed by the maintainer, a native Korean reader, on 2026-10-01 and again on
+    2026-10-02 after the G115 correction: 9월 26일(토) (2026년 9월 26일(토) and 9월 26일 토요일 are also common),
+    the consent list and 전체 동의 including optional items, terms opened in place or in a scrollable panel,
+    본인인증 kept apart from 번호 인증 (banking and government steps may require a certificate), 간편인증
+    serving both, the two birth-date forms, and 생년월일 instead of 주민등록번호 unless the law requires the
+    latter (those steps usually hand off to a certificate or a verification app). Whether the consent items or
+    collection of an identifier are legally required is not settled here.'
   - 'Checker behavior quoted in the text (behavior/DERIVED.md Forms, Commits, Flows, States, Time limits; the forms,
     flows, commits, states, and time_limits probes): the English-only reading list of the forms probe; a form kind
     read from its id, accessible name, and opening text; flows starting at the plan start route, not the URL given;
