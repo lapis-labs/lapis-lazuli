@@ -94,8 +94,10 @@ properties:
             minItems: 1
             items: { enum: [persuade, operate, read, experience] }
           style_frame: { enum: [inherit, named, undecided, subject-derived] }
-          style_name: { type: string }
+          style_name: { type: string, minLength: 1 } # the look the request named, in its own words; required when style_frame is named
           constraint_frame: { $ref: "#/$defs/strings" }
+        if: { required: [style_frame], properties: { style_frame: { const: named } } }
+        then: { required: [style_name] }
       dials:                                         # proposal controls, not quality scores
         type: object
         additionalProperties: false
@@ -104,7 +106,7 @@ properties:
           motion: { type: integer, minimum: 1, maximum: 10 }     # 1 static -> 10 cinematic
           density: { type: integer, minimum: 1, maximum: 10 }    # 1 airy -> 10 cockpit
       concept: { type: string }                      # a concept that starts from a live tension
-      levers: { $ref: "#/$defs/strings" }            # form levers (e.g. radical scale, deliberate density)
+      levers: { $ref: "#/$defs/strings" }            # form levers, one sentence each: the lever, what visibly changes, and the world material it comes from (layout.unanchored-lever)
 
   references:
     type: array
@@ -407,7 +409,7 @@ $defs:
           required: [role, family]
           properties:
             role: { enum: [display, heading, body, ui, data, code, caption] }
-            family: { type: string }
+            family: { type: string, pattern: "^[^,]+$" }   # one family name, never a comma-separated stack; fallbacks go in the fonts lock
             weights: { type: array, items: { type: integer, minimum: 1, maximum: 1000 } }
             scripts: { type: array, items: { enum: [latn, cyrl, grek, hang, kana, hani, arab, hebr, thai] } }
             source: { enum: [inventory, catalog, contract] }

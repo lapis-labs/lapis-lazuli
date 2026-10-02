@@ -10,11 +10,30 @@
 #                        system asset (/System/Library/AssetsV2) that a fresh install may lack
 #   unverified           commonly cited; confirm on the target OS with `lazuli local fonts`
 #                        before relying on it (Apple CJK family names are never added from memory)
-#   keyword              a CSS generic font keyword (`class: generic`), not a font: the browser maps
-#                        it to an installed family, so there is no file to find and nothing to verify.
-#                        What it maps to varies by browser and OS; a `note` says what to watch.
+#   keyword              a CSS generic font keyword or a vendor alias for the system UI face
+#                        (`class: generic`), not a font: the browser maps it to an installed family,
+#                        so there is no file to find and nothing to verify. What it maps to varies
+#                        by browser and OS; a `note` says what to watch.
 # class values come from vocab/type.yaml: a Latin genre (latin_genres), a Hangul/CJK class or
-# `class.subclass` (hangul_classes), or `generic` for a CSS generic keyword.
+# `class.subclass` (hangul_classes), or `generic` for a CSS generic keyword or a vendor alias for
+# the system UI face.
+#
+# Generic families in a plan. A role's `family` is one family name, never a comma-separated stack
+# (the plan schema refuses a comma); fallbacks go in the fonts lock (`fallback`) and the
+# implementation tokens. A `family` listed here with `class: generic` names no face: it is matched
+# in any letter case, needs no fonts lock entry, and is never looked up in the lazuli database. The
+# names under `platform_sans` each resolve to a sans the platform or browser picks, and are one
+# value when `type.single-neutral-sans` counts distinct families. When `brief.platform` includes
+# `web`, the plan has at least one `display`, `heading`, `body`, or `ui` role, and every such role's
+# `family` is a `platform_sans` name, `type.overused-neutral-grotesque` reports "no face chosen:
+# each platform substitutes its own sans" at the plan layer with evidence `plan`; it is a finding
+# about the plan, not a measurement of a font. A `defaults` entry for that rule waives it, as for
+# any default-class rule. The rule does not fire this way when any of those roles names a face or
+# when `brief.platform` has no `web`. The other generic keywords are never counted as a neutral
+# sans. A system face this table lists by name (Apple SD Gothic Neo, Malgun Gothic) is a named face
+# with delivery `system-only`: on a `web` plan it belongs in a fallback, and a role that relies on
+# such faces is written `system-ui`. The detectors that apply this are `plan-font-region` and
+# `plan-distinct-values` (slop/detectors.yaml).
 
 version: 0
 
@@ -53,7 +72,23 @@ fonts:
 
   # ---------------- Generic families (always available by keyword) ----------------
   - { family: system-ui, platforms: [all], scripts: [all], class: generic, verified: reviewed-2026-09-22, note: "CSS generic keyword; the honest fallback when a named system family is unverified" }
+  - { family: ui-sans-serif, platforms: [all], scripts: [all], class: generic, verified: keyword, note: "CSS generic keyword; support varies by browser" }
+  - { family: sans-serif, platforms: [all], scripts: [all], class: generic, verified: keyword, note: "CSS generic keyword; the browser's default sans, not the system UI face" }
+  - { family: -apple-system, platforms: [macos, ios], scripts: [all], class: generic, verified: keyword, note: "vendor alias for the system UI face" }
+  - { family: BlinkMacSystemFont, platforms: [macos], scripts: [all], class: generic, verified: keyword, note: "vendor alias for the system UI face" }
+  - { family: serif, platforms: [all], scripts: [all], class: generic, verified: keyword, note: "CSS generic keyword" }
+  - { family: ui-serif, platforms: [all], scripts: [all], class: generic, verified: keyword, note: "CSS generic keyword; support varies by browser" }
+  - { family: monospace, platforms: [all], scripts: [latn], class: generic, verified: keyword, note: "CSS generic keyword" }
   - { family: ui-monospace, platforms: [all], scripts: [latn], class: generic, verified: keyword, note: "CSS generic keyword; support varies by browser" }
+  - { family: ui-rounded, platforms: [all], scripts: [latn], class: generic, verified: keyword, note: "CSS generic keyword; support varies by browser" }
+  - { family: cursive, platforms: [all], scripts: [latn], class: generic, verified: keyword, note: "CSS generic keyword" }
+  - { family: fantasy, platforms: [all], scripts: [latn], class: generic, verified: keyword, note: "CSS generic keyword" }
+  - { family: math, platforms: [all], scripts: [latn], class: generic, verified: keyword, note: "CSS generic keyword; support varies by browser" }
+  - { family: emoji, platforms: [all], scripts: [all], class: generic, verified: keyword, note: "CSS generic keyword" }
+  - { family: fangsong, platforms: [all], scripts: [hani], class: generic, verified: keyword, note: "CSS generic keyword; support varies by browser" }
+
+# Generic names that resolve to a sans the platform or browser picks (see the header).
+platform_sans: [system-ui, ui-sans-serif, sans-serif, -apple-system, BlinkMacSystemFont]
 
 # Language-scoped composition defaults paired with these stacks (from the same earlier notes)
 composition:

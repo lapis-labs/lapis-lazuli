@@ -357,6 +357,13 @@ rules:
   why: No element unique to this subject and task is planned or rendered, so the surface could belong
     to any product
   better: Name one signature element drawn from world_materials in the plan and build it
+- id: layout.unanchored-lever
+  why: A lever that names no material of this subject (clean, modern, bold type, more whitespace) would
+    fit any product, so the direction stays a default
+  better: Write each lever as one sentence - the lever, what visibly changes, and the world material it
+    comes from, named as world_materials writes it
+  keep_when:
+  - the contract or the brief fixes the form and the plan says so
 - id: layout.typical-composition
   why: The composition sits close to the current defaults corpus across sequence, archetypes, symmetry,
     and density

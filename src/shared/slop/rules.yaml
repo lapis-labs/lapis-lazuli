@@ -1350,6 +1350,23 @@ rules:
     provenance:
       - { kind: method, source: "memo:layout", note: signature absence against the plan }
 
+  - id: layout.unanchored-lever
+    class: quality
+    domain: layout
+    layers: [plan, review]
+    severity: { create: gate, review: P1 }
+    detect:
+      plan: { detector: plan-anchored-text, path: "direction.levers[*]", params: { anchors: [world_materials, layout.signature], modes: [create], empty: hit-unless-operate-only, skip_style_frames: [inherit] } }
+      review: { detector: counterfactual-test }
+    why: A lever that names no material of this subject (clean, modern, bold type, more whitespace) would fit any product, so the direction stays a default
+    better: Write each lever as one sentence - the lever, what visibly changes, and the world material it comes from, named as world_materials writes it
+    keep_when:
+      - "the contract or the brief fixes the form and the plan says so"
+    waiver: { scope: rule }
+    verify: static
+    provenance:
+      - { kind: method, source: "memo:structure", note: plans whose levers were adjectives passed every plan check (pilot of 2026-10-01) }
+
   - id: layout.typical-composition
     class: default
     domain: layout

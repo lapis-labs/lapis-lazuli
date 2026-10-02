@@ -632,12 +632,12 @@ def test_sync_status_and_local_fonts_show_labels(env, clock, monkeypatch, capsys
     capsys.readouterr()
     assert cli.main(["catalog", "sync"]) == 0
     out = capsys.readouterr().out
-    assert "fake-snap: 3 families, 2 requests" in out and "system-table: 26 families, 0 requests" in out
+    assert "fake-snap: 3 families, 2 requests" in out and "system-table: 39 families, 0 requests" in out
     assert "matched 2 of 2 installed faces" in out
     assert snap.site.urls() == ["https://snap.test/robots.txt", "https://snap.test/families.json"]
     assert cli.main(["catalog", "sync"]) == 0                              # within ttl: only the bundled table
     out = capsys.readouterr().out
-    assert "fake-snap: fresh until" in out and "system-table: 26 families" in out and len(snap.calls) == 1
+    assert "fake-snap: fresh until" in out and "system-table: 39 families" in out and len(snap.calls) == 1
     assert cli.main(["catalog", "sync", "--source", "fake-snap", "--force"]) == 0 and len(snap.calls) == 2
     capsys.readouterr()
     assert cli.main(["catalog", "status"]) == 0

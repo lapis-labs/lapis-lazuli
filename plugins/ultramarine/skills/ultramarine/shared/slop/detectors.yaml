@@ -57,14 +57,14 @@ detectors:
     layers: [plan]
     input: "families at `path`, measured features from the lazuli DB"
     params: { list: "key in lists (feature-region names)" }
-    output: "families whose PANOSE/CJK features fall in a listed region"
+    output: "families whose PANOSE/CJK features fall in a listed region. A generic family (fonts/system-fonts.yaml, class generic) is never looked up; for type.overused-neutral-grotesque, a web plan whose display, heading, body, and ui roles are all platform_sans names is reported as no face chosen, with evidence plan"
     status: implemented
   - name: plan-distinct-values
     layers: [plan]
     input: "values at `path`"
     params: { min_items: "evaluate only when at least this many values exist (default 1)" }
     threshold: { distinct_min: "hit when fewer distinct values than this" }
-    output: "the distinct values"
+    output: "the distinct values. Font families are compared without letter case, and the platform_sans names in fonts/system-fonts.yaml count as one value"
     status: implemented
   - name: plan-value-range
     layers: [plan]
@@ -77,6 +77,12 @@ detectors:
     input: "values at `path`"
     params: { modes: "plan modes the check applies to; all modes when omitted" }
     output: "hit when the path resolves to nothing"
+    status: implemented
+  - name: plan-anchored-text
+    layers: [plan]
+    input: "strings at `path`, and the strings at each path in `anchors`"
+    params: { anchors: "plan paths whose words count as anchors", modes: "plan modes the check applies to", empty: "hit-unless-operate-only: when `path` resolves to nothing, hit unless direction.read.surface_mode is operate alone", skip_style_frames: "direction.read.style_frame values the check leaves alone" }
+    output: "strings that share no word with any anchor. Words of three or more letters are compared by their first five letters, common function words (the, and, for, with, and the like) left out; Hangul, kana, and Han text is compared by runs of two characters"
     status: implemented
   - name: package-hit
     layers: [plan, render, behavior]

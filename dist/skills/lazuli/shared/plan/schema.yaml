@@ -422,6 +422,7 @@ $defs:
               - caption
             family:
               type: string
+              pattern: ^[^,]+$
             weights:
               type: array
               items:

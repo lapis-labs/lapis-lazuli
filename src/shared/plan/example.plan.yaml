@@ -28,7 +28,9 @@ direction:
     constraint_frame: [mobile first, real kiln photography]
   dials: { variance: 5, motion: 2, density: 4 }
   concept: Not a sales page but the record of one firing
-  levers: [deliberate negative space, log-sheet grid]
+  levers:
+    - "rhythm: the firing log sheet's ruled rows set the page grid, one row per piece"
+    - "scale: the kiln temperature curve runs the full width of the opening, larger than any photograph"
 references:
   - source: https://example.com/archive
     kind: site
