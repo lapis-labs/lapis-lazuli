@@ -75,6 +75,27 @@ With a host that is ours, a plan, and a stub, run the sequence in `SKILL.md`. Fo
   behavior, pointer precision, or all of a screen reader's output. Keep the user's report as given
   and describe the device exercise that would settle it.
 
+## Manual accessibility scope
+
+Choose a sample by distinct templates, shared controls, task consequence, and interaction risk.
+Include critical commitments/recovery, complex inputs, charts or drag behavior, relevant themes
+and locales, and content extremes. Exercise states that can occur, not a fixed screen catalog.
+Record the task and component each route represents. Unvisited pages remain outside the claim;
+automated results and a sample count establish neither conformance nor custom-interaction usability.
+
+Name the actual browser/platform and assistive-technology pairing. Orient through title, language,
+regions, headings, and current location; then complete a critical task and recovery. Check names,
+roles, values, states, associated errors, updates without stolen focus, unavailable hidden layers,
+and meaningful focus return on closing. Walk the same task with the pointer set aside. Record the
+exact input sequence and heard or observed result. A source role or browser tree is not speech evidence.
+
+Apply the type reference's resize, reflow, and text-spacing conditions to that task. Inspect fixed
+regions, overlays, and media clips: sticky controls can consume the viewport, and clipping ancestors
+can remove descendant focus indicators without page overflow. Confine exceptional two-dimensional
+content to a navigable region. Include the on-screen keyboard on temporary input surfaces when in
+scope. Record width, text setting, orientation, route, and state. Preserve authored relations that
+survive; change the failed constraint, not the whole visual grammar by default.
+
 ## Write down each finding
 
 Put the smallest record someone else could repeat beside the finding, in the report. A bare

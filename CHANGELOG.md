@@ -41,6 +41,8 @@ after text.
 
 ### Changed
 
+- Inspection guidance gains risk-based manual accessibility samples and task/assistive-technology, zoom, clipping, and keyboard evidence limits; automated release coverage is unchanged.
+
 - Data visualization guidance gains encoding-cost tradeoffs and a selection-by-selection manual equivalence check, without expanding machine coverage claims.
 
 - Forms guidance gains compound-field target ownership and dependency-led stages with honest branch progress; the immediate-switch commitment proposal remains outside the contract.

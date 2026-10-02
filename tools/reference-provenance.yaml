@@ -1519,6 +1519,12 @@ references:
       table and worked example, bounded verification, and the pitfalls and decision matrix: the passes are what
       the checks and lint rules run, the report order is in the SKILL body, P0 to P3 is the findings schema,
       scores are not wanted, and the rest is the maker''s loop (still todo, with the card) or boilerplate.'
+  - path: references/quality/accessibility-audit.md
+    taken: 'A1–A3 (2026-10-03), lines 68–81, 111–174: risk-based manual sampling, named browser/AT task-and-recovery walk, exact input/output evidence and zoom/text/fixed/overlay/keyboard scope.'
+    dropped: Full audit passes, quotas and certification claims; existing machine bounds and release gate remain unchanged.
+  - path: assets/shape-line-and-layout-cheatsheet.md
+    taken: 'A3 (2026-10-03), lines 97–104: clipping ancestors can remove descendant focus without overflow; actual-size/state checks keep authored grammar rather than flattening it.'
+    dropped: Contour construction here; owned by tokens.md.
   external:
   - kind: practice
     name: Evidence labels for audit and critique findings (observed, measured, reported, not verified); the sources
