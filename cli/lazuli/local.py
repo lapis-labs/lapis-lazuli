@@ -63,7 +63,7 @@ def _families(conn: sqlite3.Connection, pattern: str | None = None, origin: str 
         entry["origins"].add(row["origin"])
         coverage = json.loads(row["coverage_json"] or "{}")
         entry["scripts"].update(_scripts(coverage))
-        metadata = json.loads(row["metadata_json"] or "{}")
+        metadata = measure.stored_metadata(row["metadata_json"]) or {}
         face = {"subfamily": row["subfamily"], "postscript_name": row["postscript_name"],
                 "manufacturer": row["manufacturer"], "designer": row["designer"], **metadata,
                 "class_name": FONT_CLASSES.get(metadata.get("class_id"))}

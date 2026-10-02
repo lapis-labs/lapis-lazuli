@@ -116,6 +116,20 @@ def test_a_measured_adobe_row_whose_metadata_is_no_object_does_not_stop_the_meas
     assert measure.measure_pending(conn) == (0, [])                              # no AttributeError, no new measurement
 
 
+@pytest.mark.parametrize("stored", [None, "", "{}", "null", "[]", "not json"])
+def test_the_family_listing_reads_a_row_without_design_metadata_as_having_none(adobe, tmp_path, stored):
+    """None, '' and '{}' only pin what the listing already does; the others made it fail."""
+    adobe.add("Sync Sans")
+    conn = db.connect(tmp_path / "cache" / "lazuli.db")
+    scan.scan(conn)
+    conn.execute("UPDATE local_font SET metadata_json = ?", (stored,))
+    conn.commit()
+    (family,) = local._families(conn)
+    (face,) = family["faces"]
+    assert (family["languages"], family["vertical"], face["class_name"]) == ([], [], None)
+    assert "axes" not in face
+
+
 # ---------------------------------------------------------------- the helper takes a language tag, nothing else
 
 @pytest.mark.parametrize("language", ["ko) (en", "ko\n", "", "KO", "zh-hans", "zh-Hans-CN", "-AppleLanguages", "ko -x",

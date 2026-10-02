@@ -441,7 +441,7 @@ class OpticalSizeNotPinned(Exception):
     is made at two sizes (font units, RASTER_PX), so no single optical size stands behind its numbers."""
 
 
-def _stored_metadata(metadata_json: str | None) -> dict | None:
+def stored_metadata(metadata_json: str | None) -> dict | None:
     """The design metadata a scan stored (`local_font.metadata_json`) as an object, or None when the column holds
     NULL, an empty string, anything that is not JSON text, or JSON that is not an object (`null`, `[]`)."""
     try:
@@ -453,7 +453,7 @@ def _stored_metadata(metadata_json: str | None) -> dict | None:
 
 def has_optical_size_axis(metadata_json: str | None) -> bool:
     """Whether the stored design metadata (`local_font.metadata_json`) lists an `opsz` variation axis."""
-    axes = (_stored_metadata(metadata_json) or {}).get("axes")
+    axes = (stored_metadata(metadata_json) or {}).get("axes")
     return isinstance(axes, list) and any(isinstance(axis, dict) and axis.get("tag") == "opsz" for axis in axes)
 
 
@@ -467,7 +467,7 @@ def design_metadata_stored(metadata_json: str | None) -> bool:
     is not variable). A row without an `axes` key (NULL, an empty string, `{}`, `null`, text that is not JSON) is
     stale, "not known yet", never "no axes": the next scan stores it again, and until then the row is not
     measured."""
-    stored = _stored_metadata(metadata_json)
+    stored = stored_metadata(metadata_json)
     return stored is not None and "axes" in stored
 
 
