@@ -441,9 +441,20 @@ class OpticalSizeNotPinned(Exception):
     is made at two sizes (font units, RASTER_PX), so no single optical size stands behind its numbers."""
 
 
+def _stored_metadata(metadata_json: str | None) -> dict | None:
+    """The design metadata a scan stored (`local_font.metadata_json`) as an object, or None when the column holds
+    NULL, an empty string, anything that is not JSON text, or JSON that is not an object (`null`, `[]`)."""
+    try:
+        stored = json.loads(metadata_json) if metadata_json else None
+    except (TypeError, ValueError):
+        return None
+    return stored if isinstance(stored, dict) else None
+
+
 def has_optical_size_axis(metadata_json: str | None) -> bool:
     """Whether the stored design metadata (`local_font.metadata_json`) lists an `opsz` variation axis."""
-    return any(axis.get("tag") == "opsz" for axis in json.loads(metadata_json or "{}").get("axes") or ())
+    axes = (_stored_metadata(metadata_json) or {}).get("axes")
+    return isinstance(axes, list) and any(isinstance(axis, dict) and axis.get("tag") == "opsz" for axis in axes)
 
 
 class DesignMetadataMissing(Exception):
@@ -453,9 +464,12 @@ class DesignMetadataMissing(Exception):
 
 def design_metadata_stored(metadata_json: str | None) -> bool:
     """Whether a scan stored design metadata for the row: scans always store `axes` (a list, empty when the face
-    is not variable). Empty, NULL, and `{}` mean "not known yet", never "no axes"."""
-    stored = json.loads(metadata_json) if metadata_json else None
-    return isinstance(stored, dict) and "axes" in stored
+    is not variable). A row without an `axes` key (NULL, an empty string, `{}`, `null`, text that is not JSON) is
+    stale, "not known yet", never "no axes": the next scan stores it again, and until then the row is not
+    measured."""
+    stored = _stored_metadata(metadata_json)
+    return stored is not None and "axes" in stored
+
 
 def open_face(path: str, index: int, row: dict, provider: coretext.Provider | None = None):
     """The face a row describes. An `adobe-sync` row is an identity, not a path: it is opened only through the

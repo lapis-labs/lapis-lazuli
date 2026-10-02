@@ -323,16 +323,19 @@ def layers_record(report: dict | None, lint: dict, *, plan: Path | None, behavio
 def checker_env(scratch: Path, font_db: Path, sig_key: Path) -> dict:
     """The environment of the checkers: the operator's own, except that `LAZULI_DB` is the evaluation font
     database, HOME and the cache folders are an empty scratch (so a code path that ignored `LAZULI_DB`
-    would find no database at the user cache location either), and no font roots are replaced. The
-    Playwright browsers stay where they are."""
+    would find no database at the user cache location either), and `LAZULI_FONT_ROOTS` is one empty folder in
+    the scratch (so no checker lists the operator's fonts, and the Core Text listing of Adobe Fonts is off).
+    The Playwright browsers stay where they are."""
     env = dict(os.environ)
     browsers = kit.browsers_path()
     for name in ("LAZULI_DB", "LAZULI_FONT_ROOTS", "XDG_CACHE_HOME", "XDG_CONFIG_HOME", "XDG_DATA_HOME"):
         env.pop(name, None)
     home = scratch / "home"
     (home / ".cache").mkdir(parents=True)
+    fonts = scratch / "fonts"
+    fonts.mkdir()
     env.update(HOME=str(home), XDG_CACHE_HOME=str(home / ".cache"), LAZULI_DB=str(font_db),
-               LAPIS_SIG_KEY_FILE=str(sig_key), PLAYWRIGHT_BROWSERS_PATH=browsers)
+               LAZULI_FONT_ROOTS=f"user={fonts}", LAPIS_SIG_KEY_FILE=str(sig_key), PLAYWRIGHT_BROWSERS_PATH=browsers)
     return env
 
 

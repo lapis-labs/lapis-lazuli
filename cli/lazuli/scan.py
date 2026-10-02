@@ -51,7 +51,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-from lazuli import coretext, languages
+from lazuli import coretext, languages, measure
 
 logging.getLogger("fontTools").setLevel(logging.ERROR)
 
@@ -359,7 +359,9 @@ def scan(conn: sqlite3.Connection, *, rescan: bool = False) -> ScanResult:
         keep_adobe = True
     known = {(row["path"]): (row["size"], row["mtime"]) for row in
              conn.execute("SELECT DISTINCT path, size, mtime FROM local_font")}
-    stale = {row[0] for row in conn.execute("SELECT DISTINCT path FROM local_font WHERE metadata_json IS NULL")}
+    # a row without design metadata (NULL, '', '{}', no `axes`) is described again, changed or not: measure waits for it
+    stale = {row[0] for row in conn.execute("SELECT path, metadata_json FROM local_font")
+             if not measure.design_metadata_stored(row[1])}
     present = set()
     added = updated = 0
     for root, path, stat in files:

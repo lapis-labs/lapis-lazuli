@@ -1,4 +1,5 @@
-"""Adobe Fonts CJK classification: refused, because Adobe's terms forbid collecting its site's data.
+"""Adobe Fonts CJK classification: refused, because Adobe's terms, as lazuli reads them (not legal advice),
+forbid collecting its site's data.
 
 The planned snapshot (the fonts.adobe.com listing by its CJK classification facets) is data
 gathering from an Adobe website. Adobe General Terms of Use (published and
@@ -8,7 +9,8 @@ Services and Software", and the Services include Adobe's websites. fonts.adobe.c
 would allow the listing (it disallows only /variations/*/eula and /login), but the terms decide.
 
 So the module declares REFUSED: the CLI skips it and marks it disabled with the reason, and
-`fetch` still raises Blocked without a request if it is ever called.
+`fetch` still raises Blocked without a request if it is ever called. That is about collecting the site's
+listing; it has nothing to do with recommending, choosing, or locking Adobe Fonts.
 Installed Adobe fonts are still labeled by measurement and by any other catalog that matches them.
 """
 from __future__ import annotations
@@ -23,8 +25,9 @@ TTL_DAYS = 30
 MIN_INTERVAL_S = 3.0
 
 # No closing period: the CLI appends its own sentence after the reason
-REASON = ("Adobe's General Terms of Use (section 6.18) forbid data gathering and extraction on Adobe "
-          "websites, so lazuli does not collect the Adobe Fonts listing; check a font's CJK "
+REASON = ("Adobe's General Terms of Use (section 6.18), as lazuli reads them (not legal advice), forbid data "
+          "gathering and extraction on Adobe websites, so lazuli does not collect the Adobe Fonts listing; that "
+          "has nothing to do with recommending, choosing, or locking Adobe Fonts; check a font's CJK "
           "classification at https://fonts.adobe.com/fonts in your browser; installed Adobe fonts are "
           "still classified by measurement")
 

@@ -18,7 +18,7 @@ import calibrate
 from fake_adobe import FakeAdobe
 from lazuli import cli, coretext, db, local, lock, measure, scan
 from synthetic_fonts import build
-from test_coretext import AdobeTouched, adobe_folder, install_trap, livetype
+from test_coretext import AdobeTouched, adobe_folder, install_trap, livetype, real_location, resolving, under
 
 
 # ---------------------------------------------------------------- calibration leaves Adobe Fonts out
@@ -73,7 +73,7 @@ def adobe(tmp_path, monkeypatch):
     return fake
 
 
-@pytest.mark.parametrize("stored", [None, "", "{}"])
+@pytest.mark.parametrize("stored", [None, "", "{}", "null", "[]", "not json"])
 def test_an_adobe_row_whose_metadata_is_not_stored_waits_instead_of_being_measured(adobe, tmp_path, stored):
     adobe.add("Sync Sans")
     conn = db.connect(tmp_path / "cache" / "lazuli.db")
@@ -88,6 +88,32 @@ def test_an_adobe_row_whose_metadata_is_not_stored_waits_instead_of_being_measur
     conn.execute("UPDATE local_font SET metadata_json = ?", (kept,))
     conn.commit()
     assert measure.measure_pending(conn) == (1, [])                              # decided once the scan stored it
+
+
+@pytest.mark.parametrize("stored", ["", "{}", "null", "[]", "not json"])
+def test_an_ordinary_scan_stores_the_design_metadata_a_row_lacks(adobe, tmp_path, stored):
+    adobe.add("Sync Sans")
+    conn = db.connect(tmp_path / "cache" / "lazuli.db")
+    scan.scan(conn)
+    kept = conn.execute("SELECT metadata_json FROM local_font").fetchone()[0]
+    conn.execute("UPDATE local_font SET metadata_json = ?", (stored,))
+    conn.execute("DELETE FROM measurement")
+    conn.commit()
+    assert scan.scan(conn).updated == 1                                          # stale: no --rescan needed
+    assert conn.execute("SELECT metadata_json FROM local_font").fetchone()[0] == kept
+    assert measure.measure_pending(conn) == (1, [])                              # and measured now, not waiting forever
+    assert scan.scan(conn).updated == 0                                          # a row with `axes` is not stale
+
+
+@pytest.mark.parametrize("stored", ["null", "[]", "not json"])
+def test_a_measured_adobe_row_whose_metadata_is_no_object_does_not_stop_the_measuring(adobe, tmp_path, stored):
+    adobe.add("Sync Sans")
+    conn = db.connect(tmp_path / "cache" / "lazuli.db")
+    scan.scan(conn)
+    assert measure.measure_pending(conn) == (1, [])
+    conn.execute("UPDATE local_font SET metadata_json = ?", (stored,))
+    conn.commit()
+    assert measure.measure_pending(conn) == (0, [])                              # no AttributeError, no new measurement
 
 
 # ---------------------------------------------------------------- the helper takes a language tag, nothing else
@@ -183,21 +209,22 @@ def test_no_allowed_call_turns_the_bitmap_or_a_font_into_an_image_a_file_or_a_ta
 
 def guard_links(monkeypatch, links: list[Path], touched: list[str]) -> None:
     """Record, and refuse, going into a link in the project that leads into Adobe's folders: a stat that follows it,
-    a listing, an open, an access. A name's own lstat and readlink are the look by name that is allowed."""
-    roots = [os.path.normpath(str(link)) for link in links]
+    a listing, an open, an access. A look is judged by where it ends up, so reaching the link's target through
+    `link/..` is the same look as going in by the link's name. A name's own lstat and readlink are the look by
+    name that is allowed."""
+    roots = {os.path.normpath(str(link)) for link in links} | {real_location(link) for link in links}
 
     def inside(target) -> bool:
-        try:
-            name = os.path.normpath(os.fsdecode(os.fspath(target)))
-        except TypeError:                                  # a file descriptor
+        place = real_location(target)
+        if place is None:                                  # a file descriptor
             return False
-        return any(name == root or name.startswith(root + os.sep) for root in roots)
+        return under(place, roots) or under(os.path.normpath(os.fsdecode(os.fspath(target))), roots)
 
     def guard(owner, attr):
         real = getattr(owner, attr)
 
         def wrapper(*args, **kwargs):
-            if args and inside(args[0]) and kwargs.get("follow_symlinks", True):
+            if not resolving() and args and kwargs.get("follow_symlinks", True) and inside(args[0]):
                 touched.append(f"{attr}({args[0]})")
                 raise AdobeTouched(f"{attr}({args[0]})")
             return real(*args, **kwargs)
@@ -253,7 +280,9 @@ def test_lock_globs_find_what_pathlib_finds_in_a_tree_without_links(tmp_path):
 @pytest.mark.parametrize("flags, note", [
     (["--files", "fonts/*.otf", "sub/*/*.otf", "--modified", "none"], "no local file matches 'fonts/*.otf' in"),
     (["--notice", "fonts/.10312.otf"],
-     "notice 'fonts/.10312.otf' is inside Adobe's font folders, which lazuli never opens")])
+     "notice 'fonts/.10312.otf' is inside Adobe's font folders, which lazuli never opens"),
+    (["--notice", "fonts/../.r/.10312.otf"],
+     "notice 'fonts/../.r/.10312.otf' is inside Adobe's font folders, which lazuli never opens")])
 def test_lock_reads_no_file_in_adobe_folders_through_a_project_link_and_says_so(tmp_path, monkeypatch, capsys, flags, note):
     user = tmp_path / "fonts-user"
     build(user / "TestSans-Regular.ttf", family="Test Sans")
@@ -270,6 +299,36 @@ def test_lock_reads_no_file_in_adobe_folders_through_a_project_link_and_says_so(
     assert code == 0 and touched == []
     assert any(note in line for line in out["notes"])
     assert not (project / ".lapis").exists()
+
+
+@pytest.mark.parametrize("leads_to, spelled", [
+    ("Library/Application Support/Adobe/CoreSync", "link/../CoreSync/plugins/livetype/.r/.10312.otf"),
+    ("Library/Application Support/Other/deep", "link/../../Adobe/Fonts/Some.otf")])
+def test_a_dotdot_after_a_link_is_taken_from_where_the_link_leads(tmp_path, monkeypatch, leads_to, spelled):
+    """`link/..` is the folder above where `link` leads, which the text cannot show: the first link leads into
+    Adobe's folders itself, the second one beside them, and only the `..` after it gets in (cleaned by text, its
+    path would read `<tmp>/Adobe/Fonts/Some.otf`, which names no folder of Adobe's)."""
+    build(livetype(tmp_path) / ".10312.otf", family="Decoy Sans")
+    build(adobe_folder(tmp_path) / "Fonts" / "Some.otf", family="Other Decoy")
+    target = tmp_path / leads_to
+    target.mkdir(parents=True, exist_ok=True)
+    project = tmp_path / "project"
+    project.mkdir()
+    try:
+        (project / "link").symlink_to(target)
+    except OSError:
+        pytest.skip("this platform cannot create symbolic links here")
+    via = project / spelled                                   # pathlib keeps the `..`
+    assert via.is_file()                                      # the operating system opens a decoy by this name
+    touched = install_trap(monkeypatch, adobe_folder(tmp_path))
+    assert coretext.reaches_adobe(via) is True
+    with pytest.raises(coretext.AdobeFileRefused):
+        coretext.refuse_adobe_file(via)
+    assert lock.read_file(via).postscript == []               # refused, not read
+    monkeypatch.setenv("LAZULI_FONT_ROOTS", f"user={via.parent}")
+    with pytest.raises(scan.RootsError, match="inside Adobe's font folders"):
+        scan.roots()
+    assert touched == []
 
 
 # ---------------------------------------------------------------- every test starts with no installed fonts

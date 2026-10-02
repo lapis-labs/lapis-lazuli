@@ -78,6 +78,8 @@ if TYPE_CHECKING:
 
 IDENTITY_PREFIX = "coretext:"
 SYMLINK_LIMIT = 40
+# Two consecutive names (case-folded) that put a path in Adobe's font folders: macOS, then Windows and elsewhere.
+ADOBE_FOLDERS = frozenset({("application support", "adobe"), ("adobe", "coresync")})
 UNICODE_PLANES = (0, 1, 2, 3)            # planes that hold letters: BMP, SMP, SIP, TIP
 NAMES_LANGUAGES = ("ko", "ja", "zh-Hans", "zh-Hant")    # the keys of `names_i18n_json`, one helper process each
 NAMES_TIMEOUT = 30.0                     # seconds a helper process may run before it is killed
@@ -110,47 +112,67 @@ def require_allowed(name: str) -> None:
 
 # ---------------------------------------------------------------- Adobe's folders, by name
 
-def is_adobe_path(path: str | os.PathLike) -> bool:
-    """Whether `path` is inside Adobe's font folders, decided from its name alone (nothing is touched):
-    `.../Application Support/Adobe/...` (macOS) or `.../Adobe/CoreSync/...` (Windows), any case."""
-    parts = [part.casefold() for part in PurePath(os.path.normpath(os.fspath(path))).parts]
-    pairs = set(zip(parts, parts[1:]))
-    return ("application support", "adobe") in pairs or ("adobe", "coresync") in pairs
-
-
-def reaches_adobe(path: str | os.PathLike) -> bool:
-    """Whether `path` is in Adobe's folders by name, or a symbolic link on its way leads there. Links are
-    followed one name at a time with `readlink`, and the walk stops at the first name that is Adobe's, so
-    nothing under Adobe's folders is ever looked at."""
-    target = PurePath(os.path.abspath(os.path.expanduser(os.fspath(path))))
-    current = PurePath(target.anchor)
-    pending = list(reversed(target.parts[1:]))
+def _walk(path: str | os.PathLike, follow_links: bool) -> bool:
+    """Walk `path` one name at a time, as written: nothing is collapsed beforehand, since `link/..` is the
+    parent of the link's target, not of the link, and only the walk knows which. Returns True at the first
+    name that makes the folder walked so far Adobe's (`.../Application Support/Adobe/...` on macOS,
+    `.../Adobe/CoreSync/...` on Windows, any case), so nothing under Adobe's folders is ever looked at.
+    With `follow_links`, a relative path starts at the working folder and a name that is a symbolic link
+    (`readlink`, nothing else is called) is replaced by where it leads, and `..` then leaves the folder the
+    walk has reached. Without it nothing is touched: `..` leaves the name walked before it."""
+    text = os.fspath(path)
+    if follow_links:
+        text = os.path.join(os.getcwd(), os.path.expanduser(text))      # joins; an absolute path stays as it is
+    target = PurePath(text)
+    anchor = target.anchor
+    pending = list(reversed(target.parts[1:] if anchor else target.parts))
+    walked: list[str] = []
     links = 0
     while pending:
         part = pending.pop()
-        if part in ("", "."):
-            continue
         if part == "..":
-            current = current.parent
+            if walked and walked[-1] != "..":
+                walked.pop()
+            elif not anchor:
+                walked.append(part)                      # above the start of a relative path
             continue
-        candidate = current / part
-        if is_adobe_path(candidate):
+        if walked and (walked[-1].casefold(), part.casefold()) in ADOBE_FOLDERS:
             return True
-        try:
-            link = os.readlink(candidate)
-        except OSError:                                  # not a link, or not there
-            current = candidate
+        walked.append(part)
+        if not follow_links:
             continue
+        try:
+            link = os.readlink(os.path.join(anchor, *walked))
+        except OSError:                                  # not a link, or not there
+            continue
+        walked.pop()
         links += 1
         if links > SYMLINK_LIMIT:
             return False                                 # a loop is no font
         destination = PurePath(link)
         if destination.is_absolute():
-            current = PurePath(destination.anchor)
+            anchor = destination.anchor
+            walked = []
             pending.extend(reversed(destination.parts[1:]))
         else:
             pending.extend(reversed(destination.parts))
     return False
+
+
+def is_adobe_path(path: str | os.PathLike) -> bool:
+    """Whether `path` goes through Adobe's font folders, decided from its names alone (nothing is touched):
+    `.../Application Support/Adobe/...` (macOS) or `.../Adobe/CoreSync/...` (Windows), any case. The names
+    are taken as written, so `Adobe/CoreSync/../x` is Adobe's. A link or a `..` after a link can make a path
+    Adobe's with no such name in it; only `reaches_adobe` sees that."""
+    return _walk(path, follow_links=False)
+
+
+def reaches_adobe(path: str | os.PathLike) -> bool:
+    """Whether `path` is in Adobe's folders by name, or a symbolic link on its way leads there. Links are
+    followed one name at a time with `readlink`, `..` leaves the folder the walk has reached (after the links
+    before it), and the walk stops at the first name that is Adobe's, so nothing under Adobe's folders is
+    ever looked at."""
+    return _walk(path, follow_links=True)
 
 
 class AdobeFileRefused(ValueError):

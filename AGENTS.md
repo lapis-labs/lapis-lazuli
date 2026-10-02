@@ -161,8 +161,10 @@ files beside it; the database file itself does not change.
 - Font catalogs are looked up only when a task needs them and cached only in the user's local
   database. Keep a human pace and stated crawl delays (Sandoll Cloud: 10 seconds between
   requests), name lazuli in the request headers, and never get around a block. Read a source's
-  robots.txt and terms before adding it; a source whose terms forbid automated collection (Adobe
-  Fonts, noonnu as of 2026-09-26) gets a `REFUSED` adapter that sends nothing and gives links.
+  robots.txt and terms before adding it; a source whose terms forbid automated collection, as lazuli
+  reads them (not legal advice; the Adobe Fonts site, noonnu as of 2026-09-26), gets a `REFUSED` adapter
+  that sends nothing and gives links. That has nothing to do with recommending, choosing, or locking
+  Adobe Fonts.
 - Every redirect of a request lazuli sends itself is followed by hand, one hop at a time: each hop
   is checked against the source registry and that host's robots.txt before it is requested, and a
   hop to a `refused` or `browser-link` host is never sent. A robots.txt that redirects is followed
@@ -259,10 +261,11 @@ files beside it; the database file itself does not change.
   installing software globally, changing global git config, or changing a harness's global
   settings or installed plugins.
 - No credentials, tokens, license keys, payment data, or private receipts in any file or commit.
-- Commercial, subscription, or synced font files and media never leave the machine they are on, and no
-  lazuli database or other large local data goes into the repository. This limits where files go, not
-  which fonts a design may use: recommending and using licensed fonts, Adobe Fonts included (on the web
-  through the user's Adobe web project), is fine.
+- Commercial, subscription, or synced font files and media never leave the machine they are on, nor does
+  data extracted from them (outlines, tables, glyph data; a family name sent to a catalog lookup is not
+  font data), and no lazuli database or other large local data goes into the repository. This limits where
+  files and extracted data go, not which fonts a design may use: recommending and using licensed fonts,
+  Adobe Fonts included (on the web through the user's Adobe web project), is fine.
 - Data derived from Adobe Fonts (names, coverage, measurements) never goes into tests, fixtures,
   calibrations, evaluations, or training sets, and lazuli never opens Adobe Fonts files: on macOS it reads them
   through the operating system's font API (`cli/lazuli/coretext.py`); nowhere else are they listed.

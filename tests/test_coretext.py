@@ -41,27 +41,60 @@ def livetype(tmp_path: Path) -> Path:
     return adobe_folder(tmp_path) / "CoreSync" / "plugins" / "livetype" / ".r"
 
 
+_resolving: list[bool] = []
+
+
+def resolving() -> bool:
+    """True while `real_location` runs: `os.path.realpath` calls `os.lstat` and `os.readlink`, which a trap wraps,
+    so a trap lets those calls through."""
+    return bool(_resolving)
+
+
+def real_location(target, *, link_itself: bool = False) -> str | None:
+    """Where the operating system ends up when it opens `target`: every link on the way followed and `..` taken
+    from the folder reached so far (`os.path.realpath`; the name is never cleaned by text first, which would
+    drop `link/..`). With `link_itself`, the last name is not followed: an lstat or a readlink looks at the link.
+    None for a file descriptor."""
+    try:
+        name = os.fsdecode(os.fspath(target))
+    except TypeError:
+        return None
+    _resolving.append(True)
+    try:
+        if link_itself and os.path.basename(name) not in ("", ".", ".."):
+            return os.path.join(os.path.realpath(os.path.dirname(name) or "."), os.path.basename(name))
+        return os.path.realpath(name)
+    finally:
+        _resolving.pop()
+
+
+def under(place: str, roots) -> bool:
+    return any(place == root or place.startswith(root + os.sep) for root in roots)
+
+
 def install_trap(monkeypatch, subtree: Path) -> list[str]:
     """Record, and refuse, every look at `subtree` or below it: stat, lstat, scandir, listdir, open, access,
-    readlink, Pillow's and FreeType's own open, and fontTools' (through open). Returns the record."""
+    readlink, Pillow's and FreeType's own open, and fontTools' (through open). A look is judged by where it ends
+    up (a project link into the subtree, `link/..`), not by the name it was given; an lstat or a readlink of a
+    link itself is not a look at where the link leads. Returns the record."""
     from PIL import ImageFont
 
-    root = os.path.normpath(str(subtree))
+    roots = {os.path.normpath(str(subtree)), real_location(subtree)}
     touched: list[str] = []
 
-    def inside(target) -> bool:
-        try:
-            name = os.path.normpath(os.fsdecode(os.fspath(target)))
-        except TypeError:                                  # a file descriptor
+    def inside(target, link_itself: bool) -> bool:
+        place = real_location(target, link_itself=link_itself)
+        if place is None:                                  # a file descriptor
             return False
-        return name == root or name.startswith(root + os.sep)
+        return under(place, roots) or under(os.path.normpath(os.fsdecode(os.fspath(target))), roots)
 
     def guard(owner, attr, position=0):
         real = getattr(owner, attr)
 
         def wrapper(*args, **kwargs):
             target = args[position] if len(args) > position else next(iter(kwargs.values()), None)
-            if target is not None and inside(target):
+            link_itself = attr in ("lstat", "readlink") or kwargs.get("follow_symlinks", True) is False
+            if not resolving() and target is not None and inside(target, link_itself):
                 touched.append(f"{attr}({target})")
                 raise AdobeTouched(f"{attr}({target})")
             return real(*args, **kwargs)
@@ -92,6 +125,26 @@ def test_the_trap_catches_what_it_guards(tmp_path, monkeypatch):
     assert elsewhere.stat().st_size and list(elsewhere.parent.iterdir()) and TTFont(str(elsewhere)) and touched == []
 
 
+def test_the_trap_judges_a_look_by_where_it_ends_up_not_by_the_name_it_was_given(tmp_path, monkeypatch):
+    build(livetype(tmp_path) / ".10312.otf", family="Decoy")
+    project = tmp_path / "project"
+    project.mkdir()
+    link = project / "link"
+    try:
+        link.symlink_to(adobe_folder(tmp_path) / "CoreSync")
+    except OSError:
+        pytest.skip("this platform cannot create symbolic links here")
+    touched = install_trap(monkeypatch, adobe_folder(tmp_path))
+    for look in (lambda: os.stat(link), lambda: os.stat(link / "plugins"),
+                 lambda: os.stat(project / "link" / ".." / "CoreSync" / "plugins" / "livetype" / ".r" / ".10312.otf"),
+                 lambda: os.lstat(link / "plugins"), lambda: os.listdir(link), lambda: os.lstat(link / ".." / "x")):
+        with pytest.raises(AdobeTouched):
+            look()
+    assert len(touched) == 6
+    touched.clear()
+    assert os.readlink(link) == str(adobe_folder(tmp_path) / "CoreSync") and os.lstat(link) and touched == []
+
+
 # ---------------------------------------------------------------- Adobe's folders, by name
 
 @pytest.mark.parametrize("path, adobe", [
@@ -104,6 +157,14 @@ def test_the_trap_catches_what_it_guards(tmp_path, monkeypatch):
     ("/Users/me/Library/Fonts/Adobe/Caslon.otf", False),
     ("/Users/me/Library/Application Support/Adobe Fonts/x", False),
     ("/Users/me/Adobe/CoreSyncing/x", False),
+    ("/home/me/Adobe/CoreSync/../x.otf", True),                  # the names walked through count, whatever `..` leaves
+    ("/Users/me/Library/Application Support/Adobe/../x", True),
+    ("/Users/me/Library/Application Support/Other/../Adobe/x", True),
+    ("Adobe/CoreSync/x.otf", True),
+    ("../Adobe/CoreSync/x.otf", True),
+    ("/Users/me/Library/Fonts/../Adobe/x", False),
+    ("/Users/me/Adobe/../CoreSync/x", False),
+    ("../../CoreSync/Adobe/x", False),
 ])
 def test_adobe_folders_are_recognised_by_name(path, adobe):
     assert coretext.is_adobe_path(path) is adobe

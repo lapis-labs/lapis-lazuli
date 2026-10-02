@@ -132,15 +132,18 @@ def test_the_checkers_environment_points_every_per_user_path_at_scratch_or_the_e
     scratch.mkdir()
     eval_db = make_font_db(tmp_path / "eval.db")
     env = score.checker_env(scratch, eval_db, tmp_path / "sig.key")
-    assert "LAZULI_FONT_ROOTS" not in env and env["LAZULI_DB"] == str(eval_db)
+    assert env["LAZULI_DB"] == str(eval_db)
     where = subprocess.run(
-        [sys.executable, "-c", "from lazuli import paths; from lapis_design import sig_key; "
-         "print(paths.cache_dir()); print(paths.db_path()); print(sig_key.key_path())"],
+        [sys.executable, "-c", "from lazuli import paths, scan; from lapis_design import sig_key; "
+         "print(paths.cache_dir()); print(paths.db_path()); print(sig_key.key_path()); "
+         "print([(r.origin, str(r.path)) for r in scan.roots()])"],
         env=env, capture_output=True, text=True, timeout=60)
-    cache, db_path, *_ = where.stdout.split("\n")
+    cache, db_path, _, roots, *_ = where.stdout.split("\n")
     assert where.returncode == 0, where.stderr
     assert db_path == str(eval_db)
     assert str(user_home) not in cache and cache.startswith(str(scratch))
+    assert roots == str([("user", str(scratch / "fonts"))])                      # not the operator's folders, not the OS's
+    assert list((scratch / "fonts").iterdir()) == []
 
 
 def poison_user_caches(home):

@@ -137,7 +137,8 @@ uv run --no-sync python tools/eval/share.py ~/.cache/lapis-eval/NAME /tmp/lapis-
 The font rules of the lint read measured fonts from a lazuli database. `score.py` does not use yours: it
 requires `--font-db`, a database built from OFL fonts only, and runs every checker with that file as
 `LAZULI_DB`, with HOME and the cache folders pointing at an empty scratch folder, so no code path can find
-your own database at its usual place. Measurements of Adobe Fonts faces never reach the lint's font rules
+your own database at its usual place, and with `LAZULI_FONT_ROOTS` naming one empty folder there, so no
+checker lists the fonts on this computer. Measurements of Adobe Fonts faces never reach the lint's font rules
 that way. Build the database once, outside this repository, from a folder of OFL fonts (the
 `lazuli-models` dataset keeps one):
 

@@ -52,11 +52,6 @@ GENRES = frozenset({"serif", "sans", "slab", "mono", *HANGUL_TEXT, *HANGUL_OTHER
 TAL_NEMO = "display.tal-nemo"
 EXACT = ("exact_ps", "exact_family")
 ADOBE = "adobe-sync"                 # never calibrated against: Adobe Fonts data is not used to improve anything
-# The baselines below were made while Adobe Fonts faces were still counted (their reports name families that
-# are Adobe Fonts families today) and were not redone without them.
-BASELINE_COHORT = ("It was made while Adobe Fonts faces were still counted and has not been redone without "
-                   "them; this report leaves them out, so the cohorts differ and a gap is not only the "
-                   "measurer's.")
 
 MIN_SUPPORT = 10                    # labeled families needed on each side of a boundary
 MIN_GAIN = 0.05
@@ -507,130 +502,6 @@ def bu_section(entries: list[dict], bound: float) -> tuple[list[str], str]:
     return out, proposal("`bu_ratio` bu", bound, pairs, BU_SWEEP, "bu-ri")
 
 
-def comparison_section(families: list[dict], labels: dict, hangul_labels: dict) -> list[str]:
-    """Compare kind with 1497d3f and preserve the older 13ba6c5 comparison for other metrics."""
-    form_counts: dict[str, Counter] = {source: Counter() for source in LATIN_SOURCES}
-    mono_counts: dict[str, Counter] = {source: Counter() for source in MONO_SOURCES}
-    symbol = Counter()
-    hand = Counter()
-    sandoll = Counter()
-    for fam in families:
-        name = fam["family"]
-        genres = labels.get(name, {})
-        pooled_genres = set().union(*genres.values())
-        form_face = representative([f for f in fam["faces"] if latin_form(f)])
-        form = latin_form(form_face) if form_face else None
-        width_face = representative([f for f in fam["faces"] if "monospaced" in (f.get("metrics") or {})])
-        for source, counts in form_counts.items():
-            truth = latin_truth(genres.get(source, set()))
-            if truth in LATIN_FORMS:
-                counts[(truth, form)] += 1
-        for source, counts in mono_counts.items():
-            genre = genres.get(source, set())
-            if genre & (GENRES - set(HANGUL_TEXT)):
-                if width_face is None:
-                    counts["missing"] += 1
-                else:
-                    counts[("mono" in genre, bool(width_face["metrics"]["monospaced"]))] += 1
-        if pooled_genres & GENRES:
-            kind_face = representative([f for f in fam["faces"] if f.get("kind")])
-            if kind_face is None:
-                symbol["missing"] += 1
-                hand["missing"] += 1
-            else:
-                symbol["wrong" if kind_face["kind"] == "symbol" else "other"] += 1
-                if kind_face["kind"] == "hand":
-                    hand["tp" if "hand" in pooled_genres else "fp"] += 1
-        if hangul_truth(hangul_labels.get(name, {}).get("sandoll", set())) == "bu-ri" and any(
-                cjk_script(f) == "hang" for f in fam["faces"]):
-            hangul_face = representative([f for f in fam["faces"] if cjk_class(f, "hang")])
-            sandoll["missing" if hangul_face is None else
-                    "right" if cjk_class(hangul_face, "hang") == "bu-ri" else "wrong"] += 1
-
-    rows = [
-        ["Symbol misclassifications", "105; not measured 1",
-         f"{symbol['wrong']}; not measured {symbol['missing']}"],
-        ["Sandoll Hangul bu-ri recall", "0.667; not measured 0",
-         f"{fmt(ratio(sandoll['right'], sandoll['right'] + sandoll['wrong']))}; "
-         f"not measured {sandoll['missing']}"],
-    ]
-    baseline_forms = {
-        "google-fonts": {"serif": ("0.952 / 0.952", 6), "sans": ("1.000 / 0.944", 102)},
-        "fontsource": {"serif": ("0.952 / 0.952", 6), "sans": ("1.000 / 0.931", 102)},
-        "fontshare": {"serif": ("— / —", 0), "sans": ("— / 0.000", 0)},
-    }
-    for source, counts in form_counts.items():
-        for form in LATIN_FORMS:
-            baseline, missing = baseline_forms[source][form]
-            tp = counts[(form, form)]
-            other = next(c for c in LATIN_FORMS if c != form)
-            p, r, _ = prf(tp, counts[(other, form)], counts[(form, other)])
-            rows.append([f"Latin {form} ({source})", f"{baseline}; not measured {missing}",
-                         f"{fmt(p)} / {fmt(r)}; not measured {counts[(form, None)]}"])
-    baseline_mono = {
-        "google-fonts": ("0.600 / 1.000", 110), "fontsource": ("0.600 / 1.000", 110),
-        "fontshare": ("0.000 / —", 0), "system-table": ("1.000 / 1.000", 0),
-        "sandoll": ("— / —", 3),
-    }
-    for source, counts in mono_counts.items():
-        baseline, missing = baseline_mono[source]
-        p, r, _ = prf(counts[(True, True)], counts[(False, True)], counts[(True, False)])
-        rows.append([f"Monospace ({source})", f"{baseline}; not measured {missing}",
-                     f"{fmt(p)} / {fmt(r)}; not measured {counts['missing']}"])
-    # This fixed baseline is the exact-labeled cohort in the 14a985c calibration report.
-    previous = {
-        "Symbol misclassifications": "1; not measured 1",
-        "Hand precision": "1.000; not measured 1",
-        "Sandoll Hangul bu-ri recall": "1.000; not measured 3",
-        "Latin serif (google-fonts)": "0.955 / 1.000; not measured 6",
-        "Latin sans (google-fonts)": "1.000 / 0.972; not measured 102",
-        "Latin serif (fontsource)": "0.955 / 1.000; not measured 6",
-        "Latin sans (fontsource)": "1.000 / 0.966; not measured 102",
-        "Latin serif (fontshare)": "— / —; not measured 0",
-        "Latin sans (fontshare)": "1.000 / 1.000; not measured 0",
-        "Monospace (google-fonts)": "0.600 / 1.000; not measured 110",
-        "Monospace (fontsource)": "0.600 / 1.000; not measured 110",
-        "Monospace (fontshare)": "0.000 / —; not measured 0",
-        "Monospace (system-table)": "1.000 / 1.000; not measured 0",
-        "Monospace (sandoll)": "— / —; not measured 3",
-    }
-    measured_now = {name: current for name, _, current in rows}
-    measured_now["Hand precision"] = (f"{fmt(ratio(hand['tp'], hand['tp'] + hand['fp']))}; "
-                                       f"not measured {hand['missing']}")
-    latest = [
-        "## Comparison with 14a985c", "",
-        f"Baseline: the 14a985c calibration report. {BASELINE_COHORT} "
-        "Form and monospace cells are precision / recall; the other cells are a count, recall, "
-        "or precision. Not-measured families are excluded from scored denominators.", "",
-        *table(["metric", "14a985c", "current"],
-               [[name, baseline, measured_now[name]] for name, baseline in previous.items()]), "",
-    ]
-    current = [
-        "## Comparison with 1497d3f", "",
-        f"Baseline: the 1497d3f calibration report. {BASELINE_COHORT} "
-        "Symbol misclassifications count labeled families measured as symbol; hand precision scores "
-        "measured hand families against catalog hand labels. Not-measured families are outside both denominators.", "",
-        *table(["metric", "1497d3f", "current"], [
-            ["Symbol misclassifications", "7; not measured 1",
-             f"{symbol['wrong']}; not measured {symbol['missing']}"],
-            ["Hand precision", "0.500; not measured 1",
-             f"{fmt(ratio(hand['tp'], hand['tp'] + hand['fp']))}; not measured {hand['missing']}"],
-        ]), "", "## Comparison with 13ba6c5", "",
-    ]
-    return latest + current + [
-            f"Baseline: the 13ba6c5 calibration report. {BASELINE_COHORT} Current: the exact-match catalog "
-            "cohorts on this inventory. Form and monospace cells are precision / recall; the other cells are a "
-            "count or recall. Each cell states its not-measured count, excluded from scored denominators. "
-            "The baseline's symbol count covers only labeled families included in its measured-kind matrix; "
-            "its one not-measured family is the 268-family exact-labeled cohort minus 267 matrix rows. "
-            "The script-coverage exception to the 20-letter seed and the pixel exclusion affect different "
-            "measurements; missing and correct predictions are distinct. "
-            "Sandoll bu-ri had 6 correct predictions and 3 false negatives in the "
-            f"baseline; now it has {sandoll['right']} correct predictions, {sandoll['wrong']} false negatives, "
-            f"and {sandoll['missing']} not measured. Excluding pixel faces does not turn them into correct hits.", "",
-            *table(["metric", "13ba6c5", "current"], rows), ""]
-
-
 # ---------------------------------------------------------------- report
 
 def report(conn) -> str:
@@ -647,7 +518,6 @@ def report(conn) -> str:
              f"{len(families)} installed families with a name, {faces} faces, "
              f"{measured} measured. Labels come from exact catalog matches only; per family, the representative face "
              f"(nearest a regular upright weight) carries the measurement. Family names and numbers only.", "",
-             *comparison_section(families, labels, hangul_labels),
              "## Sources", ""]
     lines += table(["source", "kind", "priority", "fetched", "status", "catalog families", "installed families (exact)",
                     "fuzzy only (left out)", "with class labels"],

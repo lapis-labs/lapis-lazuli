@@ -14,8 +14,9 @@ target. It returns candidates and facts; `lapis` or the user chooses, and only `
 plan. It locks only a family already chosen.
 
 - Font files are read, never copied or converted into a project; only files the user supplies for
-  shipping enter it. Never sign in, get around a block, download, activate, buy, or accept terms
-  for the user; for a `refused` or `browser-link` source, hand the user the link.
+  shipping enter it. Never sign in, get around a block, download, buy, or accept terms for the user;
+  activate a font only when the user asks for that font. For a `refused` or `browser-link` source,
+  hand the user the link.
 - The lock never holds credentials, keys, account or payment data. Report only the families the
   task needs.
 
@@ -65,9 +66,10 @@ plan. It locks only a family already chosen.
   freshness. A failed source is skipped until named with `--source`.
 - `lookup` asks the on-request `sandoll`, at its stated crawl delay, about installed families no
   snapshot matched (`--family` or `--unmatched`). `status` shows freshness and state.
-- Sources whose terms forbid tools send nothing: `adobe-cjk` is disabled, and
-  `lookup --source noonnu --unmatched` prints browser links. `yoon-design` is a browser link with no
-  adapter. A class the user reads there goes in with
+- Sources whose terms forbid tools, as lazuli reads them (not legal advice), send nothing: `adobe-cjk` is
+  disabled (that is about collecting the Adobe Fonts site's listing, not about recommending, choosing, or
+  locking Adobe Fonts), and `lookup --source noonnu --unmatched` prints browser links. `yoon-design` is a
+  browser link with no adapter. A class the user reads there goes in with
   `lazuli class set "<family>" --genre <id> [--subclass <id>] [--url <link>]`; it outranks catalogs
   for genre and subclass only and never leaves the user cache. Ids are in `shared/vocab/type.yaml`,
   source policies in `shared/sources/registry.yaml`.
@@ -83,6 +85,10 @@ marked a hint that narrows the search but is never a license fact; and `web` or 
 inferred from listings, labels, and origins. `--similar-to "<family>"` ranks installed families by
 measured distance, naming close and far features. The score only orders; return several candidates
 with their evidence.
+
+Fonts the user has activated are candidates like any other, Adobe Fonts included (origin `adobe-sync`,
+listed by `lazuli local fonts --origin adobe-sync`): recommend, compare, choose, and lock them. On the
+web an Adobe face is delivered through the user's own Adobe web project (`--delivery adobe-web-project`).
 
 ## License facts
 
