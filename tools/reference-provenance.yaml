@@ -2140,3 +2140,15 @@ references:
   - path: references/quality/anti-slop.md
     taken: 'Q1–Q2 (2026-10-03), lines 64–87, 103–113, 148–157: paired earned/unearned cards and heading labels; compare content relations beneath a replacement finish. Adapted in src/agents/critic.md, which builds this reference.'
     dropped: Scores, quotas, named package bans, prevalence and authorship claims; the existing findings and repair contracts remain authoritative.
+- reference: lapis/references/visual-assets.md
+  sources:
+  - path: references/visual-assets/image-selection-and-art-direction.md
+    taken: 'V1–V2 (2026-10-03), lines 34–61, 84–94, 125–178: image-job/evidence/substitute chooser, real-slot crop protection and continuity, distinct media roles, truthful grading.'
+    dropped: Source browsing/acquisition and licensing procedures, provider choices, fixed aspect ratios, brief templates and implementation recipes; crop notes use claims.proposed with ledger ids because the ledger has no crop fields.
+  - path: references/visual-assets/icon-systems-and-alternatives.md
+    taken: 'V3 (2026-10-03), lines 36–67, 90–101, 121–131: semantic contact sheet, state/size/stroke/directionality checks, failure-led replacement, label/local-glyph alternative for one missing concept.'
+    dropped: Named icon packages, dated rights/provider tables and delivery code; chosen facts stay in tokens.icons.
+  - path: assets/asset-harmonization-checklist.md
+    taken: 'V4 (2026-10-03), lines 47–100, 136–145, 162–185: fact/inference/proposal distinction, choice-changing grammar, authority/conflict classes and one real-content/state slice before expansion.'
+    dropped: New ledgers, confidence scores, mandatory sample quotas and policy changes; existing claims, sources, ledger, source access and artwork boundaries remain authoritative.
+  skill_body_pointer: Read visual-assets.md for image jobs, crop/set continuity, icon contact sheets or supplied-asset grammar.

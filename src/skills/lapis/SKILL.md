@@ -231,6 +231,9 @@ A chart, map, or other data view inside a section has its own decisions: choosin
 question, scales and annotation, text and keyboard access to its values, data color, and what an
 implementation must satisfy. For those, read `references/data-viz.md`.
 
+For an image's job, crop/set continuity, icon-family contact sheets, or grammar inferred from
+supplied assets, read `references/visual-assets.md`. Use authorized material and existing records.
+
 ### 9. Content - `content`
 
 Use real copy, or synthetic content from the domain that is clearly synthetic - long and local

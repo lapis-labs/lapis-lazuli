@@ -1400,16 +1400,18 @@ entries:
   - rule
   target: lapis/references/visual-assets.md
   merge: visual-assets
-  note: 브랜드 글리프·플랫폼 한정·고지 조건을 rights.* 규칙으로(2026-09-25)
-  status: partial
-  done: [rule]
+  note: '브랜드 글리프·플랫폼 한정·고지는 rights.* 규칙으로. V3(2026-10-03): 실제 의미 목록의 아이콘 접촉판·실패 시 교체·한 개 부족한 개념의 대안·광학 크기를 visual-assets.md로. 제공자 표·구현·권리 변경은 제외'
+  status: done
+  done: [rule, reference]
 - path: references/visual-assets/image-selection-and-art-direction.md
   words: 2220
   dest:
   - reference
   target: lapis/references/visual-assets.md
   merge: visual-assets
-  status: todo
+  note: 'V1–V2(2026-10-03): 이미지 역할·증거/분위기 구분·실제 슬롯 자르기·세트 연속성·진실한 색을 visual-assets.md로. 자르기 결정은 claims.proposed에 기존 자산 id로 기록. 접근·취득·라이선스 계약은 그대로'
+  status: done
+  done: [reference]
 - path: references/visual-assets/svg-reuse-and-authoring.md
   words: 3208
   dest:
@@ -1439,7 +1441,9 @@ entries:
   - rule
   target: lapis/references/visual-assets.md
   merge: visual-assets
-  status: todo
+  note: 'V4(2026-10-03): 관찰/추론/제안·선택을 바꾸는 문법·충돌 분류·실제 내용/상태 한 부분 확인을 visual-assets.md로. 새 원장·필드와 권리 계약은 추가하지 않음. 검사 규칙 행선지는 남음'
+  status: partial
+  done: [reference]
 - path: assets/brand-voice-by-locale-cheatsheet.md
   words: 1656
   dest: &id006

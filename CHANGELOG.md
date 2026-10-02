@@ -21,6 +21,8 @@ after text.
 
 ### Added
 
+- `lapis/references/visual-assets.md`: image-job selection, protected crops and coherent sets, semantic icon contact sheets, and fact/inference/proposal separation for supplied assets.
+
 - `explorations` in the plan records, for each open decision, two or more candidates with their sources (for type:
   `local`, `catalog:<name>`, `adobe`, `commercial:<foundry>`, `generic`), what they were compared on (`specimen`,
   `render`, `sketch`), the chosen one, and why the runner-up lost. A decision the contract or the brief fixes is
