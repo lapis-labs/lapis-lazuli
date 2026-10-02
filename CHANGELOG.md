@@ -39,6 +39,8 @@ after text.
 
 ### Changed
 
+- Type guidance gains descriptive display lanes, complaint-sized comparisons tied to `explorations`, and a copy-owned meaning pass before typesetting.
+
 - The critic gains paired earned/unearned grouping examples and a content-level test for replacement-package repairs.
 
 - A `defaults` keep waives a finding only when its `keep_when` names one of the rule's ids, in `plan check` and in

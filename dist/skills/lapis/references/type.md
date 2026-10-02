@@ -95,6 +95,12 @@ Before changing a face over a complaint, sort it into one of five conditions.
 A familiar family is not a defect by its name; write the convention that keeps it (the brief, the
 contract, a requirement) as the `basis` of its `defaults` entry, with the rule's `keep_when` id.
 
+Match the comparison to the complaint. For a crowded title, keep copy and layout fixed and compare
+width, optical cut, or family on the real narrow wrap. For identifiers, compare look-alikes and
+punctuation in actual IDs. For mixed scripts, compare apparent size, baseline, and darkness in a
+control and paragraph. For jumping values, compare signs, decimals, and figure features before
+changing the body face. Record the role-specific winner in `explorations`; unfamiliarity alone wins nothing.
+
 **Generic families.** A role's `family` is one name: the schema refuses a comma, and fallbacks go in
 the lock (`--fallback`) and the implementation tokens. CSS keywords and the vendor aliases of the
 system UI face name no face. They need no lock entry, are never looked up in the database, and match
@@ -242,6 +248,10 @@ vertical-rl`, `text-combine-upright` for short numbers, and checks of punctuatio
 
 ## Paragraphs and reading
 
+Inspect meaning before setting the block; `lps-copy`'s interface copy reference owns headings,
+paragraph moves, lists, emphasis, and quotations. Then inspect heading attachment, marker
+indentation, and comparison alignment. Space cannot explain an absent relationship.
+
 **Measure**
 
 - Latin continuous reading: 45 to 75 characters per line, about 65 in the middle. `ch` (the width
@@ -379,6 +389,19 @@ ranking. Hangul display subclasses are chosen the same way: `high-contrast`, `re
 `tal-nemo` (syllables leave the square frame, so the line looks lively and informal), `full-square`
 (syllables fill the frame, dense and poster-like), `terminal-ornament`, and the `hand` class for
 brush and handwriting.
+
+Use these Latin lanes to describe candidates, never to choose by association:
+
+| Lane | Inspect | Reject the shortcut |
+|---|---|---|
+| Old-style or humanist serif | calligraphic construction, stress, bracketed terminals | borrowed heritage without material evidence |
+| High-contrast serif | fine strokes, vertical stress, display detail | default luxury; disappearing hairlines |
+| Slab or incised | block or flared terminals, stamped or cut edges | authority supplied only by weight |
+| Constructed sans | width, geometry, spacing, repeated forms | neutrality expected to create identity |
+| Humanist sans | open shapes, modulation, terminal character | category labels treated as reading evidence |
+| Hand or graphic display | gesture, continuity, texture, rarity | invented authenticity; competing voices |
+
+Compare the real title in `explorations`. Hangul, kana, and Han need their own construction vocabulary.
 
 **Text and display drawings.** A text cut has sturdier strokes, a larger x-height, and looser spacing;
 a display cut has finer detail, more contrast, and tighter spacing. A display cut breaks up at body

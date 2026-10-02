@@ -48,9 +48,7 @@ references:
     taken: Setting measure by reading (narrow, widen, choose), leading depending on size, x-height, measure,
       and script, paragraph versus section spacing, more space above headings than below, indent or gap,
       no manual line breaks.
-    dropped: 'The meaning-versus-typesetting passes, frontloaded headings, lists, quotations, links, footnotes,
-      tables, long-form navigation, and the policy worked example: content design and layout topics owned
-      by lps-copy and the layout step.'
+    dropped: 'Long-form navigation, links, footnotes, tables, and the policy worked example; T4 (2026-10-03) recovers the meaning/typesetting distinction through the copy owner and rendered block checks.'
   - path: references/typography/responsive-typesetting.md
     taken: Role-to-scale-step indirection, sizes in rem (bounded clamp() dropped on 2026-09-29 because the render
       check reports sizes between steps), never shrinking the root size,
@@ -64,8 +62,7 @@ references:
     taken: The display job fields (condensed to one sentence), conditions for one family versus a companion,
       descriptive lanes as vocabulary rather than a ranking, keeping the contract face unless a named
       requirement fails.
-    dropped: 'The artifact and rights gate, the acceptance specimen, the decision-output template, and
-      the lane table: rights go to lazuli lock, and the templates repeat the reference.'
+    dropped: 'The artifact and rights gate and decision-output template. T1 (2026-10-03) recovers a shortened Latin lane/trait/failure table without named families or cultural associations.'
   - path: assets/type-scale-cheatsheet.md
     taken: Ratio range 1.125 to 1.333 by density, the scale as a vocabulary, Latin measure 45 to 75, Latin
       body leading 1.4 to 1.6, Latin display leading about 1.0 to 1.15, body tracking at the face default,
@@ -91,6 +88,9 @@ references:
     dropped: 'The CSS locale stacks, conditional measure, candidate source leads, stress strings, browser
       font evidence, the diagnostic flow, and the QA list: implementation detail, product names, or checks
       owned by lzl-fonts and ultramarine.'
+  - path: references/art-direction/formal-experimentation.md
+    taken: 'T3 (2026-10-03), lines 87–98, 129–154: actual role text and a fixed-context, smallest-coherent-variable comparison for a named type failure.'
+    dropped: New study records, audience-effect claims, and a whole-direction procedure here; direction exploration stays with form-levers.md.
   external:
   - kind: standard
     name: OpenType specification (feature tags tnum, pnum, lnum, onum, locl, vert, titl; registered axes
@@ -1332,6 +1332,9 @@ references:
     dropped: 'The context-capture card (the plan''s brief and content hold it), the diagnosis table, the
       seven-step loop wording, the report template (the skill''s Reporting covers it), and the plain-data
       audit fixture: duplicated by plan fields or the skill body, or test material.'
+  - path: references/typography/paragraphs-and-reading.md
+    taken: 'T4 (2026-10-03), lines 30–43, 150–172, 187–200: meaning before typesetting, peer/step lists, semantic emphasis, sourced quotations, and nonvisual pull-quote deduplication.'
+    dropped: HTML specimens and long-form page recipes; rendered measure and alignment stay with type and layout.
   - path: references/readability/korean-editing.md
     taken: 'The three registers with recognition cues; compact labels against sentences and label against
       instruction; register chosen by surface and kept; formality is not a safety mechanism; the same facts in

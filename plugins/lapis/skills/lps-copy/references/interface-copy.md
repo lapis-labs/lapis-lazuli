@@ -244,6 +244,11 @@ surprise. Drop internal release labels unless availability changes the decision 
 
 Before changing existing copy, list what must survive; afterward, compare.
 
+Inspect meaning before typesetting: read headings alone, check each paragraph's move, and keep
+qualifications beside their claims. List items must be true peers or steps. Semantic emphasis marks
+importance or stress; a quotation identifies a source, not merely a sentence worth enlarging.
+A decorative pull quote must not make the reader encounter the same passage twice nonvisually.
+
 | Keep | The failure |
 |---|---|
 | Facts and values: people, objects, status, cause, scope, numbers, dates, prices, units | a smoother sentence invents a cause or drops an exception; "about" replaces an exact amount |

@@ -105,8 +105,10 @@ entries:
   words: 3736
   dest:
   - reference
-  target: lapis
-  status: todo
+  target: lapis/references/type.md
+  note: 'T3(2026-10-03): 실제 글과 실패 조건에 맞춘 작은 타입 비교를 반영. 방향 전체의 실험·수렴은 아직 남아 partial로 기록'
+  status: partial
+  done: [reference]
 - path: references/artistic-methods/form-meaning-and-experience.md
   words: 4526
   dest:
@@ -460,7 +462,7 @@ entries:
   - card
   - reference
   target: lapis/references/type.md
-  note: 글꼴 역할·짝짓기 참조에 반영. Q44 — 열린 역할의 후보 비교, 시스템 우선은 대상 플랫폼에서 본 뒤 고르기, 진 쪽의 까닭 기록을 type.md '글꼴 고르기' 절로. 카드 본문 행선지는 별도 이관
+  note: '글꼴 역할·짝짓기 참조에 반영. Q44 — 열린 역할의 후보 비교·대상 플랫폼 확인·진 쪽의 까닭. T3(2026-10-03): 실패별 최소 표본 선택을 추가. 카드 본문 행선지는 별도 이관'
   status: partial
   done: [reference]
 - path: references/frontend-maintenance/code-health-and-ownership.md
@@ -1226,8 +1228,8 @@ entries:
   dest:
   - reference
   - rule
-  target: lapis/references/type.md
-  note: 문단 읽기 참조에 반영. 검사 규칙 행선지는 별도 이관
+  target: lapis/references/type.md + lps-copy/references/interface-copy.md
+  note: 'T4(2026-10-03): 의미와 조판의 구분·목록·강조·인용 의미는 interface-copy.md, 렌더 블록 점검은 type.md로 반영. 검사 규칙 행선지는 남음'
   status: partial
   done: [reference]
 - path: references/typography/responsive-typesetting.md
@@ -1525,7 +1527,7 @@ entries:
   - reference
   - rule
   target: lapis/references/type.md
-  note: 디스플레이 서체 선택 참조에 반영. 검사 규칙 행선지는 별도 이관
+  note: 'T1(2026-10-03): 라틴 표현 후보의 특성·실패를 함께 읽는 표를 type.md에 추가. 검사 규칙 행선지는 남음'
   status: partial
   done: [reference]
 - path: assets/flow-review-and-test-card.md
