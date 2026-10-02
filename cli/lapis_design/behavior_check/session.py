@@ -10,6 +10,7 @@ import yaml
 
 from lapis_design import __version__, shared_dir
 from lapis_design.behavior import derive_session
+from lapis_design.behavior_check.scope import BoxScope
 
 PROBE_NAMES = ("controls", "commits", "keyboard", "dialogs", "choices", "forms", "states",
                "urgency", "time_limits", "history", "pointer", "motion", "scroll",
@@ -20,8 +21,10 @@ class Session:
     def __init__(self, url: str, task: str, *, engine=None, plan: dict | None = None,
                  plan_path: str | None = None, backend: str = "stub", outbound: str | None = None,
                  build: str | None = None, extract: str | None = None, values_engine=None,
-                 stub_path: str | None = None, timezone: str = "UTC", addresses: list[str] | None = None):
+                 stub_path: str | None = None, timezone: str = "UTC", addresses: list[str] | None = None,
+                 scope: BoxScope | None = None):
         self.engine = engine
+        self.scope = scope or BoxScope()                 # which boxes the per-box probes exercise (--box, --limit)
         self.timezone = timezone                         # IANA zone every context runs in
         self.values_engine = values_engine or engine
         self.fixture_values = self.values_engine.all_values() if self.values_engine is not None else {}
@@ -114,6 +117,11 @@ class Session:
         self.flows.append(run)
 
     def cover(self, probe: str, status: str, *, contexts=None, reason=None) -> None:
+        """Record what a probe covered. Boxes the run's scope left out make a probe that ran, or found nothing it
+        could exercise, `partial`, and the reason says how many."""
+        if status != "skipped" and (left_out := self.scope.left_out(probe)):
+            status = "partial"
+            reason = "; ".join(filter(None, [reason, *left_out]))
         entry = {"probe": probe, "status": status}
         if contexts is not None:
             entry["contexts"] = list(contexts)

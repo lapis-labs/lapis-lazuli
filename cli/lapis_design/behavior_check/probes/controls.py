@@ -148,7 +148,7 @@ def run(session, open_driver):
             session.engine.reset()
         driver = open_driver(ctx_id)
         try:
-            queue = deque((box["id"], ()) for box in driver.interactive())
+            queue = deque((box["id"], ()) for box in session.scope.pick("controls", ctx_id, driver.interactive()))
             seen = set()
             ran = 0
             skipped = []
@@ -190,7 +190,8 @@ def run(session, open_driver):
                                 for req in effect.get("requests", ()))):
                         session._control_commit_requests.add((ctx_id, box_id))
                     for child in driver.interactive(reuse=True):
-                        if child["id"] not in seen and all(child["id"] != queued for queued, _ in queue):
+                        if (child["id"] not in seen and all(child["id"] != queued for queued, _ in queue)
+                                and session.scope.admit("controls", ctx_id, child["id"])):
                             queue.append((child["id"], (*path, box_id)))
                     keyboard = _keyboard(driver, box, path, effect)
                     session.add_probe("controls", {"box": box_id, "context": ctx_id,

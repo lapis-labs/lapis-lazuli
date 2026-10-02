@@ -23,6 +23,7 @@ from playwright.sync_api import sync_playwright
 from lapis_design import chromium, local_site, narrow, ours, shared_dir
 from lapis_design.behavior_check import probes, redact
 from lapis_design.behavior_check.driver import Driver, MissingSyntheticValues
+from lapis_design.behavior_check.scope import PER_BOX, BoxScope
 from lapis_design.behavior_check.session import PROBE_NAMES, Session
 from lapis_design.plan_check import read_plan_or_raise
 
@@ -33,6 +34,18 @@ def _stub_reference(path: Path) -> str | None:
         return Path(os.path.relpath(path, Path.cwd())).as_posix()
     except ValueError:  # Windows cannot make a relative path across drives.
         return None
+
+
+def _box_id(text: str) -> str:
+    if not re.fullmatch(r"b[0-9a-f]{12}", text):
+        raise argparse.ArgumentTypeError(f"{text!r} is not a box id (b and 12 hex digits, as in the session's nodes)")
+    return text
+
+
+def _count(text: str) -> int:
+    if not text.isdecimal() or int(text) < 1:
+        raise argparse.ArgumentTypeError(f"{text!r} is not a whole number of at least 1")
+    return int(text)
 
 
 def main(argv: list[str] | None = None, prog: str = "lapis-design behavior check") -> int:
@@ -52,21 +65,32 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design behavior check
     parser.add_argument("--build")
     parser.add_argument("--out", type=Path,
                         help="where to write the session (default .lapis/behavior/<task>.json, or "
-                             ".lapis/behavior/<task>.narrow.json when --probe or --context narrows the run; a "
-                             "narrowed run is refused the full path, which the release gate reads)")
+                             ".lapis/behavior/<task>.narrow.json when --probe, --context, --box, or --limit narrows "
+                             "the run; a narrowed run is refused the full path, which the release gate reads)")
     parser.add_argument("--context", choices=("m", "d"), action="append",
                         help="a context to run, m (390 px, touch) or d (1440 px, mouse); repeatable "
                              "(default: both). Narrows the run")
     parser.add_argument("--probe", action="append", choices=PROBE_NAMES,
                         help="a probe to run; repeatable (default: every probe). The others are recorded as "
                              "skipped. Narrows the run")
+    parser.add_argument("--box", action="append", type=_box_id, metavar="ID",
+                        help=f"a box id, as in the session's nodes, for the per-box probes ({', '.join(PER_BOX)}) to "
+                             "exercise; repeatable. Other boxes are left out, and each probe's coverage is partial "
+                             "with a reason that counts them. A control an action reveals is reached only when the "
+                             "control that reveals it is named too. Narrows the run")
+    parser.add_argument("--limit", type=_count, metavar="N",
+                        help="exercise at most N boxes per context in each per-box probe, in document order; the "
+                             "rest are left out and counted as with --box. Narrows the run")
     parser.add_argument("--timezone", default="UTC",
                         help="IANA zone the browser contexts run in (default UTC); absolute times without "
                              "a zone are read in it")
     args = parser.parse_args(argv)
+    if (args.box or args.limit) and args.probe and not set(args.probe) & set(PER_BOX):
+        parser.error(f"--box and --limit narrow the per-box probes ({', '.join(PER_BOX)}), and --probe selects none")
     if not args.out and ("/" in args.task or "\\" in args.task or args.task in (".", "..")):
         parser.error("task must be a filename component when --out is omitted")
-    narrowed_by = [flag for flag, given in (("--probe", args.probe), ("--context", args.context)) if given]
+    narrowed_by = [flag for flag, given in (("--probe", args.probe), ("--context", args.context),
+                                            ("--box", args.box), ("--limit", args.limit)) if given]
     args.out = narrow.output_path(parser, args.out, "behavior", args.task, narrowed_by)
     try:
         with local_site.serve(args.url) as url:
@@ -135,7 +159,8 @@ def _check(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
                           backend="local-dev" if args.backend else "stub", outbound=args.outbound,
                           build=args.build, extract=str(args.extract) if args.extract else None,
                           stub_path=_stub_reference(args.stub) if args.stub else None,
-                          timezone=args.timezone, addresses=list(source_pin.addresses) if source_pin else None)
+                          timezone=args.timezone, addresses=list(source_pin.addresses) if source_pin else None,
+                          scope=BoxScope(args.box or (), args.limit))
         selected = args.context or ["m", "d"]
         # Probes iterate session.matrix; unselected default contexts must not run or appear.
         session.contexts = {ctx_id: session.contexts[ctx_id] for ctx_id in selected}

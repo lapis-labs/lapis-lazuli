@@ -125,9 +125,16 @@ def run(session, open_driver):
         try:
             boxes = {box["id"]: box for box in driver.boxes()}
             candidates = driver.page.evaluate(CANDIDATES)
+            chosen = None                      # a narrowed run exercises only the boxes its scope admits
+            if session.scope.active:
+                named = {item["id"] for item in candidates}
+                if driver.ctx["pointer"] != "coarse":              # hover does not exist in a coarse pointer context
+                    named |= {box["id"] for box in driver.interactive()}
+                chosen = {box["id"] for box in session.scope.pick(
+                    "pointer", ctx_id, [box for box in boxes.values() if box["id"] in named])}
             for candidate in candidates:
                 box = boxes.get(candidate["id"])
-                if not box:
+                if not box or (chosen is not None and box["id"] not in chosen):
                     continue
                 if session.meta["backend"] != "stub" and box["tag"] != "input" and candidate["role"] != "slider":
                     partial.append(f"{ctx_id}: drag on potentially state-changing widget omitted on local-dev")
@@ -161,6 +168,8 @@ def run(session, open_driver):
                 continue
             for box in driver.interactive():
                 bid = box["id"]
+                if chosen is not None and bid not in chosen:
+                    continue
                 try:
                     driver.page.mouse.move(0, -1)
                     before = set(driver.page.evaluate(VISIBLE))
