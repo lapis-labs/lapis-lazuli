@@ -1,6 +1,6 @@
 """The controls probe's cost is bounded by what it observes, not by how often it looks: a snapshot costs the same
-browser round trips on a page of any size, an action snapshots a calm page twice, a control costs a fixed number of
-snapshots, and a window the page spends doing nothing does not wait the real time out."""
+browser round trips on a page of any size, an action snapshots a calm page twice, and a control costs a fixed number
+of snapshots."""
 from __future__ import annotations
 
 import threading
@@ -10,7 +10,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import pytest
 from playwright.sync_api import Locator
 
-from lapis_design.behavior_check import nodes, settle
+from lapis_design.behavior_check import nodes
 from lapis_design.behavior_check.driver import Driver
 from lapis_design.behavior_check.probes import controls
 from lapis_design.behavior_check.session import Session
@@ -159,12 +159,3 @@ def test_timers_due_inside_the_window_still_run_and_hold_it_open(opened):
     button = next(box for box in driver.interactive() if box["name"] == "go")
     effect = driver.act({"kind": "click", "target": button["id"]})
     assert effect["text_changed"] and effect["settle_ms"] >= 800          # 300 ms until the text, then 500 quiet
-
-
-def test_a_window_the_page_spends_doing_nothing_is_not_waited_out(opened, monkeypatch):
-    _, driver = opened("still.html", "<p>nothing happens here</p>")
-    sleeps, nap = [], settle.sleep
-    monkeypatch.setattr(settle, "sleep", lambda seconds: (sleeps.append(seconds), nap(seconds)))
-    settled = settle.quiet(driver, driver.page.evaluate("window.__lapisObserve.mutations"))
-    assert settled >= 500                           # the page's own clock still moved the whole window
-    assert len(sleeps) <= 10                        # real time only for its first 100 ms: about seven 16 ms naps

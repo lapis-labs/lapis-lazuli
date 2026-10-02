@@ -87,50 +87,26 @@ APART_FROM_ANIMATED = """({ids, animated}) => {
 }"""
 
 
-# What a poll reads: the mutation count, and whether anything runs in real time that the controlled clock does not
-# drive: a CSS transition or animation, a media element playing, a document still loading. Reading the animations
-# also brings the page's style up to date, as a rendered frame would, so a transition a timer starts is seen.
-POLL = """() => ({mutations: window.__lapisObserve?.mutations || 0,
-  moving: document.readyState !== 'complete' || document.getAnimations().some(a => a.playState === 'running') ||
-    [...document.querySelectorAll('video,audio')].some(m => !m.paused && !m.ended)})"""
-
-QUIET_MS = 500       # a quiet window is this long in the page's own time
-FOLLOW_MS = 100      # real time, after any mutation or request, for what real time delivers: frames, observers, events
-STEP_MS = 16         # between polls the clock moves one frame
-
-
-def _window(driver, last_mutations: int, limit_ms: int) -> tuple[bool, int, int]:
-    """Advance the controlled clock until `limit_ms` have passed or 500 ms went by without mutations or pending
-    requests. The clock follows real time (a poll, a 16 ms sleep, the clock moved by what the loop took) while a
-    request is pending, a transition runs, the document loads, or the page changed less than `FOLLOW_MS` ago.
-    Past that nothing is in flight that real time would let finish, so the rest of the quiet window passes a
-    frame per poll without waiting. Returns whether the page went quiet, the last mutation count, and the
-    controlled ms that passed."""
-    advanced_at = monotonic()
-    elapsed = quiet = 0
-    while elapsed < limit_ms:
+def _window(driver, last_mutations: int, limit: float) -> tuple[bool, int]:
+    """Wait up to `limit` real seconds for 500 ms without mutations or pending requests."""
+    started = monotonic()
+    quiet_since = started
+    advanced_at = started
+    while monotonic() - started < limit:
         try:
-            seen = driver.page.evaluate(POLL)
+            count = driver.page.evaluate("window.__lapisObserve?.mutations || 0")
         except Exception:
-            return True, last_mutations, elapsed
-        pending = bool(driver.network.pending)
-        if seen["mutations"] != last_mutations or pending:
-            last_mutations = seen["mutations"]
-            quiet = 0
-        if quiet >= QUIET_MS:
-            return True, last_mutations, elapsed
-        if pending or seen["moving"] or quiet < FOLLOW_MS:
-            sleep(.016)
-            now = monotonic()
-            step = max(1, round((now - advanced_at) * 1000))
-        else:
-            now = monotonic()
-            step = STEP_MS
-        driver.advance_clock(step)
+            return True, last_mutations
+        if count != last_mutations or driver.network.pending:
+            last_mutations = count
+            quiet_since = monotonic()
+        if monotonic() - quiet_since >= .5:
+            return True, last_mutations
+        sleep(.016)
+        now = monotonic()
+        driver.advance_clock(max(1, round((now - advanced_at) * 1000)))
         advanced_at = now
-        elapsed += step
-        quiet += step
-    return False, last_mutations, elapsed
+    return False, last_mutations
 
 
 def _hung(driver) -> bool:
@@ -140,9 +116,9 @@ def _hung(driver) -> bool:
 def quiet(driver, start_mutations: int) -> float:
     """Settle window: 500 ms without mutations or pending requests, capped at 5 s. While an
     injected hang is pending, the cap is 10 s of controlled time: the clock advances in 1 s steps
-    and the page is checked after each, so app timeouts and the stub's close fire in order.
-    Returns the controlled ms the window took."""
-    done, last, elapsed = _window(driver, start_mutations, 1000)
+    and the page is checked after each, so app timeouts and the stub's close fire in order."""
+    started = monotonic()
+    done, last = _window(driver, start_mutations, 1)
     controlled = 0
     while not done and _hung(driver) and controlled < 10_000:
         driver.advance_clock(1000, jump=True)  # each 1 s step fires due timers once, in order
@@ -153,5 +129,5 @@ def quiet(driver, start_mutations: int) -> float:
         except Exception:
             break
     if not done:
-        elapsed += _window(driver, last, 4000)[2]
-    return round(elapsed + controlled, 2)
+        _window(driver, last, 4)
+    return round((monotonic() - started) * 1000 + controlled, 2)
