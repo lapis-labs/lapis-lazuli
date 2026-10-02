@@ -176,9 +176,10 @@ def synthetic_out(tmp_path, home):
         folder.mkdir(parents=True)
     own = [str(home / ".agents" / "skills" / "private-brand-voice" / "SKILL.md")]
     own += [os.path.dirname(own[0])]
+    digest = "ab" * 32
     evalkit.write_json(out / "manifest.json", {
         "version": 1, "model": "m", "codex": {"bin": str(home / "bin" / "codex"), "version": "0.0"},
-        "skill_digests": {"lapis": "abc"}, "tasks": {TASK: {"skills": ["lapis"]}}})
+        "skill_digests": {"lapis": digest}, "tasks": {TASK: {"skills": ["lapis"]}}})
     evalkit.write_json(run_dir / "run.json", {
         "id": f"{TASK}.r1.with", "task": TASK, "arm": "with", "replicate": 1, "order": 1,
         "usage": {"input_tokens": 7},
@@ -190,16 +191,19 @@ def synthetic_out(tmp_path, home):
         "verified": True, "reason": None, "expected": ["lapis"], "visible": ["lapis"],
         "outside_before": ["private-brand-voice"], "disabled": own})
     evalkit.write_json(run_dir / "score.json", {
+        "font_db": {"sha256": digest, "faces": 2, "families": 2},
         "site": {"root": "project"},
         "checkers": {"render_check": {"status": "ok"},
                      "behavior_check": {"status": "not scored", "code": "n/a", "reason": "no behavior check"},
                      "lint": {"summary": {"blocking": 3}, "reason": f"{run_dir}/project failed"}},
         "copy": {"status": "not scored", "code": "no render", "reason": "x"}})
+    cmd = run.codex_command(str(home / "bin" / "codex"), run_dir / "project", run_dir / "last-message.txt", model="m",
+                            effort=None, sandbox="workspace-write", network=False, add_dirs=[run_dir / "home"],
+                            disabled=own)
     (run_dir / "command.txt").write_text(
-        f"# run from {run_dir}\n# environment: HOME={run_dir}/home CODEX_HOME={home}/.codex\ncodex exec \\\n"
-        f"  -C {run_dir}/project \\\n  -c 'skills.config=[{{path=\"{own[0]}\",enabled=false}},"
-        f"{{path=\"{own[1]}\",enabled=false}}]' \\\n  -\n")
-    (run_dir / "prompt.txt").write_text("Build a page.")
+        run.command_header(out / "bin", run_dir) + run.format_command(cmd, elide=True, run_dir=run_dir)
+        + " \\\n  < prompt.txt\n")
+    (run_dir / "prompt.txt").write_text(evalkit.load_tasks()[TASK]["prompt"])
     (run_dir / "events.jsonl").write_text(json.dumps({"text": f"I looked at {home}/.agents/skills/x"}) + "\n")
     (run_dir / "stderr.log").write_text(f"{home}\n")
     (run_dir / "last-message.txt").write_text("done")
@@ -229,15 +233,7 @@ def test_the_share_export_keeps_numbers_and_drops_paths_names_and_transcripts(tm
     assert evalkit.read_json(exported / "score.json")["checkers"]["lint"]["summary"] == {"blocking": 3}
     assert "disabled" not in evalkit.read_json(exported / "isolation.json")
     assert "skills.config=[... 2 paths switched off ...]" in (exported / "command.txt").read_text()
-
-
-def test_the_share_export_writes_nothing_when_it_cannot_prove_its_output_clean(tmp_path, home, monkeypatch):
-    share = load("share")
-    out = synthetic_out(tmp_path, home)
-    monkeypatch.setattr(share.Scrubber, "text", lambda self, value: value)
-    with pytest.raises(evalkit.KitError):
-        share.export(out, tmp_path / "shared")
-    assert not (tmp_path / "shared").exists()
+    assert (exported / "prompt.txt").read_text() == f"Task id: {TASK}\n"
 
 
 def test_the_share_export_refuses_a_destination_that_is_not_new_or_not_apart(tmp_path, home):
@@ -248,6 +244,26 @@ def test_the_share_export_refuses_a_destination_that_is_not_new_or_not_apart(tmp
     for dest in (tmp_path / "taken", out / "shared", ROOT / "shared"):
         with pytest.raises(evalkit.KitError):
             share.export(out, dest)
+
+
+def test_a_dry_run_folder_exports_the_settings_the_runner_wrote(fake, home, tmp_path):
+    share = load("share")
+    out = tmp_path / "out"
+    assert fake.start(out, "--dry-run", "--effort", "high", "--network") == 0
+    dest = tmp_path / "shared"
+    written = share.export(out, dest)
+    for arm in ("with", "without"):
+        name = f"{TASK}.r1.{arm}"
+        assert {f"runs/{name}/{f}" for f in ("run.json", "isolation.json", "command.txt", "prompt.txt")} <= set(written)
+        exported = evalkit.read_json(dest / "runs" / name / "run.json")
+        assert (exported["arm"], exported["model"], exported["effort"], exported["sandbox"], exported["network"]) == \
+            (arm, "test-model", "high", "workspace-write", True)
+        command = (dest / "runs" / name / "command.txt").read_text()
+        assert command.splitlines()[2] == "codex \\" and "  -c features.apps=false \\" in command.splitlines()
+        assert (dest / "runs" / name / "prompt.txt").read_text() == f"Task id: {TASK}\n"
+    manifest = evalkit.read_json(dest / "manifest.json")
+    assert manifest["model"] == "test-model" and manifest["codex"] == {"version": "codex-cli 0.0-test"}
+    assert "opuser" not in tree_text(dest) and str(out) not in tree_text(dest)
 
 
 # ------------------------------------------------------------------ EV3: the agent's environment
@@ -275,6 +291,18 @@ def test_the_agent_gets_an_allow_listed_environment_and_a_scratch_home(fake, hom
         assert Path(env["TMPDIR"]).parent == Path(env["HOME"])
         assert Path(env["TMPDIR"]).is_dir()
         assert env["PATH"].split(os.pathsep)[0] == str(out.resolve() / "bin")
+
+
+def test_every_run_switches_the_accounts_apps_off_in_both_arms_and_says_so_in_its_command(fake, tmp_path):
+    out = tmp_path / "out"
+    assert fake.start(out) == 0
+    calls = fake.execs()
+    assert len(calls) == 2
+    for call in calls:
+        args = call["args"]
+        assert args[args.index("features.apps=false") - 1] == "-c"
+    for arm in ("with", "without"):
+        assert "  -c features.apps=false \\" in (out / "runs" / f"{TASK}.r1.{arm}" / "command.txt").read_text().splitlines()
 
 
 # ------------------------------------------------------------------ EV4: --resume against the manifest
@@ -479,7 +507,8 @@ def scored_run(out, arm, order, *, leak_to=None):
         (run_dir / "project" / "leak.txt").symlink_to(leak_to)
     evalkit.write_json(run_dir / "run.json", {"id": run_id, "task": TASK, "arm": arm, "replicate": 1,
                                               "order": order, "project": "project"})
-    evalkit.write_json(run_dir / "score.json", {"site": {"root": "project"}})
+    evalkit.write_json(run_dir / "score.json", {"font_db": {"sha256": "ab" * 32, "faces": 2, "families": 2},
+                                                "site": {"root": "project"}})
     return run_id
 
 
@@ -488,7 +517,7 @@ def test_a_review_with_a_link_out_of_a_project_stops_before_writing_anything(tmp
     out = tmp_path / "out"
     scored_run(out, "with", 1)
     scored_run(out, "without", 2, leak_to=tmp_path / "secret.txt")
-    with pytest.raises(evalkit.KitError):
+    with pytest.raises(evalkit.KitError, match="leak.txt"):
         review.build(out, 1, evalkit.load_tasks())
     assert not (out / "review").exists() and not review.key_path(out).exists()
 

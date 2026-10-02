@@ -33,9 +33,9 @@ Not diagnostic: a calibration run on someone's installed fonts (the corpus is no
 commercial or Adobe faces, and stays private), and lint counts of what an agent built (the checker
 is the skills' own rules, so a count says what the rules flagged, not whether the design is good).
 
-**(c) Performance claims.** Any statement that the skills or a model make results better: a
-difference between condition means, a rank sum per condition, a before-and-after count, a
-percentage, "outperforms", "state of the art". LapisLazuli does not make them, in any place below.
+**(c) Performance claims.** Any statement that one condition, tool, or model is ahead of another: a
+difference between condition means, a rank sum per condition, a before-and-after count, a percentage,
+"outperforms", "state of the art". LapisLazuli does not make them, in any place below.
 
 ## Where each kind may appear
 
@@ -45,10 +45,12 @@ percentage, "outperforms", "state of the art". LapisLazuli does not make them, i
 | CHANGELOG | Changes to methods and tools | None; "report updated" with a link | Never |
 | This folder | Procedure, rubric, pre-registration, case records | Diagnostics for the measurer and the checkers | Never |
 | A benchmark repository and its data card, if one is published | Datasheet, scripts, splits | Baseline tables for that benchmark version | Never; no "state of the art" for our own benchmark |
-| A model card, if a model is published | Data lists, how it was made | A benchmark table beside the baselines, without adjectives | Never; no claim of a better design |
+| A model card, if a model is published | Data lists, how it was made | A benchmark table beside the baselines, without adjectives | Never; no claim about the quality of a design |
 
-README and CHANGELOG lines about evaluation or benchmarks contain no percent sign, no multiplication
-sign, and no "better" or "improvement" wording. `tests/test_eval_wording.py` checks that.
+This file, the READMEs, and the CHANGELOG hold no sentence about an evaluation, a benchmark, or
+the skills that carries a percent sign, a multiplication sign, a number beside runs, tasks,
+findings, or tokens, an "N of M", or wording that compares conditions or reports a gain.
+`tests/test_eval_wording.py` checks that.
 
 ## Case studies
 
@@ -70,7 +72,7 @@ in-domain beside its record.
 Not published: run folders (event logs, raw commands, isolation and run records), exports made for
 named reviewers, user names, skill names, local paths, the agent's login, the review key before the
 review ends, a reviewer's identity without consent, anything drawn or measured with Adobe Fonts,
-and any figure that reads as an improvement, including checker counts set side by side by condition.
+and any figure that reads as a gain, including checker counts set side by side by condition.
 
 ## Wording
 
@@ -84,9 +86,9 @@ Fill the angle-bracket parts; add no adjectives.
   OFL corpus: <link>."
 - Diagnostic: "On <benchmark> <version> (OFL only, google/fonts @<commit>, <G> design groups,
   <split>), measurer <version> matched Google's SERIF/SANS_SERIF category for <k> of <n> families
-  (95% Wilson interval <a> to <b>; <u> unmeasured, counted as misses). Its thresholds were fixed
-  before this corpus existed. This describes the measurer on this corpus only, not other fonts or
-  designs made with the skills."
+  (Wilson interval at the 95 percent level, <a> to <b>; <u> unmeasured, counted as misses). Its
+  thresholds were fixed before this corpus existed. This describes the measurer on this corpus only,
+  not other fonts or designs made with the skills."
 - Case-study header: "Case study, not a benchmark. <n> runs per condition, model <M> at effort
   <E>, Codex <V>, no browser in the agent's sandbox, skills at commit <C>. With this few runs no
   difference between conditions can be told from run-to-run variation, and none is claimed."

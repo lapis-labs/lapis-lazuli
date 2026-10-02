@@ -25,6 +25,8 @@ EVAL_DIR = Path(__file__).resolve().parent
 TASKS_FILE = EVAL_DIR / "tasks.yaml"
 ARMS = ("with", "without")
 RECORD_VERSION = 1
+ENV_PASS = ("PATH", "LANG", "TERM")      # the only variables an agent or a checker takes from the operator, with LC_*
+ENV_PASS_PREFIXES = ("LC_",)
 FINISHED = ("completed", "failed", "timed_out")   # a resume repeats anything else, `interrupted` included
 _IGNORED_NAMES = {".DS_Store"}
 _IGNORED_DIRS = {"__pycache__"}
@@ -196,6 +198,14 @@ def browsers_path() -> str:
     return str(base / "ms-playwright")
 
 
+def passed_environment() -> dict[str, str]:
+    """What an agent or a checker takes from the operator's environment: PATH, LANG, TERM, and LC_*. Nothing
+    else the shell exports (API keys, tokens, proxy settings, the user name, the operator's own lazuli
+    settings) reaches them."""
+    return {name: value for name, value in os.environ.items()
+            if name in ENV_PASS or name.startswith(ENV_PASS_PREFIXES)}
+
+
 # ------------------------------------------------------------------ Adobe data stays out of evaluations
 
 _ADOBE = re.compile(r"adobe", re.I)
@@ -284,6 +294,44 @@ def evaluation_font_db(path: Path) -> dict:
     if not faces:
         raise KitError(f"{path} holds no fonts; build it from the OFL folder (tools/eval/README.md)")
     return {"path": path, "sha256": sha256_file(path), "faces": faces, "families": families}
+
+
+_SHA256 = re.compile(r"[0-9a-f]{64}")
+
+
+def is_pinned_score(score: Any) -> bool:
+    """Whether a `score.json` says which evaluation font database its checkers read: a `font_db` record with a
+    sha256. A score made before `--font-db` existed has none, and the checkers that made it read the font
+    database of whoever ran them, so it counts as not scored."""
+    record = score.get("font_db") if isinstance(score, dict) else None
+    return isinstance(record, dict) and isinstance(record.get("sha256"), str) and bool(_SHA256.fullmatch(record["sha256"]))
+
+
+def unpinned_scores(run_dirs: Iterable[Path]) -> list[str]:
+    """The names of the runs whose `score.json` exists but is not pinned to an evaluation font database."""
+    names = []
+    for run_dir in run_dirs:
+        path = Path(run_dir) / "score.json"
+        if not path.is_file():
+            continue
+        try:
+            pinned = is_pinned_score(read_json(path))
+        except (OSError, ValueError):
+            pinned = False
+        if not pinned:
+            names.append(Path(run_dir).name)
+    return names
+
+
+def refuse_unpinned_scores(run_dirs: Iterable[Path], action: str) -> None:
+    """Raise when a run's `score.json` is not pinned to an evaluation font database: it was made with the
+    operator's own lazuli database, which may hold Adobe Fonts measurements, so it is neither summarized,
+    exported, nor reviewed until `score.py --font-db DB --rescore` makes it again."""
+    names = unpinned_scores(run_dirs)
+    if names:
+        raise KitError(f"cannot {action}: the score.json of {len(names)} run(s) has no font_db record "
+                       f"({', '.join(names)}); it was made before scoring pinned an evaluation font database, "
+                       "so its checkers read the operator's own. Score again: score.py OUT --font-db DB --rescore")
 
 
 # ------------------------------------------------------------------ tasks

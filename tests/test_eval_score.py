@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools" / "eval"))
 
 import evalkit  # noqa: E402
-from evallint_support import make_font_db  # noqa: E402
+from evallint_support import FONT_DB, make_font_db  # noqa: E402
 
 
 def load(name):
@@ -123,6 +123,18 @@ def test_a_lint_that_did_not_run_scores_no_layer_as_zero():
     assert layers["plan"]["code"] == "no plan" and layers["source"]["code"] == "lint failed"
 
 
+def test_a_source_layer_whose_links_lint_did_not_read_is_not_scored_whatever_it_found():
+    report = {"scope": {"layers": ["source", "render"], "unread_links": {"source": ["src/a.css", "pages/"], "corpus": ["x.json"]}},
+              "findings": [finding("system.literal-color", "source", blocking=True), finding("type.x", "render")]}
+    layers = score.layers_record(report, {"status": "ok"}, plan=None, behavior_applicable=False, behavior=None,
+                                 render={"status": "ok"})
+    assert layers["source"]["status"] == "not scored" and layers["source"]["code"] == "source links unread"
+    assert layers["render"]["status"] == "ok" and layers["render"]["total"] == 1
+    corpus_only = {**report, "scope": {"layers": ["source", "render"], "unread_links": {"corpus": ["x.json"]}}}
+    assert score.layers_record(corpus_only, {"status": "ok"}, plan=None, behavior_applicable=False, behavior=None,
+                               render={"status": "ok"})["source"]["status"] == "ok"
+
+
 def test_row_sums_scored_layers_and_leaves_the_others_empty():
     layers = {"plan": missing("no plan"), "source": ok(1, 3), "render": ok(2, 5), "behavior": missing("n/a")}
     copy = {"status": "ok", "words": 400, "findings": 2, "per_1000_words": 5.0}
@@ -225,7 +237,7 @@ def test_review_sheet_hides_the_arm_and_the_key_maps_it_back(tmp_path):
         shots.mkdir(parents=True)
         (shots / "01-390-light.png").write_bytes(b"png")
         evalkit.write_json(run_dir / "run.json", {**run_record("t", arm), "project": "project", "order": 1})
-        evalkit.write_json(run_dir / "score.json", {"site": {"root": "project"}})
+        evalkit.write_json(run_dir / "score.json", {"font_db": FONT_DB, "site": {"root": "project"}})
         evalkit.write_json(run_dir / "score" / "render.json", {"viewports": [
             {"width": 390, "theme": "light", "screenshot": "render.shots/01-390-light.png"}]})
     key = review.build(tmp_path, 3, tasks)

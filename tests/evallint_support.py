@@ -13,6 +13,8 @@ sys.path.insert(0, str(ROOT / "tools" / "eval"))
 import evalkit  # noqa: E402
 
 TASK = "kiln-landing-ko"
+DIGEST = "ab" * 32
+FONT_DB = {"sha256": DIGEST, "faces": 2, "families": 2}      # what score.py records of the evaluation database
 
 
 def load(name: str):
@@ -33,6 +35,7 @@ def run_record(arm: str, order: int, *, skills_read: list[str] | None = None, re
 def score_record(*, lint_code: str = "plan rejected", lint_reason: str = "lint could not use the plan",
                  root: str = "project") -> dict:
     return {
+        "font_db": dict(FONT_DB),
         "site": {"root": root, "refused_links": []},
         "checkers": {
             "render_check": {"status": "ok"},
@@ -49,7 +52,7 @@ def make_out(out: Path, *, score: dict | None = None, skills_read: list[str] | N
     `events` maps an arm to the text of that run's events.jsonl."""
     score_module = load("score")
     evalkit.write_json(out / "manifest.json", {
-        "version": 1, "model": "m", "skill_digests": {"lapis": "abc"}, "tasks": {TASK: {"skills": ["lapis"]}},
+        "version": 1, "model": "m", "skill_digests": {"lapis": DIGEST}, "tasks": {TASK: {"skills": ["lapis"]}},
         "codex": {"version": "codex-cli 0.0-test"}, "repo": {"commit": "0" * 40}})
     for order, arm in enumerate(("with", "without"), 1):
         run_dir = out / "runs" / evalkit.run_id(TASK, 1, arm)
@@ -59,6 +62,15 @@ def make_out(out: Path, *, score: dict | None = None, skills_read: list[str] | N
         if events and arm in events:
             (run_dir / "events.jsonl").write_text(events[arm], encoding="utf-8")
     score_module.write_summary(out, score_module.collect_rows(out))
+    return out
+
+
+def unpin(out: Path) -> Path:
+    """Make every score.json of `out` one from before scoring recorded the evaluation font database."""
+    for path in sorted(out.glob("runs/*/score.json")):
+        record = evalkit.read_json(path)
+        record.pop("font_db", None)
+        evalkit.write_json(path, record)
     return out
 
 

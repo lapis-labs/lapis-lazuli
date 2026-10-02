@@ -19,12 +19,18 @@ scored whatever its status, so a folder from `run.py --dry-run` can be filled by
 The server answers a link inside the site only when its target is inside the run's project; any other
 link gets a 403 and is listed under `site.refused_links` in `score.json`. A conventional site folder
 (`public`, `dist`, ...) that is itself a link out of the project is passed over and listed under
-`site.skipped_roots`.
+`site.skipped_roots`. The plan and the fonts lock are given to `slop lint` only when they resolve inside
+the project; a link out of it is not read (`plan.status` or `lock.status` says `outside`, and the plan
+layer reads `plan outside`). When `slop lint` reports links it did not read (`scope.unread_links.source`),
+the source layer is `source links unread`, not a count that describes only part of the project.
 
-The checkers run with `LAZULI_DB` pinned to the evaluation font database `--font-db` (built from OFL
-fonts only, see README.md; its sha256 goes into `score.json` as `font_db`) and with a scratch HOME and
-cache, so no checker can reach the user's own lazuli database. A run whose event log shows a call to an
-Adobe tool is neither scored nor summarized.
+The checkers run with the environment allow-list the agents get (PATH, LANG, LC_*, TERM), `LAZULI_DB`
+pinned to the evaluation font database `--font-db` (built from OFL fonts only, see README.md; its sha256
+goes into `score.json` as `font_db`), and a scratch HOME and cache, so no checker can reach the user's own
+lazuli database. A `score.json` without a `font_db` record was made before the database was pinned, with
+the checkers reading the operator's own: it counts as not scored, so scoring redoes it (and needs
+`--font-db`), and `--summary-only` refuses it. A run whose event log shows a call to an Adobe tool is
+neither scored nor summarized.
 """
 from __future__ import annotations
 
@@ -56,6 +62,9 @@ TIMEOUTS = {"render": 300, "behavior": 900, "lint": 300}
 NUMERIC = (*(f"{layer}_{kind}" for layer in (*LAYERS, "lint") for kind in ("blocking", "open", "total")),
            "copy_findings", "copy_words", "copy_per_1000", "tokens", "duration_s")
 NA = "—"
+# every `code` of a "not scored" record; share.py exports these and no other free-text reason
+CODES = ("render check failed", "behavior check failed", "lint failed", "no plan", "plan rejected", "plan outside",
+         "source links unread", "no site", "n/a", "no render", "no behavior", "no copy")
 
 
 # ------------------------------------------------------------------ site, plan, server
@@ -82,12 +91,31 @@ def skipped_site_roots(project: Path) -> list[str]:
     return [name for name, root in _site_candidates(project) if not kit.within(root, project)]
 
 
+LOCK_FILE = Path(".lapis") / "fonts.lock.json"
+
+
 def find_plan(project: Path, task: str) -> tuple[Path | None, list[str]]:
-    """The plan `.lapis/plans/<task>.yaml` when the agent wrote it, and the names of any other plan files."""
+    """The plan `.lapis/plans/<task>.yaml` when the agent wrote it inside the project, and the names of any
+    other plan files. A plan that is a link resolving outside the project is not used (see `outside_inputs`)."""
     plans = project / ".lapis" / "plans"
     wanted = plans / f"{task}.yaml"
     others = sorted(p.name for p in plans.glob("*.y*ml") if p != wanted) if plans.is_dir() else []
-    return (wanted if wanted.is_file() else None), others
+    return (wanted if wanted.is_file() and kit.within(wanted, project) else None), others
+
+
+def find_lock(project: Path) -> Path | None:
+    """The fonts lock `.lapis/fonts.lock.json` when it is a file inside the project."""
+    lock = project / LOCK_FILE
+    return lock if lock.is_file() and kit.within(lock, project) else None
+
+
+def outside_inputs(project: Path, task: str) -> dict[str, bool]:
+    """Which inputs the agent left as links that resolve outside the project: the plan and the fonts lock.
+    The checkers are never given them, because they would read a file the agent chose from anywhere."""
+    wanted = project / ".lapis" / "plans" / f"{task}.yaml"
+    lock = project / LOCK_FILE
+    return {"plan": wanted.is_file() and not kit.within(wanted, project),
+            "lock": lock.is_file() and not kit.within(lock, project)}
 
 
 class _QuietHandler(SimpleHTTPRequestHandler):
@@ -167,6 +195,8 @@ def _cli(python: str, *args: str) -> list[str]:
 
 
 def _not_scored(code: str, reason: str, **extra) -> dict:
+    if code not in CODES:
+        raise ValueError(f"{code!r} is not in score.CODES; share.py would export it as `other`")
     return {"status": "not scored", "code": code, "reason": reason, **extra}
 
 
@@ -221,12 +251,12 @@ def coverage_counts(session: dict) -> dict:
             "skipped_probes": sorted(e["probe"] for e in session.get("coverage") or [] if e.get("status") == "skipped")}
 
 
-def lint_step(ctx: dict, project: Path, plan: Path | None, extract: Path | None, session: Path | None) -> tuple[dict, dict | None]:
+def lint_step(ctx: dict, project: Path, plan: Path | None, extract: Path | None, session: Path | None,
+              lock: Path | None) -> tuple[dict, dict | None]:
     """`slop lint` over every input available; retried without the plan when the plan is what it rejects.
 
     Returns the checker record and the report (None when lint could not run)."""
     out = ctx["score_dir"] / "lint.json"
-    lock = project / ".lapis" / "fonts.lock.json"
     plan_problem = None
     for use_plan in ([plan, None] if plan else [None]):
         argv = _cli(ctx["python"], "slop", "lint", "--source", str(project), "-o", str(out))
@@ -236,14 +266,17 @@ def lint_step(ctx: dict, project: Path, plan: Path | None, extract: Path | None,
             argv += ["--extract", str(extract)]
         if session:
             argv += ["--session", str(session)]
-        if lock.is_file():
+        if lock:
             argv += ["--lock", str(lock)]
         ran = run_checker(argv, cwd=ctx["score_dir"], env=ctx["env"], timeout=ctx["timeouts"]["lint"],
                           log=ctx["score_dir"] / "logs" / "lint.txt")
         if ran.exit in (0, 1) and out.is_file():
             report = kit.read_json(out)
+            scope = report.get("scope") or {}
             record = {"status": "ok", "exit": ran.exit, "seconds": ran.seconds, "report": "score/lint.json",
-                      "layers_ran": (report.get("scope") or {}).get("layers", [])}
+                      "layers_ran": scope.get("layers", [])}
+            if scope.get("unread_links"):
+                record["unread_links"] = scope["unread_links"]
             if plan_problem:
                 record["plan_problem"] = plan_problem
             return record, report
@@ -299,12 +332,23 @@ def copy_stats(report: dict | None, extract: dict | None) -> dict:
 
 
 def layers_record(report: dict | None, lint: dict, *, plan: Path | None, behavior_applicable: bool,
-                  behavior: dict | None, render: dict) -> dict:
-    """Per-layer lint results, with the reason each layer that did not run was not scored."""
+                  behavior: dict | None, render: dict, plan_outside: bool = False) -> dict:
+    """Per-layer lint results, with the reason each layer that did not run was not scored. A source layer
+    whose links `slop lint` did not read (`scope.unread_links.source`) is not scored either: its counts
+    would describe only the part of the project that was read."""
+    scope = (report or {}).get("scope") or {}
+    unread = (scope.get("unread_links") or {}).get("source") or []
+    if plan is not None:
+        plan_reason = _not_scored("plan rejected", lint.get("plan_problem") or "lint could not use the plan")
+    elif plan_outside:
+        plan_reason = _not_scored("plan outside", "the plan is a link that resolves outside the project")
+    else:
+        plan_reason = _not_scored("no plan", "the agent wrote no .lapis/plans/<task>.yaml")
     reasons = {
-        "plan": _not_scored("no plan", "the agent wrote no .lapis/plans/<task>.yaml") if plan is None else
-                _not_scored("plan rejected", lint.get("plan_problem") or "lint could not use the plan"),
-        "source": _not_scored("lint failed", lint.get("reason", "lint did not run")),
+        "plan": plan_reason,
+        "source": (_not_scored("source links unread", f"slop lint did not read {len(unread)} source link(s): "
+                               + ", ".join(unread[:3]) + (", ..." if len(unread) > 3 else "")) if unread else
+                   _not_scored("lint failed", lint.get("reason", "lint did not run"))),
         "render": _not_scored("no render", render.get("reason", "render check did not run")),
         "behavior": _not_scored("n/a", "the task has no behavior check") if not behavior_applicable else
                     _not_scored("no behavior", (behavior or {}).get("reason", "behavior check did not run")),
@@ -314,22 +358,22 @@ def layers_record(report: dict | None, lint: dict, *, plan: Path | None, behavio
         inherent = {"plan": plan is None, "behavior": not behavior_applicable}
         return {layer: reasons[layer] if inherent.get(layer) else failed for layer in LAYERS}
     stats = layer_stats(report)
-    ran = set((report.get("scope") or {}).get("layers", []))
+    ran = set(scope.get("layers", [])) - ({"source"} if unread else set())
     return {layer: ({"status": "ok", **stats[layer]} if layer in ran else reasons[layer]) for layer in LAYERS}
 
 
 # ------------------------------------------------------------------ scoring one run
 
 def checker_env(scratch: Path, font_db: Path, sig_key: Path) -> dict:
-    """The environment of the checkers: the operator's own, except that `LAZULI_DB` is the evaluation font
-    database, HOME and the cache folders are an empty scratch (so a code path that ignored `LAZULI_DB`
-    would find no database at the user cache location either), and `LAZULI_FONT_ROOTS` is one empty folder in
-    the scratch (so no checker lists the operator's fonts, and the Core Text listing of Adobe Fonts is off).
-    The Playwright browsers stay where they are."""
-    env = dict(os.environ)
+    """The environment of the checkers: the allow-list the agents get (`evalkit.passed_environment`: PATH,
+    LANG, LC_*, TERM) and nothing else of the operator's, so none of their lazuli settings, tokens, or proxy
+    variables reach a checker. `LAZULI_DB` is the evaluation font database, HOME and the cache folders are
+    an empty scratch (so a code path that ignored `LAZULI_DB` would find no database at the user cache
+    location either), and `LAZULI_FONT_ROOTS` is one empty folder in the scratch (so no checker lists the
+    operator's fonts, and the Core Text listing of Adobe Fonts is off). The Playwright browsers stay where
+    they are."""
     browsers = kit.browsers_path()
-    for name in ("LAZULI_DB", "LAZULI_FONT_ROOTS", "XDG_CACHE_HOME", "XDG_CONFIG_HOME", "XDG_DATA_HOME"):
-        env.pop(name, None)
+    env = kit.passed_environment()
     home = scratch / "home"
     (home / ".cache").mkdir(parents=True)
     fonts = scratch / "fonts"
@@ -362,12 +406,16 @@ def _score_run(run_dir: Path, tasks: dict, *, env: dict, font_db: dict, python: 
     ctx = {"python": python, "env": env, "score_dir": score_dir, "task": run["task"],
            "timeouts": {**TIMEOUTS, **(timeouts or {})}}
     plan, other_plans = find_plan(project, run["task"])
+    lock = find_lock(project)
+    outside = outside_inputs(project, run["task"])
     root = find_site_root(project)
     result: dict = {
         "version": kit.RECORD_VERSION, "run": run["id"], "task": run["task"], "arm": run["arm"],
         "replicate": run["replicate"], "scored_at": kit.utc_now(), "run_status": run.get("status"),
-        "plan": {"status": "found" if plan else "no plan", "path": ".lapis/plans/" + plan.name if plan else None,
+        "plan": {"status": "found" if plan else "outside" if outside["plan"] else "no plan",
+                 "path": f".lapis/plans/{run['task']}.yaml" if plan or outside["plan"] else None,
                  "other_plans": other_plans},
+        "lock": {"status": "found" if lock else "outside" if outside["lock"] else "no lock"},
         "site": {"root": root.relative_to(run_dir).as_posix() if root else None,
                  "refused_links": kit.links_outside(root, project) if root else [],
                  "skipped_roots": skipped_site_roots(project)},
@@ -395,9 +443,9 @@ def _score_run(run_dir: Path, tasks: dict, *, env: dict, font_db: dict, python: 
         lint = _not_scored("no site", "the project has no index.html, so nothing was built to lint")
     else:
         lint, report = lint_step(ctx, project, plan, score_dir / "render.json" if render["status"] == "ok" else None,
-                                 score_dir / "behavior.json" if behavior["status"] == "ok" else None)
+                                 score_dir / "behavior.json" if behavior["status"] == "ok" else None, lock)
     lint["layers"] = layers_record(report, lint, plan=plan, behavior_applicable=behavior_stub is not None,
-                                   behavior=behavior, render=render)
+                                   behavior=behavior, render=render, plan_outside=outside["plan"])
     if report is not None:
         lint["summary"] = {"blocking": (report.get("summary") or {}).get("blocking", 0),
                            "total": (report.get("summary") or {}).get("total", 0)}
@@ -646,13 +694,14 @@ def main(argv: list[str] | None = None) -> int:
         if unknown:
             raise KitError(f"unknown run: {', '.join(sorted(unknown))}")
         kit.refuse_adobe_calls(runs, "summarize" if args.summary_only else "score")
+        unpinned = set(kit.unpinned_scores(runs))     # scored before --font-db pinned the database: not scored
         if not args.summary_only:
             timeouts = {name: getattr(args, f"{name}_timeout") for name in TIMEOUTS}
             font_db = None
             for run_dir in runs:
                 if wanted and run_dir.name not in wanted:
                     continue
-                if (run_dir / "score.json").is_file() and not args.rescore:
+                if (run_dir / "score.json").is_file() and run_dir.name not in unpinned and not args.rescore:
                     print(f"skip   {run_dir.name} (scored; --rescore to redo)")
                     continue
                 if font_db is None:
@@ -668,6 +717,7 @@ def main(argv: list[str] | None = None) -> int:
                 print("  render {} | behavior {} | lint {} | copy {}".format(
                     checkers["render_check"]["status"], checkers["behavior_check"]["status"],
                     checkers["lint"]["status"], result["copy"].get("per_1000_words", result["copy"]["status"])))
+        kit.refuse_unpinned_scores(runs, "summarize")
         rows = collect_rows(out)
         write_summary(out, rows)
     except KitError as exc:

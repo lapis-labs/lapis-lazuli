@@ -10,8 +10,9 @@ OUT/review.key.json, next to the review folder and never in it, so the folder ca
 reviewer as is; keep the key closed until every candidate is judged. Screenshots and a copy of each
 site (without hidden folders) are copied under anonymous names, so no path, file name, score, plan,
 or agent message in the sheet says which arm produced a candidate. A link in a site that points
-outside the run's project stops the build. The page's own source can still show habits of one arm;
-judge the screenshots first.
+outside the run's project stops the build, and so does a `score.json` without a `font_db` record (made
+before scoring pinned the evaluation font database). The page's own source can still show habits of one
+arm; judge the screenshots first.
 """
 from __future__ import annotations
 
@@ -39,6 +40,7 @@ def _candidates(out: Path) -> dict[str, list[dict]]:
     by_task: dict[str, list[dict]] = {}
     runs = kit.list_runs(out)
     kit.refuse_adobe_calls(runs, "build a review")
+    kit.refuse_unpinned_scores(runs, "build a review")
     for run_dir in runs:
         if not (run_dir / "score.json").is_file():
             continue

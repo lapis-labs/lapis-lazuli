@@ -5,11 +5,12 @@
         [--tasks all|ID,ID] [--out DIR] [--seed N] [--timeout SECONDS] [--dry-run] [--resume]
 
 Every run gets its own empty project folder (a git repository, so Codex takes it as the project
-root), a scratch HOME, and a Codex command that ignores the user's config and rules. The with-skill
-arm receives copies of the task's `dist/skills/<skill>/` trees in `.agents/skills/`; the without arm
-receives none. The skills Codex would otherwise load from the user's own folders are switched off
-for both arms (`skills.config`), and each run's skill list is read back from
-`codex debug prompt-input` to confirm the arm sees exactly its own skills. Arm order is randomized
+root), a scratch HOME, and a Codex command that ignores the user's config and rules and switches off
+the account's connector apps (`-c features.apps=false`), so no run can call a tool of the operator's own
+account. The with-skill arm receives copies of the task's `dist/skills/<skill>/` trees in
+`.agents/skills/`; the without arm receives none. The skills Codex would otherwise load from the user's
+own folders are switched off for both arms (`skills.config`), and each run's skill list is read back
+from `codex debug prompt-input` to confirm the arm sees exactly its own skills. Arm order is randomized
 per task and replicate from a recorded seed.
 
 Codex starts with an allow-listed environment (PATH, LANG, LC_*, TERM, a scratch HOME and TMPDIR, and
@@ -55,8 +56,7 @@ _SKILL_LINE = re.compile(r"^- (\S+?): .*\(file: ([^)\n]+)\)\s*$", re.M)
 _SKILL_PATH = re.compile(r"\.agents/skills/([A-Za-z0-9_.\-]+)/")
 _CHECK_CALL = re.compile(r"\b(lapis-design|lazuli)\s+([a-z]+)(?:\s+([a-z]+))?")
 
-ENV_PASS = ("PATH", "LANG", "TERM")      # the only variables an agent takes from the operator, with LC_*
-ENV_PASS_PREFIXES = ("LC_",)
+APPS_OFF = "features.apps=false"        # connector tools (the account's apps) are off in every run, both arms
 
 
 # ------------------------------------------------------------------ planning
@@ -90,7 +90,7 @@ def codex_command(codex: str, project: Path, last_message: Path, *, model: str, 
     """`codex exec` for one run; the prompt comes from stdin (`-`)."""
     cmd = [codex, "exec", "--ignore-user-config", "--ignore-rules", "--skip-git-repo-check", "--ephemeral",
            "--color", "never", "--json", "--sandbox", sandbox, "-C", str(project), "-m", model,
-           "-o", str(last_message)]
+           "-o", str(last_message), "-c", APPS_OFF]
     if effort:
         cmd += ["-c", f"model_reasoning_effort={json.dumps(effort)}"]
     if sandbox == "workspace-write":
@@ -178,8 +178,7 @@ def agent_env(run_dir: Path, shims: Path | None) -> dict[str, str]:
     holds the login (`codex exec --ignore-user-config` still reads `auth.json` there); and lazuli
     pointed at an empty font folder. Nothing else the operator's shell exports (API keys, tokens,
     proxy settings, the user name) reaches the agent."""
-    env = {name: value for name, value in os.environ.items()
-           if name in ENV_PASS or name.startswith(ENV_PASS_PREFIXES)}
+    env = kit.passed_environment()
     home = run_dir / "home"
     env["HOME"] = str(home)
     env["TMPDIR"] = str(home / "tmp")
