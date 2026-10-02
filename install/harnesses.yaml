@@ -100,6 +100,7 @@ harnesses:
     verified:
       - "2026-09-30, 2.1.277: from the public repository, `claude plugin marketplace add lapis-labs/lapis-lazuli@release` and `claude plugin install {plugin}@{catalog} -s user` install all three plugins at the release commit; a new session lists all eleven skills"
       - "2026-10-01, 2.1.285: `claude plugin marketplace update {catalog}` and `claude plugin update {plugin}@{catalog}` move all three plugins from 0.1.1 to 0.1.2 from the public repository; a new session lists all eleven skills"
+      - "2026-10-02, 2.1.285: the same update commands move all three plugins from 0.1.2 to 0.1.3 from the public repository; a new session lists all eleven skills"
       - "2026-09-27, 2.1.274: `claude plugin marketplace add <local checkout>`, then `claude plugin install {plugin}@{catalog} -s user` installs all three plugins; adding the same marketplace again exits 0 (already on disk)"
       - "2026-09-27, 2.1.274: the SessionStart hook runs `lapis-design hook session-start` and exits 0 with the inventory summary; the MCP server plugin:lazuli:lapis-lazuli connects"
       - "2026-09-27, 2.1.274: `claude plugin list --json` reports each plugin's version and installPath (~/.claude/plugins/cache/{catalog}/{plugin}/{version}/); a local-path catalog loads the plugin from the checkout"
@@ -160,6 +161,7 @@ harnesses:
     verified:
       - "2026-09-30, 0.159.0: from the public repository, `codex plugin marketplace add lapis-labs/lapis-lazuli --ref release` and `codex plugin add {plugin}@{catalog}` install all three plugins at the release commit; a new session lists all eleven skills as {plugin}:{skill}"
       - "2026-10-01, 0.159.2: `codex plugin marketplace upgrade {catalog}` moves all three plugins from 0.1.1 to 0.1.2 from the public repository; a new session lists all eleven skills as {plugin}:{skill}"
+      - "2026-10-02, 0.159.3: `codex plugin marketplace upgrade {catalog}` moves all three plugins from 0.1.2 to 0.1.3 from the public repository; a new session lists all eleven skills as {plugin}:{skill}"
       - "2026-09-27, 0.157.0: `codex plugin marketplace add <local checkout>`, then `codex plugin add {plugin}@{catalog}` installs all three plugins to ~/.codex/plugins/cache/{catalog}/{plugin}/{version}/; adding the same marketplace again exits 0"
       - "2026-09-27, 0.157.0: `codex plugin list --json` reports each plugin installed and enabled; `codex mcp list` lists lapis-lazuli (lapis-design mcp)"
       - "2026-09-27, 0.157.0: after install the plugin hook has no entry under [hooks.state] in ~/.codex/config.toml, so it stays untrusted until approved in /hooks"
@@ -212,6 +214,7 @@ harnesses:
     verified:
       - "2026-09-30, 18.4.4: from the public repository, `omp plugin marketplace add lapis-labs/lapis-lazuli` (default branch release) and `omp plugin install --scope user {plugin}@{catalog}` install all three plugins at the release commit; a new session lists all eleven skills"
       - "2026-10-01, 18.4.5: `omp plugin marketplace update {catalog}` and `omp plugin upgrade --scope user {plugin}@{catalog}` move all three plugins from 0.1.1 to 0.1.2 from the public repository; a new session lists all eleven skills"
+      - "2026-10-02, 18.4.8: the same update commands move all three plugins from 0.1.2 to 0.1.3 from the public repository; a new session lists all eleven skills"
       - "2026-09-27, 18.3.1: `omp plugin marketplace add <local checkout>`, then `omp plugin install --scope user {plugin}@{catalog}` installs all three plugins to ~/.omp/plugins/cache/plugins/{catalog}___{plugin}___{version}/; adding the same marketplace again exits 1 (already exists), which the installer reports as a failed step to rerun with --update"
       - "2026-09-27, 18.3.1: the MCP tool slop_lint is available in a session"
       - "2026-09-27, 18.3.1: with the package's version field a marketplace install links @lapis-labs/lazuli-omp into ~/.omp/plugins/node_modules (a link to the plugin cache) and a new session gets the inventory summary; earlier the same day, without the version field, it got none"
