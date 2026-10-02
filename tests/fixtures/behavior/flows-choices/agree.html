@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>주문 옵션</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main id="order-page">
+  <h1>주문 옵션</h1>
+  <form id="order" novalidate>
+    <fieldset>
+      <legend>이용약관에 동의하시나요? (필수)</legend>
+      <label class="choice"><input class="visually-hidden" type="radio" name="terms" value="no" required> <span>동의하지 않아요</span></label>
+      <label class="choice"><input class="visually-hidden" type="radio" name="terms" value="agree" required> <span>동의해요</span></label>
+    </fieldset>
+    <fieldset>
+      <legend>[필수] 선물 포장</legend>
+      <label class="choice"><input class="transparent" type="radio" name="wrap" value="premium" required> <span>프리미엄 포장 ₩3,000</span></label>
+      <label class="choice"><input class="transparent" type="radio" name="wrap" value="none" required> <span>선택 안 함</span></label>
+    </fieldset>
+    <fieldset>
+      <legend>[필수] 크기</legend>
+      <label class="choice"><input class="visually-hidden" type="radio" name="size" value="large" required> <span>Large ₩30,000</span></label>
+      <label class="choice"><input class="visually-hidden" type="radio" name="size" value="medium" required> <span>Medium ₩25,000</span></label>
+      <label class="choice"><input class="visually-hidden" type="radio" name="size" value="small" required> <span>Small ₩20,000</span></label>
+    </fieldset>
+    <button type="submit">다음</button>
+  </form>
+</main>
+<script>
+  const form = document.getElementById('order');
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    if (!form.checkValidity()) return;
+    document.getElementById('order-page').innerHTML = '<h1>주문 완료</h1><p>결과: terms=' + form.elements.terms.value +
+      ';wrap=' + form.elements.wrap.value + ';size=' + form.elements.size.value + '</p>';
+  });
+</script>
+</body>
+</html>

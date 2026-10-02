@@ -1836,16 +1836,19 @@ references:
   - 'Checker behavior quoted in the text (behavior/DERIVED.md Forms, Commits, Flows, States, Time limits; the forms,
     flows, commits, states, and time_limits probes): the English-only reading list of the forms probe; a form kind
     read from its id, accessible name, and opening text; flows starting at the plan start route, not the URL given;
-    the flow driver never ticking a checkbox; one stub value per kind, a plain text field using the text kind; one
-    invalid value in the invalid submit; two activations 80 ms apart; states reading each surface filled from a GET.
-    Keep forms-and-recovery.md in step if these change.'
+    the flow driver ticking only a required terms, privacy, or age checkbox and answering required radio groups; one
+    stub value per kind, a plain text field using the text kind; one invalid value in the invalid submit; two
+    activations 80 ms apart; states reading each surface filled from a GET. Keep forms-and-recovery.md in step if
+    these change.'
   - 'Flow driver defects found in the 2026-10-01 smoke run and reported to Main (the text describes the contract, not
     these): the field kind of autocomplete postal-code was read as password, and 주소 with 상세 주소 were read as one
     kind, so the second was typed from the same value and flagged as repeated entry. Check they are fixed before the
     Korean reservation demo.'
-  - 'The checkbox limit (a required terms checkbox ends a flow blocked) is DERIVED.md text, so Main proposed a decision
-    change to the cloud on 2026-10-01. Drop the bullet in What no check does if the driver learns to tick required
-    terms.'
+  - 'The checkbox limit began as "a required terms checkbox ends a flow blocked" (DERIVED.md text; Main proposed a
+    decision change to the cloud on 2026-10-01). Since 0.1.4 the driver ticks required terms, privacy, and age
+    checkboxes and answers required radio groups, so the bullet in What no check does now names what it still leaves
+    alone: optional items, select-all, switches, and required items that carry marketing or an add-on. Drop it only
+    if that changes.'
   resolved_2026_10_01:
   - 'Migration statuses: forms-onboarding-and-checkout is done (this reference is its only destination); interaction-design,
     state-transition-and-recovery-card, and user-messages-and-feedback stay todo with notes, because their card, rule,

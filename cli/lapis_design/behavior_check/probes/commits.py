@@ -2,14 +2,14 @@
 from __future__ import annotations
 
 import re
-from collections import Counter
 from time import sleep
 
 from lapis_design.behavior import EXIT_KINDS
 from lapis_design.behavior_check import settle
-from lapis_design.behavior_check.probes._decision import NOT_A_RESULT, RESUBMIT, WAITING, claim_table
+from lapis_design.behavior_check.probes._decision import (
+    BACK_OUT, CLOSE, CONFIRM, DECLINE, EXIT_ACTION, NEGATES_EXIT, NOT_A_RESULT, RESUBMIT, WAITING, claim_table, names)
+from lapis_design.behavior_check.probes._decision import new_text as _new_text
 from lapis_design.behavior_check.probes.controls import element, fresh
-from lapis_design.behavior_check.probes._decision import BACK_OUT, CLOSE, CONFIRM, DECLINE, EXIT_ACTION, names
 
 NAMES = ("commits",)
 _METHODS = {"POST", "PUT", "PATCH", "DELETE"}
@@ -95,26 +95,6 @@ def _region(driver, target):
     }""")
 
 
-_SEGMENT = re.compile(r"\n+|(?<=[.!?。！？])\s+")
-
-
-def _segments(texts):
-    return [" ".join(part.split()) for text in texts for part in _SEGMENT.split(text) if part.strip()]
-
-
-def _new_text(before, after):
-    """What `after` says that `before` did not, a line or sentence at a time, so a note that was already
-    there ("this cannot be undone", "예약 완료 후 문자를 보내 드려요") is not read as the commit's result."""
-    seen = Counter(_segments(before))
-    fresh = []
-    for segment in _segments(after):
-        if seen[segment]:
-            seen[segment] -= 1
-        else:
-            fresh.append(segment)
-    return " ".join(fresh)
-
-
 def _claimed(text, leaving=False):
     """What `text` claims about a commit's result. `leaving`: the commit leaves something (see `_exits`), so
     the completed forms of leaving (unsubscribed, cancelled, 해지됐어요) are a success."""
@@ -124,11 +104,19 @@ def _claimed(text, leaving=False):
 
 # A control that cancels or deletes (the probe's kind), is named for what it leaves ("Unsubscribe", "구독 해지"),
 # starts with Cancel, or ends with 취소 ("Cancel reservation", "예약 취소") leaves something, whatever noun the kind
-# went by. A booking button that mentions "free cancellation" does not.
+# went by. A booking button that mentions "free cancellation" does not, and neither does a name that negates or
+# cancels the exit ("Don't cancel", "취소 안 함", "해지 취소").
 _LEAVES = re.compile(rf"{EXIT_ACTION}|^\W*cancel\b|취소(?:하기)?\W*$", re.I)
+# The kinds of a control named for the exit, tried before any other kind so that "Unsubscribe", "구독 해지",
+# "Delete subscription", and "주문 취소" are not read as the subscription, order, or reservation they end. "Stop" and
+# a "해지" inside a longer name are left out: "Non-stop flights: book" books.
+_EXIT_FIRST = ((r"\b(?:unsubscribe|withdraw)\b|^\W*cancel\b|(?:해지|탈퇴|철회|수신 ?거부|취소)(?:하기)?\W*$", "cancel"),
+               (r"^\W*(?:delete|remove)\b|(?:삭제|제거)(?:하기)?\W*$", "delete"))
 
 
 def _exits(name, kind):
+    if re.search(NEGATES_EXIT, name, re.I):
+        return False
     return kind in ("cancel", "delete") or bool(_LEAVES.search(name))
 
 
@@ -136,12 +124,19 @@ def _kind(name, request):
     label = name.lower()
     if _UNDO.search(label):
         return "save" if request.get("method") in _METHODS else "other"
+    negated = bool(re.search(NEGATES_EXIT, label))             # "Don't cancel" is no cancel
+    if not negated:
+        for pattern, result in _EXIT_FIRST:
+            if re.search(pattern, label):
+                return result
     # Stems, so "Confirm reservation" and /api/subscriptions classify like "Reserve" and "subscribe".
     for pattern, result in ((r"purchas|\bbuy\b|\bpay\b|\bcheckout|\border now|구매|구입|결제|지불|주문", "purchase"),
                             (r"subscri|구독", "subscribe"), (r"reserv|\bbook|예약", "reserve"),
                             (r"\bcancel|취소|해지|철회", "cancel"), (r"\bdelet|\bremov|삭제|제거|지우", "delete"),
                             (r"\bpublish|게시|발행", "publish"), (r"\bsend\b|\bsent\b|전송|발송|보내", "send"),
                             (r"\bsave|저장", "save"), (r"\btoggle|전환", "toggle"), (r"\bsubmit|제출|신청", "submit")):
+        if negated and result in ("cancel", "delete"):
+            continue
         if re.search(pattern, label):
             return result
     path = request.get("path", "").lower()
@@ -351,7 +346,7 @@ def run(session, open_driver):
             steps = sorted(flow["steps"], key=lambda step: step["index"])
             step = next((step for step in steps if step["index"] == index), None)
             activations = [position for position, action in enumerate(step.get("actions", ())) if action.get("target") and
-                           action["kind"] in ("click", "tap", "key", "check", "uncheck")] if step else []
+                           not action.get("choice") and action["kind"] in ("click", "tap", "key", "check", "uncheck")] if step else []
             if not activations:
                 continue
             target = step["actions"][activations[-1]]["target"]

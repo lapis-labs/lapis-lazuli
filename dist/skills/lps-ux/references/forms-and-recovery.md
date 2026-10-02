@@ -163,8 +163,10 @@ What no check does:
   fields, "same as" text, disabled-submit reasons, and cognitive-test wording in English only. A form whose
   id, name, and opening text hold no English word is recorded without a kind; its fields, errors, and kept
   entries are still checked.
-- The flow driver types into fields and selects but never activates a checkbox, radio, or switch, so a
-  required terms checkbox ends the run `blocked`; report that flow as not run.
+- The flow driver types into fields and selects, and ticks only a required terms, privacy, or age checkbox and
+  answers a required radio group; it never ticks an optional item, a select-all checkbox, or a switch, and a
+  required item whose name carries marketing or an add-on is left unticked, so that flow ends `blocked`; report
+  it as not run.
 - An announcement is text entering a live region, an alert appearing, or focus moving there; no screen
   reader output is checked. Address search and identity verification are never called, and failure
   injection runs only on the stub.

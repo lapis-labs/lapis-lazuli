@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>주문</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main id="order-page">
+  <h1>주문</h1>
+  <p id="status">도자기 컵 한 개를 주문해요.</p>
+  <button id="pay" type="button">결제하기</button>
+  <label id="shipping" class="choice" hidden><input id="shipping-terms" class="visually-hidden" type="checkbox" required> <span>[필수] 배송 약관에 동의</span></label>
+</main>
+<script>
+  // The order is sent first; the page then asks for the shipping terms, and finishes when they are agreed to.
+  document.getElementById('pay').addEventListener('click', async () => {
+    await fetch('/api/orders', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({item: 'cup'})});
+    document.getElementById('shipping').hidden = false;
+  });
+  document.getElementById('shipping-terms').addEventListener('change', event => {
+    if (event.target.checked) document.getElementById('status').textContent = '배송 약관을 확인했어요. 주문이 접수됐어요.';
+  });
+</script>
+</body>
+</html>

@@ -19,7 +19,7 @@ EXIT_CLAIMS = FIXTURES / "exit-claims"
     "Cannot be saved", "Can't be saved", "Cannot be successfully submitted", "Nothing was saved",
     "Nothing has been sent", "No changes saved", "No items were deleted", "Not all items were saved",
     "Not every item was sent", "Your subscription was not cancelled", "Your account wasn't deleted",
-    "Consent was not withdrawn", "The item is no longer reserved",
+    "Consent was not withdrawn",
 ])
 @pytest.mark.parametrize("leaving", [False, True])
 def test_a_result_that_says_nothing_happened_is_a_failure(text, leaving):

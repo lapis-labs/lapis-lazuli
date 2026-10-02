@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>요금제</title></head>
+<body>
+<main id="plans">
+  <h1>선택한 요금제</h1>
+  <ul aria-label="주문 내역">
+    <li>프로 요금제 월 9,900원</li>
+    <li>설치 수수료 5,000원</li>
+  </ul>
+  <button id="go" type="button">계속</button>
+</main>
+<script>document.getElementById('go').addEventListener('click', () => { document.getElementById('plans').innerHTML = '<h1>완료</h1>'; });</script>
+</body>
+</html>

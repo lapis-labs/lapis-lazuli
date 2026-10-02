@@ -90,7 +90,7 @@ def run(session, open_driver):
                         # Escape would consume the driver's answer, so it is tried only where the
                         # dialog can be reopened (control trigger) or where dismissal is the answer anyway.
                         try_escape = trigger == "control" or (
-                            response(dialog["controls"])[0] in ("dismiss", "none") and not any(
+                            response(dialog["controls"], dialog["exit_question"])[0] in ("dismiss", "none") and not any(
                                 re.search(CUSTOMIZE, item["text"], re.I)
                                 for item in dialog["controls"]))
                         entry["focus"] = _focus(driver, dialog, trigger, trigger_box, try_escape)
@@ -105,7 +105,7 @@ def run(session, open_driver):
                     if entry["appearances"] and entry["appearances"][-1]["response"] == "none" and (
                             entry["appearances"][-1]["path"] == current):
                         continue
-                    answer, control = response(dialog["controls"])
+                    answer, control = response(dialog["controls"], dialog["exit_question"])
                     if answer == "none" and session.meta["backend"] == "stub":
                         customize = next((item for item in dialog["controls"]
                                           if re.search(CUSTOMIZE, item["text"], re.I)), None)
@@ -114,7 +114,7 @@ def run(session, open_driver):
                             expanded = next((candidate for candidate in dialogs(driver)
                                              if candidate["id"] == dialog["id"]), None)
                             if expanded:
-                                answer, control = response(expanded["controls"])
+                                answer, control = response(expanded["controls"], expanded["exit_question"])
                     if session.meta["backend"] == "stub" and control:
                         driver.act({"kind": "click", "target": control["id"]})
                     else:

@@ -15,6 +15,7 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeout
 from lapis_design.behavior import outcome
 from lapis_design.behavior_check import nodes, redact, settle
 from lapis_design.behavior_check.network import Network, navigation_guard
+from lapis_design.behavior_check.probes._decision import new_text, reads_as_status
 
 
 class MissingSyntheticValues(ValueError):
@@ -22,8 +23,9 @@ class MissingSyntheticValues(ValueError):
 
 
 class NotReachable(PlaywrightError):
-    """No pointer can act on a control, and nothing visible stands in for it. It is a Playwright error, as the
-    timeout it replaces was, so the probes that already catch a failed action catch it too."""
+    """No pointer can act on a control, and nothing visible stands in for it, or the one press of what stands in for
+    it did not change the control. It is a Playwright error, as the timeout it replaces was, so the probes that
+    already catch a failed action catch it too."""
 
 
 # A control that is not there fails in seconds, not after Playwright's 30 s default.
@@ -57,6 +59,11 @@ OBSERVE = r"""() => {
       rect:{x:r.x+scrollX,y:r.y+scrollY,w:r.width,h:r.height}};
     if (['INPUT','TEXTAREA','SELECT'].includes(el.tagName)) state.attrs.value=el.value;
     if (el.matches('input[type=checkbox],input[type=radio]')) state.attrs['aria-checked']=String(el.checked);
+    // A checkbox or radio with no box of its own (transparent, clipped, or display:none behind its label) shows its
+    // state on the label that stands for it, so pressing the label records the change.
+    const control=el.localName==='label' ? el.control : null;
+    if (control && control.matches('input[type=checkbox],input[type=radio]') && !control.hasAttribute('data-lapis-box'))
+      state.attrs['aria-checked']=String(control.checked);
     if (['VIDEO','AUDIO'].includes(el.tagName)) state.attrs.paused=String(el.paused);
     result[id]=state;
     const role=el.getAttribute('role');
@@ -123,9 +130,15 @@ OBSERVE = r"""() => {
      href:location.href,documentToken:o.documentToken};
 }""".replace("__ARIA_ROLES__", json.dumps(_ARIA_ROLES))
 
-# What the pointer needs to know of a control: whether it is a form control, and a native checkbox or radio's state.
-CONTROL = r"""el => ({form: ['INPUT','SELECT','TEXTAREA'].includes(el.tagName),
-  toggle: el.matches('input[type=checkbox],input[type=radio]') ? el.type : null, checked: !!el.checked})"""
+# What the pointer needs to know of a control: whether it is a form control, a native checkbox or radio's state (a
+# label stands for the checkbox or radio it belongs to), and whether it is such a label.
+CONTROL = r"""el => {
+  const label = el.localName === 'label' && el.control && el.control.matches('input[type=checkbox],input[type=radio]')
+    ? el.control : null, input = label || el;
+  return {form: ['INPUT','SELECT','TEXTAREA'].includes(el.tagName),
+    toggle: input.matches('input[type=checkbox],input[type=radio]') ? input.type : null,
+    checked: !!input.checked, label: !!label};
+}"""
 
 # What a person would press for a form control no pointer can hit: its visible labels (wrapping, or `for`), then the
 # nearest visible element around it, unless that holds another control (a click there could pick another option).
@@ -149,6 +162,30 @@ STAND_INS = r"""el => {
   return found;
 }"""
 
+# Where a person would press one of those: a point of it that no other interactive element covers. A link, a button,
+# or another input's label inside or around the label takes the press, so the label's center is not always one
+# ("[필수] <a>이용약관</a>에 동의" is centered on its link). `own` is the control and its labels.
+PRESS_POINT = r"""(candidate, input) => {
+  const control = input || candidate.control;
+  candidate.scrollIntoView({block: 'center', inline: 'nearest'});
+  const interactive = 'a[href],button,input,select,textarea,summary,[role=button],[role=link],[role=checkbox],' +
+    '[role=radio],[role=switch],[role=menuitem],[role=tab],[contenteditable=true]';
+  const own = node => node === control || (node.localName === 'label' && node.control === control);
+  const blocked = hit => {
+    for (let node = hit; node && node !== document.documentElement; node = node.parentElement) {
+      if (own(node)) continue;
+      if (node.matches(interactive) || (node.localName === 'label' && node.control)) return true;
+    }
+    return false;
+  };
+  const box = candidate.getBoundingClientRect();
+  for (const fy of [.5, .25, .75]) for (const fx of [.5, .25, .75, .1, .9]) {
+    const hit = document.elementFromPoint(box.left + box.width * fx, box.top + box.height * fy);
+    if (hit && (hit === candidate || candidate.contains(hit)) && !blocked(hit)) return {x: box.width * fx, y: box.height * fy};
+  }
+  return null;
+}"""
+
 
 class Driver:
     def __init__(self, browser: Browser, session, ctx_id: str):
@@ -162,6 +199,7 @@ class Driver:
         self.network = None
         self._loaded = False
         self._acted = False
+        self.performed = False             # the last `act` ran its action (see act)
         self._boxes = None                 # what the last snapshot saw, and the mutations it added to the page's count
         self.snapshot_mutations = 0
         self._start = monotonic()
@@ -323,10 +361,19 @@ class Driver:
 
     def _pointer(self, target, kind: str) -> None:
         """Click, tap, check, or uncheck the way a person reaches the control: where it is when a pointer can
-        hit it, else through what stands in for it."""
+        hit it, else through what stands in for it. A label standing for the checkbox or radio to check is
+        pressed where no link, button, or other input's label covers it."""
         tap = kind == "tap" or (kind == "click" and self.ctx["pointer"] == "coarse")
         want = {"check": True, "uncheck": False}.get(kind)
         info = target.evaluate(CONTROL, timeout=ACTION_TIMEOUT_MS)
+        if want is not None and info["label"]:
+            if info["checked"] != want:
+                label = target.element_handle(timeout=ACTION_TIMEOUT_MS)
+                try:
+                    self._press_through(target, [label], None, tap, want, True, "toggles")
+                finally:
+                    label.dispose()
+            return
         if want is not None and not info["toggle"]:
             getattr(target, kind)(timeout=ACTION_TIMEOUT_MS)         # an ARIA checkbox or switch: Playwright reads its state
             return
@@ -359,29 +406,55 @@ class Driver:
             press(timeout=ACTION_TIMEOUT_MS)
             return
         goal = want if want is not None else (not info["checked"] if info["toggle"] == "checkbox" else True)
+        control = target.element_handle(timeout=ACTION_TIMEOUT_MS)
         found = target.evaluate_handle(STAND_INS, timeout=ACTION_TIMEOUT_MS)
         items = list(found.get_properties().values())
         try:
-            for candidate in (item.as_element() for item in items):
-                press = candidate.tap if tap else candidate.click
-                try:
-                    press(trial=True, timeout=REACH_TIMEOUT_MS)
-                except PlaywrightTimeout:
-                    continue
-                press(timeout=ACTION_TIMEOUT_MS)
-                # None: the page replaced the control in response, so its state cannot be read, and it did react.
-                if not info["toggle"] or self._checked(target) in (goal, None):
-                    return
+            self._press_through(target, [item.as_element() for item in items], control, tap, goal,
+                                bool(info["toggle"]), "toggles" if info["toggle"] else "reaches")
         finally:
-            for handle in (found, *items):
+            for handle in (control, found, *items):
                 handle.dispose()
-        raise NotReachable("not reachable by pointer: it is not hit-testable and no visible label or wrapper "
-                           f"{'toggles' if info['toggle'] else 'reaches'} it")
+
+    def _press_through(self, target, candidates, control, tap: bool, goal: bool, toggles: bool, verb: str) -> None:
+        """Press the first of `candidates` that has a point no other interactive element covers, and press only
+        once: a second press on another candidate could undo the first. A checkbox or radio (`toggles`) must then
+        be in the `goal` state. The state is unreadable (None) when the page replaced the control in response,
+        which counts as a reaction only in the same document; a press that left the page did not do it."""
+        covered = False
+        for candidate in candidates:
+            point = candidate.evaluate(PRESS_POINT, control)
+            if point is None:
+                covered = True
+                continue
+            press = candidate.tap if tap else candidate.click
+            try:
+                press(position=point, trial=True, timeout=REACH_TIMEOUT_MS)
+            except PlaywrightTimeout:
+                continue
+            token = self._document_token()
+            press(position=point, timeout=ACTION_TIMEOUT_MS)
+            state = self._checked(target) if toggles else goal
+            if state == goal or (state is None and self._document_token() == token):
+                return
+            raise NotReachable("not reachable by pointer: pressing its label or wrapper "
+                               f"{'left the page' if state is None else 'did not change it'}")
+        raise NotReachable("not reachable by pointer: " + (
+            "every point of its visible label or wrapper is inside another link, button, or input's label"
+            if covered else f"it is not hit-testable and no visible label or wrapper {verb} it"))
+
+    def _document_token(self):
+        """Which document the page is on now (None while it is changing), as the observation reads it."""
+        try:
+            return self.page.evaluate("window.__lapisObserve?.documentToken")
+        except PlaywrightError:
+            return None
 
     @staticmethod
     def _checked(target) -> bool | None:
+        """A checkbox or radio's state (a label stands for its control); None when the page replaced it."""
         try:
-            return target.evaluate("el => el.checked", timeout=REACH_TIMEOUT_MS)
+            return target.evaluate("el => (el.control || el).checked", timeout=REACH_TIMEOUT_MS)
         except PlaywrightTimeout:
             return None
 
@@ -465,6 +538,7 @@ class Driver:
             raise ValueError(f"unknown action: {kind}")
 
     def act(self, action: dict) -> dict:
+        self.performed = False          # set once the action itself ran; an error after that comes from reading what it did
         self.boxes()
         # A snapshot of a page whose text has `line-height: normal` measures with probe nodes, and the page's
         # mutation count includes them: `dom_mutations` is read from that count (a navigation, against everything the
@@ -484,6 +558,7 @@ class Driver:
         except Exception:
             if not self.network.external:
                 raise
+        self.performed = True
         try:
             attempted = self.page.evaluate("window.__lapisExternalNavigation||null")
         except Exception:
@@ -503,13 +578,19 @@ class Driver:
                 abs(state["rect"][side] - before["boxes"][bid]["rect"][side]) > .5 for side in ("w", "h"))]})
         changed = [bid for bid, state in after["boxes"].items() if state["text"] !=
                    before["boxes"].get(bid, {}).get("text", "") and state["text"]]
-        status = [bid for bid in changed if self.page.locator(f'[data-lapis-box="{bid}"]').evaluate(
-            """(el, changed) => {
-              if (changed.some(id => id!==el.getAttribute('data-lapis-box') &&
-                  el.contains(document.querySelector('[data-lapis-box="'+id+'"]')))) return false;
-              return !!el.closest('[role=status],[role=alert],[aria-live],output,.toast,.snackbar')
-                || /\\b(cart|items|results|saved|added|sent|reserved)\\b/i.test(el.innerText||'');
-            }""", changed)]
+        # A box is status when it sits in a status, alert, or live region, an output, a toast, or a snackbar, or when the
+        # text it gained names a result or a count; what it showed before the action is not read again.
+        status = []
+        for bid in changed:
+            where = self.page.locator(f'[data-lapis-box="{bid}"]').evaluate(
+                """(el, changed) => {
+                  if (changed.some(id => id!==el.getAttribute('data-lapis-box') &&
+                      el.contains(document.querySelector('[data-lapis-box="'+id+'"]')))) return 'holds-a-change';
+                  return el.closest('[role=status],[role=alert],[aria-live],output,.toast,.snackbar') ? 'region' : 'page';
+                }""", changed)
+            if where == "region" or (where == "page" and reads_as_status(
+                    new_text([before["boxes"].get(bid, {}).get("text", "")], [after["boxes"][bid]["text"]]))):
+                status.append(bid)
         aria = []
         for bid, state in after["boxes"].items():
             old = before["boxes"].get(bid, {}).get("attrs", {})

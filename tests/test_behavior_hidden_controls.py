@@ -1,9 +1,11 @@
 """A control that no pointer can hit is reached the way a person would reach it, or recorded as not
 reachable; one such control never skips a probe. Loopback pages: custom radios and a checkbox that are
 visually hidden behind visible labels, a page whose hidden checkbox and off-screen link nothing visible can
-toggle or show, and a skip link that slides in on focus."""
+toggle or show, a skip link that slides in on focus, a label with a link in its middle, and labels that do
+not toggle, leave the page, or are covered by another input's label (one press, then stop)."""
 from __future__ import annotations
 
+import contextlib
 import json
 import subprocess
 import sys
@@ -13,8 +15,10 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import pytest
+from playwright.sync_api import Error as PlaywrightError
 
-from lapis_design.behavior_check.driver import Driver
+from lapis_design.behavior_check import settle
+from lapis_design.behavior_check.driver import Driver, NotReachable
 from lapis_design.behavior_check.probes import controls, flows, forms
 from lapis_design.behavior_check.session import Session
 from lapis_design.stub.engine import StubEngine
@@ -140,9 +144,104 @@ def test_flow_goes_on_when_the_control_it_picked_cannot_be_pressed(browser, site
     done, never = document["flows"]
     # The off-screen "계속 진행" link ranks first and cannot be pressed: the run marks it tried and carries on.
     assert done["status"] == "completed" and _actions(done) == ["type", "click"]
-    # A run that cannot finish names what it could not press.
+    # A run that cannot finish names what it could not press, and so does the one that finished.
     assert never["status"] == "blocked"
-    assert "계속 진행: not reachable by pointer" in _coverage(document, "flows")["reason"]
+    reason = _coverage(document, "flows")["reason"]
+    assert "d/visit-0: completed (계속 진행: not reachable by pointer" in reason
+    assert "d/visit-1: blocked (goal not reached; 계속 진행: not reachable by pointer" in reason
+
+
+def test_flow_that_finishes_still_reports_what_it_could_not_press(browser, site):
+    document = _run(browser, site, "unreachable.html", flows)
+    (done,) = document["flows"]
+    assert done["status"] == "completed" and _actions(done) == ["type", "click"]
+    coverage = _coverage(document, "flows")
+    assert coverage["status"] == "partial"
+    assert coverage["reason"].startswith("d/visit-0: completed (계속 진행: not reachable by pointer")
+
+
+def test_flow_does_not_call_an_error_after_the_press_a_control_nothing_reaches(browser, site, monkeypatch):
+    quiet = settle.quiet
+
+    def failing(driver, mutations):
+        if driver._acted:               # the action ran, and reading what it did fails
+            raise PlaywrightError("the page went away while its effect was read")
+        return quiet(driver, mutations)
+
+    monkeypatch.setattr(settle, "quiet", failing)
+    with pytest.raises(PlaywrightError, match="went away"):
+        _run(browser, site, "unreachable.html", flows)
+
+
+@contextlib.contextmanager
+def _page(browser, site, name):
+    session = Session(site + name, "hidden-controls", engine=StubEngine.load(STUB))
+    session.contexts = {"d": session.contexts["d"]}
+    driver = Driver(browser, session, "d")
+    driver.open()
+    try:
+        yield driver
+    finally:
+        driver.close()
+
+
+def _box(driver, element_id):
+    driver.boxes()
+    return driver.page.evaluate("id => document.getElementById(id).getAttribute('data-lapis-box')", element_id)
+
+
+def test_a_label_with_a_link_in_its_middle_is_pressed_beside_the_link(browser, site):
+    with _page(browser, site, "link-label.html") as driver:
+        driver.act({"kind": "check", "target": _box(driver, "terms")})
+        assert driver.page.url == site + "link-label.html"
+        assert driver.page.evaluate("document.getElementById('terms').checked") is True
+
+
+def test_flow_agrees_to_terms_through_a_label_that_holds_a_link(browser, site):
+    document = _run(browser, site, "link-label.html", flows, flow_done=("가입 완료",))
+    (run,) = document["flows"]
+    assert run["status"] == "completed" and _actions(run) == ["click", "check", "click"]
+    assert {step["path"] for step in run["steps"]} == {"/link-label.html"}
+    assert _coverage(document, "flows") == {"probe": "flows", "status": "ran", "contexts": ["d"]}
+
+
+def test_a_wrapper_that_only_holds_another_inputs_label_is_not_pressed(browser, site):
+    with _page(browser, site, "press-points.html") as driver:
+        with pytest.raises(NotReachable, match="inside another link, button, or input's label"):
+            driver.act({"kind": "check", "target": _box(driver, "solo")})
+        assert driver.page.evaluate("document.getElementById('other').checked") is False
+
+
+def test_a_label_that_does_not_toggle_is_pressed_once_and_the_next_one_is_left_alone(browser, site):
+    with _page(browser, site, "press-points.html") as driver:
+        with pytest.raises(NotReachable, match="did not change it"):
+            driver.act({"kind": "check", "target": _box(driver, "twice-box")})
+        assert driver.page.evaluate("window.presses") == {"first": 1, "second": 0}
+
+
+def test_a_press_that_leaves_the_page_is_not_a_check(browser, site):
+    with _page(browser, site, "press-points.html") as driver:
+        with pytest.raises(NotReachable, match="left the page"):
+            driver.act({"kind": "check", "target": _box(driver, "leaves-box")})
+        assert driver.page.url == site + "terms.html"
+
+
+def test_a_control_the_page_replaces_in_response_to_the_press_counts_as_pressed(browser, site):
+    # The state of the replaced control cannot be read, and the page is the same document: it reacted.
+    with _page(browser, site, "press-points.html") as driver:
+        driver.act({"kind": "check", "target": _box(driver, "swaps-box")})
+        assert driver.page.url == site + "press-points.html"
+        assert driver.page.evaluate("document.getElementById('swaps-box').checked") is True
+
+
+def test_pressing_a_label_records_the_state_of_the_transparent_input_it_stands_for(browser, site):
+    with _page(browser, site, "press-points.html") as driver:
+        label = _box(driver, "clear-label")
+        assert _box(driver, "clear-box") is None            # the input has no box: the label's box is what to address
+        effect = driver.act({"kind": "check", "target": label})
+        assert driver.page.evaluate("document.getElementById('clear-box').checked") is True
+        assert effect["outcome"] == "state-changed"
+        assert effect["aria_changes"] == [{"box": label, "attr": "aria-checked", "from": "false", "to": "true"}]
 
 
 def test_command_runs_controls_and_forms_instead_of_skipping_them(site, tmp_path):

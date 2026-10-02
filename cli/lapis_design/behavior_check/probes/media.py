@@ -133,7 +133,7 @@ def run(session, open_driver):
             owner_id = None
             if session.meta["backend"] == "stub":
                 for dialog in dialogs(driver):
-                    _, decline = response(dialog["controls"])
+                    _, decline = response(dialog["controls"], dialog["exit_question"])
                     if decline:
                         driver.act({"kind": "click", "target": decline["id"]})
                 for control in driver.interactive():

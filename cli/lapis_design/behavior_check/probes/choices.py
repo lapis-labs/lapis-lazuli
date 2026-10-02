@@ -4,7 +4,9 @@ from __future__ import annotations
 import re
 
 from lapis_design.behavior_check.probes._decision import (
-    CANCEL, CLOSE, CUSTOMIZE, DECLINE, DISMISS, LATER, REFUSE, REMIND, advance, dialogs, names, purpose, reopen_with, route)
+    BARE_REFUSAL, CANCEL, CLOSE, CUSTOMIZE, DECLINE, DISMISS, KEEPS, LATER, NEGATES_EXIT, REFUSE, REMIND, THROUGH,
+    advance, dialogs, names, purpose, reopen_with, route)
+from lapis_design.behavior_check.probes.flows import _cadence, _money
 from lapis_design.behavior_check.probes.permissions import INIT as DENY_DEVICES
 
 NAMES = ("choices",)
@@ -50,15 +52,24 @@ _OPTION = re.compile(r"옵션|\boptions?\b", re.I)
 _NOT_ADDING = r"안 ?(?:함|할|해)|없이|하지 ?(?:않|마)"                                  # a Korean refusal of an add-on
 
 
-def _kind(text, input_type, purpose_name):
+def _kind(text, input_type, purpose_name, exit_question=False):
+    """`exit_question`: the dialog's question is the exit or the destructive action itself. There No and the like
+    keep things as they are (`accept` in a retention dialog, `neutral` in a confirmation), and the control that
+    goes through (Yes, 나가기, Leave) is the `decline` of a retention dialog, `neutral` in a confirmation."""
+    stay = "neutral" if purpose_name == "confirm" else "accept"
+    through = "neutral" if purpose_name == "confirm" else "decline"
     refuses = re.search(rf"{REFUSE}|{DECLINE}|{_NOT_ADDING}", text, re.I)
     if _OPTION.search(text) and refuses:                       # an add-on turned down
-        return "decline" if purpose_name != "confirm" else "neutral"
+        return through
     adds_option = _ADDS_OPTION.search(text) and not re.search(CUSTOMIZE, text, re.I)
     if not adds_option and re.search(rf"{CUSTOMIZE}|options|옵션|선택 ?사항", text, re.I):
         return "customize"
-    if re.search(rf"{REFUSE}|{DECLINE}|opt out|unsubscribe|수신 ?거부|구독 ?(?:해지|취소)|{CANCEL}", text, re.I):
-        return "decline" if purpose_name != "confirm" else "neutral"
+    if re.search(NEGATES_EXIT, text, re.I) or (exit_question and re.search(KEEPS, text, re.I)):
+        return stay                                             # keeps the plan, the account, the subscription
+    if exit_question and re.search(THROUGH, text, re.I):
+        return through
+    if re.search(rf"{REFUSE}|{DECLINE}|opt out|unsubscribe|수신 ?거부|구독 ?(?:해지|취소)|{CANCEL}|{BARE_REFUSAL}", text, re.I):
+        return through
     if re.search(rf"{CLOSE}|{DISMISS}|{LATER}|{REMIND}", text, re.I):
         return "dismiss"
     if input_type == "radio" and purpose_name != "plan":
@@ -78,8 +89,8 @@ def _options(driver, root):
     return items
 
 
-def _option(driver, item, purpose_name, layer=1, interactions=1):
-    kind = _kind(item["label"], item["type"], purpose_name)
+def _option(driver, item, purpose_name, layer=1, interactions=1, exit_question=False):
+    kind = _kind(item["label"], item["type"], purpose_name, exit_question)
     name = driver.clean(item["label"])
     shown = driver.clean(item["text"])                        # an icon button keeps its glyph and its name
     option = {"kind": kind, "control": "checkbox" if item["type"] == "checkbox" else
@@ -93,12 +104,11 @@ def _option(driver, item, purpose_name, layer=1, interactions=1):
         option["lang"] = item["lang"]
     if item["type"] in ("checkbox", "radio"):
         option["preselected"] = item["checked"]
-    price = re.search(r"(?:(USD|EUR|GBP)\s*|([$€£]))\s*(\d+(?:\.\d{1,2})?)", name)
-    if price:
-        option["price"] = float(price[3])
-        option["currency"] = price[1] or {"$": "USD", "€": "EUR", "£": "GBP"}[price[2]]
-        option["cadence"] = next((value for value in ("day", "week", "month", "year")
-                                  if re.search(rf"(?:/|per )\s*{value}", name, re.I)), "once")
+    amount, currency = _money(name)
+    if amount is not None and amount >= 0:                    # a discount line is not what choosing it adds
+        option["price"] = amount
+        option["currency"] = currency
+        option["cadence"] = _cadence(name) or "once"
     return option
 
 
@@ -128,7 +138,7 @@ def run(session, open_driver):
                 for dialog in dialogs(driver):
                     value, basis, flow = purpose(dialog["text"], session.plan)
                     choices = _options(driver, dialog["id"])
-                    options = [_option(driver, item, value) for item in choices]
+                    options = [_option(driver, item, value, exit_question=dialog["exit_question"]) for item in choices]
                     for opener in (item for item in choices if _kind(item["label"], item["type"], value) == "customize"):
                         if session.meta["backend"] != "stub":
                             partial.append("layer-two choices not opened on local-dev backend")
@@ -137,7 +147,8 @@ def run(session, open_driver):
                         for nested in _options(driver, dialog["id"]):
                             if nested["id"] == opener["id"] or nested["id"] in {item["id"] for item in choices}:
                                 continue
-                            options.append(_option(driver, nested, value, layer=2, interactions=2))
+                            options.append(_option(driver, nested, value, layer=2, interactions=2,
+                                                   exit_question=dialog["exit_question"]))
                         break
                     if not options:
                         continue

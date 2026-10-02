@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>배송 선택</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main id="ship-page">
+  <h1>배송 선택</h1>
+  <div id="shipping" role="radiogroup" aria-labelledby="shipping-label" aria-required="true">
+    <p id="shipping-label">배송 방법</p>
+    <div role="radio" tabindex="0" aria-checked="false" data-value="express">빠른 배송 ₩3,000</div>
+    <div role="radio" tabindex="0" aria-checked="false" data-value="standard">일반 배송 무료</div>
+  </div>
+  <label class="choice"><input id="terms" type="checkbox"> <span>이용약관에 동의합니다</span></label>
+  <button id="next" type="button">다음</button>
+</main>
+<script>
+  const radios = [...document.querySelectorAll('[role=radio]')];
+  for (const radio of radios) radio.addEventListener('click', () => {
+    for (const other of radios) other.setAttribute('aria-checked', String(other === radio));
+  });
+  document.getElementById('next').addEventListener('click', () => {
+    const picked = radios.find(radio => radio.getAttribute('aria-checked') === 'true');
+    const terms = document.getElementById('terms');
+    // Nothing on the page reads as required until a forward control was tried: only aria-invalid says so.
+    if (!picked || !terms.checked) {
+      if (!terms.checked) terms.setAttribute('aria-invalid', 'true');
+      return;
+    }
+    document.getElementById('ship-page').innerHTML = '<h1>배송 정보</h1><p>결과: shipping=' + picked.dataset.value + ';terms=1</p>';
+  });
+</script>
+</body>
+</html>

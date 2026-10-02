@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>멤버십 가입</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main id="join-page">
+  <h1>멤버십 가입</h1>
+  <p><a href="/help.html">도움말 센터</a> · <a href="/about.html">회사 소개</a></p>
+  <form id="join" novalidate>
+    <fieldset id="plan-group">
+      <legend>[필수] 요금제</legend>
+      <label class="choice"><input class="visually-hidden" type="radio" name="plan" value="pro" required> <span>Pro ₩9,900/월</span></label>
+      <label class="choice"><input class="visually-hidden" type="radio" name="plan" value="basic" required> <span>Basic 무료</span></label>
+    </fieldset>
+    <fieldset id="cycle-group">
+      <legend>[필수] 결제 주기</legend>
+      <label class="choice"><input class="visually-hidden" type="radio" name="cycle" value="monthly" required checked> <span>월간</span></label>
+      <label class="choice"><input class="visually-hidden" type="radio" name="cycle" value="yearly" required> <span>연간</span></label>
+    </fieldset>
+    <fieldset id="channel-group">
+      <legend>[선택] 알림 채널</legend>
+      <label class="choice"><input class="visually-hidden" type="radio" name="channel" value="sms" required> <span>문자</span></label>
+      <label class="choice"><input class="visually-hidden" type="radio" name="channel" value="mail" required> <span>이메일</span></label>
+    </fieldset>
+    <label class="choice"><input id="terms" class="visually-hidden" type="checkbox" name="terms" required> <span>[필수] 서비스 이용약관에 동의</span></label>
+    <label class="choice"><input id="privacy" class="visually-hidden" type="checkbox" name="privacy" required> <span>[필수] 개인정보 수집·이용에 동의</span></label>
+    <label class="choice"><input id="all" class="visually-hidden" type="checkbox" name="all" required> <span>전체 동의</span></label>
+    <label class="choice"><input id="marketing" class="visually-hidden" type="checkbox" name="marketing" required> <span>[선택] 마케팅 정보 수신 동의</span></label>
+    <p><button id="notify" type="button" role="switch" aria-checked="false" aria-required="true">앱 알림 켜기</button></p>
+    <button type="submit">다음</button>
+  </form>
+</main>
+<script>
+  const form = document.getElementById('join');
+  const main = document.getElementById('join-page');
+  const notify = document.getElementById('notify');
+  notify.addEventListener('click', () => notify.setAttribute('aria-checked', String(notify.getAttribute('aria-checked') !== 'true')));
+  form.elements.all.addEventListener('change', event => {
+    form.elements.terms.checked = form.elements.privacy.checked = form.elements.marketing.checked = event.target.checked;
+  });
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    const ok = form.elements.plan.value && form.elements.terms.checked && form.elements.privacy.checked;
+    for (const [name, good] of [['plan-group', !!form.elements.plan.value], ['terms', form.elements.terms.checked]])
+      document.getElementById(name).setAttribute('aria-invalid', String(!good));
+    if (!ok) return;
+    const value = name => form.elements[name].value || '-';
+    main.innerHTML = '<h1>가입 완료</h1><p>결과: ' + [
+      'plan=' + value('plan'), 'cycle=' + value('cycle'), 'channel=' + value('channel'),
+      'terms=' + +form.elements.terms.checked, 'privacy=' + +form.elements.privacy.checked,
+      'all=' + +form.elements.all.checked, 'marketing=' + +form.elements.marketing.checked,
+      'notify=' + +(notify.getAttribute('aria-checked') === 'true')].join(';') + '</p>';
+  });
+</script>
+</body>
+</html>

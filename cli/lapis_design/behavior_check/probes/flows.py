@@ -41,13 +41,30 @@ kind on the step, no offer wording), the hint's kind is kept and listed as a mis
 
 Action choice is deterministic: required empty fields first (fixture values only), then controls
 ranked by overlap with the goal and the flow kind's vocabulary, forward wording, and the main
-region; in an optional-offer dialog the decline control wins. On a screen that offers a confirm control
-(in an exit flow also a control named for the exit action, such as Unsubscribe or 탈퇴), a control whose
-whole name is cancel, close, or put-off wording gets neither forward nor goal-word points; cancel wording
-is forward only in an exit flow, and 해지 never backs out. A control is read by its accessible name. An
-action that changed nothing is not repeated on that screen. A control no pointer reaches (not hit-testable, with
-nothing visible that toggles or shows it) is not an action of the run: it counts as tried, and a run that does not
-complete names it in the coverage reason. Runs stop as completed, blocked, dead-end, or abandoned after 40 actions.
+region; in an optional-offer dialog the decline control wins. A name that refuses (do not agree, continue
+without accepting, a necessary-only choice) is a decline and earns no agree, forward, or goal-word points.
+Where an exit flow's dialog asks about the exit itself, No and the like keep things as they are (no decline
+points) and the control that goes through (Yes, 나가기, Leave) is the confirm control. On a screen that offers
+a confirm control (in an exit flow also a control named for the exit action, such as Unsubscribe or 탈퇴), a
+control whose whole name is cancel, close, or put-off wording gets neither forward nor goal-word points;
+cancel wording is forward only in an exit flow, 해지 never backs out, and a name that negates the exit (Don't
+cancel, Keep my plan, 해지 취소) backs out. A control is read by its accessible name. An
+action that changed nothing is not repeated on that screen until a choice is made. A control no pointer reaches (not
+hit-testable, with nothing visible that toggles or shows it) is not an action of the run: it counts as tried, and
+the coverage reason names it, whether or not the run completes. An error after the action ran is not that: it ends
+the probe. Runs stop as completed, blocked, dead-end, or abandoned after 40 actions.
+
+Choices: checkboxes, radios, and switches are never ranked. When no untried control has forward or goal-word
+points, the driver makes every choice the screen needs, in document order, as `check` actions with `choice` set,
+and then tries the screen's controls again. A required radio group with no checked option is answered with the
+agreeing option when it asks for agreement to terms, a privacy policy, or an age confirmation, else with the
+first option that turns the offer down, the first with no amount above zero, or the lowest amount; a required
+unchecked checkbox is checked when it asks for that agreement and holds no marketing, add-on, or agree-to-all
+wording or amount. Required: the browser reports the value missing, `aria-required`, `aria-invalid` after a
+forward control was tried, or a required mark; an optional mark rules it out. A checked option is never
+changed, nothing is unchecked, and a switch is never chosen. A choice is pressed on the input's box, or on
+its visible label's when the input has none. A price a choice brings is user-caused only when the option's
+label showed its amount or its row holds the control; a checkbox choice causes nothing.
 Flows run only against the stub backend, since any control may commit.
 """
 from __future__ import annotations
@@ -61,7 +78,8 @@ from urllib.parse import urlsplit
 from playwright.sync_api import Error as PlaywrightError
 
 from lapis_design.behavior_check.probes._decision import (
-    ACCEPT, AGREE, BACK_OUT, CANCEL, CLOSE, CONFIRM, DECLINE, DISMISS, EXIT_ACTION, LATER, REFUSE, names)
+    ACCEPT, AGREE, BACK_OUT, BARE_REFUSAL, CANCEL, CLOSE, CONFIRM, DECLINE, DISMISS, EXIT_ACTION, KEEPS, LATER,
+    NEGATES_EXIT, REFUSE, THROUGH, asks_exit, names)
 from lapis_design.behavior_check.redact import path as safe_path
 
 NAMES = ("flows",)
@@ -84,8 +102,8 @@ KIND_WORDS = {
 # subscription" is not "Cancel"; 해지 ends a contract and never backs out). Cancel wording is forward only in
 # an exit flow, where cancelling is the point; "다음에" is "next time", not the forward word "다음".
 WITHDRAW = re.compile(rf"{BACK_OUT}|{CLOSE}|{LATER}|not now", re.I)
-# The answer that wins an optional dialog: the shared decline, refuse, and later wording, and these.
-TURN_DOWN = re.compile(rf"{DECLINE}|{REFUSE}|{LATER}|continue cancel|계속 (?:취소|해지)", re.I)
+# The answer that wins an optional dialog: the shared decline, refuse, and later wording, a whole-name No, and these.
+TURN_DOWN = re.compile(rf"{DECLINE}|{REFUSE}|{LATER}|continue cancel|계속 (?:취소|해지)|{BARE_REFUSAL}", re.I)
 # A dialog whose text speaks of an offer, retention ("before you go"), upsell (upgrade), marketing, advertising,
 # cookies, optional consent, a discount (50% off), or staying is optional; the Korean words are the counterparts
 # of the English ones, in that order. Consent alone is not an offer, and neither is a dialog that asks the user
@@ -94,14 +112,22 @@ OPTIONAL_DIALOG = re.compile(r"offer|retention|before you (?:go|cancel|leave)|up
                              r"optional consent|discount|\d\s?% off|stay|"
                              r"혜택|제안|특가|해지하기 전|떠나기 전|업그레이드|마케팅|광고성|쿠키|선택 ?동의|할인|유지|계속 이용", re.I)
 # What asks for that agreement. Mentioning terms or a required item does not ("Terms apply", "필수 쿠키는
-# 항상 켜져 있어요", "No card required"); the terms an offer comes with are cleared before this is read.
+# 항상 켜져 있어요", "No card required"); the terms an offer comes with are cleared before this is read. A required
+# mark asks only on an agreement item, beside the words that ask for agreement ("[필수] 이용약관 동의"), not on a
+# field label ("Email (required)", "이메일 (필수)").
+_AGREEMENT_WORD = r"(?:agree|accept|consent|terms|privacy|policy|동의|약관|개인 ?정보)"
 ASKS_AGREEMENT = re.compile(
     r"\b(?:agree|accept|consent)\w*\b[^.?!]{0,40}\bterms\b|\bterms\b[^.?!]{0,40}\b(?:agree|accept)"
-    r"|[\[(]required[\])]|\brequired to (?:continue|sign up|register|create)"
-    r"|약관[^.?!]{0,20}동의|동의[^.?!]{0,10}필수|[\[(]필수[\])]|필수 ?(?:약관|항목|동의)", re.I)
+    r"|\brequired to (?:continue|sign up|register|create)"
+    rf"|[\[(](?:required|필수)[\])][^.?!\n]{{0,60}}?{_AGREEMENT_WORD}|{_AGREEMENT_WORD}[^.?!\n]{{0,40}}?[\[(](?:required|필수)[\])]"
+    r"|약관[^.?!]{0,20}동의|동의[^.?!]{0,10}필수|필수 ?(?:약관|동의)|필수 ?항목[^.?!]{0,10}동의", re.I)
+# The terms an offer comes with are its own, not terms the flow needs: "offer terms", "terms apply", and the line
+# that says taking the offer accepts them ("By subscribing you agree to our Terms", "구독하면 이용약관에 동의하게 됩니다").
 OFFER_TERMS = re.compile(
     r"\b(?:offer|promo(?:tion(?:al)?)?|discount|deal)\s+terms\b"
     r"|\bterms(?:\s+(?:and|&)\s+conditions)?(?:\s+of\s+(?:the|this)\s+(?:offer|deal|promotion))?\s+apply\b"
+    r"|\bby\s+(?:subscribing|signing up|joining|claiming|redeeming|registering)\b[^.?!]*?\b(?:agree|accept|consent)\w*\b[^.?!]*"
+    r"|(?:구독|가입|신청|참여|등록)(?:하면|하시면|할 경우|하실 경우)[^.?!]{0,40}동의[^.?!]*"
     r"|(?:혜택|이벤트|프로모션|할인|쿠폰)\s?약관", re.I)
 FORWARD = re.compile(rf"{CONFIRM}|continue|next|checkout|reserve|subscribe|join|stop|call|review|manage|pay|"
                      r"신청|예약|계속|다음(?!에)|결제|가입|구독하", re.I)
@@ -110,8 +136,15 @@ BACK = re.compile(r"back|previous|return|edit|change|뒤로|이전|변경", re.I
 ADD = re.compile(r"\badd\b|\bbuy\b|reserve|\bchoose\b|\bselect\b|\bbook\b|담기|구매|예약|선택", re.I)
 FIELD_TYPES = ("text", "email", "password", "tel", "search", "number", "select", "textarea", "date", "url")
 
-MONEY = re.compile(r"(-)?\s?(?:([$€£₩])\s?(\d[\d,]*(?:\.\d+)?)|(\d[\d,]*(?:\.\d+)?)\s?(원|KRW|USD|EUR|GBP))")
+_NUMBER = r"\d[\d,]*(?:\.\d+)?"
+_CODES = "USD|EUR|GBP|KRW"
+# An amount, read by the flows and by the choices alike: a symbol or an ISO code before the number
+# ($12, ₩9,900, USD 12) or a code or 원 after it (12 USD, 9,900원). Shared with the page script as its source.
+MONEY = re.compile(rf"(-)?\s?(?:([$€£₩])\s?({_NUMBER})|(?<![A-Za-z])({_CODES})\s?({_NUMBER})|({_NUMBER})\s?(원|{_CODES}))")
 CURRENCY = {"$": "USD", "€": "EUR", "£": "GBP", "₩": "KRW", "원": "KRW"}
+# A Korean period word that stands before the price it qualifies (월 9,900원, 연 ₩99,000); a date such as 9월 30일
+# has a number or syllable before the word and no price after it.
+_PRICE_AHEAD = rf"(?=\s?(?:[$€£₩]\s?\d|(?:{_CODES})\s?\d|{_NUMBER}\s?(?:원|{_CODES})))"
 CHARGES = (("discount", r"discount|coupon|promo|savings|할인|쿠폰"),
            ("subtotal", r"subtotal|sub-total|소계|상품 ?금액"),
            ("total", r"\btotal\b|합계|총액|총 ?결제|결제 ?금액"),
@@ -121,8 +154,8 @@ CHARGES = (("discount", r"discount|coupon|promo|savings|할인|쿠폰"),
            ("fee", r"\bfee\b|surcharge|service charge|수수료"))
 CADENCES = (("day", r"/\s?day\b|per day|\bdaily\b|매일"),
             ("week", r"/\s?(?:wk|week)\b|per week|\bweekly\b|매주"),
-            ("month", r"/\s?mo(?:nth)?\b|per month|a month\b|\bmonthly\b|매월|/\s?월"),
-            ("year", r"/\s?(?:yr|year)\b|per year|a year\b|\byearly\b|annual(?:ly)?|매년|/\s?년"),
+            ("month", rf"/\s?mo(?:nth)?\b|per month|a month\b|\bmonthly\b|매월|/\s?월|(?<![\d가-힣])월{_PRICE_AHEAD}"),
+            ("year", rf"/\s?(?:yr|year)\b|per year|a year\b|\byearly\b|annual(?:ly)?|매년|/\s?년|(?<![\d가-힣])연{_PRICE_AHEAD}"),
             ("other", r"every \d+ (?:days|weeks|months)|매 ?\d+ ?(?:주|개월)"))
 PENDING = re.compile(r"to be calculated|calculated (?:at|later|in)|\bpending\b|\btbd\b|계산 예정|추후", re.I)
 ESTIMATED = re.compile(r"approx|estimat|\babout\b|~\s?[$€£₩\d]|약 ?[$€£₩\d]|예상", re.I)
@@ -170,7 +203,13 @@ SCREEN = r"""(args) => {
  const bodyPx=parseFloat(getComputedStyle(document.body).fontSize)||16;
  const main=document.querySelector('main,[role=main]');
  const dialog=[...document.querySelectorAll('dialog,[role=dialog],[role=alertdialog]')].find(vis);
- const ctrlSel='button,a[href],input:not([type=hidden]),textarea,select,[role=button],[role=link],[role=checkbox],[role=switch],summary';
+ const ctrlSel='button,a[href],input:not([type=hidden]),textarea,select,[role=button],[role=link],[role=checkbox],[role=radio],[role=switch],summary';
+ // The box a hidden checkbox or radio is pressed through: the input's own, else its visible label's (a clipped,
+ // transparent, or display:none input has none, and its ancestor's box is the wrong place to press).
+ const boxOf=el=>el.getAttribute('data-lapis-box');
+ const via=el=>{if(boxOf(el))return boxOf(el);
+   const labels=[...(el.labels||[])].filter(vis),own=labels.find(boxOf);
+   return own?boxOf(own):labels[0]?id(labels[0]):null};
  const ctrlEls=[...document.querySelectorAll(ctrlSel)].filter(vis);
  const controls=ctrlEls.map(el=>({id:id(el),name:labelOf(el),
    type:el.localName==='input'?el.type:(el.getAttribute('role')||el.getAttribute('type')||el.localName),
@@ -185,7 +224,7 @@ SCREEN = r"""(args) => {
    const d=el.closest('details:not([open])'); if(d&&!el.closest('summary'))return vis(d)?'collapsed':null;
    if(!vis(el))return null;
    return el.closest('main,[role=main]')&&parseFloat(getComputedStyle(el).fontSize)>=bodyPx-.5?'primary':'secondary'};
- const money=/(?:[$€£₩]\s?\d|\d[\d,.]*\s?(?:원|KRW|USD|EUR|GBP))/;
+ const money=new RegExp(args.money);
  const pending=/to be calculated|calculated (?:at|later|in)|\bpending\b|\btbd\b|계산 예정|추후/i;
  const charge=/fee|shipping|delivery|tax|total|배송|세금|수수료|합계/i;
  const termRe=[['renewal-price',/renewal price|renews? at|after the (?:free )?trial,? .*[$€£₩]|갱신 (?:가격|요금)/i],
@@ -222,12 +261,12 @@ SCREEN = r"""(args) => {
    if(!el.hasAttribute('data-lapis-price')&&['renewal-price','trial-conversion','trial-end','cancellation-terms'].includes(termKind(el)||termHint(el)))return null;
    let label=bare(el);
    if(el.localName==='dd'&&el.previousElementSibling?.localName==='dt')label=flat(el.previousElementSibling.textContent)+' '+label;
-   const ctl=[...el.querySelectorAll('button,input,[role=button],[role=checkbox],[role=switch]')];
+   const ctl=[...el.querySelectorAll('button,input,[role=button],[role=checkbox],[role=radio],[role=switch]')];
    return {id:id(el),text:label,placement,rect:rect(el),
      cart:el.hasAttribute('data-lapis-cart-line')||cartOf(el),
      removable:ctl.some(c=>c.matches('input[type=checkbox],[role=checkbox],[role=switch]')||/remove|delete|삭제|빼기/i.test(labelOf(c))),
-     checked:ctl.filter(c=>c.checked||c.getAttribute('aria-checked')==='true').map(id).filter(Boolean),
-     controls:ctl.map(id).filter(Boolean),
+     checked:ctl.filter(c=>c.checked||c.getAttribute('aria-checked')==='true').map(c=>via(c)||id(c)).filter(Boolean),
+     controls:ctl.map(c=>via(c)||id(c)).filter(Boolean),
      hint:{kind:el.getAttribute('data-lapis-price'),key:el.getAttribute('data-lapis-key'),state:el.getAttribute('data-lapis-state'),
        mandatory:el.getAttribute('data-lapis-mandatory'),cadence:el.getAttribute('data-lapis-cadence'),
        placement:el.getAttribute('data-lapis-placement'),line:el.getAttribute('data-lapis-cart-line'),
@@ -249,13 +288,41 @@ SCREEN = r"""(args) => {
  document.querySelectorAll('[data-lapis-offer]').forEach(el=>addBlock(el,el===dialog));
  if(main)main.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(h=>{const c=h.closest('section,aside,article,[role=region],form,div');
    if(c&&c!==main&&!c.contains(main))addBlock(c,false)});
- const asked=el=>{if(!el)return '';const out=[],w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
+ // Checkboxes and radios, hidden or not, with what decides whether the screen needs them chosen (DERIVED.md, Choices).
+ const groupOf=el=>el.closest('[role=radiogroup]')||el.closest('fieldset')||el.closest('[role=group]');
+ const promptOf=el=>{const g=groupOf(el),legend=g?.querySelector(':scope>legend');
+   let text=flat(legend?legend.innerText:g?(labelledBy(g)||g.getAttribute('aria-label')||''):'');
+   for(let p=g||el.parentElement,i=0;!text&&p&&p!==document.body&&i<(g?1:3);p=p.parentElement,i++){
+     const c=p.cloneNode(true);
+     c.querySelectorAll('label,input,button,select,textarea,[role=radio],[role=checkbox],script,style').forEach(n=>n.remove());
+     text=flat(c.textContent).slice(0,240)}
+   return text};
+ let loose=0;
+ const groupKey=el=>{const g=el.closest('[role=radiogroup]');
+   if(g)return 'g'+[...document.querySelectorAll('[role=radiogroup]')].indexOf(g);
+   if(el.type==='radio'&&el.name)return 'n'+(el.form?[...document.forms].indexOf(el.form):-1)+':'+el.name;
+   return 'u'+(loose++)};
+ const choices=[...document.querySelectorAll('input[type=checkbox],input[type=radio],[role=checkbox],[role=radio]')]
+   .filter(el=>el.getAttribute('role')!=='switch').map(el=>{
+   if(!vis(el)&&![...(el.labels||[])].some(vis))return null;
+   const radio=el.type==='radio'||el.getAttribute('role')==='radio',g=el.closest('[role=radiogroup]');
+   return {id:via(el),kind:radio?'radio':'checkbox',name:flat(labelOf(el)),
+     checked:!!el.checked||el.getAttribute('aria-checked')==='true',
+     disabled:!!el.disabled||el.getAttribute('aria-disabled')==='true'||!!el.closest('fieldset:disabled'),
+     in_dialog:!!dialog?.contains(el),missing:!!el.validity?.valueMissing,
+     aria_required:el.getAttribute('aria-required')==='true'||g?.getAttribute('aria-required')==='true',
+     aria_invalid:[el,g,el.closest('fieldset')].some(n=>n?.getAttribute('aria-invalid')==='true'),
+     group:radio?groupKey(el):null,prompt:radio?promptOf(el):''}}).filter(Boolean);
+ // The dialog's own words, with a line break between blocks so that a heading is not part of the question after it.
+ const asked=el=>{if(!el)return '';const out=[],w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);let last=null;
    for(let n;n=w.nextNode();){const p=n.parentElement;
      if(!p||p.closest('button,[role=button],input,select,textarea,script,style')||!vis(p))continue;
-     const t=flat(n.nodeValue);if(t)out.push(t)}
-   return out.join(' ')};
+     const t=flat(n.nodeValue);if(!t)continue;
+     const block=p.closest('p,h1,h2,h3,h4,h5,h6,li,div,section,header,footer,form,fieldset,legend,label,dt,dd,td,th,blockquote')||el;
+     out.push((out.length?(block===last?' ':'\n'):'')+t);last=block}
+   return out.join('')};
  return {main:id(main),main_text:main?.innerText||'',dialog:id(dialog),dialog_text:dialog?.innerText||'',dialog_prompt:asked(dialog),
-   text:document.body.innerText,path:location.pathname,vh:innerHeight,controls,rows,terms,gates,blocks};
+   text:document.body.innerText,path:location.pathname,vh:innerHeight,controls,choices,rows,terms,gates,blocks};
 }"""
 
 
@@ -272,20 +339,30 @@ def _bare(name):
     return " ".join("".join(" " if unicodedata.category(ch).startswith("P") else ch for ch in name).split())
 
 
+def _negates_exit(name):
+    """The name negates or cancels the exit ("Don't cancel", "Keep my plan", "해지 취소", "취소 안 함", "유지할게요")."""
+    return bool(re.search(NEGATES_EXIT, name, re.I))
+
+
 def _backs_out(name):
     """The whole name is cancel, close, or put-off wording ("Cancel", "취소", "Not now"); "Cancel
-    subscription" and "구독 취소" are not."""
-    return bool(WITHDRAW.fullmatch(_bare(name)))
+    subscription" and "구독 취소" are not. A name that negates or cancels the exit backs out too."""
+    return bool(WITHDRAW.fullmatch(_bare(name))) or _negates_exit(name)
 
 
 def _exit_named(name):
     """The name says the action that leaves something (Unsubscribe, Withdraw, Stop emails, 탈퇴, Cancel plan):
-    unlike a name that is only cancel, it does not back out."""
+    unlike a name that is only cancel, it does not back out, and neither does a name that cancels the exit."""
+    if _negates_exit(name):
+        return False
     return bool(re.search(EXIT_ACTION, name, re.I)) or (bool(re.search(CANCEL, name, re.I)) and not _backs_out(name))
 
 
 def _forward(name, exit_flow):
-    """Forward wording. Cancel wording is forward only in an exit flow, where cancelling is the point."""
+    """Forward wording. Cancel wording is forward only in an exit flow, where cancelling is the point; a name that
+    negates the exit is never forward."""
+    if _negates_exit(name):
+        return False
     return bool(FORWARD.search(name)) or (exit_flow and bool(re.search(CANCEL, name, re.I)))
 
 
@@ -316,20 +393,20 @@ def _done(flow, screen, session):
 
 
 def _money(text):
-    """(amount, currency) of the first amount in text, or (None, None)."""
+    """(amount, currency) of the first amount in text, or (None, None). The amount is negative for "-$5"."""
     found = MONEY.search(text)
     if not found:
         return None, None
-    sign, symbol, number, number2, code = found.groups()
-    amount = float((number or number2).replace(",", ""))
+    sign, symbol, number, lead, lead_number, tail_number, tail = found.groups()
+    amount = float((number or lead_number or tail_number).replace(",", ""))
+    code = lead or tail
     return (-amount if sign else amount), CURRENCY.get(symbol or code, code)
 
 
 def _label(text):
-    text = MONEY.sub(" ", text)
     for _, pattern in CADENCES:
         text = re.sub(pattern, " ", text, flags=re.I)
-    text = PENDING.sub(" ", ESTIMATED.sub(" ", text))
+    text = PENDING.sub(" ", ESTIMATED.sub(" ", MONEY.sub(" ", text)))
     return re.sub(r"[\s:()\-–—/*]+", " ", text).strip()
 
 
@@ -389,16 +466,27 @@ def _field_kind(control):
 
 
 def _caused(kind, label, row, log):
+    """How the driver's own actions since this component was last seen made it, or None: ("touch", None) for a
+    control it touched, a word of the label, an address, or a quantity; ("choice", amount) for a radio choice
+    whose option label showed this amount or whose row holds the chosen control, with the amount it added. A
+    checkbox choice (agreeing to terms) adds nothing, and no choice makes a total or subtotal: that one follows
+    the amount (see _observe_money)."""
     words = _words(label)
     for entry in log:
+        if entry.get("choice"):
+            holds = entry["target"] in row["controls"]
+            if entry["choice"] == "required-radio" and kind not in ("total", "subtotal") and (
+                    holds or (entry["amount"] is not None and entry["amount"] == row["amount"])):
+                return "choice", row["amount"] if entry["amount"] is None else entry["amount"]
+            continue
         if entry["target"] in row["controls"] or words & _words(entry["name"]):
-            return True
+            return "touch", None
         if kind in ("shipping", "tax") and (entry["field"] in ("address", "postal-code") or
                                             re.search(r"shipping|delivery|배송", entry["name"], re.I)):
-            return True
+            return "touch", None
         if kind in ("item", "subtotal") and entry["field"] == "number":
-            return True
-    return False
+            return "touch", None
+    return None
 
 
 def _mismatch(reading: dict, hints: dict) -> list[str]:
@@ -457,10 +545,11 @@ def _observe_money(run, screen, driver, index, state):
         placement = row["placement"] if row["placement"] in ("primary", "secondary", "collapsed", "tooltip") else "secondary"
         shown = amount if state_value != "pending" else None
         changed = row["key"] not in state["last_seen"] or state["last_seen"][row["key"]] != shown
+        cause = _caused(kind, row["label"], row, state["log"]) if changed else None
         component = {"key": row["key"], "kind": kind, "state": state_value, "mandatory": mandatory,
-                     "placement": placement,
-                     "user_caused": bool(changed and _caused(kind, row["label"], row, state["log"]))}
-        component["_changed"] = changed
+                     "placement": placement, "user_caused": bool(cause)}
+        component["_changed"], component["_cause"] = changed, cause
+        component["_before"] = state["last_seen"].get(row["key"])
         if shown is not None:
             component["amount"] = shown
         if cadence:
@@ -473,12 +562,15 @@ def _observe_money(run, screen, driver, index, state):
             component["hint_mismatch"] = mismatch
         components.append(component)
         charged.append((kind, row))
-    if any(c["user_caused"] for c in components if c["kind"] not in ("total", "subtotal")):
-        for c in components:
-            if c["kind"] in ("total", "subtotal") and c["_changed"]:
-                c["user_caused"] = True
+    touched = any(c["_cause"] and c["_cause"][0] == "touch" for c in components if c["kind"] not in ("total", "subtotal"))
+    chosen = [c["_cause"][1] for c in components if c["_cause"] and c["_cause"][0] == "choice" and c["_cause"][1] is not None]
     for c in components:
-        del c["_changed"]
+        if c["kind"] in ("total", "subtotal") and c["_changed"] and (touched or (
+                c.get("amount") is not None and c["_before"] is not None and any(
+                    abs((c["amount"] - c["_before"]) - amount) < .005 for amount in chosen))):
+            c["user_caused"] = True
+    for c in components:
+        del c["_changed"], c["_cause"], c["_before"]
         state["last_seen"][c["key"]] = c.get("amount")
     if components and currency:
         run.setdefault("prices", []).append({"step": index, "currency": currency, "components": components})
@@ -625,18 +717,114 @@ def _at_commit(run, screen, target, index):
             term["hint_mismatch"] = [field for field in HINT_FIELDS if field in fields]
 
 
-def _choose(screen, flow, tried, session):
+# Choices (DERIVED.md, Flows). What the driver agrees to: terms, a privacy policy, an age confirmation, and nothing
+# else; a checkbox whose name holds marketing, add-on, or agree-to-all wording is left alone.
+AGREEMENT_ITEM = re.compile(
+    r"\bterms\b|conditions|\btos\b|이용 ?약관|서비스 ?약관|약관|privacy|personal (?:data|information)|개인 ?정보|"
+    r"\b(?:over|at least|older than)\s+\d{1,2}\b|\b\d{1,2}\s*(?:years? old|or older|\+|and (?:over|older))|"
+    r"만 ?\d{1,2} ?세|\d{1,2} ?세 이상|연령", re.I)
+NOT_AGREED = re.compile(
+    r"marketing|promot|newsletter|\boffers?\b|광고|마케팅|이벤트|혜택|프로모션|뉴스레터|"
+    r"add-?ons?\b|\bextras?\b|insurance|protection plan|warranty|gift|부가|추가 ?(?:상품|옵션|서비스)|보험|보증|선물|"
+    r"전체 ?동의|모두 ?동의|전부 ?동의|"
+    r"\b(?:select|check|accept|agree(?: to)?) all\b(?!\s+(?:of\s+)?(?:the\s+|these\s+|our\s+)?(?:terms|conditions|polic))", re.I)
+# Required and optional marks on a label. A bare 선택 is not a mark: it also means "choose".
+REQUIRED_MARK = re.compile(r"[\[(（【]\s*(?:필수|required)\s*[\])）】]|\brequired\b|\*", re.I)
+OPTIONAL_MARK = re.compile(r"[\[(（【]\s*(?:선택|optional)\s*[\])）】]|\boptional\b", re.I)
+# The option that agrees, and the option that turns an offer down (beside the shared turn-down wording).
+AGREEING = re.compile(rf"{AGREE}|\baccept|\byes\b|\bi do\b|수락|^\W*(?:네|예|ok|okay)\W*$|읽었|확인했|이해했", re.I)
+NONE_OPTION = re.compile(r"^\W*(?:none|nothing)\W*$|\bnone\b|no thank|\bwithout\b|선택 ?안 ?함|없음|안 ?함|필요 ?없|원하지 ?않", re.I)
+
+
+def _option(prompt, options):
+    """The option that answers a required radio group: the agreeing one when the group asks for agreement to
+    terms, a privacy policy, or an age confirmation (none when no option agrees); otherwise the first that turns
+    the offer down (none, no thanks, 선택 안 함), else the first that shows no amount above zero, else the lowest."""
+    if AGREEMENT_ITEM.search(prompt) or (not prompt and any(AGREEMENT_ITEM.search(o["name"]) for o in options)):
+        return next((o for o in options if AGREEING.search(o["name"]) and not TURN_DOWN.search(o["name"])), None)
+    down = next((o for o in options if TURN_DOWN.search(o["name"]) or NONE_OPTION.search(o["name"])), None)
+    if down:
+        return down
+    amounts = [(_money(o["name"])[0] or 0, index, o) for index, o in enumerate(options)]
+    return next((o for amount, _, o in amounts if amount <= 0), None) or min(amounts, key=lambda row: row[:2])[2]
+
+
+def _needed(screen, asked, closed):
+    """The choices the screen needs, in document order: (`choice`, option) with `choice` the action's `choice`
+    value. A required radio group with no checked option, and each required unchecked checkbox that asks for
+    agreement; a group or checkbox with an optional mark, or a switch, is not needed. Required: the browser
+    reports its value missing, `aria-required` is set, `aria-invalid` is set after a forward control was
+    `asked`, or its label carries a required mark. `closed` holds boxes that did not take a press."""
+    dialog = bool(screen.get("dialog"))
+    items, groups = [], {}
+    for c in screen.get("choices", ()):
+        if c["in_dialog"] != dialog:
+            continue
+        if c["kind"] == "radio" and c["group"] in groups:
+            groups[c["group"]].append(c)
+        else:
+            members = [c]
+            items.append(members)
+            if c["kind"] == "radio":
+                groups[c["group"]] = members
+    out = []
+    for members in items:
+        first = members[0]
+        if any(m["checked"] for m in members):
+            continue
+        radio = first["kind"] == "radio"
+        label = (first["prompt"] or " ".join(m["name"] for m in members)) if radio else first["name"]
+        if OPTIONAL_MARK.search(label) or not (
+                any(m["missing"] or m["aria_required"] or (asked and m["aria_invalid"]) for m in members)
+                or REQUIRED_MARK.search(label)):
+            continue
+        options = [m for m in members if m["id"] and not m["disabled"] and m["id"] not in closed]
+        if radio:
+            option = _option(first["prompt"], options) if options else None
+            if option:
+                out.append(("required-radio", option))
+        elif options and AGREEMENT_ITEM.search(first["name"]) and not NOT_AGREED.search(first["name"]) and (
+                _money(first["name"])[0] is None):
+            out.append(("required-checkbox", first))
+    return out
+
+
+def _choose(screen, flow, tried, session, state=None):
+    """The next action and the name it presses (a choice, a field entry, or a control), or (None, note) to stop.
+    `state` holds what a run carries between calls: `made` (choices were made on this screen since its controls
+    were tried) and `closed` (boxes that did not take a press)."""
+    state = state if state is not None else {"made": False, "closed": set()}
     dialog = bool(screen["dialog"])
     controls = [c for c in screen["controls"] if c["id"] and not c["disabled"] and
                 (c["in_dialog"] if dialog else not c["in_dialog"])]
     actionable = [c for c in controls if c["type"] not in FIELD_TYPES + ("checkbox", "radio", "switch")
                   and not c["href"].startswith(("tel:", "mailto:"))]
     exit_flow = flow["kind"] in EXIT_KINDS
-    confirming = any(re.search(CONFIRM, c["name"], re.I) or (exit_flow and _exit_named(c["name"])) for c in actionable)
+    prompt = screen.get("dialog_prompt")
+    # In an exit flow a dialog can ask about the exit itself: then No keeps things, and Yes, 나가기, Leave go through.
+    exit_question = dialog and exit_flow and asks_exit(screen["dialog_text"] if prompt is None else prompt)
+
+    def goes_through(name):
+        return exit_question and bool(re.search(THROUGH, name, re.I))
+
+    confirming = any(re.search(CONFIRM, c["name"], re.I) or (exit_flow and _exit_named(c["name"])) or goes_through(c["name"])
+                     for c in actionable)
+
+    def refused(name):
+        """A refusal of consent (do not agree, continue without accepting) moves nothing forward: it is a decline.
+        In an exit flow the control named for the exit (수신 거부) is the action, not a refusal."""
+        return dialog and bool(re.search(REFUSE, name, re.I)) and not (exit_flow and _exit_named(name))
 
     def forward(name):
         """Forward wording, except that beside a confirm control a name that only backs out is not."""
-        return _forward(name, exit_flow) and not (confirming and _backs_out(name))
+        return _forward(name, exit_flow) and not (confirming and _backs_out(name)) and not refused(name)
+
+    def shared_words(name):
+        """The goal and flow-kind words the name shares; none for a refusal, or a name that only backs out beside a
+        confirm control."""
+        if refused(name) or (confirming and _backs_out(name)):
+            return set()
+        return _shared(set(WORDS.findall(name)), vocab)
 
     for c in controls:
         kind = c["type"].lower()
@@ -661,16 +849,34 @@ def _choose(screen, flow, tried, session):
 
     def score(c):
         name = c["name"].lower()
-        tokens = set(WORDS.findall(name))
-        shared = set() if confirming and _backs_out(name) else _shared(tokens, vocab)
-        decline = bool(TURN_DOWN.search(name))
+        shared = shared_words(name)
+        stays = exit_question and bool(re.search(KEEPS, name, re.I))      # keeps things as they are: no decline points
+        decline = bool(TURN_DOWN.search(name)) and not stays
+        refuses = bool(re.search(rf"{REFUSE}|{DECLINE}|{BARE_REFUSAL}", name, re.I))   # a refusal gets none of the 20
+        agrees = bool(re.search(rf"{ACCEPT}|{CLOSE}|{DISMISS}|{AGREE}", name))
         return (100 if dialog and decline and optional else 0) + (
             30 if shared else 0) + len(shared) * 5 + (14 if forward(name) else 0) + (
-            20 if dialog and (re.search(rf"{ACCEPT}|{CLOSE}|{DISMISS}", name) or (
-                re.search(AGREE, name) and not re.search(REFUSE, name))) else 0) + (
+            20 if dialog and (goes_through(name) or (agrees and not refuses)) else 0) + (
             4 if c["in_main"] else 0) - (30 if BACK.search(name) else 0) - (
             25 if re.search(r"login|sign in|support|help|로그인|고객 ?(?:센터|지원)|도움말", name) and not dialog else 0)
     candidates.sort(key=score, reverse=True)
+
+    def points(c):
+        """Forward or goal-word points: the part of a score that moves the flow along."""
+        name = c["name"].lower()
+        return bool(shared_words(name)) or forward(name)
+
+    if not any(points(c) for c in candidates):
+        # Nothing untried moves the flow along. Before any other control, make every choice the screen needs, in
+        # document order, and then try its controls again.
+        asked = any(forward(c["name"]) and c["id"] in tried for c in actionable)
+        if needed := _needed(screen, asked, state["closed"]):
+            choice, option = needed[0]
+            return {"kind": "check", "target": option["id"], "choice": choice}, option["name"]
+        if state["made"]:
+            state["made"] = False
+            tried.clear()
+            candidates = sorted(actionable, key=score, reverse=True)
     if not candidates or score(candidates[0]) <= 0:
         return None, None
     chosen = candidates[0]
@@ -685,7 +891,7 @@ def _main_replaced(before, after):
 def _read(driver, flow):
     """One DOM read of the screen; cancel wording counts as forward outside an offer only in an exit flow."""
     forward = FORWARD.pattern + (f"|{CANCEL}" if flow["kind"] in EXIT_KINDS else "")
-    return driver.page.evaluate(SCREEN, {"forward": forward, "names": names(driver)})
+    return driver.page.evaluate(SCREEN, {"forward": forward, "names": names(driver), "money": MONEY.pattern})
 
 
 def _run_one(session, open_driver, flow, ctx_id, start):
@@ -698,7 +904,7 @@ def _run_one(session, open_driver, flow, ctx_id, start):
                                     "single_field_steps": 0, "offers": 0, "blocking_offers": 0, "reauth": False},
                "_requires": set(flow.get("requires") or [])}
         state = {"log": [], "touched": set(), "chosen": set(), "add_words": set(), "last_seen": {},
-                 "screen_keys": [], "signed_in": False}
+                 "screen_keys": [], "signed_in": False, "made": False, "closed": set()}
         tried = set()
         unreachable = []
         prev = None
@@ -718,6 +924,7 @@ def _run_one(session, open_driver, flow, ctx_id, start):
                     step["dialog"] = screen["dialog"]
                 run["steps"].append(step)
                 tried.clear()
+                state["made"] = False
                 _observe(run, screen, driver, step, state)
             else:
                 step = run["steps"][-1]
@@ -730,7 +937,7 @@ def _run_one(session, open_driver, flow, ctx_id, start):
             if sum(len(s["actions"]) for s in run["steps"]) >= 40:
                 run["status"] = "abandoned"
                 break
-            action, name = _choose(screen, flow, tried, session)
+            action, name = _choose(screen, flow, tried, session, state)
             if action is None:
                 if name:
                     run["note"] = name
@@ -747,13 +954,19 @@ def _run_one(session, open_driver, flow, ctx_id, start):
             try:
                 effect = driver.act(action)
             except PlaywrightError as exc:
+                if driver.performed:
+                    raise               # the action ran: this error is from reading what it did
                 # A control nothing reaches is not an action of the run: it is tried, and the run goes on without it.
                 unreachable.append(f"{driver.clean(name or action['target'])}: {driver.reason(exc)}")
-                tried.add(action["target"])
+                (state["closed"] if action.get("choice") else tried).add(action["target"])
                 continue
             step["actions"].append(action)
             field = _field_kind(control) if control and control["type"].lower() in FIELD_TYPES else None
-            state["log"].append({"target": action["target"], "name": control["name"] if control else "", "field": field})
+            entry = {"target": action["target"], "name": control["name"] if control else name or "", "field": field}
+            if action.get("choice"):
+                entry.update(choice=action["choice"], amount=_money(entry["name"])[0])
+                state["made"] = True
+            state["log"].append(entry)
             state["touched"].add(action["target"])
             if field == "password":
                 state["signed_in"] = True
@@ -775,7 +988,8 @@ def _run_one(session, open_driver, flow, ctx_id, start):
                     BACK.search(c["name"]) or re.search(r"remove|edit|change|삭제", c["name"], re.I)
                     for c in screen["controls"] if not c["disabled"])
             fresh = _read(driver, flow)
-            if (safe_path(fresh["path"], session.fixture_values), fresh["main_text"], fresh["dialog"]) == old_signature:
+            if not action.get("choice") and (
+                    safe_path(fresh["path"], session.fixture_values), fresh["main_text"], fresh["dialog"]) == old_signature:
                 tried.add(action["target"])
         else:
             run["status"] = "abandoned"
@@ -824,9 +1038,9 @@ def run(session, open_driver):
             result, unreachable = _run_one(session, open_driver, flow, ctx_id, start)
             session.add_flow_run(result)
             where = f"{ctx_id}/{flow['id']}"
-            if result["status"] != "completed":
-                detail = "; ".join([result.get("note", "goal not reached"), *unreachable])
-                gaps.append(f"{where}: {result['status']} ({detail})")
+            notes = [] if result["status"] == "completed" else [result.get("note", "goal not reached")]
+            if notes or unreachable:      # a control nothing reached is a gap even when the run finished
+                gaps.append(f"{where}: {result['status']} ({'; '.join([*notes, *unreachable])})")
             if result["kind"] in PRICED_KINDS and "commit_step" in result and not result.get("prices"):
                 gaps.append(f"{where}: commit reached without an observed price")
             if result["kind"] in EXIT_KINDS and "channel" not in result["effort"]:

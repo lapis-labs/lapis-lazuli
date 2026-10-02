@@ -1,0 +1,11 @@
+version: 0
+clock: {start: '2026-10-02T00:00:00Z'}
+collections:
+  orders: []
+variants:
+  empty: {orders: []}
+  partial: {orders: []}
+routes:
+  - {method: POST, path: /api/orders, collection: orders, operation: create}
+values:
+  v1: {kind: name, valid: 이하늘, invalid: '', alternate: 남궁해솔}

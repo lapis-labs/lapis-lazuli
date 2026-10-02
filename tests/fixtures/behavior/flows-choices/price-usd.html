@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Plans</title></head>
+<body>
+<main id="plans">
+  <h1>Your plan</h1>
+  <ul aria-label="Order summary">
+    <li>Pro plan USD 12 per month</li>
+    <li>Setup fee USD 5</li>
+  </ul>
+  <button id="go" type="button">Continue</button>
+</main>
+<script>document.getElementById('go').addEventListener('click', () => { document.getElementById('plans').innerHTML = '<h1>Done</h1>'; });</script>
+</body>
+</html>

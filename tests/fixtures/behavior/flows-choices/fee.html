@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>주문 확인</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main id="order-page">
+  <h1>주문 확인</h1>
+  <ul aria-label="주문 내역">
+    <li>도자기 컵 ₩20,000</li>
+    <li id="fee" hidden>서비스 수수료 ₩1,000</li>
+  </ul>
+  <label class="choice"><input id="terms" class="transparent" type="checkbox" required> <span>[필수] 서비스 이용약관에 동의</span></label>
+  <button id="pay" type="button">결제하기</button>
+</main>
+<script>
+  const terms = document.getElementById('terms');
+  terms.addEventListener('change', () => { document.getElementById('fee').hidden = !terms.checked; });
+  document.getElementById('pay').addEventListener('click', async () => {
+    if (!terms.checked) return terms.setAttribute('aria-invalid', 'true');
+    await fetch('/api/orders', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({item: 'cup'})});
+    document.getElementById('order-page').innerHTML = '<h1>주문 완료</h1><p>결제가 끝났어요.</p>';
+  });
+</script>
+</body>
+</html>
