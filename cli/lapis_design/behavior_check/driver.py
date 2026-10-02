@@ -187,6 +187,31 @@ PRESS_POINT = r"""(candidate, input) => {
 }"""
 
 
+# Where each changed box sits: holding another change, in a status, alert, or live region, an output, a toast, or a
+# snackbar, or elsewhere on the page.
+PLACE = r"""changed => Object.fromEntries(changed.map(id => {
+  const el=document.querySelector('[data-lapis-box="'+id+'"]');
+  if (changed.some(other => other!==id && el.contains(document.querySelector('[data-lapis-box="'+other+'"]'))))
+    return [id, 'holds-a-change'];
+  return [id, el.closest('[role=status],[role=alert],[aria-live],output,.toast,.snackbar') ? 'region' : 'page'];
+}))"""
+
+# Which of these boxes carry a single control: one of the focusable controls sits inside, and fills the box to the
+# pixel (95% of its area, within 2 px of every edge). The press goes to the control, not to the box around it.
+DELEGATED = r"""({ids, focusable}) => {
+  const find=id => document.querySelector('[data-lapis-box="'+id+'"]');
+  const children=focusable.map(find).filter(Boolean).map(child => ({child, inner:child.getBoundingClientRect()}));
+  return ids.filter(id => {
+    const el=find(id);
+    if (!el) return false;
+    const outer=el.getBoundingClientRect();
+    return children.some(({child, inner}) => el.contains(child) &&
+      inner.width*inner.height>=outer.width*outer.height*.95 &&
+      inner.left<=outer.left+2 && inner.top<=outer.top+2 && inner.right>=outer.right-2 && inner.bottom>=outer.bottom-2);
+  });
+}"""
+
+
 class Driver:
     def __init__(self, browser: Browser, session, ctx_id: str):
         self.browser = browser
@@ -243,7 +268,6 @@ class Driver:
         self.page.on("popup", lambda _: setattr(self, "_popups", self._popups + 1))
         self.page.on("download", lambda _: setattr(self, "_downloads", self._downloads + 1))
         self.cdp = self.context.new_cdp_session(self.page)
-        self.cdp.send("DOM.enable")
         self.cdp.send("Accessibility.enable")
         if self.ctx["network"] in ("slow", "offline"):
             self.cdp.send("Network.enable")
@@ -306,23 +330,11 @@ class Driver:
         page's count (see `act`): the count a navigation is recorded against includes every snapshot before it."""
         boxes = self._boxes if reuse and self._boxes is not None and not self.snapshot_mutations else self.boxes()
         focusable = [box["id"] for box in boxes if box["focusable"] and box["interactive"] and box["enabled"]]
-
-        def delegated(box):
-            if box["focusable"] or box["pointer_handler"] or box["role"] not in ("card", "section", "other"):
-                return False
-            return self.page.locator(f'[data-lapis-box="{box["id"]}"]').evaluate("""(el, ids) => {
-                const outer=el.getBoundingClientRect();
-                return ids.some(id => {
-                    const child=document.querySelector('[data-lapis-box="'+id+'"]');
-                    if(!child || !el.contains(child)) return false;
-                    const inner=child.getBoundingClientRect();
-                    return inner.width*inner.height>=outer.width*outer.height*.95 &&
-                        inner.left<=outer.left+2 && inner.top<=outer.top+2 &&
-                        inner.right>=outer.right-2 && inner.bottom>=outer.bottom-2;
-                });
-            }""", focusable)
-
-        return [box for box in boxes if box["interactive"] and box["enabled"] and not delegated(box)]
+        candidates = [box["id"] for box in boxes if box["interactive"] and box["enabled"] and not box["focusable"] and
+                      not box["pointer_handler"] and box["role"] in ("card", "section", "other")]
+        # A box with no handler of its own that a single control fills (to the pixel) only carries it.
+        delegated = set(self.page.evaluate(DELEGATED, {"ids": candidates, "focusable": focusable})) if candidates else ()
+        return [box for box in boxes if box["interactive"] and box["enabled"] and box["id"] not in delegated]
 
     def ax_name(self, box_id) -> str | None:
         return next((box["name"] for box in self.boxes() if box["id"] == box_id), None)
@@ -581,13 +593,9 @@ class Driver:
         # A box is status when it sits in a status, alert, or live region, an output, a toast, or a snackbar, or when the
         # text it gained names a result or a count; what it showed before the action is not read again.
         status = []
+        place = self.page.evaluate(PLACE, changed) if changed else {}
         for bid in changed:
-            where = self.page.locator(f'[data-lapis-box="{bid}"]').evaluate(
-                """(el, changed) => {
-                  if (changed.some(id => id!==el.getAttribute('data-lapis-box') &&
-                      el.contains(document.querySelector('[data-lapis-box="'+id+'"]')))) return 'holds-a-change';
-                  return el.closest('[role=status],[role=alert],[aria-live],output,.toast,.snackbar') ? 'region' : 'page';
-                }""", changed)
+            where = place[bid]
             if where == "region" or (where == "page" and reads_as_status(
                     new_text([before["boxes"].get(bid, {}).get("text", "")], [after["boxes"][bid]["text"]]))):
                 status.append(bid)

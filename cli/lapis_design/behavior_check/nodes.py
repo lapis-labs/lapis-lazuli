@@ -11,7 +11,11 @@ _LISTENER_ROLES = ("card", "section", "other", "text", "icon")
 _POINTER_EVENTS = ("click", "pointerdown", "mousedown", "touchstart")
 
 # The capture reads the page's mutation count first: its own line-height probe nodes count as mutations (below).
-CAPTURE = "() => { const o=window.__lapisObserve; return {before:o ? o.mutations : 0, data:(" + _DOM + ")()}; }"
+# It hands the Python side only what a box is made of: the capture's text runs and styles are the render check's,
+# and serializing them costs more than taking them (so does a path of many steps, which crosses as one string).
+CAPTURE = ("() => { const o=window.__lapisObserve; const before=o ? o.mutations : 0; const data=(" + _DOM + ")(); "
+           "return {before, boxes:data.boxes.map(({index, path, role, tag, rect}) => "
+           "({index, path:JSON.stringify(path), role, tag, rect}))}; }")
 
 # The capture marks every element with its index; this stamps the box ids the probes address, then reads what each
 # box is (by id, as a probe would find it: the first element carrying it) for every box in one call.
@@ -80,9 +84,14 @@ def snapshot(driver) -> tuple[list[dict], int]:
     """The visible boxes, and how many mutations the capture added to the page's count (see CAPTURE)."""
     page = driver.page
     captured = page.evaluate(CAPTURE)
-    data = captured["data"]
     cdp = driver.cdp
-    dom = cdp.send("DOM.getDocument", {"depth": -1, "pierce": True})["root"]
+    # The DOM domain tells the client of every attribute the page changes in the nodes it has handed out, and the
+    # capture sets and clears one on every element: it is on for the tree only.
+    cdp.send("DOM.enable")
+    try:
+        dom = cdp.send("DOM.getDocument", {"depth": -1, "pierce": True})["root"]
+    finally:
+        cdp.send("DOM.disable")
     backend_by_index = {}
     indexed = set()
 
@@ -100,14 +109,14 @@ def snapshot(driver) -> tuple[list[dict], int]:
     visit(dom)
     ax = {node.get("backendDOMNodeId"): node for node in
           cdp.send("Accessibility.getFullAXTree")["nodes"] if node.get("backendDOMNodeId")}
-    ids = {box["index"]: box_id(box["path"]) for box in data["boxes"]}
-    listening = _pointer_listeners(cdp, [box["index"] for box in data["boxes"]
+    ids = {box["index"]: box_id(json.loads(box["path"])) for box in captured["boxes"]}
+    listening = _pointer_listeners(cdp, [box["index"] for box in captured["boxes"]
                                          if box["index"] in indexed and box["role"] in _LISTENER_ROLES])
     stamped = page.evaluate(DETAILS, {"ids": {str(k): v for k, v in ids.items()},
-                                      "order": [ids[box["index"]] for box in data["boxes"]]})
+                                      "order": [ids[box["index"]] for box in captured["boxes"]]})
     details = stamped["details"]
     result = []
-    for box, detail in zip(data["boxes"], details):
+    for box, detail in zip(captured["boxes"], details):
         idx = box["index"]
         bid = ids[idx]
         ax_node = ax.get(backend_by_index.get(idx), {})

@@ -153,6 +153,27 @@ def test_a_control_costs_a_fixed_number_of_snapshots(opened, monkeypatch):
     assert len(snapshots) <= 6 * len(names)
 
 
+def test_a_control_that_carries_another_is_found_by_one_question_to_the_page(opened, monkeypatch):
+    wrapped = "".join(f'<div class="wrap" id="wrap{i}"><button class="fill">fill {i}</button></div>' for i in range(30))
+    body = ("<style>.wrap{background:#eee;cursor:pointer} .fill{display:block;width:100%;margin:0;padding:0;border:0;"
+            "background:#ddd} .roomy{padding:12px}</style>" + wrapped +
+            '<div class="wrap roomy" id="roomy"><button>roomy</button></div>')
+    _, driver = opened("wrapped.html", body)
+    asked = {"locator": 0}
+    evaluate = Locator.evaluate
+
+    def counted(self, *args, **kwargs):
+        asked["locator"] += 1
+        return evaluate(self, *args, **kwargs)
+
+    monkeypatch.setattr(Locator, "evaluate", counted)
+    carried = {driver.page.eval_on_selector(f"#wrap{i}", "el => el.getAttribute('data-lapis-box')") for i in range(30)}
+    roomy = driver.page.eval_on_selector("#roomy", "el => el.getAttribute('data-lapis-box')")
+    found = {box["id"] for box in driver.interactive()}
+    assert not carried & found and roomy in found      # the wrapper that the control only nearly fills is still a target
+    assert asked["locator"] == 0
+
+
 def test_timers_due_inside_the_window_still_run_and_hold_it_open(opened):
     body = '<p id="out"></p><button id="go" onclick="setTimeout(() => out.textContent = \'later\', 300)">go</button>'
     _, driver = opened("later.html", body)
