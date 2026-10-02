@@ -1,7 +1,8 @@
 """The behavior check's cost is bounded by what it observes, not by how often it looks or how long it waits: a
 snapshot costs the same browser round trips on a page of any size, a snapshot stands while nothing has reached the
-page, an action on a page just seen snapshots only what it changed, a control costs a fixed number of snapshots, and
-a box that nothing on the browser's own clock can reveal is given its page time without waiting for it."""
+page, an action on a page just seen snapshots only what it changed, a control costs a fixed number of snapshots, a
+window the page spends doing nothing is not waited out, and neither is a box that nothing on the browser's own clock
+can reveal, while work the controlled clock cannot drive is waited for in real time."""
 from __future__ import annotations
 
 import threading
@@ -11,7 +12,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import pytest
 from playwright.sync_api import Locator
 
-from lapis_design.behavior_check import nodes
+from lapis_design.behavior_check import nodes, settle
 from lapis_design.behavior_check.driver import Driver
 from lapis_design.behavior_check.probes import controls, motion
 from lapis_design.behavior_check.session import Session
@@ -47,6 +48,7 @@ def site(tmp_path):
             f"<!doctype html><html><head><meta charset=utf-8>{STYLE}</head><body>{body}</body></html>")
         return f"http://127.0.0.1:{server.server_port}/{name}"
 
+    serve.file = lambda name, text: (tmp_path / name).write_text(text)
     serve.engine = lambda: StubEngine.load(tmp_path / "stub.yaml")
     try:
         yield serve
@@ -340,3 +342,70 @@ def test_an_animation_that_ended_before_the_look_still_reaches_its_box(opened):
     assert driver.page.evaluate("document.getAnimations().length") == 0
     read = {name: driver.page.locator(f"#{name}").evaluate(motion.READ_REVEAL) for name in "ab"}
     assert read == {"a": {"visible": False, "reached": True}, "b": {"visible": False, "reached": False}}
+
+
+def _settle_naps(monkeypatch) -> list:
+    """Every real wait the settle window asks for (the waits still happen)."""
+    naps, real = [], settle.sleep
+    monkeypatch.setattr(settle, "sleep", lambda seconds: (naps.append(seconds), real(seconds)))
+    return naps
+
+
+def _settle(driver) -> float:
+    return settle.quiet(driver, driver.page.evaluate("window.__lapisObserve.mutations"))
+
+
+def test_a_window_the_page_spends_doing_nothing_is_not_waited_out(opened, monkeypatch):
+    _, driver = opened("still.html", "<p>nothing happens here</p>")
+    naps = _settle_naps(monkeypatch)
+    settled = _settle(driver)
+    assert settled >= 500                           # the page's own clock still moved the whole window
+    assert len(naps) <= 10                          # real time only for its first 100 ms: about seven 16 ms naps
+
+
+WORK_OFF_THE_CLOCK = {
+    "a worker": "new Worker(URL.createObjectURL(new Blob(['0'])))",
+    "a shared worker": "new SharedWorker(URL.createObjectURL(new Blob(['0'])))",
+    "WebAssembly": "WebAssembly.instantiate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0]))",
+}
+
+
+@pytest.mark.parametrize("start", WORK_OFF_THE_CLOCK.values(), ids=WORK_OFF_THE_CLOCK)
+def test_a_page_that_starts_work_off_the_controlled_clock_settles_in_real_time(opened, site, monkeypatch, start):
+    site.file("sw.js", "self.addEventListener('fetch', () => {})")
+    _, driver = opened("off.html", "<p>nothing happens here</p>")
+    driver.page.evaluate(start)
+    naps = _settle_naps(monkeypatch)
+    assert _settle(driver) >= 500
+    assert len(naps) >= 15                          # about twenty-four 16 ms naps and polls for the 500 ms
+
+
+def test_a_page_that_registers_a_service_worker_is_flagged_for_real_time_settling(opened, site):
+    # The registration leaves the worker's script request pending in the driver's network log, which already keeps
+    # a window in real time; the flag is what holds once that request is gone.
+    site.file("sw.js", "self.addEventListener('fetch', () => {})")
+    _, driver = opened("registered.html", "<p>nothing happens here</p>")
+    assert driver.page.evaluate("window.__lapisObserve.offClock") is False
+    driver.page.evaluate("navigator.serviceWorker.register('/sw.js')")
+    assert driver.page.evaluate("window.__lapisObserve.offClock") is True
+
+
+def test_what_a_worker_answers_after_the_quiet_is_still_in_the_window(opened):
+    _, driver = opened("answer.html", '<p id="out">waiting</p>')
+    driver.page.evaluate("""() => {
+      const worker = new Worker(URL.createObjectURL(new Blob(['setTimeout(() => postMessage("answered"), 350)'])));
+      worker.onmessage = event => { out.textContent = event.data; };
+    }""")
+    _settle(driver)
+    assert driver.page.locator("#out").inner_text() == "answered"
+
+
+def test_real_time_settling_lasts_for_the_rest_of_the_run(opened, site, monkeypatch):
+    session, driver = opened("first.html", "<p>first</p>")
+    driver.page.evaluate("new Worker(URL.createObjectURL(new Blob(['0'])))")
+    _settle(driver)
+    site("second.html", "<p>nothing happens here</p>")
+    driver.open("second.html")
+    naps = _settle_naps(monkeypatch)
+    _settle(driver)
+    assert len(naps) >= 15
