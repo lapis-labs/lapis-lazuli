@@ -161,9 +161,12 @@ order). The **effect** records what changed in that window:
   records `none`. `external` when the navigation went to another host. `path` is the templated path
   afterward.
 - `text_changed`: boxes whose visible text changed. `status_changed`: those of them, or new boxes,
-  whose text reports a result: text that appears in a toast, snackbar, or status banner; a count or
-  result summary that changed (items in a cart, results found); or text next to the control that names
-  its result (saved, added, sent). Panels opened by a disclosure or tab are not status.
+  whose new text reports a result: text in a status, alert, or live region, an `output`, a toast, or
+  a snackbar; a count that names results or a cart (12 results, 3 items in your cart, 검색 결과 12개,
+  3건의 결과); or text that names the action's result (saved, added, sent, 저장했어요, 장바구니에
+  담았어요). Only text the box did not show before the action is read. A summary that names neither
+  (72 pieces in 4 firings) is not read as status, because a number that changes alone (a quantity, a
+  total, a page number) is not a result. Panels opened by a disclosure or tab are not status.
   `aria_changes`: state attributes that changed, including a media element's `paused`.
   `dom_mutations`: count of mutated nodes, including cosmetic class changes.
 - `focus_to`: the focused box after the window (`null` for the document body). `scroll_y_delta`:
@@ -196,11 +199,11 @@ an `aria-hidden` subtree is not announced.
 Korean, except these, which are read in English only: in forms, the kind of form (sign-in, sign-up,
 checkout, and the like), a format or length rule in an error, cognitive tests and sign-in
 alternatives, cleared-field explanations, same-as-offered text, and the reason shown for a disabled
-submit; in media, the control that starts a sound; in the settle window, the words that make a
-changed box a status (cart, items, results, saved, added, sent, reserved); in flows, the email-only
+submit; in media, the control that starts a sound; in flows, the email-only
 exit channel and a flow kind's own vocabulary (for `purchase`: buy, checkout, continue, pay, place,
-order), so a Korean plan carries its words in its goal; in choices, an option's price (`$`, `€`,
-`£`, or USD, EUR, GBP before the amount) and its period. A plan goal matches page text
+order), so a Korean plan carries its words in its goal. An option's price and period are read by
+the reader the Prices paragraph uses, so a choice and a flow read the same currencies and periods.
+A plan goal matches page text
 through its words of five or more letters, or two or more Hangul syllables. Each kind of wording
 (confirm, agree, cancel, close, decline, refuse, put off, remind, retry, a problem, and each commit
 result) has one shared list holding both languages, which every probe judging that kind reads, so a
@@ -277,7 +280,8 @@ and `commits` coverage is `partial`. For each commit control:
   show before the commit is read, so a standing note ("this cannot be undone") is not a claim. An
   exit commit is the commit of an exit flow, a commit of kind `cancel` or `delete`, or one whose
   control is named for the exit action (Unsubscribe, Withdraw, Stop, Delete, 해지, 탈퇴, 철회, 수신 거부),
-  begins with the word Cancel, or ends with 취소 or 취소하기. A
+  begins with the word Cancel, or ends with 취소 or 취소하기; a name that negates or cancels the
+  exit (Don't cancel, 취소 안 함, 해지 취소) is not one. A
   negated result reads as a failure (not saved, nothing was saved, cannot be saved, not all items
   were saved, 저장하지 않았어요, 결제를 완료하지 않았어요), unless it says the result cannot be confirmed (could not
   confirm, cannot be confirmed, 확인하지 못했어요), which is `unknown`; a conditional or future one (once
@@ -430,8 +434,15 @@ full interaction count, and the "manage settings" control is a `customize` optio
 
 - **Kinds**: `accept` gives the business what it asks for (consent, subscribe, add, upgrade, stay,
   turn on notifications such as 알림 받기); `decline` refuses it (including a refusal of consent,
-  such as do not agree or a necessary-only choice such as 필수 쿠키만 허용, and of an add-on, such
-  as 옵션 추가 안 함 or continue without it);
+  such as do not agree, I don't agree, disagree, deny, do not allow, 동의 안 함, or a necessary-only
+  choice such as 필수 쿠키만 허용, 필수 항목만 동의, allow necessary cookies, or accept essential only,
+  and of an add-on, such as 옵션 추가 안 함 or continue without it). A bare refusal as the whole name
+  (No, Never, 아니요, 싫어요, 안 할래요, 나가기) is a `decline`, except in a dialog whose question is
+  the exit or the destructive action itself (its text, buttons aside, has a question that holds
+  exit-action or cancel wording: Cancel the subscription? 정말 해지하시겠어요? 정말 나가시겠어요?).
+  There No, Never, 아니요, 싫어요, and 안 할래요 keep things as they are (`accept` in a retention
+  dialog, where the control that goes through is the `decline`; `neutral` in a confirmation, where
+  both controls are), and 나가기 or Leave is the control that goes through;
   `dismiss` closes or puts the question off while leaving it open (maybe later, remind me later);
   `customize` opens finer choices; `neutral` when the choice has no business-favored side (a
   confirmation of the user's own action, a size picker).
@@ -533,10 +544,31 @@ so a surface that disappears is recorded too (`shown`, `blank`).
 Candidates are boxes whose text matches a countdown (`mm:ss`, `hh:mm:ss`, days and hours), an
 absolute deadline, a hold the page names as one (a seat or item held for you), a stock claim ("N
 left"), a demand claim ("N people viewing"), or an activity notice ("someone just bought"), in any
-locale of the plan. `value` is seconds remaining for countdowns, deadlines, and holds, and a count
+locale of the plan. A `mm:ss` or `hh:mm:ss` is a countdown when its text says time is running out
+(left, remaining, ends in, expires in, countdown, timer, 남음, 남았, 후 마감, 마감까지, 종료까지, 만료까지,
+타이머) or when its value went down between the `load` and `later` readings; a time that does
+neither (09:30, 10:30 예약 가능, a row of time slots, opening hours) is not a claim. Time-of-day
+wording counts only where it belongs to the time: a.m. or p.m., 오전 or 오후, or a time zone beside
+it; at, from, until, or by directly before it; 부터 or 까지 directly after it; or a range of two
+times. Such a time is a time of day whatever else the text says, so "Closes at 18:00, 2 hours left"
+counts the two hours. A time-of-day deadline without a date (ends at 23:59 tonight, 오늘 23:59까지)
+is not read in v0. A count of days or hours is a countdown only when days and hours appear
+together, the text names a hold, or running-out or deadline wording stands in the same sentence
+(left, remaining, ends in, expires in, to go, within the next, for the next, order within, 남음,
+남았, 후 마감, 후 종료, 후 만료, 마감까지, 종료까지, 만료까지, N시간 내 주문). A described period (Keep 30 days of changes, 14일 무료 체험, valid for 48
+hours only, 48시간 한정), a period for paying, cancelling, or refunding (Payment due in 30 days,
+24시간 내에 예약 취소 가능), and a look-back span (in the last 24 hours, 최근 3시간 동안) are not
+countdowns. A count of minutes or seconds alone (5 minutes left, 5분 남았어요) is not read in v0
+and is never stock. A stock claim counts things that can run out (items, seats, rooms, spots, 개,
+석, 자리, 곳, and 명 as in 3명 남았어요), not progress (steps, characters, attempts, or questions
+left) and not "left a review". A demand claim has people as its subject and says they are viewing
+or waiting for the thing (N people are viewing, N명이 보고 있어요), and an activity notice has someone (someone, N people, 누군가, N명) who bought,
+ordered, reserved, or booked, so "최근 주문 내역" and "영상 3분 시청" are not claims. A number written
+with thousands separators is read whole. `value` is seconds remaining for countdowns, deadlines, and holds, and a count
 otherwise. An absolute date or time that names no zone is read in the context's `timezone`, and a
-date without a time runs to the end of that day. Korean `N일` counts days only before an hour count
-or `남` (remaining), so a date such as `9월 30일` is not a claim. `backed` is true when the value or
+date without a time runs to the end of that day. Korean `N일` counts days only before an hour count,
+`남` (remaining), or 후 마감, 후 종료, or 후 만료, and after 마감까지, 종료까지, or 만료까지, so a date
+such as `9월 30일` is not a claim. `backed` is true when the value or
 event matches the stub's fixture data (a deadline, a stock level, a recorded purchase); a number or
 event that exists only in the page's code or template is not backed. Counts are compared by number
 alone: the fixture's records carry no item identity, so a count that matches any listed item is
@@ -648,7 +680,7 @@ controls, otherwise only controls outside dialogs. It first fills one empty fiel
 or, once no untried forward control is left, an empty name, email, phone, address, postal code,
 card, or password field, with the fixture's `valid` value of that kind; without such a value the run
 stops as `blocked` with a `note`. Otherwise it ranks the enabled controls not yet tried on this
-screen, leaving out fields, checkboxes, radios, switches, and `tel:` and `mailto:` links: 30 points
+screen, leaving out fields, checkboxes, radios, switches (see Choices), and `tel:` and `mailto:` links: 30 points
 when the accessible name shares a word with the goal or the flow kind's vocabulary (for `purchase`:
 buy, checkout, continue, pay, place, order) and 5 more per shared word, where a Korean word shares a
 goal word of two or more syllables when it begins with it (해지하기 shares 해지); 14 for forward wording
@@ -659,20 +691,56 @@ the like; in an exit flow also a control named for the exit action, such as Unsu
 Cancel plan, 해지, 탈퇴, 철회, or 수신 거부), a control whose whole name, punctuation aside, is cancel, close,
 or put-off wording (Cancel, 취소, Not now; not 해지) gets neither the forward points nor the goal-word
 points; a name with more words (Cancel subscription, 구독 취소) keeps them. 해지 names ending a contract
-and is never read as backing out. In a dialog, confirm, continue, accept, agree, yes, okay, close,
-or dismiss wording adds 20 (agree wording that refuses, such as 동의 안 함, is a decline), and a decline
-(no thanks, decline, not now, maybe later, skip, leave, reject, 거부, or a necessary-only choice such
-as 필수 쿠키만 허용) adds 100 when the dialog is an optional offer (its text speaks of an offer, retention,
-upsell, marketing, cookies, a discount, or staying). A dialog that asks the user to agree to
+and is never read as backing out, but a name that negates or cancels the exit (Don't cancel, Keep
+my plan, 해지 취소, 취소 안 함, 유지할게요) backs out and is not the exit action. In a dialog,
+confirm, continue, accept, agree, yes, okay, close, or dismiss wording adds 20, except on a name
+that refuses or declines (do not agree, I don't agree, disagree, deny, do not allow, continue
+without accepting, 동의 안 함, 동의하지 않고 계속), which is a decline and gets none of the 20; and a
+decline (no thanks, no thank you, decline, not now, maybe later, skip, leave, reject, deny, 거부, a
+necessary-only choice such as 필수 쿠키만 허용, 필수 항목만 동의, allow necessary cookies, or accept
+essential only, or a bare refusal as the whole name: No, Never, 아니요, 싫어요, 안 할래요, 나가기) adds
+100 when the dialog is an optional offer (its text speaks of an offer, retention, upsell, marketing,
+cookies, a discount, or staying). In an exit flow, a dialog asks about the exit itself when its
+text, buttons aside, has a question that holds exit-action or cancel wording (Cancel the
+subscription? 정말 해지하시겠어요?). In such a dialog a control that keeps things as they are
+("No", "No thanks", "아니요", "아니요, 유지할게요") gets no decline points, and the control that goes
+through with the exit ("Yes, cancel", "네, 해지할게요", "나가기", "Leave", or a bare "Yes" or "네"
+beside such a No) is the confirm control. A dialog that asks the user to agree to
 something the flow needs (terms, or an item marked required) is not an offer, even when it also
-offers optional consent such as marketing. A dialog that only mentions terms or a required item
+offers optional consent such as marketing. A required mark counts only on an agreement item (a
+checkbox, or a sentence that asks for agreement), not on a field label (Email (required), 이메일
+(필수)), and a line saying that taking the offer accepts its own terms (By subscribing you agree to
+our Terms) does not make the offer required. A dialog that only mentions terms or a required item
 without asking for agreement (Terms apply, required cookies stay on, no card required) is judged by
 the rest of its text, and the word consent alone does not make a dialog an offer. Put-off wording is
-a whole name or a phrase that puts the offer off (maybe later, remind me later, 나중에 할게요), not a word
-inside another action (pay later, save for later, 나중에 결제). The highest score wins, earlier in
-document order on a tie; when no control scores above zero the run stops. An action after which the
-path, the main region's text, and the open dialog are all unchanged is not tried again on that
-screen.
+the word alone (Later, 나중에, 다음에), a put-off phrase (maybe later, remind me later, ask me later,
+not now), or 나중에 or 다음에 followed by anything but an action noun (나중에 할게요, 나중에
+하겠습니다, 다음에 볼게요); later after an action verb, and 나중에 or 다음에 before an action noun
+(결제, 구매, 주문, 저장, 예약, 신청), belong to that action (pay later, save for later, 나중에 결제).
+The highest score wins, earlier in document order on a tie. When no untried control has forward or
+goal-word points, the driver makes the choices the screen needs (below) before it tries any other
+control; when no control scores above zero and no choice is left, the run stops as `blocked`. An
+action after which the path, the main region's text, and the open dialog are all unchanged is not
+tried again on that screen until a choice is made.
+
+**Choices.** Checkboxes, radios, and switches are never ranked. When no untried control has forward
+or goal-word points, the driver makes every choice the screen needs, in document order, and then
+tries the screen's controls again. In a required radio group with no checked option it checks the
+agreeing option when the group asks for agreement to terms, a privacy policy, or an age
+confirmation; otherwise the first enabled option that turns the offer down (none, no thanks, 선택
+안 함), else the first that shows no amount above zero, else the one with the lowest amount. It
+checks each required unchecked checkbox that asks for agreement to terms, a privacy policy, or an
+age confirmation and whose name holds no marketing, add-on, or agree-to-all (전체 동의, 모두 동의)
+wording and no amount. A group or checkbox is required when the browser reports its value missing
+(`required`), when it or its `radiogroup` has `aria-required`, when the page set `aria-invalid` on
+it after a forward control was tried, or when its label carries a required mark (`[필수]`, `(필수)`,
+required, `*`); an optional mark (`[선택]`, `(선택)`, optional) rules it out even beside a required
+signal. The driver never unchecks, never changes a group that has a checked option, and never
+chooses a switch. Each choice is a `check` action with `choice` set, on the input's box or, when
+the input has none, its visible label's box; it counts as an interaction and is replayed with the
+step. After a choice, a price component is `user_caused` only when the chosen option's label showed
+its amount or its row holds the chosen control, and a `total` or `subtotal` only when it changes by
+that amount; a checkbox choice causes nothing.
 
 - **Steps**: a new step starts at a new URL path, when a dialog that must be answered opens, or when
   the main region is replaced (its text changes by more than half). The screen that satisfies `done`

@@ -32,6 +32,24 @@ properties:
     properties:
       blocking: { type: integer, minimum: 0 }        # findings that stop the workflow
       total: { type: integer, minimum: 0 }
+      skipped: { type: integer, minimum: 0 }         # findings with status skipped: not judged, never a defect (plan_check, slop_lint)
+      defects: { type: integer, minimum: 0 }         # release_gate: blocking findings that report a defect (GATE.md)
+      no_evidence: { type: integer, minimum: 0 }     # release_gate: blocking findings that report a check that did not run or an input that is missing; blocking = defects + no_evidence
+      to_confirm: { type: integer, minimum: 0 }      # release_gate: findings that do not block; total = blocking + to_confirm
+      not_run:                                       # release_gate: no_evidence by cause, zero counts left out
+        type: object
+        additionalProperties: false
+        properties:
+          inputs: { type: integer, minimum: 1 }        # release.input-missing
+          stale: { type: integer, minimum: 1 }         # release.input-stale
+          widths: { type: integer, minimum: 1 }        # release.width-missing
+          themes: { type: integer, minimum: 1 }        # release.theme-missing
+          probes: { type: integer, minimum: 1 }        # release.probe-incomplete
+          backend: { type: integer, minimum: 1 }       # release.backend-insufficient
+          layers: { type: integer, minimum: 1 }        # release.layer-missing
+          requirements: { type: integer, minimum: 1 }  # release.requirement-unverified
+          critic: { type: integer, minimum: 1 }        # release.critic-missing
+          licenses: { type: integer, minimum: 1 }      # release.license-unchecked
   scope:                                           # what slop lint actually ran (slop_lint); the release gate reads it
     type: object
     additionalProperties: false
@@ -44,6 +62,13 @@ properties:
         type: array
         items: { type: string }
       rules_file: { type: string }                 # present only when --rules named a file other than the packaged rules
+      unread_links:                                # present only when the tree walk passed links over: they were not read (slop_lint); the release gate reads it
+        type: object
+        additionalProperties: false
+        minProperties: 1
+        properties:
+          source: { type: array, minItems: 1, items: { type: string } }   # relative to --source: file links that resolve outside it, and folder links (never followed; listed with a trailing /)
+          corpus: { type: array, minItems: 1, items: { type: string } }   # relative to --corpus
   analyzers:                                       # morphological analyzers that ran, by locale (slop_lint)
     type: object
     additionalProperties: { type: string }         # e.g. ko: "kiwipiepy 0.24.0"

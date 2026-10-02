@@ -111,7 +111,13 @@ initialized deterministically with the 8 most frequent colors after quantizing O
 grid, and iterated until assignments stop changing (at most 50 iterations). `share` is the share
 of all pixels. `role_guess` assigns each color by where its
 pixels come from: `field` (backgrounds of sections and the page), `foreground` (text), `interaction`
-(buttons, links, inputs, and focus rings), `status` (alerts, badges with state), `data` (charts),
+(buttons, links, inputs, and focus rings), `status` (alerts, badges with state), `data` (table
+cells; a box whose own `class` or `id` holds chart, graph, plot, or sparkline as a whole word, split
+at hyphens, underscores, and case changes, so `typography` and `paragraph` do not match; and an
+`svg` or `canvas` at least 48 CSS px on its shorter side that has role `img`, `figure`, or
+`graphics-document` and an accessible name that names a chart, graph, plot, or visualization (차트,
+그래프), or, for an `svg`, holds at least three sibling shapes of one element type and at least two
+`text` labels),
 `content` (inside media), `identity` (logos and colored headings or accents that are none of the
 above), otherwise `unknown`. The role covering most of the color's pixels wins.
 

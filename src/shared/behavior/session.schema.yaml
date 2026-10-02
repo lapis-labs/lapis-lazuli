@@ -194,6 +194,7 @@ $defs:
       key: { type: string }                           # e.g. Tab, Shift+Tab, Enter, Space, Escape, ArrowDown
       value: { enum: [valid, invalid, empty, alternate] }   # which kind of fixture value was entered
       value_id: { type: string, pattern: "^v[0-9]+$" }      # same id, same fixture value
+      choice: { enum: [required-radio, required-checkbox] }   # on a check the flow driver made to let a step advance (DERIVED.md, Choices)
       ms: { $ref: "#/$defs/ms" }                      # duration for wait and clock-advance
       t_ms: { $ref: "#/$defs/ms" }                    # time since the context started
 

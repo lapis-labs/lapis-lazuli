@@ -56,7 +56,20 @@ The report holds the gate's own `release.*` findings, every blocking finding fro
 and the lint report, and from the critic report every blocking finding whose verdict is not
 `earned` plus every `unearned` finding that resolves a skipped lint finding (below). Each finding is
 copied once. A copied finding keeps every field; the path of the report it came from is appended to
-its `evidence.refs`. `summary.blocking` counts every blocking finding in the output.
+its `evidence.refs`. `summary.blocking` counts every blocking finding in the output, in two parts.
+`summary.no_evidence` counts the blocking `release.*` findings that report a check that did not run
+or an input that is missing (`input-missing`, `input-stale`, `width-missing`, `theme-missing`,
+`probe-incomplete`, `backend-insufficient`, `layer-missing`, `requirement-unverified`,
+`critic-missing`, `license-unchecked`), and `summary.not_run` breaks that count down by cause.
+`summary.defects` counts the other blocking findings: those copied from the plan checks, the lint
+report, and the critic, plus `study-reference` and `license-changed`. `summary.to_confirm` counts the
+findings that do not block, so `total = blocking + to_confirm`. The printed result gives both parts
+and then names what did not run, so a reader can tell a check to run from a defect to repair:
+
+```text
+release_gate: <blocking> blocking = <defects> defects + <no_evidence> without evidence, <total> findings -> .lapis/release/<task>.json
+  without evidence: <n> inputs missing, <n> lint layers not run, <n> requirements not verified, ...
+```
 
 Exit codes: 0 when `summary.blocking` is 0, 1 when it is not, 2 when the plan cannot be read (a
 missing file, text that does not parse, or a document that is not a mapping), the plan's `task.id`
@@ -86,7 +99,7 @@ license facts). Its `layer` is where the evidence is missing: `render` for width
 | `release.theme-unchecked` | the plan lists `high-contrast` in `tokens.color.themes` or as a color role's `theme`, which render check does not capture. Class `quality`, `{create: warn, review: P2}`, not blocking: the user checks it by hand |
 | `release.probe-incomplete` | a probe the session schema names has no coverage entry, or its entry is `partial` or `skipped`. `not-applicable` counts as covered |
 | `release.backend-insufficient` | the session ran against the local development backend instead of a stub, so failure modes and repeated commits were not exercised |
-| `release.layer-missing` | the lint report's target lacks the plan, extract, ledger, lock, or source tree, or lacks the session for an interactive surface; or its `scope` is absent, leaves out a layer those inputs call for (`plan`, `source`, `render`, `behavior` when interactive), lists `rules` because `--rule` narrowed the run, or names a `rules_file` other than the packaged rules |
+| `release.layer-missing` | the lint report's target lacks the plan, extract, ledger, lock, or source tree, or lacks the session for an interactive surface; or its `scope` is absent, leaves out a layer those inputs call for (`plan`, `source`, `render`, `behavior` when interactive), lists `rules` because `--rule` narrowed the run, names a `rules_file` other than the packaged rules, or lists `unread_links.source` because the source walk passed links over |
 | `release.requirement-unverified` | a requirement or contract rule has a `skipped` finding in the lint report that the critic did not resolve (below) |
 | `release.critic-missing` | there is no critic report, or its target names another extract |
 | `release.study-reference` | the plan uses a reference in study mode |
