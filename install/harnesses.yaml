@@ -147,11 +147,14 @@ harnesses:
     mcp: { via: plugin-mcp, output: plugin-mcp }
     trust:
       - "every plugin hook needs trust for its exact hash via /hooks; a changed hook needs trust again"
+      - "render and behavior checks start Chromium, and lazuli-backed checks read the lazuli user cache; interactive Codex sessions usually show an approval prompt: approve the requested access, or run the checks in a sandbox mode that allows both"
+      - "`codex --help` and `codex exec --help` (0.159.3, checked 2026-10-02) list `-s, --sandbox` with `read-only`, `workspace-write`, and `danger-full-access`; `codex --help` lists `-a, --ask-for-approval` with `on-request` and `never`, but exec's help does not list that option, so put it before `exec` (for example `codex --ask-for-approval never exec --sandbox workspace-write`). If approvals are possible, approve the requested browser and cache access; otherwise run with a sandbox mode that allows both, such as `--sandbox danger-full-access` only with the user's authorization for broader access"
     conflicts:
       - "Codex reads the first plugin manifest it finds and never merges: a root plugin.json with an agent-plugins $schema, then .codex-plugin, then .claude-plugin. The Codex manifest repeats skills, hooks, and MCP"
       - "a github source type in a catalog is skipped; catalogs use ./ relative sources"
     unverified:
       - "which shell runs hook commands on Windows (the command is a plain program on PATH, so any should do)"
+      - "browser and cache access on this host with 0.159.3 have not been reproduced: in the 2026-10-01 pilot with 0.159.2, headless `codex exec` under `workspace-write` with approval `never` failed to start Chromium with `bootstrap_check_in org.chromium.Chromium.MachPortRendezvousServer: Permission denied (1100)`, so render, behavior, and critic checks did not run; the lazuli user cache was also inaccessible"
     verified:
       - "2026-09-30, 0.159.0: from the public repository, `codex plugin marketplace add lapis-labs/lapis-lazuli --ref release` and `codex plugin add {plugin}@{catalog}` install all three plugins at the release commit; a new session lists all eleven skills as {plugin}:{skill}"
       - "2026-10-01, 0.159.2: `codex plugin marketplace upgrade {catalog}` moves all three plugins from 0.1.1 to 0.1.2 from the public repository; a new session lists all eleven skills as {plugin}:{skill}"

@@ -48,6 +48,12 @@ Nothing here uses `--width`, `--probe`, `--layer`, or `--rule`; the gate needs e
    skipped. It runs the plan checks itself and refreshes the license facts of locked catalog
    fonts over the network; without network it cannot pass.
 
+If a sandbox or permission prevents a check from starting Chromium or reading lazuli's user cache,
+ask the user for permission once; if refused or impossible, list the check as not run with the exact
+error. The host's own browser tool may supply `image` or `review` evidence of what you saw, never a
+render or behavior record; never move `LAZULI_DB` into the project to bypass the restriction, and if
+a project-local database is unavoidable, keep it outside version control and tell the user.
+
 The gate never compares the render with an earlier build. Once the full set has run, compare the
 shipping render with a baseline - the `.lapis/renders/<task>-before.json` capture of the build that
 last shipped or was approved, or one captured from the project's history - and report the

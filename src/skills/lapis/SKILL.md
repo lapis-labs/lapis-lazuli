@@ -208,9 +208,8 @@ Checks during work stay small; the full set runs once at the release gate.
    It needs no browser, so run it after every change to styles or markup: it finds literal colors,
    off-scale spacing, and bypassed primitives in the code (`system.*`) while they are cheap to fix.
 2. `lapis-design render check <url> --task <task> --width 390`, then rerun the lint with
-   `--extract .lapis/renders/<task>.json` added. When the render cannot run (no browser in the
-   sandbox, no server), keep the source-layer lint and list the render check among the checks that
-   did not run.
+   `--extract .lapis/renders/<task>.json` added. When there is no server, keep the source-layer
+   lint and list the render check among the checks that did not run.
 3. Only when the change touched behavior: `lapis-design behavior check <url> --task <task>
    --plan .lapis/plans/<task>.yaml --stub .lapis/stub.yaml --probe <probe>`, one `--probe` per
    area you changed (forms, dialogs, choices, flows, keyboard, ...), then rerun the lint with
@@ -222,6 +221,12 @@ Checks during work stay small; the full set runs once at the release gate.
 
 All widths, all probes, the rights check, and fresh license lookups belong to the release gate
 (`ulm-release`), not to each iteration.
+
+If a sandbox or permission prevents a check from starting Chromium or reading lazuli's user cache,
+ask the user for permission once; if refused or impossible, list the check as not run with the exact
+error. The host's own browser tool may supply `image` or `review` evidence of what you saw, never a
+render or behavior record; never move `LAZULI_DB` into the project to bypass the restriction, and if
+a project-local database is unavoidable, keep it outside version control and tell the user.
 
 Render and behavior checks capture web pages; for a native screen they and the critic do not run, so
 list them as not run.

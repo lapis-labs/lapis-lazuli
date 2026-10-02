@@ -41,8 +41,11 @@ a plan; when `.lapis/plans/<task>.yaml` exists, read it first.
 - **Project** `.lapis/`: lazuli writes only `fonts.lock.json` (`lazuli lock`,
   `shared/fonts/lock.schema.yaml`) and `refs/<slug>.json` (`lazuli ref`, validated against
   `shared/render/extract.schema.yaml`; an invalid profile is never written).
-- Nothing of the user cache goes into a project, repository, ledger, or bundle. The lock holds
-  facts about chosen fonts, never their files.
+- Never move `LAZULI_DB` into the project to work around sandbox or permission limits; if a
+  project-local database is unavoidable, keep it outside version control and tell the user.
+  It holds this machine's font inventory, including Adobe-derived rows, and is not a project asset.
+- Nothing else from the user cache goes into a project, repository, ledger, or bundle. The lock
+  holds facts about chosen fonts, never their files.
 - `lapis-design plan check` and `slop lint` read measured features from the database
   (`--lazuli-db`, else `LAZULI_DB`, else the user cache). Without it, rules that need them are
   skipped, not passed.

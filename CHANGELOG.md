@@ -42,6 +42,12 @@ All notable changes are recorded here. The format follows
   that never charged was flagged for terms "not readable at the commit" whenever the page showed a
   monthly price elsewhere; a declared `purchase` or `subscribe` flow with no commit is now reported as
   not verified.
+- `INSTALLATION.md` and the `lapis`, `ultramarine`, `ulm-release`, and `lazuli` skills say what to do
+  when an agent sandbox stops the checks from starting Chromium or reading lazuli's user cache: ask
+  the user once, otherwise report the check as not run with the exact error; a host's own browser may
+  supply `image` or `review` evidence but never a render or behavior record; and `LAZULI_DB` is never
+  moved into the project. The Codex section gives the 0.159.3 flags and the error a headless
+  `codex exec` under `workspace-write` showed in the 2026-10-01 pilot (0.159.2).
 
 ## 0.1.2 (2026-10-01)
 

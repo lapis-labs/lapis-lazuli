@@ -218,6 +218,8 @@ Remove `~/.codex/agents/ulm-critic.toml`. Only with the `ultramarine` plugin. Th
 **Needs your approval**
 
 - every plugin hook needs trust for its exact hash via /hooks; a changed hook needs trust again
+- render and behavior checks start Chromium, and lazuli-backed checks read the lazuli user cache; interactive Codex sessions usually show an approval prompt: approve the requested access, or run the checks in a sandbox mode that allows both
+- `codex --help` and `codex exec --help` (0.159.3, checked 2026-10-02) list `-s, --sandbox` with `read-only`, `workspace-write`, and `danger-full-access`; `codex --help` lists `-a, --ask-for-approval` with `on-request` and `never`, but exec's help does not list that option, so put it before `exec` (for example `codex --ask-for-approval never exec --sandbox workspace-write`). If approvals are possible, approve the requested browser and cache access; otherwise run with a sandbox mode that allows both, such as `--sandbox danger-full-access` only with the user's authorization for broader access
 
 **Conflicts**
 
@@ -227,6 +229,7 @@ Remove `~/.codex/agents/ulm-critic.toml`. Only with the `ultramarine` plugin. Th
 **Not yet confirmed**
 
 - which shell runs hook commands on Windows (the command is a plain program on PATH, so any should do)
+- browser and cache access on this host with 0.159.3 have not been reproduced: in the 2026-10-01 pilot with 0.159.2, headless `codex exec` under `workspace-write` with approval `never` failed to start Chromium with `bootstrap_check_in org.chromium.Chromium.MachPortRendezvousServer: Permission denied (1100)`, so render, behavior, and critic checks did not run; the lazuli user cache was also inaccessible
 
 Sources (checked 2026-09-25): <https://developers.openai.com/plugins/build/plugins>, <https://learn.chatgpt.com/docs/hooks>, <https://developers.openai.com/codex/skills>, <https://developers.openai.com/codex/subagents>.
 
@@ -572,6 +575,8 @@ playwright install chromium-headless-shell
 
 `lazuli doctor` reports whether the browser is installed.
 
+Render and behavior checks start Chromium, and lazuli-backed checks read the lazuli user cache; a sandboxed agent session must be allowed to do both. If a sandbox or permission blocks either, ask the user for permission once; if refused or impossible, report the check as not run with the exact error rather than treating it as a pass. Do not move `LAZULI_DB` into the project to bypass the restriction; if a project-local database is unavoidable, keep it outside version control and tell the user.
+
 ## Update and uninstall
 
 `--update` runs each harness's update steps and reinstalls the CLI from `release`. `--uninstall` runs the removal steps; with `--plugin`, only those plugins go. These steps run only when you remove every plugin, because they take every plugin with them:
@@ -607,6 +612,8 @@ Each harness section above has the exact update and removal commands.
 **OpenAI Codex CLI**
 
 - Needs your approval: every plugin hook needs trust for its exact hash via /hooks; a changed hook needs trust again
+- Needs your approval: render and behavior checks start Chromium, and lazuli-backed checks read the lazuli user cache; interactive Codex sessions usually show an approval prompt: approve the requested access, or run the checks in a sandbox mode that allows both
+- Needs your approval: `codex --help` and `codex exec --help` (0.159.3, checked 2026-10-02) list `-s, --sandbox` with `read-only`, `workspace-write`, and `danger-full-access`; `codex --help` lists `-a, --ask-for-approval` with `on-request` and `never`, but exec's help does not list that option, so put it before `exec` (for example `codex --ask-for-approval never exec --sandbox workspace-write`). If approvals are possible, approve the requested browser and cache access; otherwise run with a sandbox mode that allows both, such as `--sandbox danger-full-access` only with the user's authorization for broader access
 - Codex reads the first plugin manifest it finds and never merges: a root plugin.json with an agent-plugins $schema, then .codex-plugin, then .claude-plugin. The Codex manifest repeats skills, hooks, and MCP
 - a github source type in a catalog is skipped; catalogs use ./ relative sources
 

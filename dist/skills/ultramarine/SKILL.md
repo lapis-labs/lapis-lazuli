@@ -77,6 +77,12 @@ Every report follows `shared/slop/finding.schema.yaml`.
    borrows from, and add `--mode review` for an existing surface.
 4. **Critic**, below.
 
+If a sandbox or permission prevents a check from starting Chromium or reading lazuli's user cache,
+ask the user for permission once; if refused or impossible, list the check as not run with the exact
+error. The host's own browser tool may supply `image` or `review` evidence of what you saw, never a
+render or behavior record; never move `LAZULI_DB` into the project to bypass the restriction, and if
+a project-local database is unavoidable, keep it outside version control and tell the user.
+
 ## Read the findings
 
 - Blocking findings first, then open findings by severity.

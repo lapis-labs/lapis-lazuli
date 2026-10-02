@@ -882,6 +882,12 @@ class _Gen:
                   "in place of `bin/python` on Windows):", "", "```sh",
                   '"$(uv tool dir)/lapis-design/bin/python" -m playwright install chromium-headless-shell', "```", ""]
         L += ["`lazuli doctor` reports whether the browser is installed.", "",
+              "Render and behavior checks start Chromium, and lazuli-backed checks read the lazuli user cache; "
+              "a sandboxed agent session must be allowed to do both. If a sandbox or permission blocks either, "
+              "ask the user for permission once; if refused or impossible, report the check as not run with "
+              "the exact error rather than treating it as a pass. Do not move `LAZULI_DB` into the project to "
+              "bypass the restriction; if a project-local database is unavoidable, keep it outside version "
+              "control and tell the user.", "",
               "## Update and uninstall", "",
               f"`--update` runs each harness's update steps and reinstalls the CLI from `{self.ref}`. "
               "`--uninstall` runs the removal steps; with `--plugin`, only those plugins go. These steps run only "
