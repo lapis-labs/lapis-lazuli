@@ -578,6 +578,9 @@ h_codex() {
     for LL_plugin in $LL_PLUGINS; do
       check_expect "$LL_plugin"'@lapis-lazuli installed and enabled'
     done
+    for LL_plugin in $(pick 'ultramarine'); do
+      check_manual 'For '"$LL_plugin"', check that ~/.codex/agents/ulm-critic.toml exists and matches dist/codex/agents/ulm-critic.toml from lapis-labs/lapis-lazuli at release; a marketplace upgrade alone does not copy the critic file'
+    done
     check_manual 'In a new session, type $lapis:lps-ux and check that the skill is offered'
     : ;;
   esac

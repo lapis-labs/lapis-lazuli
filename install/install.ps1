@@ -520,6 +520,9 @@ function h_codex([string]$Phase) {
       foreach ($Plugin in @($script:Plugins)) {
         Add-CheckExpect ('' + $Plugin + '@lapis-lazuli installed and enabled')
       }
+      foreach ($Plugin in @(Select-Among @('ultramarine'))) {
+        Add-CheckManual ('For ' + $Plugin + ', check that ~/.codex/agents/ulm-critic.toml exists and matches dist/codex/agents/ulm-critic.toml from lapis-labs/lapis-lazuli at release; a marketplace upgrade alone does not copy the critic file')
+      }
       Add-CheckManual 'In a new session, type $lapis:lps-ux and check that the skill is offered'
     }
   }

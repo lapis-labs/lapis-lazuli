@@ -175,6 +175,11 @@ codex plugin add ultramarine@lapis-lazuli
 codex plugin add lazuli@lapis-lazuli
 ```
 
+```sh
+mkdir -p ~/".codex/agents"
+curl -fsSL https://raw.githubusercontent.com/lapis-labs/lapis-lazuli/release/dist/codex/agents/ulm-critic.toml -o ~/".codex/agents/ulm-critic.toml"
+```
+
 Copy https://raw.githubusercontent.com/lapis-labs/lapis-lazuli/release/dist/codex/agents/ulm-critic.toml to `~/.codex/agents/ulm-critic.toml`. Only with the `ultramarine` plugin. The install script asks before this step.
 
 By hand: Open /hooks in Codex and trust the lazuli session-start hook; it does not run until trusted.
@@ -186,6 +191,11 @@ codex plugin marketplace upgrade lapis-lazuli
 ```
 
 There is no per-plugin update; new skills appear in the next session.
+
+```sh
+mkdir -p ~/".codex/agents"
+curl -fsSL https://raw.githubusercontent.com/lapis-labs/lapis-lazuli/release/dist/codex/agents/ulm-critic.toml -o ~/".codex/agents/ulm-critic.toml"
+```
 
 Copy https://raw.githubusercontent.com/lapis-labs/lapis-lazuli/release/dist/codex/agents/ulm-critic.toml to `~/.codex/agents/ulm-critic.toml`. Only with the `ultramarine` plugin. The install script asks before this step.
 
@@ -213,6 +223,7 @@ Remove `~/.codex/agents/ulm-critic.toml`. Only with the `ultramarine` plugin. Th
   - lapis@lapis-lazuli installed and enabled
   - ultramarine@lapis-lazuli installed and enabled
   - lazuli@lapis-lazuli installed and enabled
+- For ultramarine, check that ~/.codex/agents/ulm-critic.toml exists and matches dist/codex/agents/ulm-critic.toml from lapis-labs/lapis-lazuli at release; a marketplace upgrade alone does not copy the critic file.
 - In a new session, type $lapis:lps-ux and check that the skill is offered.
 
 **Needs your approval**
@@ -573,9 +584,26 @@ playwright install chromium-headless-shell
 "$(uv tool dir)/lapis-design/bin/python" -m playwright install chromium-headless-shell
 ```
 
-`lazuli doctor` reports whether the browser is installed.
+**Sandboxed and headless hosts.** Some agent hosts run commands in a sandbox where the bundled browser is installed but cannot start, the user cache cannot be written, or both. `lazuli doctor` reports whether the browser is installed, not whether it can start. When it cannot, `render check` and `behavior check` do not run; `plan check` and `slop lint --plan ... --source .` still do, and the agent lists the rest as not run.
 
 Render and behavior checks start Chromium, and lazuli-backed checks read the lazuli user cache; a sandboxed agent session must be allowed to do both. If a sandbox or permission blocks either, ask the user for permission once; if refused or impossible, report the check as not run with the exact error rather than treating it as a pass. Do not move `LAZULI_DB` into the project to bypass the restriction; if a project-local database is unavoidable, keep it outside version control and tell the user.
+
+When the cache is not writable, point the font database at a writable path outside version control and scan again:
+
+```sh
+export LAZULI_DB="${TMPDIR:-/tmp}/lazuli.db"
+lazuli local fonts --summary
+```
+
+`lapis-design plan check`, `slop lint`, and `release check` read the same variable. The inventory then describes the sandbox, not your own computer. Both browser checks capture `http` or `https` on a host that is yours. You can serve the folder on loopback and check that address:
+
+```sh
+python3 -m http.server 8000 --bind 127.0.0.1 --directory .
+lapis-design render check http://127.0.0.1:8000/ --task <task>
+lapis-design behavior check http://127.0.0.1:8000/ --task <task> --plan .lapis/plans/<task>.yaml --stub .lapis/stub.yaml
+```
+
+An HTML file path or `file://` URL also works: the checks serve its folder read-only on 127.0.0.1 for the run and record only the loopback HTTP URL. Other URL schemes are refused.
 
 ## Update and uninstall
 

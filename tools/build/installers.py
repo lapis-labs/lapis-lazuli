@@ -661,8 +661,11 @@ class _Gen:
                 continue
             flush()
             if st["kind"] == "copy":
-                text = (f"Copy {self.raw}/{self._doc_text(st['src'], {})} to "
-                        f"`~/{self._doc_text(st['dest'], {})}`.")
+                source = f"{self.raw}/{self._doc_text(st['src'], {})}"
+                destination = self._doc_text(st["dest"], {})
+                lines += ["```sh", f"mkdir -p ~/\"{PurePosixPath(destination).parent}\"",
+                          f"curl -fsSL {source} -o ~/\"{destination}\"", "```", ""]
+                text = f"Copy {source} to `~/{destination}`."
             elif st["kind"] == "remove":
                 dest = self._doc_text(st["dest"], {})
                 text = (f"The installer removes `~/{dest}` only when it is an empty directory; "
@@ -678,7 +681,8 @@ class _Gen:
         lines = []
         for st in steps:
             if st["kind"] == "manual":
-                lines.append("- " + self.sentence(self._doc_text(st["text"], {})))
+                for values in self.doc_values(st, st["loops"]):
+                    lines.append("- " + self.sentence(self._doc_text(st["text"], values)))
                 continue
             cmd = " ".join(self._doc_word(w, {}) for w in st["argv"])
             if not st["expect"]:
@@ -881,13 +885,30 @@ class _Gen:
                   "Python than uv's default; run that environment's own interpreter instead (`Scripts\\python.exe` "
                   "in place of `bin/python` on Windows):", "", "```sh",
                   '"$(uv tool dir)/lapis-design/bin/python" -m playwright install chromium-headless-shell', "```", ""]
-        L += ["`lazuli doctor` reports whether the browser is installed.", "",
+        L += ["**Sandboxed and headless hosts.** Some agent hosts run commands in a sandbox where the bundled "
+              "browser is installed but cannot start, the user cache cannot be written, or both. "
+              "`lazuli doctor` reports whether the browser is installed, not whether it can start. "
+              "When it cannot, `render check` and `behavior check` do not run; `plan check` and "
+              "`slop lint --plan ... --source .` still do, and the agent lists the rest as not run.", "",
               "Render and behavior checks start Chromium, and lazuli-backed checks read the lazuli user cache; "
               "a sandboxed agent session must be allowed to do both. If a sandbox or permission blocks either, "
               "ask the user for permission once; if refused or impossible, report the check as not run with "
               "the exact error rather than treating it as a pass. Do not move `LAZULI_DB` into the project to "
               "bypass the restriction; if a project-local database is unavoidable, keep it outside version "
               "control and tell the user.", "",
+              "When the cache is not writable, point the font database at a writable path outside version "
+              "control and scan again:", "", "```sh", 'export LAZULI_DB="${TMPDIR:-/tmp}/lazuli.db"',
+              "lazuli local fonts --summary", "```", "",
+              "`lapis-design plan check`, `slop lint`, and `release check` read the same variable. "
+              "The inventory then describes the sandbox, not your own computer. Both browser checks capture "
+              "`http` or `https` on a host that is yours. You can serve the folder on loopback and check "
+              "that address:", "", "```sh",
+              "python3 -m http.server 8000 --bind 127.0.0.1 --directory .",
+              "lapis-design render check http://127.0.0.1:8000/ --task <task>",
+              "lapis-design behavior check http://127.0.0.1:8000/ --task <task> --plan .lapis/plans/<task>.yaml --stub .lapis/stub.yaml",
+              "```", "",
+              "An HTML file path or `file://` URL also works: the checks serve its folder read-only on "
+              "127.0.0.1 for the run and record only the loopback HTTP URL. Other URL schemes are refused.", "",
               "## Update and uninstall", "",
               f"`--update` runs each harness's update steps and reinstalls the CLI from `{self.ref}`. "
               "`--uninstall` runs the removal steps; with `--plugin`, only those plugins go. These steps run only "

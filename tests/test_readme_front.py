@@ -1,8 +1,12 @@
 """The first screen of each README stays true to the files it quotes.
 
-Text only: no script runs, so the docs-only CI workflow can run this file.
+The console examples run the CLI without a lazuli database; no browser is needed.
 """
+import os
 import re
+import shlex
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -59,6 +63,36 @@ def test_console_output_names_the_current_version(readme):
     assert header.startswith(f"plan_check {__version__}: "), (
         f"{readme} shows `{header}`; run `lapis-design plan check` on the example plan on a machine "
         "without a lazuli database and paste its output")
+
+
+@pytest.mark.parametrize("readme", READMES)
+def test_console_excerpt_matches_plan_check_without_database(readme, tmp_path):
+    shown = console(readme)
+    argv = shlex.split(shown[0].removeprefix("$ "))
+    assert argv[:3] == ["lapis-design", "plan", "check"]
+    home = tmp_path / "home"
+    home.mkdir()
+    environment = dict(
+        os.environ, HOME=str(home), USERPROFILE=str(home),
+        XDG_CACHE_HOME=str(tmp_path / "cache"), LOCALAPPDATA=str(tmp_path / "cache"),
+    )
+    environment.pop("LAZULI_DB", None)
+    result = subprocess.run(
+        [sys.executable, "-m", "lapis_design.cli", *argv[1:]],
+        cwd=ROOT, env=environment, capture_output=True, text=True, timeout=30,
+    )
+    assert result.returncode == 1, result.stderr  # The example deliberately has blocking findings.
+    output = result.stdout.splitlines()
+    excerpt = [output[0]]
+    selected = {"copy.buzzwords", "copy.vague-cta", "font.no-lock"}
+    include = False
+    for line in output[1:]:
+        finding = re.match(r"\s+\[(?:BLOCK|WARN|INFO)\] (\S+)", line)
+        if finding:
+            include = finding.group(1) in selected
+        if include:
+            excerpt.append(line)
+    assert shown[1:] == excerpt
 
 
 def test_output_examples_in_the_outputs_guide_carry_the_current_version():

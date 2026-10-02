@@ -2,12 +2,12 @@
 
 코딩 에이전트가 코드를 쓰기 전에 화면 계획을 쓰게 하는 스킬과, 계획·렌더된 화면·화면의 동작을 그 계획에 비춰 검사하는 CLI예요.
 
-Claude Code, Codex, Oh-My-Pi 같은 하네스로 웹 화면을 만드는 개발자용이에요. 발견마다 규칙 이름과 고칠 방법이 붙어요. [English](README.md)
+Claude Code, Codex, Oh-My-Pi 같은 하네스로 웹 화면을 만드는 개발자용이에요. 막는 발견마다 규칙 이름과 고칠 방법이 붙어요. [English](README.md)
 
-캠핑장 예약 화면의 예시 계획을, 코드가 생기기 전에 lazuli 폰트 DB가 없는 기계에서 검사한 출력이에요(일곱 가지 발견 중 넷은 뺐어요).
+캠핑장 예약 화면의 [예시 계획](docs/examples/site-booking-ko.yaml)을, 코드가 생기기 전에 lazuli 폰트 DB가 없는 기계에서 검사한 출력이에요(일곱 가지 발견 중 넷은 뺐어요).
 
 ```console
-$ lapis-design plan check site-booking.yaml
+$ lapis-design plan check docs/examples/site-booking-ko.yaml
 plan_check 0.1.2: 2 blocking, 7 total
   [WARN] copy.buzzwords content.key_copy[*].text — "최적의" (buzzwords) in the headline key copy: "최적의 캠핑 경험을 선사합니다"; "경험을 선사" (buzzwords) in the headline key copy: "최적의 캠핑 경험을 선사합니다"
           fix: Add a defaults entry for copy.buzzwords (keep or reject with a reason). Name the user action, the handoff removed, or the verifiable capability
@@ -17,9 +17,9 @@ plan_check 0.1.2: 2 blocking, 7 total
           fix: Run `lazuli lock` after choosing fonts.
 ```
 
-`copy.buzzwords`는 `"최적의"`와 `"경험을 선사"`를 경고하고, `copy.vague-cta`는 `"계속하기"`를, `font.no-lock`은 글꼴 역할만 정하고 폰트 잠금이 없는 계획을 막아요.
+`copy.buzzwords`는 `"최적의"`와 `"경험을 선사"`를 경고하고, `copy.vague-cta`는 `"계속하기"`를, `font.no-lock`은 폰트 역할만 정하고 폰트 잠금이 없는 계획을 막아요.
 
-화면이 localhost에서 돌면 `lapis-design slop lint`가 너비 320~1440px의 Chromium 캡처와 스텁 백엔드에 대한 스크립트 세션도 읽어요. 예를 들어 `type.ko.keep-all-missing`(한글 본문 줄바꿈), `copy.register-mix`(해요체와 합니다체 섞임), `ux.preselected-option`(미리 체크된 유료 옵션), `ux.false-urgency`(근거 없는 "지금 14명이 보고 있어요")를 잡아요.
+화면이 localhost에서 돌면 `lapis-design render check`가 너비 320~1440px의 Chromium 캡처를 만들고, `lapis-design behavior check`가 스텁 백엔드에 대한 스크립트 세션을 기록해요. `lapis-design slop lint`는 두 검사의 결과 파일을 읽어요. 예를 들어 `color.text-contrast`(텍스트 대비), `type.ko.keep-all-missing`(한글 본문 줄바꿈), `ux.preselected-option`(미리 체크된 유료 옵션), `ux.false-urgency`(근거 없는 긴급성), `rights.no-provenance`(빠진 출처 기록)를 잡아요.
 
 ## 설치
 
@@ -48,9 +48,9 @@ LapisLazuli는 검사가 찾은 것을 알려 줄 뿐이고, 접근성이나 법
 
 ## 작동 방식
 
-1. 코드를 쓰기 전에 `lapis`가 요청을 계획 파일 `.lapis/plans/<task>.yaml`로 바꿔요. 브리프, 세계 재료, 글꼴·색 역할, 레이아웃, 핵심 문구, 이름 붙은 기본값마다 유지·거절 판단이 들어가요. `lapis-design plan check`가 이 계획을 검사해요.
+1. 코드를 쓰기 전에 `lapis`가 요청을 계획 파일 `.lapis/plans/<task>.yaml`로 바꿔요. 브리프, 세계 재료, 폰트·색 역할, 레이아웃, 핵심 문구, 이름 붙은 기본값마다 유지·거절 판단이 들어가요. `lapis-design plan check`가 이 계획을 검사해요.
 2. 구현하는 동안 에이전트는 계획을 따라요. `lps-ux`, `lps-copy`, `lps-system`이 흐름, 문구, 디자인 시스템을 맡아요.
-3. 구현이 끝나면 `ultramarine`이 우리 렌더에 `lapis-design`을 돌려요. 최대 아홉 가지 조건(너비 320~1440px, 라이트·다크, 모션 줄이기, 모바일 브라우저 UI)으로 캡처하고, 스텁 백엔드에서 작업 흐름을 끝까지 돌려 보고, 뻔해 보이거나 기만적인 패턴과 빠진 권리 기록을 린트하고, 측정으로 판단할 수 없는 것은 별도의 평가자에게 넘겨요. 마지막 관문은 `ulm-release`예요.
+3. 구현이 끝나면 `ultramarine`이 내 렌더에 `lapis-design`을 돌려요. 최대 아홉 가지 조건(너비 320~1440px, 라이트·다크, 모션 줄이기, 모바일 브라우저 UI)으로 캡처하고, 스텁 백엔드에서 작업 흐름을 끝까지 돌려 보고, 뻔해 보이거나 기만적인 패턴과 빠진 권리 기록을 린트하고, 측정으로 판단할 수 없는 것은 별도의 평가자에게 넘겨요. 마지막 관문은 `ulm-release`예요.
 4. 어느 단계에서든 `lazuli`가 요청할 때 사실을 가져다줘요. 이 컴퓨터의 폰트, 카탈로그의 분류와 라이선스, 색 체계 코드, 페이지 하나, 레퍼런스 프로필이에요.
 
 ## 플러그인과 스킬
@@ -84,21 +84,22 @@ LapisLazuli는 검사가 찾은 것을 알려 줄 뿐이고, 접근성이나 법
 
 - Python 3.12 이상.
 - CLI를 설치할 `uv` 또는 `pipx`.
+- 저장소에서 CLI와 플러그인을 설치할 `git`.
 - `render check`, `behavior check`, `lazuli read --render`, `lazuli ref capture`에는 Playwright의 `chromium-headless-shell`로 설치하는 Chromium이 필요해요. 나머지는 없어도 동작해요.
 - `lazuli` 데이터베이스용 SQLite 3.34 이상(FTS5 trigram 지원).
 - 선택 사항: `cjk` 추가 패키지(한국어·일본어·중국어 형태소 분석기, 약 340 MB). 체크아웃에서 `uv sync --extra cjk`로 설치해요.
 
 ## 하지 않는 일
 
-- **살아 있는 사이트 긁어 가기.** `lazuli read`는 요청한 페이지 하나만 출처 등록부 정책과 사이트의 `robots.txt` 안에서 읽어요. 카탈로그 조회는 사람 수준 속도와 명시된 크롤 지연을 지키고, 요청 헤더에 lazuli를 밝히고, 차단이나 로그인을 우회하지 않아요. 약관이 자동 수집을 금지하는 곳(Adobe Fonts, 눈누. 2026-09-26에 약관을 읽었어요)은 출처 등록부가 호스트를 거절해서, 아무 요청도 보내지 않고 링크만 줘요.
+- **살아 있는 사이트 긁어 가기.** `lazuli read`는 요청한 페이지 하나만 출처 등록부 정책과 사이트의 `robots.txt` 안에서 읽어요. 카탈로그 조회는 사람 수준 속도와 명시된 크롤 지연을 지키고, 요청 헤더에 lazuli를 밝히고, 차단이나 로그인을 우회하지 않아요. lazuli가 약관을 읽고 자동 수집을 금지한다고 해석한 곳(Adobe Fonts 사이트, 눈누. 2026-09-26에 읽었고, 법률 조언은 아니에요)은 출처 등록부가 호스트를 거절해서, 아무 요청도 보내지 않고 링크만 줘요. 이 수집 제한은 라이선스가 있는 Adobe Fonts를 포함해 폰트를 추천하고 고르고 잠그는 일과는 상관없어요.
 - **Adobe Fonts 파일 열기.** Adobe Fonts 구독이 켜 둔 폰트는 macOS에서 운영체제 폰트 API(Core Text)로 목록을 읽고, 시스템이 그린 글리프로 재서 파생 수치만 남겨요. 파일은 열지 않아요. Windows에는 그런 목록이 없어서 Adobe Fonts가 인벤토리에 없어요. `lazuli catalog lookup`은 카탈로그 스냅샷에 맞는 곳이 없는 Adobe Fonts 페이스의 패밀리 이름과, 시스템이 한국어 이름을 주면 그 이름을 검색어로 산돌 클라우드에 보내요. 다른 설치 폰트 패밀리와 같고, 그 페이스에 대한 다른 것은 보내지 않아요.
-- **남의 페이지 구동하기.** 렌더·동작 검사는 우리 페이지만 캡처해요. `localhost`, 루프백·사설 주소, 사설 주소로만 풀리는 `.test` 이름이에요. 우리 것인 공개 주소는 `render check`만 `--public`으로 받고, 출처 등록부의 호스트나 계획이 레퍼런스로 적은 호스트는 절대 안 돼요. 나머지 호스트는 모두 막아요.
+- **남의 페이지 구동하기.** 렌더·동작 검사는 내 페이지만 캡처해요. `localhost`, 루프백·사설 주소, 사설 주소로만 풀리는 `.test` 이름이에요. 내 것인 공개 주소는 `render check`만 `--public`으로 받고, 출처 등록부의 호스트나 계획이 레퍼런스로 적은 호스트는 절대 안 돼요. 나머지 호스트는 모두 막아요. HTML 파일 경로나 `file://` URL도 받아요. 검사가 그 폴더를 읽기 전용으로 루프백에서 서빙하고, 그 HTTP URL만 기록해요.
 - **실제 계정 건드리기.** 동작 검사는 스텁이나 격리된 로컬 백엔드와 합성 데이터만 쓰고, 실제 계정·자격 증명·결제 수단은 쓰지 않아요. 입력값, 질의 문자열, 헤더, 요청 본문도 저장하지 않아요.
 - **레퍼런스를 권리 이상으로 보관하기.** 레퍼런스 캡처는 사용자가 준 URL만 열고, 로그인하거나 양식을 제출하지 않고, 출처의 권리가 허락하는 것만 남겨요. 레퍼런스 전용 캡처는 문구, 대체 텍스트, 접근 이름, 스크린숏 없이 키 서명과 지각 해시만 남겨요.
 - **폰트를 가져가거나 폰트 사이트에서 대신 행동하기.** 폰트 파일은 읽기만 하고 프로젝트로 복사하거나 변환하지 않아요. 배포용으로 사용자가 직접 준 파일만 들어가요. lazuli는 사용자를 대신해 로그인, 내려받기, 활성화, 구매, 약관 동의를 하지 않아요. 폰트 데이터베이스는 사용자 캐시에만 있어요.
 - **법률 자문.** 권리 검사는 사용자가 적어 둔 기록을 서로 대조할 뿐, 법적 결론을 말하지 않아요. 원장과 잠금에는 자격 증명, 라이선스 키, 결제 정보, 개인 영수증이 들어가지 않아요.
 - **적합성 보증.** LapisLazuli는 검사가 찾은 것을 알려 줄 뿐이에요. 접근성이나 법적 준수를 보증하지 않아요.
-- **대신 승인하기.** 계획 모드 훅은 막아야 하는 판정이 있는 계획을 거부할 뿐이고, 승인은 사용자에게 남아 있어요.
+- **대신 승인하기.** 계획 모드 훅은 막아야 하는 발견이 있는 계획을 거부할 뿐이고, 승인은 사용자에게 남아 있어요.
 
 ## 상태
 
@@ -137,13 +138,13 @@ Markdown 파일을 다시 쓸 때는 출처를 밝히고, 라이선스 링크를
 | --- | --- |
 | `plan/schema.yaml`, `plan/example.plan.yaml` | 계획 파일 스키마와 예시 (`.lapis/plans/<task-id>.yaml`). `flows`로 동작 층이 끝까지 돌려 볼 작업 흐름을 적고, 나가는 흐름은 `pair`로 들어오는 흐름과 짝지어요 |
 | `plan/HARNESS-PLAN-MODES.md` | 하네스 계획 모드와의 관계 지침 (영어, `lapis` 참조용) |
-| `behavior/session.schema.yaml`, `behavior/DERIVED.md`, `behavior/example.session.json` | 동작 세션 기록 형식 v0, 관찰·파생 값 정의, 예시 세션. 루프백·사설 주소의 우리 렌더만 구동하고(다른 호스트 요청은 차단, 스텁 백엔드 또는 격리된 로컬 백엔드, 합성 데이터), 입력값·질의 문자열·요청 본문은 남기지 않아요. 경로의 ID 같은 조각은 `:id`로 바꿔요. 예시에는 탐지기가 잡을 문제 두 가지(타이머 팝업의 거절 링크, 거절 뒤 재등장)를 일부러 넣었어요 |
+| `behavior/session.schema.yaml`, `behavior/DERIVED.md`, `behavior/example.session.json` | 동작 세션 기록 형식 v0, 관찰·파생 값 정의, 예시 세션. 루프백·사설 주소의 내 렌더만 구동하고(다른 호스트 요청은 차단, 스텁 백엔드 또는 격리된 로컬 백엔드, 합성 데이터), 입력값·질의 문자열·요청 본문은 남기지 않아요. 경로의 ID 같은 조각은 `:id`로 바꿔요. 예시에는 탐지기가 잡을 문제 두 가지(타이머 팝업의 거절 링크, 거절 뒤 재등장)를 일부러 넣었어요 |
 | `behavior/stub.schema.yaml`, `behavior/example.stub.yaml` | 스텁 백엔드 픽스처 형식 v0(2026-09-26 추가). 경로, 상태 있는 컬렉션과 효과 수, 상태 탐침용 변형(`empty`·`partial`), 합성 입력값, 합성 계정, 긴급성 근거(마감·재고·수요·활동), 외부 서비스 대체 응답을 적어요. 예시는 도자기 공방 계획에 맞췄어요 |
 | `render/extract.schema.yaml`, `render/DERIVED.md`, `render/example.extract.json` | 렌더 추출·레퍼런스 프로필 공통 형식 v1, 측정·파생 값 정의, 예시 추출. 레퍼런스 전용 캡처는 문구·대체 텍스트·접근 이름·스크린숏 없이 키 서명만 저장 |
-| `slop/rules.yaml` | 규칙 184개, 묶음 6개, 목록 16개. 이전 저장소의 체크리스트 73개와 anti-slop 카탈로그 107행에서 옮긴 규칙 125개에 동작 층 규칙 44개(기만·강요 패턴 12, 동작 접근성 17, 상태·복구·마찰 12, 동작 묶음 3), 렌더 층 대상 크기 규칙 1개, 권리 규칙 14개(`rights.*`: 출처 기록, 라이선스 범위·만료, 크레딧·고지, 예약 글꼴 이름, 타사 표장, 생성 매체, 초상·재산 동의)를 더했어요. 경계값과 목록 값은 v0 씨앗 |
+| `slop/rules.yaml` | 규칙 184개, 묶음 6개, 목록 16개. 이전 저장소의 체크리스트 73개와 anti-slop 카탈로그 107행에서 옮긴 규칙 125개에 동작 층 규칙 44개(기만·강요 패턴 12, 동작 접근성 17, 상태·복구·마찰 12, 동작 묶음 3), 렌더 층 대상 크기 규칙 1개, 권리 규칙 14개(`rights.*`: 출처 기록, 라이선스 범위·만료, 크레딧·고지, 예약 폰트 이름, 타사 표장, 생성 매체, 초상·재산 동의)를 더했어요. 경계값과 목록 값은 v0 씨앗 |
 | `slop/rules.schema.yaml`, `slop/rules.example.yaml` | 규칙 파일 스키마(출처 종류에 `regulation` 추가), 그리고 `plan_check` 단위 테스트용 부분집합 7개 |
 | `slop/detectors.yaml` | 탐지기 89개 등록부(모두 구현, 코드와 등록부가 어긋나면 테스트가 실패해요), 규칙이 쓰는 모든 `params`·`threshold` 키 선언, 렌더 탐지기가 읽는 추출 필드(`reads`), 동작 탐지기가 읽는 세션 필드(`reads_session`), 자산 원장·폰트 잠금 필드(`reads_ledger`, `reads_lock`), 계획 경로식 문법 |
-| `slop/finding.schema.yaml` | 판정 보고 형식 (behavior_check·rights_check, 세션·원장 경로, 문맥·흐름·단계·자산 위치 포함) |
+| `slop/finding.schema.yaml` | 발견 보고 형식 (behavior_check·rights_check, 세션·원장 경로, 문맥·흐름·단계·자산 위치 포함) |
 | `fonts/lock.schema.yaml`, `fonts/example.fonts.lock.json` | 폰트 잠금 파일 (프로젝트 단위, 폰트마다 사용 작업 목록, 용도별 허가(`uses`), 배포 파일·변형·예약 이름·고지) |
 | `assets/ledger.schema.yaml`, `assets/CHECKS.md`, `assets/example.assets.ledger.json` | 자산 원장 v0 (`.lapis/assets.ledger.json`, 폰트 밖 매체의 출처·라이선스·용도·크레딧·고지·표장·생성 기록), 권리 검사 정의, 예시 원장. 법적 판단이 아니라 기록 대조만 해요 |
 | `fonts/system-fonts.yaml` | 시스템 폰트 표 (검증 여부 표기) |
@@ -159,18 +160,18 @@ Markdown 파일을 다시 쓸 때는 출처를 밝히고, 라이선스 링크를
 | --- | --- |
 | `cli/lapis_design/text_sig.py` | 키를 쓰는 MinHash 문구 서명의 기준 구현 (render_check와 lazuli ref가 같은 값을 내야 함) |
 | `cli/lapis_design/behavior.py` | 동작 세션 파생 값의 기준 구현 (결과 분류, 초점 가시성, 탭 순서 역행, 재요청 횟수, 선택지 두드러짐 비와 거절 노력, 긴급성 재설정, 가격 뒤늦은 공개, 끼워 넣기, 숨은 약관, 나가기 노력) |
-| `cli/lapis_design/plan_check.py` | plan_check v0: 스키마, 기본값(계획 층 탐지기 6종과 기본값 묶음), 계약, 폰트(배포 경로, 배포할 수 없는 취득 경로, 용도별 허가), 레퍼런스, 흐름 짝 검사. 판정 보고 형식으로 출력. 하네스 계획 속 블록 검사(`--from-markdown`)와 요약(`--summary`) |
-| `cli/lapis_design/rights_check.py` | 권리 검사 기준 구현: 배포 파일·원격 호스트·아이콘 라이브러리의 원장 대조, 라이선스·용도·만료·크레딧·고지·예약 이름·표장·생성 매체·동의 검사. 원천 호스트가 우리 것인 렌더에서는 같은 출처·루프백·사설 주소의 매체를 소스 규칙에 맡기고, 이미지 최적화 경로(`/_next/image?url=...`)가 나르는 다른 호스트의 이미지는 원격으로 대조해요 |
+| `cli/lapis_design/plan_check.py` | plan_check v0: 스키마, 기본값(계획 층 탐지기 6종과 기본값 묶음), 계약, 폰트(배포 경로, 배포할 수 없는 취득 경로, 용도별 허가), 레퍼런스, 흐름 짝 검사. 발견 보고 형식으로 출력. 하네스 계획 속 블록 검사(`--from-markdown`)와 요약(`--summary`) |
+| `cli/lapis_design/rights_check.py` | 권리 검사 기준 구현: 배포 파일·원격 호스트·아이콘 라이브러리의 원장 대조, 라이선스·용도·만료·크레딧·고지·예약 이름·표장·생성 매체·동의 검사. 원천 호스트가 내 것인 렌더에서는 같은 출처·루프백·사설 주소의 매체를 소스 규칙에 맡기고, 이미지 최적화 경로(`/_next/image?url=...`)가 나르는 다른 호스트의 이미지는 원격으로 대조해요 |
 | `cli/lapis_design/lint/` | `lapis-design slop lint`: 규칙마다 계획·소스·렌더·동작·리뷰 층의 탐지기를 부르고, 심각도·예외(`keep`)·차단 여부는 엔진만 정해요. 탐지기는 관찰(`Hit`)을 돌려주거나 판단할 수 없으면 이유와 함께 건너뛰어서, 입력이 없는 것이 통과로 읽히지 않아요. 탐지기는 `detectors/`의 여섯 모듈(source, render_type, render_layout, render_visual, copy, behavior)에 있어요 |
 | `install/harnesses.schema.yaml`, `install/harnesses.yaml` | 하네스 정의 단일 원천 v0: 빌드 산출물 15종, 하네스 6종(Claude Code, Codex, Oh-My-Pi, pi, Hermes, 그 밖)의 감지·설치·갱신·제거·확인 명령(argv 배열), 세션 시작·평가자·MCP 방식, 신뢰 단계, 충돌, 미확인 사항(`unverified`), 로컬에서 확인한 사실(`verified`, 날짜·버전과 함께) |
 | `tools/build/installers.py`, `install/install.sh`, `install/install.ps1`, `INSTALLATION.md` | 설치 도구. `install/harnesses.yaml`에서 설치 스크립트(macOS·Linux용 sh, Windows용 PowerShell)와 설치 안내서를 생성해요. 감지된 하네스마다 CLI 설치와 플러그인 등록을 하고, `--dry-run`, `--harness`, `--plugin`, `--update`, `--uninstall`, `--yes`를 받아요. 설치 방법은 [INSTALLATION.md](INSTALLATION.md)에 있어요 |
 | `install/OUTPUTS.md`, `tools/build/build.py`, `tools/build/manifests.py` | 빌드 산출물 명세와 빌드. `build.py`가 `src/`와 `install/harnesses.yaml`에서 스킬·공유 보기·매니페스트·카탈로그·훅·MCP·에이전트·확장·Hermes 플러그인·패키지를 만들고, `--check`로 커밋된 산출물과 비교해요. 매니페스트·카탈로그·훅·MCP·패키지 형태는 `manifests.py`가 정해요 |
 | `pyproject.toml`, `uv.lock`, `.python-version` | CLI 배포 패키지 `lapis-design`(PyPI의 `lapis-lazuli`는 다른 프로젝트가 써요). 진입점 `lapis-design`·`lazuli`, `src/shared` 전체를 `lapis_design/shared` 패키지 데이터로 넣어요 |
 | `cli/lapis_design/cli.py`, `cli/lapis_design/hooks.py`, `cli/lapis_design/mcp_server.py`, `cli/lazuli/cli.py` | `lapis-design --version`, `plan check`·`rights check`(위 두 검사의 명령), `hook exit-plan`(Claude Code 계획 모드 종료 시 lapis-plan 블록 검사, 막을 때만 거부하고 대신 승인하지 않음), `hook session-start`(폰트 인벤토리 요약을 맥락으로 출력, 스캔은 하지 않음), `mcp`(공식 MCP Python SDK, `slop_lint` 도구). `lazuli --version` |
-| `cli/lapis_design/render/`, `cli/lapis_design/sig_key.py` | `lapis-design render check URL [--task ID] [--plan PATH] [--public]`: `render/DERIVED.md`대로 우리 렌더를 최대 9개 조건(320·390·768·1440, 라이트·다크, 모션 줄이기, 모바일 브라우저 UI)으로 캡처해 `render/extract.schema.yaml`에 맞는 추출물을 `.lapis/renders/<task>.json`에 써요. 우리 것인 호스트만 기본으로 캡처해요: `localhost`, 루프백·사설 주소, 그리고 시작할 때 사설 주소로만 풀리는 `.test` 이름(그 주소에 고정하고 `source.addresses`에 기록해요). 판단은 `ours.py` 하나가 렌더·동작 검사 모두에 맡아요. 공개 주소는 `--public`일 때만 캡처하고, 그때도 출처 등록부의 호스트와 계획 `references`의 호스트는 리디렉션까지 막아요(`hosts.py`). 캡처한 페이지가 연 새 창도 같은 규칙으로 막고 바로 닫아요. 남의 페이지는 `lazuli ref capture`로 캡처해요. 상자·텍스트 기본값은 `capture.py`, 측정 필드는 `fields/`(text·visual·interaction), 파생 값은 `derived.py`가 맡아요. 문구 서명 키는 사용자 캐시에만 둬요 |
-| `cli/lapis_design/behavior_check/`, `cli/lapis_design/stub/` | `lapis-design behavior check URL --task ID --plan PLAN --stub FIXTURE [--timezone ZONE]`: `behavior/DERIVED.md`대로 루프백·사설 주소의 우리 렌더를 구동해 `behavior/session.schema.yaml`에 맞는 세션을 `.lapis/behavior/<task>.json`에 써요. 시간대는 기본 UTC예요. 드라이버 코어와 탐침(`probes/`)으로 나뉘고, 파생 값은 `behavior.py`가 채워요. `data-lapis-*` 힌트는 요소를 찾고 묶는 데만 쓰고, 힌트와 판단이 다르면 `hint_mismatch`로 적어 탐지기가 차단하지 않고 미확인으로 보고해요. 스텁은 엔진 하나를 브라우저 요청 가로채기(기본)나 `lapis-design stub serve`(서버 렌더링 앱용 HTTP)로 연결해요. `--backend local-dev`에서는 `--values`의 합성 값만 쓰고 실패 주입과 파괴적 탐침은 하지 않아요 |
+| `cli/lapis_design/render/` | `lapis-design render check URL [--task ID] [--plan PATH] [--public]`: `render/DERIVED.md`대로 내 렌더를 최대 9개 조건(320·390·768·1440, 라이트·다크, 모션 줄이기, 모바일 브라우저 UI)으로 캡처해 `render/extract.schema.yaml`에 맞는 추출물을 `.lapis/renders/<task>.json`에 써요. 내 것인 호스트만 기본으로 캡처해요: `localhost`, 루프백·사설 주소, 그리고 시작할 때 사설 주소로만 풀리는 `.test` 이름(그 주소에 고정하고 `source.addresses`에 기록해요). 판단은 `ours.py` 하나가 렌더·동작 검사 모두에 맡아요. 공개 주소는 `--public`일 때만 캡처하고, 그때도 출처 등록부의 호스트와 계획 `references`의 호스트는 리디렉션까지 막아요(`hosts.py`). 캡처한 페이지가 연 새 창도 같은 규칙으로 막고 바로 닫아요. 남의 페이지는 `lazuli ref capture`로 캡처해요. 상자·텍스트 기본값은 `capture.py`, 측정 필드는 `fields/`(text·visual·interaction), 파생 값은 `derived.py`가 맡아요. 문구 서명 키는 사용자 캐시에만 둬요 |
+| `cli/lapis_design/behavior_check/`, `cli/lapis_design/stub/` | `lapis-design behavior check URL --task ID --plan PLAN --stub FIXTURE [--timezone ZONE]`: `behavior/DERIVED.md`대로 루프백·사설 주소의 내 렌더를 구동해 `behavior/session.schema.yaml`에 맞는 세션을 `.lapis/behavior/<task>.json`에 써요. 시간대는 기본 UTC예요. 드라이버 코어와 탐침(`probes/`)으로 나뉘고, 파생 값은 `behavior.py`가 채워요. `data-lapis-*` 힌트는 요소를 찾고 묶는 데만 쓰고, 힌트와 판단이 다르면 `hint_mismatch`로 적어 탐지기가 차단하지 않고 미확인으로 보고해요. 스텁은 엔진 하나를 브라우저 요청 가로채기(기본)나 `lapis-design stub serve`(서버 렌더링 앱용 HTTP)로 연결해요. `--backend local-dev`에서는 `--values`의 합성 값만 쓰고 실패 주입과 파괴적 탐침은 하지 않아요 |
 | `cli/lazuli/db/migrations/` | lazuli DB 마이그레이션 (SQLite 3.34 이상, FTS5 trigram). `0002_color.sql`은 사용자가 기록한 색 체계 값(`color_record`, 화면 샘플은 항상 탐지 전용), `0003_user_label.sql`은 사용자가 알려 준 폰트 분류(`user_label`, 카탈로그 분류보다 우선)예요. 둘 다 다시 만들 수 없는 사용자 데이터예요. `0004_adobe_core_text.sql`은 Adobe 폴더의 파일을 열어 모았던 행을 지우고, 다음 스캔에서 Core Text로 다시 모으게 해요 |
-| `cli/lazuli/catalog/` | `lazuli catalog sync\|lookup\|status`: 카탈로그에서 사람이 붙인 분류·라이선스를 사람 수준 속도로 받아 사용자 캐시에만 두고, 설치된 폰트와 PostScript 이름·패밀리 이름(한국어 이름 포함)·느슨한 이름으로 매칭해요. Google Fonts·Fontsource·Fontshare·안심글꼴은 스냅숏, 시스템 폰트 표는 번들, 산돌은 요청 시 조회(10초 간격)예요. Adobe Fonts와 눈누는 약관이 자동 수집을 금지해서 요청 없이 브라우저 링크만 줘요 |
+| `cli/lazuli/catalog/` | `lazuli catalog sync\|lookup\|status`: 카탈로그에서 사람이 붙인 분류·라이선스를 사람 수준 속도로 받아 사용자 캐시에만 두고, 설치된 폰트와 PostScript 이름·패밀리 이름(한국어 이름 포함)·느슨한 이름으로 매칭해요. Google Fonts·Fontsource·Fontshare·안심글꼴은 스냅숏, 시스템 폰트 표는 번들, 산돌은 요청 시 조회(10초 간격)예요. Adobe Fonts 사이트와 눈누는 lazuli가 약관을 읽고 자동 수집을 금지한다고 해석해서(법률 조언은 아니에요) 요청 없이 브라우저 링크만 줘요. 이 수집 제한은 폰트를 추천하고 고르고 잠그는 일과는 상관없어요 |
 | `cli/lazuli/` | `lazuli local fonts [--summary] [--family NAME] [--json]`: OS·사용자 폴더의 폰트를 읽기 전용으로 스캔하고(바뀐 파일만 다시 읽음), macOS에서는 Adobe Fonts가 켜 둔 폰트를 운영체제 폰트 API(Core Text)로 나열해 이름과 커버리지를 읽고 시스템이 그린 글리프로 재요(Adobe 폴더의 파일은 열지 않아요. Windows에는 Adobe 폰트가 없어요). PANOSE 라틴(굵기·비례·대비·x높이, 세리프 여부)과 한중일 확장(부리 비, 획 대비, 네모틀 편차, 라틴 대비 굵기)을 재서 사용자 캐시의 lazuli DB에 둬요. `lazuli doctor`는 SQLite·캐시·인벤토리·폰트 폴더·Adobe 폰트 수(macOS)·브라우저를 점검해요. 테스트는 코드로 만든 작은 합성 폰트를 써서 저장소에 폰트 파일이 없어요 |
 | `cli/lazuli/lock.py`, `search.py` | `lazuli lock`: 고른 폰트의 출처·라이선스·배포 경로를 그 시점에 `.lapis/fonts.lock.json`에 고정해요. 카탈로그·파일 메타데이터의 라이선스는 힌트로만 적고, 용도별 허가는 사용자가 밝힌 것만 적어요. `lazuli search`: 문자 체계·역할·분류·라이선스·배포 경로·비슷한 폰트(측정 거리)로 후보와 근거를 순위대로 돌려줘요. `--type color`·`--type source`는 아래 모듈로 넘겨요 |
 | `cli/lazuli/color.py`, `sources.py` | `lazuli color lookup\|record`: 색 체계 코드를 정규화하고 공식 링크를 줘요. HLC·RAL DESIGN SYSTEM plus는 좌표라 OKLCH 근삿값을 계산하고, Pantone·RAL CLASSIC·NCS·Munsell·Freetone은 코드와 링크만 저장소에 두고 값은 사용자 기록에서만 가져와요(접미사 없는 Pantone 번호는 불완전한 사양으로 알려요). `lazuli sources`는 출처 등록부를 보여 줘요 |

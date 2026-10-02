@@ -1,0 +1,78 @@
+# Example: campsite site booking screen (create mode), BEFORE the copy pass.
+# Synthetic campground; every fact below is sample data.
+# Run `lapis-design plan check docs/examples/site-booking-ko.yaml` without a lazuli database.
+version: 0
+mode: create
+task: { id: site-booking, title: Campsite site booking screen }
+context:
+  product: PRODUCT.md
+  design: null
+brief:
+  subject: Booking one site at a small campground for one or two nights
+  one_job: Pick a free site on the map for chosen dates and hold it
+  audience: Families and pairs who camp a few times a year
+  platform: [web]
+  locales: [ko-KR]
+  product_frame: forms-onboarding-checkout
+  constraints: [Most bookings happen on phones, Sites open for the next month at 10:00 on the 1st]
+claims:
+  known: [The campground has 18 deck sites and 4 with power]
+  declared: [No brand color yet]
+  proposed: [Use the site map as the page signature]
+  unresolved: []
+world_materials: [site map with deck numbers, deck size in metres, power hookup posts, check-in 14:00 and check-out 11:00, quiet hours from 22:00, rain refund table]
+direction:
+  read:
+    text: "Reading this as: checkout / Operate on web for occasional campers, subject-derived language, constrained by phone use at opening time; dials V/M/D = 3/2/6"
+    surface_mode: [operate]
+    style_frame: subject-derived
+    constraint_frame: [mobile first]
+  dials: { variance: 3, motion: 2, density: 6 }
+  concept: The site map is the form
+  levers: [map as primary control]
+tokens:
+  color:
+    decision:
+      medium: { answer: "Web, mobile first", status: known }
+      task_structure: { answer: dates -> site -> hold -> pay, status: declared }
+      content_colors: { answer: Site status colors on the map, status: proposed }
+      identity: { answer: None yet, status: known }
+      environment: { answer: "Outdoors and bright, often in a queue at 10:00", status: proposed }
+      tone: { answer: Plain, status: proposed }
+    roles:
+      - { name: ground, role: field, oklch: [0.985, 0.005, 150] }
+      - { name: ink, role: foreground, oklch: [0.24, 0.01, 150] }
+      - { name: hold, role: interaction, oklch: [0.5, 0.12, 150], source_class: authored }
+    relations: [near-monochrome]
+    themes: [light]
+  type:
+    roles:
+      - { role: body, family: Pretendard, weights: [400, 600], scripts: [hang, latn], source: catalog }
+    scale: { base_px: 16, ratio: 1.2 }
+  motion: { reduced_motion: respect }
+layout:
+  procedure:
+    content_inventory: [dates, site map, site detail, price with fees, hold button]
+    priority: [site map, price with fees, hold]
+    archetype: form
+  sections:
+    - { id: map, archetype: signature, answers: Which sites are free on my dates }
+    - { id: summary, archetype: form, answers: What will I pay in total }
+  signature: site map
+content:
+  real_copy: false
+  source: synthetic campground, labeled as sample data on the page
+  voice: { register: haeyo }
+  key_copy:
+    - { slot: headline, text: "최적의 캠핑 경험을 선사합니다", locale: ko-KR }
+    - { slot: cta, text: 계속하기, locale: ko-KR }
+flows:
+  - id: hold-site
+    kind: primary
+    goal: Hold one free site for the chosen nights and see the total
+    start: /
+    done: { route: /holds/* }
+    max_steps: 3
+defaults: []
+sources:
+  - { ref: PRODUCT.md }

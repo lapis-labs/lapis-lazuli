@@ -141,6 +141,8 @@ harnesses:
     verify:
       - run: [codex, plugin, list, --json]
         expect: "{plugin}@{catalog} installed and enabled"
+      - manual: "For {plugin}, check that ~/.codex/agents/ulm-critic.toml exists and matches dist/codex/agents/ulm-critic.toml from {repo} at {ref}; a marketplace upgrade alone does not copy the critic file"
+        plugins: [ultramarine]
       - manual: "In a new session, type $lapis:lps-ux and check that the skill is offered"
     session_start: { via: plugin-hook, output: plugin-hooks, event: "SessionStart startup|resume|clear|compact", note: "matchers are regular expressions; the fork alternative never matches here" }
     critic: { via: agent-file, output: codex-agents, note: "plugins cannot ship subagents; the installer copies the TOML file" }

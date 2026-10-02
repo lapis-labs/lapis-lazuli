@@ -4,13 +4,13 @@ Skills that make a coding agent write a plan for an interface before it writes c
 that checks the plan, the rendered page, and the page's behavior against that plan.
 
 For developers who build web interfaces with Claude Code, Codex, Oh-My-Pi, or another Agent Skills
-harness and want each finding tied to a named rule and a fix. [한국어](README.ko.md)
+harness and want each blocking finding tied to a named rule and a fix. [한국어](README.ko.md)
 
-An example plan for a campsite booking page, checked before any code exists, on a machine without a
-lazuli font database (four of seven findings left out):
+An [example plan for a campsite booking page](docs/examples/site-booking-en.yaml), checked before any
+code exists, on a machine without a lazuli font database (four of seven findings left out):
 
 ```console
-$ lapis-design plan check site-booking.yaml
+$ lapis-design plan check docs/examples/site-booking-en.yaml
 plan_check 0.1.2: 2 blocking, 7 total
   [WARN] copy.buzzwords content.key_copy[*].text — "elevate" (buzzwords) in the headline key copy: "Elevate your camping experience"
           fix: Add a defaults entry for copy.buzzwords (keep or reject with a reason). Name the user action, the handoff removed, or the verifiable capability
@@ -20,8 +20,9 @@ plan_check 0.1.2: 2 blocking, 7 total
           fix: Run `lazuli lock` after choosing fonts.
 ```
 
-Once the page runs on localhost, `lapis-design slop lint` also reads Chromium captures from 320 to
-1440 px and a scripted session against a stub backend, with rules such as `color.text-contrast`,
+Once the page runs on localhost, `lapis-design render check` captures it in Chromium from 320 to
+1440 px, and `lapis-design behavior check` records a scripted session against a stub backend.
+`lapis-design slop lint` reads those result files, with rules such as `color.text-contrast`,
 `type.ko.keep-all-missing`, `ux.preselected-option`, `ux.false-urgency`, and `rights.no-provenance`.
 
 ## Install
@@ -108,6 +109,7 @@ Run either with `--help` for the commands and options.
 
 - Python 3.12 or later.
 - `uv` or `pipx` to install the CLI.
+- `git` to install the CLI and plugins from the repository.
 - Chromium, through Playwright's `chromium-headless-shell`, for `render check`, `behavior check`,
   `lazuli read --render`, and `lazuli ref capture`. The rest works without it.
 - SQLite 3.34 or later with FTS5 trigram support, for the `lazuli` database.
@@ -119,8 +121,10 @@ Run either with `--help` for the commands and options.
 - **Scrape live sites.** `lazuli read` reads one page you ask for, within the source registry's
   policy and the site's `robots.txt`. Catalog lookups keep a human pace and any stated crawl delay,
   name lazuli in their request headers, and never get around a block or a sign-in. Where a site's
-  terms forbid automated collection (Adobe Fonts and noonnu, terms read on 2026-09-26), the source
-  registry refuses its hosts: lazuli sends nothing to them and gives you a link.
+  terms forbid automated collection as lazuli reads the terms (not legal advice; the Adobe Fonts
+  site and noonnu, terms read on 2026-09-26), the source registry refuses its hosts: lazuli sends nothing to
+  them and gives you a link. This collection limit does not restrict recommending, choosing, or
+  locking fonts, including licensed Adobe Fonts.
 - **Open Adobe Fonts files.** Fonts an Adobe Fonts subscription activates are listed through the
   operating system's font API on macOS (Core Text) and measured from glyphs the system draws; only
   derived numbers are kept, and the files are never opened. Windows has no such listing, so Adobe
@@ -131,7 +135,9 @@ Run either with `--help` for the commands and options.
 - **Drive pages that are not yours.** Render and behavior checks capture only your own pages:
   `localhost`, loopback and private addresses, and `.test` names that resolve privately. Only
   `render check` takes a public address of yours, with `--public`, and never a source-registry host
-  or a host your plan lists as a reference. Every other host is blocked.
+  or a host your plan lists as a reference. Every other host is blocked. An HTML file path or
+  `file://` URL also works: the checks serve its folder read-only on loopback and record only that
+  HTTP URL.
 - **Touch real accounts.** Behavior checks use a stub or an isolated local backend with synthetic
   data, never real accounts, credentials, or payment methods, and they never store typed values,
   query strings, headers, or request bodies.
