@@ -25,6 +25,15 @@ All notable changes are recorded here. The format follows
   `slop lint --layer` and `--rule` have no task-derived path, so write them with
   `-o .lapis/lint/<task>.narrow.json`. The release gate reads only the full paths. The repair loop, the
   `lapis`, `ultramarine`, `ulm-maintain`, and `ulm-release` skills, and `--help` say so.
+- `behavior check` takes box snapshots in about a third of the time (104 ms to 38 ms on the pilot pages) and
+  looks at an unchanged page once: the capture no longer hands over the text runs and styles that the driver
+  never reads, the attribute events of the DOM domain are off while the tree is read, the boxes that carry a
+  single control and the place of each changed box are asked of the page in one call each, and a snapshot
+  stands while the document, its mutation count, its scroll position, the controlled clock, and the events
+  that reached it (input, focus, scroll, transitions, animations, fonts, loads) are all unchanged, so a hover or
+  focus reveal with no mutation is still seen. The session JSON is the same as 0.2.0 wrote, apart from timings;
+  on the two pilot pages the full run takes 78% and 84% of the time, `flows` about 62%, and the 500 ms settle
+  windows, which stay in real time, are most of what is left of `controls`.
 
 ## 0.2.0 (2026-10-02)
 

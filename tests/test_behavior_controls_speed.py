@@ -1,6 +1,6 @@
 """The controls probe's cost is bounded by what it observes, not by how often it looks: a snapshot costs the same
-browser round trips on a page of any size, an action snapshots a calm page twice, and a control costs a fixed number
-of snapshots."""
+browser round trips on a page of any size, a snapshot stands while nothing has reached the page, an action on a page
+just seen snapshots only what it changed, and a control costs a fixed number of snapshots."""
 from __future__ import annotations
 
 import threading
@@ -133,13 +133,102 @@ def test_a_listener_makes_its_own_box_a_control_and_nothing_around_it(opened):
         "listener", "inline", "property", "inner", "down", "touch"}
 
 
-def test_an_action_on_a_calm_page_snapshots_it_before_and_after(opened, monkeypatch):
+def test_a_snapshot_stands_while_nothing_reaches_the_page(opened, monkeypatch):
+    _, driver = opened("calm.html", '<button id="go">go</button>')
+    snapshots = _count_snapshots(monkeypatch)
+    first = driver.boxes()
+    assert driver.boxes() is first and driver.interactive() == [box for box in first if box["interactive"]]
+    assert driver.locate(first[-1]["id"]).count() == 1
+    assert len(snapshots) == 0                      # the load's snapshot stands for all of them
+
+
+# No node changes in either of these: an input makes the page show what was not there to see.
+REVEALS = {
+    "hover": ("<style>.tip{display:none} #host:hover + .tip{display:block}</style>"
+              '<button id="host">host</button><p class="tip" id="shown">tip</p>',
+              lambda driver: driver.page.hover("#host")),
+    "focus": ("<style>#shown{opacity:0} #shown:focus{opacity:1}</style>"
+              '<a id="shown" href="#end">skip</a><p id="end">end</p>',
+              lambda driver: driver.page.keyboard.press("Tab")),
+}
+
+
+@pytest.mark.parametrize("arrival", list(REVEALS))
+def test_what_an_input_shows_without_changing_a_node_is_seen_by_the_next_snapshot(opened, arrival):
+    body, reach = REVEALS[arrival]
+    _, driver = opened(f"reveal-{arrival}.html", body)
+    before = {box["id"] for box in driver.boxes()}
+    reach(driver)
+    revealed = driver.page.eval_on_selector("#shown", "el => el.getAttribute('data-lapis-box')")
+    assert revealed not in before                   # the snapshot that stands has not seen it
+    assert {box["id"] for box in driver.boxes()} > before
+
+
+def test_a_scroll_that_has_not_yet_fired_its_event_still_ends_a_snapshot(opened):
+    # A fixed bar keeps its place in the window, so its place in the page follows the scroll.
+    body = ('<style>body{height:3000px} #bar{position:fixed;top:0;left:0}</style>'
+            '<button id="bar">bar</button><button style="margin-top:900px">far</button>')
+    _, driver = opened("scrolled.html", body)
+    bar = lambda: next(box for box in driver.boxes() if box["name"] == "bar")["rect"]["y"]
+    assert bar() == 0
+    # the scroll event fires with the next frame; the position is there at once
+    driver.page.evaluate("scrollTo({top: 500, behavior: 'instant'})")
+    assert bar() == 500
+
+
+def test_a_clock_move_a_new_node_and_a_new_document_each_end_a_snapshot(opened, monkeypatch):
+    session, driver = opened("moves.html", '<button id="go">go</button>')
+    snapshots = _count_snapshots(monkeypatch)
+    driver.boxes()
+    session.advance_clock(1)
+    driver.boxes()
+    assert len(snapshots) == 1                      # the clock moved
+    driver.page.evaluate("document.body.append(Object.assign(document.createElement('button'), "
+                         "{id: 'late', textContent: 'late'}))")
+    assert "late" in {box["name"] for box in driver.boxes()}
+    assert len(snapshots) == 2                      # a node came
+    driver.page.reload()
+    driver.boxes()
+    assert len(snapshots) == 3                      # another document, with the same nodes
+    driver.boxes()
+    assert len(snapshots) == 3
+
+
+def test_a_snapshot_that_stands_counts_the_mutations_a_new_one_would_have_added(opened, monkeypatch):
+    # A text with `line-height: normal` is measured with probe nodes, which count as mutations of the page.
+    _, driver = opened("normal.html", "<style>p{line-height:normal}</style><p>measured by a probe node</p>")
+    snapshots = _count_snapshots(monkeypatch)
+    added = driver.snapshot_mutations
+    assert added > 0
+
+    def count():
+        return driver.page.evaluate("window.__lapisObserve.mutations")
+
+    before = count()
+    driver.boxes()
+    driver.locate(driver.boxes()[-1]["id"])
+    assert count() - before == 3 * added and not snapshots
+
+
+def test_an_action_counts_the_probe_nodes_of_every_snapshot_it_stands_in_for(opened):
+    body = ("<style>p,button{line-height:normal}</style><p>probe</p>"
+            '<button id="go" onclick="this.textContent=\'done\'">go</button>')
+    _, driver = opened("measured.html", body)
+    button = next(box for box in driver.interactive() if box["name"] == "go")
+    before = driver.snapshot_mutations
+    effect = driver.act({"kind": "click", "target": button["id"]})
+    # the click replaces the button's text (2 mutations); the snapshot that found the button, which stood in for a
+    # new one, and the snapshot after the action each add the probe nodes of their own texts
+    assert before > 0 and effect["dom_mutations"] == 2 + before + driver.snapshot_mutations
+
+
+def test_an_action_on_a_page_just_seen_snapshots_only_what_it_changed(opened, monkeypatch):
     _, driver = opened("toggle.html", '<button id="go" onclick="this.textContent=\'done\'">go</button>')
     button = next(box for box in driver.interactive() if box["name"] == "go")
     snapshots = _count_snapshots(monkeypatch)
     effect = driver.act({"kind": "click", "target": button["id"]})
     assert button["id"] in effect["text_changed"]
-    assert len(snapshots) == 2
+    assert len(snapshots) == 1
 
 
 def test_a_control_costs_a_fixed_number_of_snapshots(opened, monkeypatch):
@@ -149,8 +238,9 @@ def test_a_control_costs_a_fixed_number_of_snapshots(opened, monkeypatch):
     snapshots = _count_snapshots(monkeypatch)
     controls.run(session, lambda ctx: driver)
     assert len(session.probes["controls"]) == len(names)
-    # one snapshot after each load, two around each action; a control loads twice and acts twice
-    assert len(snapshots) <= 6 * len(names)
+    # one snapshot after each of the two loads; the pointer action snapshots what it changed, and the key action
+    # the page the Tab presses reached, and what it changed
+    assert len(snapshots) <= 5 * len(names)
 
 
 def test_a_control_that_carries_another_is_found_by_one_question_to_the_page(opened, monkeypatch):

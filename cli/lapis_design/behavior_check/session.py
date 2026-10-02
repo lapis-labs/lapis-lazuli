@@ -61,6 +61,7 @@ class Session:
         self.context("m", width=390, height=844, pointer="coarse")
         self.context("d", width=1440, height=900, pointer="fine")
         self.drivers: set = set()
+        self.clock_moves = 0               # how often the controlled clock has moved: older snapshots are stale
         self._matrix_ids = tuple(self.contexts)          # the base matrix, before any probe adds twins
 
     def context(self, id: str, **overrides) -> str:
@@ -94,6 +95,7 @@ class Session:
         if ms <= 0:
             return
         self.clock.advance(ms)
+        self.clock_moves += 1
         for driver in tuple(self.drivers):
             if driver.page is not None:
                 if jump:

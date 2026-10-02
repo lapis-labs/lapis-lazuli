@@ -11,11 +11,28 @@ _LISTENER_ROLES = ("card", "section", "other", "text", "icon")
 _POINTER_EVENTS = ("click", "pointerdown", "mousedown", "touchstart")
 
 # The capture reads the page's mutation count first: its own line-height probe nodes count as mutations (below).
-# It hands the Python side only what a box is made of: the capture's text runs and styles are the render check's,
-# and serializing them costs more than taking them (so does a path of many steps, which crosses as one string).
-CAPTURE = ("() => { const o=window.__lapisObserve; const before=o ? o.mutations : 0; const data=(" + _DOM + ")(); "
-           "return {before, boxes:data.boxes.map(({index, path, role, tag, rect}) => "
+# It also reads where the page stands (see UNCHANGED), and hands the Python side only what a box is made of: the
+# capture's text runs and styles are the render check's, and serializing them costs more than taking them (so does
+# a path of many steps, which crosses as one string).
+WHERE = "o ? [o.documentToken, o.events, scrollX, scrollY] : null"
+CAPTURE = ("() => { const o=window.__lapisObserve; const before=o ? o.mutations : 0, at=" + WHERE + "; "
+           "const data=(" + _DOM + ")(); "
+           "return {before, at, boxes:data.boxes.map(({index, path, role, tag, rect}) => "
            "({index, path:JSON.stringify(path), role, tag, rect}))}; }")
+
+# Whether the page is still the one a snapshot saw: the same document, scroll position, and mutation count, and none
+# of the events the init script counts (input, focus, scroll, resize, transition, animation, font, load) has reached
+# it since. A hover reveal or a focus ring changes no node, so the mutation count alone cannot say; a scroll event
+# comes a frame after the scroll, so the position is read as well. `repeat` is the mutations the snapshot's own
+# probe nodes add (see CAPTURE): a snapshot that stands in for another counts them again, so a page that measures
+# with probe nodes counts what it always counted.
+UNCHANGED = r"""([seen, repeat]) => {
+  const o=window.__lapisObserve;
+  if (!o || o.mutations!==seen.mutations || [o.documentToken, o.events, scrollX, scrollY].some((v, i) => v!==seen.at[i]))
+    return false;
+  o.mutations+=repeat;
+  return true;
+}"""
 
 # The capture marks every element with its index; this stamps the box ids the probes address, then reads what each
 # box is (by id, as a probe would find it: the first element carrying it) for every box in one call.
@@ -51,8 +68,9 @@ DETAILS = r"""({ids, order}) => {
     return {interactive,focusable,enabled:!el.disabled&&el.getAttribute('aria-disabled')!=='true',
             in_main:inMain,landmark,pointer_handler:!!el.onclick};
   });
-  return {details, mutations:window.__lapisObserve?.mutations ?? 0};
-}"""
+  const o=window.__lapisObserve;
+  return {details, mutations:o?.mutations ?? 0, at:__WHERE__};
+}""".replace("__WHERE__", WHERE)
 
 # Which of the captured elements have a pointer listener, asked of the console API in one call (the
 # DOMDebugger domain answers one element per call). Runs before the capture marks are removed.
@@ -80,9 +98,11 @@ def _pointer_listeners(cdp, indexes: list[int]) -> set[int]:
     return set(answer.get("result", {}).get("value") or ())
 
 
-def snapshot(driver) -> tuple[list[dict], int]:
-    """The visible boxes, and how many mutations the capture added to the page's count (see CAPTURE)."""
+def snapshot(driver) -> tuple[list[dict], int, dict | None]:
+    """The visible boxes, how many mutations the capture added to the page's count (see CAPTURE), and what the
+    page was when it was seen (see UNCHANGED; None when it changed while the snapshot ran)."""
     page = driver.page
+    clock = driver.session.clock_moves
     captured = page.evaluate(CAPTURE)
     cdp = driver.cdp
     # The DOM domain tells the client of every attribute the page changes in the nodes it has handed out, and the
@@ -129,4 +149,7 @@ def snapshot(driver) -> tuple[list[dict], int]:
         result.append(entry)
         driver.session.node(bid, role=box["role"], name=name, rect=rect, context=driver.ctx_id,
                             appears="action" if driver._acted else "load")
-    return result, stamped["mutations"] - captured["before"]
+    # A page that changed while the snapshot ran is not the page the boxes were taken from.
+    seen = {"at": stamped["at"], "mutations": stamped["mutations"], "clock": clock} \
+        if stamped["at"] == captured["at"] else None
+    return result, stamped["mutations"] - captured["before"], seen

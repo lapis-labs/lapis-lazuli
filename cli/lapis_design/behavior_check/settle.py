@@ -14,7 +14,7 @@ from __future__ import annotations
 from time import monotonic, sleep
 
 INIT_SCRIPT = """(() => {
-  window.__lapisObserve={mutations:0,last:performance.now(),shifts:[],layoutAnimations:[],
+  window.__lapisObserve={mutations:0,last:performance.now(),shifts:[],layoutAnimations:[],events:0,
     documentToken:Math.random()};
   const LAYOUT=/^(width|height|inset(-.+)?|top|right|bottom|left|margin(-.+)?|padding(-.+)?)$/;
   const kebab=name=>name.replace(/[A-Z]/g,c=>'-'+c.toLowerCase());
@@ -49,6 +49,16 @@ INIT_SCRIPT = """(() => {
     try { record(this,keyframeProperties(animation.effect),durationOf(animation)); } catch(_){}
     return animation;
   };
+  // What reaches the page without changing a node (a hover reveal, a focus ring, a scroll, a transition) is counted,
+  // for the box snapshot to tell that nothing reached it since it was taken (see nodes.UNCHANGED).
+  const count=()=>{window.__lapisObserve.events++;};
+  for (const type of ['keydown','keyup','beforeinput','input','change','click','dblclick','contextmenu',
+      'pointerdown','pointerup','pointermove','pointerover','pointerout','pointercancel','mousedown','mouseup',
+      'mousemove','mouseover','mouseout','touchstart','touchmove','touchend','wheel','scroll','focus','blur',
+      'focusin','focusout','resize','popstate','hashchange','pageshow','online','offline','toggle','load','error',
+      'transitionrun','transitionend','transitioncancel','animationstart','animationend','animationcancel'])
+    window.addEventListener(type,count,{capture:true,passive:true});
+  for (const type of ['loadingdone','loadingerror']) document.fonts?.addEventListener(type,count);
   new MutationObserver(records => {
     const o=window.__lapisObserve;
     for(const record of records) {

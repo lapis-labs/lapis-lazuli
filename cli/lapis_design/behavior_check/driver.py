@@ -227,6 +227,7 @@ class Driver:
         self.performed = False             # the last `act` ran its action (see act)
         self._boxes = None                 # what the last snapshot saw, and the mutations it added to the page's count
         self.snapshot_mutations = 0
+        self._seen = None                  # the page as that snapshot saw it (see nodes.UNCHANGED), or None
         self._start = monotonic()
         self._popups = 0
         self._downloads = 0
@@ -259,6 +260,7 @@ class Driver:
         self.page = self.context.new_page()
         self._loaded = False
         self._acted = False
+        self._boxes = self._seen = None
         self._start = monotonic()
         self.context.unroute("**/*")
         self.network = Network(self)
@@ -278,6 +280,7 @@ class Driver:
         frozen_at = self.session.clock.now_ms() + 250
         self.page.clock.pause_at(datetime.fromtimestamp(frozen_at / 1000, timezone.utc))
         self.session.clock.advance(250)
+        self.session.clock_moves += 1
         for other in tuple(self.session.drivers):
             if other is not self and other.page is not None:
                 other.page.clock.run_for(250)
@@ -315,20 +318,35 @@ class Driver:
             self.boxes()
 
     def boxes(self) -> list[dict]:
-        self._boxes, self.snapshot_mutations = nodes.snapshot(self)
+        """The visible boxes. The last snapshot stands while nothing has reached the page since it was taken: the
+        document, its mutation count, and the events it has seen are the same (see nodes.UNCHANGED), and the
+        controlled clock has not moved. What a page does on its own time, with no node and no event (a CSS animation
+        still running), is read again by the first snapshot after anything does reach it."""
+        if self._boxes is not None and self._current():
+            return self._boxes
+        self._boxes, self.snapshot_mutations, self._seen = nodes.snapshot(self)
         return self._boxes
 
-    def locate(self, box_id, *, stamped=False):
-        """The element a box id stands for. `stamped`: the caller snapshotted a moment ago and nothing ran since."""
-        if not stamped:
-            self.boxes()
+    def _current(self) -> bool:
+        seen = self._seen
+        if seen is None or seen["clock"] != self.session.clock_moves:
+            return False
+        try:
+            current = self.page.evaluate(nodes.UNCHANGED, [seen, self.snapshot_mutations])
+        except PlaywrightError:
+            return False                    # the document is going away; the snapshot that follows says so
+        if current:
+            seen["mutations"] += self.snapshot_mutations
+        return current
+
+    def locate(self, box_id):
+        """The element a box id stands for."""
+        self.boxes()
         return self.page.locator(f'[data-lapis-box="{box_id}"]').first
 
-    def interactive(self, *, reuse=False) -> list[dict]:
-        """The visible enabled controls. `reuse`: nothing ran since the last snapshot (a load or an action ends
-        with one), so take its boxes instead of snapshotting again, unless that snapshot adds mutations to the
-        page's count (see `act`): the count a navigation is recorded against includes every snapshot before it."""
-        boxes = self._boxes if reuse and self._boxes is not None and not self.snapshot_mutations else self.boxes()
+    def interactive(self) -> list[dict]:
+        """The visible enabled controls."""
+        boxes = self.boxes()
         focusable = [box["id"] for box in boxes if box["focusable"] and box["interactive"] and box["enabled"]]
         candidates = [box["id"] for box in boxes if box["interactive"] and box["enabled"] and not box["focusable"] and
                       not box["pointer_handler"] and box["role"] in ("card", "section", "other")]
@@ -470,9 +488,9 @@ class Driver:
         except PlaywrightTimeout:
             return None
 
-    def _perform(self, action, *, stamped=False):
+    def _perform(self, action):
         kind = action["kind"]
-        target = self.locate(action["target"], stamped=stamped) if "target" in action else None
+        target = self.locate(action["target"]) if "target" in action else None
         if kind in ("click", "tap"):
             self._pointer(target, kind)
         elif kind == "key":
@@ -552,11 +570,6 @@ class Driver:
     def act(self, action: dict) -> dict:
         self.performed = False          # set once the action itself ran; an error after that comes from reading what it did
         self.boxes()
-        # A snapshot of a page whose text has `line-height: normal` measures with probe nodes, and the page's
-        # mutation count includes them: `dom_mutations` is read from that count (a navigation, against everything the
-        # last document counted). Such a page keeps every snapshot it was always given; on any other page the
-        # repeat snapshot changes nothing and is skipped.
-        stamped = self.snapshot_mutations == 0
         before = self.page.evaluate(OBSERVE)
         req_start = len(self.network.entries)
         console_start = len(self.session.console_entries)
@@ -566,7 +579,7 @@ class Driver:
         action["t_ms"] = self.t_ms()
         self.page.evaluate(settle.START_LAYOUT_ANIMATIONS)
         try:
-            self._perform(action, stamped=stamped)
+            self._perform(action)
         except Exception:
             if not self.network.external:
                 raise

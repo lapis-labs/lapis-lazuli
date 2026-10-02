@@ -168,7 +168,7 @@ def run(session, open_driver):
                     else:
                         fresh(driver)
                     replay(driver, path)
-                    box = next((item for item in driver.interactive(reuse=True) if item["id"] == box_id), None)
+                    box = next((item for item in driver.interactive() if item["id"] == box_id), None)
                     if box is None:
                         skipped.append(f"{box_id}: not visible after replaying prerequisite actions")
                         continue
@@ -189,7 +189,7 @@ def run(session, open_driver):
                             any(req["method"] in ("POST", "PUT", "PATCH", "DELETE")
                                 for req in effect.get("requests", ()))):
                         session._control_commit_requests.add((ctx_id, box_id))
-                    for child in driver.interactive(reuse=True):
+                    for child in driver.interactive():
                         if (child["id"] not in seen and all(child["id"] != queued for queued, _ in queue)
                                 and session.scope.admit("controls", ctx_id, child["id"])):
                             queue.append((child["id"], (*path, box_id)))
