@@ -33,6 +33,13 @@ STUB = Path(__file__).parent / "fixtures" / "behavior" / "time-history" / "app.s
     "14일 무료 체험",
     "24시간 고객센터",
     "환불은 결제 후 24시간 이내에 가능해요",
+    "Offer valid for 48 hours only",
+    "48시간 한정 특가",
+    # A period for paying, cancelling, or refunding is a term of the offer, not time left.
+    "Payment due in 30 days",
+    "Payment due within the next 7 days",
+    "Invoices are due within 14 days of the order",
+    "24시간 내에 예약 취소 가능",
 ])
 def test_a_period_the_page_describes_is_not_a_countdown(text):
     assert urgency._claim(text, 0) is None
@@ -61,6 +68,19 @@ def test_a_period_the_page_describes_is_not_a_countdown(text):
     # Days and hours together are how a timer reads, with or without words around them.
     ("02 Days 04 Hours", 2 * 86400 + 4 * 3600, 3600),
     ("3일 5시간", 3 * 86400 + 5 * 3600, 3600),
+    # "for the next" and "within the next" frame a window that is running.
+    ("Free shipping for the next 3 hours", 3 * 3600, 3600),
+    ("Order for the next 2 days and get a gift", 2 * 86400, 86400),
+    # Korean day counts: before 후 마감, and after 마감까지.
+    ("2일 후 마감", 2 * 86400, 86400),
+    ("3일 후 종료", 3 * 86400, 86400),
+    ("마감까지 3일", 3 * 86400, 86400),
+    ("만료까지 1일 4시간", 86400 + 4 * 3600, 3600),
+    # A cut-off word beside a span is not undone by a payment word in another sentence.
+    ("Sale ends in 2 days. Cancel anytime", 2 * 86400, 86400),
+    ("Sale ends in 2 days · free refunds", 2 * 86400, 86400),
+    # The payment word of a cut-off phrase ("시간 내 결제") is the cut-off, not a payment term.
+    ("3시간 내 결제하면 오늘 출발", 3 * 3600, 3600),
 ])
 def test_a_span_that_says_time_is_running_out_is_still_a_countdown(text, seconds, resolution):
     assert urgency._claim(text, 0) == ("countdown", seconds, resolution, "seconds")
@@ -89,6 +109,11 @@ PAGE = """<!doctype html><html lang="en"><meta charset="utf-8"><title>Plans</tit
   <p id="trial">Try it free for 14 days.</p>
   <p id="timer">Sale ends in <strong>2 days</strong></p>
   <p id="cells"><span>02 <small>Days</small></span> <span>04 <small>Hours</small></span></p>
+  <p id="payment">Payment due in 30 days.</p>
+  <p id="cancel">24시간 내에 예약 취소 가능</p>
+  <p id="valid">Offer valid for 48 hours only.</p>
+  <p id="shipping">Free shipping for the next 3 hours.</p>
+  <p id="deadline-ko">마감까지 3일</p>
 </main></html>"""
 
 
@@ -117,5 +142,5 @@ def test_only_the_countdowns_on_a_page_with_retention_periods_are_claims(browser
     entries = session.document()["probes"]["urgency"]
     for ctx in ("m", "d"):
         claims = sorted(entry["readings"][0]["value"] for entry in entries if entry["context"] == ctx)
-        assert claims == [2 * 86400, 2 * 86400 + 4 * 3600], claims
+        assert claims == [3 * 3600, 2 * 86400, 2 * 86400 + 4 * 3600, 3 * 86400], claims
         assert all(entry["kind"] == "countdown" for entry in entries if entry["context"] == ctx)

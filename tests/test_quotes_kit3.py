@@ -1,7 +1,8 @@
 """`copy.fabricated-proof` and the name that follows a closing quotation mark: a name in brackets, after a middle
 dot, bar, slash, comma, or blank, or after a speech verb is an attribution, so the quotation stays a lead in an
 interface line; a Korean, Japanese, or Chinese letter right on the mark, or a lowercase Latin word that is not
-a speech verb, is a sentence that goes on."""
+a speech verb, is a sentence that goes on. After a blank, or a blank and an opening bracket, only something shaped
+like a name is an attribution, and a Korean particle after the blank goes on with the sentence."""
 from __future__ import annotations
 
 import pytest
@@ -24,6 +25,10 @@ from test_lint_copy import dialog_title, doc, r
     ("ko", "“최고의 공방이에요” (김민아, 서울)"),
     ("ko", "“최고의 공방이에요” · 김민아"),
     ("ko", "“최고의 공방이에요” | 김민아"),
+    ("ko", "“최고의 공방이에요” 김민아님"),
+    ("ko", "“최고의 공방이에요” 박지수 씨"),
+    ("en", "“Best studio ever” Jane Doe, CEO"),
+    ("en", "“Best studio ever” said Mina"),
 ])
 @pytest.mark.parametrize("role", TYPE_ROLES)
 def test_a_name_after_the_closing_mark_keeps_the_quotation_a_lead_in_an_interface_line(lang, text, role):
@@ -49,6 +54,22 @@ def test_a_sentence_that_goes_on_after_the_closing_mark_is_not_a_lead_in_an_inte
     assert kinds(doc(("other", [r(text, "heading")]), lang=lang)) == []
 
 
+@pytest.mark.parametrize("lang, text", [
+    ("ko", "“오늘의 추천” 메뉴를 확인하세요"),
+    ("ko", "‘9월 소성 예약’ 을 취소할까요?"),
+    ("ko", "“개인정보 처리방침” 전문 보기"),
+    ("ko", "“빠른 배송” 이라는 평가를 받았어요"),
+    ("en", "“Quick Start” Guide for new teams"),
+    ("en", "“Delete project” Are you sure about this?"),
+    ("en", "“Dark mode” (Beta) is now available"),
+    ("en", "“Best studio ever” said no one"),
+])
+@pytest.mark.parametrize("role", TYPE_ROLES)
+def test_words_after_a_blank_that_are_not_a_name_are_not_a_lead_in_an_interface_line(lang, text, role):
+    assert kinds(doc(("other", [r(text, role)]), lang=lang)) == []
+    assert kinds(doc(("other", [dialog_title(role, text)]), lang=lang)) == []
+
+
 @pytest.mark.parametrize("text, after", [
     ('"Best studio ever" (Mina, Seoul)', "attributed"),
     ('"Best studio ever" Mina Kim', "attributed"),
@@ -56,6 +77,18 @@ def test_a_sentence_that_goes_on_after_the_closing_mark_is_not_a_lead_in_an_inte
     ('"Best studio ever," said Mina', "attributed"),
     ('"Best studio ever" — mina', "attributed"),
     ('"최고예요" 김민아 고객님', "attributed"),
+    ('"최고예요" 김민아님', "attributed"),
+    ('"최고예요" 박지수 씨', "attributed"),
+    ('"Best studio ever" said Mina', "attributed"),
+    ('"Best studio ever" CEO of Acme', "attributed"),
+    ('"Best studio ever" (김민아, 서울)', "attributed"),
+    ('"Quick Start" Guide for new teams', "continues"),
+    ('"Delete project" Are you sure about this?', "continues"),
+    ('"Dark mode" (Beta) is now available', "continues"),
+    ('"Best studio ever" said no one', "continues"),
+    ('"오늘의 추천" 메뉴를 확인하세요', "continues"),
+    ('"9월 소성 예약" 을 취소할까요?', "continues"),
+    ('"빠른 배송" 이라는 평가를 받았어요', "continues"),
     ('"최고예요"라는 김민아 고객님', "continues"),
     ('"最高"という声', "continues"),
     ('"Best studio ever," she said', "continues"),

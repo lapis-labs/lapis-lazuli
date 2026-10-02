@@ -1438,15 +1438,31 @@ def _apostrophe(text: str, i: int) -> bool:
 
 _ATTRIBUTION_VERBS = frozenset(("says", "said", "writes", "wrote"))
 _CJK_LETTER = re.compile(r"[\u1100-\u11ff\u3040-\u30ff\u3130-\u318f\u31f0-\u31ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7a3\uf900-\ufaff]")
+# A Korean particle on its own after a blank ("‘9월 소성 예약’ 을 취소할까요?", "“빠른 배송” 이라는 평가") goes on with the sentence.
+_PARTICLE = re.compile(r"(?:을|를|이|가|은|는|의|에|에서|에게|로|으로|와|과|도|만|이라고|라고|이라는|라는|이라며|라며|처럼|보다|부터|까지)(?![가-힣])")
+# After a blank (or a blank and an opening bracket) a name is told by its shape: a title word or two capitalized
+# words (`_is_named`), two to four Hangul syllables with 님, 고객님, or 씨, or in a bracket a name and a place
+# ("(Mina, Seoul)", "(김민아, 서울)").
+_NAME_SUFFIX = re.compile(r"[가-힣]{2,4}\s?(?:고객님|님|씨)(?![가-힣])")
+_NAME_PLACE = re.compile(r"(?:[A-Z][\w.'’-]*(?:\s+[A-Z][\w.'’-]*)*|[가-힣]{2,4})\s*,\s*[A-Z가-힣]")
+_BLANK_GAP = re.compile(r"\s+[(（\[［【]?\s*")
+_BRACKET_CLOSE = re.compile(r"[)）\]］】]")
+
+
+def _name_shaped(name: str, bracketed: bool) -> bool:
+    if bracketed:
+        name = _BRACKET_CLOSE.split(name, 1)[0]
+    return bool(_is_named(name) or _NAME_SUFFIX.match(name) or (bracketed and _NAME_PLACE.match(name)))
 
 
 def _after_quotation(text: str) -> str:
     """How a line that opens with a quotation mark goes on after the closing mark. `text` keeps its case
     and has straight quotation marks (`_straight`). `ends`: nothing, or only punctuation. `continues`: a
-    sentence carries on, which is a Korean, Japanese, or Chinese letter right on the mark (a particle) or
-    a lowercase Latin word that is not a speech verb (says, said, writes, wrote). `attributed`: a name
+    sentence carries on, which is a Korean, Japanese, or Chinese letter right on the mark or a Korean particle
+    after a blank, a lowercase Latin word that is not a speech verb (says, said, writes, wrote), or after a
+    blank, or a blank and an opening bracket, anything that is not shaped like a name. `attributed`: a name
     follows, after a dash, a bracket, a middle dot, a bar, a slash, a comma, or a blank, in ten tokens or
-    fewer."""
+    fewer; after a blank it must be name-shaped (`_name_shaped`)."""
     close = _QUOTE_CLOSE[text[0]]
     end = next((i for i in range(1, len(text))
                 if text[i] == close and not (close == "'" and _apostrophe(text, i))), None)
@@ -1458,10 +1474,20 @@ def _after_quotation(text: str) -> str:
     after = rest.lstrip()
     if after[:1].islower() and ord(after[0]) < 0x250 and re.match(r"[^\W\d_]+", after).group(0) not in _ATTRIBUTION_VERBS:
         return "continues"
+    if rest[:1].isspace() and _PARTICLE.match(after):
+        return "continues"
     name = next((rest[i:] for i, c in enumerate(rest) if c.isalnum()), "")
     if not name:
         return "ends"
-    return "attributed" if name[0].isalpha() and _tokens(name) <= 10 else "continues"
+    if not (name[0].isalpha() and _tokens(name) <= 10):
+        return "continues"
+    gap = _BLANK_GAP.fullmatch(rest[:len(rest) - len(name)])
+    spoken = re.match(r"[^\W\d_]+\s+([^\W\d_])", name)         # says Mina, said Mina Kim
+    if gap and spoken and name.split()[0] in _ATTRIBUTION_VERBS:
+        return "attributed" if spoken[1].isupper() or _CJK_LETTER.match(spoken[1]) else "continues"
+    if gap and not _name_shaped(name, bool(gap[0].strip())):
+        return "continues"
+    return "attributed"
 
 
 def _reads_as_quote(page: _Page | None, s: _Seg, text: str) -> bool:
