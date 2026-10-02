@@ -268,10 +268,11 @@ those definitions, and no check reads `tokens.shape` yet. One large radius on ev
 `global-habit-values` card.
 
 Describe the painted contour: silhouette, open or enclosed edge, stroke or fill, symmetry, void,
-and join. A percentage radius on a wide box makes an ellipse; oversized circular radii make
-semicircular ends with a straight middle. Only for adjacent circular corners with equal insets,
-outer radius minus measured inset shares a center; include the border. Do not generalize this to
-unequal offsets or continuous curves, or create off-scale values from it. Compare apparent gaps
+and join. A 50% radius on a wide rectangle makes an ellipse; oversized circular radii make
+semicircular ends with a straight middle. For adjacent circular corners with equal positive insets
+smaller than the outer radius, inner radius equal to outer radius minus inset shares a center.
+Include the border in that inset. Do not generalize to unequal offsets or continuous curves, or
+create off-scale values from it. Compare apparent gaps
 at actual size, long labels, and narrow widths. Exercise focus separately from media clipping.
 Smoothness is a construction choice, not a quality score.
 
