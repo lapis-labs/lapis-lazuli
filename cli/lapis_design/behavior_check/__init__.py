@@ -20,7 +20,7 @@ from jsonschema import ValidationError
 from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import sync_playwright
 
-from lapis_design import chromium, local_site, ours, shared_dir
+from lapis_design import chromium, local_site, narrow, ours, shared_dir
 from lapis_design.behavior_check import probes, redact
 from lapis_design.behavior_check.driver import Driver, MissingSyntheticValues
 from lapis_design.behavior_check.session import PROBE_NAMES, Session
@@ -50,13 +50,24 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design behavior check
     parser.add_argument("--values", type=Path, help="synthetic fixture values for local-dev input actions")
     parser.add_argument("--extract", type=Path)
     parser.add_argument("--build")
-    parser.add_argument("--out", type=Path)
-    parser.add_argument("--context", choices=("m", "d"), action="append")
-    parser.add_argument("--probe", action="append", choices=PROBE_NAMES)
+    parser.add_argument("--out", type=Path,
+                        help="where to write the session (default .lapis/behavior/<task>.json, or "
+                             ".lapis/behavior/<task>.narrow.json when --probe or --context narrows the run; a "
+                             "narrowed run is refused the full path, which the release gate reads)")
+    parser.add_argument("--context", choices=("m", "d"), action="append",
+                        help="a context to run, m (390 px, touch) or d (1440 px, mouse); repeatable "
+                             "(default: both). Narrows the run")
+    parser.add_argument("--probe", action="append", choices=PROBE_NAMES,
+                        help="a probe to run; repeatable (default: every probe). The others are recorded as "
+                             "skipped. Narrows the run")
     parser.add_argument("--timezone", default="UTC",
                         help="IANA zone the browser contexts run in (default UTC); absolute times without "
                              "a zone are read in it")
     args = parser.parse_args(argv)
+    if not args.out and ("/" in args.task or "\\" in args.task or args.task in (".", "..")):
+        parser.error("task must be a filename component when --out is omitted")
+    narrowed_by = [flag for flag, given in (("--probe", args.probe), ("--context", args.context)) if given]
+    args.out = narrow.output_path(parser, args.out, "behavior", args.task, narrowed_by)
     try:
         with local_site.serve(args.url) as url:
             args.url = url
@@ -104,9 +115,7 @@ def _check(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
         parser.error("--outbound is only valid with --backend local-dev")
     if args.values and not args.backend:
         parser.error("--values is only valid with --backend local-dev")
-    if not args.out and ("/" in args.task or "\\" in args.task or args.task in (".", "..")):
-        parser.error("task must be a filename component when --out is omitted")
-    output = args.out or Path(".lapis") / "behavior" / f"{args.task}.json"
+    output = args.out
     # Do not reach the browser until the source address has passed the session contract.
     try:
         plan = read_plan_or_raise(args.plan) if args.plan else None

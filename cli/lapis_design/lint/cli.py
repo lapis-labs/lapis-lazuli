@@ -8,7 +8,8 @@ file when present. Explicit paths take precedence. Each input is checked against
 Layers default to every layer whose input was given (plan, source, render, behavior), plus review
 in review mode when a plan or an extract was given.
 
-Output follows src/shared/slop/finding.schema.yaml with tool `slop_lint`: to --out, or stdout.
+Output follows src/shared/slop/finding.schema.yaml with tool `slop_lint`: to --out, or stdout. A run narrowed by
+--layer or --rule belongs in .lapis/lint/<task>.narrow.json, not in the full report the release gate reads.
 When an optional CJK analyzer runs, `analyzers` names its locale and installed version.
 A source or corpus file that is a link resolving outside the folder it was found in is not read, and a
 folder that is a link in the source tree is never followed; the report's `scope.unread_links` lists
@@ -248,9 +249,14 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design slop lint") ->
                     help="lazuli database with font measurements (default: $LAZULI_DB, else user cache if present)")
     ap.add_argument("--mode", choices=("create", "review"), default="create")
     ap.add_argument("--layer", choices=engine.LAYERS, action="append",
-                    help="layer to run (repeatable; requires its input; default: every layer whose input was given)")
-    ap.add_argument("--rule", action="append", default=[], help="rule id or glob pattern (repeatable)")
-    ap.add_argument("-o", "--out", type=Path, help="write the report here instead of stdout")
+                    help="layer to run (repeatable; requires its input; default: every layer whose input was given). "
+                         "Narrows the run: write it with -o .lapis/lint/<task>.narrow.json")
+    ap.add_argument("--rule", action="append", default=[],
+                    help="rule id or glob pattern (repeatable). Narrows the run: write it with "
+                         "-o .lapis/lint/<task>.narrow.json")
+    ap.add_argument("-o", "--out", type=Path,
+                    help="write the report here instead of stdout (the full report is .lapis/lint/<task>.json, "
+                         "which the release gate reads, so a run narrowed by --layer or --rule goes elsewhere)")
     args = ap.parse_args(argv)
     try:
         report = run(rules=args.rules, plan=args.plan, extract=args.extract, session=args.session,

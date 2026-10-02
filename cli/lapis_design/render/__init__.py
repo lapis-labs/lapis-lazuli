@@ -7,7 +7,7 @@ from pathlib import Path
 
 import yaml
 
-from lapis_design import chromium, local_site, ours
+from lapis_design import chromium, local_site, narrow, ours
 from lapis_design.render import hosts
 from lapis_design.sig_key import load_key
 
@@ -49,9 +49,17 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design render check")
                         "captured (default: .lapis/plans/<task>.yaml when it exists)")
     parser.add_argument("--public", action="store_true", help="capture a public host of ours; source-registry "
                         "and plan-reference hosts stay refused (use `lazuli ref capture` for those)")
-    parser.add_argument("--out", type=Path)
-    parser.add_argument("--width", type=int, choices=(320, 390, 768, 1440), action="append")
+    parser.add_argument("--out", type=Path,
+                        help="where to write the extract (default .lapis/renders/<task>.json, with the screenshots "
+                             "in <task>.shots/ beside it; .lapis/renders/<task>.narrow.json and <task>.narrow.shots/ "
+                             "when --width narrows the run, which is refused the full path the release gate reads)")
+    parser.add_argument("--width", type=int, choices=(320, 390, 768, 1440), action="append",
+                        help="a width to capture; repeatable (default: all four, with their themes). The release "
+                             "gate needs all four, so this narrows the run")
     args = parser.parse_args(argv)
+    if not args.out and args.task and ("/" in args.task or "\\" in args.task or args.task in (".", "..")):
+        parser.error("task must be a filename component when --out is omitted")
+    args.out = narrow.output_path(parser, args.out, "renders", args.task or "render", ["--width"] if args.width else [])
     try:
         with local_site.serve(args.url) as url:
             args.url = url
@@ -64,9 +72,7 @@ def _capture(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
     from playwright.sync_api import Error as PlaywrightError
     from lapis_design.render.capture import capture, has_dark_theme
     from lapis_design.render.extract import assemble, write_extract
-    if not args.out and args.task and ("/" in args.task or "\\" in args.task or args.task in (".", "..")):
-        parser.error("task must be a filename component when --out is omitted")
-    out = args.out or Path(".lapis") / "renders" / f"{args.task or 'render'}.json"
+    out = args.out
     screenshots = out.parent / f"{out.stem}.shots"
     guard = None
     try:
