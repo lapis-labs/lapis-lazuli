@@ -696,12 +696,11 @@ references:
       time, fixed scales across selections, disclosed breaks); labels and annotation (question title, units, evidence for
       annotations, actual versus forecast, missing shown as missing); uncertainty and freshness; tooltips, one status
       message, and focus retention; the equivalent nonvisual layers and the equivalence list; the separate no-data,
-      filtered, small-sample, no-permission, and failed-query messages.'
+      filtered, small-sample, no-permission, and failed-query messages; D1 (2026-10-03), lines 59–73 adds encoding strength/cost tradeoffs and side-by-side alternatives to memory-based animation.'
     dropped: 'The dials baseline and the synthetic dispatch Design Read (the dials row is in SKILL.md step 3), the metrics
       list, typical failures and pitfalls (their substance survives as positive rules), the quick matrix, the analytical
       view sketch (already the data-visualization entry of archetypes.md, which this file points to), the interaction
-      purposes list beyond one sentence, the worked selected-quarter contract, the encoding-cost list beyond what a form
-      choice needs, and the cross-references: boilerplate, held elsewhere, or example material.'
+      purposes list beyond one sentence, the worked selected-quarter contract, and the cross-references: boilerplate, held elsewhere, or example material.'
   - path: references/technology/data-visualization-implementation.md
     taken: 'The renderer draws marks and the application owns meaning, access, and state; build on the existing stack and
       add missing access instead of replacing charts; the four renderer kinds as one paragraph of fit and cost (by
@@ -718,9 +717,9 @@ references:
     taken: 'The access layers (merged with the reference''s equivalence list), the equivalence checks, the keyboard and
       touch exercise rows (folded into the keyboard paragraph and the tooltip paragraph), the update and failure checks
       (everything committing together, one ordinary status, no live region around the chart, focus surviving redraws,
-      pause versus disconnected, a failed refresh keeping labeled old data, renderer failure leaving text and table).'
+      pause versus disconnected, a failed refresh keeping labeled old data, renderer failure leaving text and table); D2 (2026-10-03), lines 48–59, 91–104 adds a real-selection equivalence exercise with bounded coverage claims.'
     dropped: 'The task-and-evidence template and the observed-evidence report template (review reporting belongs to
-      ultramarine and the skill Reporting sections), the worked check table and its specimen, the checkbox lists, the
+      ultramarine and the skill Reporting sections), the executable synthetic specimen and its fixed expected outcomes, the checkbox lists, the
       controls-disabled-until-working note, the snapshot note, and the cross-references.'
   - path: references/color/semantic-and-data-palettes.md
     taken: 'The build rules beyond choosing the scale: highlight as a job of color and not a fifth scale; status kept out of

@@ -41,6 +41,8 @@ after text.
 
 ### Changed
 
+- Data visualization guidance gains encoding-cost tradeoffs and a selection-by-selection manual equivalence check, without expanding machine coverage claims.
+
 - Forms guidance gains compound-field target ownership and dependency-led stages with honest branch progress; the immediate-switch commitment proposal remains outside the contract.
 
 - Copy guidance routes complaints to wording, order, placement, or visual treatment before editing and frontloads differentiators without imposing English grammar.

@@ -777,7 +777,7 @@ entries:
   - merge
   target: lapis/references/data-viz.md + ultramarine/references/check-bounds.md
   merge: data-viz
-  note: 질문에서 차트 고르기·정직한 척도·주석과 불확실성·구역별 일과 폭별 결정·접근 계층과 동등성·키보드와 갱신을 data-viz.md로(2026-10-01). 분석 뷰 구역 순서는 archetypes.md 원형 절에 이미 있어 가리키기만. dials·지표·함정·매트릭스·합성 Design Read 예시·선택 분기 계약 예시는 옮기지 않음
+  note: '질문·척도·주석·불확실성·구역/폭·동등성·키보드·갱신은 data-viz.md로. D1(2026-10-03): 인코딩별 강점/비용과 기억 대신 나란한 상태 비교를 추가. 차트 카탈로그·순위·합성 Design Read·구현 표는 제외'
   status: done
   done: [merge]
 - path: references/product-types/developer-tools.md
@@ -1459,7 +1459,7 @@ entries:
   - merge
   target: lapis/references/data-viz.md
   merge: data-viz
-  note: 접근 계층·동등성·키보드·갱신·실패 점검을 data-viz.md의 접근·키보드·구축 절에 병합(2026-10-01). 관찰 증거 보고 서식은 ultramarine 몫이라 옮기지 않음. 표본 기반 점검표와 작업 사례는 옮기지 않음
+  note: '접근 계층·동등성·키보드·갱신·실패는 data-viz.md로. D2(2026-10-03): 한 실제 선택의 권위 데이터와 그림/요약/표/선택 다운로드를 맞추고 필터 하나를 바꾸는 수동 절차를 추가. 실행 표본·허가/실시간/미방문 상태의 검증 주장은 제외'
   status: done
   done: [merge]
 - path: assets/color-and-contrast-cheatsheet.md

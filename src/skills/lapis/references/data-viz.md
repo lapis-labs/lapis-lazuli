@@ -42,6 +42,18 @@ These are hypotheses, not one chart per task; volume, sign, order, and the audie
 
 Readers judge positions along a shared scale more accurately than area, angle, or color intensity, so use bars for ranking, small differences, many or shifting categories, and negative values. A pie fits a small, stable part-to-whole with an evident total, direct labels, and coarse differences; a ban on pies is as arbitrary as allowing them anywhere. Decorative 3D distorts the comparison.
 
+| Encoding | Strength | Cost to inspect |
+|---|---|---|
+| shared position or length | rank and small magnitude differences | space with many categories |
+| separate positions or panels | related comparisons | scanning and scale coordination |
+| area or angle | broad composition or spatial pattern | exact comparison |
+| color intensity | dense spatial fields or matrices | steps, mark size, display conditions |
+| shape or texture | a second category cue | noise as marks accumulate |
+| animation | continuity between related states | comparison from memory |
+
+Treat these as tradeoffs, not a universal ranking. Compare side-by-side states when a decision
+depends on a difference that animation would ask the reader to remember.
+
 ## Honest scales
 
 - Bars start at zero, because a bar's length is its magnitude. A line may use a narrower range when the point is change and the scale makes that plain.
@@ -108,6 +120,12 @@ Derive the selected data once and feed chart, summary, table, and export from it
 ## What the checks cover
 
 Checks read boxes, text, source, and behavior; none reads a chart's meaning.
+
+For one real selection, write expected population, period, unit, values, and absent-value reasons
+from authoritative data. Compare graphic, summary, table, and selected download against that
+record. Change one filter and repeat, including reference lines and intervals. On failure,
+compare the still-displayed old scope, not the pending selection. Claim only the inspected
+selections; a synthetic example proves nothing about permissions, live updates, or other states.
 
 | Check | Reads | Leaves out |
 |---|---|---|
