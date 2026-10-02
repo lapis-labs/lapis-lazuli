@@ -41,6 +41,8 @@ after text.
 
 ### Changed
 
+- Research notes choose comparison media by their evidence claim and pair each transferred relation with a local disproof; requested-page access policy remains unchanged.
+
 - Form levers gain blocked-question method selection, one expressive/quiet comparison with concrete failure conditions, and temporal structure choices before motion.
 
 - Inspection guidance gains risk-based manual accessibility samples and task/assistive-technology, zoom, clipping, and keyboard evidence limits; automated release coverage is unchanged.

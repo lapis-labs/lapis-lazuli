@@ -2157,3 +2157,11 @@ references:
     taken: 'V4 (2026-10-03), lines 47–100, 136–145, 162–185: fact/inference/proposal distinction, choice-changing grammar, authority/conflict classes and one real-content/state slice before expansion.'
     dropped: New ledgers, confidence scores, mandatory sample quotas and policy changes; existing claims, sources, ledger, source access and artwork boundaries remain authoritative.
   skill_body_pointer: Read visual-assets.md for image jobs, crop/set continuity, icon contact sheets or supplied-asset grammar.
+- reference: lzl-research/SKILL.md
+  sources:
+  - path: references/research/art-research.md
+    taken: 'R2 (2026-10-03), lines 33–68, 217–226: medium chosen from its evidence claim; stated size/crop or input/endpoints; text board when visual inspection is unavailable.'
+    dropped: R1 autonomous branching, accounts, new mandatory board directories and visual/behavior claims from text-only leads; requested-page access remains unchanged.
+  - path: references/research/reference-and-inspiration-digging.md
+    taken: 'R3 (2026-10-03), lines 223–263: transfer/stop/local-disproof comparison with collection and expert-workflow counterexamples; landing places in existing plan decisions and explorations.'
+    dropped: R1 automatic traversal, distinctive maker surfaces, unowned cultural authority and new transfer record formats.

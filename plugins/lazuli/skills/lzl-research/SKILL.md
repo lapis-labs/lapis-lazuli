@@ -72,6 +72,12 @@ copies stay in the lazuli cache.
 
 ## Reference notes
 
+Choose the board medium for its claim: visual for crop, scale, color, type, and material, with
+viewed size and crop; ordered recording or authorized live observation for pacing and states,
+with input and endpoints; text for terminology, narrative order, or maker-reported rationale.
+Combine only the media needed. If images cannot be inspected, give creator, source, useful
+relation, and pending visual check as a text board. No board needs a new account or public save.
+
 - **Take** relations that survive new content: rhythm, ratios (type scale steps, column
   proportions), sequence (the order in which the page answers its reader), hierarchy, and density.
   The profile's type fingerprint, sections, and palette shares put numbers on them.
@@ -82,6 +88,13 @@ Name the relations each reference offers; `lapis` chooses which to take, usually
 reference, because a result close to one reference in layout, palette, type, and copy at once is a
 clone. Hand `lapis` the note, rights, and profile path. Reference-only material lends relations
 only; it is never reused wholesale or fed to a generator.
+
+For a retained relation, name what transfers, where it stops, and a local specimen that could
+disprove it. A collection may keep evidence beside identification, not its institutional marks,
+type pairing, or distinctive composition. An expert workflow's persistent comparison need not
+bring its density into novice intake. Give the relation a landing place in section order, region
+relationships, type roles, or motion principles. Compare against this project's content in the
+corresponding `explorations`; relational borrowing supplies no cultural or maker authority.
 
 ## Claims and their sources
 

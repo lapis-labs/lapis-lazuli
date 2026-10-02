@@ -1022,7 +1022,8 @@ entries:
   - reference
   - docs
   - card
-  target: lzl-research
+  target: lzl-research/SKILL.md
+  note: 'R2(2026-10-03): 주장별 시각/순서/텍스트 보드 선택과 관찰 한계를 카드에 반영. R1 자율 분기 검색은 접근 계약 때문에 보류. 참조·docs 행선지는 남음'
   status: partial
   done: [card]
 - path: references/research/brand-and-ip-guardrails.md
@@ -1052,8 +1053,9 @@ entries:
   dest:
   - card
   - merge
-  target: lzl-research + lapis
+  target: lzl-research/SKILL.md + lapis
   merge: reference-unit
+  note: 'R3(2026-10-03): 전이/멈출 곳/반증 표본·지역 적용 위치를 카드와 explorations에 연결. R1의 자율 읽기/캡처 예외는 넣지 않음. lapis 병합 행선지는 남음'
   status: partial
   done: [card]
 - path: references/research/trend-research.md
