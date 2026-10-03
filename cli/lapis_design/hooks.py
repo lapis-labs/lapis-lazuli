@@ -17,9 +17,10 @@ stop         Stop in the lapis plugin's hooks/hooks.json (Claude Code, Codex), a
              and agent_before_settle (pi) handlers of the lapis plugin's exit-gate extension. The event JSON
              (`cwd`, `session_id`) names a project; with a plan under it and `LAPIS_UNATTENDED=1`, the gate
              (gate.py) continues the agent with the step `lapis-design next` still asks for, up to three
-             times in a row for one step and fifteen in a session. Without that variable it prints a one-line
-             `systemMessage` and never blocks. Output is Claude Code's and Codex's Stop JSON; the extensions
-             translate it. No plan under the project, or any failure of ours, prints nothing.
+             times in a row for one step and fifteen in a session. An unattended run with no plan owes one:
+             its step is `plan`. Without that variable it prints a one-line `systemMessage` and never
+             blocks. Output is Claude Code's and Codex's Stop JSON; the extensions translate it. With no
+             plan and no unattended run, or on any failure of ours, it prints nothing.
 """
 from __future__ import annotations
 

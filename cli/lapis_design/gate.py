@@ -9,15 +9,19 @@ Limits, kept in `.lapis/gate/<task>.json` because a hook is a new process each t
 a row for the same step, fifteen in a session. At either limit the gate lets the agent stop and records
 the step that was left (`capped`), so the run ends and the reader can see where it stopped.
 
-A bug of ours, a state that cannot be read, or a project without a plan never stops an agent: the gate
-answers nothing then. It checks nothing, fixes nothing, and approves nothing for the user.
+A bug of ours or a state that cannot be read never stops an agent: the gate answers nothing then. A folder
+with no plan is no project, with one exception: an unattended run (`LAPIS_UNATTENDED=1`, which only an
+operator sets, for a design run) owes a plan, so its step is `plan`, under the same limits. The gate checks
+nothing, fixes nothing, and approves nothing for the user.
 
-Stdlib only until a plan exists: this runs at the end of every turn in every session.
+Stdlib only until a plan is in reach or the run is unattended: this runs at the end of every turn in
+every session.
 """
 from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -32,9 +36,18 @@ def is_unattended(env: Mapping[str, str] = os.environ) -> bool:
     return env.get(ENV) == "1"
 
 
+def folder_task(project: Path) -> str:
+    """A plan task id from the project folder's name (lowercase letters, digits, hyphens; two characters
+    at least), for a run that has written no plan and named no task."""
+    slug = re.sub(r"[^a-z0-9]+", "-", project.name.lower()).strip("-")[:64].strip("-")
+    return slug if len(slug) >= 2 else "design"
+
+
 def find_project(start: Path, env: Mapping[str, str] = os.environ) -> Path | None:
     """The folder whose `.lapis/plans` holds a plan: `$CLAUDE_PROJECT_DIR`, else `start` or the nearest
-    folder above it. With `$LAPIS_TASK` set and no plan yet, `start` itself, since the task is named."""
+    folder above it. With no plan yet, `start` itself when the task is named (`$LAPIS_TASK`) or the run is
+    unattended, because only an operator sets `LAPIS_UNATTENDED` for a design run, and such a run owes a
+    plan even if the agent wrote none; otherwise no project, and the gate says nothing."""
     candidates = [Path(env["CLAUDE_PROJECT_DIR"])] if env.get("CLAUDE_PROJECT_DIR") else []
     start = start.resolve()
     candidates += [start, *start.parents]
@@ -44,7 +57,9 @@ def find_project(start: Path, env: Mapping[str, str] = os.environ) -> Path | Non
                 return folder
         except OSError:
             continue
-    return start if env.get("LAPIS_TASK") else None
+    if not (env.get("LAPIS_TASK") or is_unattended(env)):
+        return None
+    return Path(env["CLAUDE_PROJECT_DIR"]).resolve() if env.get("CLAUDE_PROJECT_DIR") else start
 
 
 def _path(project: Path, task: str) -> Path:
@@ -104,6 +119,8 @@ def stop_output(project: Path, session: str = "", *, unattended: bool = True,
     from lapis_design import next_step
 
     task = next_step.resolve_task(project, task)
+    if not task and unattended:
+        task = folder_task(project)          # an unattended run with no plan still owes one: the step is `plan`
     if not task or not next_step.attempts.TASK.fullmatch(task):
         return None
     try:

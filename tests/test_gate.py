@@ -105,12 +105,48 @@ def test_another_session_counts_for_itself(project):
     assert (state(project)["session"], state(project)["total"], "capped" in state(project)) == ("s2", 1, False)
 
 
-def test_a_folder_without_a_plan_is_not_a_lapis_project_and_gets_no_answer(tmp_path, monkeypatch):
+def test_a_folder_without_a_plan_is_no_project_for_a_person_or_an_unrelated_session(tmp_path, monkeypatch):
     monkeypatch.delenv("LAPIS_TASK", raising=False)
     monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
-    assert gate.decide({"cwd": str(tmp_path)}, {"LAPIS_UNATTENDED": "1"}) is None
-    answer = gate.decide({"cwd": str(tmp_path)}, {"LAPIS_UNATTENDED": "1", "LAPIS_TASK": TASK})
-    assert "Next step: plan." in answer["reason"]          # a named task with no plan yet starts at the plan
+    assert gate.decide({"cwd": str(tmp_path)}, {}) is None
+    assert gate.decide({"cwd": str(tmp_path)}, {"LAPIS_UNATTENDED": "0"}) is None
+    answer = gate.decide({"cwd": str(tmp_path)}, {"LAPIS_TASK": TASK})
+    assert answer == {"systemMessage": gate.notice(next_state_without_plan(tmp_path))}   # a named task starts at the plan
+
+
+def next_state_without_plan(root: Path, task: str = TASK) -> dict:
+    from lapis_design import next_step
+    return next_step.evaluate(root, task)
+
+
+def test_an_unattended_run_that_wrote_no_plan_is_continued_to_write_one_and_is_capped_like_any_step(tmp_path, monkeypatch):
+    """The failure this guards: the agent wrote a free-form PLAN.md and never the schema plan."""
+    monkeypatch.delenv("LAPIS_TASK", raising=False)
+    monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
+    monkeypatch.setenv("LAZULI_DB", "")
+    folder = tmp_path / "Kiln Shop_Landing"
+    folder.mkdir()
+    (folder / "PLAN.md").write_text("# Plan\nA free-form plan.\n", encoding="utf-8")
+    env = {"LAPIS_UNATTENDED": "1"}
+    event = {"cwd": str(folder), "session_id": "s1"}
+    answers = [gate.decide(event, env) for _ in range(5)]
+    assert [bool(a) for a in answers] == [True, True, True, False, False]
+    assert "task kiln-shop-landing is not done. Next step: plan." in answers[0]["reason"]
+    assert ".lapis/plans/kiln-shop-landing.yaml" in answers[0]["reason"] and "approval: {state: assumed" in answers[0]["reason"]
+    saved = json.loads((folder / ".lapis/gate/kiln-shop-landing.json").read_text(encoding="utf-8"))
+    assert saved["capped"]["reason"] == "same-step" and saved["capped"]["step"] == "plan"
+
+
+@pytest.mark.parametrize("name, task", [("Kiln Shop_Landing", "kiln-shop-landing"), ("x", "design"), ("---", "design"),
+                                        ("a" * 80, "a" * 64), ("Café 한글 2", "caf-2")])
+def test_the_task_of_a_run_with_no_plan_comes_from_its_folder_name(tmp_path, name, task):
+    assert gate.folder_task(tmp_path / name) == task
+    assert next_step_fullmatch(task)
+
+
+def next_step_fullmatch(task: str) -> bool:
+    from lapis_design import attempts
+    return attempts.TASK.fullmatch(task) is not None
 
 
 def test_the_project_is_found_from_a_folder_below_it(project):
@@ -153,6 +189,8 @@ def test_the_stop_hook_reads_the_event_on_stdin_and_prints_claude_codes_stop_jso
 
 
 @pytest.mark.parametrize("stdin", ["", "not json", "[]", '{"cwd": 5}'])
-def test_the_stop_hook_says_nothing_to_an_event_it_cannot_read(monkeypatch, capsys, tmp_path, stdin):
+def test_the_stop_hook_says_nothing_to_an_event_it_cannot_read_when_nobody_runs_it_unattended(
+        monkeypatch, capsys, tmp_path, stdin):
     monkeypatch.chdir(tmp_path)
-    assert hook(monkeypatch, capsys, stdin, LAPIS_UNATTENDED="1") == ""
+    monkeypatch.delenv("LAPIS_TASK", raising=False)
+    assert hook(monkeypatch, capsys, stdin, LAPIS_UNATTENDED="0") == ""

@@ -87,11 +87,12 @@ def test_stop_answers_for_a_project_with_a_plan_without_heavy_modules(env, tmp_p
     assert report == {"code": 0, "heavy": []}
 
 
-def test_stop_in_a_folder_without_a_plan_prints_nothing_and_loads_neither_the_checks_nor_yaml(env, tmp_path):
+def test_stop_in_an_attended_folder_without_a_plan_prints_nothing_and_loads_neither_the_checks_nor_yaml(env, tmp_path):
     child = CHILD.replace("sorted(m for m in ('numpy', 'PIL', 'playwright') if m in sys.modules)",
                           "sorted(m for m in ('numpy', 'PIL', 'playwright', 'yaml', 'jsonschema', 'lapis_design.next_step') "
                           "if m in sys.modules)")
     r = subprocess.run([sys.executable, "-c", child, "stop"], input=json.dumps({"cwd": str(tmp_path)}),
-                       capture_output=True, text=True, env=dict(os.environ, LAPIS_UNATTENDED="1"), timeout=120)
+                       capture_output=True, text=True, env={k: v for k, v in os.environ.items() if k != "LAPIS_UNATTENDED"},
+                       timeout=120)
     assert r.returncode == 0 and r.stdout == ""
     assert json.loads(r.stderr.strip().splitlines()[-1]) == {"code": 0, "heavy": []}

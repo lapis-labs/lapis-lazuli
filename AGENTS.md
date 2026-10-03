@@ -258,7 +258,8 @@ files beside it; the database file itself does not change.
   a path the sandbox denies); `next` counts a record newer than the step's inputs as that step done, and nothing else
   is ever recorded. `lapis-design hook stop` (`gate.py`) is the exit gate every harness asks: with a plan in reach and
   `LAPIS_UNATTENDED=1` it continues the agent with that step, three times in a row for one step and fifteen in a
-  session at most (state in `.lapis/gate/<task>.json`), and otherwise prints one line and never blocks.
+  session at most (state in `.lapis/gate/<task>.json`); an unattended run with no plan owes one, so its step is `plan`
+  (task from `$LAPIS_TASK`, else the project folder's name); otherwise it prints one line and never blocks.
   (`LAZULI_DB` overrides it). Tests build synthetic fonts in code (`tests/synthetic_fonts.py`); never
   copy an installed font into the repository or a fixture.
 - `lazuli class set FAMILY --genre ID [--subclass ID] [--url URL]`, `lazuli class list [FAMILY]`,

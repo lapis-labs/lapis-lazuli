@@ -86,8 +86,9 @@ after text.
   `exit-gate.ts` is its `session_stop` (Oh-My-Pi) and `agent_before_settle` (pi) extension. Only with
   `LAPIS_UNATTENDED=1` does it continue an agent that is about to stop with the step `next` returns, at most three
   times in a row for one step and fifteen in a session, then it lets the agent stop and records the step left in
-  `.lapis/gate/<task>.json`; otherwise it prints one line and never blocks. Codex runs the hook only once you trust
-  it in `/hooks`.
+  `.lapis/gate/<task>.json`; otherwise it prints one line and never blocks. An unattended run that wrote no plan is
+  continued to write one (step `plan`, task named for the project folder unless `LAPIS_TASK` is set), under the same
+  limits. Codex runs the hook only once you trust it in `/hooks`; an untrusted hook is skipped without a message.
 - System and asset guidance separates single-source observations from proposed UI roles, preserves
   snapshot unknowns and losses, and makes icon directionality, delivery failure, notices, and state
   semantics explicit. No plan, rights, access, telemetry, or automated-coverage contract changes.
