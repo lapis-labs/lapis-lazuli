@@ -253,7 +253,7 @@ harnesses:
       - manual: "In a session, run /skill:lps-ux"
     session_start: { via: extension, output: session-extension, event: session_start }
     critic: { via: instructions, note: "pi has no subagents; the skill asks for a fresh session as the critic" }
-    mcp: { via: none, note: "pi has no MCP; the extension registers CLI tools instead (planned)" }
+    mcp: { via: none, note: "pi 1.0.0 has a built-in MCP client (servers in ~/.pi/agent/mcp.json or .pi/settings.json; a Python stdio server connected in a container on 2026-10-03), but the installer does not register lapis-lazuli there yet" }
     trust:
       - "project packages load only after project trust"
     conflicts:
