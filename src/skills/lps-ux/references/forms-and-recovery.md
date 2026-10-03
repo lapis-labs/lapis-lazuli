@@ -167,6 +167,20 @@ commit steps, limits met during a flow). The run writes `.lapis/behavior/<task>.
 | `states` | for each surface the page fills from a GET: empty, partial, loading, error, offline, timeout, forbidden, not found, success | `ux.missing-states`, `copy.error-without-recovery` |
 | `time_limits` | idle time until a session, hold, or entry ends, and whether it warned | `ux.timeout-without-warning` |
 
+For a consequential path, review material transitions rather than every possible combination.
+Include an alternative entry, Back/exit, permission change, stale data, unknown outcome, and
+return with preserved work; combine axes where their interaction changes the consequence.
+For each manual gap, record synthetic fixture, role and starting state, actions, expected
+observable result, actual result, and evidence location. Map findings to the existing flow or
+transition description; introduce no project-wide ID or analytics convention.
+
+Match evidence to the question. A cognitive walkthrough predicts whether the actor will seek,
+notice, connect, and understand an action; it is not participant behavior. A moderated task gives
+context, motive, safe data, and an outcome without teaching labels or a route; record assistance
+separately from independent completion. Regression checks establish the defined contract,
+not usability; analytics shows only instrumented states, not motive or causality. A protocol
+is planned coverage until executed, never a participant finding or population rate.
+
 What no check does:
 
 - Form-purpose and explanation recognition is language-limited. An unrecognized form still has its

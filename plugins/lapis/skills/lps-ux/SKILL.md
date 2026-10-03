@@ -36,6 +36,16 @@ and the stub (`.lapis/stub.yaml`) that `behavior check` drives.
    unanswered request - read `references/forms-and-recovery.md` for the fields, when they are checked,
    messages, retry and unknown outcomes, consent inside a form, Korean form conventions, and the stub's
    values.
+5. For a consequential operating condition, record the supplied or observed situation and affected
+   task in `brief.constraints`, not a demographic preference. Name the visible symptom, a competing
+   cause, and what observation would reject the proposed change in `claims.proposed`.
+   Glare can require different treatment without proving dark mode is better; gloves require the
+   issued input/device, not a universal thumb zone. Preserve access floors and test safely on the
+   intended equipment. Simulated impairment is not lived-experience evidence.
+   Interruption, offline work, shared devices, and helpers expose state or policy questions:
+   do not invent autosave, queueing, retention, or delegated access. Keep operator, affected person,
+   current identity, and authority distinct; a helper relationship grants no account permission.
+   Continue independent work while the named owner resolves those questions.
 
 ## Flows - `flows`
 
@@ -88,6 +98,33 @@ disabled, and busy. Each state says what happened and offers the next action.
   disabled submit says what is missing.
 - Timeouts warn and offer more time before work is lost.
 - Motion explains a change of state and has a reduced-motion branch.
+
+## Notifications and attention
+
+An alert directs attention to product state; it proves neither receipt nor completion. Choose by
+usefulness and lifetime: feedback belongs in the open task, work that can wait in existing history
+or a digest, an expected event while away in an opted-in channel with a durable destination.
+Do not create a competing inbox when the task list already owns resolution.
+
+For each category, state the recipient, authoritative trigger, foreground/away context, channel,
+urgency and expiry, grouping or schedule, mute scope, destination, and clearing rule in the
+existing specification or `claims.proposed`. Product preference and OS permission are separate:
+show their effective limitation and a real settings route, never claim end-to-end delivery.
+Urgency and mandatory communication come from supplied policy, not a marketing label.
+
+Group related bursts; do not replay an unchanged event because its read state is unknown.
+Respect quiet hours and their time zone; re-evaluate relevance before deferred delivery, omit
+or label expired/resolved digest items, and avoid a backlog burst. One underlying event keeps
+one meaning across channels; multiple delivery or fallback needs an explicit policy.
+
+Keep delivered, read, dismissed, resolved, and expired distinct. A badge counts one named thing
+with accessible text; opening the inbox does not resolve approvals. At a deep link, recheck current
+state and permission, resume after authentication, and explain expiry or revoked access without
+disclosing protected detail. Keep shared-device previews private and sound/haptics redundant.
+
+Manually exercise foreground/away, denied permission, quiet hours, offline/stale arrival, and
+resolution on another device when supported. Web behavior checks do not establish OS delivery,
+cross-device clearing, or participant awareness; report those evidence limits explicitly.
 
 ## Write the stub
 
