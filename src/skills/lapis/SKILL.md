@@ -139,6 +139,12 @@ clean, or editorial. When none matches, write in `direction.read.text` what the 
 the content. A style file says what the style assumes about the content and which plan fields make it
 this subject's; it is not a look to reproduce.
 
+When influences are mixed, give each a bounded owner in `claims.proposed`: a surface, type role,
+image grammar, or other variable. Keep one governing relation in `direction.concept`; a secondary
+influence must do a named job rather than compete for the same grid, hierarchy, or state language.
+Platform behavior can stay native while supported brand roles differ. Shared identity need not
+give a persuasive opening and a repeated working task the same density or composition.
+
 The motion dial has three bands: 1-3 feedback only, 4-6 transitions that explain a change, 7-10 authored
 moments. Write the band into `tokens.motion.principles` with a reduced-motion branch for each effect
 (`respect` is the only accepted value for `reduced_motion`). For timing and easing, interruption, scroll and route
@@ -281,6 +287,19 @@ List every document, page, and file the plan relied on.
    plan as described in `shared/plan/HARNESS-PLAN-MODES.md`.
 
 ## Implement
+
+Preserve the maintained stack and adopted components. Read runtime, lockfile, rendering/routing,
+deployment, and token evidence together; one filename does not establish ownership. A visual
+request does not authorize a runtime or styling migration. When stack choice is genuinely open,
+eliminate options that cannot meet the required rendering, distribution, platform APIs, access,
+or maintenance constraints. Compare credible survivors on the hardest real path, including
+state/data ownership and reversal cost; a library's look or demo size is not decisive evidence.
+
+Adapt platform behavior, not just its pixels: navigation and Back, text scaling, focus/input,
+safe areas, system preferences, and materials follow the target's maintained components.
+CSS pixels and relative units, native points, and density/scalable units are not interchangeable.
+Test the actual target, enlarged text, supported inputs, and effective system preferences.
+Sharing content and domain rules does not require identical chrome or physical measurements.
 
 - Follow the plan. When implementation forces a change, change the YAML first and tell the user.
 - Tokens become variables; no raw values in components.

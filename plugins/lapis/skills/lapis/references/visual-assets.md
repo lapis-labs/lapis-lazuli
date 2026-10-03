@@ -42,6 +42,14 @@ not a second family. Compare optical mass in real controls, not equal view boxes
 visible glyph from its hit area. Label uncertain metaphors. Include the contact sheet in any
 direction `explorations` it settles; the chosen family, size, and stroke stay in `tokens.icons`.
 
+Specify mirror, fixed, or localized behavior per glyph; never flip a whole family for RTL.
+If delivery uses a symbol font, test its unavailable-font and ligature path in the real control.
+Pin the exact package, upstream collection, version, and applicable notices in existing records;
+an aggregator's label grants neither glyph rights nor site access. Brand marks identify the actual
+service, not the user's identity or an implied partnership. Native symbols stay within the
+verified platform/delivery agreement. The control's programmatic state owns selection or expansion,
+not the icon's fill; decorative glyphs beside sufficient visible text need no duplicate name.
+
 ## Supplied asset sets
 
 Separate an observed asset fact, an inferred relation with its sample limit, and a proposed use.

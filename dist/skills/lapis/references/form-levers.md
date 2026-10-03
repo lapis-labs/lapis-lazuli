@@ -59,6 +59,21 @@ content, and operating cost, not polish or novelty. Choose one governing relatio
 what strengthens it. Keep candidates, comparison, chosen relation, and runner-up reason in
 `explorations`; optional keep/rework/discard/combine observations belong in `claims.proposed`.
 
+## Carry the relation into production
+
+Name what must remain recognizable and what the study merely happened to use. A documented
+whole/detail pair can become a narrow sequence; equal image boxes and fixed caption positions
+need not survive. Keep the relationship in `direction.levers` and `layout`, repeated values in
+`tokens`, content prerequisites and local exceptions in `claims.proposed`, and uncertain
+capabilities in `claims.unresolved`. A composition rule is not an unexplained margin token.
+
+Exercise the smallest real path challenging the relation: ordinary content, a long title,
+an absent asset, the narrow arrangement, and the applicable state or reduced-motion branch.
+Do not invent documentary detail to complete a pair or repeat an opening device on every task.
+When it fails, identify the threatened relation and first revise the least consequential
+dimension, crop, sequence, or medium that can fix it. Reopen the direction only when its premise
+cannot carry the available content or supported behavior; palette and font alone are not fidelity.
+
 ## Allocate the levers
 
 | Decision | Plan field | What checks it |
