@@ -331,7 +331,7 @@ What gets installed:
 - Session-start extension: `plugins/lazuli/extensions/session-start.ts`
 - Session summary: extension, from `plugins/lazuli/extensions/session-start.ts`, event `session_start`.
 - Separate critic: instructions only: the skills say what to run by hand. pi has no subagents; the skill asks for a fresh session as the critic.
-- MCP: not available. pi has no MCP; the extension registers CLI tools instead (planned).
+- MCP: not available. pi 1.0.0 has a built-in MCP client (servers in ~/.pi/agent/mcp.json or .pi/settings.json; a Python stdio server connected in a container on 2026-10-03), but the installer does not register lapis-lazuli there yet.
 
 The harness also reads skills from: `~/.pi/agent/skills`, `.pi/skills`, `~/.agents/skills`, `.agents/skills`.
 
