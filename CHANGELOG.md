@@ -49,6 +49,16 @@ after text.
 
 ### Changed
 
+- Recovered direction guidance bounds mixed influences by ownership, adapts native behavior without
+  equating platform units, preserves maintained stacks, and carries compositional relations into
+  real-content production rather than copying study dimensions.
+- UX guidance distinguishes walkthrough, participant, regression, and analytics evidence; records
+  contextual constraints without invented persistence or delegated authority; and specifies notification
+  usefulness, effective permission, deferred delivery, badge lifecycle, and current-state deep links.
+- System and asset guidance separates single-source observations from proposed UI roles, preserves
+  snapshot unknowns and losses, and makes icon directionality, delivery failure, notices, and state
+  semantics explicit. No plan, rights, access, telemetry, or automated-coverage contract changes.
+
 - Direction explorations distinguish controlled tuning from whole-relation hypotheses, choose the smallest disprovable specimen, and converge by consequence rather than novelty.
 
 - Research notes choose comparison media by their evidence claim and pair each transferred relation with a local disproof; requested-page access policy remains unchanged.
