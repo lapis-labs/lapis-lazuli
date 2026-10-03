@@ -31,7 +31,8 @@ accessibility or legal conformance. The full pre-ship gate is `ulm-release`.
    or the plan records a `proposed_design_changes` entry that the user approves.
 3. Platform and framework conventions.
 4. Named defaults (the cards). A default the plan keeps with a basis, one of the rule's `keep_when`
-   ids, and a reason is waived unless the render contradicts the reason.
+   ids, the evidence that case lists, and a reason is waived unless the render contradicts the reason.
+   A case listed as `evidence: none` waives on the reason alone; read that reason against the render.
 
 ## What the checks may touch
 

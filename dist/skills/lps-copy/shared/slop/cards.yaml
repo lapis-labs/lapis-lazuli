@@ -21,8 +21,9 @@
 #
 # How generators use cards
 #   Walk the cards while planning. For each card the plan or the draft hits, record a `defaults`
-#   entry for each of its rules that applies: keep with a basis, a `keep_when` id of the rule, and a
-#   reason, or reject and take a route. Rule-level why, better, and keep_when come from the rules view.
+#   entry for each of its rules that applies: keep with a basis, a `keep_when` id of the rule, the
+#   evidence that case lists, and a reason, or reject and take a route. Rule-level why, better, and
+#   keep_when (with its evidence) come from the rules view.
 
 version: 0
 as_of: 2026-09

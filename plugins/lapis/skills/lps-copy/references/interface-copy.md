@@ -72,7 +72,7 @@ not that a click will.
 `copy.vague-cta` (a gate at P1) reads a whole control label: "계속" alone is vague and "예약 내용 확인"
 names its outcome. A plain "계속" beside a step title that states the outcome is a `keep_when` case
 (`step-title-states-outcome`) the check cannot see, so record a `keep` in the plan's `defaults` with
-that id and reason. The same rule reads
+that id and reason; the case also needs a multi-step flow in `flows` (`max_steps` of two or more). The same rule reads
 duplicate labels. Two actions with different outcomes never share one: on a piece card 작품 보기
 opens the piece, and 예약하기 on the sheet commits.
 
@@ -218,7 +218,7 @@ A confirmation names the object and the consequence, and each button names its o
   and scope words exactly (must, may, the period, the exceptions), list wording that needs review as
   unresolved, and never soften a term to fit a button. Legal text may keep its own fixed register, but
   `copy.register-mix` cannot tell it from a slip, so record a `keep` with
-  `keep_when: fixed-legal-register` and that reason. Payment and account
+  `keep_when: fixed-legal-register`, that reason, and the `evidence` (the legal source in `sources`, or a quoted brief line). Payment and account
   text more often take the product's formal register, named per surface in `content.voice.notes` (a note
   for writers and reviewers; no check reads it).
 
@@ -304,7 +304,7 @@ warns at P2 when honorific or formality registers mix on one surface; it reads t
 each locale against the plan's register, and does not classify compact labels that carry no ending or a
 sentence that opens with a quotation mark. It does not know legal text or a surface whose register the
 notes change, and flags their endings against the plan's register: for legal text record a `keep` with
-`keep_when: fixed-legal-register`, and name any other surface that sets its own register in the notes.
+`keep_when: fixed-legal-register` with the same evidence, and name any other surface that sets its own register in the notes.
 Register follows the product, the surface, and the reader, never a nationality. Read the notes below
 as decisions to confirm, not settled style: a reader proficient in the locale confirms product terms
 and tone, and the report says so when none has.
@@ -487,7 +487,8 @@ entry for `copy.meta-text`, `copy.placeholder-content`, and `copy.buzzwords`. `l
 with a render extract, which the `ultramarine` skill runs, reads the rendered copy: register,
 translationese, rhetorical habits, proof, and repeated notices. The P3 copy rules warn; walk each card
 and keep or reject it with a reason. The `keep_when` cases of a rule, such as a legal register or a
-contrast that carries scope, are decisions the check cannot see: record each `keep` with its id and reason.
+contrast that carries scope, are decisions the check cannot see: record each `keep` with its id, its reason, and
+the `evidence` the case lists; a case that lists `evidence: none` takes the reason alone.
 
 Error, offline, and empty states are read from a behavior session. `behavior check` with the `states`
 probe induces them from the stub and records whether each says what went wrong and offers a way forward;

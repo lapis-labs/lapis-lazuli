@@ -9,12 +9,20 @@ rules:
   keep_when:
   - id: proposed-change
     when: the change is recorded as a proposed design change
+    evidence:
+    - plan: proposed_design_changes
+      present: true
 - id: system.literal-color
   why: Literal colors outside semantic tokens drift into near-duplicate grays and accents
   better: Use the semantic token for the role, or add a token when the value repeats with a real role
   keep_when:
   - id: content-color
     when: data or content colors that come from the content itself, such as a product swatch
+    evidence:
+    - plan: tokens.color.roles[*].role
+      has:
+      - data
+      - content
 - id: system.off-scale-value
   why: One-off radius, size, or spacing values make equivalent components drift without a role or optical
     reason
@@ -23,6 +31,7 @@ rules:
   keep_when:
   - id: optical-correction
     when: a documented optical correction, such as balancing an icon inside a round button
+    evidence: none
 - id: system.bypassed-primitive
   why: A component that bypasses the adopted primitives or theme API behaves and styles its states differently
     from its peers
@@ -30,6 +39,7 @@ rules:
   keep_when:
   - id: recorded-primitive-gap
     when: the primitive cannot express a documented requirement and the gap is recorded
+    evidence: none
 - id: plan.uncompared-decision
   why: A decision made without a second candidate is the first answer that came to mind, and for most
     pages that is the default for that kind of page
@@ -43,8 +53,19 @@ rules:
   keep_when:
   - id: specified-face
     when: the brand or contract specifies the face
+    evidence:
+    - design
+    - brief
   - id: editorial-reading
     when: publishing or editorial subjects where the reading sequence earns it
+    evidence:
+    - brief
+    - plan: brief.product_frame
+      has:
+      - content-editorial-docs
+    - plan: direction.read.surface_mode
+      has:
+      - read
 - id: type.eyebrow-kicker
   why: A small tracked uppercase label or index marker repeats before most headings without adding category,
     scope, state, or sequence
@@ -52,8 +73,10 @@ rules:
   keep_when:
   - id: real-category
     when: the label names a real category or scope that differs between sections
+    evidence: none
   - id: ordered-process
     when: the marker numbers a real ordered process
+    evidence: none
 - id: type.heading-badge
   why: A badge chip or status strip above a headline delays the message and can imply a state that does
     not exist
@@ -61,8 +84,10 @@ rules:
   keep_when:
   - id: current-state
     when: the badge reflects authoritative current state
+    evidence: none
   - id: filter-or-state-chip
     when: the chip filters content or identifies authoritative current state
+    evidence: none
 - id: type.icon-tile-heading
   why: Every section opens with the same stacked icon tile, heading, and paragraph, so the icon only duplicates
     the label
@@ -70,40 +95,54 @@ rules:
   keep_when:
   - id: recognition-icon
     when: icons that users need to recognize a category or action
+    evidence: none
 - id: type.oversized-display
   why: Headline scale grows past the content and viewport need, crowding the task or wrapping awkwardly
   better: Balance title, evidence, and action for the surface; do not force every opening into one viewport
   keep_when:
   - id: title-is-content
     when: an immersive or campaign opening where the title is the content
+    evidence:
+    - brief
+    - plan: direction.read.surface_mode
+      has:
+      - experience
 - id: type.negative-tracking
   why: Tracking tighter than the face tolerates makes letterforms collide and word shapes collapse
   better: Respect the face's spacing; tighten only display sizes where the letterforms survive
   keep_when:
   - id: tight-display-face
     when: a display face designed for tight setting at that size
+    evidence: none
 - id: type.body-tracking
   why: Positive tracking on paragraphs stripes the text and tires the reader
   better: Keep body tracking near the face's default
   keep_when:
   - id: contract-tracking
     when: the design contract sets the body tracking and the plan cites it
+    evidence:
+    - design
   - id: measured-correction
     when: the face's metrics are measured to need open spacing at that size
+    evidence: none
 - id: type.tight-leading
   why: Body leading near 1 makes ascenders and descenders collide and lines hard to track
   better: Set leading for size, measure, script, and content
   keep_when:
   - id: single-line-text
     when: body-role text that never wraps, such as one-line table cells, so no two lines can collide
+    evidence: none
   - id: contract-leading
     when: the design contract sets the leading and the plan cites it
+    evidence:
+    - design
 - id: type.long-measure
   why: Paragraphs that run past a comfortable measure make readers lose the next line
   better: Constrain the prose measure; give data its own grid
   keep_when:
   - id: data-grid
     when: tables and data rows, which follow their own grid
+    evidence: none
 - id: type.flat-hierarchy
   why: Title, label, and body share size, weight, and color, so the scan order is flat despite semantic
     headings
@@ -111,9 +150,12 @@ rules:
   keep_when:
   - id: contract-scale
     when: the design contract fixes the type scale and the plan cites it
+    evidence:
+    - design
   - id: non-size-levers
     when: the roles are separated by weight, contrast, or space instead of size, and the plan names the
       lever for each pair of roles
+    evidence: none
 - id: type.overused-neutral-grotesque
   why: A featureless low-contrast, high-x-height grotesque carries every role with no distinction between
     product, editorial, and data voices
@@ -122,10 +164,21 @@ rules:
   keep_when:
   - id: specified-face
     when: the contract or platform specifies the face
+    evidence:
+    - design
+    - brief
+    - plan: brief.platform
+      has:
+      - ios
+      - android
+      - desktop
   - id: role-variation
     when: a one-family system with deliberate role variation
+    evidence: none
   - id: won-comparison
     when: the face won a side-by-side comparison on this surface's own copy, recorded in explorations
+    evidence:
+    - exploration
 - id: type.single-neutral-sans
   why: One family, usually a neutral sans, carries every role with no variation in width, optical size,
     or weight, so consistency turns into monotony
@@ -133,24 +186,34 @@ rules:
   keep_when:
   - id: role-variation
     when: a one-family system that varies width, optical size, or weight by role
+    evidence: none
   - id: platform-body-readability
     when: body readability on the target platform favors one family
+    evidence:
+    - exploration
   - id: specified-family
     when: the contract specifies one family
+    evidence:
+    - design
 - id: type.caps-prose
   why: All-caps prose and decorative micro-labels assert importance without adding hierarchy or meaning
   better: Reserve capitals for brief, readable labels whose role or brand earns them
   keep_when:
   - id: established-label
     when: short labels whose role is established
+    evidence: none
   - id: brand-wordmark
     when: brand wordmarks
+    evidence:
+    - design
+    - brief
 - id: type.tiny-ui-text
   why: Miniaturized interface text signals sophistication at the cost of legibility
   better: Use readable sizes and reduce density structurally instead
   keep_when:
   - id: legal-metadata
     when: legal or metadata text that has a readable alternative
+    evidence: none
 - id: type.costume-monospace
   why: Monospace is worn as a technical costume on prose and headings instead of marking code, identifiers,
     or aligned values
@@ -158,16 +221,26 @@ rules:
   keep_when:
   - id: code-product
     when: developer products where the text is code
+    evidence:
+    - brief
+    - plan: brief.product_frame
+      has:
+      - developer-tools
   - id: monospaced-brand-face
     when: a brand face that happens to be monospaced
+    evidence:
+    - design
+    - brief
 - id: type.font-fallback
   why: Text renders in a fallback font instead of the requested one, mixing sizes and color between scripts
   better: Lock a face that covers every script in the locales, or pair a companion with matched metrics
   keep_when:
   - id: locked-companion
     when: the rendered face is the companion or fallback that the fonts lock records for that script
+    evidence: none
   - id: user-content-scripts
     when: user-generated text in scripts the planned locales do not cover, left to the platform's fallback
+    evidence: none
 - id: type.synthetic-style
   why: The browser synthesizes bold or italic that the font does not have, distorting the letterforms
   better: Load the real weight or style, or choose a face that has it
@@ -177,6 +250,7 @@ rules:
   keep_when:
   - id: measured-correction
     when: the face's metrics are measured to need it at that size
+    evidence: none
 - id: type.ko.keep-all-missing
   why: Korean body text breaks inside words because word-break keep-all is missing
   better: Set word-break keep-all on Korean text blocks and allow overflow-wrap for long tokens
@@ -188,6 +262,9 @@ rules:
   keep_when:
   - id: recolor-task
     when: the task is only a recolor of an approved system
+    evidence:
+    - design
+    - brief
 - id: color.violet-blue-gradient
   why: A violet-to-blue gradient supplies the whole mood of an otherwise unchanged composition
   better: Derive color roles from the subject and let a gradient appear only where it encodes something,
@@ -195,8 +272,13 @@ rules:
   keep_when:
   - id: brand-gradient
     when: an approved brand gradient
+    evidence:
+    - design
+    - brief
   - id: light-is-subject
     when: generative media, or light as the subject
+    evidence:
+    - brief
 - id: color.gradient-headline
   why: Gradient text or one accent-colored word is the headline's main emphasis, substituting a color
     effect for title craft
@@ -204,6 +286,7 @@ rules:
   keep_when:
   - id: encoded-state
     when: the colored word encodes a real category or state
+    evidence: none
 - id: color.hero-halo
   why: A radial halo or soft spotlight behind the hero fills space and simulates depth without meaning
     or a material model
@@ -212,18 +295,27 @@ rules:
   keep_when:
   - id: light-is-subject
     when: light itself is the subject, such as a lighting or display product
+    evidence:
+    - brief
 - id: color.neon-glow
   why: Bright outer glow on dark surfaces is a technical costume that blurs hierarchy and boundaries
   better: Build a functional dark palette with semantic roles; mark focus and state with borders and contrast
   keep_when:
   - id: emitted-light
     when: nightlife, gaming, or display subjects where emitted light is the material
+    evidence:
+    - brief
+    - plan: brief.product_frame
+      has:
+      - games-entertainment
 - id: color.gray-on-color
   why: A neutral gray text token placed on a saturated surface looks muddy and often fails contrast
   better: Use an on-color role tuned to the surface hue and test it on the actual surface
   keep_when:
   - id: contract-pair
     when: the design contract defines this text color on this surface and the plan cites it
+    evidence:
+    - design
 - id: color.warm-editorial
   why: Warm cream, a clay or brass accent, and serif display arrive together as a category-generic premium
     package
@@ -233,6 +325,9 @@ rules:
   - id: subject-material
     when: food, publishing, craft, or material products whose type, imagery, grid, and copy come from
       the subject
+    evidence:
+    - material
+    - brief
 - id: color.cream-base
   why: A warm cream field reads as quiet premium by default; alone it is weak, together with a clay accent
     and serif display it is a package
@@ -241,16 +336,28 @@ rules:
   keep_when:
   - id: paper-material
     when: the subject's material is paper or unbleached stock
+    evidence:
+    - material
+    - brief
   - id: brand-field
     when: an approved brand field
+    evidence:
+    - design
+    - brief
 - id: color.terracotta-accent
   why: An earthy accent used regardless of the subject, where one fashionable hue substitutes for identity
   better: Ground the accent in the subject's world_materials, or choose again from the plan's color relations
   keep_when:
   - id: brand-color
     when: an approved brand color
+    evidence:
+    - design
+    - brief
   - id: clay-subject
     when: the subject itself is terracotta or clay
+    evidence:
+    - material
+    - brief
 - id: color.competing-accents
   why: Several unrelated accent hues compete, so action, focus, status, data, and ornament become ambiguous
   better: Allocate each accent to a role and check its area and repetition; there is no universal accent
@@ -258,24 +365,47 @@ rules:
   keep_when:
   - id: categorical-data
     when: categorical data palettes
+    evidence:
+    - plan: tokens.color.data_scales
+      has:
+      - categorical
   - id: planned-multi-hue
     when: a multi-hue relation chosen in the plan
+    evidence:
+    - plan: tokens.color.relations
+      has:
+      - multi-hue
 - id: color.mixed-neutrals
   why: Neutrals of different temperatures make components look assembled from different kits
   better: Use one neutral family, or deliberate warm and cool zones with a reason
   keep_when:
   - id: temperature-zones
     when: deliberate temperature zones recorded in the plan
+    evidence:
+    - plan: tokens.color.relations
+      has:
+      - temperature-contrast
 - id: color.pure-endpoints
   why: Pure black and white used by habit flatten material relationships
   better: Choose endpoints deliberately while keeping the required contrast
   keep_when:
   - id: high-contrast-theme
     when: high-contrast themes
+    evidence:
+    - plan: tokens.color.themes
+      has:
+      - high-contrast
   - id: eink-or-print
     when: e-ink or print targets
+    evidence:
+    - brief
+    - plan: output_condition
+      present: true
   - id: brand-pair
     when: an approved brand pair
+    evidence:
+    - design
+    - brief
 - id: color.inverted-dark-theme
   why: The light palette is inverted literally for dark mode, so elevation, images, focus, and status
     colors look wrong
@@ -285,6 +415,8 @@ rules:
   - id: contract-two-color-swap
     when: the design contract defines the dark theme as a deliberate swap of a two-color palette, with
       focus, status, and image treatment set separately
+    evidence:
+    - design
 - id: color.text-contrast
   why: Text contrast below the applicable requirement, measured on the actual surface in every theme
   better: Adjust the text or surface role until both themes meet the requirement on the worst backdrop
@@ -300,44 +432,71 @@ rules:
   keep_when:
   - id: generative-media
     when: generative media
+    evidence:
+    - brief
   - id: light-subject
     when: light or spectral subjects
+    evidence:
+    - brief
   - id: brand-materials
     when: an established brand that uses these materials
+    evidence:
+    - design
+    - brief
 - id: surface.glass-everywhere
   why: Translucent glass on most panels stops communicating layering and weakens backdrop contrast
   better: Reserve transparency for real overlays and depth
   keep_when:
   - id: platform-material
     when: platform materials that the platform itself applies
+    evidence:
+    - plan: brief.platform
+      has:
+      - ios
+      - android
+      - desktop
   - id: overlay-on-content
     when: overlays above live content
+    evidence: none
 - id: surface.uniform-large-radius
   why: One large or pill radius on every container erases shape hierarchy
   better: Assign radii by component role and platform
   keep_when:
   - id: platform-convention
     when: a platform convention
+    evidence:
+    - design
+    - plan: brief.platform
+      has:
+      - ios
+      - android
+      - desktop
   - id: contract-shape-language
     when: a brand shape language recorded in the contract
+    evidence:
+    - design
 - id: surface.side-accent-border
   why: A colored side border on rounded cards speaks a selected-state language without any state
   better: Show actual selection or hierarchy, or remove the border
   keep_when:
   - id: real-selection-or-status
     when: the border marks real selection, status, or a callout type
+    evidence: none
 - id: surface.depth-cue-conflict
   why: Borders and shadows disagree in color, direction, or depth with the rest of the surface model
   better: Align boundary and elevation roles to one shared light and depth model
   keep_when:
   - id: distinct-overlay-roles
     when: a fine border plus soft shadow on an overlay, where both roles are distinct
+    evidence: none
 - id: surface.decorative-grid-texture
   why: A decorative grid or crosshair background adds a designed texture with no product meaning
   better: Derive texture from the subject, or remove it
   keep_when:
   - id: grid-is-subject
     when: the grid is the subject, such as a drafting, mapping, or measurement product
+    evidence:
+    - brief
 - id: surface.hard-offset-shadow
   why: Thick outlines with hard offset shadows on every card replace one package with another over an
     unchanged structure
@@ -345,6 +504,12 @@ rules:
   keep_when:
   - id: graphic-voice
     when: games, creator commerce, or a brand with an established direct graphic voice
+    evidence:
+    - design
+    - brief
+    - plan: brief.product_frame
+      has:
+      - games-entertainment
 - id: surface.hard-edge-graphic
   why: Offset shadows, costume monospace, capitals, and oversized grotesque arrive together as a hard-edge
     package
@@ -352,6 +517,12 @@ rules:
   keep_when:
   - id: graphic-voice
     when: games, creator commerce, culture, or independent tools with an established direct voice
+    evidence:
+    - design
+    - brief
+    - plan: brief.product_frame
+      has:
+      - games-entertainment
 - id: layout.hero-before-priority
   why: A centered or split hero shell was chosen before the proposition, evidence, action, and imagery
     were ranked
@@ -360,6 +531,7 @@ rules:
   keep_when:
   - id: priority-calls-for-shell
     when: the ranked content genuinely calls for the conventional shell
+    evidence: none
 - id: layout.equal-siblings
   why: Feature or pricing cards get equal size and emphasis despite unequal content, flattening priority
     and recommendation
@@ -367,12 +539,14 @@ rules:
   keep_when:
   - id: peer-comparison
     when: a genuine peer comparison of equal items
+    evidence: none
 - id: layout.nested-cards
   why: Containers stack border on border without distinct ownership or behavior, obscuring relationships
   better: Group with space, rules, or one meaningful surface
   keep_when:
   - id: inner-role-surface
     when: an inner surface with its own role, such as a chart plot area inside a data card
+    evidence: none
 - id: layout.template-section-sequence
   why: Section order follows a category landing template, or unrelated sections repeat identical spans,
     instead of following the questions the reader brings
@@ -381,28 +555,34 @@ rules:
   keep_when:
   - id: reader-question-order
     when: the reader's questions genuinely follow that order
+    evidence: none
 - id: layout.bento-filler
   why: A bento cell exists only to complete the grid shape, so empty modules advertise the template
   better: Give one cell to each meaningful item and vary weight by importance
   keep_when:
   - id: data-cells
     when: cells of a calendar, matrix, seat map, or heatmap, where an empty cell is a real value
+    evidence: none
 - id: layout.zigzag
   why: Image and text rows alternate by rule without a narrative reason, making distinct ideas look equivalent
   better: Consolidate related content or choose a structure that reflects each relationship
   keep_when:
   - id: sequence-narrative
     when: a step-by-step narrative where alternation tracks the sequence
+    evidence: none
 - id: layout.decorative-numbering
   why: Numbers on non-sequential sections imply progress, sequence, or record identity that does not exist
   better: Number only real steps, ranked items, or records; otherwise use descriptive headings
   keep_when:
   - id: ordered-process
     when: a real ordered process
+    evidence: none
   - id: ranked-items
     when: ranked items
+    evidence: none
   - id: record-identifiers
     when: record identifiers
+    evidence: none
 - id: layout.heading-proximity
   why: The space above a heading is no larger than the space below it, so the heading attaches to the
     previous section
@@ -410,15 +590,19 @@ rules:
   keep_when:
   - id: repeating-rows
     when: repeating heading rows, such as an accordion or definition list, that keep one even gap by design
+    evidence: none
 - id: layout.monotonous-spacing
   why: The same gap at every hierarchy level makes siblings, groups, and sections hard to tell apart
   better: Order spacing as inside a group, then between siblings, then between groups, then between sections
   keep_when:
   - id: contract-spacing
     when: the design contract fixes the spacing step for each level and the page follows it
+    evidence:
+    - design
   - id: single-level-surface
     when: a surface with one level of grouping, such as a log, a feed, or a plain table, so there are
       no groups or sections to tell apart
+    evidence: none
 - id: layout.compact-overflow
   why: Fixed columns overflow at compact width, so text or controls clip, overlap, or force page scrolling
   better: Let columns collapse or reflow at compact widths; scroll only regions whose content needs two
@@ -433,6 +617,8 @@ rules:
   - id: brief-fixed-opening
     when: the brief fixes what the opening must carry, such as an event's date and place, and the plan
       lists those items
+    evidence:
+    - brief
 - id: layout.edge-flush
   why: Cards touch the viewport or scroller edge without a safe inset, so content feels clipped and targets
     become awkward
@@ -440,6 +626,7 @@ rules:
   keep_when:
   - id: full-bleed-media
     when: full-bleed media that is meant to run to the edge
+    evidence: none
 - id: layout.split-heading
   why: A heading sits in one column and its explanation in another, splitting a dependent reading path
   better: Keep a dependent heading and intro in one reading path
@@ -447,6 +634,7 @@ rules:
   - id: aligned-side-heading
     when: a side heading aligned to the first line of its text, with the heading before the text in reading
       order
+    evidence: none
 - id: layout.decorative-opening-stack
   why: A decorative opening stack pushes necessary context or the primary action out of reach
   better: Remove the unearned stack; keep deliberate long-form or immersive openings without enforcing
@@ -454,6 +642,11 @@ rules:
   keep_when:
   - id: immersive-opening
     when: a deliberate immersive or long-form opening
+    evidence:
+    - brief
+    - plan: direction.read.surface_mode
+      has:
+      - experience
 - id: layout.wrapped-navigation
   why: Navigation wraps to two lines at common desktop widths, consuming the opening and destabilizing
     scanning
@@ -461,6 +654,7 @@ rules:
   keep_when:
   - id: footer-link-groups
     when: footer or sitemap link groups, which sit at the end of the page rather than in the opening
+    evidence: none
 - id: layout.occluded-text
   why: A decorative layer covers text, hiding content
   better: Reorder the layers or reserve space for the text
@@ -473,6 +667,7 @@ rules:
   keep_when:
   - id: independent-objects
     when: collections of independent, comparable objects
+    evidence: none
 - id: layout.shrunk-desktop
   why: The compact layout is the desktop composition shrunk, treating responsive behavior as scale
   better: Define content order, collapse, and density for each section at each width
@@ -480,12 +675,16 @@ rules:
   - id: fixed-canvas
     when: a fixed-canvas surface, such as a map, diagram, slide, or spreadsheet, whose layout is the canvas
       itself
+    evidence:
+    - brief
 - id: layout.symmetry-excess
   why: Nearly everything centers on one axis, so the layout expresses no priority through placement
   better: Place content by reading order and weight; keep symmetry where the content is genuinely balanced
   keep_when:
   - id: ceremonial-surface
     when: ceremonial, poster-like, or single-message surfaces
+    evidence:
+    - brief
 - id: layout.missing-signature
   why: No element unique to this subject and task is planned or rendered, so the surface could belong
     to any product
@@ -493,6 +692,10 @@ rules:
   keep_when:
   - id: repair-scope
     when: a repair plan (mode repair) whose scope leaves the visual identity untouched
+    evidence:
+    - plan: mode
+      has:
+      - repair
 - id: layout.unanchored-lever
   why: A lever that names no material of this subject (clean, modern, bold type, more whitespace) would
     fit any product, so the direction stays a default
@@ -501,6 +704,9 @@ rules:
   keep_when:
   - id: form-fixed-by-contract-or-brief
     when: the contract or the brief fixes the form and the plan says so
+    evidence:
+    - design
+    - brief
 - id: layout.typical-composition
   why: The composition sits close to the current defaults corpus across sequence, archetypes, symmetry,
     and density
@@ -509,14 +715,20 @@ rules:
   - id: content-fixed-structure
     when: the content has a structure of its own, such as a form, a legal text, a changelog, or a data
       table
+    evidence: none
   - id: form-fixed-by-contract-or-brief
     when: the contract or the brief fixes the composition and the plan says so
+    evidence:
+    - design
+    - brief
 - id: component.emoji-icons
   why: Emoji or Unicode glyphs serve as product icons, so weight and style vary by operating system
   better: Use one maintained icon family and label icon-only buttons
   keep_when:
   - id: emoji-content
     when: user-generated content, reactions, or a brand voice built on emoji
+    evidence:
+    - brief
 - id: component.hand-drawn-icons
   why: Hand-authored SVG paths for standard actions reinvent tested geometry and drift from the library
     icons beside them
@@ -525,21 +737,35 @@ rules:
   keep_when:
   - id: uncovered-concept
     when: custom icons for concepts the family does not cover, drawn on the family's grid and stroke
+    evidence:
+    - asset:
+        kind:
+        - icon-set
+        origin:
+        - own
+        - commissioned
 - id: component.mixed-icon-families
   why: Two or more icon families on one surface disagree in stroke, fill, optical size, and grid
   better: Normalize to one family, weight, grid, and alignment
   keep_when:
   - id: brand-marks
     when: third-party brand marks beside the interface family, which cannot be redrawn in its style
+    evidence:
+    - asset:
+        kind:
+        - mark
   - id: content-glyph-set
     when: a glyph set that is content rather than interface chrome, such as country flags or file-type
       badges
+    evidence: none
 - id: component.fake-app-window
   why: Decorative divs mimic an app window or data, replacing real product evidence with a facsimile
   better: Use a real capture or a clearly labeled illustrative slot
   keep_when:
   - id: labeled-illustration
     when: a labeled illustration where no product exists yet
+    evidence:
+    - brief
 - id: component.generic-spinner
   why: One spinner for every wait ignores duration and layout and gives no sense of structure or preserved
     task
@@ -548,6 +774,7 @@ rules:
   - id: handoff-wait
     when: a hand-off wait with no progress to report and no content structure to preview, such as an external
       payment or sign-in redirect, with text that names what is happening
+    evidence: none
 - id: component.library-default-theme
   why: The component library's starter styling has become the brand even though its behavior is sound
   better: Keep the useful primitives, then define type, color roles, radius, spacing, states, and composition
@@ -555,6 +782,9 @@ rules:
   keep_when:
   - id: adopted-library-system
     when: internal tools where the library's system is the adopted contract
+    evidence:
+    - design
+    - brief
 - id: component.unlabeled-input
   why: An input has no programmatic label, or its placeholder is the only label and disappears once the
     user types
@@ -583,8 +813,10 @@ rules:
   keep_when:
   - id: destructive-confirmation
     when: confirmation of a destructive action
+    evidence: none
   - id: blocking-short-task
     when: a short task that must block the rest of the screen
+    evidence: none
 - id: ux.dead-control
   why: An element that looks interactive does nothing, or a runtime error or cosmetic result stands in
     for the promised state or data outcome
@@ -689,6 +921,7 @@ rules:
   keep_when:
   - id: short-header
     when: a short header whose few stops are the page's main task
+    evidence: none
 - id: ux.focus-obscured
   why: The focused control is entirely hidden behind a sticky header, a banner, or a fixed bar
   better: Reserve room with scroll padding or move fixed content so focused elements stay in view
@@ -774,6 +1007,7 @@ rules:
   - id: cleared-secret
     when: a secret or single-use value, such as a password, card number, or one-time code, is cleared
       on purpose and the form says why
+    evidence: none
 - id: ux.destructive-without-undo
   why: A destructive action runs with neither a confirmation that names what is lost nor a working undo,
     or its undo does not bring the object back
@@ -790,8 +1024,17 @@ rules:
   - id: host-owns-navigation
     when: the surface runs inside a host that owns navigation, such as an embedded widget or webview,
       and brief.platform lists embedded
+    evidence:
+    - plan: brief.platform
+      has:
+      - embedded
   - id: kiosk-auto-reset
     when: a kiosk or signage screen that returns to its start by itself after a visible countdown
+    evidence:
+    - brief
+    - plan: brief.platform
+      has:
+      - embedded
 - id: ux.permission-on-load
   why: The browser asks for notifications, location, or the camera before the user has done anything that
     needs it, so the request has no context and a refusal sticks
@@ -799,6 +1042,8 @@ rules:
   keep_when:
   - id: permission-is-job
     when: a page whose one job needs the permission at once, such as a scanner the user opened
+    evidence:
+    - brief
 - id: ux.entry-interruption
   why: A modal or sheet interrupts before the user has done anything - on load, on a timer, on scroll,
     or on the way out - to ask for something the page's job does not need
@@ -806,6 +1051,7 @@ rules:
   keep_when:
   - id: equal-ease-decision
     when: a decision required before content can be shown, with accepting and declining equally easy
+    evidence: none
 - id: ux.lost-context-on-return
   why: Coming back with Back or after signing in loses filters, the page, the scroll position, or the
     linked destination, so the user starts over
@@ -814,27 +1060,32 @@ rules:
   keep_when:
   - id: live-feed
     when: a live feed whose order changes, so a restored position would land on other items
+    evidence: none
   - id: cleared-for-security
     when: state cleared on purpose for security, such as when a session ends on a shared device, with
       the page saying so
+    evidence: none
 - id: ux.excess-steps
   why: A flow takes more steps than its plan allows, or splits a short form into one-field screens
   better: Group related fields into steps that each settle a decision, and cut steps that decide nothing
   keep_when:
   - id: boundary-step
     when: one-field steps at a branch, a verification boundary, or a save-and-resume point
+    evidence: none
 - id: ux.premature-validation
   why: Errors appear while the user is still typing, or on untouched fields as the page loads
   better: Validate on blur or submit, and clear an error as soon as the value becomes valid
   keep_when:
   - id: helpful-live-feedback
     when: live feedback that helps while typing, such as password strength or characters remaining
+    evidence: none
 - id: ux.disabled-submit-unexplained
   why: The submit control stays disabled with no visible reason, so the user cannot tell what is missing
   better: Keep submit enabled and explain errors on submit, or show next to it what is still needed
   keep_when:
   - id: request-in-flight
     when: the control is disabled only while its own request is in flight and shows a pending state
+    evidence: none
 - id: ux.scroll-hijack
   why: The page takes over scrolling - snapping between sections, changing how far a scroll moves, or
     holding it while an animation plays - so users lose control of their position
@@ -842,6 +1093,7 @@ rules:
   keep_when:
   - id: entered-presentation-mode
     when: a full-screen presentation mode the user entered on purpose
+    evidence: none
 - id: ux.subscription-trap
   why: Hidden renewal terms, a preselected plan or extra, a hard exit, and repeated asks work together
     to keep people paying
@@ -861,14 +1113,17 @@ rules:
   keep_when:
   - id: live-status
     when: the dot reflects live status that changes
+    evidence: none
   - id: loading-skeleton
     when: a skeleton placeholder while loading
+    evidence: none
 - id: motion.decorative-cursor
   why: A decorative blinking cursor mimics typing or generation indefinitely
   better: Show the actual input state, or remove it
   keep_when:
   - id: text-input-focus
     when: a real text input with focus
+    evidence: none
 - id: motion.uncontrolled-marquee
   why: Content auto-scrolls without a way to pause, stop, or hide it, moving before it can be read
   better: Use static overflow or a controlled carousel with a pause control
@@ -879,8 +1134,12 @@ rules:
   keep_when:
   - id: playful-brand-motion
     when: playful subjects where overshoot is the brand's motion voice
+    evidence:
+    - design
+    - brief
   - id: drag-release
     when: release after a physical drag
+    evidence: none
 - id: motion.layout-property-animation
   why: Routine state changes animate width, height, or position, shifting neighboring content and causing
     jank
@@ -888,6 +1147,7 @@ rules:
   keep_when:
   - id: measured-layout-animation
     when: a purposeful layout animation handled by a tool that measures and transforms
+    evidence: none
 - id: motion.hover-zoom-everything
   why: Every image scales or shifts on hover, making the gallery restless and moving crops and alignment
   better: Use hover to reveal actionable information, or keep images still
@@ -895,6 +1155,7 @@ rules:
   - id: inspection-zoom
     when: hover zoom that lets a visitor inspect detail on one or two product or artwork images, not a
       transform across a gallery
+    evidence: none
 - id: motion.transition-all
   why: Transitioning all properties animates unintended properties and makes interaction inconsistent
   better: Name the properties and durations to animate
@@ -908,6 +1169,9 @@ rules:
   keep_when:
   - id: planned-expressive-motion
     when: expressive or subject-driven motion recorded in the plan's motion dial
+    evidence:
+    - plan: direction.dials.motion
+      min: 7
 - id: motion.scroll-gated-content
   why: Scroll animation gates reading, leaving content hidden or delayed until the animation runs
   better: Keep content available at rest and enhance progressively
@@ -915,6 +1179,7 @@ rules:
   - id: story-with-static-fallback
     when: a scroll-driven story whose content is complete and readable with animation off, shown by the
       reduced-motion capture
+    evidence: none
 - id: copy.dash-cadence
   why: Frequent dashes in labels, calls to action, or every paragraph give unrelated messages one cadence
     and hide whether the relation is cause, contrast, or aside
@@ -923,12 +1188,18 @@ rules:
   keep_when:
   - id: approved-copy
     when: approved copy
+    evidence:
+    - brief
   - id: exact-quotation
     when: exact quotations
+    evidence:
+    - source
   - id: notation
     when: notation
+    evidence: none
   - id: genuine-interruption
     when: a genuine interruption
+    evidence: none
 - id: copy.buzzwords
   why: Sales words and lexical markers claim improvement, seamlessness, or scale without an observable
     difference, so the claim fits any product
@@ -936,30 +1207,42 @@ rules:
   keep_when:
   - id: governed-term
     when: a governed technical meaning, such as robust error handling
+    evidence:
+    - source
   - id: brand-voice-with-proof
     when: an established brand voice paired with specific proof nearby
+    evidence:
+    - design
+    - brief
 - id: copy.contrast-frame
   why: A negative setup that corrects no belief exists only to enlarge the positive claim that follows
   better: Write one direct proposition with the supported capability
   keep_when:
   - id: scope-or-misconception
     when: the contrast carries scope or corrects a real misconception
+    evidence: none
   - id: quoted-or-governed
     when: quoted or governed language
+    evidence:
+    - source
+    - brief
 - id: copy.staging
   why: The text announces a point before making it, or closes by praising what it just said
   better: State the point
   keep_when:
   - id: safety-staging
     when: staging that establishes safety
+    evidence: none
   - id: narrative-voice
     when: narrative voice
+    evidence: none
 - id: copy.forced-triad
   why: Ideas are padded into threes, or synonyms pose as separate benefits for symmetry
   better: List the actual parts or actions, however many there are
   keep_when:
   - id: true-triad
     when: a complete set that truly has three parts
+    evidence: none
 - id: copy.uniform-rhythm
   why: Sentence length barely varies and openings or endings repeat, so the rhythm follows a rule instead
     of the content
@@ -967,20 +1250,26 @@ rules:
   keep_when:
   - id: deliberate-anaphora
     when: deliberate anaphora in a speech, quotation, or campaign
+    evidence: none
 - id: copy.generative-metaphor
   why: Imported metaphor families unrelated to the subject stand in for plain statements
   better: State the literal proposition first; keep only imagery drawn from the subject's world_materials
   keep_when:
   - id: metaphor-is-argument
     when: the metaphor is the argument itself
+    evidence: none
   - id: world-material-imagery
     when: imagery taken from world_materials
+    evidence:
+    - material
 - id: copy.empty-significance
   why: An ordinary detail is labeled pivotal, transformative, or historic without support
   better: Keep the capability and remove the unsupported significance
   keep_when:
   - id: supported-significance
     when: significance the source supports, such as a stated date, dependency, or cited result
+    evidence:
+    - source
 - id: copy.borrowed-authority
   why: Vague attribution or borrowed authority asserts support that the copy cannot show
   better: Cite supplied, attributable evidence or state the relation the source defines; remove an unsupported
@@ -988,25 +1277,36 @@ rules:
   keep_when:
   - id: undefined-source-relation
     when: the source does not define the relation; keep the vague wording or ask rather than invent one
+    evidence: none
 - id: copy.intensifier-hedging
   why: Intensifiers and stacked hedges replace a precise claim with degree words
   better: State the claim at the strength the evidence supports
   keep_when:
   - id: exact-quotation
     when: exact quotations
+    evidence:
+    - source
   - id: required-qualifier
     when: qualifiers that a regulation, a medical label, or a legal notice requires
+    evidence:
+    - source
+    - brief
   - id: calibrated-to-source
     when: hedges that state the strength the source supports, such as a forecast range or a study's stated
       uncertainty
+    evidence:
+    - source
 - id: copy.closing-formula
   why: A stock closing formula ends the text with an outlook or summary that adds nothing
   better: End on the last fact or the next action
   keep_when:
   - id: exact-quotation
     when: exact quotations
+    evidence:
+    - source
   - id: genre-sign-off
     when: a sign-off that the text's genre requires, such as the close of a letter or an email
+    evidence: none
 - id: copy.formatting-residue
   why: Formatting follows a rule - bold-labeled bullets, emoji markers, restating headings - instead of
     the structure readers use
@@ -1014,6 +1314,7 @@ rules:
   keep_when:
   - id: consistent-reference-format
     when: scan-oriented reference pages that use consistent formatting
+    evidence: none
 - id: copy.translationese
   why: Constructions carried over from English, such as double passives and heavy postpositional phrases,
     make the text read as translated
@@ -1021,14 +1322,22 @@ rules:
   keep_when:
   - id: quoted-or-governed
     when: quoted or governed language
+    evidence:
+    - source
+    - brief
 - id: copy.register-mix
   why: Honorific or formality registers mix on one surface
   better: Set the register per surface in the plan and keep it
   keep_when:
   - id: quoted-speech
     when: quoted speech
+    evidence:
+    - source
   - id: fixed-legal-register
     when: legal text with a fixed register
+    evidence:
+    - source
+    - brief
 - id: copy.name-swap
   why: The key copy stays true when the product name is swapped for another product, so it says nothing
     specific
@@ -1037,12 +1346,18 @@ rules:
   - id: fixed-function-text
     when: text whose wording its function or the law fixes, such as terms, a privacy notice, or a standard
       system message
+    evidence:
+    - source
+    - brief
 - id: copy.vague-cta
   why: Vague or duplicate action labels leave the outcome unclear at the decision point
   better: Name the outcome of the action in the label
   keep_when:
   - id: step-title-states-outcome
     when: a multi-step flow where the step title states the outcome
+    evidence:
+    - plan: flows[*].max_steps
+      min: 2
 - id: copy.fabricated-proof
   why: Invented metrics, customers, quotes, logos, or credits are presented as real evidence
   better: Use real, permissioned proof, clearly labeled sample data, or structurally neutral placeholders
@@ -1056,6 +1371,7 @@ rules:
   - id: cause-withheld-for-security
     when: the cause is withheld on purpose so the message does not reveal whether an account or item exists,
       and a way forward is still offered
+    evidence: none
 - id: copy.meta-text
   why: Copy addresses the builder, the prompt, or QA instead of the user, or repeats what the hierarchy
     already says
@@ -1064,8 +1380,10 @@ rules:
   - id: qualified-disclosure
     when: a consequential disclosure - simulation, non-delivery, privacy, persistence, consent, eligibility,
       recovery, safety, or legal - placed once at the decision it qualifies
+    evidence: none
   - id: compatibility-label
     when: a version, build, or environment label where compatibility or availability depends on it
+    evidence: none
 - id: copy.separator-join
   why: The same label, separator, and dependent tail recur across unrelated content, flattening a title
     and its qualifier into peers
@@ -1075,16 +1393,25 @@ rules:
   keep_when:
   - id: label-value-syntax
     when: clear label-value syntax
+    evidence: none
   - id: conventional-title-punctuation
     when: conventional title and subtitle punctuation whose relation is already clear
+    evidence: none
   - id: peer-metadata
     when: genuine peer metadata and enumerations
+    evidence: none
   - id: notation-or-code
     when: notation and code
+    evidence: none
   - id: exact-quotation
     when: exact quotations
+    evidence:
+    - source
   - id: governed-name
     when: governed names and approved official copy
+    evidence:
+    - source
+    - brief
 - id: copy.decorative-metadata
   why: A middle-dot metadata strip or an ambient locale, weather, demo, or status strip gains prominence
     without changing any task
@@ -1093,6 +1420,7 @@ rules:
   keep_when:
   - id: decision-metadata
     when: real metadata the user filters or decides by
+    evidence: none
 - id: copy.placeholder-content
   why: Placeholder names and companies hide edge cases and the product's voice
   better: Use representative, clearly synthetic content matched to the domain, including long and local
@@ -1101,6 +1429,7 @@ rules:
   - id: reserved-example-values
     when: values reserved for examples, such as example.com or 555 phone numbers, in documentation or
       code samples
+    evidence: none
 - id: copy.typical-phrasing
   why: The copy sits close to the current defaults corpus in phrasing and construction
   better: Rewrite around the subject's facts and materials rather than substituting synonyms
@@ -1108,14 +1437,22 @@ rules:
   - id: fixed-by-convention
     when: wording that a legal, platform, or interface convention fixes, such as terms, system dialogs,
       or standard control labels
+    evidence:
+    - source
+    - brief
   - id: approved-copy
     when: approved copy
+    evidence:
+    - brief
 - id: imagery.css-illustration
   why: CSS primitives assemble a pseudo-illustration from generic shapes that stand in for the subject
   better: Art-direct imagery from real objects, processes, or data
   keep_when:
   - id: brand-geometry
     when: abstract geometry that is the brand's established visual language
+    evidence:
+    - design
+    - brief
 - id: imagery.jagged-clip
   why: A jagged decorative clip path on unrelated photos competes with the image subject
   better: Choose crop and contour from the content
@@ -1123,14 +1460,21 @@ rules:
   - id: content-contour
     when: a clip that follows the outline of the image's own subject, such as a product silhouette or
       a map region
+    evidence: none
   - id: contract-shape-language
     when: a brand shape language recorded in the contract
+    evidence:
+    - design
 - id: imagery.buried-raster
   why: A heavy gradient or overlay buries the main image to rescue text contrast
   better: Show the image with legible contrast by placing text off it, or remove the image
   keep_when:
   - id: decorative-backdrop
     when: a decorative backdrop with empty alt text, which carries nothing the page needs
+    evidence:
+    - asset:
+        role:
+        - decorative
 - id: imagery.missing-content-image
   why: A content image is broken or an unresolved placeholder, or meaningful image information has no
     text alternative
@@ -1144,15 +1488,25 @@ rules:
   keep_when:
   - id: supplied-asset
     when: an image the client or brief supplied, recorded in the asset ledger with its origin
+    evidence:
+    - asset:
+        origin:
+        - own
+        - commissioned
 - id: code.mobile-100vh
   why: A full-height shell sized with the static viewport height is clipped by mobile browser chrome
   better: Use dynamic viewport units and test on the target
   keep_when:
   - id: dvh-fallback
     when: 100vh is only the fallback declared before a dynamic-viewport value for the same property
+    evidence: none
   - id: no-mobile-browser
     when: the brief lists no web platform, such as a desktop app or an embedded kiosk, so no mobile browser
       chrome resizes the viewport
+    evidence:
+    - plan: brief.platform
+      lacks:
+      - web
 - id: code.focus-outline-removed
   why: The focus outline is removed without a replacement, so keyboard focus is invisible
   better: Provide a visible focus-visible style with enough contrast
@@ -1166,6 +1520,7 @@ rules:
   - id: css-reserved-box
     when: the box is reserved by a CSS aspect-ratio or fixed size that the source query cannot see, and
       the render shows no layout shift
+    evidence: none
 - id: code.locale-time-rendering
   why: Hard-coded dates, numbers, or locale strings go stale or wrong by locale, and time-dependent output
     differs between server and client
@@ -1174,17 +1529,23 @@ rules:
   - id: content-literal
     when: a date or number that is part of the written content, such as a publication date or a historical
       year
+    evidence: none
   - id: fixed-format-by-spec
     when: a format that the brief or a standard fixes, such as ISO 8601 timestamps in a log view
+    evidence:
+    - brief
+    - source
 - id: code.continuous-value-in-state
   why: Continuous pointer or scroll values stored in component state cause re-render loops and stutter
   better: Use motion values, refs, CSS, or platform APIs for continuous values
   keep_when:
   - id: frame-throttled
     when: the setter runs at most once per frame through requestAnimationFrame or a throttle
+    evidence: none
   - id: value-is-displayed
     when: the value is rendered as text or structure that refs and CSS cannot update, such as a slider's
       numeric readout
+    evidence: none
 - id: code.animation-package-mismatch
   why: Animation imports do not match the installed package or API, or several animation packages are
     mixed
@@ -1192,6 +1553,7 @@ rules:
   keep_when:
   - id: matching-import-path
     when: either import path is fine when it matches the installed package
+    evidence: none
 - id: code.unvirtualized-list
   why: A large list renders every item in a scrolling data surface, stalling and consuming memory
   better: Virtualize when the measured volume requires it
@@ -1199,9 +1561,12 @@ rules:
   - id: measured-within-budget
     when: the full list was measured on the target device and stays within a performance budget that the
       brief states
+    evidence:
+    - brief
   - id: needs-full-dom
     when: the full list must stay in the page for find-in-page, print, or assistive technology, and its
       count is bounded by the source
+    evidence: none
 - id: reference.brand-asset-reuse
   why: Logos, illustrations, or copy from a reference-only source are reused as they are
   better: Take relations from the reference and leave its assets, identity, and copy behind
@@ -1212,6 +1577,11 @@ rules:
   keep_when:
   - id: licensed-reference
     when: the reference is owned or licensed for this use
+    evidence:
+    - plan: references[*].rights
+      has:
+      - own
+      - licensed
 - id: rights.no-provenance
   why: A shipped image, video, icon set, or font has no provenance record, so nobody can show where it
     came from or what its license allows

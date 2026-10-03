@@ -292,6 +292,17 @@ properties:
         decision: { enum: [keep, reject] }
         basis: { enum: [brief, contract, requirement] }
         keep_when: { type: string, pattern: "^[a-z0-9]+(-[a-z0-9]+)*$" }   # a keep names one keep_when id of its rule (shared/slop/rules.yaml); the check waives the finding only when it is one
+        evidence:                                    # what the case's `evidence` in shared/slop/rules.yaml asks a keep for; the check waives only when an alternative of the case holds
+          type: object
+          additionalProperties: false
+          minProperties: 1
+          properties:
+            design: { type: string, pattern: "^[^#]*#[^#\\s][^#]*$" }   # a token of the context.design file, as DESIGN.md#colors.accent
+            brief: { type: string, minLength: 8 }       # a line of brief, quoted
+            material: { type: string, minLength: 2 }    # an entry of world_materials
+            source: { type: string, minLength: 1 }      # the ref of an entry of sources
+            exploration: { type: string, minLength: 1 } # the chosen face of a type comparison in explorations
+            asset: { type: string, pattern: "^[a-z0-9][a-z0-9-]*$" }   # the id of an asset in .lapis/assets.ledger.json that this task uses
         reason: { type: string, minLength: 8 }
 
   sources:

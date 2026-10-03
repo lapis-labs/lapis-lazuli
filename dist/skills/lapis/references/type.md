@@ -71,7 +71,7 @@ Work down the rows. "Not checked" means only the report shows the work.
 | Hangul and Latin: one face that draws both, or a Hangul face with a Latin companion as two entries | `tokens.type.roles[*].scripts` | `type.font-fallback` reads a rendered page for text drawn in a face other than the requested one. `scripts` also limits the neutral-grotesque region to Latin |
 | Record each choice: `role`, one `family` name, `weights`, `scripts`, `source` | `tokens.type.roles[*]` | the schema; `type.single-neutral-sans` reads whether two or more roles all name one family; `type.overused-neutral-grotesque`, `type.serif-luxury-display`, and `type.costume-monospace` read measured features, so they need the lazuli database |
 | Lock with the delivery path: `lazuli lock "<family>" --role <role> --task <task>`. An Adobe face on a web plan adds `--source adobe-sync --delivery adobe-web-project` | `tokens.type.lock` | `font.no-lock` (no lock given), `font.not-locked` (a family missing from it), `font.no-web-delivery` (no web delivery path), `font.channel-mismatch` (files from a source that cannot ship them), `font.use-unknown` (no recorded grant for a planned use) |
-| An intended `system-ui` (an operate screen, a tight budget, email) is a candidate like any other: it wins by comparison on each platform in `brief.platform`, against a named face | `explorations` (`chosen: system-ui`); `defaults`: `type.overused-neutral-grotesque`, `keep`, `keep_when: won-comparison`, a `basis`, and a `reason` naming the platforms seen | the generic-family finding below |
+| An intended `system-ui` (an operate screen, a tight budget, email) is a candidate like any other: it wins by comparison on each platform in `brief.platform`, against a named face | `explorations` (`chosen: system-ui`); `defaults`: `type.overused-neutral-grotesque`, `keep`, `keep_when: won-comparison`, `evidence: { exploration: system-ui }`, a `basis`, and a `reason` naming the platforms seen | the generic-family finding below; the keep waives only when a complete comparison in `explorations` chose that face for a role that uses it |
 | No database: set `LAZULI_DB` to a writable path, run `lazuli local fonts` and `lazuli catalog sync`, then `lazuli search --license open --delivery web`, and lock a family the user or `DESIGN.md` names with `--source`, `--delivery`, `--postscript`. With nothing to name, use `system-ui`, add one `claims.unresolved` line, report it first, and ask the user to name a face or to fix the platform's own face in the brief (`fixed_by: brief`) | `claims.unresolved` | `plan.uncompared-decision` and the finding below stay open until then |
 
 **Specimen.** One throwaway page per task under `.lapis/specimens/`, never shipped. For each
@@ -93,7 +93,8 @@ Before changing a face over a complaint, sort it into one of five conditions.
 | A kept convention or a missing file | a `defaults` entry's `basis` and `keep_when`; `claims.unresolved` | the waiver; `font.not-locked` |
 
 A familiar family is not a defect by its name; write the convention that keeps it (the brief, the
-contract, a requirement) as the `basis` of its `defaults` entry, with the rule's `keep_when` id.
+contract, a requirement) as the `basis` of its `defaults` entry, with the rule's `keep_when` id and the
+`evidence` that case lists (the face that won, a `DESIGN.md` token, a quoted line of the brief).
 
 Match the comparison to the complaint. For a crowded title, keep copy and layout fixed and compare
 width, optical cut, or family on the real narrow wrap. For identifiers, compare look-alikes and

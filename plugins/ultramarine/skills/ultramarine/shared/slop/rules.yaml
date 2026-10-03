@@ -415,6 +415,9 @@ rules:
   keep_when:
   - id: proposed-change
     when: the change is recorded as a proposed design change
+    evidence:
+    - plan: proposed_design_changes
+      present: true
   waiver:
     scope: value
   verify: static
@@ -441,6 +444,11 @@ rules:
   keep_when:
   - id: content-color
     when: data or content colors that come from the content itself, such as a product swatch
+    evidence:
+    - plan: tokens.color.roles[*].role
+      has:
+      - data
+      - content
   waiver:
     scope: value
   verify: static
@@ -477,6 +485,7 @@ rules:
   keep_when:
   - id: optical-correction
     when: a documented optical correction, such as balancing an icon inside a round button
+    evidence: none
   waiver:
     scope: value
   verify: static
@@ -500,6 +509,7 @@ rules:
   keep_when:
   - id: recorded-primitive-gap
     when: the primitive cannot express a documented requirement and the gap is recorded
+    evidence: none
   waiver:
     scope: value
   verify: review
@@ -562,8 +572,19 @@ rules:
   keep_when:
   - id: specified-face
     when: the brand or contract specifies the face
+    evidence:
+    - design
+    - brief
   - id: editorial-reading
     when: publishing or editorial subjects where the reading sequence earns it
+    evidence:
+    - brief
+    - plan: brief.product_frame
+      has:
+      - content-editorial-docs
+    - plan: direction.read.surface_mode
+      has:
+      - read
   waiver:
     scope: value
   verify: static
@@ -589,8 +610,10 @@ rules:
   keep_when:
   - id: real-category
     when: the label names a real category or scope that differs between sections
+    evidence: none
   - id: ordered-process
     when: the marker numbers a real ordered process
+    evidence: none
   waiver:
     scope: rule
   verify: review
@@ -614,8 +637,10 @@ rules:
   keep_when:
   - id: current-state
     when: the badge reflects authoritative current state
+    evidence: none
   - id: filter-or-state-chip
     when: the chip filters content or identifies authoritative current state
+    evidence: none
   waiver:
     scope: value
   verify: review
@@ -643,6 +668,7 @@ rules:
   keep_when:
   - id: recognition-icon
     when: icons that users need to recognize a category or action
+    evidence: none
   waiver:
     scope: rule
   verify: static
@@ -670,6 +696,11 @@ rules:
   keep_when:
   - id: title-is-content
     when: an immersive or campaign opening where the title is the content
+    evidence:
+    - brief
+    - plan: direction.read.surface_mode
+      has:
+      - experience
   waiver:
     scope: value
   verify: static
@@ -701,6 +732,7 @@ rules:
   keep_when:
   - id: tight-display-face
     when: a display face designed for tight setting at that size
+    evidence: none
   waiver:
     scope: value
   verify: static
@@ -726,8 +758,11 @@ rules:
   keep_when:
   - id: contract-tracking
     when: the design contract sets the body tracking and the plan cites it
+    evidence:
+    - design
   - id: measured-correction
     when: the face's metrics are measured to need open spacing at that size
+    evidence: none
   waiver:
     scope: value
   verify: static
@@ -760,8 +795,11 @@ rules:
   keep_when:
   - id: single-line-text
     when: body-role text that never wraps, such as one-line table cells, so no two lines can collide
+    evidence: none
   - id: contract-leading
     when: the design contract sets the leading and the plan cites it
+    evidence:
+    - design
   waiver:
     scope: value
   verify: static
@@ -794,6 +832,7 @@ rules:
   keep_when:
   - id: data-grid
     when: tables and data rows, which follow their own grid
+    evidence: none
   waiver:
     scope: value
   verify: static
@@ -828,9 +867,12 @@ rules:
   keep_when:
   - id: contract-scale
     when: the design contract fixes the type scale and the plan cites it
+    evidence:
+    - design
   - id: non-size-levers
     when: the roles are separated by weight, contrast, or space instead of size, and the plan names the
       lever for each pair of roles
+    evidence: none
   waiver:
     scope: value
   verify: static
@@ -860,10 +902,21 @@ rules:
   keep_when:
   - id: specified-face
     when: the contract or platform specifies the face
+    evidence:
+    - design
+    - brief
+    - plan: brief.platform
+      has:
+      - ios
+      - android
+      - desktop
   - id: role-variation
     when: a one-family system with deliberate role variation
+    evidence: none
   - id: won-comparison
     when: the face won a side-by-side comparison on this surface's own copy, recorded in explorations
+    evidence:
+    - exploration
   waiver:
     scope: value
   verify: static
@@ -896,10 +949,15 @@ rules:
   keep_when:
   - id: role-variation
     when: a one-family system that varies width, optical size, or weight by role
+    evidence: none
   - id: platform-body-readability
     when: body readability on the target platform favors one family
+    evidence:
+    - exploration
   - id: specified-family
     when: the contract specifies one family
+    evidence:
+    - design
   waiver:
     scope: rule
   verify: static
@@ -929,8 +987,12 @@ rules:
   keep_when:
   - id: established-label
     when: short labels whose role is established
+    evidence: none
   - id: brand-wordmark
     when: brand wordmarks
+    evidence:
+    - design
+    - brief
   waiver:
     scope: rule
   verify: static
@@ -965,6 +1027,7 @@ rules:
   keep_when:
   - id: legal-metadata
     when: legal or metadata text that has a readable alternative
+    evidence: none
   waiver:
     scope: value
   verify: static
@@ -997,8 +1060,16 @@ rules:
   keep_when:
   - id: code-product
     when: developer products where the text is code
+    evidence:
+    - brief
+    - plan: brief.product_frame
+      has:
+      - developer-tools
   - id: monospaced-brand-face
     when: a brand face that happens to be monospaced
+    evidence:
+    - design
+    - brief
   waiver:
     scope: value
   verify: static
@@ -1018,8 +1089,10 @@ rules:
   keep_when:
   - id: locked-companion
     when: the rendered face is the companion or fallback that the fonts lock records for that script
+    evidence: none
   - id: user-content-scripts
     when: user-generated text in scripts the planned locales do not cover, left to the platform's fallback
+    evidence: none
   waiver:
     scope: value
   verify: static
@@ -1059,6 +1132,7 @@ rules:
   keep_when:
   - id: measured-correction
     when: the face's metrics are measured to need it at that size
+    evidence: none
   waiver:
     scope: value
   verify: static
@@ -1107,6 +1181,9 @@ rules:
   keep_when:
   - id: recolor-task
     when: the task is only a recolor of an approved system
+    evidence:
+    - design
+    - brief
   waiver:
     scope: rule
   verify: review
@@ -1142,8 +1219,13 @@ rules:
   keep_when:
   - id: brand-gradient
     when: an approved brand gradient
+    evidence:
+    - design
+    - brief
   - id: light-is-subject
     when: generative media, or light as the subject
+    evidence:
+    - brief
   waiver:
     scope: value
   verify: static
@@ -1173,6 +1255,7 @@ rules:
   keep_when:
   - id: encoded-state
     when: the colored word encodes a real category or state
+    evidence: none
   waiver:
     scope: value
   verify: review
@@ -1202,6 +1285,8 @@ rules:
   keep_when:
   - id: light-is-subject
     when: light itself is the subject, such as a lighting or display product
+    evidence:
+    - brief
   waiver:
     scope: value
   verify: static
@@ -1228,6 +1313,11 @@ rules:
   keep_when:
   - id: emitted-light
     when: nightlife, gaming, or display subjects where emitted light is the material
+    evidence:
+    - brief
+    - plan: brief.product_frame
+      has:
+      - games-entertainment
   waiver:
     scope: value
   verify: static
@@ -1251,6 +1341,8 @@ rules:
   keep_when:
   - id: contract-pair
     when: the design contract defines this text color on this surface and the plan cites it
+    evidence:
+    - design
   waiver:
     scope: value
   verify: static
@@ -1280,6 +1372,9 @@ rules:
   - id: subject-material
     when: food, publishing, craft, or material products whose type, imagery, grid, and copy come from
       the subject
+    evidence:
+    - material
+    - brief
   waiver:
     scope: rule
   verify: static
@@ -1333,8 +1428,14 @@ rules:
   keep_when:
   - id: paper-material
     when: the subject's material is paper or unbleached stock
+    evidence:
+    - material
+    - brief
   - id: brand-field
     when: an approved brand field
+    evidence:
+    - design
+    - brief
   waiver:
     scope: value
   verify: static
@@ -1386,8 +1487,14 @@ rules:
   keep_when:
   - id: brand-color
     when: an approved brand color
+    evidence:
+    - design
+    - brief
   - id: clay-subject
     when: the subject itself is terracotta or clay
+    evidence:
+    - material
+    - brief
   waiver:
     scope: value
   verify: static
@@ -1411,8 +1518,16 @@ rules:
   keep_when:
   - id: categorical-data
     when: categorical data palettes
+    evidence:
+    - plan: tokens.color.data_scales
+      has:
+      - categorical
   - id: planned-multi-hue
     when: a multi-hue relation chosen in the plan
+    evidence:
+    - plan: tokens.color.relations
+      has:
+      - multi-hue
   waiver:
     scope: value
   verify: review
@@ -1437,6 +1552,10 @@ rules:
   keep_when:
   - id: temperature-zones
     when: deliberate temperature zones recorded in the plan
+    evidence:
+    - plan: tokens.color.relations
+      has:
+      - temperature-contrast
   waiver:
     scope: value
   verify: static
@@ -1461,10 +1580,21 @@ rules:
   keep_when:
   - id: high-contrast-theme
     when: high-contrast themes
+    evidence:
+    - plan: tokens.color.themes
+      has:
+      - high-contrast
   - id: eink-or-print
     when: e-ink or print targets
+    evidence:
+    - brief
+    - plan: output_condition
+      present: true
   - id: brand-pair
     when: an approved brand pair
+    evidence:
+    - design
+    - brief
   waiver:
     scope: value
   verify: static
@@ -1490,6 +1620,8 @@ rules:
   - id: contract-two-color-swap
     when: the design contract defines the dark theme as a deliberate swap of a two-color palette, with
       focus, status, and image treatment set separately
+    evidence:
+    - design
   waiver:
     scope: value
   verify: review
@@ -1545,10 +1677,17 @@ rules:
   keep_when:
   - id: generative-media
     when: generative media
+    evidence:
+    - brief
   - id: light-subject
     when: light or spectral subjects
+    evidence:
+    - brief
   - id: brand-materials
     when: an established brand that uses these materials
+    evidence:
+    - design
+    - brief
   waiver:
     scope: rule
   verify: static
@@ -1581,8 +1720,15 @@ rules:
   keep_when:
   - id: platform-material
     when: platform materials that the platform itself applies
+    evidence:
+    - plan: brief.platform
+      has:
+      - ios
+      - android
+      - desktop
   - id: overlay-on-content
     when: overlays above live content
+    evidence: none
   waiver:
     scope: value
   verify: static
@@ -1607,8 +1753,17 @@ rules:
   keep_when:
   - id: platform-convention
     when: a platform convention
+    evidence:
+    - design
+    - plan: brief.platform
+      has:
+      - ios
+      - android
+      - desktop
   - id: contract-shape-language
     when: a brand shape language recorded in the contract
+    evidence:
+    - design
   waiver:
     scope: value
   verify: static
@@ -1630,6 +1785,7 @@ rules:
   keep_when:
   - id: real-selection-or-status
     when: the border marks real selection, status, or a callout type
+    evidence: none
   waiver:
     scope: value
   verify: static
@@ -1653,6 +1809,7 @@ rules:
   keep_when:
   - id: distinct-overlay-roles
     when: a fine border plus soft shadow on an overlay, where both roles are distinct
+    evidence: none
   waiver:
     scope: value
   verify: review
@@ -1678,6 +1835,8 @@ rules:
   keep_when:
   - id: grid-is-subject
     when: the grid is the subject, such as a drafting, mapping, or measurement product
+    evidence:
+    - brief
   waiver:
     scope: value
   verify: static
@@ -1706,6 +1865,12 @@ rules:
   keep_when:
   - id: graphic-voice
     when: games, creator commerce, or a brand with an established direct graphic voice
+    evidence:
+    - design
+    - brief
+    - plan: brief.product_frame
+      has:
+      - games-entertainment
   waiver:
     scope: value
   verify: static
@@ -1728,6 +1893,12 @@ rules:
   keep_when:
   - id: graphic-voice
     when: games, creator commerce, culture, or independent tools with an established direct voice
+    evidence:
+    - design
+    - brief
+    - plan: brief.product_frame
+      has:
+      - games-entertainment
   waiver:
     scope: rule
   verify: static
@@ -1758,6 +1929,7 @@ rules:
   keep_when:
   - id: priority-calls-for-shell
     when: the ranked content genuinely calls for the conventional shell
+    evidence: none
   waiver:
     scope: rule
   verify: review
@@ -1782,6 +1954,7 @@ rules:
   keep_when:
   - id: peer-comparison
     when: a genuine peer comparison of equal items
+    evidence: none
   waiver:
     scope: value
   verify: static
@@ -1804,6 +1977,7 @@ rules:
   keep_when:
   - id: inner-role-surface
     when: an inner surface with its own role, such as a chart plot area inside a data card
+    evidence: none
   waiver:
     scope: value
   verify: review
@@ -1866,6 +2040,7 @@ rules:
   keep_when:
   - id: reader-question-order
     when: the reader's questions genuinely follow that order
+    evidence: none
   waiver:
     scope: rule
   verify: static
@@ -1886,6 +2061,7 @@ rules:
   keep_when:
   - id: data-cells
     when: cells of a calendar, matrix, seat map, or heatmap, where an empty cell is a real value
+    evidence: none
   waiver:
     scope: value
   verify: review
@@ -1909,6 +2085,7 @@ rules:
   keep_when:
   - id: sequence-narrative
     when: a step-by-step narrative where alternation tracks the sequence
+    evidence: none
   waiver:
     scope: rule
   verify: static
@@ -1931,10 +2108,13 @@ rules:
   keep_when:
   - id: ordered-process
     when: a real ordered process
+    evidence: none
   - id: ranked-items
     when: ranked items
+    evidence: none
   - id: record-identifiers
     when: record identifiers
+    evidence: none
   waiver:
     scope: rule
   verify: review
@@ -1957,6 +2137,7 @@ rules:
   keep_when:
   - id: repeating-rows
     when: repeating heading rows, such as an accordion or definition list, that keep one even gap by design
+    evidence: none
   waiver:
     scope: value
   verify: static
@@ -1980,9 +2161,12 @@ rules:
   keep_when:
   - id: contract-spacing
     when: the design contract fixes the spacing step for each level and the page follows it
+    evidence:
+    - design
   - id: single-level-surface
     when: a surface with one level of grouping, such as a log, a feed, or a plain table, so there are
       no groups or sections to tell apart
+    evidence: none
   waiver:
     scope: value
   verify: static
@@ -2035,6 +2219,8 @@ rules:
   - id: brief-fixed-opening
     when: the brief fixes what the opening must carry, such as an event's date and place, and the plan
       lists those items
+    evidence:
+    - brief
   waiver:
     scope: value
   verify: review
@@ -2059,6 +2245,7 @@ rules:
   keep_when:
   - id: full-bleed-media
     when: full-bleed media that is meant to run to the edge
+    evidence: none
   waiver:
     scope: value
   verify: static
@@ -2081,6 +2268,7 @@ rules:
   - id: aligned-side-heading
     when: a side heading aligned to the first line of its text, with the heading before the text in reading
       order
+    evidence: none
   waiver:
     scope: value
   verify: static
@@ -2105,6 +2293,11 @@ rules:
   keep_when:
   - id: immersive-opening
     when: a deliberate immersive or long-form opening
+    evidence:
+    - brief
+    - plan: direction.read.surface_mode
+      has:
+      - experience
   waiver:
     scope: value
   verify: review
@@ -2132,6 +2325,7 @@ rules:
   keep_when:
   - id: footer-link-groups
     when: footer or sitemap link groups, which sit at the end of the page rather than in the opening
+    evidence: none
   waiver:
     scope: value
   verify: static
@@ -2175,6 +2369,7 @@ rules:
   keep_when:
   - id: independent-objects
     when: collections of independent, comparable objects
+    evidence: none
   waiver:
     scope: rule
   verify: review
@@ -2200,6 +2395,8 @@ rules:
   - id: fixed-canvas
     when: a fixed-canvas surface, such as a map, diagram, slide, or spreadsheet, whose layout is the canvas
       itself
+    evidence:
+    - brief
   waiver:
     scope: value
   verify: static
@@ -2221,6 +2418,8 @@ rules:
   keep_when:
   - id: ceremonial-surface
     when: ceremonial, poster-like, or single-message surfaces
+    evidence:
+    - brief
   waiver:
     scope: rule
   verify: static
@@ -2248,6 +2447,10 @@ rules:
   keep_when:
   - id: repair-scope
     when: a repair plan (mode repair) whose scope leaves the visual identity untouched
+    evidence:
+    - plan: mode
+      has:
+      - repair
   waiver:
     scope: rule
   verify: static
@@ -2282,6 +2485,9 @@ rules:
   keep_when:
   - id: form-fixed-by-contract-or-brief
     when: the contract or the brief fixes the form and the plan says so
+    evidence:
+    - design
+    - brief
   waiver:
     scope: rule
   verify: static
@@ -2312,8 +2518,12 @@ rules:
   - id: content-fixed-structure
     when: the content has a structure of its own, such as a form, a legal text, a changelog, or a data
       table
+    evidence: none
   - id: form-fixed-by-contract-or-brief
     when: the contract or the brief fixes the composition and the plan says so
+    evidence:
+    - design
+    - brief
   waiver:
     scope: rule
   verify: static
@@ -2343,6 +2553,8 @@ rules:
   keep_when:
   - id: emoji-content
     when: user-generated content, reactions, or a brand voice built on emoji
+    evidence:
+    - brief
   waiver:
     scope: value
   verify: static
@@ -2371,6 +2583,13 @@ rules:
   keep_when:
   - id: uncovered-concept
     when: custom icons for concepts the family does not cover, drawn on the family's grid and stroke
+    evidence:
+    - asset:
+        kind:
+        - icon-set
+        origin:
+        - own
+        - commissioned
   waiver:
     scope: value
   verify: static
@@ -2399,9 +2618,14 @@ rules:
   keep_when:
   - id: brand-marks
     when: third-party brand marks beside the interface family, which cannot be redrawn in its style
+    evidence:
+    - asset:
+        kind:
+        - mark
   - id: content-glyph-set
     when: a glyph set that is content rather than interface chrome, such as country flags or file-type
       badges
+    evidence: none
   waiver:
     scope: value
   verify: static
@@ -2424,6 +2648,8 @@ rules:
   keep_when:
   - id: labeled-illustration
     when: a labeled illustration where no product exists yet
+    evidence:
+    - brief
   waiver:
     scope: value
   verify: review
@@ -2450,6 +2676,7 @@ rules:
   - id: handoff-wait
     when: a hand-off wait with no progress to report and no content structure to preview, such as an external
       payment or sign-in redirect, with text that names what is happening
+    evidence: none
   waiver:
     scope: value
   verify: runtime
@@ -2480,6 +2707,9 @@ rules:
   keep_when:
   - id: adopted-library-system
     when: internal tools where the library's system is the adopted contract
+    evidence:
+    - design
+    - brief
   waiver:
     scope: rule
   verify: static
@@ -2587,8 +2817,10 @@ rules:
   keep_when:
   - id: destructive-confirmation
     when: confirmation of a destructive action
+    evidence: none
   - id: blocking-short-task
     when: a short task that must block the rest of the screen
+    evidence: none
   waiver:
     scope: value
   verify: runtime
@@ -3105,6 +3337,7 @@ rules:
   keep_when:
   - id: short-header
     when: a short header whose few stops are the page's main task
+    evidence: none
   waiver:
     scope: value
   verify: runtime
@@ -3441,6 +3674,7 @@ rules:
   - id: cleared-secret
     when: a secret or single-use value, such as a password, card number, or one-time code, is cleared
       on purpose and the form says why
+    evidence: none
   waiver:
     scope: value
   verify: runtime
@@ -3487,8 +3721,17 @@ rules:
   - id: host-owns-navigation
     when: the surface runs inside a host that owns navigation, such as an embedded widget or webview,
       and brief.platform lists embedded
+    evidence:
+    - plan: brief.platform
+      has:
+      - embedded
   - id: kiosk-auto-reset
     when: a kiosk or signage screen that returns to its start by itself after a visible countdown
+    evidence:
+    - brief
+    - plan: brief.platform
+      has:
+      - embedded
   waiver:
     scope: value
   verify: runtime
@@ -3518,6 +3761,8 @@ rules:
   keep_when:
   - id: permission-is-job
     when: a page whose one job needs the permission at once, such as a scanner the user opened
+    evidence:
+    - brief
   waiver:
     scope: value
   verify: runtime
@@ -3557,6 +3802,7 @@ rules:
   keep_when:
   - id: equal-ease-decision
     when: a decision required before content can be shown, with accepting and declining equally easy
+    evidence: none
   waiver:
     scope: value
   verify: runtime
@@ -3587,9 +3833,11 @@ rules:
   keep_when:
   - id: live-feed
     when: a live feed whose order changes, so a restored position would land on other items
+    evidence: none
   - id: cleared-for-security
     when: state cleared on purpose for security, such as when a session ends on a shared device, with
       the page saying so
+    evidence: none
   waiver:
     scope: value
   verify: runtime
@@ -3614,6 +3862,7 @@ rules:
   keep_when:
   - id: boundary-step
     when: one-field steps at a branch, a verification boundary, or a save-and-resume point
+    evidence: none
   waiver:
     scope: value
   verify: runtime
@@ -3635,6 +3884,7 @@ rules:
   keep_when:
   - id: helpful-live-feedback
     when: live feedback that helps while typing, such as password strength or characters remaining
+    evidence: none
   waiver:
     scope: value
   verify: runtime
@@ -3656,6 +3906,7 @@ rules:
   keep_when:
   - id: request-in-flight
     when: the control is disabled only while its own request is in flight and shows a pending state
+    evidence: none
   waiver:
     scope: value
   verify: runtime
@@ -3679,6 +3930,7 @@ rules:
   keep_when:
   - id: entered-presentation-mode
     when: a full-screen presentation mode the user entered on purpose
+    evidence: none
   waiver:
     scope: value
   verify: runtime
@@ -3767,8 +4019,10 @@ rules:
   keep_when:
   - id: live-status
     when: the dot reflects live status that changes
+    evidence: none
   - id: loading-skeleton
     when: a skeleton placeholder while loading
+    evidence: none
   waiver:
     scope: value
   verify: static
@@ -3797,6 +4051,7 @@ rules:
   keep_when:
   - id: text-input-focus
     when: a real text input with focus
+    evidence: none
   waiver:
     scope: value
   verify: static
@@ -3856,8 +4111,12 @@ rules:
   keep_when:
   - id: playful-brand-motion
     when: playful subjects where overshoot is the brand's motion voice
+    evidence:
+    - design
+    - brief
   - id: drag-release
     when: release after a physical drag
+    evidence: none
   waiver:
     scope: value
   verify: static
@@ -3907,6 +4166,7 @@ rules:
   keep_when:
   - id: measured-layout-animation
     when: a purposeful layout animation handled by a tool that measures and transforms
+    evidence: none
   waiver:
     scope: value
   verify: runtime
@@ -3932,6 +4192,7 @@ rules:
   - id: inspection-zoom
     when: hover zoom that lets a visitor inspect detail on one or two product or artwork images, not a
       transform across a gallery
+    evidence: none
   waiver:
     scope: rule
   verify: runtime
@@ -3997,6 +4258,9 @@ rules:
   keep_when:
   - id: planned-expressive-motion
     when: expressive or subject-driven motion recorded in the plan's motion dial
+    evidence:
+    - plan: direction.dials.motion
+      min: 7
   waiver:
     scope: rule
   verify: static
@@ -4019,6 +4283,7 @@ rules:
   - id: story-with-static-fallback
     when: a scroll-driven story whose content is complete and readable with animation off, shown by the
       reduced-motion capture
+    evidence: none
   waiver:
     scope: value
   verify: runtime
@@ -4046,12 +4311,18 @@ rules:
   keep_when:
   - id: approved-copy
     when: approved copy
+    evidence:
+    - brief
   - id: exact-quotation
     when: exact quotations
+    evidence:
+    - source
   - id: notation
     when: notation
+    evidence: none
   - id: genuine-interruption
     when: a genuine interruption
+    evidence: none
   waiver:
     scope: rule
   verify: review
@@ -4088,8 +4359,13 @@ rules:
   keep_when:
   - id: governed-term
     when: a governed technical meaning, such as robust error handling
+    evidence:
+    - source
   - id: brand-voice-with-proof
     when: an established brand voice paired with specific proof nearby
+    evidence:
+    - design
+    - brief
   waiver:
     scope: value
   verify: review
@@ -4112,8 +4388,12 @@ rules:
   keep_when:
   - id: scope-or-misconception
     when: the contrast carries scope or corrects a real misconception
+    evidence: none
   - id: quoted-or-governed
     when: quoted or governed language
+    evidence:
+    - source
+    - brief
   waiver:
     scope: value
   verify: review
@@ -4137,8 +4417,10 @@ rules:
   keep_when:
   - id: safety-staging
     when: staging that establishes safety
+    evidence: none
   - id: narrative-voice
     when: narrative voice
+    evidence: none
   waiver:
     scope: value
   verify: review
@@ -4161,6 +4443,7 @@ rules:
   keep_when:
   - id: true-triad
     when: a complete set that truly has three parts
+    evidence: none
   waiver:
     scope: value
   verify: review
@@ -4186,6 +4469,7 @@ rules:
   keep_when:
   - id: deliberate-anaphora
     when: deliberate anaphora in a speech, quotation, or campaign
+    evidence: none
   waiver:
     scope: rule
   verify: review
@@ -4211,8 +4495,11 @@ rules:
   keep_when:
   - id: metaphor-is-argument
     when: the metaphor is the argument itself
+    evidence: none
   - id: world-material-imagery
     when: imagery taken from world_materials
+    evidence:
+    - material
   waiver:
     scope: value
   verify: review
@@ -4235,6 +4522,8 @@ rules:
   keep_when:
   - id: supported-significance
     when: significance the source supports, such as a stated date, dependency, or cited result
+    evidence:
+    - source
   waiver:
     scope: value
   verify: review
@@ -4259,6 +4548,7 @@ rules:
   keep_when:
   - id: undefined-source-relation
     when: the source does not define the relation; keep the vague wording or ask rather than invent one
+    evidence: none
   waiver:
     scope: value
   verify: review
@@ -4281,11 +4571,18 @@ rules:
   keep_when:
   - id: exact-quotation
     when: exact quotations
+    evidence:
+    - source
   - id: required-qualifier
     when: qualifiers that a regulation, a medical label, or a legal notice requires
+    evidence:
+    - source
+    - brief
   - id: calibrated-to-source
     when: hedges that state the strength the source supports, such as a forecast range or a study's stated
       uncertainty
+    evidence:
+    - source
   waiver:
     scope: rule
   verify: review
@@ -4308,8 +4605,11 @@ rules:
   keep_when:
   - id: exact-quotation
     when: exact quotations
+    evidence:
+    - source
   - id: genre-sign-off
     when: a sign-off that the text's genre requires, such as the close of a letter or an email
+    evidence: none
   waiver:
     scope: value
   verify: review
@@ -4337,6 +4637,7 @@ rules:
   keep_when:
   - id: consistent-reference-format
     when: scan-oriented reference pages that use consistent formatting
+    evidence: none
   waiver:
     scope: rule
   verify: review
@@ -4365,6 +4666,9 @@ rules:
   keep_when:
   - id: quoted-or-governed
     when: quoted or governed language
+    evidence:
+    - source
+    - brief
   waiver:
     scope: value
   verify: review
@@ -4390,8 +4694,13 @@ rules:
   keep_when:
   - id: quoted-speech
     when: quoted speech
+    evidence:
+    - source
   - id: fixed-legal-register
     when: legal text with a fixed register
+    evidence:
+    - source
+    - brief
   waiver:
     scope: value
   verify: static
@@ -4417,6 +4726,9 @@ rules:
   - id: fixed-function-text
     when: text whose wording its function or the law fixes, such as terms, a privacy notice, or a standard
       system message
+    evidence:
+    - source
+    - brief
   waiver:
     scope: value
   verify: review
@@ -4450,6 +4762,9 @@ rules:
   keep_when:
   - id: step-title-states-outcome
     when: a multi-step flow where the step title states the outcome
+    evidence:
+    - plan: flows[*].max_steps
+      min: 2
   waiver:
     scope: value
   verify: static
@@ -4501,6 +4816,7 @@ rules:
   - id: cause-withheld-for-security
     when: the cause is withheld on purpose so the message does not reveal whether an account or item exists,
       and a way forward is still offered
+    evidence: none
   waiver:
     scope: value
   verify: runtime
@@ -4537,8 +4853,10 @@ rules:
   - id: qualified-disclosure
     when: a consequential disclosure - simulation, non-delivery, privacy, persistence, consent, eligibility,
       recovery, safety, or legal - placed once at the decision it qualifies
+    evidence: none
   - id: compatibility-label
     when: a version, build, or environment label where compatibility or availability depends on it
+    evidence: none
   waiver:
     scope: value
   verify: review
@@ -4569,16 +4887,25 @@ rules:
   keep_when:
   - id: label-value-syntax
     when: clear label-value syntax
+    evidence: none
   - id: conventional-title-punctuation
     when: conventional title and subtitle punctuation whose relation is already clear
+    evidence: none
   - id: peer-metadata
     when: genuine peer metadata and enumerations
+    evidence: none
   - id: notation-or-code
     when: notation and code
+    evidence: none
   - id: exact-quotation
     when: exact quotations
+    evidence:
+    - source
   - id: governed-name
     when: governed names and approved official copy
+    evidence:
+    - source
+    - brief
   waiver:
     scope: value
   verify: review
@@ -4605,6 +4932,7 @@ rules:
   keep_when:
   - id: decision-metadata
     when: real metadata the user filters or decides by
+    evidence: none
   waiver:
     scope: value
   verify: review
@@ -4634,6 +4962,7 @@ rules:
   - id: reserved-example-values
     when: values reserved for examples, such as example.com or 555 phone numbers, in documentation or
       code samples
+    evidence: none
   waiver:
     scope: value
   verify: static
@@ -4661,8 +4990,13 @@ rules:
   - id: fixed-by-convention
     when: wording that a legal, platform, or interface convention fixes, such as terms, system dialogs,
       or standard control labels
+    evidence:
+    - source
+    - brief
   - id: approved-copy
     when: approved copy
+    evidence:
+    - brief
   waiver:
     scope: rule
   verify: static
@@ -4684,6 +5018,9 @@ rules:
   keep_when:
   - id: brand-geometry
     when: abstract geometry that is the brand's established visual language
+    evidence:
+    - design
+    - brief
   waiver:
     scope: value
   verify: static
@@ -4706,8 +5043,11 @@ rules:
   - id: content-contour
     when: a clip that follows the outline of the image's own subject, such as a product silhouette or
       a map region
+    evidence: none
   - id: contract-shape-language
     when: a brand shape language recorded in the contract
+    evidence:
+    - design
   waiver:
     scope: value
   verify: static
@@ -4732,6 +5072,10 @@ rules:
   keep_when:
   - id: decorative-backdrop
     when: a decorative backdrop with empty alt text, which carries nothing the page needs
+    evidence:
+    - asset:
+        role:
+        - decorative
   waiver:
     scope: value
   verify: static
@@ -4788,6 +5132,11 @@ rules:
   keep_when:
   - id: supplied-asset
     when: an image the client or brief supplied, recorded in the asset ledger with its origin
+    evidence:
+    - asset:
+        origin:
+        - own
+        - commissioned
   waiver:
     scope: value
   verify: review
@@ -4819,9 +5168,14 @@ rules:
   keep_when:
   - id: dvh-fallback
     when: 100vh is only the fallback declared before a dynamic-viewport value for the same property
+    evidence: none
   - id: no-mobile-browser
     when: the brief lists no web platform, such as a desktop app or an embedded kiosk, so no mobile browser
       chrome resizes the viewport
+    evidence:
+    - plan: brief.platform
+      lacks:
+      - web
   waiver:
     scope: value
   verify: static
@@ -4903,6 +5257,7 @@ rules:
   - id: css-reserved-box
     when: the box is reserved by a CSS aspect-ratio or fixed size that the source query cannot see, and
       the render shows no layout shift
+    evidence: none
   waiver:
     scope: value
   verify: static
@@ -4932,8 +5287,12 @@ rules:
   - id: content-literal
     when: a date or number that is part of the written content, such as a publication date or a historical
       year
+    evidence: none
   - id: fixed-format-by-spec
     when: a format that the brief or a standard fixes, such as ISO 8601 timestamps in a log view
+    evidence:
+    - brief
+    - source
   waiver:
     scope: value
   verify: runtime
@@ -4955,9 +5314,11 @@ rules:
   keep_when:
   - id: frame-throttled
     when: the setter runs at most once per frame through requestAnimationFrame or a throttle
+    evidence: none
   - id: value-is-displayed
     when: the value is rendered as text or structure that refs and CSS cannot update, such as a slider's
       numeric readout
+    evidence: none
   waiver:
     scope: value
   verify: static
@@ -4981,6 +5342,7 @@ rules:
   keep_when:
   - id: matching-import-path
     when: either import path is fine when it matches the installed package
+    evidence: none
   waiver:
     scope: value
   verify: static
@@ -5003,9 +5365,12 @@ rules:
   - id: measured-within-budget
     when: the full list was measured on the target device and stays within a performance budget that the
       brief states
+    evidence:
+    - brief
   - id: needs-full-dom
     when: the full list must stay in the page for find-in-page, print, or assistive technology, and its
       count is bounded by the source
+    evidence: none
   waiver:
     scope: value
   verify: runtime
@@ -5057,6 +5422,11 @@ rules:
   keep_when:
   - id: licensed-reference
     when: the reference is owned or licensed for this use
+    evidence:
+    - plan: references[*].rights
+      has:
+      - own
+      - licensed
   waiver:
     scope: value
   verify: static

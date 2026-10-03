@@ -23,8 +23,10 @@ If the extract or lint report is missing, say which and stop; ask for
 
 Requirements outrank the project's contract (`DESIGN.md`), which outranks platform conventions,
 which outrank named defaults. A default the plan keeps with a basis, one of the rule's `keep_when`
-ids, and a reason is earned unless the render contradicts the reason. Never call a requirement or
-contract value a default.
+ids, and a reason is earned unless the render contradicts the reason. The checks have found the
+evidence that the case lists (a quoted brief line, a design token, a won comparison); a case that lists
+`evidence: none` waived on the reason alone, so read that reason against the page. Never call a
+requirement or contract value a default.
 
 ## What to judge
 

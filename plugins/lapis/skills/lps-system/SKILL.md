@@ -84,8 +84,8 @@ Start from `tokens.type`: the families per role and script, `scale.base_px`, and
 - **Surfaces** from `tokens.surface`: elevation levels and what each means, border treatment, and
   every decorative treatment (translucency, texture, heavy outlines, offset shadows) with the job it
   does. A treatment without a job is not tokenized. A treatment that a card names is also decided in
-  `defaults`: the token records the value, and the keep entry with its `keep_when` id and reason is what
-  stops a check from gating it.
+  `defaults`: the token records the value, and the keep entry with its `keep_when` id, the evidence that
+  case lists, and a reason is what stops a check from gating it.
 - **Icons** from `tokens.icons`: one family, its source, style, stroke, and sizes. Mixed icon
   sources and drawn stand-ins are a decision, recorded in `defaults`.
 
