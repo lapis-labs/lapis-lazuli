@@ -13,6 +13,13 @@ session-start  SessionStart in the lazuli plugin's hooks/hooks.json (Claude Code
              session_start extension (pi, Oh-My-Pi). Prints the local font inventory summary as
              context (`lazuli local fonts --summary`, without scanning or measuring), or one line
              that says how to create the inventory. A failure prints nothing: the session must start.
+stop         Stop in the lapis plugin's hooks/hooks.json (Claude Code, Codex), and the session_stop (Oh-My-Pi)
+             and agent_before_settle (pi) handlers of the lapis plugin's exit-gate extension. The event JSON
+             (`cwd`, `session_id`) names a project; with a plan under it and `LAPIS_UNATTENDED=1`, the gate
+             (gate.py) continues the agent with the step `lapis-design next` still asks for, up to three
+             times in a row for one step and fifteen in a session. Without that variable it prints a one-line
+             `systemMessage` and never blocks. Output is Claude Code's and Codex's Stop JSON; the extensions
+             translate it. No plan under the project, or any failure of ours, prints nothing.
 """
 from __future__ import annotations
 
@@ -106,7 +113,25 @@ def session_start(stdin: TextIO, stdout: TextIO) -> int:
     return 0
 
 
+def stop(stdin: TextIO, stdout: TextIO) -> int:
+    try:
+        event = json.load(stdin)
+    except ValueError:
+        event = {}
+    try:
+        from lapis_design import gate
+
+        out = gate.decide(event if isinstance(event, dict) else {})
+    except Exception as exc:        # the gate never holds an agent in its turn because of a bug of ours
+        print(f"lapis-design hook stop: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 0
+    if out:
+        print(json.dumps(out, ensure_ascii=False), file=stdout)
+    return 0
+
+
 HOOKS: dict[str, Callable[[TextIO, TextIO], int]] = {
     "exit-plan": exit_plan,
     "session-start": session_start,
+    "stop": stop,
 }

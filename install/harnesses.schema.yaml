@@ -73,7 +73,7 @@ $defs:
       skills: { type: array, minItems: 1, items: { $ref: "#/$defs/slug" } }   # the main skill shares the plugin name
       hooks:                                        # hook events this plugin registers (outputs say how)
         type: array
-        items: { enum: [session-start, exit-plan] }
+        items: { enum: [session-start, exit-plan, stop] }
       agents: { type: array, items: { $ref: "#/$defs/slug" } }
       mcp: { type: array, items: { $ref: "#/$defs/slug" } }   # MCP server names
 
@@ -89,7 +89,7 @@ $defs:
       format:
         enum: [agent-skill, claude-plugin-manifest, codex-plugin-manifest, claude-catalog, codex-catalog,
                hooks-json, mcp-json, claude-agent, codex-agent, omp-package, pi-package,
-               ts-extension, hermes-plugin, agents-md-snippet]
+               ts-extension, gate-extension, hermes-plugin, agents-md-snippet]
       from: { type: array, minItems: 1, items: { type: string } }   # src paths or other output ids
       committed: { type: boolean }                  # default true: marketplace installs read the repo as is
 
@@ -137,7 +137,7 @@ $defs:
     type: object
     additionalProperties: false
     required: [id, name, detect, form, consumes, invoke, install, update, uninstall, verify,
-               session_start, critic, mcp, sources]
+               session_start, critic, exit_gate, mcp, sources]
     properties:
       id: { $ref: "#/$defs/slug" }
       name: { type: string }
@@ -172,6 +172,7 @@ $defs:
       verify: { $ref: "#/$defs/steps" }
       session_start: { $ref: "#/$defs/mechanism" }
       critic: { $ref: "#/$defs/mechanism" }
+      exit_gate: { $ref: "#/$defs/mechanism" }          # what continues an unattended agent that is about to stop
       mcp: { $ref: "#/$defs/mechanism" }
       trust: { type: array, items: { type: string } }       # what the user must approve before parts run
       conflicts: { type: array, items: { type: string } }   # double loading and precedence traps

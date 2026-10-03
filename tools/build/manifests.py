@@ -14,7 +14,13 @@ HOOKS = {
     "session-start": {"event": "SessionStart", "matcher": "startup|resume|clear|compact|fork", "timeout": 10,
                       "file": "shared"},
     "exit-plan": {"event": "PermissionRequest", "matcher": "ExitPlanMode", "timeout": 30, "file": "claude"},
+    # Stop takes no matcher in either harness; the gate runs `lapis-design next`, which reads the plan and the
+    # reports, so its timeout is longer than a session summary's
+    "stop": {"event": "Stop", "matcher": None, "timeout": 60, "file": "shared"},
 }
+# The extension each hook has under pi and Oh-My-Pi, which have no hooks.json; the file is under the plugin's
+# extensions/ folder and its source is named by the output that emits it (install/harnesses.yaml).
+EXTENSIONS = {"session-start": "session-start.ts", "stop": "exit-gate.ts"}
 MCP_COMMAND = {"command": "lapis-design", "args": ["mcp"]}
 # The first sentence of the repository's GitHub About text, which the maintainers set by hand.
 ABOUT = "Design skills for coding agents, plus two CLIs."
@@ -36,7 +42,8 @@ def _hooks(plugin: dict, file: str) -> dict | None:
             continue
         # a plain command on PATH parses the same in sh, PowerShell, and cmd
         handler = {"type": "command", "command": f"lapis-design hook {name}", "timeout": h["timeout"]}
-        events.setdefault(h["event"], []).append({"matcher": h["matcher"], "hooks": [handler]})
+        group = {"matcher": h["matcher"]} if h["matcher"] else {}
+        events.setdefault(h["event"], []).append({**group, "hooks": [handler]})
     return {"hooks": events} if events else None
 
 
@@ -91,17 +98,18 @@ def mcp_json(plugin: dict) -> dict | None:
 
 
 def omp_package(plugin: dict, version: str, license_id: str) -> dict | None:
-    if "session-start" not in plugin.get("hooks", []):
+    extensions = [f"./extensions/{EXTENSIONS[h]}" for h in plugin.get("hooks", []) if h in EXTENSIONS]
+    if not extensions:
         return None
     return {"name": f"@lapis-labs/{plugin['name']}-omp", "version": version, "license": license_id, "private": True,
-            "omp": {"extensions": ["./extensions/session-start.ts"]}}
+            "omp": {"extensions": extensions}}
 
 
 def pi_package(doc: dict, version: str, license_id: str) -> dict:
-    host = next(p["name"] for p in doc["plugins"] if "session-start" in p.get("hooks", []))
+    extensions = [f"./plugins/{p['name']}/extensions/{EXTENSIONS[h]}" for p in doc["plugins"]
+                  for h in p.get("hooks", []) if h in EXTENSIONS]
     return {"name": doc["repo"]["name"], "version": version, "license": license_id, "private": True,
-            "keywords": ["pi-package"],
-            "pi": {"skills": ["./dist/skills"], "extensions": [f"./plugins/{host}/extensions/session-start.ts"]}}
+            "keywords": ["pi-package"], "pi": {"skills": ["./dist/skills"], "extensions": extensions}}
 
 
 def hermes_plugin(doc: dict, version: str, source: dict) -> dict:

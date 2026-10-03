@@ -104,11 +104,13 @@ complete rules and schemas wherever the plugin is cached.
 |---|---|---|---|---|---|
 | lazuli | `hooks/hooks.json` (Claude Code and Codex) | `SessionStart` | `startup\|resume\|clear\|compact\|fork` | `session-start` | prints the inventory summary as context |
 | lapis | inline in `.claude-plugin/plugin.json` (Claude Code only) | `PermissionRequest` | `ExitPlanMode` | `exit-plan` | denies with findings when the plan's lapis-plan block has blocking findings, and denies when the block cannot be read or checked (cli/lapis_design/hooks.py) |
+| lapis | `hooks/hooks.json` (Claude Code and Codex) | `Stop` | none | `stop` | the exit gate (cli/lapis_design/gate.py): with a plan under the project and `LAPIS_UNATTENDED=1`, continues the agent with the step `lapis-design next` still asks for (`{"decision": "block", "reason": …}`), at most three times in a row for one step and fifteen in a session; otherwise prints a one-line `systemMessage` and never blocks; prints nothing without a plan or when it fails |
 
 Codex reads `hooks/hooks.json` by default, and its matchers are regular expressions, so the
 `fork` alternative never matches there. The plan check stays out of that file: Codex has no
-ExitPlanMode tool, and a hook in the file would still ask Codex users to trust it. The lapis plugin
-therefore has no `hooks/hooks.json`, and its Codex manifest has no `hooks` key.
+ExitPlanMode tool, and a hook in the file would still ask Codex users to trust it. The lapis plugin's
+`hooks/hooks.json` therefore holds the `stop` hook alone, and its Codex manifest names that file.
+`Stop` takes no matcher in either harness, so the hook has none.
 
 ## MCP — `plugin-mcp`
 
@@ -130,17 +132,26 @@ per-request versions from 2026-07-28, so older and newer harness clients connect
 - `references/critic.md` in the ultramarine skill: the body of `src/agents/critic.md` without its
   frontmatter, so a harness without agents can run the critic in a fresh context from the skill.
 
-## Session extension and packages — `session-extension`, `omp-package`, `pi-package`
+## Session and gate extensions and packages — `session-extension`, `gate-extension`, `omp-package`, `pi-package`
 
 - `plugins/lazuli/extensions/session-start.ts` exports a default factory that listens for
   `session_start` and runs `lapis-design hook session-start`. It imports the host API with
   `import type` only, so the same module loads under pi and Oh-My-Pi, whose package names differ.
-- `plugins/lazuli/package.json`: `{"name": "@lapis-labs/lazuli-omp", "license": "MIT AND CC-BY-4.0",
-  "private": true, "omp": {"extensions": ["./extensions/session-start.ts"]}}`.
+- `plugins/lapis/extensions/exit-gate.ts` (from `src/extensions/exit-gate.ts`) is the `stop` hook for the two
+  harnesses that have no hooks.json. It starts `lapis-design hook stop` with the event JSON (`cwd`,
+  `session_id`) on stdin and translates the answer: Oh-My-Pi's `session_stop` takes `{ decision: "block",
+  reason }`, pi's `agent_before_settle` takes a `custom_message` entry with `continue: true`, and a
+  `systemMessage` goes to `ctx.ui.notify` when the host has a UI. Each host never fires the other's event,
+  so both are registered, and a registration the host does not know is ignored. The CLI holds the rules
+  (unattended switch, limits, state); a missing CLI, a failure, or output that is not JSON lets the agent stop.
+- `plugins/lapis/package.json` and `plugins/lazuli/package.json`: `{"name": "@lapis-labs/<plugin>-omp",
+  "license": "MIT AND CC-BY-4.0", "private": true, "omp": {"extensions": ["./extensions/<file>.ts"]}}` with the
+  extension each plugin's hooks name (`exit-gate.ts` for lapis, `session-start.ts` for lazuli).
 - `package.json` at the repository root: `{"name": "lapis-lazuli", "version": …,
   "license": "MIT AND CC-BY-4.0", "private": true, "keywords": ["pi-package"], "pi": {"skills":
-  ["./dist/skills"], "extensions": ["./plugins/lazuli/extensions/session-start.ts"]}}`. pi's git
-  installs have no subdirectory selector, so the root carries the key.
+  ["./dist/skills"], "extensions": ["./plugins/lapis/extensions/exit-gate.ts",
+  "./plugins/lazuli/extensions/session-start.ts"]}}`. pi's git installs have no subdirectory selector, so
+  the root carries the key.
 
 ## Hermes — `hermes-plugin`
 

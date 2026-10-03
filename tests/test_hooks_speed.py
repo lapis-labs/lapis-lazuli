@@ -1,4 +1,4 @@
-"""The harness hooks stay light: `hook exit-plan` and `hook session-start` load neither numpy, Pillow,
+"""The harness hooks stay light: `hook exit-plan`, `hook session-start`, and `hook stop` load neither numpy, Pillow,
 nor Playwright (AGENTS.md: hooks run at every session start). Each hook runs in a fresh interpreter
 the way a harness starts it, with the event on stdin, so modules other tests imported do not count."""
 from __future__ import annotations
@@ -70,3 +70,28 @@ def test_session_start_summarizes_the_inventory_without_heavy_modules(env):
     assert "lazuli: 1 font families in 1 files" in out
     assert "Latin without a CJK set: 1 families" in out and "unmeasured" not in out    # read at MEASURER_VERSION
     assert report == {"code": 0, "heavy": []}
+
+
+def test_stop_answers_for_a_project_with_a_plan_without_heavy_modules(env, tmp_path, monkeypatch):
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent))
+    from procedure_support import make_project
+
+    project = make_project(tmp_path / "project")
+    (project / ".lapis/assets.ledger.json").unlink()
+    monkeypatch.setenv("LAPIS_UNATTENDED", "1")
+    monkeypatch.setenv("LAZULI_DB", "")
+    report, out = run_hook("stop", {"hook_event_name": "Stop", "cwd": str(project), "session_id": "s"})
+    decision = json.loads(out)
+    assert decision["decision"] == "block" and "Next step: ledger." in decision["reason"]
+    assert report == {"code": 0, "heavy": []}
+
+
+def test_stop_in_a_folder_without_a_plan_prints_nothing_and_loads_neither_the_checks_nor_yaml(env, tmp_path):
+    child = CHILD.replace("sorted(m for m in ('numpy', 'PIL', 'playwright') if m in sys.modules)",
+                          "sorted(m for m in ('numpy', 'PIL', 'playwright', 'yaml', 'jsonschema', 'lapis_design.next_step') "
+                          "if m in sys.modules)")
+    r = subprocess.run([sys.executable, "-c", child, "stop"], input=json.dumps({"cwd": str(tmp_path)}),
+                       capture_output=True, text=True, env=dict(os.environ, LAPIS_UNATTENDED="1"), timeout=120)
+    assert r.returncode == 0 and r.stdout == ""
+    assert json.loads(r.stderr.strip().splitlines()[-1]) == {"code": 0, "heavy": []}

@@ -53,7 +53,6 @@ GENERATED = ("plugins/", "dist/", ".claude-plugin/marketplace.json", ".agents/pl
 SKILLS_DIR = "src/skills"
 SHARED_DIR = "src/shared"
 AGENTS_DIR = "src/agents"
-EXTENSION = "src/extensions/session-start.ts"
 HERMES_DIR = "src/hermes"
 
 # Texts at the repository root, copied byte for byte into every folder that can be installed on its
@@ -421,9 +420,9 @@ class Build:
                 for agent, (plugin, desc, body) in self.agents.items()}
 
     def ts_extension(self, out: dict) -> dict[str, str | bytes]:
-        src = self.root / EXTENSION
+        src = self.root / out["from"][0]
         if not src.is_file():
-            raise BuildError(f"{EXTENSION} is missing")
+            raise BuildError(f"{out['from'][0]} is missing")
         return {out["path"]: _read(src)}
 
     def hermes_plugin(self, out: dict) -> dict[str, str | bytes]:
@@ -467,6 +466,7 @@ class Build:
         "claude-agent": claude_agent,
         "codex-agent": codex_agent,
         "ts-extension": ts_extension,
+        "gate-extension": ts_extension,
         "hermes-plugin": hermes_plugin,
         "agents-md-snippet": agents_md_snippet,
     }

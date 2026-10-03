@@ -38,6 +38,7 @@ FORMAT_LABELS = {
     "omp-package": "Extension package",
     "pi-package": "Package manifest",
     "ts-extension": "Session-start extension",
+    "gate-extension": "Exit-gate extension",
     "hermes-plugin": "Hermes plugin",
     "agents-md-snippet": "Instructions snippet",
 }
@@ -53,7 +54,8 @@ VIA_LABELS = {
     "none": "not available",
 }
 VIA_BY_HAND = "instructions only: the skills say what to run by hand"
-MECHANISMS = (("session_start", "Session summary"), ("critic", "Separate critic"), ("mcp", "MCP"))
+MECHANISMS = (("session_start", "Session summary"), ("critic", "Separate critic"), ("exit_gate", "Exit gate"),
+              ("mcp", "MCP"))
 SH_VARS = {"plugin": "LL_plugin", "skill": "LL_skill", "agent": "LL_agent", "sha": "LL_sha"}
 PS_VARS = {"plugin": "$Plugin", "skill": "$Skill", "agent": "$Agent", "sha": "$script:Sha"}
 DOC_VARS = {"agent": "<agent>", "sha": "<commit>"}
@@ -713,7 +715,8 @@ class _Gen:
         elif via == "hermes-plugin-hook":
             parts.append(("Hermes plugin hook", False))
         elif via == "extension":
-            parts.append(("session-start extension", False))
+            both = h["exit_gate"]["via"] == "extension"
+            parts.append(("session-start and exit-gate extensions" if both else "session-start extension", both))
         if h["mcp"]["via"] in ("plugin-mcp", "cli-register"):
             parts.append(("MCP server", False))
         if not parts:
@@ -909,6 +912,20 @@ class _Gen:
               "```", "",
               "An HTML file path or `file://` URL also works: the checks serve its folder read-only on "
               "127.0.0.1 for the run and record only the loopback HTTP URL. Other URL schemes are refused.", "",
+              "### Unattended runs", "",
+              "`lapis-design next --task <task>` prints the one step of the procedure still to do, from the files "
+              "under `.lapis/`, until it says done; done means every step ran on real inputs, not that the "
+              "release gate passes. A harness's stop event can ask it: the exit gate continues an agent that is "
+              "about to stop with that step only when `LAPIS_UNATTENDED=1` is set in the environment the harness "
+              "runs in, and otherwise prints one line and never blocks. It continues at most three times in a row "
+              "for one step and fifteen times in a session, then lets the agent stop and records the step that was "
+              "left in `.lapis/gate/<task>.json`. Claude Code and Codex run it as the lapis plugin's `Stop` hook, "
+              "Oh-My-Pi as `session_stop` and pi as `agent_before_settle` in the lapis exit-gate extension. "
+              "Codex runs a plugin hook only after you trust it in `/hooks` (or for one run that already vets its "
+              "hook sources, with `--dangerously-bypass-hook-trust`); an untrusted hook is skipped without a "
+              "message, so the agent stops as it would without the gate. Without the gate the skills say to run "
+              "`lapis-design next` by hand. Use reasoning or thinking at high or above for the agent that makes "
+              "the work: in our runs, a low setting skipped the procedure.", "",
               "## Update and uninstall", "",
               f"`--update` runs each harness's update steps and reinstalls the CLI from `{self.ref}`. "
               "`--uninstall` runs the removal steps; with `--plugin`, only those plugins go. These steps run only "

@@ -49,7 +49,7 @@ def test_outputs_and_consumers_match():
 
 def test_mechanism_outputs_are_consumed_by_their_harness():
     for h in doc()["harnesses"]:
-        for key in ("session_start", "critic", "mcp"):
+        for key in ("session_start", "critic", "exit_gate", "mcp"):
             out = h[key].get("output")
             assert out is None or out in h["consumes"], (h["id"], key)
 
@@ -148,12 +148,30 @@ def test_packages_point_at_emitted_paths():
     d, outs = doc(), outputs()
     pi = manifests.pi_package(d, "0.1.0", LICENSE)
     assert pi["pi"]["skills"] == ["./" + outs["flat-skills"]["path"].split("{")[0].rstrip("/")]
-    assert pi["pi"]["extensions"] == ["./" + outs["session-extension"]["path"]]
-    host = next(p for p in d["plugins"] if manifests.omp_package(p, "0.1.0", LICENSE))
-    omp = manifests.omp_package(host, "0.1.0", LICENSE)
-    assert pi["license"] == omp["license"] == LICENSE
-    assert f"plugins/{host['name']}/" + omp["omp"]["extensions"][0][2:] == outs["session-extension"]["path"]
-    assert omp["version"] == "0.1.0"          # omp lists a linked package as name@version
+    assert pi["pi"]["extensions"] == ["./" + outs["gate-extension"]["path"], "./" + outs["session-extension"]["path"]]
+    omp = {p["name"]: manifests.omp_package(p, "0.1.0", LICENSE) for p in d["plugins"]}
+    assert {name for name, package in omp.items() if package} == set(outs["omp-package"]["only"])
+    assert [f"plugins/lapis/{path[2:]}" for path in omp["lapis"]["omp"]["extensions"]] == [outs["gate-extension"]["path"]]
+    assert [f"plugins/lazuli/{path[2:]}" for path in omp["lazuli"]["omp"]["extensions"]] == [
+        outs["session-extension"]["path"]]
+    assert pi["license"] == omp["lapis"]["license"] == omp["lazuli"]["license"] == LICENSE
+    assert omp["lazuli"]["version"] == "0.1.0"          # omp lists a linked package as name@version
+
+
+def test_every_hook_a_plugin_lists_has_the_extension_pi_and_oh_my_pi_load():
+    for p in doc()["plugins"]:
+        extensions = (manifests.omp_package(p, "0.1.0", LICENSE) or {}).get("omp", {}).get("extensions", [])
+        listed = [h for h in p.get("hooks", []) if h in manifests.EXTENSIONS]
+        assert [Path(e).name for e in extensions] == [manifests.EXTENSIONS[h] for h in listed], p["name"]
+
+
+def test_the_stop_hook_takes_no_matcher_and_codex_gets_it_with_the_lapis_plugin():
+    d = doc()
+    lapis = next(p for p in d["plugins"] if p["name"] == "lapis")
+    shared = manifests.hooks_json(lapis)["hooks"]
+    assert shared == {"Stop": [{"hooks": [{"type": "command", "command": "lapis-design hook stop", "timeout": 60}]}]}
+    assert manifests.codex_manifest(d, lapis, "0.1.0", LICENSE)["hooks"] == "./hooks/hooks.json"
+    assert "PermissionRequest" in manifests.claude_manifest(d, lapis, "0.1.0", LICENSE)["hooks"]   # exit-plan stays inline
 
 
 def test_emit_writes_every_json_output_it_owns():

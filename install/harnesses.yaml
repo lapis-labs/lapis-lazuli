@@ -38,7 +38,7 @@ plugins:
     prefix: lps-
     description: Design direction, plans, and named defaults for new UI and redesigns
     skills: [lapis, lps-ux, lps-copy, lps-system]
-    hooks: [exit-plan]
+    hooks: [exit-plan, stop]
   - name: ultramarine
     prefix: ulm-
     description: Render checks, slop and rights review, and a separate critic
@@ -58,13 +58,14 @@ outputs:
   - { id: codex-plugin-manifest, path: "plugins/{plugin}/.codex-plugin/plugin.json", per: plugin, format: codex-plugin-manifest, from: [install/harnesses.yaml] }
   - { id: claude-catalog, path: ".claude-plugin/marketplace.json", per: repo, format: claude-catalog, from: [install/harnesses.yaml] }
   - { id: codex-catalog, path: ".agents/plugins/marketplace.json", per: repo, format: codex-catalog, from: [install/harnesses.yaml] }
-  - { id: plugin-hooks, path: "plugins/{plugin}/hooks/hooks.json", per: plugin, only: [lazuli], format: hooks-json, from: [install/harnesses.yaml] }
+  - { id: plugin-hooks, path: "plugins/{plugin}/hooks/hooks.json", per: plugin, only: [lapis, lazuli], format: hooks-json, from: [install/harnesses.yaml] }
   - { id: plugin-mcp, path: "plugins/{plugin}/.mcp.json", per: plugin, only: [lazuli], format: mcp-json, from: [install/harnesses.yaml] }
   - { id: claude-agents, path: "plugins/{plugin}/agents/", per: plugin, only: [ultramarine], format: claude-agent, from: [src/agents] }
   - { id: codex-agents, path: "dist/codex/agents/", per: repo, format: codex-agent, from: [src/agents] }
   - { id: session-extension, path: "plugins/lazuli/extensions/session-start.ts", per: repo, format: ts-extension, from: [src/extensions/session-start.ts] }
-  - { id: omp-package, path: "plugins/{plugin}/package.json", per: plugin, only: [lazuli], format: omp-package, from: [session-extension] }
-  - { id: pi-package, path: "package.json", per: repo, format: pi-package, from: [flat-skills, session-extension] }
+  - { id: gate-extension, path: "plugins/lapis/extensions/exit-gate.ts", per: repo, format: gate-extension, from: [src/extensions/exit-gate.ts] }
+  - { id: omp-package, path: "plugins/{plugin}/package.json", per: plugin, only: [lapis, lazuli], format: omp-package, from: [session-extension, gate-extension] }
+  - { id: pi-package, path: "package.json", per: repo, format: pi-package, from: [flat-skills, session-extension, gate-extension] }
   - { id: hermes-plugin, path: "plugins/hermes/lapis-lazuli/", per: repo, format: hermes-plugin, from: [src/hermes] }
   - { id: agents-md-snippet, path: "dist/AGENTS.snippet.md", per: repo, format: agents-md-snippet, from: [install/harnesses.yaml] }
 
@@ -94,6 +95,7 @@ harnesses:
       - manual: "In a session, run /lapis:lapis and check that the skill loads"
     session_start: { via: plugin-hook, output: plugin-hooks, event: "SessionStart startup|resume|clear|compact|fork" }
     critic: { via: plugin-agent, output: claude-agents, note: "invoked as ultramarine:critic; the plan check runs from a hook inline in the lapis manifest" }
+    exit_gate: { via: plugin-hook, output: plugin-hooks, event: Stop, note: "`lapis-design hook stop` continues the agent with the next step only when LAPIS_UNATTENDED=1 and says so in one line otherwise; at most 3 continues in a row for one step and 15 in a session" }
     mcp: { via: plugin-mcp, output: plugin-mcp, note: "server plugin:lazuli:lapis-lazuli; the command is the CLI on PATH" }
     conflicts:
       - "Oh-My-Pi can load plugins from Claude Code's install registry; with both installed, skills load twice and dedupe by name"
@@ -127,7 +129,7 @@ harnesses:
       - run: [codex, plugin, add, "{plugin}@{catalog}"]
       - copy: { from: "dist/codex/agents/ulm-critic.toml", to: "~/.codex/agents/ulm-critic.toml" }
         confirm: true
-      - manual: "Open /hooks in Codex and trust the lazuli session-start hook; it does not run until trusted"
+      - manual: "Open /hooks in Codex and trust the lazuli session-start hook and the lapis stop hook; neither runs until trusted"
     update:
       - run: [codex, plugin, marketplace, upgrade, "{catalog}"]
         note: there is no per-plugin update; new skills appear in the next session
@@ -149,6 +151,7 @@ harnesses:
       - manual: "In a new session, type $lapis:lps-ux and check that the skill is offered"
     session_start: { via: plugin-hook, output: plugin-hooks, event: "SessionStart startup|resume|clear|compact", note: "matchers are regular expressions; the fork alternative never matches here" }
     critic: { via: agent-file, output: codex-agents, note: "plugins cannot ship subagents; the installer copies the TOML file" }
+    exit_gate: { via: plugin-hook, output: plugin-hooks, event: Stop, note: "`lapis-design hook stop` continues the agent with the next step only when LAPIS_UNATTENDED=1 and says so in one line otherwise; the lapis plugin's hook needs trust like the lazuli one; Stop takes no matcher" }
     mcp: { via: plugin-mcp, output: plugin-mcp }
     trust:
       - "every plugin hook needs trust for its exact hash via /hooks; a changed hook needs trust again"
@@ -189,13 +192,13 @@ harnesses:
     name: Oh-My-Pi
     detect: { commands: [omp], dirs: ["~/.omp"] }
     form: plugin
-    consumes: [claude-catalog, claude-plugin-manifest, plugin-skills, plugin-mcp, claude-agents, omp-package, session-extension]
+    consumes: [claude-catalog, claude-plugin-manifest, plugin-skills, plugin-mcp, claude-agents, omp-package, session-extension, gate-extension]
     skill_paths: [".omp/skills", "~/.omp/agent/skills", ".agents/skills", ".claude/skills"]
     invoke: "/skill:{skill}"
     install:
       - run: [omp, plugin, marketplace, add, "{repo}"]
       - run: [omp, plugin, install, --scope, user, "{plugin}@{catalog}"]
-      - manual: "Restart omp so the session-start extension loads; /reload-plugins refreshes skills and MCP only"
+      - manual: "Restart omp so the session-start and exit-gate extensions load; /reload-plugins refreshes skills and MCP only"
     update:
       - run: [omp, plugin, marketplace, update, "{catalog}"]
       - run: [omp, plugin, upgrade, --scope, user, "{plugin}@{catalog}"]
@@ -209,6 +212,7 @@ harnesses:
       - manual: "In a session, run /skill:lps-ux"
     session_start: { via: extension, output: session-extension, event: session_start, note: "omp does not run hooks/hooks.json; a marketplace install links the plugin's package.json into ~/.omp/plugins/node_modules, and its omp.extensions load after a restart" }
     critic: { via: plugin-agent, output: claude-agents, note: "loaded as a task agent" }
+    exit_gate: { via: extension, output: gate-extension, event: session_stop, note: "asks `lapis-design hook stop` and answers `{ decision: block }`, only when LAPIS_UNATTENDED=1; the lapis plugin's package.json links the extension" }
     mcp: { via: plugin-mcp, output: plugin-mcp }
     conflicts:
       - "reads .omp-plugin, then .claude-plugin manifests; never .codex-plugin"
@@ -235,7 +239,7 @@ harnesses:
     status: experimental
     detect: { commands: [pi], dirs: ["~/.pi/agent"] }
     form: package
-    consumes: [pi-package, flat-skills, session-extension]
+    consumes: [pi-package, flat-skills, session-extension, gate-extension]
     skill_paths: ["~/.pi/agent/skills", ".pi/skills", "~/.agents/skills", ".agents/skills"]
     invoke: "/skill:{skill}"
     install:
@@ -253,6 +257,7 @@ harnesses:
       - manual: "In a session, run /skill:lps-ux"
     session_start: { via: extension, output: session-extension, event: session_start }
     critic: { via: instructions, note: "pi has no subagents; the skill asks for a fresh session as the critic" }
+    exit_gate: { via: extension, output: gate-extension, event: agent_before_settle, note: "asks `lapis-design hook stop` and continues the agent with a custom message and `continue: true`, only when LAPIS_UNATTENDED=1" }
     mcp: { via: none, note: "pi 1.0.0 has a built-in MCP client (servers in ~/.pi/agent/mcp.json or .pi/settings.json; a Python stdio server connected in a container on 2026-10-03), but the installer does not register lapis-lazuli there yet" }
     trust:
       - "project packages load only after project trust"
@@ -298,6 +303,7 @@ harnesses:
       - manual: "In a session, run /lps-ux"
     session_start: { via: hermes-plugin-hook, output: hermes-plugin, event: "pre_llm_call when is_first_turn", note: "on_session_start ignores return values, so it cannot add context" }
     critic: { via: instructions }
+    exit_gate: { via: instructions, note: "no stop event is used; the skills say to run `lapis-design next --task <task>` until it says done" }
     mcp: { via: cli-register, note: "hermes mcp add; tools appear as mcp_lapis-lazuli_<tool>" }
     trust:
       - "project skills load only after hermes skills trust"
@@ -338,6 +344,7 @@ harnesses:
         expect: "every skill of the selected plugins is listed"
     session_start: { via: instructions, output: agents-md-snippet }
     critic: { via: instructions }
+    exit_gate: { via: instructions, note: "no stop event is used; the skills say to run `lapis-design next --task <task>` until it says done" }
     mcp: { via: instructions, output: agents-md-snippet, note: "the snippet shows the harness's own MCP registration for lapis-design mcp" }
     conflicts:
       - "Codex, pi, and Hermes have their own rows; the skills CLI's Codex target ~/.codex/skills is deprecated"
