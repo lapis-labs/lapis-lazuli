@@ -229,6 +229,46 @@ def test_a_keep_on_a_rule_that_lists_no_case_leaves_the_hit_open():
     [f] = lint([rule("color.cream", {"render": det("test-echo", "cream field")})], plan=plan)
     assert (f["status"], f["blocking"]) == ("open", True) and "lists no keep_when case" in f["context"]["basis"]
 
+# The rules that gate in create mode and had no keep case; each now lists one, which the hit's plan keep can name.
+GATING_CASES = {
+    "type.tight-leading": "single-line-text",
+    "type.flat-hierarchy": "contract-scale",
+    "color.gray-on-color": "contract-pair",
+    "color.inverted-dark-theme": "contract-two-color-swap",
+    "layout.bento-filler": "data-cells",
+    "ux.lost-input": "cleared-secret",
+    "ux.dead-end": "host-owns-navigation",
+    "motion.hover-zoom-everything": "inspection-zoom",
+    "copy.error-without-recovery": "cause-withheld-for-security",
+    "imagery.jagged-clip": "content-contour",
+    "code.mobile-100vh": "dvh-fallback",
+    "code.unvirtualized-list": "measured-within-budget",
+}
+
+
+def real_rule_that_hits(rule_id: str) -> dict:
+    """The rule as rules.yaml writes it (class, severity, waiver, keep_when), with a detector that always hits."""
+    real = next(r for r in yaml.safe_load((SHARED / "slop/rules.yaml").read_text(encoding="utf-8"))["rules"]
+                if r["id"] == rule_id)
+    return rule(rule_id, {"render": det("test-echo", "seen here")}, cls=real["class"], waiver=real["waiver"],
+                create=real["severity"]["create"], review=real["severity"]["review"],
+                **({"keep_when": real["keep_when"]} if "keep_when" in real else {}))
+
+
+@pytest.mark.parametrize("rule_id, case", GATING_CASES.items())
+def test_a_gating_rule_is_waived_by_a_keep_naming_its_case_and_not_by_another_rules_case(rule_id, case):
+    other_rules_case = next(c for other, c in GATING_CASES.items() if other != rule_id)
+
+    def finding(named: str) -> dict:
+        keep = {"id": rule_id, "decision": "keep", "basis": "brief", "keep_when": named, "reason": "The brief fixes it"}
+        [f] = lint([real_rule_that_hits(rule_id)], plan=plan_with(keep))
+        return f
+
+    kept = finding(case)
+    assert (kept["status"], kept["blocking"]) == ("waived", False)
+    unfit = finding(other_rules_case)
+    assert (unfit["status"], unfit["blocking"]) == ("open", True)
+    assert case in unfit["context"]["basis"]
 
 def test_a_reject_decision_leaves_the_hit_open():
     plan = plan_with({"id": "color.cream", "decision": "reject", "basis": "brief", "reason": "Competes with glazes"})

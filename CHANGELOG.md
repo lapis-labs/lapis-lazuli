@@ -16,6 +16,14 @@ after text.
   within its rule (140 entries in 99 rules); `type.overused-neutral-grotesque` gains the case `won-comparison`; the
   new rule `plan.uncompared-decision` (domain `plan`, quality, gate in create mode, no waiver) and its detector
   `plan-candidates`. `slop/rules.schema.yaml` takes the new `keep_when` shape and the domain `plan`.
+- `slop/rules.yaml` (197 `keep_when` entries in 137 rules): 38 of the 47 rules that are not requirements and listed no
+  case now list one to three, each a condition the plan has to show: a contract that fixes the value
+  (`contract-scale`, `contract-leading`, `contract-pair`, ...), a brief requirement (`brief-fixed-opening`), or an
+  exception the plan can state and a reviewer can check (`cleared-secret`, `dvh-fallback`, `data-cells`, ...), among them
+  all 12 rules that gate in create mode. Nine still list none, so a keep waives nothing there: `type.synthetic-style`,
+  `type.ko.keep-all-missing`, `motion.transition-all`, `rights.license-hint-only`, `rights.generated-unreviewed`,
+  `rights.unapproved-mark-symbol`, and the packages `ux.subscription-trap`, `ux.pressure-selling`, and
+  `ux.consent-steering`; the way out of those is the fix.
 - `plan/schema.yaml`: the top-level `explorations` and `keep_when` on a `defaults` entry; `plan/example.plan.yaml`
   records both, and `docs/examples` stay unfinished on purpose.
 
@@ -67,7 +75,7 @@ after text.
 
 - A `defaults` keep waives a finding only when its `keep_when` names one of the rule's ids, in `plan check` and in
   `slop lint`. A keep with no id, an id of another rule, or an id nobody lists leaves the finding at its severity,
-  and the message lists the accepted ids. A rule that lists no `keep_when` case takes no keep (47 rules that are not
+  and the message lists the accepted ids. A rule that lists no `keep_when` case takes no keep (nine rules that are not
   requirements list none), and a requirement or a rule whose waiver scope is `none` takes no entry at all: a reject
   no longer lowers such a plan finding to INFO. The `fix` text of an undecided finding lists the ids.
 - The `lapis` skill and `type.md` say that a brief's no-network, no-external-assets, or offline line limits what the

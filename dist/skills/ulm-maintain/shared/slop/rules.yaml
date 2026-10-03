@@ -723,6 +723,11 @@ rules:
         max: 0.02
   why: Positive tracking on paragraphs stripes the text and tires the reader
   better: Keep body tracking near the face's default
+  keep_when:
+  - id: contract-tracking
+    when: the design contract sets the body tracking and the plan cites it
+  - id: measured-correction
+    when: the face's metrics are measured to need open spacing at that size
   waiver:
     scope: value
   verify: static
@@ -752,6 +757,11 @@ rules:
           other: 1.3
   why: Body leading near 1 makes ascenders and descenders collide and lines hard to track
   better: Set leading for size, measure, script, and content
+  keep_when:
+  - id: single-line-text
+    when: body-role text that never wraps, such as one-line table cells, so no two lines can collide
+  - id: contract-leading
+    when: the design contract sets the leading and the plan cites it
   waiver:
     scope: value
   verify: static
@@ -815,6 +825,12 @@ rules:
   why: Title, label, and body share size, weight, and color, so the scan order is flat despite semantic
     headings
   better: Separate adjacent roles by changing one lever at a time - size, weight, contrast, or space
+  keep_when:
+  - id: contract-scale
+    when: the design contract fixes the type scale and the plan cites it
+  - id: non-size-levers
+    when: the roles are separated by weight, contrast, or space instead of size, and the plan names the
+      lever for each pair of roles
   waiver:
     scope: value
   verify: static
@@ -999,6 +1015,11 @@ rules:
       detector: font-fallback
   why: Text renders in a fallback font instead of the requested one, mixing sizes and color between scripts
   better: Lock a face that covers every script in the locales, or pair a companion with matched metrics
+  keep_when:
+  - id: locked-companion
+    when: the rendered face is the companion or fallback that the fonts lock records for that script
+  - id: user-content-scripts
+    when: user-generated text in scripts the planned locales do not cover, left to the platform's fallback
   waiver:
     scope: value
   verify: static
@@ -1227,6 +1248,9 @@ rules:
         chromatic_background_c: 0.08
   why: A neutral gray text token placed on a saturated surface looks muddy and often fails contrast
   better: Use an on-color role tuned to the surface hue and test it on the actual surface
+  keep_when:
+  - id: contract-pair
+    when: the design contract defines this text color on this surface and the plan cites it
   waiver:
     scope: value
   verify: static
@@ -1462,6 +1486,10 @@ rules:
     colors look wrong
   better: Define dark-theme roles separately, with lighter surfaces for elevation and re-tuned status
     and focus colors
+  keep_when:
+  - id: contract-two-color-swap
+    when: the design contract defines the dark theme as a deliberate swap of a two-color palette, with
+      focus, status, and image treatment set separately
   waiver:
     scope: value
   verify: review
@@ -1855,6 +1883,9 @@ rules:
       detector: grid-filler
   why: A bento cell exists only to complete the grid shape, so empty modules advertise the template
   better: Give one cell to each meaningful item and vary weight by importance
+  keep_when:
+  - id: data-cells
+    when: cells of a calendar, matrix, seat map, or heatmap, where an empty cell is a real value
   waiver:
     scope: value
   verify: review
@@ -1923,6 +1954,9 @@ rules:
   why: The space above a heading is no larger than the space below it, so the heading attaches to the
     previous section
   better: Give headings more space above than below
+  keep_when:
+  - id: repeating-rows
+    when: repeating heading rows, such as an accordion or definition list, that keep one even gap by design
   waiver:
     scope: value
   verify: static
@@ -1943,6 +1977,12 @@ rules:
         level_ratio_min: 1.5
   why: The same gap at every hierarchy level makes siblings, groups, and sections hard to tell apart
   better: Order spacing as inside a group, then between siblings, then between groups, then between sections
+  keep_when:
+  - id: contract-spacing
+    when: the design contract fixes the spacing step for each level and the page follows it
+  - id: single-level-surface
+    when: a surface with one level of grouping, such as a log, a feed, or a plain table, so there are
+      no groups or sections to tell apart
   waiver:
     scope: value
   verify: static
@@ -1991,6 +2031,10 @@ rules:
         check: proof-in-hero
   why: A logo wall, metrics, and extra copy packed into the hero bury the proposition and the action
   better: Keep the opening to proposition and action; place real proof immediately after
+  keep_when:
+  - id: brief-fixed-opening
+    when: the brief fixes what the opening must carry, such as an event's date and place, and the plan
+      lists those items
   waiver:
     scope: value
   verify: review
@@ -2033,6 +2077,10 @@ rules:
         check: heading-separated-from-intro
   why: A heading sits in one column and its explanation in another, splitting a dependent reading path
   better: Keep a dependent heading and intro in one reading path
+  keep_when:
+  - id: aligned-side-heading
+    when: a side heading aligned to the first line of its text, with the heading before the text in reading
+      order
   waiver:
     scope: value
   verify: static
@@ -2081,6 +2129,9 @@ rules:
   why: Navigation wraps to two lines at common desktop widths, consuming the opening and destabilizing
     scanning
   better: Prioritize the items or change the navigation model
+  keep_when:
+  - id: footer-link-groups
+    when: footer or sitemap link groups, which sit at the end of the page rather than in the opening
   waiver:
     scope: value
   verify: static
@@ -2145,6 +2196,10 @@ rules:
         check: scaled-only
   why: The compact layout is the desktop composition shrunk, treating responsive behavior as scale
   better: Define content order, collapse, and density for each section at each width
+  keep_when:
+  - id: fixed-canvas
+    when: a fixed-canvas surface, such as a map, diagram, slide, or spreadsheet, whose layout is the canvas
+      itself
   waiver:
     scope: value
   verify: static
@@ -2190,6 +2245,9 @@ rules:
   why: No element unique to this subject and task is planned or rendered, so the surface could belong
     to any product
   better: Name one signature element drawn from world_materials in the plan and build it
+  keep_when:
+  - id: repair-scope
+    when: a repair plan (mode repair) whose scope leaves the visual identity untouched
   waiver:
     scope: rule
   verify: static
@@ -2250,6 +2308,12 @@ rules:
   why: The composition sits close to the current defaults corpus across sequence, archetypes, symmetry,
     and density
   better: Revisit the content ranking and signature; change the structure where the content relation differs
+  keep_when:
+  - id: content-fixed-structure
+    when: the content has a structure of its own, such as a form, a legal text, a changelog, or a data
+      table
+  - id: form-fixed-by-contract-or-brief
+    when: the contract or the brief fixes the composition and the plan says so
   waiver:
     scope: rule
   verify: static
@@ -2332,6 +2396,12 @@ rules:
         families_max: 1
   why: Two or more icon families on one surface disagree in stroke, fill, optical size, and grid
   better: Normalize to one family, weight, grid, and alignment
+  keep_when:
+  - id: brand-marks
+    when: third-party brand marks beside the interface family, which cannot be redrawn in its style
+  - id: content-glyph-set
+    when: a glyph set that is content rather than interface chrome, such as country flags or file-type
+      badges
   waiver:
     scope: value
   verify: static
@@ -2376,6 +2446,10 @@ rules:
   why: One spinner for every wait ignores duration and layout and gives no sense of structure or preserved
     task
   better: Choose by wait - a delayed indicator, skeleton, progress, or inline status
+  keep_when:
+  - id: handoff-wait
+    when: a hand-off wait with no progress to report and no content structure to preview, such as an external
+      payment or sign-in redirect, with text that names what is happening
   waiver:
     scope: value
   verify: runtime
@@ -3363,6 +3437,10 @@ rules:
     in again
   better: Keep entered values through errors and navigation within the flow; clear only secrets, and say
     why
+  keep_when:
+  - id: cleared-secret
+    when: a secret or single-use value, such as a password, card number, or one-time code, is cleared
+      on purpose and the form says why
   waiver:
     scope: value
   verify: runtime
@@ -3405,6 +3483,12 @@ rules:
   why: A step offers no way forward or back other than the browser, including an error with no recovery
     action
   better: Give every state a next action - retry, edit, go back, or get help - and keep the user's place
+  keep_when:
+  - id: host-owns-navigation
+    when: the surface runs inside a host that owns navigation, such as an embedded widget or webview,
+      and brief.platform lists embedded
+  - id: kiosk-auto-reset
+    when: a kiosk or signage screen that returns to its start by itself after a visible countdown
   waiver:
     scope: value
   verify: runtime
@@ -3500,6 +3584,12 @@ rules:
     linked destination, so the user starts over
   better: Keep list state in the URL or history, restore the scroll position, and return to the requested
     destination after sign-in
+  keep_when:
+  - id: live-feed
+    when: a live feed whose order changes, so a restored position would land on other items
+  - id: cleared-for-security
+    when: state cleared on purpose for security, such as when a session ends on a shared device, with
+      the page saying so
   waiver:
     scope: value
   verify: runtime
@@ -3563,6 +3653,9 @@ rules:
         check: disabled-submit
   why: The submit control stays disabled with no visible reason, so the user cannot tell what is missing
   better: Keep submit enabled and explain errors on submit, or show next to it what is still needed
+  keep_when:
+  - id: request-in-flight
+    when: the control is disabled only while its own request is in flight and shows a pending state
   waiver:
     scope: value
   verify: runtime
@@ -3835,6 +3928,10 @@ rules:
         media_share_max: 0.8
   why: Every image scales or shifts on hover, making the gallery restless and moving crops and alignment
   better: Use hover to reveal actionable information, or keep images still
+  keep_when:
+  - id: inspection-zoom
+    when: hover zoom that lets a visitor inspect detail on one or two product or artwork images, not a
+      transform across a gallery
   waiver:
     scope: rule
   verify: runtime
@@ -3918,6 +4015,10 @@ rules:
         check: hidden-at-rest
   why: Scroll animation gates reading, leaving content hidden or delayed until the animation runs
   better: Keep content available at rest and enhance progressively
+  keep_when:
+  - id: story-with-static-fallback
+    when: a scroll-driven story whose content is complete and readable with animation off, shown by the
+      reduced-motion capture
   waiver:
     scope: value
   verify: runtime
@@ -4177,6 +4278,14 @@ rules:
         trigger: density
   why: Intensifiers and stacked hedges replace a precise claim with degree words
   better: State the claim at the strength the evidence supports
+  keep_when:
+  - id: exact-quotation
+    when: exact quotations
+  - id: required-qualifier
+    when: qualifiers that a regulation, a medical label, or a legal notice requires
+  - id: calibrated-to-source
+    when: hedges that state the strength the source supports, such as a forecast range or a study's stated
+      uncertainty
   waiver:
     scope: rule
   verify: review
@@ -4196,6 +4305,11 @@ rules:
         trigger: once
   why: A stock closing formula ends the text with an outlook or summary that adds nothing
   better: End on the last fact or the next action
+  keep_when:
+  - id: exact-quotation
+    when: exact quotations
+  - id: genre-sign-off
+    when: a sign-off that the text's genre requires, such as the close of a letter or an email
   waiver:
     scope: value
   verify: review
@@ -4248,6 +4362,9 @@ rules:
   why: Constructions carried over from English, such as double passives and heavy postpositional phrases,
     make the text read as translated
   better: Write directly in the target language, using particles and endings to show the relations
+  keep_when:
+  - id: quoted-or-governed
+    when: quoted or governed language
   waiver:
     scope: value
   verify: review
@@ -4296,6 +4413,10 @@ rules:
   why: The key copy stays true when the product name is swapped for another product, so it says nothing
     specific
   better: Rewrite around a fact, material, or action that only this product has
+  keep_when:
+  - id: fixed-function-text
+    when: text whose wording its function or the law fixes, such as terms, a privacy notice, or a standard
+      system message
   waiver:
     scope: value
   verify: review
@@ -4376,6 +4497,10 @@ rules:
         check: problem-and-recovery
   why: An error message apologizes or jokes without naming the problem and a route forward
   better: Say what happened, what it affects, and what the user can do next
+  keep_when:
+  - id: cause-withheld-for-security
+    when: the cause is withheld on purpose so the message does not reveal whether an account or item exists,
+      and a way forward is still offered
   waiver:
     scope: value
   verify: runtime
@@ -4505,6 +4630,10 @@ rules:
   why: Placeholder names and companies hide edge cases and the product's voice
   better: Use representative, clearly synthetic content matched to the domain, including long and local
     names
+  keep_when:
+  - id: reserved-example-values
+    when: values reserved for examples, such as example.com or 555 phone numbers, in documentation or
+      code samples
   waiver:
     scope: value
   verify: static
@@ -4528,6 +4657,12 @@ rules:
         distance_min: 0.2
   why: The copy sits close to the current defaults corpus in phrasing and construction
   better: Rewrite around the subject's facts and materials rather than substituting synonyms
+  keep_when:
+  - id: fixed-by-convention
+    when: wording that a legal, platform, or interface convention fixes, such as terms, system dialogs,
+      or standard control labels
+  - id: approved-copy
+    when: approved copy
   waiver:
     scope: rule
   verify: static
@@ -4567,6 +4702,12 @@ rules:
         check: decorative-clip-path
   why: A jagged decorative clip path on unrelated photos competes with the image subject
   better: Choose crop and contour from the content
+  keep_when:
+  - id: content-contour
+    when: a clip that follows the outline of the image's own subject, such as a product silhouette or
+      a map region
+  - id: contract-shape-language
+    when: a brand shape language recorded in the contract
   waiver:
     scope: value
   verify: static
@@ -4588,6 +4729,9 @@ rules:
         overlay_alpha_max: 0.6
   why: A heavy gradient or overlay buries the main image to rescue text contrast
   better: Show the image with legible contrast by placing text off it, or remove the image
+  keep_when:
+  - id: decorative-backdrop
+    when: a decorative backdrop with empty alt text, which carries nothing the page needs
   waiver:
     scope: value
   verify: static
@@ -4641,6 +4785,9 @@ rules:
         space: embedding
   why: A generic stock scene supplies category cliche instead of evidence about the product
   better: Commission or select context-specific, permissioned imagery
+  keep_when:
+  - id: supplied-asset
+    when: an image the client or brief supplied, recorded in the asset ledger with its origin
   waiver:
     scope: value
   verify: review
@@ -4669,6 +4816,12 @@ rules:
         - dynamic-viewport-clip
   why: A full-height shell sized with the static viewport height is clipped by mobile browser chrome
   better: Use dynamic viewport units and test on the target
+  keep_when:
+  - id: dvh-fallback
+    when: 100vh is only the fallback declared before a dynamic-viewport value for the same property
+  - id: no-mobile-browser
+    when: the brief lists no web platform, such as a desktop app or an embedded kiosk, so no mobile browser
+      chrome resizes the viewport
   waiver:
     scope: value
   verify: static
@@ -4746,6 +4899,10 @@ rules:
         cls_max: 0.1
   why: Images without intrinsic dimensions shift content as they load
   better: Supply width and height or an aspect ratio
+  keep_when:
+  - id: css-reserved-box
+    when: the box is reserved by a CSS aspect-ratio or fixed size that the source query cannot see, and
+      the render shows no layout shift
   waiver:
     scope: value
   verify: static
@@ -4771,6 +4928,12 @@ rules:
   why: Hard-coded dates, numbers, or locale strings go stale or wrong by locale, and time-dependent output
     differs between server and client
   better: Format with locale-aware APIs, stabilize the initial value, then update safely on the client
+  keep_when:
+  - id: content-literal
+    when: a date or number that is part of the written content, such as a publication date or a historical
+      year
+  - id: fixed-format-by-spec
+    when: a format that the brief or a standard fixes, such as ISO 8601 timestamps in a log view
   waiver:
     scope: value
   verify: runtime
@@ -4789,6 +4952,12 @@ rules:
         query: state-setter-in-pointer-or-scroll-handler
   why: Continuous pointer or scroll values stored in component state cause re-render loops and stutter
   better: Use motion values, refs, CSS, or platform APIs for continuous values
+  keep_when:
+  - id: frame-throttled
+    when: the setter runs at most once per frame through requestAnimationFrame or a throttle
+  - id: value-is-displayed
+    when: the value is rendered as text or structure that refs and CSS cannot update, such as a slider's
+      numeric readout
   waiver:
     scope: value
   verify: static
@@ -4830,6 +4999,13 @@ rules:
         rendered_items_max: 500
   why: A large list renders every item in a scrolling data surface, stalling and consuming memory
   better: Virtualize when the measured volume requires it
+  keep_when:
+  - id: measured-within-budget
+    when: the full list was measured on the target device and stays within a performance budget that the
+      brief states
+  - id: needs-full-dom
+    when: the full list must stay in the page for find-in-page, print, or assistive technology, and its
+      count is bounded by the source
   waiver:
     scope: value
   verify: runtime

@@ -132,11 +132,16 @@ def test_a_keep_with_a_reason_but_no_case_of_the_rule_leaves_the_default_blockin
 
 
 def test_a_keep_on_a_rule_that_lists_no_case_waives_nothing(tmp_path):
+    rules = yaml.safe_load(REAL_RULES.read_text(encoding="utf-8"))
+    next(r for r in rules["rules"] if r["id"] == "copy.name-swap").pop("keep_when", None)
+    rules_file = tmp_path / "rules-without-cases.yaml"
+    rules_file.write_text(yaml.safe_dump(rules, allow_unicode=True), encoding="utf-8")
     plan = base_plan()
     plan["content"]["key_copy"][0]["text"] = "Best pots in town"
     plan["defaults"].append({"id": "copy.name-swap", "decision": "keep", "basis": "brief", "keep_when": "anything",
                              "reason": "The studio wants this line"})
-    found = [f for f in run_real(tmp_path, plan)["findings"] if f["rule_id"] == "copy.name-swap"]
+    report = plan_check.run(write_plan(tmp_path, plan), rules_file, LOCK, SCHEMA, tmp_path)
+    found = [f for f in report["findings"] if f["rule_id"] == "copy.name-swap"]
     assert [f["status"] for f in found] == ["open"] and "lists no keep_when case" in found[0]["observed"]
 
 
@@ -569,6 +574,23 @@ def test_flat_scale_is_detected(tmp_path):
     plan["tokens"]["type"]["scale"]["ratio"] = 1.05
     report = run_real(tmp_path, plan)
     assert "type.flat-hierarchy" in ids(report, blocking=True)
+
+
+def flat_scale_plan(**keep):
+    plan = base_plan()
+    plan["tokens"]["type"]["scale"]["ratio"] = 1.05
+    plan["defaults"].append({"id": "type.flat-hierarchy", "decision": "keep", "basis": "contract",
+                             "reason": "The studio's design file fixes this scale", **keep})
+    return plan
+
+
+@pytest.mark.parametrize("named, status, blocking", [
+    ({"keep_when": "contract-scale"}, "waived", False),
+    ({"keep_when": "specified-face"}, "open", True),
+    ({}, "open", True)], ids=["a case of the rule", "a case of another rule", "no case"])
+def test_flat_scale_is_waived_only_by_a_keep_naming_a_case_of_the_rule(tmp_path, named, status, blocking):
+    [found] = [f for f in run_real(tmp_path, flat_scale_plan(**named))["findings"] if f["rule_id"] == "type.flat-hierarchy"]
+    assert (found["status"], found["blocking"]) == (status, blocking)
 
 
 def test_missing_signature_warns_in_create_mode(tmp_path):
