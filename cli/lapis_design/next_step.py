@@ -15,6 +15,9 @@ Done means the procedure is complete, not that the release passes: a blocking ve
 report. A step is also done when its failure record is fresh (`attempts.py`): the check was tried and
 the environment, not an input, stopped it. A missing input, an invalid input, a timeout, a finding, or a
 plan blocker never counts as done; the step that creates or fixes it comes back.
+
+While questions the run wrote for its user are unanswered (`waiting.py`), the state is `waiting-for-user`
+instead: its step says to stop and wait, and `then` is the step that comes after the answers.
 """
 from __future__ import annotations
 
@@ -31,7 +34,7 @@ from typing import Any
 
 import yaml
 
-from lapis_design import attempts, release_check, shared_dir
+from lapis_design import attempts, gate, release_check, shared_dir, waiting
 from lapis_design.lint.cli import problems
 from lapis_design.plan_check import PlanOverLimit, read_plan
 
@@ -55,12 +58,15 @@ class NextError(Exception):
 
 
 def resolve_task(root: Path, task: str | None = None) -> str | None:
-    """`task`, else $LAPIS_TASK, else the most recently written plan under `root`."""
+    """`task`, else $LAPIS_TASK, else the task of the most recently written plan or set of questions
+    under `root` (a run that has asked its questions has no plan yet, and names the task by them)."""
     task = task or os.environ.get("LAPIS_TASK") or None
     if task:
         return task
-    plans = sorted((root / ".lapis" / "plans").glob("*.yaml"), key=lambda p: p.stat().st_mtime, reverse=True)
-    return next((p.stem for p in plans if attempts.TASK.fullmatch(p.stem)), None)
+    written = [*(root / ".lapis" / "plans").glob("*.yaml"),
+               *(p for p in (root / ".lapis" / "questions").glob("*.md") if waiting.counts(p))]
+    written.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    return next((p.stem for p in written if attempts.TASK.fullmatch(p.stem)), None)
 
 
 class _Controls(HTMLParser):
@@ -191,9 +197,25 @@ def evaluate(root: Path, task: str, page: str | None = None) -> dict:
     """The state of `task` under `root`: `{"task", "state", "step", "interactive", "reason"}`.
 
     `state` is `needs-step` with the one `step` to take (`id`, `why`, `command` or None, and `schema`
-    when a file has to be written), or `done`. `page` is the page the render and behavior commands
+    when a file has to be written), or `done`. While the run's questions for its user wait for an
+    answer, `state` is `waiting-for-user`, `step` says to stop, `then` is the step that comes after, and
+    `waiting` names the questions and answers files. `page` is the page the render and behavior commands
     name; without it the usual entry file is used, and a page that cannot be found stays `<page>`.
     Raises NextError when the files cannot be read as a state."""
+    result = _steps(root, task, page)
+    step = result["step"]
+    if step is None:
+        return result
+    found = waiting.pending(root, task, "plan" if step["id"] == "plan" else "approval",
+                            gate.load(root, task).get("waits"))
+    if found is None:
+        return result
+    wait = _step(waiting.STEP, waiting.why(task, found, step["id"]))
+    return {**result, "state": waiting.STEP, "step": wait, "then": step, "waiting": found, "reason": wait["why"]}
+
+
+def _steps(root: Path, task: str, page: str | None) -> dict:
+    """`evaluate` without the waiting state: the step the files call for."""
     paths = release_check.input_paths(root, task)
     paths["release"] = root / ".lapis" / "release" / f"{task}.json"
     stub = root / ".lapis" / "stub.yaml"

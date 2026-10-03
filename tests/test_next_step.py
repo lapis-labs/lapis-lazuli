@@ -11,7 +11,7 @@ import yaml
 
 from lapis_design import attempts, next_step
 from lapis_design.cli import main as cli_main
-from procedure_support import TASK, finish, make_interactive, make_project, save, touch, update
+from procedure_support import TASK, ask, finish, make_interactive, make_project, reply, save, touch, update
 
 PLAN = f"plans/{TASK}.yaml"
 
@@ -236,3 +236,68 @@ def test_without_a_plan_or_a_task_the_command_asks_for_one(tmp_path, monkeypatch
     with pytest.raises(SystemExit) as exc:
         cli_main(["next", "--root", str(tmp_path)])
     assert exc.value.code == 2 and "pass --task" in capsys.readouterr().err
+
+
+QUESTIONS = "1. Who visits the kiln shop page?\n2. Is the monthly firing date fixed?\n"
+
+
+def test_unanswered_questions_make_the_state_waiting_for_the_user_and_the_answers_bring_back_the_step(project):
+    (project / ".lapis/assets.ledger.json").unlink()
+    ask(project, QUESTIONS, 200)
+    result = next_step.evaluate(project, TASK)
+    assert (result["state"], result["step"]["id"], result["then"]["id"]) == ("waiting-for-user", "waiting-for-user", "ledger")
+    assert result["waiting"]["questions"] == f".lapis/questions/{TASK}.md" and result["waiting"]["phase"] == "approval"
+    assert result["step"]["command"] is None and f".lapis/answers/{TASK}.md" in result["step"]["why"]
+    reply(project, "1. Buyers.\n2. Yes.\n", 300)
+    assert (next_step.evaluate(project, TASK)["state"], step_of(project)) == ("needs-step", "ledger")
+    ask(project, "3. Which glaze first?\n", 400)
+    assert step_of(project) == "waiting-for-user"                       # the latest questions are newer than the answers
+
+
+def test_a_run_with_no_plan_waits_in_the_plan_phase(project):
+    (project / ".lapis" / PLAN).unlink()
+    ask(project, QUESTIONS, 200)
+    result = next_step.evaluate(project, TASK)
+    assert (result["state"], result["waiting"]["phase"], result["then"]["id"]) == ("waiting-for-user", "plan", "plan")
+
+
+def test_a_finished_procedure_is_done_whatever_the_questions_say(project):
+    assert finish(project, "--static") == 0
+    ask(project, QUESTIONS, 10**9)
+    assert next_step.evaluate(project, TASK)["state"] == "done"
+
+
+def test_waiting_ends_for_next_when_the_gate_has_let_as_many_sets_pass_as_the_run_may_ask(project):
+    (project / ".lapis/assets.ledger.json").unlink()
+    save(project, f"gate/{TASK}.json", {"version": 0, "task": TASK, "waits": {"approval": 1, "last": "old"}})
+    ask(project, QUESTIONS, 200)
+    assert step_of(project) == "ledger"
+
+
+@pytest.mark.parametrize("text", ["", "Questions", "# Questions\n"])
+def test_questions_without_words_do_not_make_the_run_wait(project, text):
+    (project / ".lapis/assets.ledger.json").unlink()
+    ask(project, text, 200)
+    assert step_of(project) == "ledger"
+
+
+def test_the_json_of_a_waiting_run_names_the_step_after_the_answers(project, capsys):
+    (project / ".lapis/assets.ledger.json").unlink()
+    ask(project, QUESTIONS, 200)
+    assert cli_main(["next", "--task", TASK, "--root", str(project), "--json"]) == 0
+    printed = json.loads(capsys.readouterr().out)
+    assert (printed["state"], printed["then"]["id"]) == ("waiting-for-user", "ledger")
+    assert cli_main(["next", "--task", TASK, "--root", str(project)]) == 0
+    assert capsys.readouterr().out.startswith(f"next: waiting-for-user ({TASK})")
+
+
+def test_a_run_that_asked_before_it_wrote_a_plan_is_found_by_its_questions(tmp_path, monkeypatch):
+    monkeypatch.delenv("LAPIS_TASK", raising=False)
+    assert next_step.resolve_task(tmp_path) is None
+    ask(tmp_path, "", 200, task="kiln-remake")
+    assert next_step.resolve_task(tmp_path) is None                     # an empty file names no task
+    ask(tmp_path, QUESTIONS, 210, task="kiln-remake")
+    assert next_step.resolve_task(tmp_path) == "kiln-remake"
+    save(tmp_path, "plans/older-plan.yaml", {})
+    touch(tmp_path, "plans/older-plan.yaml", 100)
+    assert next_step.resolve_task(tmp_path) == "kiln-remake"            # the newest of plans and questions

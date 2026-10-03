@@ -9,6 +9,12 @@ Limits, kept in `.lapis/gate/<task>.json` because a hook is a new process each t
 a row for the same step, fifteen in a session. At either limit the gate lets the agent stop and records
 the step that was left (`capped`), so the run ends and the reader can see where it stopped.
 
+One stop passes without counting a continue: the run asked its user something. `next` then says
+`waiting-for-user` (waiting.py: questions written and not yet answered) and the gate answers nothing, so
+an operator can relay the answers. It counts each set of questions it let pass under `waits` in the same
+file and lets at most two pass before a plan exists and one after; past that it continues the agent as
+before.
+
 A bug of ours or a state that cannot be read never stops an agent: the gate answers nothing then. A folder
 with no plan is no project, with one exception: an unattended run (`LAPIS_UNATTENDED=1`, which only an
 operator sets, for a design run) owes a plan, so its step is `plan`, under the same limits. The gate checks
@@ -26,6 +32,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
+
+from lapis_design import waiting
 
 ENV = "LAPIS_UNATTENDED"
 CAP_STEP = 3
@@ -66,7 +74,8 @@ def _path(project: Path, task: str) -> Path:
     return project / ".lapis" / "gate" / f"{task}.json"
 
 
-def _load(project: Path, task: str) -> dict[str, Any]:
+def load(project: Path, task: str) -> dict[str, Any]:
+    """The gate's recorded state for `task`: `{}` when there is none or it cannot be read."""
     try:
         state = json.loads(_path(project, task).read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -84,7 +93,7 @@ def _save(project: Path, task: str, state: dict[str, Any]) -> None:
         print(f"lapis-design gate: {target} cannot be written: {exc}", file=sys.stderr)
 
 
-def continuation(result: dict[str, Any], first: bool) -> str:
+def continuation(result: dict[str, Any], first: bool, relayed: bool = False) -> str:
     """What the agent is told when the gate continues it: the step, and the rules that make it count."""
     step, task = result["step"], result["task"]
     parts = [f"LapisLazuli: the procedure for task {task} is not done. Next step: {step['id']}."]
@@ -97,7 +106,11 @@ def continuation(result: dict[str, Any], first: bool) -> str:
                  f"`lapis-design next --task {task}` again until it says done. Only a failure of the environment, "
                  "such as a browser that cannot start, counts, and the check records it itself. Never write or edit "
                  "a report, a lock, or a failure record by hand.")
-    if first or step["id"].startswith("plan"):
+    if relayed:
+        if step["id"].startswith("plan"):
+            parts.append("A person's answers are recorded: write `approval: {state: approved}` only if they approve "
+                         "this plan, otherwise `assumed` with a reason.")
+    elif first or step["id"].startswith("plan"):
         parts.append("No person is present to approve the plan: record `approval: {state: assumed, reason: ...}` in "
                      "it and continue; never write `approved`, which only the user's own approval earns.")
     return "\n".join(parts)
@@ -105,6 +118,8 @@ def continuation(result: dict[str, Any], first: bool) -> str:
 
 def notice(result: dict[str, Any]) -> str:
     step, task = result["step"], result["task"]
+    if result["state"] == waiting.STEP:
+        return f"LapisLazuli: task {task} waits for the user's answers to {result['waiting']['questions']}."
     return (f"LapisLazuli: the procedure for task {task} is not done; next step {step['id']} "
             f"(`lapis-design next --task {task}`).")
 
@@ -128,28 +143,39 @@ def stop_output(project: Path, session: str = "", *, unattended: bool = True,
     except Exception as exc:        # a bug or an unreadable file here must not hold an agent in its turn
         print(f"lapis-design gate: {type(exc).__name__}: {exc}", file=sys.stderr)
         return None
-    state = _load(project, task)
+    stored = load(project, task)
+    waits = stored.get("waits") if isinstance(stored.get("waits"), dict) else {}
+    state = stored
     if session and state.get("session") not in (None, session):
         state = {}                                              # another session starts its own count
+
+    def save(**fields: Any) -> None:                             # the waits belong to the task, not the session
+        _save(project, task, {"session": session or state.get("session"), **fields,
+                              **({"waits": waits} if waits else {})})
+
     step = result["step"]
     if step is None:
         if state.get("step") or state.get("capped"):
-            _save(project, task, {"session": session or state.get("session"), "step": None, "same": 0,
-                                  "total": state.get("total", 0)})
+            save(step=None, same=0, total=state.get("total", 0))
         return None
     if not unattended:
         return {"systemMessage": notice(result)}
+    if result["state"] == waiting.STEP:                         # the run asked its user: no continue, none counted
+        found = result["waiting"]
+        if not found["counted"]:
+            waits = waiting.counted(waits, found)
+            save(step=state.get("step"), same=state.get("same", 0), total=state.get("total", 0),
+                 **({"capped": state["capped"]} if state.get("capped") else {}))
+        return None
     same = state.get("same", 0) if state.get("step") == step["id"] else 0
     total = state.get("total", 0)
     if same >= CAP_STEP or total >= CAP_TOTAL:
         capped = {"reason": "same-step" if same >= CAP_STEP else "total", "step": step["id"],
                   "command": step["command"], "at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
-        _save(project, task, {"session": session or state.get("session"), "step": step["id"], "same": same,
-                              "total": total, "capped": capped})
+        save(step=step["id"], same=same, total=total, capped=capped)
         return None
-    _save(project, task, {"session": session or state.get("session"), "step": step["id"], "same": same + 1,
-                          "total": total + 1})
-    return {"decision": "block", "reason": continuation(result, first=total == 0)}
+    save(step=step["id"], same=same + 1, total=total + 1)
+    return {"decision": "block", "reason": continuation(result, first=total == 0, relayed=bool(waits))}
 
 
 def decide(event: Mapping[str, Any], env: Mapping[str, str] = os.environ) -> dict[str, Any] | None:

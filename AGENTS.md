@@ -255,7 +255,10 @@ files beside it; the database file itself does not change.
   is ever recorded. `lapis-design hook stop` (`gate.py`) is the exit gate every harness asks: with a plan in reach and
   `LAPIS_UNATTENDED=1` it continues the agent with that step, three times in a row for one step and fifteen in a
   session at most (state in `.lapis/gate/<task>.json`); an unattended run with no plan owes one, so its step is `plan`
-  (task from `$LAPIS_TASK`, else the project folder's name); otherwise it prints one line and never blocks.
+  (task from `$LAPIS_TASK`, else the project folder's name); otherwise it prints one line and never blocks. A run that
+  stopped to ask its user (`waiting.py`: `.lapis/questions/<task>.md` newer than `.lapis/answers/<task>.md`) makes
+  `next` say `waiting-for-user` and the gate let the stop pass without a continue: two sets before a plan, one after
+  (`waits` in the gate state).
 - `lazuli` lives in `cli/lazuli/`: `scan.py` (read-only inventory; `LAZULI_FONT_ROOTS` replaces the
   roots and turns the Core Text listing off), `coretext.py` (Adobe Fonts through Core Text on macOS,
   never through their files), `measure.py` (PANOSE Latin and the CJK extension per `vocab/type.yaml`; bump

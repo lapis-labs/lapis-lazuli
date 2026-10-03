@@ -17,6 +17,11 @@ license: MIT AND CC-BY-4.0
   to edit a report or waive a finding.
 - With nobody to ask (`LAPIS_UNATTENDED=1`), record `approval: {state: assumed, reason: ...}` in the plan and go on;
   `approved` is only a person's.
+- When a person will answer, a user or an operator who relays replies, write the questions the plan needs (grilling
+  before it, or its approval) to `.lapis/questions/<task>.md` and stop with them as your last message: `next` says
+  `waiting-for-user` and the exit gate lets that stop pass, twice before a plan and once after, never for a file of
+  fewer than two words. Record the replies in `.lapis/answers/<task>.md`, cite them in the plan (`context.other`,
+  `claims.declared`), and run `next` again.
 - A brief's no-network line limits what the page loads; checks on 127.0.0.1 are not network use.
 
 lapis turns a request into a design contract - the plan file `.lapis/plans/<task>.yaml` - and then
@@ -52,8 +57,8 @@ A small edit inside an established system needs no plan. Say so and make the edi
    including the `DESIGN.md` dialect. Report conflicting records instead of merging them.
 2. Read `.lapis/plans/<task>.yaml` if it exists and continue it; a different task gets a new id.
 3. If this session has no font inventory summary, run `lazuli local fonts --summary`.
-4. Ask only questions whose answers change the plan, as the smallest independent set. Otherwise
-   write a reversible assumption into `claims.proposed` and continue.
+4. Ask only questions whose answers change the plan, as the smallest independent set (a relayed run: see Done).
+   Otherwise write a reversible assumption into `claims.proposed` and continue.
 
 ## Direction principles
 
@@ -293,8 +298,8 @@ List every document, page, and file the plan relied on.
    default win here.
 2. Run `lapis-design plan check .lapis/plans/<task>.yaml` and fix every blocking finding.
 3. Run `lapis-design plan check .lapis/plans/<task>.yaml --summary`, show the user the summary and
-   the defaults decisions, and wait for approval before code. Once the user approves, record
-   `approval: {state: approved}` in the plan; with nobody to ask, record `assumed` (see Done). In a
+   the defaults decisions, and wait for approval before code (a relayed run asks it as Done says). Once the user
+   approves, record `approval: {state: approved}` in the plan; with nobody to ask, record `assumed` (see Done). In a
    harness plan mode, embed the plan as described in `shared/plan/HARNESS-PLAN-MODES.md`.
 
 ## Implement

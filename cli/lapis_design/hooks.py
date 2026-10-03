@@ -18,9 +18,11 @@ stop         Stop in the lapis plugin's hooks/hooks.json (Claude Code, Codex), a
              (`cwd`, `session_id`) names a project; with a plan under it and `LAPIS_UNATTENDED=1`, the gate
              (gate.py) continues the agent with the step `lapis-design next` still asks for, up to three
              times in a row for one step and fifteen in a session. An unattended run with no plan owes one:
-             its step is `plan`. Without that variable it prints a one-line `systemMessage` and never
-             blocks. Output is Claude Code's and Codex's Stop JSON; the extensions translate it. With no
-             plan and no unattended run, or on any failure of ours, it prints nothing.
+             its step is `plan`. A run waiting for its user's answers (`.lapis/questions/<task>.md`, see
+             waiting.py) is let stop, two sets of questions before a plan and one after. Without that
+             variable it prints a one-line `systemMessage` and never blocks. Output is Claude Code's and
+             Codex's Stop JSON; the extensions translate it. With no plan and no unattended run, or on any
+             failure of ours, it prints nothing.
 """
 from __future__ import annotations
 

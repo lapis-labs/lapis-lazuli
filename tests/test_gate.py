@@ -9,7 +9,7 @@ import pytest
 
 from lapis_design import gate
 from lapis_design.cli import main as cli_main
-from procedure_support import TASK, finish, make_project, save, touch
+from procedure_support import TASK, ask, finish, make_project, reply, save, touch
 
 STATE = f".lapis/gate/{TASK}.json"
 
@@ -194,3 +194,110 @@ def test_the_stop_hook_says_nothing_to_an_event_it_cannot_read_when_nobody_runs_
     monkeypatch.chdir(tmp_path)
     monkeypatch.delenv("LAPIS_TASK", raising=False)
     assert hook(monkeypatch, capsys, stdin, LAPIS_UNATTENDED="0") == ""
+
+
+QUESTIONS = "1. Who visits the kiln shop page?\n2. Is the monthly firing date fixed?\n"
+ANSWERS = "1. Buyers of the monthly firing.\n2. Yes, the first Saturday.\n"
+
+
+def next_question(index: int) -> str:
+    return f"{index}. Which of the {index + 2} glaze colors goes first?\n"
+
+
+def test_a_run_that_asked_its_user_may_stop_and_no_continue_is_counted(project):
+    assert gate.stop_output(project, "s1")["decision"] == "block"            # one continue before the question
+    ask(project, QUESTIONS, 200)
+    assert [gate.stop_output(project, "s1") for _ in range(4)] == [None] * 4   # the same set is one wait, not four
+    saved = state(project)
+    assert (saved["step"], saved["same"], saved["total"]) == ("ledger", 1, 1)
+    assert saved["waits"]["approval"] == 1 and "plan" not in saved["waits"] and "capped" not in saved
+
+
+def test_answers_resume_the_run_with_the_step_that_comes_next(project):
+    ask(project, QUESTIONS, 200)
+    assert gate.stop_output(project, "s1") is None
+    reply(project, ANSWERS, 300)
+    answer = gate.stop_output(project, "s1")
+    assert answer["decision"] == "block" and "Next step: ledger." in answer["reason"]
+    assert (state(project)["same"], state(project)["total"], state(project)["waits"]["approval"]) == (1, 1, 1)
+
+
+def test_questions_asked_again_after_an_answer_are_waited_on_while_the_cap_allows(tmp_path, monkeypatch):
+    monkeypatch.setenv("LAZULI_DB", "")
+    folder = tmp_path / "Kiln Shop"
+    folder.mkdir()
+    outcomes = []
+    for index in range(3):
+        ask(folder, next_question(index), 200 + 20 * index, task="kiln-shop")
+        outcomes.append(gate.stop_output(folder, "s1", task="kiln-shop"))
+        reply(folder, ANSWERS, 210 + 20 * index, task="kiln-shop")
+    assert outcomes[:2] == [None, None]                                   # two sets before a plan exist
+    assert outcomes[2]["decision"] == "block" and "Next step: plan." in outcomes[2]["reason"]
+    saved = json.loads((folder / ".lapis/gate/kiln-shop.json").read_text(encoding="utf-8"))
+    assert saved["waits"]["plan"] == 2 and (saved["step"], saved["same"], saved["total"]) == ("plan", 1, 1)
+
+
+def test_one_set_after_the_plan_and_the_two_before_it_are_counted_apart(project):
+    save(project, f"gate/{TASK}.json", {"version": 0, "task": TASK, "waits": {"plan": 2, "last": "0-0"}})
+    ask(project, next_question(1), 200)
+    assert gate.stop_output(project, "s1") is None                         # the approval question
+    reply(project, ANSWERS, 210)
+    ask(project, next_question(2), 220)
+    answer = gate.stop_output(project, "s1")
+    assert answer["decision"] == "block" and "Next step: ledger." in answer["reason"]
+    assert state(project)["waits"]["plan"] == 2 and state(project)["waits"]["approval"] == 1
+
+
+@pytest.mark.parametrize("text", ["", "  \n\n", "Questions", "# Questions for the user\n", "1.\n", "?\n"])
+def test_a_questions_file_without_words_of_its_own_does_not_hold_the_run(project, text):
+    ask(project, text, 200)
+    answer = gate.stop_output(project, "s1")
+    assert answer["decision"] == "block" and "Next step: ledger." in answer["reason"]
+    assert "waits" not in state(project)
+
+
+def test_writing_the_same_questions_again_after_the_answer_is_a_new_set_and_hits_the_cap(project):
+    ask(project, QUESTIONS, 200)
+    assert gate.stop_output(project, "s1") is None
+    reply(project, ANSWERS, 210)
+    ask(project, QUESTIONS, 220)
+    assert gate.stop_output(project, "s1")["decision"] == "block"
+
+
+def test_the_waits_belong_to_the_task_and_not_to_the_session(project):
+    ask(project, QUESTIONS, 200)
+    assert gate.stop_output(project, "s1") is None
+    assert gate.stop_output(project, "s2") is None                         # the same set is not counted again
+    reply(project, ANSWERS, 210)
+    ask(project, next_question(1), 220)
+    assert gate.stop_output(project, "s2")["decision"] == "block"          # the one after-plan set was used in s1
+    assert state(project)["waits"]["approval"] == 1 and state(project)["session"] == "s2"
+
+
+def test_a_person_at_the_keyboard_is_told_what_the_run_waits_for_and_nothing_is_recorded(project):
+    ask(project, QUESTIONS, 200)
+    answer = gate.stop_output(project, "s1", unattended=False)
+    assert set(answer) == {"systemMessage"} and f".lapis/questions/{TASK}.md" in answer["systemMessage"]
+    assert not (project / STATE).exists()
+
+
+def test_a_run_whose_questions_were_answered_is_not_told_that_nobody_is_present(tmp_path, monkeypatch):
+    monkeypatch.setenv("LAZULI_DB", "")
+    folder = tmp_path / "Kiln Shop"
+    folder.mkdir()
+    cold = gate.stop_output(folder, "s1", task="kiln-shop")["reason"]
+    assert "No person is present to approve the plan" in cold
+    ask(folder, QUESTIONS, 200, task="kiln-shop")
+    assert gate.stop_output(folder, "s1", task="kiln-shop") is None
+    reply(folder, ANSWERS, 210, task="kiln-shop")
+    warm = gate.stop_output(folder, "s1", task="kiln-shop")["reason"]
+    assert "Next step: plan." in warm and "No person is present" not in warm
+    assert "A person's answers are recorded: write `approval: {state: approved}` only if they approve" in warm
+
+
+def test_the_stop_hook_prints_nothing_while_the_run_waits_for_its_user(project, monkeypatch, capsys):
+    ask(project, QUESTIONS, 200)
+    event = json.dumps({"hook_event_name": "Stop", "cwd": str(project), "session_id": "s1", "stop_hook_active": False})
+    assert hook(monkeypatch, capsys, event, LAPIS_UNATTENDED="1") == ""
+    reply(project, ANSWERS, 210)
+    assert json.loads(hook(monkeypatch, capsys, event, LAPIS_UNATTENDED="1"))["decision"] == "block"

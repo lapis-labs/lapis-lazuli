@@ -167,6 +167,20 @@ findings pick the plan steps. A record newer than what its step reads (the plan,
 `behavior`) stands in for that step, and the lint gaps it leaves are expected. `done` means the procedure is
 complete, not that the gate passes: a blocking report ends it too, and the verdict is what the agent reports.
 
+While questions the run wrote for its user are unanswered, `next` returns the state `waiting-for-user` instead
+of a step: `step.id` is `waiting-for-user` (stop, and wait for the answers), `then` is the step that comes
+after them, and `waiting` names the files and the `phase`, `plan` while there is no plan file and `approval`
+once there is one. The questions are in `.lapis/questions/<task>.md` and count when the file has two words or
+more outside its heading lines (an empty or one-word file is no question); the answers are in
+`.lapis/answers/<task>.md`, where the plan can cite them from `context.other` and `claims.declared`. The
+questions are unanswered when no answers file with a word in it is at least as new, by modification time, as the
+questions file. A procedure that is `done` stays `done`. The exit gate (`lapis-design hook stop` with
+`LAPIS_UNATTENDED=1`) lets a waiting run stop without counting a continue, and counts each set of questions it let
+pass in `.lapis/gate/<task>.json` under `waits` (`plan`, `approval`, and `last`, the set's id): at most two sets
+while there is no plan file and one after it. A set is one text written once, so writing the same words again is a
+new set. Past the cap `next` and the gate name the step the files call for, as without questions. Without
+`--task`, `next` takes the task of the newest plan or counted questions file.
+
 ## What the gate does not do
 
 It does not rerun captures, probes, or lint, judge design quality, or state a legal conclusion.

@@ -90,3 +90,22 @@ def make_interactive(root: Path) -> None:
 def finish(root: Path, *flags: str) -> int:
     """Run the real release gate offline so its report is the newest file: the procedure is then complete."""
     return cli_main(["release", "check", "--task", TASK, "--root", str(root), "--offline", *flags])
+
+
+def record(root: Path, folder: str, text: str, at: int, task: str = TASK) -> Path:
+    """`.lapis/<folder>/<task>.md` with `text`, modified at second `at` (the order of two records is what counts)."""
+    path = root / ".lapis" / folder / f"{task}.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+    os.utime(path, (at, at))
+    return path
+
+
+def ask(root: Path, text: str, at: int, task: str = TASK) -> Path:
+    """The questions the run wrote for its user."""
+    return record(root, "questions", text, at, task)
+
+
+def reply(root: Path, text: str, at: int, task: str = TASK) -> Path:
+    """The answers the run recorded."""
+    return record(root, "answers", text, at, task)

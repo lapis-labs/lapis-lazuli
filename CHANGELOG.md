@@ -40,6 +40,9 @@ after text.
   lists a plan nobody approved for the user to confirm, and the section on failure records and `next`.
   `install/harnesses.yaml`: the plugin hook `stop`, the output `gate-extension`, and the harness mechanism
   `exit_gate`.
+- `release/GATE.md`: the `next` state `waiting-for-user`, for a run that stopped to ask its user. The questions are in
+  `.lapis/questions/<task>.md` and the answers in `.lapis/answers/<task>.md`; the gate counts each set it lets pass in
+  `.lapis/gate/<task>.json` under `waits`, two before a plan exists and one after.
 
 ### Added
 
@@ -80,6 +83,14 @@ after text.
   `.lapis/gate/<task>.json`; otherwise it prints one line and never blocks. An unattended run that wrote no plan is
   continued to write one (step `plan`, task named for the project folder unless `LAPIS_TASK` is set), under the same
   limits. Codex runs the hook only once you trust it in `/hooks`; an untrusted hook is skipped without a message.
+- Waiting for the user: a run that must ask before it can plan (grilling), or for the plan's approval, writes the
+  questions to `.lapis/questions/<task>.md` and stops. `lapis-design next` returns `waiting-for-user` (`then` is the
+  step after the answers) while the questions are newer than `.lapis/answers/<task>.md`, and the unattended exit gate
+  lets that stop pass without counting a continue: at most two sets of questions before a plan exists and one after,
+  and not for a file of under two words; a set past the limit is continued like any stop. Without `--task`, `next`
+  also takes the task of the newest questions file. The `lapis` Done block says how the replies reach the plan
+  (`context.other`, `claims.declared`); after an answered set the gate's continuation no longer says nobody is present
+  to approve, and tells the run to write `approved` only when the recorded answers approve the plan.
 
 ### Changed
 
