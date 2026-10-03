@@ -236,6 +236,27 @@ def test_web_fonts_are_named_by_their_font_face(browser, web_font_page: str, tmp
     assert fonts["System font paragraph"]["rendered"] not in ("Brand Sans", "")
 
 
+def test_page_that_rebuilds_itself_on_resize_is_captured_whole(browser, render_server: str, tmp_path: Path,
+                                                               monkeypatch: pytest.MonkeyPatch) -> None:
+    """Every full-page screenshot makes the browser send a resize event although nothing is resized. A page that
+    rebuilds its text and chart in answer lost the nodes the field passes held: `getComputedStyle` of the
+    parent of a removed text node, and box ids that were no longer in the page."""
+    import lapis_design.render.capture as capture_module
+    real, resizes = capture_module.apply_fields, {}
+
+    def observed(view, vp):
+        real(view, vp)
+        view.page.evaluate("dispatchEvent(new Event('resize'))")      # a page's own event still gets through
+        resizes.update(view.page.evaluate("window.__resizes"))
+
+    monkeypatch.setattr(capture_module, "apply_fields", observed)
+    vp = capture(browser, f"{render_server}/resize-rerender.html", _configs(False, [390])[0],
+                 tmp_path / "shot.png", bytes(range(32)))
+    stats = next(run for run in vp["text"] if "12.4%" in run["text"])
+    assert stats["fill"] == "solid" and stats["measure_chars"] > 0
+    assert resizes == {"browser": 0, "page": 1}
+
+
 def test_cli_writes_extract_and_screenshots(render_server: str, tmp_path: Path) -> None:
     out = tmp_path / "demo.json"
     env = {**os.environ, "LAPIS_SIG_KEY_FILE": str(tmp_path / "sig.key")}

@@ -24,6 +24,25 @@ from lapis_design.render.raw import RawView
 from lapis_design.render.script import script_of
 from lapis_design.text_sig import page_sig, run_sig
 
+# Chromium delivers a `resize` event to the window and to visualViewport for every full-page screenshot,
+# although neither size changes. Pages answer it by rebuilding charts and live regions, which detaches the
+# text nodes and `data-lapis-box` elements the field passes still hold. These contexts never resize, so a
+# browser-made resize that leaves the size where it was is dropped before the page's listeners run. A resize
+# event the page dispatches itself is not the browser's (`isTrusted` is false) and goes through.
+_DROP_SAME_SIZE_RESIZE = r"""(() => {
+  const drop = (target, size) => {
+    let last = size();
+    target.addEventListener('resize', event => {
+      const now = size();
+      if (event.isTrusted && now === last) event.stopImmediatePropagation();
+      last = now;
+    }, true);
+  };
+  drop(window, () => innerWidth + 'x' + innerHeight);
+  if (window.visualViewport)
+    drop(visualViewport, () => visualViewport.width + 'x' + visualViewport.height + '@' + visualViewport.scale);
+})()"""
+
 # One evaluation preserves DOM order and exact style boundaries before Python converts colors.
 _DOM = r"""() => {
  const nodes = [...document.querySelectorAll('*')];
@@ -358,6 +377,7 @@ def capture(browser: Browser, url: str, config: dict, screenshot_path: Path, key
     context = browser.new_context(viewport={"width": config["width"], "height": config["layout_height"]},
                                   device_scale_factor=2, color_scheme=config["theme"],
                                   reduced_motion="reduce" if config["reduced_motion"] else "no-preference")
+    context.add_init_script(_DROP_SAME_SIZE_RESIZE)
     for script in init_scripts():
         context.add_init_script(script)
     try:

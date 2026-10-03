@@ -188,6 +188,18 @@ after text.
   On the stillvault and clinic pilot pages, isolated `controls` probes take 133 s and 332 s rather than 266 s
   and 534 s. The contract wording is proposed separately; `src/shared/behavior/DERIVED.md` is unchanged.
 
+### Fixed
+
+- `render check` exited 2 with `Page.evaluate: getComputedStyle: parameter 1 is not of type 'Element'` (or a
+  `KeyError` on a box id) on a page that rebuilds its chart and text when the window resizes. Chromium sends a
+  `resize` event to the window and to `visualViewport` for every full-page screenshot, although neither size
+  changes, and the capture takes one before the field passes and more inside them. The page replaced the text
+  nodes and boxes the passes still held, and the geometry pass read the parent of a removed text node. The
+  capture context now drops a browser-made `resize` that leaves the window and visual viewport at the size they
+  had; a `resize` event the page dispatches itself still reaches its listeners. The transit dashboard pilot page
+  captures in all six viewports three runs out of three (it failed every run before). A page that replaces a
+  text node on its own timer while the capture runs still fails the same way.
+
 ## 0.2.0 (2026-10-02)
 
 Direction: the plan's form levers must be tied to the subject, a font left to the platform counts as a

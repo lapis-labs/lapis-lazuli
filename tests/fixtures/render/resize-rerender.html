@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Rebuilt on resize</title>
+<style>
+ body { margin: 0; font: 16px/1.4 Arial, sans-serif; }
+ #stats { margin: 16px; padding: 12px; border: 1px solid #888; }
+ #chart { margin: 16px; border: 1px solid #888; }
+ #chart svg { display: block; width: 100%; height: 120px; }
+ #tail { height: 1600px; background: #f4f4f4; }
+</style></head><body><main>
+ <h1>Ridership</h1>
+ <p id="stats"></p>
+ <div id="chart"></div>
+ <div id="tail">Tall enough that a full-page screenshot is larger than the viewport</div>
+</main><script>
+ // A chart that measures and rebuilds itself on `resize`, as chart libraries and dashboards do: the text
+ // node and the svg boxes it replaced are gone from the document afterwards. It rebuilds in the handler
+ // so the rebuild is over before the screenshot that made the browser send the event returns.
+ window.__resizes = {browser: 0, page: 0};
+ const render = () => {
+   document.getElementById('stats').innerHTML = '12.4% above yesterday <span>(forecast)</span>';
+   document.getElementById('chart').innerHTML =
+     '<svg viewBox="0 0 100 40" role="img" aria-label="Ridership"><rect width="40" height="30" fill="#3a9e85"/></svg>';
+ };
+ render();
+ addEventListener('resize', event => {
+   window.__resizes[event.isTrusted ? 'browser' : 'page']++;
+   render();
+ });
+</script></body></html>
