@@ -269,9 +269,11 @@ Walk the cards in `shared/slop/cards.yaml`. For each card whose cue matches the 
 decide each of its rules that applies:
 
 - **keep** with a basis - `brief`, `contract`, or `requirement` - a `keep_when` naming one of the
-  rule's ids in `shared/slop/rules.yaml`, and a reason that says how this plan meets that case. A keep
-  whose id is not the rule's waives nothing, a rule that lists no case takes no keep, and no entry
-  lifts `plan.uncompared-decision`.
+  rule's ids in `shared/slop/rules.yaml`, a reason that says how this plan meets that case, and the
+  `evidence` that case lists: a quoted line of `brief`, a `DESIGN.md#token` of the contract in
+  `context.design`, a world material, a source, the face that won in `explorations`, or a ledger
+  asset. A keep whose id is not the rule's, or whose case lists evidence the keep lacks, waives
+  nothing; a rule that lists no case takes no keep, and no entry lifts `plan.uncompared-decision`.
 - **reject** and take one of the card's routes. A route spends a world material, the signature, or
   a plan decision; it never swaps one card for another (rejecting the dark luminous package by
   switching to the warm editorial one is still a default).

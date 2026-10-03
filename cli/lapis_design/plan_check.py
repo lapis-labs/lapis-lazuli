@@ -3,9 +3,10 @@
 Checks, in order:
   1. schema     JSON Schema validation against src/shared/plan/schema.yaml
   2. defaults   evaluate plan-layer detectors from rules.yaml; every hit needs a `defaults` entry. A keep
-                waives a hit only when it names, as `keep_when`, one of the ids the rule lists; a rule that
-                lists none takes no keep. Detectors this module does not implement run from the slop_lint
-                registry (cli/lapis_design/lint), with the lazuli database for font features.
+                waives a hit only when it names, as `keep_when`, one of the ids the rule lists and, when that
+                case lists evidence (keep_evidence), carries evidence that holds; a rule that lists none takes
+                no keep. Detectors this module does not implement run from the slop_lint registry
+                (cli/lapis_design/lint), with the lazuli database for font features.
   3. contract   when DESIGN.md is declared, token values must come from it or be proposed changes
   4. fonts      every type role must be in the fonts lock with a delivery path for the platform, files
                 from a channel that may ship them, and a recorded grant for each planned use
@@ -15,8 +16,9 @@ Checks, in order:
 Output follows src/shared/slop/finding.schema.yaml. Exit code 1 when any finding is blocking.
 
 By default, plan-layer rules come from the CLI's shared slop/rules.yaml. A font lock is read from
-ROOT/.lapis/fonts.lock.json when present. Font measurements use $LAZULI_DB when set, otherwise the
-lazuli user-cache database when present. Explicit --rules, --lock, and --lazuli-db paths take precedence.
+ROOT/.lapis/fonts.lock.json when present, and a keep's design evidence is looked up in the file the plan
+declares as context.design, under ROOT. Font measurements use $LAZULI_DB when set, otherwise the lazuli
+user-cache database when present. Explicit --rules, --lock, and --lazuli-db paths take precedence.
 
 A plan larger than 1,000,000 bytes, or nested more than 100 levels deep, is not parsed (`parse_plan`):
 it gets one schema.invalid finding. The exit-plan hook, the release gate, and the slop lint layer
@@ -471,11 +473,12 @@ def keep_ids(rule: dict) -> list[str]:
     return [case["id"] for case in rule.get("keep_when") or [] if isinstance(case, dict) and "id" in case]
 
 
-def default_verdict(rule: dict, decision: dict | None) -> tuple[bool, str | None]:
+def default_verdict(rule: dict, decision: dict | None, sources: Any) -> tuple[bool, str | None]:
     """Whether a plan's `defaults` entry waives a hit of `rule`, and why an entry that cannot does not apply.
     A rule that is a requirement or whose waiver scope is none takes no entry. A keep waives only when the
-    entry names one of the ids the rule lists as `keep_when`; a rule that lists none takes no keep. A reject,
-    or no entry, is (False, None): the finding stays as it was."""
+    entry names one of the ids the rule lists as `keep_when` and, when that case lists evidence, carries
+    evidence that holds in `sources` (keep_evidence.Sources: the plan, the asset ledger, the design text); a
+    rule that lists no case takes no keep. A reject, or no entry, is (False, None): the finding stays as it was."""
     if not decision:
         return False, None
     name = rule.get("id")
@@ -486,7 +489,11 @@ def default_verdict(rule: dict, decision: dict | None) -> tuple[bool, str | None
     ids = keep_ids(rule)
     named = decision.get("keep_when")
     if named in ids:
-        return True, None
+        from lapis_design import keep_evidence   # imports this module's resolve, so not at load time
+
+        case = next(c for c in rule["keep_when"] if isinstance(c, dict) and c.get("id") == named)
+        missing = keep_evidence.gap(case, decision, sources)
+        return (False, missing) if missing else (True, None)
     if not ids:
         return False, f"{name} lists no keep_when case, so no keep fits it"
     accepted = ", ".join(ids)
@@ -507,8 +514,26 @@ def _defaults_fix(rule: dict) -> str:
             f"({', '.join(ids)}). {better}").rstrip()
 
 
-def check_defaults(plan: dict, rules: dict, plan_file: str, lazuli_db: Path | None = None) -> list[dict]:
-    """Plan-layer rules; registry detectors share one context, with the lazuli DB for font features."""
+def read_design_text(plan: dict, root: Path) -> str | None:
+    """The text of the design contract the plan declares in `context.design`, or None when none is declared
+    or the file cannot be read."""
+    design = (plan.get("context") or {}).get("design")
+    if not design:
+        return None
+    try:
+        return (root / design["path"]).read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+
+
+def check_defaults(plan: dict, rules: dict, plan_file: str, lazuli_db: Path | None = None,
+                   sources: Any = None) -> list[dict]:
+    """Plan-layer rules; registry detectors share one context, with the lazuli DB for font features.
+    `sources` (keep_evidence.Sources) is where a keep's evidence is looked up; the plan alone when absent."""
+    if sources is None:
+        from lapis_design.keep_evidence import Sources
+
+        sources = Sources(plan)
     names = {det.get("detector") for r in rules.get("rules", []) if (det := (r.get("detect") or {}).get("plan"))}
     ctx = None
     if names - PLAN_DETECTORS:
@@ -523,13 +548,13 @@ def check_defaults(plan: dict, rules: dict, plan_file: str, lazuli_db: Path | No
             raise LazuliDBOpenError(f"lazuli database {lazuli_db} cannot be opened: {exc}") from exc
         ctx = Context(rules=rules, plan=plan, plan_path=plan_file, lazuli=lazuli)
     try:
-        return _check_defaults(plan, rules, plan_file, ctx)
+        return _check_defaults(plan, rules, plan_file, ctx, sources)
     finally:
         if ctx is not None and ctx.lazuli is not None:
             ctx.lazuli.close()
 
 
-def _check_defaults(plan: dict, rules: dict, plan_file: str, ctx: Any) -> list[dict]:
+def _check_defaults(plan: dict, rules: dict, plan_file: str, ctx: Any, sources: Any) -> list[dict]:
     out = []
     decided = {d["id"]: d for d in plan.get("defaults", []) if isinstance(d, dict) and "id" in d}
     for rule in rules.get("rules", []):
@@ -545,7 +570,7 @@ def _check_defaults(plan: dict, rules: dict, plan_file: str, ctx: Any) -> list[d
         if not hit:
             continue
         decision = decided.get(rule["id"])
-        waived, unfit = default_verdict(rule, decision)
+        waived, unfit = default_verdict(rule, decision, sources)
         if waived or (decision and decision["decision"] == "reject" and unfit is None):
             out.append(finding(rule["id"], rule["class"], detail, blocking=False, create="info",
                                status="waived" if waived else "open",
@@ -811,7 +836,10 @@ def run(plan_path: Path | None, rules_path: Path | None, lock_path: Path | None,
     findings = check_structure(plan, schema_path, plan_file)
     if not findings:                           # code checks assume a structurally valid plan
         if rules_path:
-            findings += check_defaults(plan, load_yaml(rules_path), plan_file, lazuli_db)
+            from lapis_design.keep_evidence import Sources
+
+            sources = Sources(plan, design_text=read_design_text(plan, root))
+            findings += check_defaults(plan, load_yaml(rules_path), plan_file, lazuli_db, sources)
         findings += check_contract(plan, root, plan_file)
         lock = load_lock(lock_path) if lock_path and lock_path.exists() else None
         findings += check_fonts(plan, lock, plan_file)

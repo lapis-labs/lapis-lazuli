@@ -45,8 +45,8 @@ rules:
     why: An earthy accent used regardless of the subject
     better: Ground the accent in the subject's world_materials, or choose again using relation vocabulary
     keep_when:
-      - { id: brand-color, when: "an approved brand color" }
-      - { id: clay-subject, when: "the subject itself is terracotta or clay" }
+      - { id: brand-color, when: "an approved brand color", evidence: [design, brief] }
+      - { id: clay-subject, when: "the subject itself is terracotta or clay", evidence: [material, brief] }
     waiver: { scope: value }
     verify: static
 

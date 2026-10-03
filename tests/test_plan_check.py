@@ -105,6 +105,7 @@ def test_unrecorded_default_blocks(tmp_path):
 
 def clay_plan(**keep):
     plan = base_plan()
+    plan["world_materials"].append("clay body")
     plan["tokens"]["color"]["roles"].append({"name": "clay", "role": "identity", "oklch": [0.61, 0.13, 41]})
     plan["defaults"].append({"id": "color.terracotta-accent", "decision": "keep", "basis": "brief",
                              "reason": "The studio's clay body is this color", **keep})
@@ -117,7 +118,7 @@ def clay_finding(report):
 
 
 def test_recorded_keep_naming_a_case_of_the_rule_waives_the_default(tmp_path):
-    report = run(tmp_path, clay_plan(keep_when="clay-subject"))
+    report = run(tmp_path, clay_plan(keep_when="clay-subject", evidence={"material": "clay body"}))
     assert "color.terracotta-accent" not in ids(report, blocking=True)
     assert (clay_finding(report)["status"], clay_finding(report)["blocking"]) == ("waived", False)
 
@@ -563,8 +564,10 @@ def test_web_plan_with_every_text_role_on_the_platform_sans_blocks_without_a_fon
         [finding] = [f for f in report["findings"] if f["rule_id"] == rule_id]
         assert finding["status"] == "open" and finding["blocking"] and finding["evidence"] == {"type": "plan"}
     assert [f["rule_id"] for f in report["findings"] if f["rule_id"].startswith("type.") and f["status"] == "skipped"] == []
+    plan["brief"]["constraints"].append("Operate screens take the platform's own face")
     plan["defaults"] = [{"id": "type.overused-neutral-grotesque", "decision": "keep", "basis": "brief",
-                         "keep_when": "specified-face", "reason": "An operate screen takes the platform's own face"}]
+                         "keep_when": "specified-face", "reason": "An operate screen takes the platform's own face",
+                         "evidence": {"brief": "Operate screens take the platform's own face"}}]
     waived = [f for f in run_real(tmp_path, plan)["findings"] if f["rule_id"] == "type.overused-neutral-grotesque"]
     assert [(f["status"], f["blocking"]) for f in waived] == [("waived", False)]
 
@@ -578,6 +581,7 @@ def test_flat_scale_is_detected(tmp_path):
 
 def flat_scale_plan(**keep):
     plan = base_plan()
+    plan["context"]["design"] = {"path": "DESIGN.md", "dialect": "google"}
     plan["tokens"]["type"]["scale"]["ratio"] = 1.05
     plan["defaults"].append({"id": "type.flat-hierarchy", "decision": "keep", "basis": "contract",
                              "reason": "The studio's design file fixes this scale", **keep})
@@ -585,10 +589,11 @@ def flat_scale_plan(**keep):
 
 
 @pytest.mark.parametrize("named, status, blocking", [
-    ({"keep_when": "contract-scale"}, "waived", False),
+    ({"keep_when": "contract-scale", "evidence": {"design": "DESIGN.md#typography.scale"}}, "waived", False),
     ({"keep_when": "specified-face"}, "open", True),
     ({}, "open", True)], ids=["a case of the rule", "a case of another rule", "no case"])
 def test_flat_scale_is_waived_only_by_a_keep_naming_a_case_of_the_rule(tmp_path, named, status, blocking):
+    (tmp_path / "DESIGN.md").write_text("typography:\n  scale: 1.05\n", encoding="utf-8")
     [found] = [f for f in run_real(tmp_path, flat_scale_plan(**named))["findings"] if f["rule_id"] == "type.flat-hierarchy"]
     assert (found["status"], found["blocking"]) == (status, blocking)
 

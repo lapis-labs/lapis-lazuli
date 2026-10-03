@@ -83,7 +83,7 @@ def _names(entry: dict) -> list[str]:
                               if isinstance(c, dict) and _text(c.get("name"))))
 
 
-def _problems(entry: dict, params: dict, design: object) -> list[str]:
+def entry_problems(entry: dict, params: dict, design: object) -> list[str]:
     """Why an entry does not hold up; empty when it is a complete comparison or a valid exemption."""
     fixed = entry.get("fixed_by")
     if fixed:
@@ -143,7 +143,7 @@ def plan_candidates(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
     entries = [(i, e) for i, e in enumerate(plan.get("explorations") or ()) if isinstance(e, dict)]
     here = {"file": ctx.plan_path} if ctx.plan_path else {}
     path = det.get("path") or "explorations"
-    problems = {i: _problems(e, params, design) for i, e in entries}
+    problems = {i: entry_problems(e, params, design) for i, e in entries}
     missing: list[Need] = []
     unsound: dict[int, None] = {}
     for need in _needs(plan, params, design):

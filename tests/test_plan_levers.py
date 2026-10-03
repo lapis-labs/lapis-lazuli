@@ -155,6 +155,9 @@ def pilot_shaped_plan():
          "candidates": [{"name": "system-ui", "source": "generic"}, {"name": "Pretendard", "source": "local"}],
          "compared_on": ["specimen"], "chosen": "system-ui",
          "runner_up_lost": "Pretendard read the same on the phone and needs a file to ship"}]
+    for entry in plan["defaults"]:                     # the example's keeps cite the face that won there
+        if entry.get("evidence") == {"exploration": "Pretendard"}:
+            entry["evidence"] = {"exploration": "system-ui"}
     plan["layout"]["sections"] = [
         {"id": name, "archetype": name, "answers": "What do I need to know here"}
         for name in ("opening", "features", "plans", "questions", "closing")]
@@ -178,9 +181,10 @@ def test_a_lever_that_names_its_material_unblocks_the_pilot_shaped_plan(tmp_path
 @pytest.mark.parametrize("decision,status", [("keep", "waived"), ("reject", "open")])
 def test_a_defaults_entry_for_the_rule_stops_the_block(tmp_path, decision, status):
     plan = pilot_shaped_plan()
-    entry = {"keep_when": "form-fixed-by-contract-or-brief"} if decision == "keep" else {}
+    entry = ({"keep_when": "form-fixed-by-contract-or-brief",
+              "evidence": {"brief": "Most visits are on mobile"}} if decision == "keep" else {})
     plan["defaults"].append({"id": RULE_ID, "decision": decision, "basis": "brief", **entry,
-                             "reason": "The contract fixes the form and says so"})
+                             "reason": "The brief fixes the form and says so"})
     report = run_real(tmp_path, plan)
     found = next(f for f in report["findings"] if f["rule_id"] == RULE_ID)
     assert found["blocking"] is False and found["status"] == status

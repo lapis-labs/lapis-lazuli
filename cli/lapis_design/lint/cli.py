@@ -5,6 +5,8 @@ given: the plan, a source tree, a render extract, a behavior session, the asset 
 lock, reference profiles, a typicality corpus, and the lazuli database. The lock defaults to
 ./.lapis/fonts.lock.json when present; the database defaults to $LAZULI_DB, else the user cache
 file when present. Explicit paths take precedence. Each input is checked against its schema first.
+A keep's design evidence is looked up in the file the plan declares as context.design, read from the
+working directory.
 Layers default to every layer whose input was given (plan, source, render, behavior), plus review
 in review mode when a plan or an extract was given.
 
@@ -40,7 +42,7 @@ from lapis_design import shared_dir
 from lapis_design.lint import engine
 from lapis_design.lint.types import Context
 from lapis_design.plan_check import (default_lazuli_db, default_lock, expansion_problem, non_string_key_paths,
-                                     read_plan, skipped_note)
+                                     read_design_text, read_plan, skipped_note)
 
 SCHEMAS = {
     "rules": ("slop", "rules.schema.yaml"),
@@ -194,6 +196,7 @@ def run(*, rules: Path | None = None, plan: Path | None = None, extract: Path | 
         source_root=source,
         ledger=_load(ledger, "ledger", "asset ledger") if ledger else None,
         lock=_load(lock, "lock", "fonts lock") if lock else None,
+        design_text=read_design_text(plan_doc, Path(".")) if plan_doc else None,
         refs=[_load(p, "extract", "reference profile") for p in refs],
         corpus=_corpus(corpus, corpus_links) if corpus else [],
     )

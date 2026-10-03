@@ -229,20 +229,22 @@ def test_a_keep_on_a_rule_that_lists_no_case_leaves_the_hit_open():
     [f] = lint([rule("color.cream", {"render": det("test-echo", "cream field")})], plan=plan)
     assert (f["status"], f["blocking"]) == ("open", True) and "lists no keep_when case" in f["context"]["basis"]
 
-# The rules that gate in create mode and had no keep case; each now lists one, which the hit's plan keep can name.
+# The rules that gate in create mode and had no keep case; each lists one. A keep that names it waives once it
+# holds what that case lists, given per rule here: a design file and the token cited in it, a line of the brief,
+# or a platform the brief lists.
 GATING_CASES = {
-    "type.tight-leading": "single-line-text",
-    "type.flat-hierarchy": "contract-scale",
-    "color.gray-on-color": "contract-pair",
-    "color.inverted-dark-theme": "contract-two-color-swap",
-    "layout.bento-filler": "data-cells",
-    "ux.lost-input": "cleared-secret",
-    "ux.dead-end": "host-owns-navigation",
-    "motion.hover-zoom-everything": "inspection-zoom",
-    "copy.error-without-recovery": "cause-withheld-for-security",
-    "imagery.jagged-clip": "content-contour",
-    "code.mobile-100vh": "dvh-fallback",
-    "code.unvirtualized-list": "measured-within-budget",
+    "type.tight-leading": ("single-line-text", {}),
+    "type.flat-hierarchy": ("contract-scale", {"design": ("DESIGN.md#typography.scale", "typography:\n  scale: 1.25\n")}),
+    "color.gray-on-color": ("contract-pair", {"design": ("DESIGN.md#components.button", "components:\n  button: {}\n")}),
+    "color.inverted-dark-theme": ("contract-two-color-swap", {"design": ("DESIGN.md#colors.ink", "colors:\n  ink: '#111'\n")}),
+    "layout.bento-filler": ("data-cells", {}),
+    "ux.lost-input": ("cleared-secret", {}),
+    "ux.dead-end": ("host-owns-navigation", {"platform": ["embedded"]}),
+    "motion.hover-zoom-everything": ("inspection-zoom", {}),
+    "copy.error-without-recovery": ("cause-withheld-for-security", {}),
+    "imagery.jagged-clip": ("content-contour", {}),
+    "code.mobile-100vh": ("dvh-fallback", {}),
+    "code.unvirtualized-list": ("measured-within-budget", {"brief": "The full list renders in 100 ms on a mid-range phone"}),
 }
 
 
@@ -255,13 +257,24 @@ def real_rule_that_hits(rule_id: str) -> dict:
                 **({"keep_when": real["keep_when"]} if "keep_when" in real else {}))
 
 
-@pytest.mark.parametrize("rule_id, case", GATING_CASES.items())
-def test_a_gating_rule_is_waived_by_a_keep_naming_its_case_and_not_by_another_rules_case(rule_id, case):
-    other_rules_case = next(c for other, c in GATING_CASES.items() if other != rule_id)
+@pytest.mark.parametrize("rule_id, case_and_support", GATING_CASES.items())
+def test_a_gating_rule_is_waived_by_a_keep_naming_its_case_and_not_by_another_rules_case(rule_id, case_and_support):
+    case, support = case_and_support
+    other_rules_case = next(c for other, (c, _) in GATING_CASES.items() if other != rule_id)
 
     def finding(named: str) -> dict:
         keep = {"id": rule_id, "decision": "keep", "basis": "brief", "keep_when": named, "reason": "The brief fixes it"}
-        [f] = lint([real_rule_that_hits(rule_id)], plan=plan_with(keep))
+        plan, inputs = plan_with(keep), {}
+        if "design" in support:
+            anchor, inputs["design_text"] = support["design"]
+            keep["evidence"] = {"design": anchor}
+            plan["context"] = {"design": {"path": "DESIGN.md", "dialect": "google"}}
+        if "brief" in support:
+            keep["evidence"] = {"brief": support["brief"]}
+            plan["brief"]["constraints"] = [support["brief"]]
+        if "platform" in support:
+            plan["brief"]["platform"] = support["platform"]
+        [f] = lint([real_rule_that_hits(rule_id)], plan=plan, **inputs)
         return f
 
     kept = finding(case)
@@ -269,6 +282,7 @@ def test_a_gating_rule_is_waived_by_a_keep_naming_its_case_and_not_by_another_ru
     unfit = finding(other_rules_case)
     assert (unfit["status"], unfit["blocking"]) == ("open", True)
     assert case in unfit["context"]["basis"]
+
 
 def test_a_reject_decision_leaves_the_hit_open():
     plan = plan_with({"id": "color.cream", "decision": "reject", "basis": "brief", "reason": "Competes with glazes"})

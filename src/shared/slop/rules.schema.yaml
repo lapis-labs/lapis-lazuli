@@ -105,6 +105,42 @@ $defs:
       threshold: {}                                    # included in the checker view only
       params: { type: object }
 
+  keep_evidence:                                       # what a keep that names the case has to carry (cli keep_evidence.py)
+    oneOf:
+      - { const: none }                                # no plan field, contract, or ledger can show the premise; the critic reads the reason
+      - type: array                                    # alternatives: one that holds backs the keep
+        minItems: 1
+        uniqueItems: true
+        items:
+          oneOf:
+            - { enum: [design, brief, material, source, exploration] }   # cited in the keep's evidence.<kind>
+            - type: object                             # a ledger asset the keep cites in evidence.asset
+              additionalProperties: false
+              required: [asset]
+              properties:
+                asset:
+                  type: object
+                  additionalProperties: false
+                  minProperties: 1
+                  properties:                          # values from assets/ledger.schema.yaml
+                    kind: { type: array, minItems: 1, items: { type: string } }
+                    origin: { type: array, minItems: 1, items: { type: string } }
+                    role: { type: array, minItems: 1, items: { type: string } }
+            - type: object                             # the plan itself says it; no citation
+              additionalProperties: false
+              required: [plan]
+              properties:
+                plan: { type: string, pattern: "^[a-z_][a-z0-9_]*(\\[\\*\\])?(\\.[a-z_][a-z0-9_]*(\\[\\*\\])?)*$" }   # plan path
+                has: { type: array, minItems: 1, items: { type: string } }     # holds when any value is at the path
+                lacks: { type: array, minItems: 1, items: { type: string } }   # holds when none is, and the path has a value
+                present: { const: true }
+                min: { type: number }                  # holds when a number at the path is at least this
+              oneOf:
+                - { required: [has] }
+                - { required: [lacks] }
+                - { required: [present] }
+                - { required: [min] }
+
   rule:
     type: object
     additionalProperties: false
@@ -158,6 +194,7 @@ $defs:
           properties:
             id: { type: string, pattern: "^[a-z0-9]+(-[a-z0-9]+)*$" }   # stable and unique within the rule
             when: { type: string, minLength: 8 }
+            evidence: { $ref: "#/$defs/keep_evidence" }   # absent on a rule that takes no keep (requirement, or waiver scope none)
       waiver:
         type: object
         properties:

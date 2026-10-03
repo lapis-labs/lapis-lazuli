@@ -174,11 +174,13 @@ defaults:
     decision: keep
     keep_when: platform-body-readability
     basis: brief
+    evidence: { exploration: Pretendard }
     reason: Body text favors mobile readability, so a neutral sans stays
   - id: type.overused-neutral-grotesque
     decision: keep
     keep_when: won-comparison
     basis: brief
+    evidence: { exploration: Pretendard }
     reason: Pretendard won the body specimen on a phone against Noto Sans KR
   - id: color.warm-editorial
     decision: reject
@@ -188,6 +190,7 @@ defaults:
     decision: keep
     keep_when: paper-material
     basis: brief
+    evidence: { material: firing log sheet }
     reason: The field is the paper of the firing log sheet, one of the world materials
 sources:
   - { ref: PRODUCT.md }

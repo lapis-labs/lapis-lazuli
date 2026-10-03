@@ -186,6 +186,88 @@ def test_keep_when_ids_are_unique_within_their_rule():
     assert repeated == []
 
 
+def takes_a_keep(rule):
+    """A rule a plan's defaults keep can waive: not a requirement, and its waiver scope is not none."""
+    return rule["class"] != "requirement" and (rule.get("waiver") or {}).get("scope") != "none"
+
+
+def test_every_case_of_a_rule_that_takes_a_keep_says_what_evidence_it_needs_and_no_other_case_does():
+    """`evidence: none` is the visible gap: the case waives on the keep's reason alone."""
+    wrong = [(r["id"], k["id"]) for r in rules_doc()["rules"] for k in r.get("keep_when", [])
+             if ("evidence" in k) != takes_a_keep(r)]
+    assert wrong == []
+
+
+def alternatives_of(case):
+    """The alternatives a case lists; `evidence: none` and a missing key list none."""
+    return case["evidence"] if isinstance(case.get("evidence"), list) else []
+
+
+def plan_schema_values(path):
+    """What the plan schema allows at a plan path such as `tokens.color.roles[*].role`: its enum, or the enum of
+    its items when it is a list, and its type. KeyError when the path is not in the schema."""
+    root = load("plan/schema.yaml")
+
+    def deref(node):
+        while "$ref" in node:
+            target = root
+            for part in node["$ref"].split("/")[1:]:
+                target = target[part]
+            node = target
+        return node
+
+    node = root
+    for part in path.split("."):
+        node = deref(deref(node)["properties"][part.removesuffix("[*]")])
+        if part.endswith("[*]"):
+            node = deref(node["items"])
+    item = deref(node["items"]) if node.get("type") == "array" else node
+    return item.get("enum"), item.get("type")
+
+
+def test_a_plan_condition_in_a_keep_case_names_a_path_and_values_the_plan_schema_allows():
+    bad = []
+    for r in rules_doc()["rules"]:
+        for k in r.get("keep_when", []):
+            for alt in (a for a in alternatives_of(k) if isinstance(a, dict) and "plan" in a):
+                try:
+                    allowed, kind = plan_schema_values(alt["plan"])
+                except KeyError:
+                    bad.append((r["id"], k["id"], alt["plan"], "not in the plan schema"))
+                    continue
+                values = alt.get("has", []) + alt.get("lacks", [])
+                if allowed is not None and not set(values) <= set(allowed):
+                    bad.append((r["id"], k["id"], alt["plan"], sorted(set(values) - set(allowed))))
+                if "min" in alt and kind not in ("integer", "number"):
+                    bad.append((r["id"], k["id"], alt["plan"], "min needs a number"))
+    assert bad == []
+
+
+def test_an_asset_condition_in_a_keep_case_lists_values_the_ledger_schema_allows():
+    asset = load("assets/ledger.schema.yaml")["$defs"]["asset"]["properties"]
+    bad = [(r["id"], k["id"], field, value)
+           for r in rules_doc()["rules"] for k in r.get("keep_when", [])
+           for alt in alternatives_of(k) if isinstance(alt, dict) and "asset" in alt
+           for field, values in alt["asset"].items() for value in values if value not in asset[field]["enum"]]
+    assert bad == []
+
+
+def test_every_kind_of_evidence_a_case_lists_is_one_a_defaults_entry_can_carry():
+    carried = set(load("plan/schema.yaml")["properties"]["defaults"]["items"]["properties"]["evidence"]["properties"])
+    listed = {alt if isinstance(alt, str) else "asset" for r in rules_doc()["rules"] for k in r.get("keep_when", [])
+              for alt in alternatives_of(k) if isinstance(alt, str) or "asset" in alt}
+    assert listed and listed <= carried
+
+
+def test_a_case_that_two_rules_state_in_the_same_words_asks_for_the_same_evidence():
+    seen, mismatched = {}, set()
+    for r in rules_doc()["rules"]:
+        for k in r.get("keep_when", []):
+            if "evidence" in k and seen.setdefault((k["id"], k["when"]), k["evidence"]) != k["evidence"]:
+                mismatched.add((r["id"], k["id"]))
+    assert mismatched == set()
+
+
 def test_every_observed_layer_has_a_detector_except_review():
     bad = [(r["id"], layer) for r in rules_doc()["rules"] for layer in r["layers"]
            if layer != "review" and layer not in (r.get("detect") or {})]

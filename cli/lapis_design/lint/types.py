@@ -51,6 +51,7 @@ class Context:
     source_root: Path | None = None                 # project source tree for source-layer detectors
     ledger: dict | None = None
     lock: dict | None = None
+    design_text: str | None = None                  # text of the file the plan declares as context.design
     refs: list[dict] = field(default_factory=list)     # reference profiles (extract format with `reference`)
     corpus: list[dict] = field(default_factory=list)   # typicality corpus entries (extract format)
     lazuli: sqlite3.Connection | None = None           # the user's lazuli DB, for font features

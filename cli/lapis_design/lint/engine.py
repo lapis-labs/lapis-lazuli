@@ -8,8 +8,8 @@ the run (slop/rules.yaml header, behavior/DERIVED.md "Coverage"):
                      that of the first `severity.adjust` whose `when` the hit satisfies, else the
                      rule's; blocking on create `gate` in create mode, on review P0/P1 in review mode
 - plan `defaults`    a `keep` entry waives the rule's hits when it names one of the rule's `keep_when` ids
-                     (`plan_check.default_verdict`), except for requirement rules and rules whose waiver
-                     scope is `none`
+                     and carries the evidence that case lists (`plan_check.default_verdict`, `keep_evidence`),
+                     except for requirement rules and rules whose waiver scope is `none`
 - rule `locales`     the rule runs only when the plan's brief.locales or the extract's text runs
                      include one of them; detectors restrict their own text runs (`in_locales`)
 - package-hit        hits when at least `hit_when.min_members` member rules hit at the same layer
@@ -35,6 +35,7 @@ from typing import Iterable, Mapping
 import yaml
 
 from lapis_design import __version__, plan_check, shared_dir
+from lapis_design.keep_evidence import Sources
 from lapis_design.lint import detectors
 from lapis_design.lint.types import DETECTORS, Context, Hit, Result
 
@@ -222,6 +223,7 @@ class _Run:
         self.by_id = {r["id"]: r for r in rules}
         defaults = (ctx.plan or {}).get("defaults") or []
         self.decisions = {d["id"]: d for d in defaults if isinstance(d, dict) and "id" in d}
+        self.evidence = Sources(ctx.plan or {}, ctx.ledger, ctx.design_text)
         self.memo: dict[tuple[str, str], Result | None] = {}
         self._content: set[str] | None = None
 
@@ -368,7 +370,7 @@ class _Run:
             f["distance"] = hit.distance
         f["evidence"] = {"type": hit.evidence, **({"refs": list(hit.refs)} if hit.refs else {})}
         decision = self.decisions.get(rule["id"])
-        waived, unfit = plan_check.default_verdict(rule, decision)
+        waived, unfit = plan_check.default_verdict(rule, decision, self.evidence)
         if waived:
             f["context"] = {"verdict": "earned", "basis": f"plan defaults entry ({decision.get('basis')}, {decision.get('keep_when')})"}
             f.update(blocking=False, status="waived",

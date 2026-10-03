@@ -26,6 +26,15 @@ after text.
   `ux.consent-steering`; the way out of those is the fix.
 - `plan/schema.yaml`: the top-level `explorations` and `keep_when` on a `defaults` entry; `plan/example.plan.yaml`
   records both, and `docs/examples` stay unfinished on purpose.
+- `slop/rules.yaml` and `slop/rules.schema.yaml`: each of the 175 `keep_when` cases on a rule that takes a keep lists
+  `evidence`, the alternatives a plan can hold for its premise (a `design` token, a quoted line of `brief`, a
+  `material`, a `source`, a won `exploration`, a ledger `asset`, or a `plan` condition such as
+  `brief.platform lacks web`), or `none`. 88 cases list evidence (50 accept a brief line, 28 a design token, 24 a
+  plan condition, 16 a source, 4 a material, 4 a ledger asset, 2 a won comparison; a case may accept several) and 87
+  list `none`: nothing a plan, a design contract, or the ledger holds shows their premise, so the keep waives on its
+  reason as before and the critic reads it. The 22 cases on requirement and `scope: none` rules, which take no keep,
+  carry no `evidence`. `plan/schema.yaml`: a `defaults` entry takes `evidence` (`design`, `brief`, `material`,
+  `source`, `exploration`, `asset`); `plan/example.plan.yaml` cites the face that won and the world material.
 - `plan/schema.yaml`: the optional top-level `approval` (`state: approved|assumed`, and a `reason` when `assumed`);
   `plan/example.plan.yaml` records it. `release/GATE.md`: the non-blocking finding `release.approval-assumed`, which
   lists a plan nobody approved for the user to confirm, and the section on failure records and `next`.
@@ -120,6 +129,15 @@ after text.
   and the message lists the accepted ids. A rule that lists no `keep_when` case takes no keep (nine rules that are not
   requirements list none), and a requirement or a rule whose waiver scope is `none` takes no entry at all: a reject
   no longer lowers such a plan finding to INFO. The `fix` text of an undecided finding lists the ids.
+- A `defaults` keep also needs the evidence its case lists, in `plan check` and in `slop lint`. The skill-only run in
+  the gate experiment kept `color.terracotta-accent` as `brand-color` with `context.design` null and an orange it
+  authored itself, and the blocker became INFO; now that keep stays blocking and the finding says `keep_when
+  'brand-color' needs evidence`: `evidence.design` (a token of the file `context.design` declares, found in its
+  text) or `evidence.brief` (a line quoted from `brief`). A `won-comparison` keep needs `evidence.exploration`, the
+  face that a complete type comparison in `explorations` chose for a role that uses it. A case that lists `evidence:
+  none` waives on the reason alone, as before. `slop lint` reads the declared design file from the working
+  directory (`Context.design_text`); `plan check` reads it under `--root`. The ledger asset cases are checked in
+  `slop lint` only, which gets the ledger; no plan-layer rule lists one.
 - The `lapis` skill and `type.md` say that a brief's no-network, no-external-assets, or offline line limits what the
   page ships, never what is explored. Type has explicit exploration steps (`lazuli local fonts`, `lazuli search`,
   `lazuli catalog sync`, a specimen of the page's real copy captured with `render check`), a generic family is a

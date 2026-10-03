@@ -103,10 +103,14 @@ files beside it; the database file itself does not change.
   statistical detection warn. Every `params` and `threshold` key is declared in
   `src/shared/slop/detectors.yaml`; threshold keys are `<metric>_max`, `<metric>_min`, or bare
   `min`/`max`, and a bound is the allowed edge (`_max` fires above it, `_min` below it).
-- Each `keep_when` case is `{ id, when }` with a kebab-case id, unique within its rule. A plan's `defaults`
-  keep names one as `keep_when`, and `plan check` and `slop lint` waive a finding only for an id of that
-  rule, so renaming or removing an id breaks the plans that name it: treat it like a rule ID. A rule that
-  lists no case takes no keep.
+- Each `keep_when` case is `{ id, when, evidence }` with a kebab-case id, unique within its rule. A plan's
+  `defaults` keep names one as `keep_when`, and `plan check` and `slop lint` waive a finding only for an id
+  of that rule, so renaming or removing an id breaks the plans that name it: treat it like a rule ID. A rule
+  that lists no case takes no keep. A case on a rule that takes a keep lists `evidence`: the alternatives a
+  plan can hold for its premise (`design`, `brief`, `material`, `source`, `exploration`, an `asset`, or a
+  `plan` condition), any one of which backs the keep, or `none` when nothing a plan, a design contract, or
+  the asset ledger holds can show it. The check waives only when the keep carries that evidence, so a new
+  case states what a plan can hold, or `none`; the legend in `src/shared/slop/rules.yaml` defines each kind.
 - Agent-facing rule text (`why`, `better`, `keep_when`) never names external skills, products,
   laws, or external IDs. Attribution goes only in `provenance`, which the build strips.
 - Skill bodies name no connectors, external skills, or specific tools, and have no boilerplate
