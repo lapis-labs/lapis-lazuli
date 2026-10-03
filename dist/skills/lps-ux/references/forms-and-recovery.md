@@ -7,6 +7,19 @@ decisions land in existing ones: what a flow may demand in `flows[].requires`, o
 placement and look are the `lapis` layout step's. Examples continue the pottery shop: reserving one
 piece, on a phone, in Korean.
 
+## Operating conditions
+
+For a consequential operating condition, record the supplied or observed situation and affected
+task in `brief.constraints`, not a demographic preference. Name the visible symptom, a competing
+cause, and what observation would reject the proposed change in `claims.proposed`.
+Glare can require different treatment without proving dark mode is better; gloves require the
+issued input/device, not a universal thumb zone. Preserve access floors and test safely on the
+intended equipment. Simulated impairment is not lived-experience evidence.
+Interruption, offline work, shared devices, and helpers expose state or policy questions:
+do not invent autosave, queueing, retention, or delegated access. Keep operator, affected person,
+current identity, and authority distinct; a helper relationship grants no account permission.
+Continue independent work while the named owner resolves those questions.
+
 ## From the goal to the fields
 
 Start from the goal, not the data model. For each field ask whether the goal fails without it, whether

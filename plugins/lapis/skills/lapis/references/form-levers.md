@@ -32,6 +32,12 @@ State the mismatch limiting the analogy in `claims.proposed`.
 
 A concept earns its place when it changes a consequential choice. Write two that differ in what governs order or emphasis, not in palette, choose one, and record the loser and the reason in `explorations` (decision `direction`); `plan.uncompared-decision` reads that both are recorded, not whether the concept is good. Invent no history to make a concept sound deep; a guess about the subject goes in `claims.proposed`.
 
+When influences are mixed, give each a bounded owner in `claims.proposed`: a surface, type role,
+image grammar, or other variable. Keep one governing relation in `direction.concept`; a secondary
+influence must do a named job rather than compete for the same grid, hierarchy, or state language.
+Platform behavior can stay native while supported brand roles differ. Shared identity need not
+give a persuasive opening and a repeated working task the same density or composition.
+
 ## Compare an open direction
 
 To tune a suspected cause, hold content, viewport, state, and surrounding choices fixed; change

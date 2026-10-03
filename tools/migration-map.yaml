@@ -1148,11 +1148,11 @@ entries:
 - path: references/styles/style-catalog-and-selection.md
   words: 2760
   dest:
-  - card
-  target: lapis card
-  note: 주제/모드/상속/탐색은 이미 존재. 혼합 영향의 화면·변수별 소유권과 동일 변수 충돌 방지를 카드에 압축. 양식 순위·적합 점수·회사/역사/문화 처방·참조 자동 탐색은 제외
+  - reference
+  target: lapis/references/form-levers.md
+  note: 주제/모드/상속/탐색은 이미 존재. 혼합 영향의 화면·변수별 소유권과 동일 변수 충돌 방지를 참조로 압축하고 카드에는 포인터만 유지. 양식 순위·적합 점수·회사/역사/문화 처방·참조 자동 탐색은 제외
   status: done
-  done: [card]
+  done: [reference]
 - path: references/technology/animation-and-motion-libraries.md
   words: 2397
   dest:
@@ -1281,12 +1281,12 @@ entries:
 - path: references/ux-methodology/contextual-and-situational-constraints.md
   words: 5238
   dest:
-  - card
+  - reference
   - schema
-  target: lps-ux card + src/shared/plan/schema.yaml
-  note: 상황→과업 영향→경쟁 원인→반증·실제 장비/안전 확인을 카드로. brief.constraints/claims는 이미 존재. 저장·대리 권한은 발명하지 않고 기존 소유자로. 연구 프로토콜·전체 사례·새 점수/필드는 제외
+  target: lps-ux/references/forms-and-recovery.md + src/shared/plan/schema.yaml
+  note: 상황→과업 영향→경쟁 원인→반증·실제 장비/안전 확인을 참조의 Operating conditions로, 카드에는 포인터만. brief.constraints/claims는 이미 존재. 저장·대리 권한은 기존 소유자로. 연구 프로토콜·전체 사례·새 점수/필드는 제외
   status: done
-  done: [card, schema]
+  done: [reference, schema]
 - path: references/ux-methodology/ethics-and-dark-patterns.md
   words: 5060
   dest:
@@ -1634,20 +1634,19 @@ entries:
   done: [reference]
 - path: assets/notification-and-attention-card.md
   words: 2076
-  dest: [card]
-  target: lps-ux card
-  note: 채널 선택·선호와 OS 권한·그룹/quiet hours/지연/만료·read/dismissed/resolved·badge·deep link·수동 근거 한계를 카드로. push 아키텍처·의무 통신 정책·전달 보장은 발명하지 않음
+  dest: [reference]
+  target: lps-ux/references/notifications-and-attention.md
+  note: 채널 선택·선호와 OS 권한·그룹/quiet hours/지연/만료·read/dismissed/resolved·badge·deep link·수동 근거 한계를 참조로, 카드에는 포인터만. push 아키텍처·의무 통신 정책·전달 보장은 발명하지 않음
   status: done
-  done: [card]
+  done: [reference]
 - path: assets/platform-conventions-cheatsheet.md
   words: 621
   dest:
-  - merge
-  target: lapis card
-  merge: engine-principles
-  note: 단위 비동등·navigation/text/input/preferences/material의 실제 타깃 적응을 Implement에 압축. 플랫폼 수치·버전별 외관·API 표는 옮기지 않음; 다른 플랫폼 원본의 계획은 닫지 않음
+  - reference
+  target: lapis/references/implementation.md
+  note: 단위 비동등·navigation/text/input/preferences/material의 실제 타깃 적응을 implementation 참조로, 카드에는 포인터만. 플랫폼 수치·버전별 외관·API 표는 옮기지 않음; 다른 플랫폼 원본의 계획은 닫지 않음
   status: done
-  done: [merge]
+  done: [reference]
 - path: assets/readability-review-card.md
   words: 1257
   dest: *id006
@@ -1699,11 +1698,11 @@ entries:
 - path: assets/stack-decision-cards.md
   words: 1798
   dest:
-  - card
-  target: lapis card
-  note: 유지 중인 스택 보존·여러 저장소 근거 대조·hard constraint 탈락·실제 어려운 경로/상태 소유권/되돌림 비용 비교를 Implement에 압축. 제품 이름 추천표·무단 마이그레이션·두 번째 styling 체계 없음
+  - reference
+  target: lapis/references/implementation.md
+  note: 유지 중인 스택 보존·여러 저장소 근거 대조·hard constraint 탈락·실제 어려운 경로/상태 소유권/되돌림 비용 비교를 implementation 참조로, 카드에는 포인터만. 제품 이름 추천표·무단 마이그레이션·두 번째 styling 체계 없음
   status: done
-  done: [card]
+  done: [reference]
 - path: assets/state-transition-and-recovery-card.md
   words: 1431
   dest: *id009

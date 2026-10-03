@@ -58,6 +58,8 @@ after text.
 - System and asset guidance separates single-source observations from proposed UI roles, preserves
   snapshot unknowns and losses, and makes icon directionality, delivery failure, notices, and state
   semantics explicit. No plan, rights, access, telemetry, or automated-coverage contract changes.
+- Recovered branch-specific procedures live in references, including implementation and notifications;
+  the `lapis` and `lps-ux` skill bodies keep only conditional pointers to them.
 
 - Direction explorations distinguish controlled tuning from whole-relation hypotheses, choose the smallest disprovable specimen, and converge by consequence rather than novelty.
 
