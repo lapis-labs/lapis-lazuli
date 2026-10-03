@@ -1,0 +1,420 @@
+"""`lapis-design next`: the one step of the LapisLazuli procedure that is still missing, read from the files.
+
+The procedure is: the plan, the plan check without a blocking finding, the inputs the checks need (fonts
+lock, stub for an interactive page, asset ledger), the full render, the behavior check for an interactive
+page, the full lint over every input, the critic, and the release gate's report. `next` returns the first
+step that is not done, with the exact command or schema to follow, or `done`.
+
+What counts as done is what the release gate already decides: `release_check.run(..., offline=True)` is
+run on the files, and its findings that report a check that did not run or an input that is missing
+(`release.NO_EVIDENCE`) say which step comes back. Nothing else is judged here, with three additions the
+gate does not make: the plan check's own findings pick the plan step, a stub is validated before a
+behavior check needs it, and a page with controls but no `flows` in the plan is sent back to the plan.
+
+Done means the procedure is complete, not that the release passes: a blocking verdict is a result to
+report. A step is also done when its failure record is fresh (`attempts.py`): the check was tried and
+the environment, not an input, stopped it. A missing input, an invalid input, a timeout, a finding, or a
+plan blocker never counts as done; the step that creates or fixes it comes back.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import shlex
+import subprocess
+import sys
+import time
+from html.parser import HTMLParser
+from pathlib import Path
+from typing import Any
+
+import yaml
+
+from lapis_design import attempts, release_check, shared_dir
+from lapis_design.lint.cli import problems
+from lapis_design.plan_check import PlanOverLimit, read_plan
+
+PAGES = ("index.html", "dist/index.html", "build/index.html", "public/index.html", "out/index.html")
+CONTROLS = {"button", "input", "select", "textarea", "details", "dialog", "form"}
+CONTROL_ROLES = {"button", "input", "dialog"}      # extract box roles of a page a visitor can act on
+JOB_MAX_AGE_S = 2 * 3600                           # a background run older than this is not assumed alive
+# the plan check's findings that name a step of their own; every other blocker is a plan fix
+PLAN_STEPS = {"font.no-lock": "fonts-lock", "plan.uncompared-decision": "plan-explorations"}
+# release.input-missing / input-stale, by the file the finding names: the step that makes it again
+MISSING = {"extract": "render", "session": "behavior", "lint": "lint", "critic": "critic",
+           "lock": "fonts-lock", "ledger": "ledger"}
+STALE = {"session": "behavior", "lint": "lint", "critic": "critic"}
+GENERIC_LOCK = ('Lock each named face the page uses with `lazuli lock "<family>" --role <role> --task {task}` (it '
+                'records source, license, and delivery). A generic family has no file to lock: lock the named face '
+                'it was compared with, as the lzl-fonts skill describes.')
+
+
+class NextError(Exception):
+    """The files cannot be read as a procedure state (a lazuli database that cannot be opened)."""
+
+
+def resolve_task(root: Path, task: str | None = None) -> str | None:
+    """`task`, else $LAPIS_TASK, else the most recently written plan under `root`."""
+    task = task or os.environ.get("LAPIS_TASK") or None
+    if task:
+        return task
+    plans = sorted((root / ".lapis" / "plans").glob("*.yaml"), key=lambda p: p.stat().st_mtime, reverse=True)
+    return next((p.stem for p in plans if attempts.TASK.fullmatch(p.stem)), None)
+
+
+class _Controls(HTMLParser):
+    found = False
+
+    def handle_starttag(self, tag, attrs):
+        if tag in CONTROLS:
+            self.found = True
+
+
+def _page(root: Path, given: str | None) -> tuple[str | None, Path | None]:
+    """The page as the commands name it, and its file when it is one: the given page, else the first
+    of the usual entry files (`PAGES`) that exists."""
+    if given:
+        return given, (root / given if "://" not in given else None)
+    found = next((name for name in PAGES if (root / name).is_file()), None)
+    return found, (root / found if found else None)
+
+
+def _interactive(plan: dict, page: Path | None, extract: Any) -> bool:
+    """Whether the page has something to act on: flows in the plan, a control in the page's markup, or a
+    button, input, or dialog box in the render."""
+    if plan.get("flows"):
+        return True
+    if page is not None and page.is_file():
+        parser = _Controls()
+        try:
+            parser.feed(page.read_text(encoding="utf-8", errors="replace"))
+        except (OSError, ValueError):
+            pass
+        if parser.found:
+            return True
+    boxes = (box for view in (extract or {}).get("viewports", []) if isinstance(view, dict)
+             for box in view.get("boxes", []) if isinstance(box, dict))
+    return any(box.get("role") in CONTROL_ROLES for box in boxes)
+
+
+def _json(path: Path) -> Any:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def _newer(path: Path, inputs: list[Path]) -> bool:
+    """`path` exists and no input is newer (the gate's own freshness test, by modification time)."""
+    try:
+        mtime = path.stat().st_mtime
+    except OSError:
+        return False
+    return all(not p.is_file() or mtime >= p.stat().st_mtime for p in inputs)
+
+
+def _recorded(root: Path, task: str, step: str, inputs: list[Path]) -> bool:
+    """A failure record of the environment for `step`, newer than what the step reads."""
+    return attempts.read(root, task, step) is not None and _newer(attempts.path(root, task, step), inputs)
+
+
+def _stub_problem(path: Path) -> str | None:
+    """Why `path` is not a stub `behavior check --stub` would load, or None."""
+    if not path.is_file():
+        return f"{path.as_posix()} does not exist"
+    try:
+        from lapis_design.stub.engine import StubEngine
+
+        StubEngine.load(path)
+    except Exception as exc:        # whatever stops the loader, the stub cannot be used as it is
+        return f"{type(exc).__name__}: {(str(exc).splitlines() or [''])[0]}"
+    return None
+
+
+def job_running(root: Path, task: str, step: str = "behavior") -> bool:
+    """Whether the background run of `step` that the step's command started is still going.
+
+    The command writes `.lapis/logs/<task>.<step>.pid`. The run is over when its report or its failure
+    record is newer than that file, when the process is gone or a zombie, or when the file is older than
+    two hours, since a process id can be reused."""
+    pidfile = root / ".lapis" / "logs" / f"{task}.{step}.pid"
+    try:
+        started = pidfile.stat().st_mtime
+        pid = int(pidfile.read_text(encoding="utf-8").strip())
+    except (OSError, ValueError):
+        return False
+    if os.name == "nt" or pid <= 0 or time.time() - started > JOB_MAX_AGE_S:
+        return False
+    outputs = [release_check.input_paths(root, task)["session"], attempts.path(root, task, step)]
+    if any(p.is_file() and p.stat().st_mtime >= started for p in outputs):
+        return False
+    try:
+        os.kill(pid, 0)
+    except PermissionError:
+        return True
+    except OSError:
+        return False
+    try:
+        state = subprocess.run(["ps", "-o", "stat=", "-p", str(pid)], capture_output=True, text=True,
+                               timeout=5).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return True
+    return not state.startswith("Z")
+
+
+def _step(step_id: str, why: str, command: str | None = None, schema: Path | None = None) -> dict:
+    return {"id": step_id, "why": why, "command": command, **({"schema": str(schema)} if schema else {})}
+
+
+def _brief(items: list[str], limit: int = 3) -> str:
+    shown = "; ".join(items[:limit])
+    return shown + (f"; and {len(items) - limit} more" if len(items) > limit else "")
+
+
+def _finding_line(finding: dict) -> str:
+    return f"{finding['rule_id']}: {finding['observed']}"
+
+
+def _lock_commands(plan: dict, task: str) -> list[str]:
+    roles = (((plan.get("tokens") or {}).get("type") or {}).get("roles")) or []
+    commands: list[str] = []
+    for role in roles:
+        if isinstance(role, dict) and role.get("family") and role.get("role"):
+            command = f"lazuli lock {shlex.quote(str(role['family']))} --role {role['role']} --task {task}"
+            if command not in commands:
+                commands.append(command)
+    return commands
+
+
+def evaluate(root: Path, task: str, page: str | None = None) -> dict:
+    """The state of `task` under `root`: `{"task", "state", "step", "interactive", "reason"}`.
+
+    `state` is `needs-step` with the one `step` to take (`id`, `why`, `command` or None, and `schema`
+    when a file has to be written), or `done`. `page` is the page the render and behavior commands
+    name; without it the usual entry file is used, and a page that cannot be found stays `<page>`.
+    Raises NextError when the files cannot be read as a state."""
+    paths = release_check.input_paths(root, task)
+    paths["release"] = root / ".lapis" / "release" / f"{task}.json"
+    stub = root / ".lapis" / "stub.yaml"
+    shared = shared_dir()
+    plan_rel = f".lapis/plans/{task}.yaml"
+    check = f"lapis-design plan check {plan_rel}"
+    shown, page_file = _page(root, page)
+    target = shlex.quote(shown) if shown else "<page>"
+
+    def state(step: dict | None, interactive: bool, reason: str | None = None) -> dict:
+        return {"task": task, "state": "needs-step" if step else "done", "step": step, "interactive": interactive,
+                "reason": reason or (step["why"] if step else "")}
+
+    try:
+        plan = read_plan(paths["plan"])
+    except FileNotFoundError:
+        return state(_step("plan", f"Write the plan at {plan_rel} before any code or check: the brief, the "
+                           f"decisions and the candidates compared for each, and a keep or reject on every default "
+                           f"that applies. The schema is below and an example is {shared / 'plan/example.plan.yaml'}. "
+                           "Then run the command to see what blocks.", check, shared / "plan" / "schema.yaml"), False)
+    except (OSError, ValueError, yaml.YAMLError) as exc:
+        return state(_step("plan-fix", f"{plan_rel} cannot be read: {(str(exc).splitlines() or [''])[0]}", check,
+                           shared / "plan" / "schema.yaml"), False)
+    if isinstance(plan, PlanOverLimit) or not isinstance(plan, dict):
+        why = plan.problem if isinstance(plan, PlanOverLimit) else "the plan is not a mapping"
+        return state(_step("plan-fix", f"{plan_rel}: {why}", check, shared / "plan" / "schema.yaml"), False)
+
+    interactive = _interactive(plan, page_file, _json(paths["extract"]))
+    try:
+        gate = release_check.run(root, task, static=not interactive, offline=True)
+    except ValueError as exc:
+        if not str(exc).startswith(str(paths["plan"])):
+            raise NextError(str(exc)) from exc
+        return state(_step("plan-fix", str(exc), check, shared / "plan" / "schema.yaml"), interactive)
+
+    findings = [f for f in gate["findings"] if f["blocking"]]
+
+    def origin(finding: dict) -> str | None:
+        refs = finding["evidence"].get("refs") or []
+        return refs[-1] if refs else None
+
+    # the plan check's findings are copied into the gate's report with the plan's path appended last
+    from_plan = [f for f in findings if not f["rule_id"].startswith("release.") and origin(f) == str(paths["plan"])]
+    if schema_findings := [f for f in from_plan if f["rule_id"].startswith("schema.")]:
+        return state(_step("plan-fix", "The plan does not match its schema: "
+                           + _brief([_finding_line(f) for f in schema_findings]), check,
+                           shared / "plan" / "schema.yaml"), interactive)
+    if interactive and not plan.get("flows"):
+        return state(_step("plan-flows", "The page has controls (a button, an input, or a dialog) and the plan lists "
+                           "no `flows`. Record each real flow with its goal, its start route, and how it ends: "
+                           "without them the behavior check is not required, and that is not a reason to leave "
+                           "them out.", check, shared / "plan" / "schema.yaml"), interactive)
+
+    # which failure records stand in for a step, and the gaps in later reports they leave
+    recorded = {
+        "render": _recorded(root, task, "render", [paths["plan"]]),
+        "behavior": interactive and _recorded(root, task, "behavior", [paths["plan"], stub]),
+        "critic": _recorded(root, task, "critic", [paths["lint"], paths["extract"]]),
+    }
+    expected = set()
+    if recorded["render"]:
+        expected |= {release_check.lint_lacks_target("extract"), release_check.lint_lacks_layer("render")}
+    if recorded["behavior"]:
+        expected |= {release_check.lint_lacks_target("session"), release_check.lint_lacks_layer("behavior")}
+
+    by_path = {str(paths[name]): name for name in ("extract", "session", "lint", "critic", "lock", "ledger")}
+    dark = ((_json(paths["extract"]) or {}).get("meta") or {}).get("dark_theme") is True
+    need: set[str] = set()
+    for finding in findings:
+        rule, observed = finding["rule_id"], finding["observed"]
+        refs = finding["evidence"].get("refs") or []
+        name = by_path.get(refs[0]) if refs else None
+        if rule == "release.input-missing":
+            need.add("stub" if observed.startswith("stub fixture not found") else MISSING.get(name, ""))
+        elif rule == "release.input-stale":
+            need.add(STALE.get(name, ""))
+        elif rule == "release.width-missing" or (rule == "release.theme-missing" and dark):
+            need.add("render")
+        elif rule == "release.layer-missing" and observed not in expected:
+            need.add("lint")
+        elif rule == "release.critic-missing":
+            need.add("critic")
+    need -= {step for step, done in recorded.items() if done} | {""}
+    from_plan_steps = {PLAN_STEPS.get(f["rule_id"], "plan-fix") for f in from_plan}
+
+    if "plan-fix" in from_plan_steps:
+        blockers = [f for f in from_plan if f["rule_id"] not in PLAN_STEPS]
+        return state(_step("plan-fix", "The plan check blocks: " + _brief([_finding_line(f) for f in blockers])
+                           + ". Run the command for the fix each finding names.", check,
+                           shared / "plan" / "schema.yaml"), interactive)
+    if "plan-explorations" in from_plan_steps:
+        return state(_step("plan-explorations", "`plan.uncompared-decision` blocks: record each open decision in "
+                           "`explorations` with two or more candidates, what they were compared on, the one chosen, and "
+                           "why the runner-up lost. Compare them for real; do not invent a `fixed_by` or a keep to lift "
+                           "it.", check, shared / "plan" / "schema.yaml"), interactive)
+    if "fonts-lock" in from_plan_steps or "fonts-lock" in need:
+        commands = _lock_commands(plan, task)
+        why = GENERIC_LOCK.format(task=task) + " " + (
+            "The plan's roles: " + "; ".join(commands) + "." if commands else "")
+        return state(_step("fonts-lock", why.strip() + " A missing or invalid lock is an input to make; never write "
+                           "`.lapis/fonts.lock.json` by hand.", "; ".join(commands) or None,
+                           shared / "fonts" / "lock.schema.yaml"), interactive)
+    stub_problem = (_stub_problem(stub) if interactive and not recorded["behavior"] and {"behavior", "stub"} & need
+                    else None)
+    if stub_problem:
+        return state(_step("stub", "Write .lapis/stub.yaml for the page's real flows, with synthetic data only (a page "
+                           f"without an API still gets the minimal stub). Problem: {stub_problem}. An example is "
+                           f"{shared / 'behavior/example.stub.yaml'}.", None,
+                           shared / "behavior" / "stub.schema.yaml"), interactive)
+    if "stub" in need:
+        need.add("behavior")        # the last session names a stub that is gone; the one here is valid, so run again
+    if "ledger" in need:
+        return state(_step("ledger", "Write .lapis/assets.ledger.json listing every image, icon set, and generated "
+                           "asset the page ships, with its origin and rights; a page with none lists none. An example "
+                           f"is {shared / 'assets/example.assets.ledger.json'}.", None,
+                           shared / "assets" / "ledger.schema.yaml"), interactive)
+
+    log = f".lapis/logs/{task}.behavior.log"
+    if "render" in need:
+        return state(_step("render", "Capture every width (320, 390, 768, 1440 px, and dark where the page has a dark "
+                           f"theme). A run narrowed by `--width` writes {task}.narrow.json and never counts.",
+                           f"lapis-design render check {target} --task {task}"), interactive)
+    if interactive and not recorded["behavior"] and job_running(root, task):
+        return state(_step("behavior-wait", "The behavior check is still running in the background. Wait for it, then "
+                           f"run `lapis-design next --task {task}` again; do not start a second run, and do not stop "
+                           "while it runs.", f"sleep 60; tail -n 3 {log}"), interactive)
+    if "behavior" in need:
+        launch = (f"mkdir -p .lapis/logs && nohup lapis-design behavior check {target} --task {task} --plan {plan_rel} "
+                  f"--stub .lapis/stub.yaml > {log} 2>&1 < /dev/null & echo $! > .lapis/logs/{task}.behavior.pid")
+        return state(_step("behavior", "Run the full behavior check in the background, since it takes minutes and a "
+                           f"tool call that waits for it can time out: run the command, then poll with `sleep 60; tail "
+                           f"-n 3 {log}` until the report exists, and run `lapis-design next --task {task}`. If a "
+                           f"run ended with no report, read {log}. A run narrowed by `--probe`, `--context`, `--box`, "
+                           "or `--limit` never counts.", launch), interactive)
+    if "lint" in need:
+        refs = "".join(f" --ref {shlex.quote(str(ref['profile']))}" for ref in plan.get("references") or ()
+                       if isinstance(ref, dict) and ref.get("profile"))
+        extract = "" if recorded["render"] else f" --extract .lapis/renders/{task}.json"
+        session = f" --session .lapis/behavior/{task}.json" if interactive and not recorded["behavior"] else ""
+        mode = " --mode review" if plan.get("mode") in ("redesign", "repair") else ""
+        return state(_step("lint", "Run the full lint with every input: a run left without one, or narrowed by "
+                           "`--layer` or `--rule`, never counts.",
+                           f"lapis-design slop lint --plan {plan_rel}{extract}{session} --source . "
+                           f"--ledger .lapis/assets.ledger.json --lock .lapis/fonts.lock.json{refs}{mode} "
+                           f"-o .lapis/lint/{task}.json"), interactive)
+    if "critic" in need:
+        return state(_step("critic", "Run the critic in a context that did not make the design, as the ultramarine "
+                           "skill describes (the `critic` agent, or references/critic.md in a fresh session), and save "
+                           f"its report to .lapis/critic/{task}.json. Only when this harness cannot start a separate "
+                           f"context, record that with `lapis-design next --task {task} --unavailable critic --reason "
+                           "\"<why>\"`; the release gate still reports the critic as missing and no independent "
+                           "review ran.", None, shared / "slop" / "finding.schema.yaml"), interactive)
+
+    release_inputs = [paths[n] for n in ("plan", "lock", "ledger", "extract", "session", "lint", "critic")]
+    release_inputs += [attempts.path(root, task, s) for s in ("render", "behavior", "critic")]
+    document = _json(paths["release"])
+    current = (isinstance(document, dict) and not problems(document, "report")
+               and (document.get("target") or {}).get("task") == task and _newer(paths["release"], release_inputs))
+    release_record = attempts.read(root, task, "release") if _recorded(root, task, "release", release_inputs) else None
+    if not current and not release_record:
+        static = "" if interactive else " --static"
+        return state(_step("release", "Run the release gate on these reports; it can find that the work does not "
+                           "ship, and that verdict is the result to report, not a step to repeat. Add `--offline` "
+                           "when the network is not available (catalog font licenses then stay unchecked).",
+                           f"lapis-design release check --task {task}{static}"), interactive)
+
+    if current:
+        summary = document["summary"]
+        verdict = (f"the release gate's report has {summary['blocking']} blocking findings ({summary['defects']} "
+                   f"defects, {summary['no_evidence']} without evidence)")
+    else:
+        verdict = f"the release check could not run here ({release_record['reason']})"
+    return state(None, interactive, f"The procedure is complete; {verdict}. Report that verdict, the checks that "
+                 "did not run and why, and what remains for the user. Passing the gate is not required to stop.")
+
+
+def _text(result: dict) -> str:
+    step = result["step"]
+    if not step:
+        return f"next: done ({result['task']})\n  {result['reason']}"
+    lines = [f"next: {step['id']} ({result['task']})"]
+    if step["command"]:
+        lines.append(f"  run: {step['command']}")
+    if step.get("schema"):
+        lines.append(f"  schema: {step['schema']}")
+    lines.append(f"  why: {step['why']}")
+    return "\n".join(lines)
+
+
+def main(argv: list[str] | None = None, prog: str = "lapis-design next") -> int:
+    ap = argparse.ArgumentParser(prog=prog, description=__doc__.split("\n")[0], allow_abbrev=False)
+    ap.add_argument("--task", help="the plan's task id (default: $LAPIS_TASK, else the newest plan under --root)")
+    ap.add_argument("--root", type=Path, default=Path("."), help="the project folder (default: .)")
+    ap.add_argument("--url", help="the page the render and behavior commands name: an HTML file or an address on a "
+                    "host that is ours (default: index.html, or one in dist/, build/, public/, out/)")
+    ap.add_argument("--json", action="store_true", help="print the state as JSON")
+    ap.add_argument("--unavailable", choices=["critic"],
+                    help="record that this step cannot run here, with --reason: a harness that cannot start a "
+                    "separate context for the critic")
+    ap.add_argument("--reason", help="why --unavailable applies")
+    args = ap.parse_args(argv)
+    task = resolve_task(args.root, args.task)
+    if not task:
+        ap.error("no plan found under .lapis/plans; pass --task")
+    if not attempts.TASK.fullmatch(task):
+        ap.error("--task must be a plan task id (lowercase letters, digits, and hyphens)")
+    if bool(args.unavailable) != bool(args.reason and args.reason.strip()):
+        ap.error("--unavailable and --reason go together")
+    if args.unavailable:
+        command = ["lapis-design", "next", "--task", task, "--unavailable", args.unavailable]
+        if attempts.record(args.root, task, args.unavailable, command, None, args.reason.strip().splitlines()[0]) is None:
+            print(f"next: the {args.unavailable} record cannot be written under {args.root / '.lapis'}", file=sys.stderr)
+            return 2
+    try:
+        result = evaluate(args.root, task, args.url)
+    except NextError as exc:
+        print(f"next: {exc}", file=sys.stderr)
+        return 2
+    print(json.dumps(result, ensure_ascii=False, indent=2) if args.json else _text(result))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -3,6 +3,7 @@
 version: 0
 mode: create
 task: { id: kiln-shop-landing, title: Pottery studio sales landing }
+approval: { state: approved }   # the user's own approval; a run with nobody to ask writes `state: assumed` and a reason
 context:
   product: PRODUCT.md
   design: null

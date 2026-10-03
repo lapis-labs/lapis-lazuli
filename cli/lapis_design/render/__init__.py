@@ -7,7 +7,7 @@ from pathlib import Path
 
 import yaml
 
-from lapis_design import chromium, local_site, narrow, ours
+from lapis_design import attempts, chromium, local_site, narrow, ours
 from lapis_design.render import hosts
 from lapis_design.sig_key import load_key
 
@@ -60,6 +60,8 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design render check")
     if not args.out and args.task and ("/" in args.task or "\\" in args.task or args.task in (".", "..")):
         parser.error("task must be a filename component when --out is omitted")
     args.out = narrow.output_path(parser, args.out, "renders", args.task or "render", ["--width"] if args.width else [])
+    args.command = attempts.command_line(prog, argv)
+    args.full_run = bool(args.task) and not args.width and args.out == Path(".lapis") / "renders" / f"{args.task}.json"
     try:
         with local_site.serve(args.url) as url:
             args.url = url
@@ -114,7 +116,12 @@ def _capture(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
         # a navigation the guard blocked surfaces as a Playwright error; report the refusal instead
         refused = guard.refused if guard and guard.refused else exc
         print(refused if isinstance(refused, hosts.WrongScheme) else f"render check: {refused}", file=sys.stderr)
+        if refused is exc:
+            attempts.record_failure(exc, task=args.task, step="render", command=args.command, exit_code=2,
+                                    full_run=args.full_run)
         return 2
+    if args.full_run:
+        attempts.clear(args.task, "render")
     print(f"{len(viewports)} viewports, {sum(len(v['boxes']) for v in viewports)} boxes, "
           f"{sum(len(v['text']) for v in viewports)} runs -> {out}")
     return 0

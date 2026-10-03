@@ -14,7 +14,7 @@ from typing import Any
 
 import yaml
 
-from lapis_design import __version__, shared_dir
+from lapis_design import __version__, attempts, shared_dir
 from lapis_design.lint.cli import LintError, _load, problems
 from lapis_design.lint.engine import open_lazuli
 from lapis_design.plan_check import (LazuliDBUpgradeError, PlanOverLimit, check_expansion, check_non_string_keys,
@@ -53,6 +53,16 @@ def _finding(rule: str, observed: str, *, layer: str = "review", refs: tuple[str
     if asset is not None:
         result["location"] = {"asset": asset}
     return result
+
+
+def lint_lacks_target(name: str) -> str:
+    """What `release.layer-missing` says of a lint report whose target lacks the task's `name`; `next` reads it."""
+    return f"lint target lacks the task's {name}"
+
+
+def lint_lacks_layer(layer: str) -> str:
+    """What `release.layer-missing` says of a lint scope that did not run `layer`; `next` reads it."""
+    return f"lint scope did not run {layer}"
 
 
 def _copy_blocking(document: dict | None, origin: Path) -> list[dict]:
@@ -213,13 +223,18 @@ def _report(paths: dict[str, Path], task: str, interactive: bool, findings: list
     return report
 
 
-def run(root: Path, task: str, *, static: bool = False, offline: bool = False) -> dict:
-    """Return the release report; ValueError only for an unreadable plan or invalid option."""
-    paths = {name: root / ".lapis" / rel for name, rel in (
+def input_paths(root: Path, task: str) -> dict[str, Path]:
+    """Where the gate reads each input of `task` (the table in release/GATE.md); `next` reads the same files."""
+    return {name: root / ".lapis" / rel for name, rel in (
         ("plan", f"plans/{task}.yaml"), ("extract", f"renders/{task}.json"),
         ("session", f"behavior/{task}.json"), ("lint", f"lint/{task}.json"),
         ("critic", f"critic/{task}.json"), ("lock", "fonts.lock.json"),
         ("ledger", "assets.ledger.json"))}
+
+
+def run(root: Path, task: str, *, static: bool = False, offline: bool = False) -> dict:
+    """Return the release report; ValueError only for an unreadable plan or invalid option."""
+    paths = input_paths(root, task)
     try:
         plan = read_plan(paths["plan"])
     except (OSError, ValueError, yaml.YAMLError) as exc:
@@ -301,7 +316,7 @@ def run(root: Path, task: str, *, static: bool = False, offline: bool = False) -
             correct = ((root / target[name]).is_dir() if name == "source" and target.get(name) else
                        _same(root, target.get(name), paths[name]) if name != "source" else False)
             if not correct:
-                findings.append(_finding("layer-missing", f"lint target lacks the task's {name}",
+                findings.append(_finding("layer-missing", lint_lacks_target(name),
                                          refs=(str(paths["lint"]),)))
         scope = lint.get("scope")
         required_layers = {"plan", "source", "render"} | ({"behavior"} if interactive else set())
@@ -310,7 +325,7 @@ def run(root: Path, task: str, *, static: bool = False, offline: bool = False) -
                                      refs=(str(paths["lint"]),)))
         else:
             for layer in sorted(required_layers - set(scope["layers"])):
-                findings.append(_finding("layer-missing", f"lint scope did not run {layer}",
+                findings.append(_finding("layer-missing", lint_lacks_layer(layer),
                                          refs=(str(paths["lint"]),)))
             for narrow in ("rules", "rules_file"):
                 if narrow in scope:
@@ -380,6 +395,9 @@ def run(root: Path, task: str, *, static: bool = False, offline: bool = False) -
         if ref.get("mode") == "study":
             findings.append(_finding("study-reference", f"reference {index} is used in study mode",
                                      layer="plan", refs=(str(paths["plan"]),)))
+    if (plan.get("approval") or {}).get("state") == "assumed":
+        findings.append(_finding("approval-assumed", f"no person approved this plan: {plan['approval']['reason']}",
+                                 layer="plan", warning=True, refs=(str(paths["plan"]),)))
     if docs.get("lock"):
         findings.extend(_licenses([font for font in docs["lock"]["fonts"] if task in font["used_by"]], offline))
     # Put license uncertainty ahead of blocking results so the user can reconfirm it.
@@ -442,7 +460,10 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design release check"
         except OSError:
             pass  # Preserve the original failure as the single actionable reason.
         print(f"release check: {str(exc) or type(exc).__name__}", file=sys.stderr)
+        attempts.record_failure(exc, task=args.task, step="release", command=attempts.command_line(prog, argv),
+                                exit_code=2, full_run=True, root=args.root)
         return 2
+    attempts.clear(args.task, "release", args.root)
     print("\n".join(_result_lines(result["summary"], output)))
     return 1 if result["summary"]["blocking"] else 0
 

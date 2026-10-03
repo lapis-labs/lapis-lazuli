@@ -20,7 +20,7 @@ from jsonschema import ValidationError
 from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import sync_playwright
 
-from lapis_design import chromium, local_site, narrow, ours, shared_dir
+from lapis_design import attempts, chromium, local_site, narrow, ours, shared_dir
 from lapis_design.behavior_check import probes, redact
 from lapis_design.behavior_check.driver import Driver, MissingSyntheticValues
 from lapis_design.behavior_check.scope import PER_BOX, BoxScope
@@ -92,6 +92,8 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design behavior check
     narrowed_by = [flag for flag, given in (("--probe", args.probe), ("--context", args.context),
                                             ("--box", args.box), ("--limit", args.limit)) if given]
     args.out = narrow.output_path(parser, args.out, "behavior", args.task, narrowed_by)
+    args.command = attempts.command_line(prog, argv)
+    args.full_run = not narrowed_by and args.out == Path(".lapis") / "behavior" / f"{args.task}.json"
     try:
         with local_site.serve(args.url) as url:
             args.url = url
@@ -225,7 +227,11 @@ def _check(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
                 temporary.unlink(missing_ok=True)
     except (chromium.BrowserUnavailable, OSError, ValueError, PlaywrightError, ValidationError, yaml.YAMLError) as exc:
         print(f"behavior check: {exc}", file=sys.stderr)
+        attempts.record_failure(exc, task=args.task, step="behavior", command=args.command, exit_code=2,
+                                full_run=args.full_run)
         return 2
+    if args.full_run:
+        attempts.clear(args.task, "behavior")
     print(f"{len(document['contexts'])} contexts, {len(document['nodes'])} nodes, "
           f"{len(document['coverage'])} coverage entries -> {output}")
     return 0
