@@ -16,6 +16,7 @@ from pathlib import Path
 from playwright.sync_api import Browser
 from playwright.sync_api import Page
 
+from lapis_design.render import detached
 from lapis_design.render.color import to_oklch
 from lapis_design.render.derived import derive
 from lapis_design.render.fields import after_scroll, apply_fields, init_scripts, observe_rest
@@ -230,22 +231,30 @@ def _stack_family(name: str, stack: list[str]) -> str:
     return name
 
 
-def _font(cdp, backends: list[int], requested: str, stack: list[str], web_fonts: set[str]) -> str:
+def _font(cdp, backends: list[int], requested: str, stack: list[str], web_fonts: set[str]) -> str | None:
     """The family that painted the most glyphs. A web font reports the name inside its file, which
     can be empty or scrambled, so it is named by the first family in the CSS stack that has a
     loaded @font-face instead. A static local face that reports its weight in the family name is
-    named by the stack family it extends."""
+    named by the stack family it extends. None when the browser could not be asked: the run's text
+    nodes were no longer in the page."""
     if not backends:
-        return requested
+        return None
     web_name = next((family for family in stack if family.casefold() in web_fonts), None)
     counts: Counter[str] = Counter()
+    asked = False
     nodes = cdp.send("DOM.pushNodesByBackendIdsToFrontend", {"backendNodeIds": backends})["nodeIds"]
     for node in nodes:
         if node:
-            for font in cdp.send("CSS.getPlatformFontsForNode", {"nodeId": node})["fonts"]:
+            fonts = detached.send(cdp, "CSS.getPlatformFontsForNode", {"nodeId": node})
+            if fonts is None:
+                continue
+            asked = True
+            for font in fonts["fonts"]:
                 name = (web_name if font["isCustomFont"] and web_name
                         else _stack_family(font["familyName"], stack))
                 counts[name] += font["glyphCount"]
+    if not asked:
+        return None
     return counts.most_common(1)[0][0] if counts else requested
 
 
@@ -317,8 +326,7 @@ def _run(data: dict, box: str, index: int, cdp, backend: dict[tuple[int, int], i
     tracking = 0 if spacing == "normal" else float(spacing.removesuffix("px"))
     run = {"id": f"{box}-t{index}", "box": box, "text": text,
            "chars": sum(not char.isspace() for char in text), "script": script,
-           "font": {"requested": requested, "rendered": rendered,
-                    "fallback": rendered.casefold() != requested.casefold()},
+           "font": {"requested": requested, "rendered": rendered or requested},
            "size_px": round(size, 2),
            "weight": round(float(style["weight"]), 4),
            "line_height": round(float(line_height) / size, 4) if size else 0,
@@ -327,6 +335,8 @@ def _run(data: dict, box: str, index: int, cdp, backend: dict[tuple[int, int], i
                "uppercase", "lowercase", "capitalize") else "none",
            "style": style["style"] if style["style"] in ("normal", "italic", "oblique") else "oblique",
            "lines": data["lines"], "word_break": style["wordBreak"]}
+    if rendered is not None:
+        run["font"]["fallback"] = rendered.casefold() != requested.casefold()
     if lang := _lang(style["lang"]):
         run["lang"] = lang
     if color := to_oklch(style["color"]):
@@ -428,10 +438,21 @@ def capture(browser: Browser, url: str, config: dict, screenshot_path: Path, key
         }
         paint, backend = _paint_and_fonts(cdp, indexes)
         raw_ids = {b["index"]: box_id(b["path"]) for b in data["boxes"]}
-        missing_paint = raw_ids.keys() - paint.keys()
+        # Field passes find a box's element as [data-lapis-box="<id>"] while the page is live. A box whose
+        # element is no longer there by now was taken out by the page itself.
+        present = set(page.evaluate("""ids => {
+            const present = [];
+            document.querySelectorAll('[data-lapis-capture-index]').forEach(el => {
+              const index = el.getAttribute('data-lapis-capture-index'), id = ids[index];
+              if (id) { el.setAttribute('data-lapis-box', id); present.push(Number(index)); }
+              el.removeAttribute('data-lapis-capture-index'); });
+            return present; }""", {str(index): bid for index, bid in raw_ids.items()}))
+        gone = raw_ids.keys() - present
+        missing_paint = raw_ids.keys() - paint.keys() - gone
         if missing_paint:
             raise ValueError(f"CDP paint order missing {len(missing_paint)} visible boxes")
-        ranks = {index: rank for rank, index in enumerate(sorted(raw_ids, key=paint.__getitem__))}
+        ranks = {index: rank for rank, index in enumerate(sorted(raw_ids.keys() & paint.keys(),
+                                                                 key=paint.__getitem__))}
         boxes = []
         elements = {}
         for b in data["boxes"]:
@@ -439,7 +460,11 @@ def capture(browser: Browser, url: str, config: dict, screenshot_path: Path, key
             box = {"id": bid, "parent": raw_ids.get(b["parentIndex"]), "role": b["role"],
                    "role_confidence": b["confidence"], "role_basis": b["basis"],
                    "rect": {k: round(v, 2) for k, v in b["rect"].items()},
-                   "style": _style(b["style"]), "paint_order": ranks[b["index"]]}
+                   "style": _style(b["style"])}
+            if b["index"] in ranks:
+                box["paint_order"] = ranks[b["index"]]
+            if b["index"] in gone:
+                detached.mark(box)
             boxes.append(box)
             elements[bid] = {"tag": b["tag"], "attrs": b["attrs"],
                              "children": [raw_ids[c] for c in b["children"]],
@@ -454,12 +479,6 @@ def capture(browser: Browser, url: str, config: dict, screenshot_path: Path, key
             if run["chars"]:
                 texts.append(run)
                 run_locators[run["id"]] = i
-        # Field passes find a box's element as [data-lapis-box="<id>"] while the page is live.
-        page.evaluate("""ids => document.querySelectorAll('[data-lapis-capture-index]').forEach(el => {
-            const id = ids[el.getAttribute('data-lapis-capture-index')];
-            if (id) el.setAttribute('data-lapis-box', id);
-            el.removeAttribute('data-lapis-capture-index'); })""",
-                      {str(index): bid for index, bid in raw_ids.items()})
         if check_document is not None:
             check_document(page)
         screenshot_path.parent.mkdir(parents=True, exist_ok=True)

@@ -87,6 +87,22 @@ the run.
 4. Let animations finish their current iteration (infinite animations are paused at their start
    state) and measure everything else.
 
+**A page that changes during the capture.** Boxes, text runs, and their rects come from one read of
+the page (step 4). The field passes that follow read it again, a screenshot and a few browser calls
+later, and a page that rebuilds itself in between (a live clock, a ticker, a feed) can take a box's
+element or a run's text node out of the document. A pass never reads a value for a node that is no
+longer there. It sets `unmeasured: detached-during-capture` on the box or text run and leaves out
+what only the passes add: on a box `clipped`, `a11y`, `icon`, `media`, `scroll`, `motion`, and
+`style.shadows`, `style.filter_blur_px`, `style.backdrop_filter`, `style.gradients`,
+`style.background_pattern`, and `style.clip`; on a run `type_role`, `fill`, `measure_chars`,
+`backdrop`, `states`, and `font.synthetic`. A pass that read some of them before the node left keeps
+them. A box that left before the paint order was read has no `paint_order`. What the capture itself
+read stays: a box's `rect`, `role`, and the colors and borders of its `style`, and a run's text, font,
+size, and color. On an `unmeasured` object a missing field is unknown, not absent from the page.
+The `resize` event the browser sends to the window and to `visualViewport` for each full-page
+screenshot, although neither size changes, is not passed on to the page, so a page that rebuilds
+itself on resize does not take part in that; a `resize` event the page dispatches itself is.
+
 **Box ids.** Box id = "b" + the first 12 hex digits of SHA-256 over the UTF-8 bytes of the box's
 DOM path. The path joins root-to-element steps with "/". Each step is "<localName>:<index>"
 (lowercase local name; index counts earlier siblings with the same local name, from 0), or
@@ -156,7 +172,9 @@ for own or licensed references; never for reference-only captures.
 that painted the most glyphs of the run (a web font is named by the first family in the stack with
 a loaded `@font-face`, because the name inside its file can be empty or scrambled; a local face whose
 family name is a stack family plus weight or slope words, such as a static face named "Pretendard
-SemiBold", is named by that stack family); `fallback` is true when the two differ.
+SemiBold", is named by that stack family); `fallback` is true when the two differ. When the run's
+text had left the page before the browser could be asked, `rendered` repeats `requested` and
+`fallback` is absent; the run is then `unmeasured`.
 
 `font.synthetic` is `none` for runs below weight 600 in normal style. For a heavier or italic run
 set in a loaded web font, bold (or italic) is synthesized when no loaded face of the requested

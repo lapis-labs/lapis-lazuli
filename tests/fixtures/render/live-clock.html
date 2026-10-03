@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Live clock</title>
+<style>
+ body { margin: 0; font: 16px/1.4 Arial, sans-serif; }
+ #feed { margin: 16px; padding: 12px; border: 1px solid #888; }
+ #tail { height: 1600px; background: #f4f4f4; }
+</style></head><body><main>
+ <h1>Departures</h1>
+ <p id="intro">The times below follow the station clock.</p>
+ <p id="clock"></p>
+ <ul id="feed"></ul>
+ <div id="tail">Tall enough that a full-page screenshot is larger than the viewport</div>
+</main><script>
+ // A live board: the clock replaces its text node and the feed rebuilds its rows every 50 ms, so the
+ // nodes a capture recorded are gone from the document by the time they are measured.
+ let tick = 0;
+ const update = () => {
+   tick++;
+   document.getElementById('clock').textContent = 'Updated ' + tick;
+   document.getElementById('feed').innerHTML = '<li><button>Line ' + tick + '</button></li>';
+ };
+ update();
+ setInterval(update, 50);
+</script></body></html>

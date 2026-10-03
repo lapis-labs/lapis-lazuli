@@ -8,6 +8,7 @@ from urllib.parse import parse_qsl, urlsplit
 import numpy as np
 from PIL import Image
 
+from lapis_design.render import detached
 from lapis_design.render.color import to_oklch
 from lapis_design.render.fields.paint import split_top_level
 
@@ -95,11 +96,12 @@ def _overlays(box: dict, boxes: list[dict], styles: dict) -> dict | None:
                 r = box["rect"]
                 layers.append(((r["x"], r["y"], r["x"] + r["w"], r["y"] + r["h"]), alpha))
     for candidate in boxes:
-        if candidate["paint_order"] <= box["paint_order"] or candidate["id"] == box["id"]:
+        if candidate.get("paint_order", -1) <= box["paint_order"] or candidate["id"] == box["id"]:
             continue
         if not (intersection := _intersect(box["rect"], candidate["rect"])):
             continue
-        css = styles[candidate["id"]]
+        if (css := styles.get(candidate["id"])) is None:       # the page took the candidate out of the document
+            continue
         if css["backgroundColor"] not in ("transparent", "rgba(0, 0, 0, 0)"):
             color = to_oklch(css["backgroundColor"])
             alpha = (color[3] if color and len(color) == 4 else 1) if color else 0
@@ -182,7 +184,10 @@ def apply(view, vp: dict, styles: dict, screenshot: Image.Image) -> None:
     }""")
     page_host = urlsplit(view.page.url).hostname
     for box in vp["boxes"]:
-        data = info[box["id"]]
+        data = info.get(box["id"])
+        if data is None or box["id"] not in styles or "paint_order" not in box:
+            detached.mark(box)                                 # the page took the box out of the document
+            continue
         role = box["role"]
         tag = data["tag"]
         icon = role == "icon" or (role == "button" and data["iconOnly"])

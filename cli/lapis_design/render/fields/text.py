@@ -16,6 +16,7 @@ from statistics import median
 import numpy as np
 from PIL import Image
 
+from lapis_design.render import detached
 from lapis_design.render.color import contrast_ratio, delta_e_ok, to_oklch
 from lapis_design.render.raw import RawView
 
@@ -33,9 +34,12 @@ _GEOMETRY = r"""locators => {
     if (!blocks.has(block)) blocks.set(block, blocks.size);
     return blocks.get(block);
   };
+  const detached = [];
   for (const [id,index] of Object.entries(locators)) {
     const nodes = window.__lapisRunNodes?.[index] || [];
     if (!nodes.length) continue;
+    // The page took a text node of the run out of the document after the run was captured.
+    if (nodes.some(node => !node.isConnected || !node.parentElement)) { detached.push(id); continue; }
     const element = nodes[0].parentElement;
     const style = getComputedStyle(element);
     const ancestor = [];
@@ -82,7 +86,7 @@ _GEOMETRY = r"""locators => {
       synthesisWeight:style.fontSynthesisWeight,synthesisStyle:style.fontSynthesisStyle,
       fontSynthesis:style.fontSynthesis};
   }
-  return {runs:result, faces};
+  return {runs:result, faces, detached};
 }"""
 
 _COLOR = re.compile(r"(?:rgba?|hsla?|oklch|oklab|lab|lch|color)\([^()]*\)", re.I)
@@ -325,11 +329,20 @@ def _node_ids(view: RawView, ids: set[str]) -> dict[str, int]:
     return {name: node for name, node in zip(names, found) if node}
 
 
+def _mark_detached(runs: list[dict], ids: list[str]) -> None:
+    """Mark the runs whose text the page took out of the document since they were captured."""
+    gone = set(ids)
+    for run in runs:
+        if run['id'] in gone:
+            detached.mark(run)
+
+
 def _platform_fonts(view: RawView, vp: dict, nodes: dict[str, int]) -> dict[str, list[dict]]:
     needed = {run['box'] for run in vp['text'] if run['weight'] >= 600 or
               run['style'] in ('italic', 'oblique')}
-    return {box: view.cdp.send('CSS.getPlatformFontsForNode', {'nodeId': nodes[box]})['fonts']
-            for box in needed & nodes.keys()}
+    answers = {box: detached.send(view.cdp, 'CSS.getPlatformFontsForNode', {'nodeId': nodes[box]})
+               for box in needed & nodes.keys()}
+    return {box: answer['fonts'] for box, answer in answers.items() if answer}
 
 
 def _gradient_stops(background: str) -> list[list[float]]:
@@ -406,15 +419,22 @@ _PAINTED_JS = r"""locators => {
     }
     return seen.get(element);
   };
-  return Object.entries(locators).filter(([id, index]) =>
-    (window.__lapisRunNodes?.[index] || []).some(node => node.parentElement && paints(node.parentElement)))
-    .map(([id]) => id);
+  const painted = [], gone = [];
+  for (const [id, index] of Object.entries(locators)) {
+    const nodes = window.__lapisRunNodes?.[index] || [];
+    // Asked after the screenshot: a run whose text the page took out meanwhile has no backdrop in it.
+    if (nodes.some(node => !node.isConnected || !node.parentElement)) gone.push(id);
+    else if (nodes.some(node => paints(node.parentElement))) painted.push(id);
+  }
+  return {painted, gone};
 }"""
 
 
-def _painted(view: RawView, locators: dict[str, int]) -> set[str]:
-    """Ids of the runs whose text is still painted while the backdrop styles are on."""
-    return set(view.page.evaluate(_PAINTED_JS, locators))
+def _painted(view: RawView, locators: dict[str, int]) -> tuple[set[str], set[str]]:
+    """Ids of the runs whose text is still painted while the backdrop styles are on, and of the runs
+    whose text the page has taken out of the document."""
+    answer = view.page.evaluate(_PAINTED_JS, locators)
+    return set(answer['painted']), set(answer['gone'])
 
 
 def apply(view: RawView, vp: dict) -> None:
@@ -423,7 +443,8 @@ def apply(view: RawView, vp: dict) -> None:
         return
     geometry = view.page.evaluate(_GEOMETRY, view.extra['run_locators'])
     info, faces = geometry['runs'], geometry['faces']
-    _roles(vp['text'], info, vp['boxes'])
+    _mark_detached(vp['text'], geometry['detached'])
+    _roles([run for run in vp['text'] if run['id'] in info], info, vp['boxes'])
     interactive = defaultdict(list)
     for run in vp['text']:
         detail = info.get(run['id'])
@@ -455,15 +476,16 @@ def apply(view: RawView, vp: dict) -> None:
         state_style = True
         _set_backdrop_mode(view, True)
         backdrop_mode = True
-        painted = _painted(view, view.extra['run_locators'])
         base = _pixels(view.page.screenshot(full_page=True))
+        painted, gone = _painted(view, view.extra['run_locators'])
+        _mark_detached(vp['text'], gone)
         original = _pixels(view.screenshot_path.read_bytes())
         view.extra['line_extents'] = {
             run['id']: _ink_extents(original, base, info[run['id']], view.config['dpr'])
-            for run in vp['text'] if run['id'] in info}
+            for run in vp['text'] if run['id'] in info and run['id'] not in gone}
         for run in vp['text']:
             detail = info.get(run['id'])
-            if not detail or run['id'] in painted:
+            if not detail or run['id'] in painted or run['id'] in gone:
                 continue
             stops = []
             if run['fill'] == 'gradient':
@@ -483,19 +505,22 @@ def apply(view: RawView, vp: dict) -> None:
             locators = {run['id']: view.extra['run_locators'][run['id']] for run in active}
             for name, pseudo in (('hover', 'hover'), ('focus', 'focus-visible'), ('active', 'active')):
                 for node in target_nodes:
-                    view.cdp.send('CSS.forcePseudoState', {
-                        'nodeId': node, 'forcedPseudoClasses': [pseudo]})
-                    forced.append(node)
+                    if detached.send(view.cdp, 'CSS.forcePseudoState', {
+                            'nodeId': node, 'forcedPseudoClasses': [pseudo]}) is not None:
+                        forced.append(node)
                 _set_backdrop_mode(view, False)
                 backdrop_mode = False
-                state_geometry = view.page.evaluate(_GEOMETRY, locators)['runs']
+                state = view.page.evaluate(_GEOMETRY, locators)
+                state_geometry = state['runs']
+                _mark_detached(active, state['detached'])
                 _set_backdrop_mode(view, True)
                 backdrop_mode = True
-                painted = _painted(view, locators)
                 image = _pixels(view.page.screenshot(full_page=True))
+                painted, gone = _painted(view, locators)
+                _mark_detached(active, gone)
                 for run in active:
                     detail = state_geometry.get(run['id'])
-                    if not detail:
+                    if not detail or run['id'] in gone:
                         continue
                     color = to_oklch(detail['fillColor'])
                     if color is None:
@@ -506,12 +531,12 @@ def apply(view: RawView, vp: dict) -> None:
                         entry['backdrop'] = sampled['oklch']
                     run.setdefault('states', {})[name] = entry
                 for node in forced:
-                    view.cdp.send('CSS.forcePseudoState', {
+                    detached.send(view.cdp, 'CSS.forcePseudoState', {
                         'nodeId': node, 'forcedPseudoClasses': []})
                 forced.clear()
     finally:
         for node in forced:
-            view.cdp.send('CSS.forcePseudoState', {
+            detached.send(view.cdp, 'CSS.forcePseudoState', {
                 'nodeId': node, 'forcedPseudoClasses': []})
         if backdrop_mode:
             _set_backdrop_mode(view, False)

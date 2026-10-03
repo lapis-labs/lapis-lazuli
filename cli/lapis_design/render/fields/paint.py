@@ -6,6 +6,7 @@ import re
 
 import numpy as np
 from PIL import Image
+from lapis_design.render import detached
 from lapis_design.render.color import to_oklch
 
 _NUMBER = r"[-+]?(?:\d*\.\d+|\d+\.?\d*)(?:e[-+]?\d+)?"
@@ -179,7 +180,7 @@ def _gradient(value: str, target: str, rect: dict, vp: dict, blur: float | None,
                           max(rect["x"], b["rect"]["x"])) *
                       max(0, min(rect["y"] + rect["h"], b["rect"]["y"]+b["rect"]["h"]) -
                           max(rect["y"], b["rect"]["y"])), b["id"])
-                     for b in others if b["paint_order"] > own["paint_order"])
+                     for b in others if b.get("paint_order", -1) > own["paint_order"])
             if above and (best := max(above))[0] > 0:
                 item["behind"] = best[1]
             result.append(item)
@@ -327,7 +328,10 @@ def apply(view, vp: dict, screenshot: Image.Image) -> dict[str, dict]:
     }""", vp["height"])
     values, page_height = records["records"], records["pageHeight"]
     for box in vp["boxes"]:
-        data = values[box["id"]]
+        data = values.get(box["id"])
+        if data is None or "paint_order" not in box:       # the page took the box out of the document
+            detached.mark(box)
+            continue
         style = box["style"]
         shadows = _shadows(data["boxShadow"], "box-shadow") + _shadows(data["textShadow"], "text-shadow")
         for name, contents in _functions(data["filter"]):

@@ -257,6 +257,29 @@ def test_page_that_rebuilds_itself_on_resize_is_captured_whole(browser, render_s
     assert resizes == {"browser": 0, "page": 1}
 
 
+def test_nodes_a_live_page_removes_are_marked_unmeasured_not_read(browser, render_server: str, tmp_path: Path) -> None:
+    """A live board replaces a text node and a list row every 50 ms, so the nodes the capture recorded are gone
+    from the document when the field passes reach them. The capture completes, measures what stayed, and marks
+    each run and box it could not read without a value for what only the field passes add."""
+    url, key = f"{render_server}/live-clock.html", bytes(range(32))
+    vp = capture(browser, url, _configs(False, [390])[0], tmp_path / "shot.png", key)
+    assert validate(assemble(url, "live-clock", [vp], key, dark_theme=False)) == []
+
+    def run(start: str) -> dict:
+        return next(item for item in vp["text"] if item["text"].startswith(start))
+
+    stayed = run("The times")
+    assert "unmeasured" not in stayed and stayed["fill"] == "solid" and stayed["measure_chars"] > 0
+    for start in ("Updated ", "Line "):
+        assert run(start)["unmeasured"] == "detached-during-capture"
+        assert not {"type_role", "fill", "measure_chars", "backdrop", "states"} & run(start).keys()
+    lost = [box for box in vp["boxes"] if "unmeasured" in box]
+    assert sorted(box["role"] for box in lost) == ["button", "text"]       # the row and its button
+    assert all(box["unmeasured"] == "detached-during-capture" and not {"clipped", "a11y", "motion"} & box.keys()
+               for box in lost)
+    assert all("clipped" in box for box in vp["boxes"] if "unmeasured" not in box)
+
+
 def test_cli_writes_extract_and_screenshots(render_server: str, tmp_path: Path) -> None:
     out = tmp_path / "demo.json"
     env = {**os.environ, "LAPIS_SIG_KEY_FILE": str(tmp_path / "sig.key")}

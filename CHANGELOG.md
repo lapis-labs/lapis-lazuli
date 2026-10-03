@@ -43,6 +43,13 @@ after text.
 - `release/GATE.md`: the `next` state `waiting-for-user`, for a run that stopped to ask its user. The questions are in
   `.lapis/questions/<task>.md` and the answers in `.lapis/answers/<task>.md`; the gate counts each set it lets pass in
   `.lapis/gate/<task>.json` under `waits`, two before a plan exists and one after.
+- `render/extract.schema.yaml` and `render/DERIVED.md`: the optional `unmeasured` on a box and on a text run, with the
+  one value `detached-during-capture`: a field pass found the box's element or the run's text node gone from the
+  page after the capture read it, and what only the field passes add (a box's `clipped`, `a11y`, `icon`, `media`,
+  `scroll`, `motion`, and the paint effects in `style`; a run's `type_role`, `fill`, `measure_chars`, `backdrop`,
+  `states`, and `font.synthetic`) is unknown, not absent from the page. `paint_order` is absent on a box that left
+  before the paint order was read, and `font.fallback` on a run whose font could not be read. Extracts without
+  `unmeasured` stay valid.
 
 ### Added
 
@@ -197,8 +204,18 @@ after text.
   nodes and boxes the passes still held, and the geometry pass read the parent of a removed text node. The
   capture context now drops a browser-made `resize` that leaves the window and visual viewport at the size they
   had; a `resize` event the page dispatches itself still reaches its listeners. The transit dashboard pilot page
-  captures in all six viewports three runs out of three (it failed every run before). A page that replaces a
-  text node on its own timer while the capture runs still fails the same way.
+  captures in all six viewports three runs out of three (it failed every run before).
+- `render check` no longer ends in an exception on a page that takes its own nodes out of the document while it is
+  measured (a live clock that replaces its text node, a feed that rebuilds its rows). The capture reads the page
+  once and the field passes read it again a screenshot later; a pass that finds a box's element or a run's text
+  node gone skips it, reads no value for it, and marks the box or run `unmeasured: detached-during-capture`.
+  The sites that threw were the text geometry read (`getComputedStyle` of a removed text node's parent), the
+  paint, media, and interaction reads (a box id missing from the page), the hover and focus style reads, the CDP
+  calls that name a node (`CSS.forcePseudoState`, `CSS.getPlatformFontsForNode`, `DOM.resolveNode`), and the
+  paint-order check, which refused the extract with `CDP paint order missing N visible boxes`. A run whose font
+  the browser could not be asked about repeats `requested` as `rendered` and carries no `fallback`. A run is
+  measured only from nodes that stayed in the page across its backdrop screenshots. A page that changes a text
+  node's data in place keeps the node in the document and is still measured as it reads at that moment.
 
 ## 0.2.0 (2026-10-02)
 

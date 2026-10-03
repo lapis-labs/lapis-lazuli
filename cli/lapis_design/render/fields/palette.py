@@ -115,7 +115,7 @@ def _mask(view, vp: dict, shape: tuple[int, int], screenshot_size: tuple[int, in
     source_width, source_height = screenshot_size
     sx, sy = width / source_width * view.config["dpr"], height / source_height * view.config["dpr"]
     roles = np.zeros((height, width), dtype=np.uint8)
-    boxes = sorted(vp["boxes"], key=lambda b: b["paint_order"])
+    boxes = sorted((b for b in vp["boxes"] if "paint_order" in b), key=lambda b: b["paint_order"])
 
     def paint(rect, role, icon_ink=False):
         x = max(0, math.floor(rect["x"] * sx))
@@ -132,7 +132,7 @@ def _mask(view, vp: dict, shape: tuple[int, int], screenshot_size: tuple[int, in
         else:
             destination[:] = _ROLE_INDEX[role]
 
-    by_id = {box["id"]: box for box in boxes}
+    by_id = {box["id"]: box for box in vp["boxes"]}
     charts = _chart_boxes(view, boxes)
     for box in boxes:
         role = _role(box, view.elements[box["id"]], charts)

@@ -14,7 +14,8 @@
 # clipping, page overflow, layout shift, text signatures, and the 320 px viewport. It also closes
 # objects that accepted any key and requires text in our own renders. No v0 extracts were ever
 # produced, so there is no converter. Within v1, 2026-09-27 adds the optional
-# `derived.signature_evidence`; extracts without it stay valid.
+# `derived.signature_evidence`, and 2026-10-03 the optional `unmeasured` on boxes and text runs;
+# extracts without them stay valid.
 #
 # Rights: a reference-only capture stores no copy, alt text, accessible names, or screenshots.
 # Its text runs carry `text_sig`, a keyed MinHash signature; the schema enforces this at the bottom.
@@ -175,6 +176,11 @@ $defs:
       media: { $ref: "#/$defs/media" }                # one slot per box: role media, or the topmost CSS background image
       scroll: { $ref: "#/$defs/scroll" }              # scroll containers and long lists
       motion: { $ref: "#/$defs/motion" }
+      unmeasured: { $ref: "#/$defs/unmeasured" }      # a field pass found the element gone; what only those passes add is unknown, see DERIVED.md
+
+  unmeasured:                                        # why a box or text run is missing what the field passes measure
+    enum:
+      - detached-during-capture                      # the page took its node out of the document after the capture read it
 
   box_style:
     type: object
@@ -418,6 +424,7 @@ $defs:
       lines: { type: integer, minimum: 0 }
       measure_chars: { type: number, minimum: 0 }     # median code points per line, spaces included
       word_break: { type: string }                    # for checking keep-all on Hangul
+      unmeasured: { $ref: "#/$defs/unmeasured" }      # a field pass found the text gone; what only those passes add is unknown, see DERIVED.md
 
   # ---------------------------------------------------------------- derived
 

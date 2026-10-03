@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import re
 
+from lapis_design.render import detached
 from lapis_design.render.color import delta_e_ok, to_oklch
 from lapis_design.render.raw import RawView
 
@@ -339,8 +340,8 @@ def apply(view: RawView, vp: dict) -> None:
         ident = node.get('backendDOMNodeId')
         if ident and (ident not in ax_by_backend or ax_by_backend[ident].get('ignored')):
             ax_by_backend[ident] = node
-    focus = {id for id, box in by_id.items() if box['role'] in ('button','link','input')
-             or measured[id]['tabindex'] is not None}
+    focus = {id for id, box in by_id.items() if id in measured and (
+        box['role'] in ('button','link','input') or measured[id]['tabindex'] is not None)}
     # Batch the post-force DOM reads rather than evaluating once per element.
     node_ids = view.cdp.send('DOM.pushNodesByBackendIdsToFrontend',
                              {'backendNodeIds':list(backend.values())}).get('nodeIds', [])
@@ -349,46 +350,52 @@ def apply(view: RawView, vp: dict) -> None:
     focus_ids = {id for id in focus if id in front}
     try:
         for id in hover_ids:
-            view.cdp.send('CSS.forcePseudoState', {'nodeId':front[id], 'forcedPseudoClasses':['hover']})
+            detached.send(view.cdp, 'CSS.forcePseudoState', {'nodeId':front[id], 'forcedPseudoClasses':['hover']})
         hovered = view.page.evaluate(r"""ids => {
           // Finish only hover transitions; captured animations stay at their settled state.
           for (const a of document.getAnimations()) if (a instanceof CSSTransition) try { a.finish(); } catch (_) {}
           const out={}; for (const id of ids) {
-            const s=getComputedStyle(document.querySelector('[data-lapis-box="'+id+'"]'));
+            const el=document.querySelector('[data-lapis-box="'+id+'"]');
+            if (!el) continue;                      // the page took it out of the document
+            const s=getComputedStyle(el);
             out[id]=Object.fromEntries([...s].map(k=>[k,s.getPropertyValue(k)]));
           } return out;
         }""", list(hover_ids))
     finally:
         for id in hover_ids:
-            view.cdp.send('CSS.forcePseudoState', {'nodeId':front[id], 'forcedPseudoClasses':[]})
+            detached.send(view.cdp, 'CSS.forcePseudoState', {'nodeId':front[id], 'forcedPseudoClasses':[]})
     try:
         for id in focus_ids:
-            view.cdp.send('CSS.forcePseudoState', {'nodeId':front[id],
-                                                    'forcedPseudoClasses':['focus','focus-visible']})
+            detached.send(view.cdp, 'CSS.forcePseudoState', {'nodeId':front[id],
+                                                             'forcedPseudoClasses':['focus','focus-visible']})
         focused = view.page.evaluate(r"""ids => {
           for (const a of document.getAnimations()) if (a instanceof CSSTransition) try { a.finish(); } catch (_) {}
           const out={}; for (const id of ids) {
-            const s=getComputedStyle(document.querySelector('[data-lapis-box="'+id+'"]'));
+            const el=document.querySelector('[data-lapis-box="'+id+'"]');
+            if (!el) continue;
+            const s=getComputedStyle(el);
             out[id]=Object.fromEntries([...s].map(k=>[k,s.getPropertyValue(k)]));
           } return out;
         }""", list(focus_ids))
     finally:
         for id in focus_ids:
-            view.cdp.send('CSS.forcePseudoState', {'nodeId':front[id], 'forcedPseudoClasses':[]})
-        view.page.evaluate("() => { for (const a of document.getAnimations()) if (a instanceof CSSTransition) try { a.finish(); } catch (_) {} }")
+            detached.send(view.cdp, 'CSS.forcePseudoState', {'nodeId':front[id], 'forcedPseudoClasses':[]})
     for id, box in by_id.items():
         data = measured.get(id)
         if not data:
+            detached.mark(box)                      # the page took the box out of the document
             continue
         box['clipped'] = _clipped(data)
         if scroll := _scroll(box,data,view.config['height']):
             box['scroll'] = scroll
         motion = _motion(data, after['rest'].get(id))
         if id in hover_ids:
-            change = sorted(k for k, value in data['style'].items()
-                            if hovered.get(id, {}).get(k) != value)
-            if change:
-                motion['hover_changes'] = change
+            if id in hovered:
+                change = sorted(k for k, value in data['style'].items() if hovered[id].get(k) != value)
+                if change:
+                    motion['hover_changes'] = change
+            else:
+                detached.mark(box)
         if motion:
             box['motion'] = motion
         node = ax_by_backend.get(backend.get(id))
@@ -398,8 +405,10 @@ def apply(view: RawView, vp: dict) -> None:
         native = tag in ('button','input','select','textarea','summary') or (
             tag == 'a' and 'href' in view.elements[id]['attrs'])
         if id in front:
-            resolved = view.cdp.send('DOM.resolveNode', {'nodeId':front[id]})
-            object_id = resolved.get('object',{}).get('objectId')
+            resolved = detached.send(view.cdp, 'DOM.resolveNode', {'nodeId':front[id]})
+            object_id = (resolved or {}).get('object',{}).get('objectId')
+            if resolved is None:
+                detached.mark(box)
             if object_id:
                 try:
                     listeners = view.cdp.send('DOMDebugger.getEventListeners', {'objectId':object_id})['listeners']
@@ -427,7 +436,10 @@ def apply(view: RawView, vp: dict) -> None:
         if data['tabindex'] is not None:
             a11y['tabindex'] = data['tabindex']
         if id in focus_ids:
-            a11y['focus_indicator'] = _is_focus_change(data['style'], focused.get(id,{}))
+            if id in focused:
+                a11y['focus_indicator'] = _is_focus_change(data['style'], focused[id])
+            else:
+                detached.mark(box)
         box['a11y'] = a11y
     vp['metrics'] = {'cls':round(view.page.evaluate('window.__lapisCls?.value || 0'),4),
                      'shift_sources':sorted(set(after['shift']) & by_id.keys())}
