@@ -486,7 +486,7 @@ function h_codex([string]$Phase) {
       if (Test-Selected 'ultramarine') {
         Invoke-Copy $true '' 'dist/codex/agents/ulm-critic.toml' (Get-HomePath '.codex/agents/ulm-critic.toml')
       }
-      Invoke-Manual 'Open /hooks in Codex and trust the lazuli session-start hook; it does not run until trusted'
+      Invoke-Manual 'Open /hooks in Codex and trust the lazuli session-start hook and the lapis stop hook; neither runs until trusted'
     }
     'update' {
       Start-Phase 'OpenAI Codex CLI' @('codex')
@@ -544,7 +544,7 @@ function h_oh_my_pi([string]$Phase) {
       foreach ($Plugin in @($script:Plugins)) {
         Invoke-Run $false '' @('omp', 'plugin', 'install', '--scope', 'user', ('' + $Plugin + '@lapis-lazuli'))
       }
-      Invoke-Manual 'Restart omp so the session-start extension loads; /reload-plugins refreshes skills and MCP only'
+      Invoke-Manual 'Restart omp so the session-start and exit-gate extensions load; /reload-plugins refreshes skills and MCP only'
     }
     'update' {
       Start-Phase 'Oh-My-Pi' @('omp')

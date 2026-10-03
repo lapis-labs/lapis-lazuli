@@ -1,0 +1,11 @@
+{
+  "name": "@lapis-labs/lapis-omp",
+  "version": "0.2.0",
+  "license": "MIT AND CC-BY-4.0",
+  "private": true,
+  "omp": {
+    "extensions": [
+      "./extensions/exit-gate.ts"
+    ]
+  }
+}

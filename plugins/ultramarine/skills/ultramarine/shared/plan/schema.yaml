@@ -25,6 +25,19 @@ properties:
       id: { type: string, pattern: "^[a-z0-9][a-z0-9-]{1,63}$" }
       title: { type: string, minLength: 1 }
 
+  # Who approved the plan before the work followed it. `approved` is the user's own approval and only
+  # a person sets it; a run with nobody to ask records `assumed` and says why. The release gate lists an
+  # assumed approval for the user to confirm and never counts it as approval.
+  approval:
+    type: object
+    additionalProperties: false
+    required: [state]
+    properties:
+      state: { enum: [approved, assumed] }
+      reason: { type: string, minLength: 8 }           # why no person approved it (assumed only)
+    if: { required: [state], properties: { state: { const: assumed } } }
+    then: { required: [reason] }
+
   # Contract documents that were actually read. If DESIGN.md exists, tokens only reference it.
   context:
     type: object

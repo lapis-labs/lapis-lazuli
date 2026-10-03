@@ -4,6 +4,7 @@
   "description": "Design direction, plans, and named defaults for new UI and redesigns",
   "license": "MIT AND CC-BY-4.0",
   "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
   "interface": {
     "displayName": "Lapis",
     "shortDescription": "Design direction, plans, and named defaults for new UI and redesigns",

@@ -39,11 +39,11 @@ LapisLazuli는 검사가 찾은 것을 알려 줄 뿐이고, 접근성이나 법
 
 | 하네스 | 상태 | 비고 |
 |---|---|---|
-| [Claude Code](INSTALLATION.md#claude-code) | 확인함 (2.1.274, 2026-09-27; 공개 저장소 설치 2.1.277, 2026-09-30) | 플러그인, 세션 시작 훅, 계획 모드 훅, MCP 서버, 평가자 서브에이전트예요. |
-| [OpenAI Codex CLI](INSTALLATION.md#openai-codex-cli) | 확인함 (0.157.x, 2026-09-27; 공개 저장소 설치 0.159.0, 2026-09-30) | 플러그인, 세션 시작 훅(`/hooks`에서 직접 신뢰해야 해요), MCP 서버, 설치 스크립트가 복사하는 에이전트 파일로 된 평가자예요. |
-| [Oh-My-Pi](INSTALLATION.md#oh-my-pi) | 확인함 (18.3.1, 2026-09-27; 공개 저장소 설치 18.4.4, 2026-09-30) | 마켓플레이스로 설치하는 플러그인, 세션 시작 확장, MCP 서버, 작업 에이전트로 불러오는 평가자예요. |
+| [Claude Code](INSTALLATION.md#claude-code) | 확인함 (2.1.274, 2026-09-27; 공개 저장소 설치 2.1.277, 2026-09-30) | 플러그인, 세션 시작 훅, 계획 모드 훅, 종료 관문, MCP 서버, 평가자 서브에이전트예요. |
+| [OpenAI Codex CLI](INSTALLATION.md#openai-codex-cli) | 확인함 (0.157.x, 2026-09-27; 공개 저장소 설치 0.159.0, 2026-09-30) | 플러그인, 세션 시작 훅과 종료 관문(`/hooks`에서 직접 신뢰해야 해요), MCP 서버, 설치 스크립트가 복사하는 에이전트 파일로 된 평가자예요. |
+| [Oh-My-Pi](INSTALLATION.md#oh-my-pi) | 확인함 (18.3.1, 2026-09-27; 공개 저장소 설치 18.4.4, 2026-09-30) | 마켓플레이스로 설치하는 플러그인, 세션 시작 확장과 종료 관문 확장, MCP 서버, 작업 에이전트로 불러오는 평가자예요. |
 | [그 밖의 Agent Skills 하네스](INSTALLATION.md#other-agent-skills-harnesses) (Cursor, Gemini CLI, GitHub Copilot, opencode, Windsurf, Kiro CLI) | `skills` CLI로 목록 확인함 (1.7.0, 2026-09-30) | 스킬만 들어가고, 세션 요약과 MCP 설정은 `AGENTS.md` 조각으로 안내해요. 에이전트마다 따로 시험하지는 않았어요. |
-| [pi](INSTALLATION.md#pi) | 실험적 | 스킬과 세션 시작 확장이에요. 실제 설치에서는 아직 확인하지 않았어요. |
+| [pi](INSTALLATION.md#pi) | 실험적 | 스킬, 세션 시작 확장, 종료 관문 확장이에요. 실제 설치에서는 아직 확인하지 않았어요. |
 | [Hermes Agent](INSTALLATION.md#hermes-agent) | 실험적 | 스킬, Hermes 플러그인, MCP예요. 실제 설치에서는 아직 확인하지 않았어요. |
 
 상태는 `install/harnesses.yaml`에서 가져왔고, 하네스별 정확한 명령은 [INSTALLATION.md](INSTALLATION.md)에 있어요. 설치 스크립트는 `uv`나 `pipx`로 CLI를 설치하고, 찾은 하네스마다 플러그인을 등록해요(pi와 Hermes Agent는 `--harness`로 이름을 줄 때만이에요). 플러그인 명령만 직접 실행하면 플러그인만 설치돼요. 훅과 MCP 서버는 `PATH`에 CLI가 있어야 동작해요([CLI와 선택 구성 요소](INSTALLATION.md#cli-and-optional-components) 참고).
@@ -54,6 +54,8 @@ LapisLazuli는 검사가 찾은 것을 알려 줄 뿐이고, 접근성이나 법
 2. 구현하는 동안 에이전트는 계획을 따라요. `lps-ux`, `lps-copy`, `lps-system`이 흐름, 문구, 디자인 시스템을 맡아요.
 3. 구현이 끝나면 `ultramarine`이 내 렌더에 `lapis-design`을 돌려요. 최대 아홉 가지 조건(너비 320~1440px, 라이트·다크, 모션 줄이기, 모바일 브라우저 UI)으로 캡처하고, 스텁 백엔드에서 작업 흐름을 끝까지 돌려 보고, 뻔해 보이거나 기만적인 패턴과 빠진 권리 기록을 린트하고, 측정으로 판단할 수 없는 것은 별도의 평가자에게 넘겨요. 마지막 관문은 `ulm-release`예요.
 4. 어느 단계에서든 `lazuli`가 요청할 때 사실을 가져다줘요. 이 컴퓨터의 폰트, 카탈로그의 분류와 라이선스, 색 체계 코드, 페이지 하나, 레퍼런스 프로필이에요.
+
+사람 없이 돌릴 때 그 길을 벗어나지 않게 하려면 `lapis-design next --task <task>`를 써요. 이 명령은 아직 남은 단계 하나와 그 정확한 명령을 알려 주고, 끝났다고 할 때까지 반복해요. 끝났다는 말은 모든 단계를 실제 입력으로 돌렸다는 뜻이고, 릴리스 관문 통과를 뜻하지 않아요. 에이전트가 멈추려 할 때 정지 훅(Claude Code, Codex)이나 확장(Oh-My-Pi, pi)이 이 명령에 물어보고, `LAPIS_UNATTENDED=1`이 설정된 경우에만 남은 단계로 에이전트를 이어서 돌려요. 설정하지 않으면 한 줄만 알리고 막지 않아요. 에이전트의 추론(thinking) 수준은 high 이상으로 두세요. 우리가 돌려 본 결과 추론 수준이 low일 때 절차를 건너뛰었어요. Codex는 플러그인 훅을 신뢰한 뒤에만 실행해요([INSTALLATION.md](INSTALLATION.md#unattended-runs)).
 
 ## 플러그인과 스킬
 
@@ -77,7 +79,7 @@ LapisLazuli는 검사가 찾은 것을 알려 줄 뿐이고, 접근성이나 법
 
 ## 명령줄 도구
 
-- `lapis-design`: `plan check`, `rights check`, `render check`, `behavior check`, `stub serve`, `slop lint`, `release check`, 그리고 하네스가 부르는 `hook`·`mcp` 진입점이에요.
+- `lapis-design`: `plan check`, `rights check`, `render check`, `behavior check`, `stub serve`, `slop lint`, `release check`, `next`, 그리고 하네스가 부르는 `hook`·`mcp` 진입점이에요.
 - `lazuli`: `local fonts`, `catalog`, `search`, `lock`, `class`, `sources`, `color`, `read`, `ref`, `doctor`, `setup`이에요. 상태는 사용자 캐시에 두고, `lazuli doctor`가 설치를 점검해요.
 
 명령과 옵션은 `--help`로 볼 수 있어요.

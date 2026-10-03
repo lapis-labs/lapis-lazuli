@@ -84,11 +84,12 @@ What gets installed:
 - Catalog: `.claude-plugin/marketplace.json`
 - Plugin manifest (Claude format): `plugins/<plugin>/.claude-plugin/plugin.json`
 - Skills: `plugins/<plugin>/skills/<skill>/`
-- Hooks: `plugins/lazuli/hooks/hooks.json`
+- Hooks: `plugins/<plugin>/hooks/hooks.json` (lapis, lazuli only)
 - MCP server: `plugins/lazuli/.mcp.json`
 - Critic agent (Claude format): `plugins/ultramarine/agents/`
-- Session summary: plugin hook, from `plugins/lazuli/hooks/hooks.json`, event `SessionStart startup|resume|clear|compact|fork`.
+- Session summary: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `SessionStart startup|resume|clear|compact|fork`.
 - Separate critic: plugin agent, from `plugins/ultramarine/agents/`. Invoked as ultramarine:critic; the plan check runs from a hook inline in the lapis manifest.
+- Exit gate: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `Stop`. `lapis-design hook stop` continues the agent with the next step only when LAPIS_UNATTENDED=1 and says so in one line otherwise; at most 3 continues in a row for one step and 15 in a session.
 - MCP: plugin MCP configuration, from `plugins/lazuli/.mcp.json`. Server plugin:lazuli:lapis-lazuli; the command is the CLI on PATH.
 
 The harness also reads skills from: `~/.claude/skills`, `.claude/skills`, `plugin skills/`.
@@ -155,11 +156,12 @@ What gets installed:
 - Catalog (Codex): `.agents/plugins/marketplace.json`
 - Plugin manifest (Codex format): `plugins/<plugin>/.codex-plugin/plugin.json`
 - Skills: `plugins/<plugin>/skills/<skill>/`
-- Hooks: `plugins/lazuli/hooks/hooks.json`
+- Hooks: `plugins/<plugin>/hooks/hooks.json` (lapis, lazuli only)
 - MCP server: `plugins/lazuli/.mcp.json`
 - Critic agent (Codex format): `dist/codex/agents/`
-- Session summary: plugin hook, from `plugins/lazuli/hooks/hooks.json`, event `SessionStart startup|resume|clear|compact`. Matchers are regular expressions; the fork alternative never matches here.
+- Session summary: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `SessionStart startup|resume|clear|compact`. Matchers are regular expressions; the fork alternative never matches here.
 - Separate critic: agent file that the install script copies, from `dist/codex/agents/`. Plugins cannot ship subagents; the installer copies the TOML file.
+- Exit gate: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `Stop`. `lapis-design hook stop` continues the agent with the next step only when LAPIS_UNATTENDED=1 and says so in one line otherwise; the lapis plugin's hook needs trust like the lazuli one; Stop takes no matcher.
 - MCP: plugin MCP configuration, from `plugins/lazuli/.mcp.json`.
 
 The harness also reads skills from: `.agents/skills (cwd up to the repo root)`, `~/.agents/skills`.
@@ -182,7 +184,7 @@ curl -fsSL https://raw.githubusercontent.com/lapis-labs/lapis-lazuli/release/dis
 
 Copy https://raw.githubusercontent.com/lapis-labs/lapis-lazuli/release/dist/codex/agents/ulm-critic.toml to `~/.codex/agents/ulm-critic.toml`. Only with the `ultramarine` plugin. The install script asks before this step.
 
-By hand: Open /hooks in Codex and trust the lazuli session-start hook; it does not run until trusted.
+By hand: Open /hooks in Codex and trust the lazuli session-start hook and the lapis stop hook; neither runs until trusted.
 
 **Update**
 
@@ -255,17 +257,19 @@ What gets installed:
 - Skills: `plugins/<plugin>/skills/<skill>/`
 - MCP server: `plugins/lazuli/.mcp.json`
 - Critic agent (Claude format): `plugins/ultramarine/agents/`
-- Extension package: `plugins/lazuli/package.json`
+- Extension package: `plugins/<plugin>/package.json` (lapis, lazuli only)
 - Session-start extension: `plugins/lazuli/extensions/session-start.ts`
+- Exit-gate extension: `plugins/lapis/extensions/exit-gate.ts`
 - Session summary: extension, from `plugins/lazuli/extensions/session-start.ts`, event `session_start`. omp does not run hooks/hooks.json; a marketplace install links the plugin's package.json into ~/.omp/plugins/node_modules, and its omp.extensions load after a restart.
 - Separate critic: plugin agent, from `plugins/ultramarine/agents/`. Loaded as a task agent.
+- Exit gate: extension, from `plugins/lapis/extensions/exit-gate.ts`, event `session_stop`. Asks `lapis-design hook stop` and answers `{ decision: block }`, only when LAPIS_UNATTENDED=1; the lapis plugin's package.json links the extension.
 - MCP: plugin MCP configuration, from `plugins/lazuli/.mcp.json`.
 
 The harness also reads skills from: `.omp/skills`, `~/.omp/agent/skills`, `.agents/skills`, `.claude/skills`.
 
 **Install**
 
-These commands do not install the CLI. The session-start extension and MCP server run `lapis-design` by name, so the CLI must be on the PATH the harness sees (see [CLI and optional components](#cli-and-optional-components)).
+These commands do not install the CLI. The session-start and exit-gate extensions and MCP server run `lapis-design` by name, so the CLI must be on the PATH the harness sees (see [CLI and optional components](#cli-and-optional-components)).
 
 ```sh
 omp plugin marketplace add lapis-labs/lapis-lazuli
@@ -274,7 +278,7 @@ omp plugin install --scope user ultramarine@lapis-lazuli
 omp plugin install --scope user lazuli@lapis-lazuli
 ```
 
-By hand: Restart omp so the session-start extension loads; /reload-plugins refreshes skills and MCP only.
+By hand: Restart omp so the session-start and exit-gate extensions load; /reload-plugins refreshes skills and MCP only.
 
 **Update**
 
@@ -329,8 +333,10 @@ What gets installed:
 - Package manifest: `package.json`
 - Skills: `dist/skills/<skill>/`
 - Session-start extension: `plugins/lazuli/extensions/session-start.ts`
+- Exit-gate extension: `plugins/lapis/extensions/exit-gate.ts`
 - Session summary: extension, from `plugins/lazuli/extensions/session-start.ts`, event `session_start`.
 - Separate critic: instructions only: the skills say what to run by hand. pi has no subagents; the skill asks for a fresh session as the critic.
+- Exit gate: extension, from `plugins/lapis/extensions/exit-gate.ts`, event `agent_before_settle`. Asks `lapis-design hook stop` and continues the agent with a custom message and `continue: true`, only when LAPIS_UNATTENDED=1.
 - MCP: not available. pi 1.0.0 has a built-in MCP client (servers in ~/.pi/agent/mcp.json or .pi/settings.json; a Python stdio server connected in a container on 2026-10-03), but the installer does not register lapis-lazuli there yet.
 
 The harness also reads skills from: `~/.pi/agent/skills`, `.pi/skills`, `~/.agents/skills`, `.agents/skills`.
@@ -339,7 +345,7 @@ The harness also reads skills from: `~/.pi/agent/skills`, `.pi/skills`, `~/.agen
 
 These steps cover every plugin at once; `--plugin` does not narrow them.
 
-These commands do not install the CLI. The session-start extension runs `lapis-design` by name, so the CLI must be on the PATH the harness sees (see [CLI and optional components](#cli-and-optional-components)).
+These commands do not install the CLI. The session-start and exit-gate extensions run `lapis-design` by name, so the CLI must be on the PATH the harness sees (see [CLI and optional components](#cli-and-optional-components)).
 
 ```sh
 pi install git:github.com/lapis-labs/lapis-lazuli@release
@@ -391,6 +397,7 @@ What gets installed:
 - Hermes plugin: `plugins/hermes/lapis-lazuli/`
 - Session summary: Hermes plugin hook, from `plugins/hermes/lapis-lazuli/`, event `pre_llm_call when is_first_turn`. on_session_start ignores return values, so it cannot add context.
 - Separate critic: instructions only: the skills say what to run by hand.
+- Exit gate: instructions only: the skills say what to run by hand. No stop event is used; the skills say to run `lapis-design next --task \<task>` until it says done.
 - MCP: registered with the harness's own command. hermes mcp add; tools appear as mcp_lapis-lazuli_\<tool>.
 
 The harness also reads skills from: `~/.hermes/skills`, `skills.external_dirs in ~/.hermes/config.yaml`.
@@ -497,6 +504,7 @@ What gets installed:
 - Instructions snippet: `dist/AGENTS.snippet.md`
 - Session summary: instructions, from `dist/AGENTS.snippet.md`.
 - Separate critic: instructions only: the skills say what to run by hand.
+- Exit gate: instructions only: the skills say what to run by hand. No stop event is used; the skills say to run `lapis-design next --task \<task>` until it says done.
 - MCP: instructions, from `dist/AGENTS.snippet.md`. The snippet shows the harness's own MCP registration for lapis-design mcp.
 
 **Install**
@@ -604,6 +612,10 @@ lapis-design behavior check http://127.0.0.1:8000/ --task <task> --plan .lapis/p
 ```
 
 An HTML file path or `file://` URL also works: the checks serve its folder read-only on 127.0.0.1 for the run and record only the loopback HTTP URL. Other URL schemes are refused.
+
+### Unattended runs
+
+`lapis-design next --task <task>` prints the one step of the procedure still to do, from the files under `.lapis/`, until it says done; done means every step ran on real inputs, not that the release gate passes. A harness's stop event can ask it: the exit gate continues an agent that is about to stop with that step only when `LAPIS_UNATTENDED=1` is set in the environment the harness runs in, and otherwise prints one line and never blocks. It continues at most three times in a row for one step and fifteen times in a session, then lets the agent stop and records the step that was left in `.lapis/gate/<task>.json`. Claude Code and Codex run it as the lapis plugin's `Stop` hook, Oh-My-Pi as `session_stop` and pi as `agent_before_settle` in the lapis exit-gate extension. Codex runs a plugin hook only after you trust it in `/hooks` (or for one run that already vets its hook sources, with `--dangerously-bypass-hook-trust`); an untrusted hook is skipped without a message, so the agent stops as it would without the gate. Without the gate the skills say to run `lapis-design next` by hand. Use reasoning or thinking at high or above for the agent that makes the work: in our runs, a low setting skipped the procedure.
 
 ## Update and uninstall
 

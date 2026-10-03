@@ -544,7 +544,7 @@ h_codex() {
     if selected ultramarine; then
       step_copy 1 '' dist/codex/agents/ulm-critic.toml "$HOME"/.codex/agents/ulm-critic.toml
     fi
-    step_manual 'Open /hooks in Codex and trust the lazuli session-start hook; it does not run until trusted'
+    step_manual 'Open /hooks in Codex and trust the lazuli session-start hook and the lapis stop hook; neither runs until trusted'
     ;;
   update)
     begin 'OpenAI Codex CLI' codex
@@ -602,7 +602,7 @@ h_oh_my_pi() {
     for LL_plugin in $LL_PLUGINS; do
       step_run 0 '' omp plugin install --scope user "$LL_plugin"@lapis-lazuli
     done
-    step_manual 'Restart omp so the session-start extension loads; /reload-plugins refreshes skills and MCP only'
+    step_manual 'Restart omp so the session-start and exit-gate extensions load; /reload-plugins refreshes skills and MCP only'
     ;;
   update)
     begin 'Oh-My-Pi' omp

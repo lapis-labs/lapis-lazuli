@@ -10,6 +10,18 @@ metadata:
 
 # lapis
 
+## Done
+
+- Done is when `lapis-design next --task <task>` says done. Run it before you report, do the one step it names, and
+  repeat; a plan, a check, or a page that merely looks finished is not done.
+- A missing or invalid input, a plan blocker, and a timeout are not done: that step comes back. Only a failure of the
+  environment, such as a browser that cannot start, counts, and the tool records it itself.
+- The release gate may say the work does not ship. Report that verdict; it is not a step to repeat, and never a reason
+  to edit a report or waive a finding.
+- With nobody to ask (`LAPIS_UNATTENDED=1`), record `approval: {state: assumed, reason: ...}` in the plan and go on;
+  `approved` is only a person's.
+- A brief's no-network line limits what the page loads; checks on 127.0.0.1 are not network use.
+
 lapis turns a request into a design contract - the plan file `.lapis/plans/<task>.yaml` - and then
 into an implementation that follows it. The plan is written before code, checked by
 `lapis-design plan check`, approved by the user, and read by every later check.
@@ -282,8 +294,9 @@ List every document, page, and file the plan relied on.
    default win here.
 2. Run `lapis-design plan check .lapis/plans/<task>.yaml` and fix every blocking finding.
 3. Run `lapis-design plan check .lapis/plans/<task>.yaml --summary`, show the user the summary and
-   the defaults decisions, and wait for approval before code. In a harness plan mode, embed the
-   plan as described in `shared/plan/HARNESS-PLAN-MODES.md`.
+   the defaults decisions, and wait for approval before code. Once the user approves, record
+   `approval: {state: approved}` in the plan; with nobody to ask, record `assumed` (see Done). In a
+   harness plan mode, embed the plan as described in `shared/plan/HARNESS-PLAN-MODES.md`.
 
 ## Implement
 

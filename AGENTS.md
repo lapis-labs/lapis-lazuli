@@ -51,6 +51,7 @@ uv run lapis-design slop lint --plan .lapis/plans/demo.yaml --extract .lapis/ren
   --session .lapis/behavior/demo.json -o .lapis/lint/demo.json   # every layer whose input is given
 # a lint run narrowed by --layer or --rule goes to -o .lapis/lint/demo.narrow.json
 uv run lapis-design release check --task demo   # the release gate (src/shared/release/GATE.md) -> .lapis/release/demo.json
+uv run lapis-design next --task demo           # the one step still to take (--json for tools); see GATE.md, Failure records
 uv run lazuli local fonts --summary       # read-only font scan and measurement into the user cache
 uv run lazuli doctor
 uv run lazuli catalog sync                 # snapshot catalogs at human pace into the user cache (asks nothing)
@@ -205,7 +206,7 @@ files beside it; the database file itself does not change.
   `shared_dir()`, never through paths relative to the repository.
 - `dist/` holds committed skill outputs, so build Python wheels elsewhere
   (`uv build --out-dir build/wheels`).
-- Hooks call the plain command `lapis-design hook <name>` (`session-start`, `exit-plan`), with
+- Hooks call the plain command `lapis-design hook <name>` (`session-start`, `exit-plan`, `stop`), with
   bodies in `cli/lapis_design/hooks.py`; MCP is `lapis-design mcp` (`cli/lapis_design/mcp_server.py`,
   official MCP Python SDK). Hooks run at every session start, so keep heavy imports out of them.
 - `render check` lives in `cli/lapis_design/render/`: `capture.py` (capture matrix, boxes, base
@@ -244,6 +245,16 @@ files beside it; the database file itself does not change.
   never through their files), `measure.py` (PANOSE Latin and the CJK extension per `vocab/type.yaml`; bump
   `MEASURER_VERSION` when a measurement changes so faces are re-measured), `db/` (migrations), `local.py`
   (`local fonts`, the session summary), `doctor.py`. The database lives in the user cache
+- `next` lives in `cli/lapis_design/next_step.py`: `lapis-design next --task demo [--json]` runs `release_check.run(...,
+  offline=True)` on the files and returns the one step still to take (`plan`, `plan-fix`, `plan-flows`,
+  `plan-explorations`, `fonts-lock`, `stub`, `ledger`, `render`, `behavior`, `lint`, `critic`, `release`) with its exact
+  command or schema, or `done`; it judges nothing the gate already judges, and `done` is a complete procedure, not a
+  passing gate. `render check`, `behavior check`, and `release check` write `.lapis/attempts/<task>/<step>.json`
+  (`attempts.py`) when a full run cannot start because of the environment (a browser that is missing or will not start,
+  a path the sandbox denies); `next` counts a record newer than the step's inputs as that step done, and nothing else
+  is ever recorded. `lapis-design hook stop` (`gate.py`) is the exit gate every harness asks: with a plan in reach and
+  `LAPIS_UNATTENDED=1` it continues the agent with that step, three times in a row for one step and fifteen in a
+  session at most (state in `.lapis/gate/<task>.json`), and otherwise prints one line and never blocks.
   (`LAZULI_DB` overrides it). Tests build synthetic fonts in code (`tests/synthetic_fonts.py`); never
   copy an installed font into the repository or a fixture.
 - `lazuli class set FAMILY --genre ID [--subclass ID] [--url URL]`, `lazuli class list [FAMILY]`,

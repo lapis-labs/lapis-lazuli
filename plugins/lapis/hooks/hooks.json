@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "lapis-design hook stop",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}

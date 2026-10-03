@@ -26,6 +26,11 @@ after text.
   `ux.consent-steering`; the way out of those is the fix.
 - `plan/schema.yaml`: the top-level `explorations` and `keep_when` on a `defaults` entry; `plan/example.plan.yaml`
   records both, and `docs/examples` stay unfinished on purpose.
+- `plan/schema.yaml`: the optional top-level `approval` (`state: approved|assumed`, and a `reason` when `assumed`);
+  `plan/example.plan.yaml` records it. `release/GATE.md`: the non-blocking finding `release.approval-assumed`, which
+  lists a plan nobody approved for the user to confirm, and the section on failure records and `next`.
+  `install/harnesses.yaml`: the plugin hook `stop`, the output `gate-extension`, and the harness mechanism
+  `exit_gate`.
 
 ### Added
 
@@ -55,9 +60,34 @@ after text.
 - UX guidance distinguishes walkthrough, participant, regression, and analytics evidence; records
   contextual constraints without invented persistence or delegated authority; and specifies notification
   usefulness, effective permission, deferred delivery, badge lifecycle, and current-state deep links.
+- `lapis-design next --task <task> [--url PAGE] [--json]` returns the one step of the procedure still to take, with
+  its exact command or schema, or `done`: `plan`, `plan-fix`, `plan-flows`, `plan-explorations`, `fonts-lock`, `stub`,
+  `ledger`, `render`, `behavior`, `lint`, `critic`, `release`. It reads `release check --offline`'s classification
+  of the files, so a missing input, an invalid input, a plan blocker, a narrowed report, a stale report, or a lint run
+  that left out an input sends the agent back to the step that makes it. `done` means the procedure is complete, not
+  that the gate passes: a blocking release report ends it too. The behavior check is started in the background with
+  a log, and `next` waits for it. Without `--task` it takes `$LAPIS_TASK`, else the newest plan.
+- Failure records: `render check`, `behavior check`, and `release check` write
+  `.lapis/attempts/<task>/<step>.json` (reason, command, exit, time) when a full run cannot start because the browser
+  is missing or will not start, or the sandbox denies a path. `next` counts a record newer than the step's inputs as
+  that step done; an input error, a timeout, a finding, and a plan blocker are never recorded. A harness that cannot
+  start a separate context for the critic records it with `lapis-design next --unavailable critic --reason ...`, and
+  the gate still reports the critic as missing.
+- Exit gates: `lapis-design hook stop` is the `Stop` hook of the lapis plugin in Claude Code and Codex, and
+  `exit-gate.ts` is its `session_stop` (Oh-My-Pi) and `agent_before_settle` (pi) extension. Only with
+  `LAPIS_UNATTENDED=1` does it continue an agent that is about to stop with the step `next` returns, at most three
+  times in a row for one step and fifteen in a session, then it lets the agent stop and records the step left in
+  `.lapis/gate/<task>.json`; otherwise it prints one line and never blocks. Codex runs the hook only once you trust
+  it in `/hooks`.
 - System and asset guidance separates single-source observations from proposed UI roles, preserves
   snapshot unknowns and losses, and makes icon directionality, delivery failure, notices, and state
   semantics explicit. No plan, rights, access, telemetry, or automated-coverage contract changes.
+- `lapis` and `ultramarine` open with a short Done block: done is when `lapis-design next` says done, a missing or
+  invalid input is never done, a blocking release verdict is a result to report, a run with nobody to ask records
+  `approval: {state: assumed, reason: ...}` and goes on, and checks on 127.0.0.1 are not network use. The plan gate
+  records `approved` once the user approves.
+- README and INSTALLATION recommend reasoning or thinking at high or above for the agent that makes the work,
+  because a low setting skipped the procedure in our runs, and describe unattended runs and the Codex hook trust.
 - Recovered branch-specific procedures live in references, including implementation and notifications;
   the `lapis` and `lps-ux` skill bodies keep only conditional pointers to them.
 

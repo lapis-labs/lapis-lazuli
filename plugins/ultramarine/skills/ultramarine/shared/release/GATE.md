@@ -103,6 +103,7 @@ license facts). Its `layer` is where the evidence is missing: `render` for width
 | `release.requirement-unverified` | a requirement or contract rule has a `skipped` finding in the lint report that the critic did not resolve (below) |
 | `release.critic-missing` | there is no critic report, or its target names another extract |
 | `release.study-reference` | the plan uses a reference in study mode |
+| `release.approval-assumed` | the plan's `approval.state` is `assumed`: no person approved the plan, and its `reason` says why. Class `quality`, `{create: warn, review: P2}`, not blocking, layer `plan`: the user confirms the plan, which the gate never counts as approved |
 | `release.license-changed` | a catalog font's current license kind differs from the lock |
 | `release.license-unchecked` | a catalog font's license could not be refreshed: the source blocked the request, answered in a form the adapter cannot read, the family was not found, or `--offline` was given |
 | `release.license-unconfirmed` | a font's license is declared by the user (`license.source_class: user-declared`), comes with a subscription sync, or is unknown, including a catalog font whose lock and refreshed catalog both say `unknown`. Class `quality`, `{create: warn, review: P2}`, not blocking: listed first so the user reconfirms it |
@@ -142,6 +143,29 @@ and, because their grants depend on the user's subscription, also get `release.l
 Families whose `source` is `system` are left to the plan checks whatever their
 `license.source_class`, since the plan checks already block a system face with no delivery path for
 the platform. The gate never stores license keys, receipts, or account details.
+
+## Failure records and `lapis-design next`
+
+`render check`, `behavior check`, and `release check` write a record themselves when a full run cannot
+start because of its environment: `.lapis/attempts/<task>/<step>.json` (`step` is `render`, `behavior`,
+or `release`), holding `version`, `task`, `step`, `failure_kind: environment`, `reason` (the one line the
+check printed), `command` (its argv), `exit`, and `at` (UTC). The environment is a browser that is not
+installed or cannot start, or a path the sandbox denies. A run narrowed by a flag, or one that writes
+somewhere other than the task's own path, leaves no record, and a full run that writes its report removes
+an older record. Nothing else is recorded: a missing or invalid input, a stub or plan that does not
+validate, a timeout, a finding, and a plan blocker are never the environment. A harness that cannot start
+a separate context for the critic records that with `lapis-design next --task <task> --unavailable critic
+--reason <why>`, which writes the same record for the step `critic`.
+
+`lapis-design next --task <task>` runs this gate offline on the files and returns the one step still to
+take, with its exact command or schema: `plan`, `plan-fix`, `plan-flows`, `plan-explorations`,
+`fonts-lock`, `stub`, `ledger`, `render`, `behavior`, `lint`, `critic`, `release`, or `done`. The gate's
+own findings that report a check that did not run or an input that is missing (the ten under
+`summary.not_run`, except `probe-incomplete`, `backend-insufficient`, `requirement-unverified`, and
+`license-unchecked`, which are results of a check that ran) say which step comes back; the plan checks'
+findings pick the plan steps. A record newer than what its step reads (the plan, and the stub for
+`behavior`) stands in for that step, and the lint gaps it leaves are expected. `done` means the procedure is
+complete, not that the gate passes: a blocking report ends it too, and the verdict is what the agent reports.
 
 ## What the gate does not do
 

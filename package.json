@@ -11,6 +11,7 @@
       "./dist/skills"
     ],
     "extensions": [
+      "./plugins/lapis/extensions/exit-gate.ts",
       "./plugins/lazuli/extensions/session-start.ts"
     ]
   }

@@ -100,6 +100,7 @@ harnesses:
     conflicts:
       - "Oh-My-Pi can load plugins from Claude Code's install registry; with both installed, skills load twice and dedupe by name"
     verified:
+      - "2026-10-03, 2.1.285: `claude -p --plugin-dir plugins/lapis` with LAPIS_UNATTENDED=1 continues the agent once through the Stop hook (shown as Stop hook feedback with the next step); without the variable the hook prints a one-line systemMessage and the agent stops"
       - "2026-09-30, 2.1.277: from the public repository, `claude plugin marketplace add lapis-labs/lapis-lazuli@release` and `claude plugin install {plugin}@{catalog} -s user` install all three plugins at the release commit; a new session lists all eleven skills"
       - "2026-10-01, 2.1.285: `claude plugin marketplace update {catalog}` and `claude plugin update {plugin}@{catalog}` move all three plugins from 0.1.1 to 0.1.2 from the public repository; a new session lists all eleven skills"
       - "2026-10-02, 2.1.285: the same update commands move all three plugins from 0.1.2 to 0.1.3 from the public repository; a new session lists all eleven skills"
@@ -164,6 +165,7 @@ harnesses:
       - "which shell runs hook commands on Windows (the command is a plain program on PATH, so any should do)"
       - "browser and cache access on this host with 0.159.3 have not been reproduced: in the 2026-10-01 pilot with 0.159.2, headless `codex exec` under `workspace-write` with approval `never` failed to start Chromium with `bootstrap_check_in org.chromium.Chromium.MachPortRendezvousServer: Permission denied (1100)`, so render, behavior, and critic checks did not run; the lazuli user cache was also inaccessible"
     verified:
+      - "2026-10-03, 0.160.0: with the built lapis plugin installed in an isolated CODEX_HOME and `codex exec --dangerously-bypass-hook-trust`, the plugin's Stop hook gets the session id and LAPIS_UNATTENDED, continues the agent with the next step three times, then the gate lets it stop; without the flag the untrusted hook is skipped and the output says nothing about it"
       - "2026-09-30, 0.159.0: from the public repository, `codex plugin marketplace add lapis-labs/lapis-lazuli --ref release` and `codex plugin add {plugin}@{catalog}` install all three plugins at the release commit; a new session lists all eleven skills as {plugin}:{skill}"
       - "2026-10-01, 0.159.2: `codex plugin marketplace upgrade {catalog}` moves all three plugins from 0.1.1 to 0.1.2 from the public repository; a new session lists all eleven skills as {plugin}:{skill}"
       - "2026-10-02, 0.159.3: `codex plugin marketplace upgrade {catalog}` moves all three plugins from 0.1.2 to 0.1.3 from the public repository; a new session lists all eleven skills as {plugin}:{skill}"
@@ -220,6 +222,7 @@ harnesses:
     unverified:
       - "whether omp plugin marketplace add accepts a ref; neither the command's help nor docs/marketplace.md (18.4.3, read 2026-09-30) names one for any source form, so the catalog follows the default branch"
     verified:
+      - "2026-10-03, 18.4.10: `omp -p -e exit-gate.ts` with LAPIS_UNATTENDED=1 fires session_stop in print mode (its agent_before_settle registration ignored); `{ decision: block }` continued the agent three times with the next step, then the gate let it stop and recorded the step"
       - "2026-09-30, 18.4.4: from the public repository, `omp plugin marketplace add lapis-labs/lapis-lazuli` (default branch release) and `omp plugin install --scope user {plugin}@{catalog}` install all three plugins at the release commit; a new session lists all eleven skills"
       - "2026-10-01, 18.4.5: `omp plugin marketplace update {catalog}` and `omp plugin upgrade --scope user {plugin}@{catalog}` move all three plugins from 0.1.1 to 0.1.2 from the public repository; a new session lists all eleven skills"
       - "2026-10-02, 18.4.8: the same update commands move all three plugins from 0.1.2 to 0.1.3 from the public repository; a new session lists all eleven skills"
@@ -264,6 +267,8 @@ harnesses:
     conflicts:
       - "a git source has no subdirectory selector, so the repository root package.json carries the pi key"
       - "pi also reads ~/.agents/skills; do not install flat skills there alongside the package"
+    verified:
+      - "2026-10-03, 1.0.0, in the lapis-pi:arms3 container with `--thinking high`: with LAPIS_UNATTENDED=1 the exit-gate extension (loaded with --extension, its session_stop registration ignored) continued the agent through agent_before_settle three times with the next step, then left `capped` in .lapis/gate/<task>.json"
     sources:
       - https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/packages.md
       - https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/extensions.md
