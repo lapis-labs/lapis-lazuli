@@ -29,6 +29,19 @@ tokens:
 The examples continue the example plan's pottery shop, `kiln-shop-landing`: twenty-four pieces
 from one firing, reserved mostly on phones, Korean copy.
 
+## From authorized assets to roles
+
+One authoritative asset can start a reversible provisional direction; it does not prove a
+complete system. Reuse the supplied-asset grammar in `lapis`'s visual-assets reference, name
+sample limits in `claims.proposed`, and protect the artwork. Missing mark clear-space, size,
+recolor, or lockup rules remain owner questions, not numbers borrowed from another brand.
+
+To promote an asset color, keep the observed source and its authority separate from the proposed
+UI role. A logo hue may inform an identity or action family without recoloring the logo itself.
+Derive only the roles the task needs, then test their resolved pairs, states, and themes; status
+and data meanings must remain distinct. Promote repeated decisions that survive the real slice,
+keep local exceptions local, and freeze only the disputed dependency rather than all system work.
+
 ## The token graph
 
 A token set is a directed graph, not a bag of variables. Every edge points from a more specific
@@ -368,6 +381,12 @@ next task, whose plan cites it with `ref`. A new token in an existing `DESIGN.md
 A design-tool importer is not the release authority by default. Per family, find out who owns the
 decision, whether the importer merges or replaces, and whether repository-only entries share an
 overwritten file; record the direction. A one-way importer is not a two-way sync.
+
+An imported snapshot records only what its source can express. Absent or empty mode data means
+unknown, not a verified single theme; a bare number does not establish spacing, radius, or time.
+Preserve source names, aliases, and producer-owned unknown data where the destination permits,
+and report unsupported data as losses. Add no invented snapshot keys or claim rendered contrast,
+direction fit, or state completeness from a normalized token list.
 
 To replace scattered literals: inventory values and callers, cluster by role rather than exact value,
 define only the primitives those roles need and the semantic tokens their uses show, migrate one
