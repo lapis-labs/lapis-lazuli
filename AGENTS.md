@@ -212,7 +212,8 @@ files beside it; the database file itself does not change.
   (`uv build --out-dir build/wheels`).
 - Hooks call the plain command `lapis-design hook <name>` (`session-start`, `exit-plan`, `stop`), with
   bodies in `cli/lapis_design/hooks.py`; MCP is `lapis-design mcp` (`cli/lapis_design/mcp_server.py`,
-  official MCP Python SDK). Hooks run at every session start, so keep heavy imports out of them.
+  official MCP Python SDK). Hooks run at every session start (`stop`, at every turn's end), so keep heavy imports out
+  of them; pi and Oh-My-Pi have no hooks.json, so the `exit-gate.ts` extension asks `hook stop` (install/OUTPUTS.md).
 - `render check` lives in `cli/lapis_design/render/`: `capture.py` (capture matrix, boxes, base
   text runs), field passes in `render/fields/` (`text`, `visual`, `interaction`, run in that
   order on the live page, each restoring what it changed), `derived.py`, and `extract.py`
@@ -244,11 +245,6 @@ files beside it; the database file itself does not change.
   `rules_file` when the run was narrowed), and every skipped finding records `skip_cause`; the
   release gate reads both.
 - `release check` lives in `cli/lapis_design/release_check.py`: it runs the plan checks itself, reads the lint, session, extract, and critic reports, rechecks catalog font licenses through `lazuli.catalog`, and writes the gate report; it never captures or drives a page.
-- `lazuli` lives in `cli/lazuli/`: `scan.py` (read-only inventory; `LAZULI_FONT_ROOTS` replaces the
-  roots and turns the Core Text listing off), `coretext.py` (Adobe Fonts through Core Text on macOS,
-  never through their files), `measure.py` (PANOSE Latin and the CJK extension per `vocab/type.yaml`; bump
-  `MEASURER_VERSION` when a measurement changes so faces are re-measured), `db/` (migrations), `local.py`
-  (`local fonts`, the session summary), `doctor.py`. The database lives in the user cache
 - `next` lives in `cli/lapis_design/next_step.py`: `lapis-design next --task demo [--json]` runs `release_check.run(...,
   offline=True)` on the files and returns the one step still to take (`plan`, `plan-fix`, `plan-flows`,
   `plan-explorations`, `fonts-lock`, `stub`, `ledger`, `render`, `behavior`, `lint`, `critic`, `release`) with its exact
@@ -260,6 +256,11 @@ files beside it; the database file itself does not change.
   `LAPIS_UNATTENDED=1` it continues the agent with that step, three times in a row for one step and fifteen in a
   session at most (state in `.lapis/gate/<task>.json`); an unattended run with no plan owes one, so its step is `plan`
   (task from `$LAPIS_TASK`, else the project folder's name); otherwise it prints one line and never blocks.
+- `lazuli` lives in `cli/lazuli/`: `scan.py` (read-only inventory; `LAZULI_FONT_ROOTS` replaces the
+  roots and turns the Core Text listing off), `coretext.py` (Adobe Fonts through Core Text on macOS,
+  never through their files), `measure.py` (PANOSE Latin and the CJK extension per `vocab/type.yaml`; bump
+  `MEASURER_VERSION` when a measurement changes so faces are re-measured), `db/` (migrations), `local.py`
+  (`local fonts`, the session summary), `doctor.py`. The database lives in the user cache
   (`LAZULI_DB` overrides it). Tests build synthetic fonts in code (`tests/synthetic_fonts.py`); never
   copy an installed font into the repository or a fixture.
 - `lazuli class set FAMILY --genre ID [--subclass ID] [--url URL]`, `lazuli class list [FAMILY]`,

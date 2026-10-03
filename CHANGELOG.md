@@ -60,15 +60,6 @@ after text.
   out has `partial` coverage whose reason says how many (and names any `--box` id that matched nothing);
   `commits`, which works from the controls that ran, says the same. `--box` takes ids from the session's
   `nodes`, and a control that only an action reveals is reached when the control that reveals it is named too.
-
-### Changed
-
-- Recovered direction guidance bounds mixed influences by ownership, adapts native behavior without
-  equating platform units, preserves maintained stacks, and carries compositional relations into
-  real-content production rather than copying study dimensions.
-- UX guidance distinguishes walkthrough, participant, regression, and analytics evidence; records
-  contextual constraints without invented persistence or delegated authority; and specifies notification
-  usefulness, effective permission, deferred delivery, badge lifecycle, and current-state deep links.
 - `lapis-design next --task <task> [--url PAGE] [--json]` returns the one step of the procedure still to take, with
   its exact command or schema, or `done`: `plan`, `plan-fix`, `plan-flows`, `plan-explorations`, `fonts-lock`, `stub`,
   `ledger`, `render`, `behavior`, `lint`, `critic`, `release`. It reads `release check --offline`'s classification
@@ -89,15 +80,24 @@ after text.
   `.lapis/gate/<task>.json`; otherwise it prints one line and never blocks. An unattended run that wrote no plan is
   continued to write one (step `plan`, task named for the project folder unless `LAPIS_TASK` is set), under the same
   limits. Codex runs the hook only once you trust it in `/hooks`; an untrusted hook is skipped without a message.
-- System and asset guidance separates single-source observations from proposed UI roles, preserves
-  snapshot unknowns and losses, and makes icon directionality, delivery failure, notices, and state
-  semantics explicit. No plan, rights, access, telemetry, or automated-coverage contract changes.
+
+### Changed
+
 - `lapis` and `ultramarine` open with a short Done block: done is when `lapis-design next` says done, a missing or
   invalid input is never done, a blocking release verdict is a result to report, a run with nobody to ask records
   `approval: {state: assumed, reason: ...}` and goes on, and checks on 127.0.0.1 are not network use. The plan gate
   records `approved` once the user approves.
 - README and INSTALLATION recommend reasoning or thinking at high or above for the agent that makes the work,
   because a low setting skipped the procedure in our runs, and describe unattended runs and the Codex hook trust.
+- Recovered direction guidance bounds mixed influences by ownership, adapts native behavior without
+  equating platform units, preserves maintained stacks, and carries compositional relations into
+  real-content production rather than copying study dimensions.
+- UX guidance distinguishes walkthrough, participant, regression, and analytics evidence; records
+  contextual constraints without invented persistence or delegated authority; and specifies notification
+  usefulness, effective permission, deferred delivery, badge lifecycle, and current-state deep links.
+- System and asset guidance separates single-source observations from proposed UI roles, preserves
+  snapshot unknowns and losses, and makes icon directionality, delivery failure, notices, and state
+  semantics explicit. No plan, rights, access, telemetry, or automated-coverage contract changes.
 - Recovered branch-specific procedures live in references, including implementation and notifications;
   the `lapis` and `lps-ux` skill bodies keep only conditional pointers to them.
 
