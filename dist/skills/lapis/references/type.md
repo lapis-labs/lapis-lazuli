@@ -7,11 +7,9 @@ tokens.
 
 ## Exploring and shipping
 
-A brief's no-network, no-external-assets, or offline line limits what the page ships and loads. It
-never limits what you explore. Always read the local inventory and the catalogs, and take
-open-licensed libraries, commercial foundries, and Adobe Fonts as candidates to explore and
-brainstorm with. Their licensing, purchase, or activation goes to the user for approval; nothing is
-bought, downloaded, or activated for them.
+Read the local inventory and the catalogs, and take open-licensed libraries, commercial foundries, and
+Adobe Fonts as candidates to explore and brainstorm with. Their licensing, purchase, or activation goes
+to the user for approval; nothing is bought, downloaded, or activated for them.
 
 Offline shipping leaves three outcomes: an installed named face with a fallback stack, OFL files the
 user supplies for the project, or a generic family that won a recorded comparison against a named

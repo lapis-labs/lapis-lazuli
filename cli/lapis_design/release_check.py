@@ -14,7 +14,7 @@ from typing import Any
 
 import yaml
 
-from lapis_design import __version__, attempts, gate, order, shared_dir
+from lapis_design import __version__, attempts, gate, order, references, shared_dir
 from lapis_design.lint.cli import LintError, _load, problems
 from lapis_design.lint.engine import open_lazuli
 from lapis_design.plan_check import (LazuliDBUpgradeError, PlanOverLimit, check_expansion, check_non_string_keys,
@@ -407,6 +407,14 @@ def run(root: Path, task: str, *, static: bool = False, offline: bool = False,
     if (plan.get("approval") or {}).get("state") == "assumed":
         findings.append(_finding("approval-assumed", f"no person approved this plan: {plan['approval']['reason']}",
                                  layer="plan", warning=True, refs=(str(paths["plan"]),)))
+    if plan.get("mode") == "create" and references.problems(root, task) and (
+            declined := references.declined(root, task, plan)):
+        findings.append(_finding("references-declined",
+                                 f"no reference was researched: the run declined the references step with the user's "
+                                 f"line \"{declined['brief_line']}\" ({declined['at']}), so nothing outside was looked at and "
+                                 "the plan's explorations rest on local material (installed fonts, the project, the "
+                                 "brief's facts)", layer="plan", warning=True, source=True,
+                                 refs=(str(attempts.path(root, task, references.STEP)),)))
     if docs.get("lock"):
         findings.extend(_licenses([font for font in docs["lock"]["fonts"] if task in font["used_by"]], offline))
     # Put license uncertainty ahead of blocking results so the user can reconfirm it.

@@ -112,6 +112,7 @@ license facts). Its `layer` is where the evidence is missing: `render` for width
 | `release.critic-missing` | there is no critic report, or its target names another extract |
 | `release.study-reference` | the plan uses a reference in study mode |
 | `release.approval-assumed` | the plan's `approval.state` is `assumed`: no person approved the plan, and its `reason` says why. Class `quality`, `{create: warn, review: P2}`, not blocking, layer `plan`: the user confirms the plan, which the gate never counts as approved |
+| `release.references-declined` | a plan in `mode: create` with no references record of its own whose run declined the references step with a line of the user's brief (`lapis-design next --declined references`, above) that is still in the brief record or the plan's `brief.constraints`. It says which line, when, and that nothing outside was looked at, so the plan's `explorations` rest on local material. Class `quality`, `{create: warn, review: P2}`, not blocking, layer `plan`, evidence `source`: the user sees what was not researched and why |
 | `release.procedure-order` | a plan in `mode: create` whose page code came before its brief, references, or plan, by one of two readings: the first-write record `.lapis/order/<task>.json`, which `lapis-design hook pre-write` writes when a page write goes through while `next` still asked for one of them, or, with no such record, every page source file (markup, style, and script files outside hidden and generated folders) last modified before the brief record or the references record. A plan revised after the page says nothing, so the plan's own time is not read. Lifted by a plan that cites `.lapis/answers/<task>.md` in `context.other` and lists the existing code as a candidate (`source: existing-code`) of a `direction` exploration. Layer `plan`, `evidence.type: source`; blocking, class `requirement`, only when `LAPIS_UNATTENDED=1`, and then a defect, not a missing input; otherwise class `quality`, `{create: warn, review: P2}`, not blocking |
 | `release.license-changed` | a catalog font's current license kind differs from the lock |
 | `release.license-unchecked` | a catalog font's license could not be refreshed: the source blocked the request, answered in a form the adapter cannot read, the family was not found, or `--offline` was given |
@@ -167,6 +168,16 @@ a separate context for the critic, or a harness with no network for the referenc
 `lapis-design next --task <task> --unavailable critic|references --reason <why>`, which writes the same record for
 that step.
 
+One record is no failure: a run whose user's words forbid network use, lookups, or downloads during the work, with
+nobody to ask, declines the references step with `lapis-design next --task <task> --declined references --brief-line
+"<the line>"`. It writes `.lapis/attempts/<task>/references.json` with `version`, `task`, `step`, `kind:
+declined-by-brief`, `brief_line` (the user's line), `command`, and `at` (UTC), and only after the line is found
+verbatim (white space and wrapping quotation marks aside; at least two words or eight characters) in the brief record
+`.lapis/answers/<task>.md` or the plan's `brief.constraints`. The check cannot tell whether the line forbids
+lookups; it keeps the claim from being the run's own wording. The record shares its file with the `--unavailable`
+record (the later one stands), and `next` counts it only while the line is still in the brief and no references record
+of the run's own is newer.
+
 `lapis-design next --task <task>` runs this gate offline on the files and returns the one step still to
 take, with its exact command or schema: `brief`, `references`, `plan`, `plan-fix`, `plan-flows`, `plan-explorations`,
 `plan-order`, `fonts-lock`, `stub`, `ledger`, `render`, `behavior`, `lint`, `critic`, `release`, or `done`. The gate's
@@ -193,11 +204,13 @@ capture that is an image (PNG, JPEG, GIF, or WebP by its first bytes, at least 1
 is anything else, or a page on an encyclopedia host, is text-only. The record needs at least six references, at most
 two text-only, and, among those seen as images, at least three kinds and two outside `web-ui`: a text-only reference
 counts toward the six and toward nothing else. The check reads the record and the files, not whether the looking was
-good, and a brief's no-network or no-external-assets line never excuses it. A run that cannot reach the network
-records that with `lapis-design next --task <task> --unavailable references --reason <why>`; the command sends one
-plain GET first and refuses the record when it works. The record is the same as for the critic: `next` goes on to the
-plan, and when the procedure is `done` its reason says no references were looked at. The captures are for study only,
-git-ignored, and never shipped or copied into the page.
+good. A run that cannot reach the network records that with `lapis-design next --task <task> --unavailable references
+--reason <why>`; the command sends one plain GET first and refuses the record when it works. A run whose user's
+words forbid the lookups declines the step with the user's line (above). Either record is the same as for the critic:
+`next` goes on to the plan, whose `explorations` still compare candidates, from local material (installed fonts, the
+project, the brief's facts); when the procedure is `done` its reason says no references were looked at, and `release
+check` lists a decline as `release.references-declined`. The captures are for study only, git-ignored, and never
+shipped or copied into the page.
 
 `plan-order` comes after the plan's own blockers and before the fonts lock: a blocking `release.procedure-order` (an
 unattended run whose page code came before the brief, references, or plan) sends the run back to redo the direction

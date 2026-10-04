@@ -16,7 +16,7 @@ metadata:
   check records itself, counts.
 - A blocking release verdict is a result to report, not a step to repeat. With nobody to ask (`LAPIS_UNATTENDED=1`),
   the plan records `approval: {state: assumed, reason: ...}` and the checks go on.
-- A brief's no-network line limits what the page loads; checks on 127.0.0.1 are not network use.
+- The render and behavior checks serve the page on 127.0.0.1 and run locally.
 
 ultramarine checks designs; it does not make them. It runs the `lapis-design` checks on our own
 render, reads the findings in order of authority, has a separate critic judge what measurement

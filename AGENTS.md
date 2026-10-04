@@ -270,7 +270,10 @@ files beside it; the database file itself does not change.
   The `references` step (`references.py`) follows it on the same terms: `.lapis/references/<task>.md`, a fenced `yaml`
   block of at least six references, each with a `capture` file under `.lapis/references/<task>/` (three kinds and two
   outside `web-ui` among the images, `source_facts` for `web-ui`, at most two text-only); a run with no network records
-  `next --unavailable references --reason`, which counts as done and is reported as not looked at.
+  `next --unavailable references --reason`, and a run whose user's words forbid lookups during the work, with nobody
+  to ask, declines with `next --declined references --brief-line "<line>"` (the line has to be in the brief record or
+  the plan's `brief.constraints`; `references.declined`). Either counts as done and is reported as not looked at; a
+  decline is `release.references-declined` in `release check`, and the plan's `explorations` use local material.
   A run that stopped to ask its user (`waiting.py`: `.lapis/questions/<task>.md` newer than `.lapis/answers/<task>.md`)
   makes `next` say `waiting-for-user` and the gate let the stop pass without a continue: two sets before a plan, one
   after (`waits` in the gate state).

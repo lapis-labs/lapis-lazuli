@@ -10,7 +10,7 @@ Take it apart line by line before opening anything else.
 | In the request | Goes to the record as |
 |---|---|
 | A named product, number, place, price, or person | `[declared]`, as written |
-| A delivery rule ("plain files, no build step"), a limit ("no network requests", "no real company names"), a duty ("state once that the data is fictional") | `[declared]`; keep its scope: "no network requests" limits what the page loads, not your own lookups |
+| A delivery rule ("plain files, no build step"), a limit ("no network requests", "no real company names"), a duty ("state once that the data is fictional") | `[declared]`, as written; a line that forbids network use, lookups, or downloads is kept word for word, since declining a lookup quotes it |
 | A look word ("modern", "professional", "clean") | `[declared]` as a named style, in the user's words; unpack what it assumes about the content and ask only if that is open |
 | What is absent: no audience, no offer, no name, no outcome | An open area for `questions.md` |
 
@@ -57,8 +57,12 @@ Keep it bounded: a few reads, chosen by the open areas, and stop when they are c
 
 ### What stops a lookup
 
-- The harness has no search or fetch, the operator or request forbids looking things up, or the call fails:
-  write `Not looked up: <reason>` under `Found`, and go on. Do not retry in a loop.
+- The request forbids network use, lookups, or downloads, and nobody can be asked: follow it. Write
+  `Not looked up: "<the request's line, as the user wrote it>"` under `Found`, and go on from what the project
+  and your own knowledge give; the `references` step that follows is declined with the same line
+  (`lzl-research`, the exploration guide, section 5).
+- The harness has no search or fetch, or the call fails: write `Not looked up: <reason>` under `Found`, and go
+  on. Do not retry in a loop.
 - A source the `lazuli sources` registry marks `refused` or `browser-link` is never requested; give the
   link and the reason.
 - Never sign in, submit a form, get past a block or CAPTCHA, or accept terms for the user.

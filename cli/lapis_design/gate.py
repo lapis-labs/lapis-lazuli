@@ -103,10 +103,16 @@ def continuation(result: dict[str, Any], first: bool, relayed: bool = False) -> 
     if step.get("schema"):
         parts.append(f"Schema: {step['schema']}")
     parts.append(step["why"])
-    parts.append(f"A missing or invalid input and a plan blocker are not done: create or fix it, then run "
-                 f"`lapis-design next --task {task}` again until it says done. Only a failure of the environment, "
-                 "such as a browser that cannot start, counts, and the check records it itself. Never write or edit "
-                 "a report, a lock, or a failure record by hand.")
+    if step["id"] == "references":
+        parts.append(f"A missing or invalid record is not done: write it, or, when the user's words forbid lookups during "
+                     f"the work and nobody can be asked, decline the step with their line as the step says, then run "
+                     f"`lapis-design next --task {task}` again until it says done. Never write or edit a report, a lock, "
+                     "or a failure record by hand.")
+    else:
+        parts.append(f"A missing or invalid input and a plan blocker are not done: create or fix it, then run "
+                     f"`lapis-design next --task {task}` again until it says done. Only a failure of the environment, "
+                     "such as a browser that cannot start, counts, and the check records it itself. Never write or edit "
+                     "a report, a lock, or a failure record by hand.")
     if relayed:
         if step["id"].startswith("plan"):
             parts.append("A person's answers are recorded: write `approval: {state: approved}` only if they approve "

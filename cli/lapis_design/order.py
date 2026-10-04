@@ -59,7 +59,7 @@ _TEXT_KEYS = ("command", "input", "patch")
 LABEL = {"brief": "brief record", "references": "references record", "plan": "plan"}
 OWES = {"brief": "the brief record `.lapis/answers/{task}.md` (the lps-brief skill)",
         "references": "the references record `.lapis/references/{task}.md` (the lzl-research skill)",
-        "plan": "the plan `.lapis/plans/{task}.yaml`, citing both records",
+        "plan": "the plan `.lapis/plans/{task}.yaml`, citing the records it rests on (a declined step has none)",
         "plan-fix": "a plan that `lapis-design plan check` reads and passes",
         "plan-explorations": "a plan that compares each open decision (`plan.uncompared-decision`)"}
 
@@ -216,9 +216,10 @@ def _refusal(page: str, task: str, step: str) -> dict[str, Any]:
     reason = (f"LapisLazuli refuses this write: {page} is page code, and task {task} is in create mode with "
               f"{OWES[step].format(task=task)} still owed. The order is brief, references, plan, then code. "
               f"Write that first (files under .lapis/ are never refused), run `lapis-design next --task {task}` "
-              "for the step and its command, and write page files once it names a later step. A no-network or "
-              "no-external-assets line in the brief limits what the shipped page loads; looking things up and "
-              "capturing references for study is part of the work and needs no extra permission.")
+              "for the step and its command, and write page files once it names a later step.")
+    if step == "references":
+        reason += (" If the user's words forbid lookups during the work and nobody can be asked, the step is declined "
+                   "with their line, not researched and not left open (the step's text gives the command).")
     return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
                                    "permissionDecisionReason": reason}}
 

@@ -70,6 +70,14 @@ after text.
   `next` step `plan-order`, the plugin hook `pre-write` and the harness mechanism `pre_write`. `GATE.md` also says a
   plan is read as `yaml.safe_load` reads it (libyaml where the two agree, PyYAML's pure-Python loader where libyaml
   reads differently or not at all), so text only libyaml accepts is exit 2 and `plan-fix`.
+- `release/GATE.md`: the `next` option `--declined references --brief-line "<line>"` and its record
+  `.lapis/attempts/<task>/references.json` (`kind: declined-by-brief`, `brief_line`, `command`, `at`), and the
+  non-blocking finding `release.references-declined` (class `quality`, layer `plan`, evidence `source`). Before: the
+  references step could be left only by a references record that passes or by `--unavailable references`, which refuses
+  while the network works, and the text said a brief's no-network or no-external-assets line "never excuses it". After:
+  a run whose user's words forbid the lookups and who cannot ask declines the step with the user's line, which has to
+  be in the brief record or the plan's `brief.constraints`; `next` goes on to the plan, and the plan's `explorations`
+  still compare candidates from local material.
 
 ### Added
 
@@ -158,6 +166,20 @@ after text.
 
 ### Changed
 
+- A brief that forbids lookups no longer deadlocks the references step. An unattended run read "Use no
+  network requests, external services, downloads, or external assets" as forbidding research during the work, would
+  not capture references or write a false `--unavailable` record (which now refuses while the network works), and the
+  pre-write hook and the exit gate sent it back to `references` until their caps, so it ended with no page.
+  `lapis-design next --declined references --brief-line "<line>"` declines the step with the user's own line when it
+  is in the brief record or the plan's `brief.constraints` (verbatim, white space aside); `next` then goes on to `plan`,
+  which tells the run to take its candidates from local material, the finished run says no references were looked at
+  and why, `release check` lists `release.references-declined` without blocking, and the exit gate and pre-write hook,
+  which read `next`, stop naming `references`. The skills stop arguing with the user's words: the sentence "a no-network
+  line limits what the shipped page loads; looking things up needs no extra permission" is gone from `lapis` (five
+  places), `type.md`, `lps-brief` (`SKILL.md` and `research.md`), `lzl-research` (`SKILL.md` and `exploration.md`),
+  `ultramarine`, the `references` step text, the `--unavailable` refusal, and the pre-write refusal. They say instead
+  to follow the user's words and, when those forbid lookups and nobody can be asked, to decline with the quoted line
+  and continue from local material. `lps-brief` records the same case as `Not looked up: "<line>"` under `Found`.
 - `lapis-design next` holds the brief to its question cap. Runs recorded 11 and 8 answers in round 1 although
   `lps-brief` allows six questions a round and two rounds. `brief.py` now counts the list items under each answers
   heading of `.lapis/answers/<task>.md` (`## Answers` is round 1, `## Answers (round 2)` round 2, a `Round N`

@@ -4,12 +4,14 @@ a run can look as if it had without having: text pages, encyclopedias, files tha
 reused, facts that state no value."""
 from __future__ import annotations
 
+import json
 import os
+import re
 from pathlib import Path
 
 import pytest
 
-from lapis_design import attempts, next_step, references
+from lapis_design import attempts, gate, next_step, order, references
 from lapis_design.cli import main as cli_main
 from procedure_support import (BRIEF_RECORD, FACTS, TASK, finish, make_project, record, reference_entries,
                                references_text, save, update, write_references)
@@ -49,12 +51,13 @@ def test_a_run_with_a_brief_and_no_references_is_sent_to_the_references_before_t
     assert f".lapis/references/{TASK}.md" in result["step"]["why"] and "lazuli ref capture" in result["step"]["why"]
 
 
-def test_a_brief_that_forbids_outside_assets_does_not_excuse_the_run_from_looking(bare):
-    """A museum brief said 'no network requests, no external assets' and the run refused to research on that ground."""
+def test_a_brief_with_a_no_network_line_still_gets_the_references_step_and_its_text_says_how_to_decline_it(bare):
+    """A museum brief said 'no network requests, no external assets' and the run refused to research on that ground:
+    the step is still asked for, since only the user's own line can decline it, and the step says how."""
     record(bare, "answers", BRIEF_RECORD + "- [declared] Q3 Network? The page makes no network requests and uses "
            "no external assets.\n", 60)
     result = evaluated(bare)
-    assert result["step"]["id"] == "references" and "no-external-assets" in result["step"]["why"]
+    assert result["step"]["id"] == "references" and "--declined references --brief-line" in result["step"]["why"]
     write_references(bare, 70)
     assert step_of(bare) == "plan"
 
@@ -295,10 +298,169 @@ def test_the_record_is_refused_while_the_network_works_whatever_the_reason_says(
     monkeypatch.setattr(references, "unreachable", lambda: None)
     reason = "The brief says no network requests or external assets, so I did not run the step"
     assert unavailable(bare, reason) == 2
-    assert "the network is reachable from here" in capsys.readouterr().err
+    err = capsys.readouterr().err
+    assert "the network is reachable from here" in err and "--declined references --brief-line" in err
     assert attempts.read(bare, TASK, "references") is None and step_of(bare) == "references"
 
 
 def test_the_probe_failure_is_kept_in_the_record(bare):
     assert unavailable(bare) == 0
     assert "probe of https://example.org/: Network is unreachable" in attempts.read(bare, TASK, "references")["reason"]
+
+
+# ------------------------------------------------------------------ declined with the user's own line
+LINE = "Use no network requests, external services, downloads, or external assets"
+QUOTED = f"- The request says: {LINE}.\n"
+
+
+def with_line(root: Path, text: str = QUOTED, at: int = 50) -> None:
+    """The brief record with `text` among its findings."""
+    record(root, "answers", BRIEF_RECORD.replace("\n## Answers", text + "\n## Answers"), at)
+
+
+def decline(root: Path, line: str = LINE) -> int:
+    return cli_main(["next", "--task", TASK, "--root", str(root), "--declined", "references", "--brief-line", line])
+
+
+def declined_file(root: Path) -> Path:
+    return root / ".lapis" / "attempts" / TASK / "references.json"
+
+
+@pytest.fixture
+def forbidden(bare) -> Path:
+    """A run at the references whose brief record holds the request's no-network line as the user wrote it."""
+    with_line(bare)
+    return bare
+
+
+def test_a_line_of_the_brief_declines_the_references_and_the_run_goes_on_to_the_plan(forbidden, monkeypatch):
+    monkeypatch.setattr(references, "unreachable", lambda: None)        # the network works: this is not the other record
+    assert step_of(forbidden) == "references"
+    assert decline(forbidden, f"\u201c{LINE}.\u201d") == 0                 # quotation marks and the full stop are not the line
+    saved = json.loads(declined_file(forbidden).read_text(encoding="utf-8"))
+    assert (saved["kind"], saved["step"], saved["task"], saved["brief_line"]) == (
+        "declined-by-brief", "references", TASK, LINE)
+    assert re.fullmatch(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ", saved["at"])
+    result = evaluated(forbidden)
+    assert result["step"]["id"] == "plan"
+    assert LINE in result["step"]["why"] and "local material" in result["step"]["why"]
+    assert attempts.read(forbidden, TASK, "references") is None          # a decline is no failure of the environment
+
+
+@pytest.mark.parametrize("line, part", [
+    ("Use no network requests, external services, downloads or external assets", "is not in the brief record"),
+    ("The page fires once a week", "is not in the brief record"),
+    ("offline", "too short"),
+], ids=["the-user's-words-where-the-record-paraphrased-them", "a-line-nobody-wrote", "one-word"])
+def test_a_line_the_brief_does_not_hold_cannot_decline_the_step(bare, capsys, line, part):
+    with_line(bare, "- The request says: no network requests, external services, downloads or external assets.\n")
+    assert decline(bare, line) == 2
+    assert part in capsys.readouterr().err
+    assert not declined_file(bare).exists() and step_of(bare) == "references"
+
+
+def test_white_space_and_wrapping_do_not_make_a_line_another_line(bare):
+    with_line(bare, "- The request says: use no network\n  requests,   external services.\n")
+    assert decline(bare, "use no network requests, external services") == 0
+    assert step_of(bare) == "plan"
+
+
+def test_a_line_of_the_plans_brief_constraints_is_the_request_too(tmp_path, monkeypatch):
+    monkeypatch.setenv("LAZULI_DB", "")
+    root = make_project(tmp_path)
+    (root / f".lapis/references/{TASK}.md").unlink()
+    assert step_of(root) == "references"
+    assert decline(root, "Photos show pieces straight out of the kiln") == 0       # brief.constraints of the example plan
+    assert step_of(root) != "references"
+
+
+def test_the_option_needs_its_line_and_is_not_the_other_record(bare, capsys):
+    with pytest.raises(SystemExit):
+        cli_main(["next", "--task", TASK, "--root", str(bare), "--declined", "references"])
+    assert "--declined and --brief-line go together" in capsys.readouterr().err
+    with pytest.raises(SystemExit):
+        cli_main(["next", "--task", TASK, "--root", str(bare), "--declined", "references", "--brief-line", LINE,
+                  "--unavailable", "references", "--reason", "no network"])
+    assert "give one" in capsys.readouterr().err
+    assert not declined_file(bare).exists()
+
+
+def test_a_references_record_written_after_the_decline_takes_over(forbidden):
+    assert decline(forbidden) == 0 and step_of(forbidden) == "plan"
+    stamp = declined_file(forbidden).stat().st_mtime + 5
+    write(forbidden, reference_entries(forbidden)[:3])                  # tried after all, and left unfinished
+    os.utime(forbidden / f".lapis/references/{TASK}.md", (stamp, stamp))
+    assert step_of(forbidden) == "references"
+
+
+def test_a_decline_stops_standing_once_its_line_is_gone_from_the_brief(forbidden):
+    assert decline(forbidden) == 0 and step_of(forbidden) == "plan"
+    record(forbidden, "answers", BRIEF_RECORD, 50)
+    assert step_of(forbidden) == "references"
+
+
+def test_a_decline_written_by_hand_with_a_line_the_brief_lacks_counts_for_nothing(bare):
+    declined_file(bare).parent.mkdir(parents=True)
+    declined_file(bare).write_text(json.dumps({
+        "version": 0, "task": TASK, "step": "references", "kind": "declined-by-brief",
+        "brief_line": "Never look anything up", "command": ["by", "hand"], "at": "2026-10-04T00:00:00Z"}), encoding="utf-8")
+    assert step_of(bare) == "references"
+
+
+def test_a_declined_run_is_not_a_run_that_looked_and_both_the_release_and_the_end_say_so(tmp_path, monkeypatch):
+    monkeypatch.setenv("LAZULI_DB", "")
+    root = make_project(tmp_path)
+    (root / f".lapis/references/{TASK}.md").unlink()
+    with_line(root)
+    assert decline(root) == 0
+    assert finish(root, "--static") == 0                                 # nothing blocks on it
+    report = json.loads((root / f".lapis/release/{TASK}.json").read_text(encoding="utf-8"))
+    [found] = [f for f in report["findings"] if f["rule_id"] == "release.references-declined"]
+    assert found["blocking"] is False and found["class"] == "quality" and found["layer"] == "plan"
+    assert found["severity"] == {"create": "warn", "review": "P2"} and report["summary"]["blocking"] == 0
+    assert LINE in found["observed"] and "local material" in found["observed"]
+    result = evaluated(root)
+    assert result["state"] == "done" and "No references were looked at" in result["reason"] and LINE in result["reason"]
+
+
+def test_a_decline_beside_a_references_record_that_passes_is_not_reported(tmp_path, monkeypatch):
+    monkeypatch.setenv("LAZULI_DB", "")
+    root = make_project(tmp_path)
+    (root / f".lapis/references/{TASK}.md").unlink()
+    with_line(root)
+    assert decline(root) == 0
+    write_references(root, 50)                                           # the run looked after all
+    assert finish(root, "--static") == 0
+    report = json.loads((root / f".lapis/release/{TASK}.json").read_text(encoding="utf-8"))
+    assert not [f for f in report["findings"] if f["rule_id"] == "release.references-declined"]
+    assert "No references were looked at" not in evaluated(root)["reason"]
+
+
+def page_write(root: Path) -> tuple[dict, dict]:
+    """A page-file write event of an unattended run in `root`, with the environment the hooks read."""
+    event = {"cwd": str(root), "tool_input": {"file_path": str(root / "index.html"), "content": "<h1>x</h1>"}}
+    return event, {"LAPIS_UNATTENDED": "1", "CLAUDE_PROJECT_DIR": str(root)}
+
+
+def test_the_exit_gate_and_the_pre_write_hook_stop_sending_a_declined_run_back_to_the_references(forbidden):
+    event, env = page_write(forbidden)
+    held = order.decide(event, env)["hookSpecificOutput"]["permissionDecisionReason"]
+    assert "references record" in held and "declined" in held
+    assert "Next step: references." in gate.stop_output(forbidden, "s1")["reason"]
+    assert decline(forbidden) == 0
+    still = order.decide(event, env)["hookSpecificOutput"]["permissionDecisionReason"]
+    assert "references record" not in still and "the plan" in still
+    assert "Next step: plan." in gate.stop_output(forbidden, "s1")["reason"]
+
+
+def test_a_declined_run_that_has_done_everything_else_is_let_stop_and_write(tmp_path, monkeypatch):
+    monkeypatch.setenv("LAZULI_DB", "")
+    for name in ("LAPIS_UNATTENDED", "LAPIS_TASK", "CLAUDE_PROJECT_DIR"):
+        monkeypatch.delenv(name, raising=False)
+    root = make_project(tmp_path)
+    (root / f".lapis/references/{TASK}.md").unlink()
+    with_line(root)
+    event, env = page_write(root)
+    assert order.decide(event, env) is not None and "Next step: references." in gate.stop_output(root, "s1")["reason"]
+    assert decline(root) == 0 and finish(root, "--static") == 0
+    assert order.decide(event, env) is None and gate.stop_output(root, "s1") is None

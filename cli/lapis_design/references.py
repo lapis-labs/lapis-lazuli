@@ -19,12 +19,19 @@ A run with no network records that with `lapis-design next --unavailable referen
 `next` counts as the step done and reports as a step that did not run. The command first tries one plain GET
 (`unreachable`) and records only when that fails.
 
+A run whose user's words could forbid lookups during the work, with nobody to ask, declines the step instead with
+`lapis-design next --declined references --brief-line "<the line>"`. The line must be in what the run recorded of the
+request, the brief record or the plan's `brief.constraints` (`declined_problem`); `next` then counts the step done,
+the plan's `explorations` compare candidates from local material, and the finished run and `release check` report
+that no reference was looked at and why (`declined`).
+
 Stdlib and PyYAML only: `next` and the stop hook import this.
 """
 from __future__ import annotations
 
 import hashlib
 import re
+import unicodedata
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -33,7 +40,7 @@ from urllib.parse import urlsplit
 
 import yaml
 
-from lapis_design import waiting
+from lapis_design import attempts, waiting
 
 STEP = "references"
 KINDS = {
@@ -233,6 +240,67 @@ def unreachable() -> str | None:
     return None
 
 
+_QUOTES = "\"'`“”‘’「」『』«»"
+
+
+def _squash(text: str) -> str:
+    return " ".join(unicodedata.normalize("NFC", text).split())
+
+
+def clean_line(text: str) -> str:
+    """A quoted line as it is compared: white space collapsed, wrapping quotation marks and a closing full stop
+    dropped (in either order: `"...".` and `"...."` are the same line)."""
+    line, before = _squash(text), None
+    while line != before:
+        line, before = line.strip(_QUOTES + " ").rstrip(".。 "), line
+    return line
+
+
+def request_texts(root: Path, task: str, plan: Any = None) -> list[str]:
+    """What the run recorded of the request, each part apart: the brief record, and each item of the plan's
+    `brief.constraints` when a plan is given."""
+    found: list[str] = []
+    try:
+        found.append(waiting.answers_path(root, task).read_text(encoding="utf-8", errors="replace"))
+    except OSError:
+        pass
+    brief = plan.get("brief") if isinstance(plan, dict) else None
+    constraints = brief.get("constraints") if isinstance(brief, dict) else None
+    if isinstance(constraints, list):
+        found.extend(item for item in constraints if isinstance(item, str))
+    return found
+
+
+def declined_problem(line: str, root: Path, task: str, plan: Any = None) -> str | None:
+    """Why `line` cannot decline the step, or None when it can: it has to be a line of the request as the run
+    recorded it (verbatim, white space aside) in the brief record or the plan's `brief.constraints`. The check
+    cannot tell whether the line forbids lookups; it keeps the claim from being the run's own wording."""
+    line = clean_line(line)
+    if len(_WORD.findall(line)) < waiting.MIN_WORDS and len(line) < 8:
+        return f"{line!r} is too short to be a line of the request; quote the whole line"
+    if any(line in _squash(text) for text in request_texts(root, task, plan)):
+        return None
+    return (f"{line!r} is not in the brief record {waiting.answers_path(Path('.'), task).as_posix()} or in the plan's "
+            "brief.constraints, so it is not recorded as the user's words. Copy the line of the request into the "
+            "record's `## Found` section exactly as the user wrote it, then run this again; a line the request does "
+            "not hold cannot decline a step")
+
+
+def declined(root: Path, task: str, plan: Any = None) -> dict[str, Any] | None:
+    """The record that declines the step, when it stands: one of ours, newer than any references record the run
+    wrote after it, and its line still in the request as recorded (a brief rewritten since cannot keep it)."""
+    found = attempts.read_declined(root, task, STEP)
+    if found is None:
+        return None
+    mine = record_path(root, task)
+    try:
+        if mine.is_file() and mine.stat().st_mtime > attempts.path(root, task, STEP).stat().st_mtime:
+            return None
+    except OSError:
+        return None
+    return found if declined_problem(found["brief_line"], root, task, plan) is None else None
+
+
 def why(task: str, found: list[str], planned: bool) -> str:
     """What the `references` step tells the run to do. `planned` says a plan already exists without the record."""
     record = record_path(Path("."), task).as_posix()
@@ -266,12 +334,15 @@ def why(task: str, found: list[str], planned: bool) -> str:
         f"most {MAX_TEXT_ONLY} text-only.",
         "Take relations (order, ratio, rhythm, density, a label's job), never assets, text, or a layout wholesale.",
         "The captures are for study only: never ship them or copy them into the page.",
-        "A no-network or no-external-assets line in the brief limits what the shipped page loads; looking things up and",
-        "capturing references for study is part of the work and needs no extra permission. Only when the network cannot",
-        "be reached from here at all, record that with",
-        f"`lapis-design next --task {task} --unavailable references --reason \"<the error you got>\"`. It sends one",
-        "plain GET first and refuses the record when that works: a brief's line, a missing WebSearch, or a",
-        "preference is no reason. A record it accepts is an environment record, not a pass, and the finished run",
-        "reports that no references were looked at.",
+        "Follow the user's words. If the request or the brief forbids network use, lookups, or downloads during the work",
+        "and nobody can be asked, do not look things up and do not stop: decline this step with the user's own line, as",
+        "the brief record or the plan's `brief.constraints` holds it:",
+        f"`lapis-design next --task {task} --declined references --brief-line \"<the line>\"`. It refuses a line that is",
+        "in neither: copy the request's line into the brief record's `## Found` as the user wrote it, then run it",
+        "again. Then plan from local material (installed fonts, the project, the brief's facts), with no lookups.",
+        "If the network cannot be reached from here at all, record that with",
+        f"`lapis-design next --task {task} --unavailable references --reason \"<the error you got>\"`; it sends one",
+        "plain GET first and refuses the record when that works. Neither record is a pass: the finished run reports",
+        "that no references were looked at.",
         "Then cite the record from the plan's `context.other` and carry what you took into `references`,",
         "`explorations`, and `sources`."])

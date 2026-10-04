@@ -23,9 +23,10 @@ license: MIT AND CC-BY-4.0
   file of fewer than two words or a brief set of more than six numbered questions. Record the replies in
   `.lapis/answers/<task>.md`, the brief record: keep what it holds, add approval replies under their own heading,
   cite it in the plan (`context.other`), and run `next` again.
-- A no-network or no-external-assets line in the brief limits what the shipped page loads; looking things up and
-  capturing references for study is part of the work and needs no extra permission. Checks on 127.0.0.1 are not
-  network use.
+- Follow the user's words. When they forbid network use, lookups, or downloads during the work and nobody can be
+  asked, do not look things up and do not stop: decline the references step with their line, as the brief record
+  holds it (`lapis-design next --task <task> --declined references --brief-line "<the line>"`), and plan from local
+  material. Render and behavior checks serve the page on 127.0.0.1 and run locally.
 - The order is brief, references, plan, then code: write no markup, style, script, or component file while `next` names
   `brief`, `references`, or a plan step. Page code written first comes back as `plan-order`, and an unattended run's
   page writes may be refused until then.
@@ -69,9 +70,8 @@ A small edit inside an established system needs no plan. Say so and make the edi
    findings leave open.
 5. Before the plan of a create run, look at references yourself: `next` names `references` until
    `.lapis/references/<task>.md` passes. Search, capture with `lazuli ref ... --task <task>`, open the
-   captures, and read a page's HTML and CSS, as the `lzl-research` skill's exploration guide describes.
-   A no-network or no-external-assets line in the brief limits what the shipped page loads; looking things up and
-   capturing references for study is part of the work and needs no extra permission.
+   captures, and read a page's HTML and CSS, as the `lzl-research` skill's exploration guide describes. If the
+   user's words forbid the lookups, decline the step with their line instead (see Done).
 
 ## Direction principles
 
@@ -90,9 +90,7 @@ if anything, checks it.
   `direction.dials` for each screen. The critic's vision check judges it; no rule reads it.
 - `explore-then-choose` - An open decision is made between candidates: two or more, compared on the
   page's own content, before one wins. `explorations` holds them and `plan.uncompared-decision` reads
-  whether it does. A brief's no-network, no-external-assets, or offline line limits what the page
-  ships and loads, never what you explore: read the local inventory and the catalogs whatever the
-  brief says.
+  whether it does.
 
 ## Explorations
 
@@ -106,8 +104,7 @@ candidate came from: a world material, a reference, a sketch of your own, or `ge
 choice for this kind of page.
 
 A decision the contract or the brief fixes is marked `fixed_by: contract` or `brief` with a `reason`
-and needs no candidates. `contract` holds only when `context.design` is set, and the brief fixes
-what the page ships, so "offline" or "no external assets" fixes no face. A create plan whose open
+and needs no candidates. `contract` holds only when `context.design` is set. A create plan whose open
 decision has no comparison, or whose type candidates are all generic families, is blocked.
 
 ## Write the plan
@@ -226,8 +223,7 @@ choosing (`explorations`, decision `palette`).
 ### 7. Type - `tokens.type`
 
 Decide roles - display, heading, body, ui, data, code, caption - per script, then explore faces before
-choosing one. The brief's no-network, no-external-assets, or offline line limits what the page ships;
-it never limits this exploration, which always runs:
+choosing one:
 
 1. Inventory: `lazuli local fonts --summary`; `--family <text>` for one family's faces, scripts, and
    measurements; `--origin adobe-sync` for the Adobe Fonts activated here.

@@ -15,11 +15,12 @@ behavior check needs it, and a page with controls but no `flows` in the plan is 
 
 Done means the procedure is complete, not that the release passes: a blocking verdict is a result to
 report. A step is also done when its failure record is fresh (`attempts.py`): the check was tried and
-the environment, not an input, stopped it. A missing input, an invalid input, a timeout, a finding, or a
-plan blocker never counts as done; the step that creates or fixes it comes back. So does a plan that cannot be
-read: it is read the way every other tool reads YAML (`plan_check.parse_plan`), never leniently, and its fault is
-named with its line and column. A blocking `release.procedure-order` (an unattended run whose page code came before
-its brief, references, or plan, `order.py`) sends the run to `plan-order`.
+the environment, not an input, stopped it. So is the references step when the run declined it with a line of its
+brief (`references.declined`): the user's own words forbade the lookups. A missing input, an invalid input, a timeout,
+a finding, or a plan blocker never counts as done; the step that creates or fixes it comes back. So does a plan that
+cannot be read: it is read the way every other tool reads YAML (`plan_check.parse_plan`), never leniently, and its
+fault is named with its line and column. A blocking `release.procedure-order` (an unattended run whose page code
+came before its brief, references, or plan, `order.py`) sends the run to `plan-order`.
 
 While questions the run wrote for its user are unanswered (`waiting.py`), the state is `waiting-for-user`
 instead: its step says to stop and wait, and `then` is the step that comes after the answers.
@@ -132,13 +133,23 @@ def _recorded(root: Path, task: str, step: str, inputs: list[Path]) -> bool:
     return attempts.read(root, task, step) is not None and _newer(attempts.path(root, task, step), inputs)
 
 
-def _references_owed(root: Path, task: str) -> list[str]:
-    """Why the references record is not one, or nothing when it is or when a fresh failure record of the
-    environment (no network) stands in for it."""
+def _references_owed(root: Path, task: str, plan: Any = None) -> list[str]:
+    """Why the references record is not one, or nothing when it is, when a fresh failure record of the
+    environment (no network) stands in for it, or when the run declined the step with a line of its brief."""
     found = references.problems(root, task)
-    if found and _recorded(root, task, references.STEP, [references.record_path(root, task)]):
+    if found and (_recorded(root, task, references.STEP, [references.record_path(root, task)])
+                  or references.declined(root, task, plan)):
         return []
     return found
+
+
+def _plan_or_none(root: Path, task: str) -> dict | None:
+    """The task's plan when it exists and reads, else None: the plan's words only add to what the brief record says."""
+    try:
+        plan = read_plan(release_check.input_paths(root, task)["plan"])
+    except (OSError, ValueError, yaml.YAMLError):
+        return None
+    return plan if isinstance(plan, dict) else None
 
 
 def _stub_problem(path: Path) -> str | None:
@@ -255,11 +266,19 @@ def _steps(root: Path, task: str, page: str | None) -> dict:
             return state(_step(brief.STEP, owed), False)
         if found := _references_owed(root, task):
             return state(_step(references.STEP, references.why(task, found, planned=False)), False)
-        return state(_step("plan", f"Write the plan at {plan_rel} before any code or check, and cite the brief record "
-                           f"{waiting.answers_path(Path('.'), task).as_posix()} and the references record "
-                           f"{references.record_path(Path('.'), task).as_posix()} in its `context.other`: the brief, the "
-                           f"decisions and the candidates compared for each, what the references taught (in `references` "
-                           f"and the candidates' sources), and a keep or reject on every default that applies. The "
+        answers = waiting.answers_path(Path('.'), task).as_posix()
+        if declined := references.declined(root, task) if references.problems(root, task) else None:
+            cited = (f"the brief record {answers} in its `context.other`: the brief, and the decisions with the candidates "
+                     f"compared for each. The references were declined with the user's own line, \"{declined['brief_line']}\", "
+                     "so nothing is looked up: take the candidates from local material (installed fonts with `lazuli "
+                     "local fonts`, the project, the brief's facts) and say so in their `source`, and keep or reject "
+                     "every default that applies.")
+        else:
+            cited = (f"the brief record {answers} and the references record "
+                     f"{references.record_path(Path('.'), task).as_posix()} in its `context.other`: the brief, the "
+                     "decisions and the candidates compared for each, what the references taught (in `references` "
+                     "and the candidates' sources), and a keep or reject on every default that applies.")
+        return state(_step("plan", f"Write the plan at {plan_rel} before any code or check, and cite {cited} The "
                            f"schema is below and an example is {shared / 'plan/example.plan.yaml'}. "
                            "Then run the command to see what blocks.", check, shared / "plan" / "schema.yaml"), False)
     except (OSError, ValueError, yaml.YAMLError) as exc:
@@ -274,7 +293,7 @@ def _steps(root: Path, task: str, page: str | None) -> dict:
     if plan.get("mode") == "create":
         if owed := brief.owed(root, task, planned=True):
             return state(_step(brief.STEP, owed), False)
-        if found := _references_owed(root, task):
+        if found := _references_owed(root, task, plan):
             return state(_step(references.STEP, references.why(task, found, planned=True)), False)
 
     interactive = _interactive(plan, page_file, _json(paths["extract"]))
@@ -436,9 +455,13 @@ def _steps(root: Path, task: str, page: str | None) -> dict:
                    f"defects, {summary['no_evidence']} without evidence)")
     else:
         verdict = f"the release check could not run here ({release_record['reason']})"
-    skipped = attempts.read(root, task, references.STEP) if plan.get("mode") == "create" and references.problems(
-        root, task) else None
-    looked = f" No references were looked at: {skipped['reason']}." if skipped else ""
+    looked = ""
+    if plan.get("mode") == "create" and references.problems(root, task):
+        if declined := references.declined(root, task, plan):
+            looked = (f" No references were looked at: the user's line \"{declined['brief_line']}\" declined the "
+                      "lookups, so the plan rests on local material.")
+        elif skipped := attempts.read(root, task, references.STEP):
+            looked = f" No references were looked at: {skipped['reason']}."
     return state(None, interactive, f"The procedure is complete; {verdict}.{looked} Report that verdict, the checks "
                  "that did not run and why, and what remains for the user. Passing the gate is not required to stop.")
 
@@ -467,6 +490,11 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design next") -> int:
                     help="record that this step cannot run here, with --reason: a harness that cannot start a "
                     "separate context for the critic, or no network for the references")
     ap.add_argument("--reason", help="why --unavailable applies")
+    ap.add_argument("--declined", choices=list(attempts.DECLINABLE),
+                    help="decline this step with the user's own words, with --brief-line: the request forbids the "
+                    "lookups the step needs and nobody can be asked")
+    ap.add_argument("--brief-line", help="the line of the request that forbids them, exactly as the brief record or "
+                    "the plan's brief.constraints holds it")
     args = ap.parse_args(argv)
     task = resolve_task(args.root, args.task)
     if not task:
@@ -475,18 +503,32 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design next") -> int:
         ap.error("--task must be a plan task id (lowercase letters, digits, and hyphens)")
     if bool(args.unavailable) != bool(args.reason and args.reason.strip()):
         ap.error("--unavailable and --reason go together")
+    if bool(args.declined) != bool(args.brief_line and args.brief_line.strip()):
+        ap.error("--declined and --brief-line go together")
+    if args.unavailable and args.declined:
+        ap.error("--unavailable and --declined are two different records; give one")
     if args.unavailable:
         reason = args.reason.strip().splitlines()[0]
         if args.unavailable == references.STEP:
             if (probe := references.unreachable()) is None:
-                print(f"next: the network is reachable from here ({references.PROBE_URL} answered), so the references "
-                      "step can run and no record was written; a brief's no-network line, a missing search tool, or a "
-                      "preference is no environment failure", file=sys.stderr)
+                print(f"next: the network is reachable from here ({references.PROBE_URL} answered), so no record of an "
+                      "unreachable network was written. If the user's words forbid the lookups, decline the step with "
+                      f"their line: `lapis-design next --task {task} --declined references --brief-line \"<the line>\"`; "
+                      "otherwise run the step", file=sys.stderr)
                 return 2
             reason = f"{reason} (probe of {references.PROBE_URL}: {probe})"
         command = ["lapis-design", "next", "--task", task, "--unavailable", args.unavailable]
         if attempts.record(args.root, task, args.unavailable, command, None, reason) is None:
             print(f"next: the {args.unavailable} record cannot be written under {args.root / '.lapis'}", file=sys.stderr)
+            return 2
+    if args.declined:
+        line = references.clean_line(args.brief_line)
+        if problem := references.declined_problem(line, args.root, task, _plan_or_none(args.root, task)):
+            print(f"next: the {args.declined} step was not declined: {problem}", file=sys.stderr)
+            return 2
+        command = ["lapis-design", "next", "--task", task, "--declined", args.declined, "--brief-line", line]
+        if attempts.record_declined(args.root, task, args.declined, command, line) is None:
+            print(f"next: the {args.declined} record cannot be written under {args.root / '.lapis'}", file=sys.stderr)
             return 2
     try:
         result = evaluate(args.root, task, args.url)

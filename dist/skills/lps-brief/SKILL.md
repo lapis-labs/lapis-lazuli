@@ -36,11 +36,11 @@ name in lowercase letters and hyphens, which the exit gate uses too.
 
 1. **Read the request** sentence by sentence. Every named thing, number, constraint, delivery rule, and look
    word is `[declared]`, kept as written. A look word such as "modern" is a named style to unpack, not a taste
-   decision to settle by guessing. A no-network or no-external-assets line in the brief limits what the shipped
-   page loads; looking things up and capturing references for study is part of the work and needs no extra
-   permission.
+   decision to settle by guessing. Copy as written any line that forbids network use, lookups, or downloads;
+   declining a lookup cites it (`references/research.md`, "What stops a lookup").
 2. **Read the project**, then **look up the subject's world** (`references/research.md`). Record what each
-   source says and where; a lookup that cannot run is recorded with its reason, never skipped silently.
+   source says and where; a lookup that cannot run, or that the request forbids, is recorded with its reason,
+   never skipped silently.
 3. **Choose the questions** (`references/questions.md`). List what is still open, rank it by how much the
    answer would change the page, and keep the top six at most. Drop what a source answered and what changes
    nothing. Each question gives its reason and the default you will assume if it goes unanswered.

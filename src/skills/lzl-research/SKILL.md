@@ -80,11 +80,12 @@ ship them or copy them into a page.
 ## Explore references
 
 A create run's `lapis-design next` names `references` after the brief. Here you choose sources yourself,
-at a human pace, through the registry and policies above: a `refused` or `browser-link` source stays so,
-and a brief's no-network or no-external-assets line limits what the page loads, never this research. A
+at a human pace, through the registry and policies above: a `refused` or `browser-link` source stays so. A
 reference counts when you have looked at it: search for candidates beyond web design, capture them with
 `--task <task>`, open the capture images, read a page's saved HTML and CSS, then write
-`.lapis/references/<task>.md`. Read `references/exploration.md` for the steps and the record.
+`.lapis/references/<task>.md`. Read `references/exploration.md` for the steps and the record. If the user's
+words forbid network use or lookups during the work and nobody can be asked, follow them: decline the step
+with their quoted line instead (section 5 there).
 References inform relations and decisions; never copy assets, text, or a layout wholesale.
 
 ## Reference notes

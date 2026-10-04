@@ -98,24 +98,36 @@ Take relations, not surfaces: order, ratio, rhythm, density, a label's job, how 
 assets, text, brand colors, marks, the exact type pairing, and any signature composition. A result close to
 one reference in layout, palette, type, and copy at once is a clone.
 
-## 5. No network
+## 5. No network, or no lookups
 
-A brief's no-network or no-external-assets line limits what the page loads; it never limits this research,
-because looking is not shipping, and a missing search tool or a preference is no reason either: `lazuli ref
-capture` needs only a network, and candidates come from `lazuli sources` and the pages you already know.
-Only when the network cannot be reached from here at all, record it:
+Two honest records stand for a references step that does not run. Neither is a pass: `next` goes on to the plan,
+and the finished run and `release check` report that no references were looked at.
+
+The user's words forbid network use, lookups, or downloads during the work, and nobody can be asked: follow them.
+Do not look things up, and do not stop. Decline the step with the user's own line, exactly as the brief record
+(`.lapis/answers/<task>.md`, under `Found`) or the plan's `brief.constraints` holds it:
+
+```
+lapis-design next --task <task> --declined references --brief-line "<the line>"
+```
+
+The command refuses a line that is in neither, so copy the request's line into `Found` as the user wrote it
+first. The plan's `explorations` still compare candidates for every open decision, from local material: the
+installed fonts (`lazuli local fonts`), the project, and the brief's facts.
+
+The network cannot be reached from here at all (not a line of the brief): record the error.
 
 ```
 lapis-design next --task <task> --unavailable references --reason "<the error you got>"
 ```
 
-The command sends one plain GET first and refuses the record when it works. A record it accepts is an
-environment record, not a pass: `next` goes on to the plan, and the finished run reports that no references
-were looked at. Never write a record for references you did not look at.
+The command sends one plain GET first and refuses the record when it works. Never write a record for
+references you did not look at.
 
 ## 6. Carry it into the plan
 
-Cite the record from the plan's `context.other`. Put each reference you took something from in the plan's
+Cite the record from the plan's `context.other` (a declined step has none: cite the brief record). Put each
+reference you took something from in the plan's
 `references` (the profile at `.lapis/refs/<slug>.json`, `rights: reference-only`, `mode: analyze` or
 `borrow`, what to `take` and `leave`), name it as the `source` of the candidate in the `explorations` entry of
 the decision it informed, and list it in `sources`. The captures stay where they are: git-ignored, for study
