@@ -173,6 +173,23 @@ def test_section_sequence_max_distance_is_the_allowed_edge():
     assert observed(lint("layout.template-section-sequence", params={"max_distance": 0.24}, extract=near)) == []
 
 
+def test_section_sequence_compares_from_the_hero_and_counts_a_repeated_archetype_once():
+    # a header read as a section, then a pricing section split in two, as the render check often derives them
+    page = sequence("cta", "hero", "cta", "feature-grid", "pricing", "pricing", "cta", "footer")
+    [hit] = lint("layout.template-section-sequence", extract=page).hits
+    assert "hero > cta > feature-grid > pricing > cta at distance 0.20" in hit.observed
+
+
+def test_section_sequence_knows_the_feature_plan_question_close_spine():
+    [hit] = lint("layout.template-section-sequence",
+                 extract=sequence("hero", "feature-grid", "pricing", "faq", "cta", "footer")).hits
+    assert "follows the template hero > feature-grid > pricing > faq > cta (hero >" in hit.observed and "distance 0.00" in hit.observed
+
+
+def test_a_page_of_fewer_than_four_sections_is_not_a_landing_template():
+    assert observed(lint("layout.template-section-sequence", extract=sequence("hero", "pricing", "cta", "footer"))) == []
+
+
 def test_section_sequence_skips_without_a_sequence():
     assert lint("layout.template-section-sequence", extract=extract(viewport(1440))).skipped
 
@@ -251,6 +268,69 @@ def test_equal_siblings_skip_when_the_plan_cannot_rank_the_members():
     unmatched = lint("layout.equal-siblings", extract=tiers(0.95), plan=plan(["gallery"]))
     assert "distinct entries" in unmatched.skipped
     assert "sibling_groups" in lint("layout.equal-siblings", extract=extract(viewport(1440)), plan=plan()).skipped
+
+
+# ---------------------------------------------------------------- pricing-offers
+
+CARD_BORDER = {"border_px": 1, "border_color": [0.9, 0.0, 0.0]}
+PICKED = {"border_px": 1, "border_color": [0.55, 0.15, 150], "background": [0.95, 0.03, 150]}
+
+
+def offers(middle=None, outer=None, count=3, price="$8 / month", label=None, action=None, lift=0):
+    """`count` plan cards in a row under one section, each with a name, a price, and a button."""
+    boxes = [box(1, "section", 0, 0, 1440, 900)]
+    text, members = [], []
+    for i in range(count):
+        n = 10 + i * 10
+        picked = i == 1
+        style = {**CARD_BORDER, **(middle if picked and middle is not None else outer or {})}
+        y = 100 - (lift if picked else 0)
+        boxes += [box(n, "card", 100 + i * 440, y, 400, 500, parent=1, style=style),
+                  box(n + 1, "heading", 120 + i * 440, y + 40, 300, 32, parent=n),
+                  box(n + 2, "text", 120 + i * 440, y + 100, 300, 32, parent=n),
+                  box(n + 3, "button", 120 + i * 440, y + 420, 300, 44, parent=n,
+                      style=(action or {}) if picked else {})]
+        text += [run(n + 1, n + 1, f"Plan {i}", "heading", 24), run(n + 2, n + 2, price)]
+        if picked and label:
+            boxes.append(box(n + 4, "text", 120 + i * 440, y + 8, 200, 20, parent=n))
+            text.append(run(n + 4, n + 4, label, "label", 12))
+        members.append(bid(n))
+    group = {"parent": bid(1), "members": members, "similarity": 0.8}
+    return extract(viewport(1440, boxes, text, derived={"sibling_groups": [group]}))
+
+
+def test_three_offerings_with_a_set_apart_middle_hit():
+    hits = lint("layout.pricing-trio-recommendation", extract=offers(PICKED, label="Most popular")).hits
+    assert len(hits) == 1 and hits[0].location["box"] == bid(20) and hits[0].refs == [bid(10), bid(20), bid(30)]
+    assert 'the badge "Most popular"' in hits[0].observed and "its own fill" in hits[0].observed
+
+
+def test_a_raised_frame_and_the_only_filled_action_count_as_signals():
+    page = offers({}, lift=16, action={"background": [0.4, 0.15, 150]})
+    assert "a raised or larger frame, the only filled action" in "".join(observed(lint("layout.pricing-trio-recommendation", extract=page)))
+
+
+def test_a_label_above_the_plan_name_is_a_signal_even_without_a_recommendation_word():
+    page = offers({"border_color": [0.55, 0.15, 150]}, label="For shared work")
+    assert 'a label "For shared work" above the plan name' in "".join(observed(lint("layout.pricing-trio-recommendation", extract=page)))
+
+
+@pytest.mark.parametrize("page", [
+    offers(),                                                     # three equal cards
+    offers({"background": [0.95, 0.03, 150]}),                    # one signal is not a recommendation
+    offers(PICKED, count=2),                                      # a pair
+    offers(PICKED, count=4),                                      # four
+    offers(PICKED, price="Contact us"),                           # no prices
+], ids=["equal", "one-signal", "two-plans", "four-plans", "unpriced"])
+def test_offerings_without_a_set_apart_middle_do_not_hit(page):
+    assert observed(lint("layout.pricing-trio-recommendation", extract=page)) == []
+
+
+def test_the_outer_plan_set_apart_is_not_a_center_recommendation():
+    page = offers(None, outer=None)
+    cards = [b for b in page["viewports"][0]["boxes"] if b["role"] == "card"]
+    cards[0]["style"] = {**PICKED}
+    assert observed(lint("layout.pricing-trio-recommendation", extract=page)) == []
 
 
 # ---------------------------------------------------------------- card-nesting
@@ -551,6 +631,38 @@ def test_decorative_dom_skips_without_box_styles():
     assert lint("imagery.css-illustration", extract=extract(viewport(1440, [box(1, "other", 0, 0, 9, 9)]))).skipped
 
 
+def floating_chips(chip_rects=((620, 200, 200, 70), (1200, 400, 200, 70)), text="Backup complete", control=False, top=120):
+    boxes = [box(1, "card", 700, top, 600, 500, style={"background": [0.97, 0.01, 150], "radius_px": 16})]
+    runs = []
+    for i, (x, y, w, h) in enumerate(chip_rects):
+        n = 10 + i * 5
+        boxes += [box(n, "card", x, y, w, h, style={"background": [1.0, 0.0, 0.0], "border_px": 1, "border_color": [0.9, 0.0, 0.0]}),
+                  box(n + 1, "text", x + 12, y + 12, w - 24, 24, parent=n)]
+        runs.append(run(i, n + 1, text if i == 0 else "Always protected"))
+        if control:
+            boxes.append(box(n + 2, "button", x + 12, y + 40, 80, 24, parent=n))
+    return extract(viewport(1440, boxes, runs))
+
+
+def test_floating_chips_hit_when_two_labels_overhang_the_hero_object():
+    hits = lint("component.floating-chips", extract=floating_chips()).hits
+    assert len(hits) == 1 and hits[0].location["box"] == bid(1)
+    assert "2 short boxed labels float over the edge of box" in hits[0].observed
+    assert '"Backup complete"' in hits[0].observed and hits[0].refs == [bid(10), bid(15)]
+
+
+@pytest.mark.parametrize("page", [
+    floating_chips(chip_rects=((620, 200, 200, 70),)),                              # one label is not a set
+    floating_chips(chip_rects=((760, 200, 200, 70), (1000, 400, 200, 70))),          # both inside the object
+    floating_chips(chip_rects=((420, 200, 200, 70), (1340, 400, 90, 70))),           # beside it, not over it
+    floating_chips(control=True),                                                     # a control is not a status panel
+    floating_chips(text="Every file you save is copied twice to other cities and kept"),  # a sentence, not a label
+    floating_chips(chip_rects=((620, 1300, 200, 70), (1200, 1400, 200, 70)), top=1200),   # below the opening
+], ids=["one", "inside", "beside", "control", "sentence", "below-opening"])
+def test_boxes_that_are_not_floating_labels_do_not_hit(page):
+    assert observed(lint("component.floating-chips", extract=page)) == []
+
+
 # ---------------------------------------------------------------- contract-diff
 
 TOKENS_PLAN = {"tokens": {
@@ -794,7 +906,7 @@ def test_layout_animation_behavior_hits_controls_that_animate_layout_properties(
 LAYOUT_DETECTORS = {"template-repetition", "section-sequence", "section-inventory", "sibling-identity",
                     "card-nesting", "grid-filler", "gap-proximity", "symmetry", "reading-path", "edge-inset",
                     "responsive-structure", "signature-present", "large-list", "decorative-dom", "contract-diff",
-                    "motion-inventory", "accessibility-tree", "layout-shift"}
+                    "motion-inventory", "accessibility-tree", "layout-shift", "pricing-offers"}
 
 
 @pytest.mark.parametrize("rule_id,layer", sorted(

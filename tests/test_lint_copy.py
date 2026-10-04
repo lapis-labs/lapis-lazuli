@@ -264,6 +264,39 @@ def test_density_bound_is_one_per_thousand_words_and_fires_only_above(words, hit
     assert len(result.hits) == hits
 
 
+def test_comfort_wording_has_to_recur_on_the_page_to_hit():
+    once = doc(("hero", [r("Life happens. Keep what matters.", "display")]))
+    assert lint("copy.stock-reassurance", extract=once).hits == []
+    twice = doc(("hero", [r("Life happens. Keep what matters.", "display")]),
+                ("cta", [r("Make room for peace of mind.", "heading")]))
+    result = lint("copy.stock-reassurance", extract=twice)
+    assert '"life happens" x1' in observed(result) and '"peace of mind" x1' in observed(result)
+
+
+def test_comfort_wording_in_plan_key_copy_hits_without_a_count():
+    hit = lint("copy.stock-reassurance", "plan", plan=plan([("headline", "A little backup. A lot of peace of mind.")]))
+    assert "peace of mind" in observed(hit)
+    assert lint("copy.stock-reassurance", "plan", plan=plan([("headline", "Restore any file from the last 30 days")])).hits == []
+
+
+def test_korean_comfort_wording_counts_with_particles():
+    extract = doc(("hero", [r("마음 편히 맡기세요.", "display"), r("백업은 걱정 없이 매일 자동으로 이루어져요.")]), lang="ko")
+    assert "reassurance_phrases instances on the page" in observed(lint("copy.stock-reassurance", extract=extract))
+
+
+def test_offer_terms_hit_when_two_of_them_share_a_section():
+    stacked = doc(("hero", [r("Start free", "ui"), r("14-day free trial", "caption"), r("No credit card required", "caption")]))
+    assert "2 offer_terms values together" in observed(lint("copy.template-offer-terms", extract=stacked))
+
+
+def test_one_offer_term_or_terms_in_separate_sections_do_not_hit():
+    one = doc(("hero", [r("Start free", "ui"), r("Cancel anytime", "caption")]))
+    apart = doc(("hero", [r("Start free", "ui"), r("Cancel anytime", "caption")]),
+                ("cta", [r("Start now", "ui"), r("No credit card required", "caption")]))
+    assert lint("copy.template-offer-terms", extract=one).hits == []
+    assert lint("copy.template-offer-terms", extract=apart).hits == []
+
+
 # ---------------------------------------------------------------- rhetorical-shell
 
 def test_contrast_frames_hit_by_density():
@@ -470,6 +503,77 @@ def test_repeated_korean_endings():
 def test_rhythm_needs_five_body_sentences():
     result = lint("copy.uniform-rhythm", extract=doc(("other", [r("One. Two words. Three words here.")])))
     assert result.hits == [] and "fewer than 5" in result.skipped
+
+
+# ---------------------------------------------------------------- paired headings (rhythm-variance)
+
+def paired_page(*headings: str, first: str = "Backups for small studios"):
+    sections = [("hero", [r(first, "display")])]
+    sections += [("feature-grid", [r(h, "heading")]) for h in headings]
+    return doc(*sections)
+
+
+def test_first_heading_built_as_two_short_sentences_hits():
+    result = lint("copy.uniform-rhythm", extract=doc(("hero", [r("Your files. Safe, always.", "display")])))
+    assert "the first heading built as two or three short sentences" in observed(result)
+    assert '"Your files. Safe, always."' in observed(result)
+
+
+def test_sentences_joined_by_a_line_break_without_a_space_are_still_two_beats():
+    result = lint("copy.uniform-rhythm", extract=doc(("hero", [r("Life happens.Keep what matters.", "display")])))
+    assert "Life happens. Keep what matters." in observed(result)
+
+
+def test_runs_of_one_heading_box_are_one_heading():
+    shared = box(7)
+    extract = doc(("hero", [r("Your work.", "display", box=shared), r("Safe, always.", "display", box=shared)]))
+    assert "Your work. Safe, always." in observed(lint("copy.uniform-rhythm", extract=extract))
+
+
+def test_one_paired_section_heading_is_not_a_cadence():
+    result = lint("copy.uniform-rhythm", extract=paired_page("Set it up. Then get on with it.", "How restores work"))
+    assert result.hits == [] and result.skipped is None
+
+
+def test_three_paired_section_headings_are_a_page_wide_cadence():
+    result = lint("copy.uniform-rhythm", extract=paired_page(
+        "Set it up. Then get on with it.", "One click. One restore.", "Small price. Big relief.", "How restores work"))
+    assert "3 of 5 headings built as two or three short sentences" in observed(result)
+
+
+def test_quantity_and_negation_pairs_are_named():
+    quantity = lint("copy.uniform-rhythm", extract=doc(("hero", [r("A little backup. A lot of calm.", "display")])))
+    negation = lint("copy.uniform-rhythm", extract=doc(("hero", [r("Built to be there. Not in the way.", "display")])))
+    assert "1 a quantity pair" in observed(quantity)
+    assert "1 a negation pair" in observed(negation)
+
+
+@pytest.mark.parametrize("heading", [
+    "Backups for small studios",                                                    # one sentence
+    "Every file you save is copied twice to other cities. The second copy lives somewhere far from the first.",  # long sentences
+    "A, B. C, D. E, F. G, H.",                                                      # four beats
+    "Same words. Same words.",                                                      # one beat said twice
+])
+def test_headings_that_are_not_short_sentence_pairs_do_not_hit(heading):
+    result = lint("copy.uniform-rhythm", extract=doc(("hero", [r(heading, "display")])))
+    assert result.hits == [] and result.skipped is None
+
+
+def test_bilingual_heading_is_a_translation_not_a_pair():
+    result = lint("copy.uniform-rhythm", extract=doc(("hero", [r("빛은 사라져도, 감각은 남습니다. Light passes.", "display")]), lang="ko"))
+    assert result.hits == [] and result.skipped is None
+
+
+def test_korean_heading_pair_hits():
+    result = lint("copy.uniform-rhythm", extract=doc(("hero", [r("파일은 안전하게. 복구는 빠르게.", "display")]), lang="ko"))
+    assert "the first heading built as two or three short sentences" in observed(result)
+
+
+def test_japanese_heading_pair_is_measured_in_characters():
+    pair = lint("copy.uniform-rhythm", extract=doc(("hero", [r("季節を包む。ひとくち。", "display")]), lang="ja"))
+    long = lint("copy.uniform-rhythm", extract=doc(("hero", [r("季節の移ろいを一つ一つ丁寧に包みます。毎朝その日の分だけ作ります。", "display")]), lang="ja"))
+    assert "the first heading built" in observed(pair)
+    assert long.hits == []
 
 
 # ---------------------------------------------------------------- formatting-residue

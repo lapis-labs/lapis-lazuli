@@ -462,14 +462,20 @@ def section_sequence(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
     if not templates:
         return Result(skipped="the rule lists no templates")
     max_distance = float(params.get("max_distance", 0.34))
+    min_sections = int(params.get("min_sections", 0))
     measured = [p for p in pages if p.derived.get("section_sequence") is not None]
     if not measured:
         return Result(skipped="the extract has no derived.section_sequence")
 
     def observe(page: _Page) -> Iterable[_Obs]:
-        # No template names a footer and every page ends with one, so it is not compared.
+        # No template names a footer and every page ends with one, so it is not compared. The sections
+        # before the first hero are the site header, and an archetype repeated in a row is one section
+        # split in two, so a template is compared with the page from its hero, each archetype once.
         sequence = [a for a in page.derived["section_sequence"] if a != "footer"]
-        if not sequence:
+        if "hero" in sequence:
+            sequence = sequence[sequence.index("hero"):]
+        sequence = [a for i, a in enumerate(sequence) if i == 0 or a != sequence[i - 1]]
+        if not sequence or len(sequence) < min_sections:
             return
         def distance(template: list[str]) -> float:
             return _edit_distance(sequence, template) / max(len(sequence), len(template))
@@ -645,6 +651,133 @@ def sibling_identity(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
         note = (f"{_count(len(unjudged), 'sibling group')} above similarity {_fmt(bound)} not judged: no two "
                 "members match distinct entries of the plan's layout.procedure.priority")
     return Result(hits=hits, skipped=note)
+
+
+# ---------------------------------------------------------------- pricing-offers
+
+# Same shape as render/derived.py, which decides what a priced card is.
+_PRICE = re.compile(r"(?:[$€£¥₩₹]\s*\d|\d[\d,.]*\s*(?:[$€£¥₩₹]|원|usd|eur|krw|/\s*(?:mo|month|yr|year|월|년)))", re.I)
+_EMPHASIS_DE = 0.03          # ΔE_OK by which a card's fill or border stands apart from its siblings'
+_EMPHASIS_PX = 8             # px by which a card rises above or outgrows its siblings
+_BADGE_WORDS = 4             # a ribbon or badge on a card is at most this many words
+
+
+def _fill(box: dict) -> list[float] | None:
+    background = (box.get("style") or {}).get("background")
+    return background if background is not None and (len(background) < 4 or background[3] > 0) else None
+
+
+def _effective_fill(page: _Page, ident: str) -> list[float]:
+    """The card's own fill, else the nearest ancestor's, else white."""
+    for i in (ident, *page.ancestors(ident)):
+        fill = _fill(page.by_id[i])
+        if fill is not None:
+            return fill
+    return [1.0, 0.0, 0.0]
+
+
+def _shadowed(box: dict) -> bool:
+    style = box.get("style") or {}
+    return bool(style.get("shadow") or style.get("shadows"))
+
+
+def _recommendation(text: str, phrases: list[str]) -> bool:
+    folded = text.casefold()
+    return any(re.search(rf"(?<!\w){re.escape(p.casefold())}(?!\w)", folded) if p.isascii() else p in folded
+               for p in phrases)
+
+
+def _plan_cards(page: _Page) -> Iterable[tuple[str, list[str]]]:
+    """(parent, members in reading order) of each group of exactly three offerings: siblings that each
+    hold a control, at least two of which show a price."""
+    for group in page.derived.get("sibling_groups") or ():
+        members = [m for m in group["members"] if m in page.by_id]
+        if len(members) != 3:
+            continue
+        texts = {m: " ".join(r.get("text", "") for r in page.subtree_runs(m)) for m in members}
+        controls = all(any(page.by_id[d]["role"] in _CONTROLS for d in page.descendants(m)) for m in members)
+        if controls and sum(1 for t in texts.values() if _PRICE.search(t)) >= 2:
+            rects = [page.rect(m) for m in members]
+            row = all(_side_by_side(a, b) for a, b in combinations(rects, 2))
+            yield group["parent"], sorted(members, key=lambda m: page.rect(m)["x" if row else "y"])
+
+
+def _center_emphasis(page: _Page, members: list[str], phrases: list[str]) -> list[str]:
+    """How the middle offering stands out from the two outer ones."""
+    first, mid, last = members
+    a, m, c = (page.by_id[i] for i in members)
+    outer = (a, c)
+    signals: list[str] = []
+    fills = [_effective_fill(page, i) for i in members]
+    if all(delta_e_ok(fills[1], f) > _EMPHASIS_DE for f in (fills[0], fills[2])):
+        signals.append("its own fill")
+    style = [(b.get("style") or {}) for b in (a, m, c)]
+    widths = [s.get("border_px", 0) for s in style]
+    colors = [s.get("border_color") for s in style]
+    if widths[1] > max(widths[0], widths[2]) or (
+            widths[1] > 0 and all(x is not None for x in colors)
+            and all(delta_e_ok(colors[1], colors[k]) > 2 * _EMPHASIS_DE for k in (0, 2))):
+        signals.append("a border the others lack" if widths[1] > max(widths[0], widths[2]) else "a different border color")
+    if _shadowed(m) and not any(_shadowed(b) for b in outer):
+        signals.append("a shadow")
+    ra, rm, rc = (page.rect(i) for i in members)
+    if _side_by_side(ra, rm) and _side_by_side(rm, rc):
+        if rm["y"] <= min(ra["y"], rc["y"]) - _EMPHASIS_PX or rm["h"] >= max(ra["h"], rc["h"]) + _EMPHASIS_PX:
+            signals.append("a raised or larger frame")
+
+    def action(ident: str) -> dict | None:
+        return next((page.by_id[d] for d in page.descendants(ident) if _button_like(page.by_id[d])), None)
+
+    buttons = [action(i) for i in members]
+    if all(buttons):
+        filled = [_fill(b) is not None and delta_e_ok(_fill(b), f) > 0.15 for b, f in zip(buttons, fills)]
+        if filled[1] and not filled[0] and not filled[2]:
+            signals.append("the only filled action")
+    own = {i: [r for r in page.subtree_runs(i)] for i in members}
+    others = {r.get("text", "").strip().casefold() for i in (first, last) for r in own[i]}
+    names = [r["box"] for r in own[mid] if r.get("type_role") in _HEADING_RUNS]
+    name_top = min((page.rect(b)["y"] for b in names if b in page.by_id), default=None)
+    for run in own[mid]:
+        text = run.get("text", "").strip()
+        if not text or not 1 <= len(text.split()) <= _BADGE_WORDS or run.get("type_role") in _HEADING_RUNS:
+            continue
+        if _recommendation(text, phrases):
+            signals.append(f'the badge "{text}"')
+            break
+        box = page.by_id.get(run["box"])
+        # a ribbon sits above the plan name, which every card has
+        if (box and name_top is not None and text.casefold() not in others and not _PRICE.search(text)
+                and box["rect"]["y"] + box["rect"]["h"] <= name_top + 1):
+            signals.append(f'a label "{text}" above the plan name')
+            break
+    return signals
+
+
+@detector("pricing-offers", layers=("render",))
+def pricing_offers(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
+    pages = _pages(ctx)
+    if isinstance(pages, str):
+        return Result(skipped=pages)
+    check = _params(det).get("check")
+    if check != "center-recommendation":
+        return Result(skipped=f"unknown pricing-offers check {check!r}")
+    bound = _bound(det, "emphasis_signals_max")
+    if bound is None:
+        return _no_bound("emphasis_signals_max")
+    measured = [p for p in pages if p.derived.get("sibling_groups") is not None and p.has_style()]
+    if not measured:
+        return Result(skipped="the extract has no derived.sibling_groups or box styles")
+    phrases = ctx.list_values(det["list"]) if det.get("list") else []
+
+    def observe(page: _Page) -> Iterable[_Obs]:
+        for parent, members in _plan_cards(page):
+            signals = _center_emphasis(page, members, phrases)
+            if len(signals) > bound:
+                yield _Obs(("pricing", parent),
+                           f"three offerings under {parent}, the middle one ({members[1]}) set apart by "
+                           f"{', '.join(signals)}", box=members[1], refs=tuple(members))
+
+    return Result(hits=_merge(measured, observe))
 
 
 # ---------------------------------------------------------------- card-nesting
@@ -1236,13 +1369,71 @@ def _shape_illustrations(page: _Page) -> Iterable[_Obs]:
                        box=ident, refs=tuple(shapes[:12]))
 
 
+_CHIP_WORDS = 8                  # a chip holds a few words, not a paragraph
+_CHIP_AREA = 0.04                # of the first viewport
+_CHIP_OBJECT_AREA = (0.06, 0.55) # the object the chips float over, as a share of the first viewport
+_CHIP_INSIDE = (0.15, 0.97)      # share of a chip over the object: below it the chip sits beside, above it inside
+_CHIP_VS_OBJECT = 0.25           # a chip is at most this share of the object's area
+_CHIPS_MIN = 2
+_OPENING = 1.25                  # the opening is the first viewport and a quarter more
+_NOT_CHIP_ROLES = frozenset({"button", "link", "input", "section", "heading", "media", "nav", "list"})
+
+
+def _overlap(a: dict, b: dict) -> float:
+    return _h_overlap(a, b) * _v_overlap(a, b)
+
+
+def _floating_chips(page: _Page) -> Iterable[_Obs]:
+    """Two or more short, boxed labels that overhang the edge of one large object in the opening: status,
+    file, and proof panels that float around a hero illustration or mock."""
+    if not page.has_style():
+        return
+    view = page.width * page.height
+    opening = [i for i in page.pre_order() if page.rect(i)["y"] + page.rect(i)["h"] / 2 <= _OPENING * page.height]
+    chips = []
+    for ident in opening:
+        box, rect = page.by_id[ident], page.rect(ident)
+        if (box["role"] in _NOT_CHIP_ROLES or not _painted(box) or rect["w"] < 60 or rect["h"] < 20
+                or _area(rect) > _CHIP_AREA * view or any(a in chips for a in page.ancestors(ident))):
+            continue
+        words = " ".join(r.get("text", "") for r in page.subtree_runs(ident)).split()
+        if 1 <= len(words) <= _CHIP_WORDS and not any(page.by_id[d]["role"] in _CONTROLS for d in page.descendants(ident)):
+            chips.append(ident)
+    low, high = _CHIP_OBJECT_AREA
+    objects = [i for i in opening if low * view <= _area(page.rect(i)) <= high * view and page.rect(i)["w"] <= 0.7 * page.width
+               and page.by_id[i]["role"] not in (*_CONTROLS, "heading", "text", "nav")]
+    floating: dict[str, list[str]] = defaultdict(list)
+    for chip in chips:
+        rect = page.rect(chip)
+        best, best_overlap = None, 0.0
+        ancestors = set(page.ancestors(chip))
+        for obj in objects:
+            if obj == chip or obj in ancestors or chip in page.ancestors(obj):
+                continue
+            orect = page.rect(obj)
+            shared = _overlap(rect, orect)
+            inside = shared / _area(rect)
+            if not _CHIP_INSIDE[0] <= inside < _CHIP_INSIDE[1] or _area(rect) > _CHIP_VS_OBJECT * _area(orect):
+                continue
+            if shared > best_overlap or (shared == best_overlap and best and _area(orect) < _area(page.rect(best))):
+                best, best_overlap = obj, shared
+        if best is not None:
+            floating[best].append(chip)
+    for obj, members in floating.items():
+        if len(members) >= _CHIPS_MIN:
+            labels = ", ".join(f'"{" ".join(r.get("text", "") for r in page.subtree_runs(c))[:28].strip()}"' for c in members[:3])
+            yield _Obs(("chips", members[0]), f"{len(members)} short boxed labels float over the edge of box {obj} in the "
+                       f"opening: {labels}", box=obj, refs=tuple(members))
+
+
 @detector("decorative-dom", layers=("render",))
 def decorative_dom(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
     pages = _pages(ctx)
     if isinstance(pages, str):
         return Result(skipped=pages)
     kind = _params(det).get("kind")
-    observe = {"app-window": _app_windows, "shape-illustration": _shape_illustrations}.get(kind)
+    observe = {"app-window": _app_windows, "shape-illustration": _shape_illustrations,
+               "floating-chips": _floating_chips}.get(kind)
     if observe is None:
         return Result(skipped=f"unknown decorative-dom kind {kind!r}")
     if not any(p.has_style() for p in pages):

@@ -138,6 +138,48 @@ def test_palette_region_skips_without_palette_or_role_guesses():
     assert "role guesses" in judge("color.cream-base", unguessed).skipped
 
 
+# ---------------------------------------------------------------- palette-family
+
+SAGE_FIELD = [0.98, 0.007, 125]
+FOREST = [0.44, 0.058, 154]
+
+
+def test_palette_family_needs_a_soft_field_and_an_accent_together():
+    doc = extract(viewport(1440, palette=palette((SAGE_FIELD, 0.68, "field"), (FOREST, 0.015, "interaction"))))
+    hits = observed(judge("color.sage-soft-field", doc))
+    assert len(hits) == 1 and "field oklch(0.980 0.007 125.0) covers 68%" in hits[0] and "accent oklch(0.440 0.058 154.0) 1.5%" in hits[0]
+
+
+@pytest.mark.parametrize("entries", [
+    ((SAGE_FIELD, 0.68, "field"), ([0.5, 0.15, 25], 0.015, "interaction")),         # a red accent
+    (([1.0, 0.0, 0], 0.68, "field", True), (FOREST, 0.015, "interaction")),          # a pure white field is not a soft one
+    ((SAGE_FIELD, 0.68, "field"), (FOREST, 0.0005, "interaction")),                  # an accent too small to see
+    ((SAGE_FIELD, 0.1, "field"), (FOREST, 0.015, "interaction")),                    # a field that is not the page
+    ((SAGE_FIELD, 0.68, "field"), ([0.0, 0.0, 0], 0.05, "identity", True)),          # black is not an accent
+], ids=["other-hue", "white-field", "tiny-accent", "small-field", "black"])
+def test_palette_family_ignores_a_page_missing_half_of_the_pair(entries):
+    assert observed(judge("color.sage-soft-field", extract(viewport(1440, palette=palette(*entries))))) == []
+
+
+def test_each_palette_family_names_its_own_hue():
+    violet = extract(viewport(1440, palette=palette(([1.0, 0.0, 0], 0.7, "field", True), ([0.55, 0.2, 290], 0.01, "interaction"))))
+    acid = extract(viewport(1440, palette=palette(([0.15, 0.01, 90], 0.6, "field"), ([0.93, 0.22, 120], 0.02, "interaction"))))
+    teal = extract(viewport(1440, palette=palette(([0.97, 0.004, 90], 0.6, "field"), ([0.55, 0.1, 195], 0.012, "interaction"))))
+    assert len(observed(judge("color.violet-indigo-accent", violet))) == 1
+    assert len(observed(judge("color.acid-on-black", acid))) == 1
+    assert len(observed(judge("color.teal-accent", teal))) == 1
+    assert observed(judge("color.sage-soft-field", violet)) == observed(judge("color.acid-on-black", violet)) == []
+    assert observed(judge("color.teal-accent", acid)) == []
+
+
+def test_palette_family_reports_once_across_captures():
+    entries = palette((SAGE_FIELD, 0.68, "field"), (FOREST, 0.015, "interaction"))
+    doc = extract(viewport(390, palette=entries), viewport(1440, palette=entries))
+    [hit] = observed(judge("color.sage-soft-field", doc))
+    assert "2 of 2 captures show it" in hit
+
+
+
 # ---------------------------------------------------------------- palette-structure
 
 def test_accent_roles_fire_on_two_interaction_hue_families():

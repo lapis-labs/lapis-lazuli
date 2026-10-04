@@ -1138,6 +1138,81 @@ def _ending(sentence: str, locale: str | None) -> str | None:
     return " ".join(words[-2:]) if len(words) >= 2 else None
 
 
+# paired-headings: a heading built as two or three short sentences ("Your files. Safe, always.")
+_PAIRED_BEATS = (2, 3)
+_PAIRED_BEAT_WORDS = 7               # a beat longer than this is a sentence, not a slogan beat
+_PAIRED_BEAT_CHARS = 14              # the same bound for unspaced scripts (ja, zh)
+_PAIRED_HEADING_WORDS = 14
+_PAIRED_HEADING_CHARS = 28
+_PAIRED_HEADINGS_MIN = 3             # paired headings that make a page-wide cadence when the first is plain
+_QUANT_OPEN = re.compile(r"^(?:a (?:little|bit|few)|just a (?:little|bit)|less|fewer)\b")
+_QUANT_CLOSE = re.compile(r"^(?:a (?:lot|whole lot|world)|lots|plenty|more)\b")
+_NEGATED_BEAT = re.compile(r"^(?:not|no|never|without)\b")
+
+
+def _heading_groups(page: _Page, segs: list[_Seg]) -> list[list[_Seg]]:
+    """Heading and display runs grouped by the heading box that holds them, in reading order."""
+    groups: dict[str, list[_Seg]] = {}
+    for s in segs:
+        if s.control or s.in_nav:
+            continue
+        if not (s.role in ("display", "heading") if page.has_roles else s.box_role == "heading"):
+            continue
+        owner = next((b["id"] for b in _chain(page.boxes, s.box) if b.get("role") == "heading"), s.box)
+        groups.setdefault(owner, []).append(s)
+    return sorted(groups.values(), key=lambda g: g[0].order)
+
+
+_BREAK_JOINED = re.compile(r"([.!?])(?=[A-Z\u00c0-\u00de\uac00-\ud7a3])")
+
+
+def _paired(group: list[_Seg]) -> tuple[str, str] | None:
+    """(heading text, shape) when the heading is two or three short sentences in one script."""
+    # a <br> joins sentences without a space ("Life happens.Keep what matters.")
+    text = _BREAK_JOINED.sub(r"\1 ", " ".join(s.text.strip() for s in group))
+    locale = group[0].locale
+    spaced = locale not in ("ja", "zh")
+    beats = _sentences(text)
+    if len(beats) not in _PAIRED_BEATS or len({_script(b) for b in beats}) != 1:
+        return None
+    lengths = [_length(b, locale) for b in beats]
+    if not all(1 <= n <= (_PAIRED_BEAT_WORDS if spaced else _PAIRED_BEAT_CHARS) for n in lengths):
+        return None
+    if sum(lengths) > (_PAIRED_HEADING_WORDS if spaced else _PAIRED_HEADING_CHARS):
+        return None
+    folded = [_fold(b) for b in beats]
+    if len(set(folded)) < len(folded):
+        return None
+    if len(beats) == 2 and _QUANT_OPEN.match(folded[0]) and _QUANT_CLOSE.match(folded[1]):
+        shape = "a quantity pair"
+    elif locale == "en" and any(_NEGATED_BEAT.match(f) for f in folded):
+        shape = "a negation pair"
+    else:
+        shape = "short beats"
+    return " ".join(text.split()), shape
+
+
+def _paired_heading_hits(ctx: Context, page: _Page, segs: list[_Seg]) -> tuple[list[Hit], int]:
+    """Hits for the first heading built as short sentences, or for a page-wide cadence of them, and the
+    number of headings that could be judged."""
+    groups = _heading_groups(page, segs)
+    first = groups[:1]          # the title; the sections the render check derives start with the site header
+    found = [(g, p) for g in groups if (p := _paired(g))]
+    opens = bool(first) and any(g is first[0] for g, _ in found)
+    if not found or not (opens or len(found) >= _PAIRED_HEADINGS_MIN):
+        return [], len(groups)
+    shapes = Counter(p[1] for _, p in found)
+    examples = ", ".join(f'"{_clip(p[0], 48)}"' for _, p in found[:3])
+    others = len(found) - opens
+    if opens:
+        subject = "the first heading" + (f" and {others} of the other {len(groups) - 1} headings" if others else "")
+    else:
+        subject = f"{len(found)} of {len(groups)} headings"
+    return [Hit(observed=f"{subject} built as two or three short sentences "
+                         f"({', '.join(f'{n} {s}' for s, n in shapes.most_common())}): {examples}",
+                location=page.loc(ctx), refs=[g[0].loc["path"] for g, _ in found])], len(groups)
+
+
 @detector("rhythm-variance", layers=("render",))
 def rhythm_variance(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
     checks = (det.get("params") or {}).get("checks") or ["sentence-length-variance", "repeated-openings",
@@ -1146,14 +1221,19 @@ def rhythm_variance(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
     if isinstance(got, Result):
         return got
     page, segs = got
+    hits: list[Hit] = []
+    headings = 0
+    if "paired-headings" in checks:
+        hits, headings = _paired_heading_hits(ctx, page, segs)
     body = [s for s in segs if s.role == "body"] if page.has_roles else [s for s in segs if s.box_role == "text"]
     by_locale: dict[str, list[tuple[str, _Seg]]] = defaultdict(list)
     for s in body:
         by_locale[s.locale or "unknown"] += [(sent, s) for sent in _sentences(s.text)]
     judged = {loc: sents for loc, sents in by_locale.items() if len(sents) >= _RHYTHM_MIN_SENTENCES}
     if not judged:
+        if headings:
+            return Result(hits=hits)
         return Result(skipped=f"fewer than {_RHYTHM_MIN_SENTENCES} body sentences in any locale")
-    hits = []
     for locale, sents in sorted(judged.items()):
         n = len(sents)
         refs = list(dict.fromkeys(s.loc["path"] for _, s in sents))

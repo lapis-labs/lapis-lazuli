@@ -77,7 +77,7 @@ items:
   - id: slop-rules
     kind: rules
     path: slop/rules.yaml
-    note: 186 rules - 125 migrated from the checklist and catalog of the previous repository (design-and-frontend), 44 behavior-layer rules (deceptive patterns, behavioral accessibility, state and recovery), one render target-size rule, 14 rights rules on asset provenance and licenses, and two plan-layer rules (layout.unanchored-lever, plan.uncompared-decision); each keep_when case has an id that a plan's defaults keep names; thresholds and lists are v0 seeds
+    note: 195 rules - 125 migrated from the checklist and catalog of the previous repository (design-and-frontend), 44 behavior-layer rules (deceptive patterns, behavioral accessibility, state and recovery), one render target-size rule, 14 rights rules on asset provenance and licenses, two plan-layer rules (layout.unanchored-lever, plan.uncompared-decision), and nine default rules from the 2026-10-04 catalog of generated pages (a recommended middle plan, floating panels, comfort wording, stacked offer terms, the reassurance-landing package, and four category palettes); each keep_when case has an id that a plan's defaults keep names; thresholds and lists are v0 seeds
     consumers:
       lapis: names-and-alternatives
       lps-copy: names-and-alternatives
@@ -89,7 +89,7 @@ items:
   - id: default-cards
     kind: data
     path: slop/cards.yaml
-    note: v0; the 61 default-class rules grouped into 20 named cards with a cue and alternative routes; tests/test_cards.py keeps coverage exact and the text free of checker bounds and lexicons
+    note: v0; the 70 default-class rules grouped into 21 named cards with a cue and alternative routes; tests/test_cards.py keeps coverage exact and the text free of checker bounds and lexicons
     consumers:
       lapis: full
       lps-copy: full

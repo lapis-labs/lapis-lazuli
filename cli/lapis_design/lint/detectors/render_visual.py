@@ -266,6 +266,38 @@ def palette_region(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
     return Result(hits=hits)
 
 
+@detector("palette-family", layers=("render",))
+def palette_family(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
+    """A recurring palette: a field color in one OKLCH region together with an accent in another, both
+    measured on one capture. The accent is any palette entry in its region except the field's own; pure
+    black and white bins are never an accent."""
+    viewports, why = _viewports(ctx)
+    if why:
+        return Result(skipped=why)
+    params = _params(det)
+    regions = {name: (params.get(name) or {}).get("bounds") for name in ("accent", "field")}
+    if not all(regions.values()):
+        return Result(skipped="palette-family needs params accent.bounds and field.bounds")
+    accent_min = float(params.get("accent_min_share", 0.0))
+    field_min = float(params.get("field_min_share", 0.0))
+    palettes = [(vp, vp["palette"]) for vp in viewports if vp.get("palette")]
+    if not palettes:
+        return Result(skipped="no capture in the render extract carries a palette")
+    found: list[tuple[float, Hit]] = []
+    for vp, palette in palettes:
+        fields = [e for e in palette if oklch_in_region(e["oklch"][:3], regions["field"]) and e["share"] >= field_min]
+        accents = [e for e in palette if oklch_in_region(e["oklch"][:3], regions["accent"]) and e["share"] >= accent_min
+                   and not e.get("exact") and not any(e is f for f in fields)]
+        if not fields or not accents:
+            continue
+        field, accent = max(fields, key=lambda e: e["share"]), max(accents, key=lambda e: e["share"])
+        found.append((accent["share"], Hit(
+            observed=f"field {_fmt(field['oklch'])} covers {field['share']:.0%} and accent {_fmt(accent['oklch'])} "
+                     f"{accent['share']:.1%} of the {_label(vp)} capture, both in the rule's palette family",
+            location=_where(vp))))
+    return Result(hits=_worst(found, len(viewports)))
+
+
 @detector("palette-structure", layers=("render",))
 def palette_structure(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
     viewports, why = _viewports(ctx)
