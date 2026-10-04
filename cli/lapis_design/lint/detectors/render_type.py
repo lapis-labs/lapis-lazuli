@@ -808,6 +808,89 @@ def eyebrow_relation(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
     return finish(hits, unjudged)
 
 
+def emphasis_runs(view: View, anchor: str) -> list[dict]:
+    """The runs of one heading box, in document order."""
+    return [r for r in view.runs if r.get("type_role") in HEADINGS and view.contains(anchor, r["box"])]
+
+
+def heading_groups(view: View) -> list[list[dict]]:
+    """The runs of each headline. A headline broken into lines may reach the extract as sibling heading boxes
+    one under the other, with one size and one left edge; those boxes are one headline."""
+    groups: list[dict] = []
+    for _, anchor in heading_starts(view):
+        runs = emphasis_runs(view, anchor)
+        rect = view.rect(anchor)
+        if not runs or rect is None:
+            continue
+        size = max(r.get("size_px", 0) for r in runs)
+        last = groups[-1] if groups else None
+        if (last and view.boxes[anchor].get("parent") == last["parent"] and abs(size - last["size"]) <= 0.1 * last["size"]
+                and -2 <= rect["y"] - (last["rect"]["y"] + last["rect"]["h"]) <= 0.6 * last["size"]
+                and abs(rect["x"] - last["rect"]["x"]) <= 16):
+            last["runs"] += runs
+            last["rect"] = rect
+            continue
+        groups.append({"runs": runs, "rect": rect, "size": size, "parent": view.boxes[anchor].get("parent")})
+    return [g["runs"] for g in groups]
+
+
+def set_apart(runs: list[dict]) -> tuple[list[dict], list[dict], list[str]]:
+    """The runs a headline sets in italic, or in another typeface than its first run, and how. Only runs
+    in the script most of the headline is set in are compared: a second script falls to another typeface by itself."""
+    def script(run: dict) -> str:
+        return "cjk" if run.get("script") in ("hang", "kana", "hani") else run.get("script", "other")
+
+    scripts: dict[str, int] = {}
+    for run in runs:
+        scripts[script(run)] = scripts.get(script(run), 0) + run.get("chars", 0)
+    main_script = max(scripts, key=scripts.get)
+    same = [r for r in runs if script(r) == main_script]
+    main = (same[0].get("font") or {}).get("rendered", "")                 # the headline's own face is its first
+    italic_main = all(r.get("style") in ("italic", "oblique") for r in same)       # a headline set wholly in italic
+    apart, how = [], []
+    for run in same:
+        family = (run.get("font") or {}).get("rendered", "")
+        marks = []
+        if run.get("style") in ("italic", "oblique") and not italic_main:
+            marks.append("italic")
+        if family and family != main:
+            marks.append(f"a second typeface ({family})")
+        if marks:
+            apart.append(run)
+            how.extend(m for m in marks if m not in how)
+    return same, apart, how
+
+
+@detector("headline-emphasis", layers=("render",))
+def headline_emphasis(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
+    all_views, missing = views(ctx, rule)
+    if missing:
+        return Result(skipped=missing)
+    share_max = (det.get("threshold") or {}).get("emphasis_share_max")
+    size_min = (det.get("threshold") or {}).get("size_px_min")
+    if share_max is None or size_min is None:
+        return Result(skipped="the rule sets no threshold emphasis_share_max and size_px_min")
+    hits = Hits()
+    unjudged = []
+    for view in layout_views(all_views):
+        if any("type_role" not in run for run in view.runs):
+            unjudged.append("text runs have no type role")
+            continue
+        for runs in heading_groups(view):
+            same, apart, how = set_apart(runs)
+            total = sum(r.get("chars", 0) for r in same)
+            if len(same) < 2 or not apart or not total or max(r.get("size_px", 0) for r in runs) < size_min:
+                continue
+            if sum(r.get("chars", 0) for r in apart) > share_max * total:
+                continue
+            lead = " ".join(r.get("text", "") for r in same if r not in apart)
+            tail = " ".join(r.get("text", "") for r in apart)
+            hits.add((tuple(r["id"] for r in apart),), view, Hit(
+                observed=f"heading {quote(lead)} sets {quote(tail)} apart in {' and '.join(how)}",
+                location=view.location(apart[0]["box"]), refs=refs(apart)))
+    return finish(hits, unjudged)
+
+
 @detector("index-markers", layers=("render",))
 def index_markers(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
     all_views, missing = views(ctx, rule)

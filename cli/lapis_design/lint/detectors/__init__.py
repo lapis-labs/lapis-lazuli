@@ -14,6 +14,8 @@ MODULES: dict[str, tuple[str, ...]] = {
     "source": ("source",),
     "render_type": ("render",),
     "render_layout": ("render", "behavior"),
+    "render_compact": ("render",),
+    "render_hierarchy": ("render",),
     "render_visual": ("render",),
     "behavior": ("behavior",),
 }

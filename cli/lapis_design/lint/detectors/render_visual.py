@@ -539,7 +539,7 @@ def gradient_inventory(ctx: Context, det: dict, rule: dict, layer: str) -> Resul
     params = _params(det)
     target = params.get("target", "background")
     if target == "text":
-        return _gradient_text(viewports, params)
+        return _gradient_text(viewports, params, _threshold(det).get("accent_share_max", 0.5))
     region = det.get("region")
     if region and region.get("space", "oklch") != "oklch":
         return Result(skipped=f"gradient-inventory compares OKLCH regions, not {region['space']!r}")
@@ -633,9 +633,33 @@ def _quote(runs: list[dict]) -> str:
     return f'"{_snippet(text)}"' if text else f"run {runs[0]['id']}"
 
 
-def _gradient_text(viewports: list[dict], params: dict) -> Result:
+def _stacked_headlines(groups: dict[str, list[dict]], index: dict[str, dict]) -> dict[str, list[dict]]:
+    """A headline broken into lines may reach the extract as sibling heading boxes one under the other, with
+    one size and one left edge; those boxes are one headline, keyed by its first box."""
+    ordered = sorted((k for k in groups if k in index), key=lambda k: (index[k]["rect"]["y"], index[k]["rect"]["x"]))
+    merged: dict[str, list[dict]] = {k: v for k, v in groups.items() if k not in index}
+    head: str | None = None                  # the key of the headline being built
+    tail: str | None = None                  # the last box added to it
+    for key in ordered:
+        box, size = index[key], max((r.get("size_px") or 0) for r in groups[key])
+        if tail is not None:
+            above = index[tail]
+            above_size = max((r.get("size_px") or 0) for r in groups[tail])
+            gap = box["rect"]["y"] - (above["rect"]["y"] + above["rect"]["h"])
+            if (box.get("parent") == above.get("parent") and abs(size - above_size) <= 0.1 * above_size
+                    and -2 <= gap <= 0.6 * above_size and abs(box["rect"]["x"] - above["rect"]["x"]) <= 16):
+                merged[head] = merged[head] + groups[key]
+                tail = key
+                continue
+        merged[key] = list(groups[key])
+        head = tail = key
+    return merged
+
+
+def _gradient_text(viewports: list[dict], params: dict, accent_share_max: float = 0.5) -> Result:
     """Headings painted with a gradient; with include_accent_word, also headings that set a part
-    shorter than half of them apart with a gradient or an accent color."""
+    shorter than `accent_share_max` of their characters (half by default) apart with a gradient or an
+    accent color."""
     roles = set(params.get("roles") or [])
     accent_words = bool(params.get("include_accent_word"))
     once, unjudged = _Once(), []
@@ -649,7 +673,7 @@ def _gradient_text(viewports: list[dict], params: dict) -> Result:
         for run in runs:
             if not roles or run.get("type_role") in roles:
                 groups[_heading_of(run, index)].append(run)
-        for box_id, group in groups.items():
+        for box_id, group in _stacked_headlines(groups, index).items():
             total = sum(run["chars"] for run in group)
             role = group[0].get("type_role", "heading")
             painted = [run for run in group if run.get("fill") == "gradient"]
@@ -664,11 +688,11 @@ def _gradient_text(viewports: list[dict], params: dict) -> Result:
             for run in group:
                 if run.get("color"):
                     weight[tuple(run["color"][:3])] += run["chars"]
-            base = list(weight.most_common(1)[0][0]) if weight else None
+            base = list(min(weight, key=lambda c: (c[1], -weight[c]))) if weight else None      # the ink: the least chromatic color
             accents = [run for run in group if run.get("fill") == "gradient" or (
                 base is not None and run.get("color") and run["color"][1] >= ACCENT_MIN_C
                 and delta_e_ok(run["color"], base) >= ACCENT_WORD_DE)]
-            if not accents or sum(run["chars"] for run in accents) * 2 >= total:
+            if not accents or sum(run["chars"] for run in accents) >= accent_share_max * total:
                 continue
             how = ("a gradient fill" if any(run.get("fill") == "gradient" for run in accents)
                    else f"the accent color {_fmt(accents[0]['color'])}")
