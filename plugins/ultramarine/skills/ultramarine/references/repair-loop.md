@@ -30,6 +30,16 @@ Unless the user specifies another bound, allow at most three rounds for the task
 
 The pilot repeatedly returned to enlarged-text wrapping through critic, fix and recheck without a rule that measured that property. Repetition did not establish closure. The limit prevents that failure mode; it is not a quality measure. When no rule observes the appearance at issue, make one correction and reserve the critic for the end. Report any unsupported outcome as unverified even if the final review supplies useful visual judgment.
 
+## Refine a direction once
+
+| Decision | Plan field or record | What checks it |
+|---|---|---|
+| Read the rendered direction once, refine it once, then stop and report | `direction.concept`, `direction.levers`, `layout.signature`; the user report | Not checked: no rule counts direction passes; the critic reads the captured appearance against the plan |
+
+A new visual direction has no check that says it is finished, so taste can keep a loop open for ever. Bound it. Once behavior and the responsive facts hold on a render, read that render one time against the written concept and the visitor's task: hierarchy, rhythm, type, contrast, feedback, and what remains of the defaults. Make one refinement pass over everything that read names, and rerun the narrowest render once. Then stop. Report what still looks unresolved as findings, each with its place, what was seen, and what would decide it, and leave the choice to the user instead of starting another round. The pass spends one of the task's rounds; it is never an extra one.
+
+A defect that a rule or the brief names is not part of this pass and follows the budget above. A preference only the maker holds is not a finding to iterate on, and a surface that the project's contract or an approved design already fixes is not a new direction: it gets no refinement pass, and a restyle of it needs the user's approval.
+
 ## Select the observing check
 
 | Decision | Plan field or record | What checks it |

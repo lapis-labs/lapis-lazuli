@@ -2023,6 +2023,10 @@ references:
       loop when runtime evidence is unavailable. This adds to its inspection-and-evidence contribution;
       its existing partial migration status and outstanding card destination are unchanged.'
     dropped: 'The nine audit passes, scores, worked examples, general audit contract and boilerplate.'
+  external:
+  - kind: practice
+    name: Superloopy frontend references (impeccable.md, anti-slop.md), beefiker/superloopy at 9a812cb (MIT, Copyright (c) 2026; the license file names no holder)
+    used_for: One short read of a new visual direction on a render whose behavior and responsive facts hold, one refinement pass over what the read names, then a stop with the rest reported; taste justified by the brief, the render, the visitor's task, and accessibility, not by a count. Rewritten; no text copied. The pass spends one of the three rounds, so the bound is unchanged. The CLI, the evidence gate, and the crew roles were not taken
   skill_body_pointer: 'Before repeating a repair, read `references/repair-loop.md` for the finding record,
     observing check, critic bound, candidate disposition, and final full run.'
   resolved_2026_10_02:
@@ -2199,6 +2203,9 @@ references:
   - kind: practice
     name: motion-design director guidance on narrative structure and choreography, LottieFiles/motion-design-skill at f9a8a04 (MIT, Copyright (c) 2025 LottieFiles)
     used_for: Rhythm as a recurring unit that changes at more than one scale, and hierarchy that survives movement. Rewritten; no text copied. The four acts, the duration shares, the animated-share quota, and the closing-button recipe were not taken
+  - kind: practice
+    name: Superloopy frontend references (impeccable.md, anti-slop.md), beefiker/superloopy at 9a812cb (MIT, Copyright (c) 2026; the license file names no holder)
+    used_for: One read and one refinement pass of the rendered direction, then a report of what remains, in Carry the relation into production. Rewritten; no text copied; the full rule is kept in ultramarine's repair-loop.md
   skill_body_pointer: For how each lever works and where it lands in the plan, read `references/form-levers.md`.
   license: CC-BY-4.0
   attribution: 'Additions of 2026-10-05 adapted from design-and-frontend by SJY051 (2026), CC BY 4.0; condensed and rewritten, mapped to the existing owners, with no external text copied. The external work above keeps its own license.'
@@ -2373,6 +2380,12 @@ references:
   - kind: measurement
     name: Generated-page catalog of 2026-10-04 (123 pages, 55 observations), maintainers' working notes
     used_for: What recurs, per genre; counts are kept out of the reference text except as a general sign.
+  - kind: practice
+    name: Superloopy frontend anti-slop reference, beefiker/superloopy at 9a812cb (MIT, Copyright (c) 2026; the license file names no holder)
+    used_for: Anti-slop judgment scoped to a new visual direction, with the brand, the existing system, and the request named as legitimate exceptions. Rewritten; no text copied; the claim-by-claim gate and the tooling were not taken
+  - kind: measurement
+    name: Left-stack opening study of 2026-10-04 (143 generated first screens and 130 pages of good examples), maintainers' working notes
+    used_for: The guide for an opening whose object was removed. The study found the pattern on 1 of 143 screens strictly and 9 of 143 in the opening band, judged no screen a defect, and found deliberate poster openings among the strict cases, so the guide keeps left alignment and open space where something holds them. Counts are kept out of the reference text.
   skill_body_pointer: For what these defaults look like on a page and the per-genre packages, read references/anti-slop.md.
   license: CC-BY-4.0
   attribution: 'Adapted from design-and-frontend by SJY051 (2026), CC BY 4.0, and written from the 2026-10-04 catalog of generated pages; the AntiSlop project (MIT) shaped the format, and none of its text is copied.'

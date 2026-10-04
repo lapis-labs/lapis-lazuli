@@ -28,6 +28,10 @@ material, the signature, or a plan decision. Replacing one named package with an
 cream and serif for dark glass) is not a route; compare a replacement as a structure without its finish
 (`layout.md`, step 6). When a default is the honest answer, say what makes it so.
 
+The cards judge a direction this task chooses: a new surface, a redesign, or the part of one that is still open. A
+system the project already has, a `DESIGN.md` contract or an approved design the surface continues, wins. A choice it
+fixes is kept with that basis and not rejected, and a small edit inside it walks no card.
+
 Each entry: what it looks like, why it reads as generated, what to do instead, honest exceptions, and the rules
 that see it. Rules marked * are statistical or lexical leads; the critic judges them against the page.
 

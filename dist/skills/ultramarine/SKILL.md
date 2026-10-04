@@ -154,7 +154,8 @@ The critic judges in a context that did not make the design, reading only the in
 6. A finding that is still open after two fixes goes to the user with both attempts and the cause
    you now suspect; do not try a third variation of the same change.
 7. Stop when the target finding is gone and nothing that was passing now blocks, when the rounds
-   are spent, or when a check cannot run; unused rounds are not a reason to keep polishing.
+   are spent, or when a check cannot run; unused rounds are not a reason to keep polishing. A new visual
+   direction gets one read of its render and one refinement pass, then a report of what remains, not a taste round.
 8. End by sorting the report into defects that remain, checks that did not run with the reason for
    each, and items the user must decide; a check that did not run is never reported as passed, and
    missing evidence is not a defect to repair.

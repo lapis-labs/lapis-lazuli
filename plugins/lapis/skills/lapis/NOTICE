@@ -100,6 +100,9 @@ here. Their licenses and owners are given so their terms are easy to find.
   up the facts inside sibling objects.
 - motion-design, https://github.com/LottieFiles/motion-design-skill (MIT, Copyright (c) 2025 LottieFiles):
   rhythm that changes at more than one scale.
+- Superloopy, https://github.com/beefiker/superloopy (MIT, Copyright (c) 2026; the license file names no
+  holder): one bounded direction read and one rendered refinement pass, and anti-slop checks scoped to a new
+  visual direction.
 
 tools/reference-provenance.yaml names the standards and other works behind each skill reference.
 

@@ -215,6 +215,13 @@ after text.
 
 ### Changed
 
+- A new visual direction gets one bounded read of its render and one refinement pass, then a stop with the rest
+  reported to the user, not another round on taste: `ultramarine/references/repair-loop.md` (Refine a direction once;
+  the pass spends one of the three rounds, so the bound is unchanged, and a defect that a rule or the brief names, or
+  a surface the contract fixes, is outside it), one sentence each in the `lapis` direction step, `form-levers.md`
+  (Carry the relation into production), and the `ultramarine` repair list. `anti-slop.md` says the cards judge a
+  direction this task chooses and that an existing contract or approved design wins. Superloopy (MIT) is named in
+  `NOTICE` and the provenance.
 - The layout references gain ten compact procedures from the layout-mining report, each in the owner it belongs to
   (`layout.md`, `archetypes.md`, `form-levers.md`, `anti-slop.md`; their section indexes are updated): comparing two
   page structures with the finish set aside, and two arrangements of the same ranked content inside one task

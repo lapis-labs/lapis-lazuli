@@ -194,7 +194,9 @@ as it is written in `world_materials`. A lever's bare name, or words such as cle
 are not levers; `plan check` blocks a lever that names no world material. For how each lever works
 and where it lands in the plan, read `references/form-levers.md`. The signature is the one element
 only this task has, built from a world material; the page is organized around it, not around a hero
-shell.
+shell. Once the page renders and works, read it once against the concept and refine it once; then stop and report
+what is still unresolved, in place of another round on taste (`ultramarine`'s `repair-loop.md`, Refine a direction
+once). A surface that the contract in `context.design` already fixes is not a new direction and gets no such pass.
 
 
 ### 5. References - `references`

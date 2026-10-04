@@ -7,7 +7,7 @@ Read the section for the lever or step at hand, by heading; the rest are other l
 - Write each lever as one sentence: the lever, what visibly changes, the world material it comes from
 - Start from a tension, write a concept: the live tension and the relation that answers it
 - Compare an open direction: specimens that tune one cause or compare two governing relations, and the arrangement of one task
-- Carry the relation into production: what must stay recognizable when a study becomes the page
+- Carry the relation into production: what must stay recognizable when a study becomes the page, and the one read and one refinement of the render
 - Allocate the levers: which sections carry a lever and how far it spreads
 - Scale and space: the largest element and what it is set against
 - Density: where the page is dense and where open, by task
@@ -103,6 +103,10 @@ Do not invent documentary detail to complete a pair or repeat an opening device 
 When it fails, identify the threatened relation and first revise the least consequential
 dimension, crop, sequence, or medium that can fix it. Reopen the direction only when its premise
 cannot carry the available content or supported behavior; palette and font alone are not fidelity.
+
+Once the rendered page works, read it one time against the relation and refine it one time. What still looks
+unresolved goes to the user as findings, not into another round on taste (the repair loop of the `ultramarine`
+skill, Refine a direction once).
 
 ## Allocate the levers
 
