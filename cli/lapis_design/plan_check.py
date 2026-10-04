@@ -143,19 +143,37 @@ class PlanOverLimit:
         self.problem = problem
 
 
-def _nested_deeper_than(text: str, limit: int) -> bool:
-    """Whether YAML text nests collections deeper than `limit`, counted from the C parser's events and
-    stopped at the first event past the limit, so a 50,000-level block costs no more than a shallow one.
-    Tokens would undercount: an indentless block list makes no token per level."""
-    depth = 0
+def _scan(text: str, limit: int) -> tuple[bool, bool]:
+    """`(too_deep, divergent)` for YAML text, read from the C parser's events in one pass.
+
+    `too_deep`: collections nest deeper than `limit`; the scan stops at the first event past it, so a
+    50,000-level block costs no more than a shallow one. Tokens would undercount: an indentless block list
+    makes no token per level.
+
+    `divergent`: libyaml 0.2.5 reads something PyYAML's pure-Python scanner, and so every tool built on
+    `yaml.safe_load`, refuses. Two readings are known, both about a `?` in a flow collection: a plain scalar
+    that holds one (`{ answers: What now? }`: libyaml keeps the text, PyYAML ends the scalar at the `?` and
+    fails), and an explicit key opening a pair inside a flow list (`[? a: b]`, `[?]]`: libyaml also lets a stray
+    `]` through). The scan reads the whole text for them unless it is too deep."""
+    depth = flow = 0
+    divergent = False
     for event in yaml.parse(text, Loader=_YAML_LOADER):
-        if isinstance(event, (yaml.MappingStartEvent, yaml.SequenceStartEvent)):
+        if isinstance(event, yaml.ScalarEvent):
+            if flow and not event.style and "?" in event.value:        # plain: '' from libyaml, None from PyYAML
+                divergent = True
+        elif isinstance(event, (yaml.MappingStartEvent, yaml.SequenceStartEvent)):
             depth += 1
+            if event.flow_style:
+                index = event.start_mark.index
+                if flow and isinstance(event, yaml.MappingStartEvent) and text[index:index + 1] == "?":
+                    divergent = True
+                flow += 1
             if depth > limit:
-                return True
+                return True, divergent
         elif isinstance(event, (yaml.MappingEndEvent, yaml.SequenceEndEvent)):
             depth -= 1
-    return False
+            flow -= bool(flow)             # a flow collection holds only flow ones, so an end seen inside one is its own
+    return False, divergent
 
 
 def parse_plan(text: str) -> Any:
@@ -163,20 +181,23 @@ def parse_plan(text: str) -> Any:
     nested deeper than MAX_PLAN_DEPTH is not parsed: the result is a PlanOverLimit. A YAML error
     propagates as yaml.YAMLError.
 
-    The size and depth guard reads events with libyaml when it is installed, which is fast and stops at the
-    first event past the limit. The document itself is then read with PyYAML's pure-Python safe loader, the
-    reader `yaml.safe_load` gives every other tool that opens a plan, so a plan parses the same on every
-    install: libyaml accepts a `?` inside a plain scalar of a flow collection (`{ answers: What now? }`) that
-    the pure-Python loader, and so any other reader built on it, refuses."""
+    A plan reads the same on every install and in every other tool built on `yaml.safe_load`. The document is
+    read with libyaml when it is installed (a megabyte of padding costs a fraction of a second, where the
+    pure-Python loader takes seconds), except where the two readers differ, and then PyYAML's pure-Python safe
+    loader reads it, which names the fault with its line and column or reads the plan as everyone else does:
+    text libyaml cannot read, text `_scan` finds libyaml reading more leniently, and text with a tab, which the
+    pure-Python scanner refuses wherever it is not inside a quoted or block scalar or a comment (libyaml reads
+    it as blank space). Both readers stay out of a text over the limits, and the pure-Python one never sees a
+    text nested deeper than the limit."""
     if len(text) > MAX_PLAN_BYTES or len(text.encode("utf-8", "surrogatepass")) > MAX_PLAN_BYTES:
         return PlanOverLimit(PLAN_TOO_LARGE)
     try:
-        too_deep = _nested_deeper_than(text, MAX_PLAN_DEPTH)
+        too_deep, divergent = _scan(text, MAX_PLAN_DEPTH)
     except yaml.YAMLError:
-        too_deep = False                  # the strict reader below names the fault, as it would without libyaml
+        too_deep, divergent = False, True       # libyaml could not read it: the strict reader names the fault
     if too_deep:
         return PlanOverLimit(PLAN_TOO_DEEP)
-    return yaml.safe_load(text)
+    return yaml.load(text, Loader=yaml.SafeLoader if divergent or "\t" in text else _YAML_LOADER)
 
 
 def read_plan(path: Path) -> Any:

@@ -68,7 +68,8 @@ after text.
   before the brief or references record; lifted by a plan that cites `.lapis/answers/<task>.md` and lists the
   existing code, `source: existing-code`, in a `direction` exploration; blocking only with `LAPIS_UNATTENDED=1`), the
   `next` step `plan-order`, the plugin hook `pre-write` and the harness mechanism `pre_write`. `GATE.md` also says a
-  plan is read with PyYAML's pure-Python safe loader, so text only libyaml accepts is exit 2 and `plan-fix`.
+  plan is read as `yaml.safe_load` reads it (libyaml where the two agree, PyYAML's pure-Python loader where libyaml
+  reads differently or not at all), so text only libyaml accepts is exit 2 and `plan-fix`.
 
 ### Added
 
@@ -295,9 +296,13 @@ after text.
 - `lapis-design next` said `done` for a plan only libyaml could read. The plan reader used libyaml's loader, which
   accepts a `?` inside a plain scalar of a flow collection (`{ answers: What does this do for me? }`) that PyYAML's
   pure-Python loader, and every other tool built on `yaml.safe_load`, refuses; `plan check` found 0 blocking
-  findings and the procedure ended on a plan nobody else could parse (the brief-saas-1 run). Plans are now read with
-  the pure-Python safe loader, so such a plan is exit 2 from `plan check` and `release check` and `plan-fix` from
-  `next`, which now names the line and column and says to quote the string.
+  findings and the procedure ended on a plan nobody else could parse (the brief-saas-1 run). Plans are now read as
+  `yaml.safe_load` reads them: libyaml reads a plan, unless the events show a `?` in a plain scalar of a flow
+  collection or an explicit `?` key opening a pair in a flow list, the text holds a tab, or libyaml cannot read it;
+  PyYAML's pure-Python loader then reads it. Such a plan is exit 2 from `plan check` and `release check` and
+  `plan-fix` from `next`, which now names the line and column and says to quote the string. A megabyte of padding
+  still costs a fraction of a second (the pure-Python loader alone took 11 s on the CI runners and failed
+  `test_extension_padding_cannot_delay_hook_denial`).
 - `render check` exited 2 with `Page.evaluate: getComputedStyle: parameter 1 is not of type 'Element'` (or a
   `KeyError` on a box id) on a page that rebuilds its chart and text when the window resizes. Chromium sends a
   `resize` event to the window and to `visualViewport` for every full-page screenshot, although neither size

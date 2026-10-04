@@ -172,6 +172,35 @@ def yaml_fault(text: str) -> tuple[str, str]:
     return raised.value.problem, raised.value.context
 
 
+# Texts libyaml 0.2.5 reads differently from PyYAML's pure-Python loader, which every other tool built on
+# `yaml.safe_load` uses; and texts the two read alike that sit next to them and must not be sent the slow way.
+SAFE_LOAD_PARITY = {
+    "question-mark-in-a-flow-mapping": "brief: { subject: pottery, answers: What does this do for me? }\n",
+    "question-mark-in-a-flow-list": "locales: [en, what?]\n",
+    "explicit-key-in-a-flow-list-and-a-stray-bracket": "x-note: [?]]\n",
+    "explicit-key-in-a-flow-list": "x-note: [? a: b]\n",
+    "tab-after-the-colon": "brief:\tfine\n",
+    "tab-in-a-flow-list": "locales: [en,\ten]\n",
+    "libyaml-refuses-a-colon-before-the-bracket": "locales: [en:]\n",
+    "tab-in-a-quoted-scalar": 'brief: "one\ttwo"\n',
+    "question-mark-in-a-quoted-scalar": "locales: ['what?', \"why?\"]\nbrief: { subject: 'Why?' }\n",
+    "question-mark-in-a-block-scalar": "brief: |\n  What?\n  Why?\nlocales: [en]\n",
+    "question-mark-in-a-block-plain-scalar": "brief: What does this do for me?\nlocales: [en]\n",
+}
+
+
+def read_as(read, text: str):
+    try:
+        return "read", read(text)
+    except yaml.YAMLError as exc:
+        return "refused", str(exc)
+
+
+@pytest.mark.parametrize("text", list(SAFE_LOAD_PARITY.values()), ids=list(SAFE_LOAD_PARITY))
+def test_a_plan_is_read_as_yaml_safe_load_reads_it(text):
+    assert read_as(plan_check.parse_plan, text) == read_as(yaml.safe_load, text)
+
+
 @pytest.mark.parametrize("markdown", [False, True], ids=["file", "markdown"])
 def test_yaml_error_names_its_problem_and_position(tmp_path, markdown):
     text = "brief: [oops\n"
