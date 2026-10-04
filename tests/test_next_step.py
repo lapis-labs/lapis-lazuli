@@ -47,6 +47,7 @@ def invalid_lock(root):
 
 MISSING_INPUTS = [
     ("plan", lambda r: (r / ".lapis" / PLAN).unlink()),
+    ("brief", lambda r: (r / f".lapis/answers/{TASK}.md").unlink()),
     ("plan-fix", lambda r: (r / ".lapis" / PLAN).write_text("brief: [oops\n", encoding="utf-8")),
     ("plan-fix", lambda r: update(r, PLAN, lambda d: d.pop("brief"))),
     ("plan-fix", lambda r: update(r, PLAN, vague_cta)),

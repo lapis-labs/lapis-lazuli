@@ -158,7 +158,7 @@ a separate context for the critic records that with `lapis-design next --task <t
 --reason <why>`, which writes the same record for the step `critic`.
 
 `lapis-design next --task <task>` runs this gate offline on the files and returns the one step still to
-take, with its exact command or schema: `plan`, `plan-fix`, `plan-flows`, `plan-explorations`,
+take, with its exact command or schema: `brief`, `plan`, `plan-fix`, `plan-flows`, `plan-explorations`,
 `fonts-lock`, `stub`, `ledger`, `render`, `behavior`, `lint`, `critic`, `release`, or `done`. The gate's
 own findings that report a check that did not run or an input that is missing (the ten under
 `summary.not_run`, except `probe-incomplete`, `backend-insufficient`, `requirement-unverified`, and
@@ -167,19 +167,25 @@ findings pick the plan steps. A record newer than what its step reads (the plan,
 `behavior`) stands in for that step, and the lint gaps it leaves are expected. `done` means the procedure is
 complete, not that the gate passes: a blocking report ends it too, and the verdict is what the agent reports.
 
+`brief` comes first: a run with no plan file, or a plan in `mode: create`, whose `.lapis/answers/<task>.md` is not
+a brief record gets it, and a redesign or repair plan never does. The file is a brief record when it has a
+`## Found` and an `## Answers` section with text and every answer that starts with `[assumed]` gives a `Basis:`
+(`[declared]`, `[known]`, and `[open]` are the other tags); nothing else about it is judged. The record is not a
+report of this gate, and the plan cites it from `context.other`.
+
 While questions the run wrote for its user are unanswered, `next` returns the state `waiting-for-user` instead
 of a step: `step.id` is `waiting-for-user` (stop, and wait for the answers), `then` is the step that comes
 after them, and `waiting` names the files and the `phase`, `plan` while there is no plan file and `approval`
 once there is one. The questions are in `.lapis/questions/<task>.md` and count when the file has two words or
 more outside its heading lines (an empty or one-word file is no question); the answers are in
-`.lapis/answers/<task>.md`, where the plan can cite them from `context.other` and `claims.declared`. The
+`.lapis/answers/<task>.md`, the brief record, where the plan can cite them from `context.other` and `claims.declared`. The
 questions are unanswered when no answers file with a word in it is at least as new, by modification time, as the
 questions file. A procedure that is `done` stays `done`. The exit gate (`lapis-design hook stop` with
 `LAPIS_UNATTENDED=1`) lets a waiting run stop without counting a continue, and counts each set of questions it let
 pass in `.lapis/gate/<task>.json` under `waits` (`plan`, `approval`, and `last`, the set's id): at most two sets
 while there is no plan file and one after it. A set is one text written once, so writing the same words again is a
 new set. Past the cap `next` and the gate name the step the files call for, as without questions. Without
-`--task`, `next` takes the task of the newest plan or counted questions file.
+`--task`, `next` takes the task of the newest plan, counted questions file, or counted answers file.
 
 ## What the gate does not do
 

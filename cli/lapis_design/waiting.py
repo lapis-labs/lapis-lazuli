@@ -1,11 +1,11 @@
 """Waiting for the user: a run that stopped to ask questions, recorded in two files.
 
-Some runs must stop and ask: grilling before the plan, or the plan's approval, in a harness where an
-operator relays a person's answers. The agent writes its open questions to `.lapis/questions/<task>.md`
-and stops; the answers go to `.lapis/answers/<task>.md`, where the plan's `context.other` and
-`claims.declared` can cite them. `lapis-design next` says `waiting-for-user` while the latest questions
-are unanswered, that is, the questions file is the newer of the two, and the exit gate lets that stop pass
-without counting a continue.
+Some runs must stop and ask: the brief before the plan (`brief.py`), or the plan's approval, in a harness
+where an operator relays a person's answers. The agent writes its open questions to
+`.lapis/questions/<task>.md` and stops; the answers go to `.lapis/answers/<task>.md`, the file that is also
+the brief record, where the plan's `context.other` and `claims.declared` can cite them. `lapis-design next`
+says `waiting-for-user` while the latest questions are unanswered, that is, the questions file is the newer of
+the two, and the exit gate lets that stop pass without counting a continue.
 
 Two guards keep a question from becoming a way to stop. A questions file with fewer than two words (a
 heading line is not text) does not count. And the gate lets a run wait for at most `CAP["plan"]` sets of
@@ -95,8 +95,14 @@ def counted(waits: Any, found: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def why(task: str, found: Mapping[str, Any], then: str) -> str:
+    if then == "brief":
+        after = (f"record them in {found['answers']} as the brief record (a `## Found` and an `## Answers` section, "
+                 f"as the lps-brief skill describes), and run `lapis-design next --task {task}` again; it names the "
+                 "step after the brief.")
+    else:
+        after = (f"add them to {found['answers']} under a heading of their own, keeping what the file holds, cite "
+                 f"them from the plan (`context.other`, `claims.declared`), and run `lapis-design next --task "
+                 f"{task}` again; the step after the answers is {then}.")
     return (f"The questions in {found['questions']} have no answer yet, so the run waits for the user: stop with "
-            f"them as your last message. When the answers come, record them in {found['answers']}, cite them from "
-            f"the plan (`context.other`, `claims.declared`), and run `lapis-design next --task {task}` again; the "
-            f"step after the answers is {then}. A run may wait for {CAP['plan']} sets of questions before a plan "
-            f"exists and {CAP['approval']} after; past that the exit gate continues it.")
+            f"them as your last message. When the answers come, {after} A run may wait for {CAP['plan']} sets of "
+            f"questions before a plan exists and {CAP['approval']} after; past that the exit gate continues it.")

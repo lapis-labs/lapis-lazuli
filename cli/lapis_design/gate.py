@@ -17,8 +17,8 @@ before.
 
 A bug of ours or a state that cannot be read never stops an agent: the gate answers nothing then. A folder
 with no plan is no project, with one exception: an unattended run (`LAPIS_UNATTENDED=1`, which only an
-operator sets, for a design run) owes a plan, so its step is `plan`, under the same limits. The gate checks
-nothing, fixes nothing, and approves nothing for the user.
+operator sets, for a design run) owes a plan, so its step is `brief` until a brief record exists and then
+`plan`, under the same limits. The gate checks nothing, fixes nothing, and approves nothing for the user.
 
 Stdlib only until a plan is in reach or the run is unattended: this runs at the end of every turn in
 every session.
@@ -110,7 +110,7 @@ def continuation(result: dict[str, Any], first: bool, relayed: bool = False) -> 
         if step["id"].startswith("plan"):
             parts.append("A person's answers are recorded: write `approval: {state: approved}` only if they approve "
                          "this plan, otherwise `assumed` with a reason.")
-    elif first or step["id"].startswith("plan"):
+    elif step["id"] != "brief" and (first or step["id"].startswith("plan")):     # a brief comes before any plan to approve
         parts.append("No person is present to approve the plan: record `approval: {state: assumed, reason: ...}` in "
                      "it and continue; never write `approved`, which only the user's own approval earns.")
     return "\n".join(parts)

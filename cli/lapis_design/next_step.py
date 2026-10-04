@@ -1,9 +1,10 @@
 """`lapis-design next`: the one step of the LapisLazuli procedure that is still missing, read from the files.
 
-The procedure is: the plan, the plan check without a blocking finding, the inputs the checks need (fonts
-lock, stub for an interactive page, asset ledger), the full render, the behavior check for an interactive
-page, the full lint over every input, the critic, and the release gate's report. `next` returns the first
-step that is not done, with the exact command or schema to follow, or `done`.
+The procedure is: the brief record for a create run (`brief.py`: what the request, the project, and the subject
+say, with the answers a person gave or the run assumed), the plan, the plan check without a blocking finding,
+the inputs the checks need (fonts lock, stub for an interactive page, asset ledger), the full render, the
+behavior check for an interactive page, the full lint over every input, the critic, and the release gate's
+report. `next` returns the first step that is not done, with the exact command or schema to follow, or `done`.
 
 What counts as done is what the release gate already decides: `release_check.run(..., offline=True)` is
 run on the files, and its findings that report a check that did not run or an input that is missing
@@ -34,7 +35,7 @@ from typing import Any
 
 import yaml
 
-from lapis_design import attempts, gate, release_check, shared_dir, waiting
+from lapis_design import attempts, brief, gate, release_check, shared_dir, waiting
 from lapis_design.lint.cli import problems
 from lapis_design.plan_check import PlanOverLimit, read_plan
 
@@ -58,13 +59,15 @@ class NextError(Exception):
 
 
 def resolve_task(root: Path, task: str | None = None) -> str | None:
-    """`task`, else $LAPIS_TASK, else the task of the most recently written plan or set of questions
-    under `root` (a run that has asked its questions has no plan yet, and names the task by them)."""
+    """`task`, else $LAPIS_TASK, else the task of the most recently written plan, set of questions, or brief
+    record under `root` (a run that has asked its questions or recorded its brief has no plan yet, and names the
+    task by them)."""
     task = task or os.environ.get("LAPIS_TASK") or None
     if task:
         return task
     written = [*(root / ".lapis" / "plans").glob("*.yaml"),
-               *(p for p in (root / ".lapis" / "questions").glob("*.md") if waiting.counts(p))]
+               *(p for folder in ("questions", "answers") for p in (root / ".lapis" / folder).glob("*.md")
+                 if waiting.counts(p))]
     written.sort(key=lambda p: p.stat().st_mtime, reverse=True)
     return next((p.stem for p in written if attempts.TASK.fullmatch(p.stem)), None)
 
@@ -206,8 +209,8 @@ def evaluate(root: Path, task: str, page: str | None = None) -> dict:
     step = result["step"]
     if step is None:
         return result
-    found = waiting.pending(root, task, "plan" if step["id"] == "plan" else "approval",
-                            gate.load(root, task).get("waits"))
+    plan_exists = (root / ".lapis" / "plans" / f"{task}.yaml").exists()
+    found = waiting.pending(root, task, "approval" if plan_exists else "plan", gate.load(root, task).get("waits"))
     if found is None:
         return result
     wait = _step(waiting.STEP, waiting.why(task, found, step["id"]))
@@ -232,7 +235,10 @@ def _steps(root: Path, task: str, page: str | None) -> dict:
     try:
         plan = read_plan(paths["plan"])
     except FileNotFoundError:
-        return state(_step("plan", f"Write the plan at {plan_rel} before any code or check: the brief, the "
+        if reason := brief.record_problem(root, task):
+            return state(_step(brief.STEP, brief.why(task, reason, planned=False)), False)
+        return state(_step("plan", f"Write the plan at {plan_rel} before any code or check, and cite the brief record "
+                           f"{waiting.answers_path(Path('.'), task).as_posix()} in its `context.other`: the brief, the "
                            f"decisions and the candidates compared for each, and a keep or reject on every default "
                            f"that applies. The schema is below and an example is {shared / 'plan/example.plan.yaml'}. "
                            "Then run the command to see what blocks.", check, shared / "plan" / "schema.yaml"), False)
@@ -242,6 +248,8 @@ def _steps(root: Path, task: str, page: str | None) -> dict:
     if isinstance(plan, PlanOverLimit) or not isinstance(plan, dict):
         why = plan.problem if isinstance(plan, PlanOverLimit) else "the plan is not a mapping"
         return state(_step("plan-fix", f"{plan_rel}: {why}", check, shared / "plan" / "schema.yaml"), False)
+    if plan.get("mode") == "create" and (reason := brief.record_problem(root, task)):
+        return state(_step(brief.STEP, brief.why(task, reason, planned=True)), False)
 
     interactive = _interactive(plan, page_file, _json(paths["extract"]))
     try:

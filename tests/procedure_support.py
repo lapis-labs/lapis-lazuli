@@ -16,6 +16,17 @@ TASK = "kiln-shop-landing"
 SHARED = shared_dir()
 PROBES = ("controls", "commits", "keyboard", "dialogs", "choices", "forms", "states", "urgency", "time_limits",
           "history", "pointer", "motion", "scroll", "permissions", "media", "flows", "console")
+BRIEF_RECORD = """# Brief: kiln shop landing
+
+## Found
+
+- The studio fires once a month and keeps a ruled firing log. Source: PRODUCT.md.
+
+## Answers
+
+- [known] Q1 Who buys? Craft lovers in their 30s and 40s. Basis: PRODUCT.md.
+- [assumed] Q2 What is the one job? Reserve a piece from this firing. Basis: nobody to ask; the request names no other action.
+"""
 
 
 def save(root: Path, name: str, document) -> Path:
@@ -62,6 +73,7 @@ def make_project(root: Path) -> Path:
     for index, name in enumerate((f"plans/{TASK}.yaml", f"renders/{TASK}.json", "fonts.lock.json",
                                   "assets.ledger.json", f"lint/{TASK}.json", f"critic/{TASK}.json")):
         touch(root, name, 100 + index)
+    record(root, "answers", BRIEF_RECORD, 50)                    # the brief record, older than the plan and any questions
     return root
 
 
@@ -107,5 +119,5 @@ def ask(root: Path, text: str, at: int, task: str = TASK) -> Path:
 
 
 def reply(root: Path, text: str, at: int, task: str = TASK) -> Path:
-    """The answers the run recorded."""
-    return record(root, "answers", text, at, task)
+    """The answers the run recorded: the brief record with the replies added under their own heading."""
+    return record(root, "answers", f"{BRIEF_RECORD}\n## Replies\n\n{text}", at, task)

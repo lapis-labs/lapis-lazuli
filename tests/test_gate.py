@@ -9,7 +9,7 @@ import pytest
 
 from lapis_design import gate
 from lapis_design.cli import main as cli_main
-from procedure_support import TASK, ask, finish, make_project, reply, save, touch
+from procedure_support import BRIEF_RECORD, TASK, ask, finish, make_project, record, reply, save, touch
 
 STATE = f".lapis/gate/{TASK}.json"
 
@@ -119,7 +119,9 @@ def next_state_without_plan(root: Path, task: str = TASK) -> dict:
     return next_step.evaluate(root, task)
 
 
-def test_an_unattended_run_that_wrote_no_plan_is_continued_to_write_one_and_is_capped_like_any_step(tmp_path, monkeypatch):
+@pytest.mark.parametrize("recorded, step", [(False, "brief"), (True, "plan")])
+def test_an_unattended_run_that_wrote_no_plan_is_continued_to_write_one_and_is_capped_like_any_step(
+        tmp_path, monkeypatch, recorded, step):
     """The failure this guards: the agent wrote a free-form PLAN.md and never the schema plan."""
     monkeypatch.delenv("LAPIS_TASK", raising=False)
     monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
@@ -127,14 +129,48 @@ def test_an_unattended_run_that_wrote_no_plan_is_continued_to_write_one_and_is_c
     folder = tmp_path / "Kiln Shop_Landing"
     folder.mkdir()
     (folder / "PLAN.md").write_text("# Plan\nA free-form plan.\n", encoding="utf-8")
+    if recorded:
+        record(folder, "answers", BRIEF_RECORD, 100, task="kiln-shop-landing")
     env = {"LAPIS_UNATTENDED": "1"}
     event = {"cwd": str(folder), "session_id": "s1"}
     answers = [gate.decide(event, env) for _ in range(5)]
     assert [bool(a) for a in answers] == [True, True, True, False, False]
-    assert "task kiln-shop-landing is not done. Next step: plan." in answers[0]["reason"]
-    assert ".lapis/plans/kiln-shop-landing.yaml" in answers[0]["reason"] and "approval: {state: assumed" in answers[0]["reason"]
+    assert f"task kiln-shop-landing is not done. Next step: {step}." in answers[0]["reason"]
+    assert ("approval: {state: assumed" in answers[0]["reason"]) == (step == "plan")     # there is no plan to approve yet
     saved = json.loads((folder / ".lapis/gate/kiln-shop-landing.json").read_text(encoding="utf-8"))
-    assert saved["capped"]["reason"] == "same-step" and saved["capped"]["step"] == "plan"
+    assert saved["capped"]["reason"] == "same-step" and saved["capped"]["step"] == step
+
+
+def test_a_run_that_recorded_its_brief_under_a_task_id_of_its_own_is_continued_under_that_id(tmp_path, monkeypatch):
+    monkeypatch.delenv("LAPIS_TASK", raising=False)
+    monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
+    monkeypatch.setenv("LAZULI_DB", "")
+    folder = tmp_path / "Kiln Shop"
+    folder.mkdir()
+    record(folder, "answers", BRIEF_RECORD, 100, task="pottery-landing")
+    answer = gate.decide({"cwd": str(folder), "session_id": "s1"}, {"LAPIS_UNATTENDED": "1"})
+    assert "task pottery-landing is not done. Next step: plan." in answer["reason"]
+
+
+def test_an_unattended_run_that_answers_its_own_questions_must_mark_what_it_assumed_and_why(tmp_path, monkeypatch):
+    monkeypatch.delenv("LAPIS_TASK", raising=False)
+    monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
+    monkeypatch.setenv("LAZULI_DB", "")
+    folder = tmp_path / "Kiln Shop"
+    folder.mkdir()
+    env, event = {"LAPIS_UNATTENDED": "1"}, {"cwd": str(folder), "session_id": "s1"}
+    assert "Next step: brief." in gate.decide(event, env)["reason"]
+    record(folder, "answers", "## Found\nThe request only; nothing else to read.\n## Answers\n"
+           "- [assumed] Q1 Who buys? Small teams.\n", 100, task="kiln-shop")
+    hollow = gate.decide(event, env)["reason"]                          # an assumption with no basis is no record
+    assert "Next step: brief." in hollow and "Basis" in hollow
+    record(folder, "answers", "## Found\nThe request only; nothing else to read.\n## Answers\n"
+           "- [assumed] Q1 Who buys? Small teams. Basis: the usual buyer of this kind of product; nobody to ask.\n",
+           110, task="kiln-shop")
+    done = gate.decide(event, env)["reason"]
+    assert "Next step: plan." in done and "approval: {state: assumed" in done
+    saved = json.loads((folder / ".lapis/gate/kiln-shop.json").read_text(encoding="utf-8"))
+    assert (saved["step"], saved["same"], saved["total"]) == ("plan", 1, 3)
 
 
 @pytest.mark.parametrize("name, task", [("Kiln Shop_Landing", "kiln-shop-landing"), ("x", "design"), ("---", "design"),
@@ -286,13 +322,29 @@ def test_a_run_whose_questions_were_answered_is_not_told_that_nobody_is_present(
     folder = tmp_path / "Kiln Shop"
     folder.mkdir()
     cold = gate.stop_output(folder, "s1", task="kiln-shop")["reason"]
-    assert "No person is present to approve the plan" in cold
+    assert "Next step: brief." in cold and "approve the plan" not in cold      # no plan yet, so nothing to approve
     ask(folder, QUESTIONS, 200, task="kiln-shop")
     assert gate.stop_output(folder, "s1", task="kiln-shop") is None
     reply(folder, ANSWERS, 210, task="kiln-shop")
     warm = gate.stop_output(folder, "s1", task="kiln-shop")["reason"]
     assert "Next step: plan." in warm and "No person is present" not in warm
     assert "A person's answers are recorded: write `approval: {state: approved}` only if they approve" in warm
+
+
+def test_questions_before_the_brief_are_waited_on_twice_and_a_third_set_sends_the_run_back_to_the_brief(
+        tmp_path, monkeypatch):
+    monkeypatch.setenv("LAZULI_DB", "")
+    folder = tmp_path / "Kiln Shop"
+    folder.mkdir()
+    outcomes = []
+    for index in range(3):
+        ask(folder, next_question(index), 200 + 20 * index, task="kiln-shop")
+        outcomes.append(gate.stop_output(folder, "s1", task="kiln-shop"))
+        record(folder, "answers", ANSWERS, 210 + 20 * index, task="kiln-shop")      # replies, not yet a record
+    assert outcomes[:2] == [None, None]                                   # the two rounds the brief may take
+    assert outcomes[2]["decision"] == "block" and "Next step: brief." in outcomes[2]["reason"]
+    saved = json.loads((folder / ".lapis/gate/kiln-shop.json").read_text(encoding="utf-8"))
+    assert saved["waits"]["plan"] == 2 and (saved["step"], saved["same"], saved["total"]) == ("brief", 1, 1)
 
 
 def test_the_stop_hook_prints_nothing_while_the_run_waits_for_its_user(project, monkeypatch, capsys):
