@@ -12,6 +12,9 @@ roles, families, and scale; this file turns those decisions into tokens. When a 
 missing, send it back to `lapis` or record a reversible assumption in `claims.proposed`; never settle
 it inside a token file.
 
+For document dialects, supplied tool exports, generated specifications or implementation handoff,
+read `interop.md`; it separates acquired evidence from format interpretation and runtime proof.
+
 ```yaml
 tokens:
   color:

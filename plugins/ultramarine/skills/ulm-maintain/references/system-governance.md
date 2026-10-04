@@ -44,3 +44,20 @@ window, and owner; invent no date or urgency. Do not introduce a shim just to im
 Exceptions name the failed shared use case, scope, evidence, and owner; recurring exceptions may
 show a wrong system boundary. Artifact generation and a documentation claim of “tested” are not
 consumer evidence unless the exercised release, task, conditions, and observed result are named.
+
+## Decisions and handoff
+
+Separate requirements, reproduced defects, evidence gaps, goal tradeoffs, direction preferences,
+implementation risks and new scope before acting on feedback. Owners resolve tradeoffs; silence
+is not consensus and an author's intention is not runtime evidence. Keep the approved direction
+and protected consumer contracts visible while repairing a real failure.
+
+Use an existing decision record only when rediscovery or cross-consumer ambiguity has material
+cost. Name the question, selected relation and evidence, rejected alternative, affected scope,
+owner, reversal limit and condition for revisiting. Supersede a changed decision rather than
+rewriting its history. Do not create a committee, new ledger or remote destination for a local fix.
+
+A handoff retains the task, current authoritative state, confirmed work and attempted actions,
+protected decisions, consequential unknowns and next owner. State the observed engineering
+constraint and its effect before proposing a substitution. A screenshot with redlines cannot
+specify behavior; acceptance names the actual task/state/input and evidence still required.
