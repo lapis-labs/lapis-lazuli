@@ -1047,6 +1047,134 @@ def symmetry(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
     return Result(hits=hits)
 
 
+# ---------------------------------------------------------------- opening-split
+
+_DESKTOP = 1024                    # captures at least this wide are judged; narrower ones stack on purpose
+_SPLIT_HEADING_PX = 28             # the opening's heading is a display or heading run at least this large
+_SPLIT_WIDTH = (0.2, 0.7)          # the object's share of the page width: narrower is an accent, wider a cover
+_SPLIT_HEIGHT = 0.2                # the object's share of the first viewport height
+_SPLIT_REACH = 0.08                # a heading box may reach this share of the page width, and a fifth of its own
+                                   # width, into the object: a box is wider than the text set in it
+_SPLIT_PROSE = 200                 # a box that holds a run this long is prose, not an object
+_SPLIT_VISUAL = 0.25               # media or drawings must cover this share of a box that carries no fill itself
+_SPLIT_OBJECT_ROLES = frozenset({"media", "icon", "card", "section", "other"})
+_SPLIT_TEXT_ROLES = frozenset({"heading", "text", "button", "link"})
+
+
+def _in_nav(page: _Page, ident: str) -> bool:
+    return page.by_id[ident]["role"] == "nav" or any(page.by_id[a]["role"] == "nav" for a in page.ancestors(ident))
+
+
+def _opening_heading(page: _Page) -> str | None:
+    """The box of the largest display or heading run that starts in the first viewport outside navigation, when
+    it is at least `_SPLIT_HEADING_PX`; the nearest heading box around it when there is one."""
+    best: tuple[float, str] | None = None
+    for run in page.runs:
+        box = page.by_id.get(run["box"])
+        size = run.get("size_px") or 0
+        if (box is None or run.get("type_role") not in _HEADING_RUNS or size < _SPLIT_HEADING_PX
+                or box["rect"]["y"] >= page.height or _in_nav(page, run["box"])):
+            continue
+        if best is None or size > best[0]:
+            best = (size, run["box"])
+    if best is None:
+        return None
+    return next((a for a in (best[1], *page.ancestors(best[1])) if page.by_id[a]["role"] == "heading"), best[1])
+
+
+def _split_object_kind(page: _Page, ident: str) -> str | None:
+    """What the box is as the second column: images and drawings, or a filled or bordered panel that holds
+    content (a mock); None for prose and for unfilled wrappers of text."""
+    subtree = (ident, *page.descendants(ident))
+    if any((r.get("chars") or len(r.get("text", ""))) >= _SPLIT_PROSE for i in subtree for r in page.runs_by_box.get(i, ())):
+        return None
+    visual = _union_area(page.rect(i) for i in subtree
+                         if page.by_id[i]["role"] in ("media", "icon") or page.by_id[i].get("media"))
+    if visual >= _SPLIT_VISUAL * _area(page.rect(ident)):
+        return "an image or drawing"
+    if _painted(page.by_id[ident]) and (page.subtree_runs(ident) or visual):
+        return "a boxed panel"
+    return None
+
+
+def _opening_splits(page: _Page, area_min: float, chars_max: float) -> Iterable[_Obs]:
+    """The first viewport divides into two side-by-side groups: the heading with short text and controls on one
+    side, an image, drawing, or boxed panel on the other. Either side counts, and the heading may be the
+    larger box."""
+    heading = _opening_heading(page)
+    if heading is None:
+        return
+    h = page.rect(heading)
+    view = page.width * page.height
+    reach = min(_SPLIT_REACH * page.width, 0.2 * h["w"])
+    around = {heading, *page.ancestors(heading)}
+    objects: list[tuple[float, str, str, str]] = []          # (area, box, side, kind)
+    for ident in page.pre_order():
+        box, r = page.by_id[ident], page.rect(ident)
+        if (box["role"] not in _SPLIT_OBJECT_ROLES or r["y"] >= page.height or _area(r) < area_min * view
+                or not _SPLIT_WIDTH[0] * page.width <= r["w"] <= _SPLIT_WIDTH[1] * page.width
+                or r["h"] < _SPLIT_HEIGHT * page.height or ident in around or heading in page.ancestors(ident)
+                or _in_nav(page, ident)):
+            continue
+        if r["x"] >= h["x"] + h["w"] - reach:
+            side = "right"
+        elif r["x"] + r["w"] <= h["x"] + reach:
+            side = "left"
+        else:
+            continue
+        if _v_overlap(r, h) < min(r["h"], h["h"]) / 2:
+            continue
+        kind = _split_object_kind(page, ident)
+        if kind is not None:
+            objects.append((_area(r), ident, side, kind))
+    if not objects:
+        return
+    _, obj, side, kind = max(objects, key=lambda o: o[0])    # the first of equal areas is the outermost
+    o = page.rect(obj)
+    near = o["x"] if side == "right" else o["x"] + o["w"]
+    band = (min(o["y"], h["y"]), max(o["y"] + o["h"], h["y"] + h["h"]))
+    inside = {obj, *page.descendants(obj)}
+    controls = {i for i in page.pre_order() if page.by_id[i]["role"] in _CONTROLS}
+    texts = actions = chars = 0
+    for ident in page.pre_order():
+        box = page.by_id[ident]
+        if box["role"] not in _SPLIT_TEXT_ROLES or ident == heading or ident in inside or _in_nav(page, ident):
+            continue
+        ancestors = set(page.ancestors(ident))
+        if heading in ancestors:
+            continue
+        r = page.rect(ident)
+        cx, cy = r["x"] + r["w"] / 2, r["y"] + r["h"] / 2
+        if not band[0] <= cy <= band[1] or (cx >= near if side == "right" else cx <= near):
+            continue
+        if box["role"] in _CONTROLS:
+            actions += 1
+        elif not ancestors & controls:
+            runs = page.subtree_runs(ident)
+            texts += bool(runs)
+            chars += sum(run.get("chars") or len(run.get("text", "")) for run in runs)
+    if texts + actions == 0 or chars > chars_max:
+        return
+    label = " ".join(run.get("text", "") for run in page.subtree_runs(heading)).split()
+    title = " ".join(label)[:40]
+    yield _Obs(("split", heading), f'the first screen holds the heading "{title}" with {_count(texts, "text box", "text boxes")} and '
+                                   f'{_count(actions, "control")} beside {kind} on the {side}', box=heading, refs=(obj,))
+
+
+@detector("opening-split", layers=("render",))
+def opening_split(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
+    pages = _pages(ctx)
+    if isinstance(pages, str):
+        return Result(skipped=pages)
+    area_min, chars_max = _bound(det, "object_area_share_min"), _bound(det, "text_chars_max")
+    if area_min is None or chars_max is None:
+        return _no_bound("object_area_share_min and text_chars_max")
+    desktop = [p for p in pages if p.width >= _DESKTOP]
+    if not desktop:
+        return Result(skipped="the extract has no capture at desktop width, and narrower captures stack by design")
+    return Result(hits=_merge(desktop, lambda page: _opening_splits(page, area_min, chars_max)))
+
+
 # ---------------------------------------------------------------- reading-path
 
 @detector("reading-path", layers=("render",))

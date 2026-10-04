@@ -15,22 +15,35 @@ that see it. Rules marked * are statistical or lexical leads; the critic judges 
 
 ## Opening
 
-- **Looks like.** A split hero: a large proposition left, a product mock or illustration right. The mock is a
-  small invented app (title bar, file rows, a storage bar, a "Synced" line). Short status panels float over its
-  edge ("Backup complete", "Always protected", a file card). Sometimes a vault, cloud, or shield mascot stands in
-  for the product. Two buttons sit under the title, a filled start action and a quiet "see how it works". A strip
-  of three short assurances or logos follows.
-- **Reads as generated because** the composition was picked before the content was ranked, so changing the
-  product changes a noun and nothing else. Mock chrome and floating panels are plausibility, not a fact the
-  visitor can use; the mascot restates the claim.
-- **Instead.** Write what the first screen has to settle and show the one object that settles it: the restore
-  point and its time, the actual plan, the route on the map. Put each state beside the object it describes. Keep a
-  second button only when it serves a different intent right now, such as evaluating versus starting.
-- **Exceptions.** A working preview labelled as an illustration is evidence. A real confirmation inside a captured
-  task is not decoration. An annotated diagram names its parts. A strip of comparable, verified facts (supported
-  platforms, a stated retention) helps an immediate evaluation.
-- **Rules.** `layout.hero-before-priority`, `component.fake-app-window`, `component.floating-chips`,
-  `imagery.css-illustration`, `copy.vague-cta`.
+- **Looks like.** A split hero, either way round: the large heading, a short paragraph, and two buttons in one
+  column; a product mock, an illustration, or a picture in the other. The mock is a small invented app (title bar,
+  file rows, a storage bar, a "Synced" line). Short status panels float over its edge ("Backup complete", "Always
+  protected", a file card). Sometimes a vault, cloud, or shield mascot stands in for the product. The buttons are a
+  filled start action and a quiet "see how it works". A strip of three short assurances or logos follows.
+- **Reads as generated because** the composition was picked before the content was ranked. Two columns, a big
+  heading, and an object fit any subject, so changing the product changes a noun and nothing else; it is the
+  commonest opening in the corpus, on nearly every landing page for software and on museum, craft, and product
+  pages alike. Mock chrome and floating panels are plausibility, not a fact the visitor can use; the mascot
+  restates the claim.
+- **Instead.** Do not swap in another layout from a list of layouts; derive the opening, from one of three things.
+  The relation inside the content: the thing and its state, a question and its answer, before and after, a claim
+  and the record that proves it - the composition is whatever puts that relation on the screen (the restore point
+  and its time as the heading's own sentence, the route on the map with the arrival below it). The subject's own
+  objects: the firing log row, the ticket, the timetable, the printed page, at their real scale and arrangement
+  (`world_materials`), which no other subject could reuse. The sequence the visitor follows: what they see, what
+  they decide, what they do, set in that order down or across the screen instead of divided into columns. Keep a
+  second button only when it serves a different intent right now, such as evaluating versus starting. If the split
+  is still what the derivation gives, say which of the three gave it and compare it with an opening built without
+  it, rendered with the page's copy (`explorations`, decision `layout`).
+- **Exceptions.** A real capture of the subject itself beside its name (the product at work, the artwork, the
+  object on sale), recorded as evidence. The interface the visitor came to use, such as a booking panel or a
+  search, with the first column saying what it is for. One record of the subject's real state beside the claim it
+  supports. A contract or brief that fixes a two-column opening. A split that won a rendered comparison against an
+  opening without it. A working preview labelled as an illustration is evidence; a real confirmation inside a
+  captured task is not decoration; an annotated diagram names its parts. A strip of comparable, verified facts
+  (supported platforms, a stated retention) helps an immediate evaluation.
+- **Rules.** `layout.split-hero`, `layout.hero-before-priority`, `component.fake-app-window`,
+  `component.floating-chips`, `imagery.css-illustration`, `copy.vague-cta`.
 
 ## Section order and the close
 

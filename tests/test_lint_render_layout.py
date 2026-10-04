@@ -472,6 +472,111 @@ def test_hero_shell_skips_a_hero_whose_placement_cannot_be_read():
     assert "placement" in lint("layout.hero-before-priority", extract=page, plan=plan()).skipped
 
 
+# ---------------------------------------------------------------- opening-split
+
+PANEL = {"background": [0.97, 0.01, 150], "border_px": 1, "border_color": [0.9, 0.0, 0.0]}
+
+
+def opening(side="right", second="media", heading_w=560, second_w=560, second_h=450, text="Wheel-thrown bowls, fired once a month.",
+            button=True, heading_size=56, second_y=150, width=1440):
+    """The first screen of a hero: a heading, a short paragraph, and a button in one column, `second` in the other."""
+    text_x, second_x = (100, 800) if side == "right" else (780, 80)
+    boxes = [box(1, "section", 0, 0, width, 800), box(2, "heading", text_x, 180, heading_w, 160, parent=1)]
+    runs = [run(1, 2, "Fire once a month", "display", heading_size)]
+    if text:
+        boxes.append(box(3, "text", text_x, 360, 520, 60, parent=1))
+        runs.append(run(2, 3, text))
+    if button:
+        boxes.append(box(4, "button", text_x, 450, 180, 48, parent=1))
+        runs.append(run(3, 4, "See the bowls", "ui", 14))
+    rect = (second_x, second_y, second_w, second_h)
+    if second == "media":
+        boxes.append(box(5, "media", *rect, parent=1, media={"kind": "img", "loaded": True}))
+    elif second == "panel":
+        boxes += [box(5, "card", *rect, parent=1, style=PANEL), box(6, "text", second_x + 30, second_y + 40, 300, 30, parent=5)]
+        runs.append(run(4, 6, "Last firing 14:02"))
+    elif second == "stats":
+        boxes += [box(5, "other", *rect, parent=1), box(6, "text", second_x + 30, second_y + 40, 300, 60, parent=5)]
+        runs.append(run(4, 6, "24 pieces"))
+    elif second == "prose":
+        boxes += [box(5, "card", *rect, parent=1, style=PANEL), box(6, "text", second_x + 30, second_y + 40, 400, 200, parent=5)]
+        runs.append(run(4, 6, "Every bowl is thrown on a wheel in the studio and trimmed the next day. " * 4))
+    return extract(viewport(width, boxes, runs))
+
+
+def split(page, **threshold):
+    return lint("layout.split-hero", extract=page, threshold=threshold)
+
+
+def test_a_heading_with_text_and_a_button_beside_an_image_is_a_split_opening():
+    [hit] = split(opening()).hits
+    assert hit.observed == ('the first screen holds the heading "Fire once a month" with 1 text box and 1 control '
+                            'beside an image or drawing on the right (at 1440 px)')
+    assert hit.location == {"viewport": 1440, "box": bid(2)} and hit.refs == [bid(5)]
+
+
+def test_the_reversed_split_is_found_with_the_object_on_the_left():
+    [hit] = split(opening(side="left")).hits
+    assert "beside an image or drawing on the left" in hit.observed and hit.refs == [bid(5)]
+
+
+def test_a_filled_panel_that_holds_a_mock_counts_as_the_object():
+    [hit] = split(opening(second="panel")).hits
+    assert "beside a boxed panel on the right" in hit.observed
+
+
+def test_a_heading_box_wider_than_its_text_may_reach_into_the_image():
+    assert len(split(opening(heading_w=720)).hits) == 1      # the heading box ends 20 px inside the image
+    assert split(opening(heading_w=900)).hits == []          # 100 px inside: the heading sits over the image
+
+
+def test_a_heading_with_a_button_and_no_paragraph_is_still_the_split():
+    assert len(split(opening(text="")).hits) == 1
+
+
+def test_only_the_desktop_capture_is_judged_and_the_stacked_phone_capture_is_tolerated():
+    stacked = viewport(390, [box(1, "section", 0, 0, 390, 800), box(2, "heading", 20, 100, 350, 120, parent=1),
+                             box(3, "text", 20, 240, 350, 60, parent=1),
+                             box(5, "media", 20, 330, 350, 300, parent=1, media={"kind": "img", "loaded": True})],
+                      [run(1, 2, "Fire once a month", "display", 40), run(2, 3, "Wheel-thrown bowls, fired once a month.")])
+    desktop = opening()["viewports"][0]
+    [hit] = lint("layout.split-hero", extract=extract(stacked, desktop), threshold={}).hits
+    assert hit.observed.endswith("(at 1440 px)")
+    assert split(extract(stacked)).skipped.startswith("the extract has no capture at desktop width")
+
+
+@pytest.mark.parametrize("page", [
+    opening(second="stats"),                                  # a column of figures, no image or panel
+    opening(second="prose"),                                  # a panel of paragraphs is text, not an object
+    opening(second_w=220, second_h=180),                      # an accent, not a column
+    opening(second_w=1100, side="right"),                     # a cover behind the text
+    opening(text="", button=False),                           # a heading alone is a title card
+    opening(heading_size=24),                                 # no large heading
+    opening(text="Wheel-thrown bowls, fired once a month. " * 14),   # a long text column
+    opening(second_y=900),                                    # the image starts below the first screen
+], ids=["figures", "prose-panel", "small-object", "cover", "heading-alone", "small-heading", "long-text", "below-fold"])
+def test_openings_that_are_not_a_text_column_beside_an_object_do_not_hit(page):
+    assert observed(split(page)) == []
+
+
+def test_a_centered_opening_with_the_image_below_the_text_is_not_split():
+    boxes = [box(1, "section", 0, 0, 1440, 800), box(2, "heading", 320, 100, 800, 120, parent=1),
+             box(3, "text", 420, 240, 600, 60, parent=1), box(4, "button", 640, 320, 160, 48, parent=1),
+             box(5, "media", 320, 400, 800, 380, parent=1, media={"kind": "img", "loaded": True})]
+    page = extract(viewport(1440, boxes, [run(1, 2, "Fire once a month", "display", 56), run(2, 3, "Pieces")]))
+    assert observed(split(page)) == []
+
+
+def test_the_object_area_bound_is_the_rules_threshold():
+    assert observed(split(opening(), object_area_share_min=0.5)) == []
+
+
+def test_a_split_opening_hits_at_create_gate_as_a_default():
+    rule = next(r for r in RULES["rules"] if r["id"] == "layout.split-hero")
+    assert (rule["class"], rule["severity"]["create"]) == ("default", "gate")
+
+
+
 # ---------------------------------------------------------------- reading-path
 
 def heading_and_intro(intro_rect):
@@ -906,7 +1011,7 @@ def test_layout_animation_behavior_hits_controls_that_animate_layout_properties(
 LAYOUT_DETECTORS = {"template-repetition", "section-sequence", "section-inventory", "sibling-identity",
                     "card-nesting", "grid-filler", "gap-proximity", "symmetry", "reading-path", "edge-inset",
                     "responsive-structure", "signature-present", "large-list", "decorative-dom", "contract-diff",
-                    "motion-inventory", "accessibility-tree", "layout-shift", "pricing-offers"}
+                    "motion-inventory", "accessibility-tree", "layout-shift", "pricing-offers", "opening-split"}
 
 
 @pytest.mark.parametrize("rule_id,layer", sorted(

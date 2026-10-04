@@ -113,7 +113,7 @@ $defs:
         uniqueItems: true
         items:
           oneOf:
-            - { enum: [design, brief, material, source, exploration] }   # cited in the keep's evidence.<kind>
+            - { enum: [design, brief, material, source, exploration, composition] }   # cited in the keep's evidence.<kind>
             - type: object                             # a ledger asset the keep cites in evidence.asset
               additionalProperties: false
               required: [asset]

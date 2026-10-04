@@ -178,6 +178,55 @@ def test_slop_lint_waives_the_brand_color_only_with_the_contract_or_the_brief_be
     assert (waived["status"], waived["blocking"]) == ("waived", False)
 
 
+OPENING = "layout.split-hero"
+CHOSEN = "the restore point and its time, set beside the claim"
+
+
+def layout_exploration(chosen=CHOSEN, compared_on=("render",), candidates=None, **more):
+    return {"decision": "layout", "chosen": chosen, "compared_on": list(compared_on),
+            "candidates": [{"name": name, "source": "restore log"}
+                           for name in candidates or [chosen, "heading left, product mock right"]],
+            "runner_up_lost": "the mock hid the restore time that decides the visit", **more}
+
+
+def opening_plan(*explorations, **keep):
+    plan = base_plan()
+    plan["explorations"] += list(explorations)
+    plan["defaults"].append({"id": OPENING, "decision": "keep", "basis": "brief", "keep_when": "won-comparison",
+                             "reason": "The split beat the stacked opening when both were rendered with the page's copy",
+                             **keep})
+    return plan
+
+
+def test_slop_lint_waives_a_split_opening_only_for_a_rendered_comparison_it_won(always_hits):
+    assert lint_real(OPENING, opening_plan(layout_exploration()))["status"] == "open"            # nothing cited
+    waived = lint_real(OPENING, opening_plan(layout_exploration(), evidence={"composition": CHOSEN}))
+    assert (waived["status"], waived["blocking"]) == ("waived", False)
+    sketched = lint_real(OPENING, opening_plan(layout_exploration(compared_on=("sketch",)),
+                                                evidence={"composition": CHOSEN}))
+    assert sketched["status"] == "open"
+    assert "no complete layout comparison in explorations was rendered" in sketched["context"]["basis"]
+
+
+@pytest.mark.parametrize("exploration, holds", [
+    (layout_exploration(), True),
+    (layout_exploration(compared_on=("sketch",)), False),                       # never seen on a page
+    (layout_exploration(compared_on=("sketch", "render")), True),
+    (layout_exploration(candidates=[CHOSEN]), False),                           # nothing to compare it with
+    (layout_exploration(fixed_by="brief", reason="The brief fixes the opening"), False),   # exempt, not compared
+    (layout_exploration(chosen="heading left, product mock right"), False),     # the cited candidate lost
+    ({**layout_exploration(), "decision": "palette"}, False),                   # another decision
+], ids=["won", "sketch only", "sketch and render", "one candidate", "fixed", "lost", "palette"])
+def test_a_composition_is_evidence_only_when_a_rendered_layout_comparison_chose_it(exploration, holds):
+    assert (gap(["composition"], {"composition": CHOSEN}, {"explorations": [exploration]}) is None) is holds
+
+
+def test_a_composition_that_won_nothing_names_the_candidates_that_did():
+    why = gap(["composition"], {"composition": "a stacked opening"}, {"explorations": [layout_exploration()]})
+    assert f"won: {CHOSEN}" in why
+
+
+
 def test_slop_lint_reads_the_declared_design_file_from_the_working_directory(tmp_path, monkeypatch):
     from lazuli import paths
 

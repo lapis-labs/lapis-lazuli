@@ -16,6 +16,9 @@ Alternatives a case may list:
   source       `evidence.source` is the `ref` of an entry of `sources`
   exploration  `evidence.exploration` is the chosen face of a complete type comparison in `explorations`
                that a type role covered by that comparison uses
+  composition  `evidence.composition` is the chosen candidate of a complete layout comparison in
+               `explorations` that was rendered (`compared_on` has `render`) and weighed at least one other
+               candidate; the check cannot tell what shape the other candidates have, the critic reads them
   {asset: {kind, origin, role}}   `evidence.asset` is the id of a ledger asset recorded as used by this
                plan's task, whose kind, origin, and role are among the listed values
   {plan: PATH, has | lacks | present | min}   no citation: the plan itself says it. `has` holds when any
@@ -40,6 +43,7 @@ CITED = {
     "material": "an entry of world_materials",
     "source": "the ref of an entry of sources",
     "exploration": "the chosen face of a type comparison in explorations",
+    "composition": "the chosen candidate of a rendered layout comparison in explorations",
     "asset": "the id of an asset in the asset ledger",
 }
 
@@ -151,6 +155,23 @@ def _exploration(cite: Any, sources: Sources) -> str | None:
     return f"exploration: {str(cite)!r} won no comparison that a type role uses; won: {', '.join(dict.fromkeys(won))}"
 
 
+def _composition(cite: Any, sources: Sources) -> str | None:
+    from lapis_design.lint.detectors.plan_candidates import entry_problems
+
+    plan = sources.plan
+    design = (plan.get("context") or {}).get("design")
+    won = [entry["chosen"] for entry in plan.get("explorations") or ()
+           if isinstance(entry, dict) and entry.get("decision") == "layout" and not entry.get("fixed_by")
+           and not entry_problems(entry, {}, design) and "render" in (entry.get("compared_on") or ())]
+    if not won:
+        return "composition: no complete layout comparison in explorations was rendered"
+    if not _norm(cite):
+        return f"composition: {_missing('composition')}; won: {', '.join(dict.fromkeys(won))}"
+    if _norm(cite) in {_norm(name) for name in won}:
+        return None
+    return f"composition: {str(cite)!r} won no rendered layout comparison; won: {', '.join(dict.fromkeys(won))}"
+
+
 def _asset(spec: dict, cite: Any, sources: Sources) -> str | None:
     needs = "; ".join(f"{field} {' or '.join(spec[field])}" for field in ("kind", "origin", "role") if spec.get(field))
     if sources.ledger is None:
@@ -194,4 +215,4 @@ def _plan_value(condition: dict, plan: dict) -> str | None:
 
 
 _CHECKS = {"design": _design, "brief": _brief, "material": _material, "source": _source,
-           "exploration": _exploration}
+           "exploration": _exploration, "composition": _composition}

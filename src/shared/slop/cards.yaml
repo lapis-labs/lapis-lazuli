@@ -149,6 +149,16 @@ cards:
     decide: [layout.procedure, layout.sections, layout.signature]
     rules: [layout.hero-before-priority, layout.template-section-sequence, layout.pricing-trio-recommendation, layout.reassurance-landing, layout.zigzag, layout.symmetry-excess, layout.typical-composition]
 
+  - id: split-opening
+    name: Split opening
+    cue: The first screen divides in two - the large heading with a short paragraph and a pair of buttons on one side, an image, illustration, or product mock on the other - and the same split would open a page for any other subject.
+    routes:
+      - Name the relation the opening has to show - the object and its state, a question and its answer, before and after - and let that relation set the composition.
+      - Build the opening from the subject's own objects at their real arrangement and scale, so it could not open another subject's page.
+      - Order the first screen by the sequence the visitor follows - what they see, what they decide, what they do - and let the sequence, not a column pair, set the structure.
+    decide: [layout.procedure.relationships, layout.procedure.reading_order, world_materials, layout.signature]
+    rules: [layout.split-hero]
+
   - id: boxed-everything
     name: Everything in a box
     cue: Cards are the whole page structure - equal cards for unequal content, cards inside cards, grid cells that exist to complete the shape.

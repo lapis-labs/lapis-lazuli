@@ -28,9 +28,10 @@
 #                (cli/lapis_design/keep_evidence.py). `none` means no plan field, design contract, or asset
 #                ledger can show the premise; the keep then waives on its reason, as before, and the critic
 #                reads that reason. Otherwise a list of alternatives, any one of which backs the keep:
-#                  design, brief, material, source, exploration   the keep cites it in its `evidence`: a
-#                      token of the declared DESIGN.md, a quoted line of brief, an entry of world_materials or
-#                      sources, the chosen face of a type comparison in explorations
+#                  design, brief, material, source, exploration, composition   the keep cites it in its
+#                      `evidence`: a token of the declared DESIGN.md, a quoted line of brief, an entry of
+#                      world_materials or sources, the chosen face of a type comparison in explorations,
+#                      the chosen candidate of a rendered layout comparison in explorations
 #                  { asset: { kind, origin, role } }   the keep cites a ledger asset that this task uses and
 #                      whose listed fields have one of the listed values
 #                  { plan: PATH, has | lacks | present | min }   the plan itself says it; no citation
@@ -1208,6 +1209,26 @@ rules:
   - id: layout.equal-siblings
     class: default
     domain: layout
+  - id: layout.split-hero
+    class: default
+    domain: layout
+    layers: [render, review]
+    severity: { create: gate, review: P3 }
+    detect:
+      render: { detector: opening-split, threshold: { object_area_share_min: 0.06, text_chars_max: 450 } }
+    why: The first screen is divided in two, a column with the large heading, a short paragraph, and the buttons beside a column with an image, drawing, or product mock - the composition generated pages open with whatever the subject, so changing the subject changes a noun and nothing else
+    better: Derive the opening from the content's own relation (the object and its state, a question and its answer, before and after), from the subject's own objects at their real arrangement, or from the sequence the visitor follows; the split stays only when it is what that derivation gives
+    keep_when:
+      - { id: won-comparison, when: "the split won a rendered comparison against an opening built from the same content without it", evidence: [composition] }
+      - { id: contract-fixes-opening, when: "the design contract or the brief fixes a two-column opening and the plan says so", evidence: [design, brief] }
+      - { id: evidentiary-capture, when: "the second column is a real capture of the subject itself - the product at work, the artwork, the object on sale - recorded in the asset ledger as evidence", evidence: [{ asset: { kind: [photo, screenshot, video], role: [evidentiary] } }] }
+      - { id: task-in-opening, when: "the second column is the interface the visitor came to use, such as a booking panel or a search, and the first column says what it is for", evidence: none }
+      - { id: record-beside-claim, when: "the second column is one record of the subject's real state, such as a restore point with its time, shown beside the claim it supports, and the plan's relationships between its contents name that pair", evidence: [{ plan: layout.procedure.relationships, present: true }] }
+    waiver: { scope: rule }
+    verify: review
+    provenance:
+      - { kind: measurement, source: "slop catalog 2026-10-04 split-hero", note: "a large heading on one side and an object on the other on 83 of 123 generated pages, 65 of 69 backup landing pages" }
+
     layers: [render]
     severity: { create: gate, review: P3 }
     detect:
