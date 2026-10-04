@@ -1732,6 +1732,11 @@ references:
       checklist, and the delivery verdict template: repeats of the representation table, of the scroll section,
       and of the skill body''s reporting.'
   external:
+  - kind: read for principles
+    name: SAP Fiori v1.136 - Motion design overview
+    url: https://www.sap.com/design-system/fiori-design-web/v1-136/foundations/interaction/motion-design-overview
+    date_read: '2026-10-05'
+    used_for: Conditional full/basic/minimal/none product modes with essential feedback in every mode; no vendor timing or curve tokens copied.
   - kind: standard
     name: WCAG 2.2 SC 2.3.3 Animation from Interactions (AAA), with the project policy in the plan schema
       (tokens.motion.reduced_motion) making it a requirement
@@ -1773,7 +1778,7 @@ references:
   skill_body_pointer: 'The motion dial has three bands: 1-3 feedback only, 4-6 transitions that explain a change,
     7-10 authored moments. Write the band into `tokens.motion.principles` with a reduced-motion branch for each
     effect (`respect` is the only accepted value for `reduced_motion`). For timing and easing, interruption, scroll and route
-    enhancement, choosing between native and library animation, and delivering authored animation, read
+    enhancement, optional product motion modes, choosing between native and library animation, and delivering authored animation, read
     `references/motion.md`.'
   resolved_2026_10_01:
   - 'A compromise of two drafts, written 2026-10-01. The local night draft (5,284 words, all seven sources) and the

@@ -8,7 +8,7 @@ Read the section a motion decision needs, by heading; the rest are other decisio
 - Timing and easing: durations, easing, and distance by purpose
 - Interruption and choreography: stable states, legal transitions, interruption, sequencing
 - Scroll, navigation, and transitions: scroll and route enhancement that still works with animation off
-- Reduced motion: what `respect` covers and the branch each effect needs
+- Reduced motion: what `respect` covers, each effect's branch, and optional product motion modes
 - Choosing a layer and delivering authored motion: native or library animation, and delivering authored moments
 - What the checks read: which motion rules read what, and what they cannot see
 - Handoff to lps-system: the purposes, durations, and curve roles to pass on
@@ -203,6 +203,16 @@ drawn from live data. Decide the reduced branch when you decide the effect.
 - Support two moments: at load, and when the setting changes while the page is open. A CSS media query
   follows both; script-owned animations and player runtimes must observe the change and settle, with the
   preference branch in one place.
+
+For a motion-rich product with a real need for user control, define modes in
+`tokens.motion.principles`: **full** includes earned authored moments; **basic** keeps
+task-explaining transitions without expressive staging; **minimal** uses direct updates with
+non-spatial feedback; **none** removes animation. Every mode preserves essential feedback:
+input acknowledgement, selection, progress, focus, status, and recovery, using static cues when
+needed. A product setting never overrides the system's reduced-motion preference; apply the
+less-motion branch and settle safely if either changes during an interaction. Exercise the
+same task in every offered mode. Do not add preference UI to routine screens merely to expose
+these modes; token implementation stays with `lps-system`.
 
 Flashing must stay within the applicable flash-safety limits. Motion input needs an ordinary control
 and a way to disable it; continued automatic movement needs a pause, stop, or hide route. Record these
