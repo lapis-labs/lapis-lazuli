@@ -85,7 +85,11 @@ release_gate: <blocking> blocking = <defects> defects + <no_evidence> without ev
   [NOT RUN] <rule_id> ×<n>
       <observed>
   [CONFIRM] <rule_id> <observed>
+  no blocking findings; not judged: genre fit, information choice, the visitor's task at phone and desktop width
 ```
+
+The last line prints only when `summary.blocking` is 0 (`no defects found` when the report has no finding at all). It
+says what no check judges; it changes no count, finding, or exit code, and a pass is a floor, not a verdict on the work.
 
 Exit codes: 0 when `summary.blocking` is 0, 1 when it is not, 2 when the plan cannot be read (a
 missing file, text that does not parse, or a document that is not a mapping), the plan's `task.id`

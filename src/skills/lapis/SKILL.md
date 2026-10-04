@@ -15,6 +15,9 @@ license: MIT AND CC-BY-4.0
   environment, such as a browser that cannot start, counts, and the tool records it itself.
 - The release gate may say the work does not ship. Report that verdict; it is not a step to repeat, and never a reason
   to edit a report or waive a finding.
+- A passing gate and a `next` that says done are a floor: they say no defects were found, not that the page fits its
+  genre, shows the right information, or lets a visitor finish their task at phone and desktop width. Say that
+  when you report, and do not call a pass good.
 - With nobody to ask (`LAPIS_UNATTENDED=1`), record `approval: {state: assumed, reason: ...}` in the plan and go on;
   `approved` is only a person's.
 - When a person will answer, a user or an operator who relays replies, write the questions the plan needs (the

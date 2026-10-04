@@ -20,7 +20,7 @@ from lapis_design.lint.engine import open_lazuli
 from lapis_design.plan_check import (LazuliDBUpgradeError, PlanOverLimit, check_expansion, check_non_string_keys,
                                      check_schema, default_lazuli_db, default_lock, load_yaml, read_plan,
                                      run as check_plan, yaml_reason)
-from lapis_design.summary import finding_lines
+from lapis_design.summary import finding_lines, floor_lines
 
 PROBES = ("controls", "commits", "keyboard", "dialogs", "choices", "forms", "states", "urgency",
           "time_limits", "history", "pointer", "motion", "scroll", "permissions", "media", "flows", "console")
@@ -226,7 +226,7 @@ def _result_lines(report: dict, output: Path) -> list[str]:
     lines += finding_lines((f for f in blocking if f["rule_id"] not in NO_EVIDENCE), "BLOCK", here)
     lines += finding_lines((f for f in blocking if f["rule_id"] in NO_EVIDENCE), "NOT RUN", here)
     lines += finding_lines((f for f in findings if not f["blocking"]), "CONFIRM", here)
-    return lines
+    return lines + floor_lines(summary)
 
 
 def _report(paths: dict[str, Path], task: str, interactive: bool, findings: list[dict]) -> dict:

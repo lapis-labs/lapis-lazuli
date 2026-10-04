@@ -1271,4 +1271,5 @@ def test_printed_result_without_missing_evidence_names_only_what_to_confirm(proj
     output = project / ".lapis/release/kiln-shop-landing.json"
     assert capsys.readouterr().out.splitlines() == [
         f"release_gate: 0 blocking = 0 defects + 0 without evidence, 1 findings -> {output}",
-        "  [CONFIRM] release.theme-unchecked high-contrast theme needs a manual check"]
+        "  [CONFIRM] release.theme-unchecked high-contrast theme needs a manual check",
+        "  no blocking findings; not judged: genre fit, information choice, the visitor's task at phone and desktop width"]

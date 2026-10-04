@@ -28,6 +28,19 @@ def skipped_note(summary: dict) -> str:
     return f", {summary['skipped']} skipped: not judged" if summary.get("skipped") else ""
 
 
+NOT_JUDGED = "genre fit, information choice, the visitor's task at phone and desktop width"
+
+
+def floor_lines(summary: dict) -> list[str]:
+    """One line on what the checks cannot see, printed when nothing blocks. A pass is a floor, not a verdict on the
+    work: no check judges whether the page fits its genre, shows the right information, or lets a visitor finish
+    their task."""
+    if summary.get("blocking"):
+        return []
+    found = "no defects found" if not summary.get("total") else "no blocking findings"
+    return [f"  {found}; not judged: {NOT_JUDGED}"]
+
+
 def place(finding: dict, here: str | None = None) -> str:
     """Where a finding is, as the words a narrowed rerun needs: `320 px box b2e4777952afd`. `here` is the file the
     whole report is about (the plan), which a finding in it need not repeat."""

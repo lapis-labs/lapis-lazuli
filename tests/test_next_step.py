@@ -142,6 +142,7 @@ def test_an_environment_failure_record_completes_the_step_it_names(project):
     assert finish(project, "--static") == 1                       # the gate still says the render has no evidence
     result = next_step.evaluate(project, TASK)
     assert result["state"] == "done" and "0 defects, 3 without evidence" in result["reason"]
+    assert "No defects found" not in result["reason"]         # a report that blocks is never called a pass
 
 
 def test_a_failure_record_older_than_the_plan_no_longer_stands_in_for_the_step(project):
@@ -201,6 +202,13 @@ def test_a_blocking_release_report_still_ends_the_procedure(project):
     result = next_step.evaluate(project, TASK)
     assert result["state"] == "done" and result["step"] is None
     assert "1 blocking findings (1 defects, 0 without evidence)" in result["reason"]
+
+
+def test_done_after_a_gate_with_no_blocking_finding_says_what_no_check_judged(project):
+    assert finish(project, "--static") == 0
+    reason = next_step.evaluate(project, TASK)["reason"]
+    assert "No defects found; not judged by any check: genre fit, information choice, the visitor's task" in reason
+    assert "says nothing about whether the page is good" in reason
 
 
 def test_changing_the_plan_after_the_gate_brings_the_checks_back_in_order(project):
