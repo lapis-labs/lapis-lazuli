@@ -16,6 +16,8 @@ metadata:
   check records itself, counts.
 - A blocking release verdict is a result to report, not a step to repeat. With nobody to ask (`LAPIS_UNATTENDED=1`),
   the plan records `approval: {state: assumed, reason: ...}` and the checks go on.
+- A pass is a floor. "No defects found" does not judge genre fit, information choice, or the visitor's task at phone
+  and desktop width; report it as that, never as quality.
 - The render and behavior checks serve the page on 127.0.0.1 and run locally.
 
 ultramarine checks designs; it does not make them. It runs the `lapis-design` checks on our own
@@ -135,6 +137,9 @@ The critic judges in a context that did not make the design, reading only the in
   independent review ran.
 - A critic that cannot write files returns its report as JSON; save it to
   `.lapis/critic/<task>.json`.
+- Hand it the visitor-task walk (`references/critic.md`, First: walk the visitor's tasks): one to three tasks from the
+  brief, walked on the 1440 and 390 captures, recorded in the report's `walkthroughs`. Coverage of requirements and
+  notices is a floor; a walk that fails is a finding whatever the checks say.
 
 ## Hand fixes back
 

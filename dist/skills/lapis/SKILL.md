@@ -18,6 +18,9 @@ metadata:
   environment, such as a browser that cannot start, counts, and the tool records it itself.
 - The release gate may say the work does not ship. Report that verdict; it is not a step to repeat, and never a reason
   to edit a report or waive a finding.
+- A passing gate and a `next` that says done are a floor: they say no defects were found, not that the page fits its
+  genre, shows the right information, or lets a visitor finish their task at phone and desktop width. Say that
+  when you report, and do not call a pass good.
 - With nobody to ask (`LAPIS_UNATTENDED=1`), record `approval: {state: assumed, reason: ...}` in the plan and go on;
   `approved` is only a person's.
 - When a person will answer, a user or an operator who relays replies, write the questions the plan needs (the
@@ -374,6 +377,10 @@ When repeating a repair, follow the bounds and final full run in `ultramarine`'s
 `repair-loop.md` reference; do not turn a missing check into another edit.
 While fixing, rerun the narrowest check that observes the change (one width, one probe, one lint layer or rule) and run the
 full set once, after the last change.
+
+Before you report, walk the page yourself as its visitor: take one to three tasks from the brief (find today's hours
+and book; see which line is delayed now) and do them on the 1440 and 390 captures, noting where you looked first,
+what you had to read or scroll past, and where you got stuck. A page that passes every check can still fail the walk.
 
 
 1. `lapis-design slop lint --plan .lapis/plans/<task>.yaml --source <source dir> -o .lapis/lint/<task>.json`.

@@ -75,6 +75,20 @@ properties:
   findings:
     type: array
     items: { $ref: "#/$defs/finding" }
+  walkthroughs:                                    # critic: the visitor's tasks walked on the captures before judging; optional, and no check or gate reads it
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [task, viewport, completed, first_look]
+      properties:
+        task: { type: string, minLength: 3 }           # one of one to three tasks derived from the brief: "find today's hours and book"
+        viewport: { enum: [320, 390, 768, 1440] }      # the capture walked; walk 1440 and 390
+        first_look: { type: string, minLength: 3 }     # where the eye went first
+        read_or_scrolled_past: { type: string }        # what had to be read or scrolled past to reach the next step
+        stuck: { type: string }                        # where the walk stopped or turned back; absent when it did not
+        completed: { enum: ["yes", "partly", "no", "not-walked"] }   # not-walked: the capture or the session could not show the step
+        refs: { type: array, items: { type: string } } # capture files, box ids, or session steps the walk rests on
 
 $defs:
   finding:
@@ -84,7 +98,7 @@ $defs:
     properties:
       rule_id: { type: string }                      # a rules.yaml id, a built-in check id (schema.*, contract.*, font.*, reference.*, flow.*,
                                                     # release.* from release/GATE.md), or a critic judgement no rule covers
-                                                    # (review.counterfactual, review.world-materials, review.package-drift)
+                                                    # (review.counterfactual, review.world-materials, review.package-drift, review.task-walkthrough)
       class: { enum: [requirement, quality, default, contract] }
       severity:
         type: object

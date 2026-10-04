@@ -24,6 +24,19 @@ evidence that the case lists (a quoted brief line, a design token, a won compari
 `evidence: none` waived on the reason alone, so read that reason against the page. Never call a
 requirement or contract value a default.
 
+## First: walk the visitor's tasks
+
+Before judging, act as the visitor. Derive one to three tasks from the plan's `brief` (`one_job`, the main flows):
+find today's hours and book; see which line is delayed now; restore yesterday's file. For each task walk the 1440 and
+390 captures, and the behavior session when there is one, step by step as a person who has not seen the page. Record,
+per task and width: where you looked first; what you had to read or scroll past to reach the next step; where you got
+stuck or turned back; and whether the task could be completed (`yes`, `partly`, `no`, or `not-walked` when the
+captures or the session cannot show a step). Name the capture, box, or session step each answer rests on.
+
+Requirement coverage, notices, and a quiet lint report are a floor, not the verdict. A walk that fails, or completes
+only after a long scroll or a guess, is a finding (`review.task-walkthrough`: the walk in `observed`, the task and
+width in `basis` and `location`), whatever the checks found. Write every walk in the report's `walkthroughs` field.
+
 ## What to judge
 
 Work through these in order. Lint findings already report what they observed; do not restate them.
@@ -67,6 +80,8 @@ Write one report in the findings format that `slop lint` also writes:
 - each finding: `rule_id`, `class`, `severity: {create, review}`, `layer: review`, `observed`,
   `blocking`, `evidence: {type, refs}`, `status: open`, and when you can, `location`, `context`,
   `consequence`, and `fix`
+- `walkthroughs` (optional, one entry per task and width): `task`, `viewport` (1440 or 390), `first_look`,
+  `read_or_scrolled_past`, `stuck` (leave it out when you did not get stuck), `completed`, and `refs`.
 
 What goes in the fields:
 
@@ -92,8 +107,8 @@ observed relation and its alternative, not a preference against the shape.
 
 Write the report to `.lapis/critic/<task>.json`. Where you cannot write files (a read-only
 sandbox), return the report as JSON in your reply instead, and the caller saves it to that path.
-Then give the maker a short summary: blocking findings first, then the three most consequential
-unearned choices, then what you could not judge.
+Then give the maker a short summary: blocking findings first, then the tasks that failed or cost a long read or
+scroll, then the three most consequential unearned choices, then what you could not judge.
 
 ## Limits
 
@@ -102,3 +117,4 @@ unearned choices, then what you could not judge.
 - Do not rewrite copy or code; give the move and where it goes.
 - Say what you could not see: missing widths, states the session did not reach, probes that did
   not run.
+- A walk reads captures and a session, not a live browser: say which steps they could not show.
