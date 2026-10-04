@@ -77,12 +77,25 @@ def fonts_db(tmp_path, monkeypatch, capsys):
 
 
 def found(capsys, *argv: str) -> dict:
-    assert search.main([*argv, "--json"]) == 0
+    """The JSON of a search that lists every match unless the test names a --limit."""
+    limit = [] if "--limit" in argv else ["--limit", "50"]
+    assert search.main([*argv, *limit, "--json"]) == 0
     return json.loads(capsys.readouterr().out)
 
 
 def families(result: dict) -> list[str]:
     return [c["family"] for c in result["candidates"]]
+
+
+def test_a_search_lists_eight_by_default_and_says_how_many_more_match(fonts_db, capsys):
+    assert search.main(["--role", "body", "--json"]) == 0
+    default = json.loads(capsys.readouterr().out)
+    everything = found(capsys, "--role", "body")
+    hidden = len(everything["candidates"]) - search.DEFAULT_LIMIT
+    assert search.DEFAULT_LIMIT == 8 and hidden > 0
+    assert families(default) == families(everything)[:8]
+    assert any(note.startswith(f"{hidden} more candidates match") for note in default["notes"])
+    assert not any("more candidates match" in note for note in everything["notes"])
 
 
 def test_text_query_ranks_names_first_and_says_why(fonts_db, capsys):

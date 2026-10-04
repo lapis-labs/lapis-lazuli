@@ -73,6 +73,7 @@ ROLES = ("display", "heading", "body", "ui", "data", "code", "caption")
 COMPOSITE_SCRIPTS = {"kore": ("hang",), "jpan": ("kana", "hani"), "hans": ("hani",), "hant": ("hani",),
                      "hrkt": ("kana",)}
 CATALOG_HITS = 500                  # catalog families store.search may return for one query
+DEFAULT_LIMIT = 8                   # candidates listed by default: an agent re-reads every line it prints
 
 # (measurement part, key, typical step, compare logarithms): distance counts steps of this size
 FEATURES = (("metrics", "weight_rat", 0.5, True), ("metrics", "con_rat", 0.3, False),
@@ -560,7 +561,10 @@ def search_fonts(conn: sqlite3.Connection, args) -> tuple[list[dict], list[str]]
     out.sort(key=lambda c: (c.get("distance", 0), -c["rank"], not c["installed"],
                             min((priority.get(s["source"], 99) for s in c["catalogs"]), default=99),
                             c["family"].casefold()))
-    return out[:args.limit], notes
+    shown = out[:args.limit]
+    if len(out) > len(shown):
+        notes.append(f"{len(out) - len(shown)} more candidates match; --limit {len(out)} lists them")
+    return shown, notes
 
 
 # ---------------------------------------------------------------- output
@@ -609,7 +613,8 @@ def _parser(prog: str) -> argparse.ArgumentParser:
     ap.add_argument("--delivery", choices=("web", "app"), help="only families with a known delivery path there")
     ap.add_argument("--installed", action="store_true", help="installed families only")
     ap.add_argument("--similar-to", metavar="FAMILY", help="rank installed families by measured-feature distance")
-    ap.add_argument("--limit", type=int, default=20, metavar="N")
+    ap.add_argument("--limit", type=int, default=DEFAULT_LIMIT, metavar="N",
+                    help=f"candidates to list (default {DEFAULT_LIMIT}); a note says how many more match")
     ap.add_argument("--json", action="store_true", help="machine output")
     return ap
 

@@ -71,12 +71,20 @@ or an input that is missing (`input-missing`, `input-stale`, `width-missing`, `t
 `critic-missing`, `license-unchecked`), and `summary.not_run` breaks that count down by cause.
 `summary.defects` counts the other blocking findings: those copied from the plan checks, the lint
 report, and the critic, plus `study-reference` and `license-changed`. `summary.to_confirm` counts the
-findings that do not block, so `total = blocking + to_confirm`. The printed result gives both parts
-and then names what did not run, so a reader can tell a check to run from a defect to repair:
+findings that do not block, so `total = blocking + to_confirm`. The printed result gives both parts,
+names what did not run, so a reader can tell a check to run from a defect to repair, and then lists each
+finding grouped by rule, its text cut at 200 characters (the report holds all of it): `[BLOCK]` for a
+defect, `[NOT RUN]` for a blocking finding that reports a check that did not run or an input that is
+missing, `[CONFIRM]` for a finding that does not block. `--json` prints the whole report instead; the
+report file is written either way:
 
 ```text
 release_gate: <blocking> blocking = <defects> defects + <no_evidence> without evidence, <total> findings -> .lapis/release/<task>.json
   without evidence: <n> inputs missing, <n> lint layers not run, <n> requirements not verified, ...
+  [BLOCK] <rule_id> <where> — <observed>
+  [NOT RUN] <rule_id> ×<n>
+      <observed>
+  [CONFIRM] <rule_id> <observed>
 ```
 
 Exit codes: 0 when `summary.blocking` is 0, 1 when it is not, 2 when the plan cannot be read (a

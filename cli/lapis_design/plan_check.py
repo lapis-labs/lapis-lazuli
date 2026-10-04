@@ -13,7 +13,9 @@ Checks, in order:
   5. references reference profiles must exist; study-mode references are flagged for the release gate
   6. flows      flow ids are unique; an exit flow's pair names an existing flow of a joining kind
 
-Output follows src/shared/slop/finding.schema.yaml. Exit code 1 when any finding is blocking.
+Output follows src/shared/slop/finding.schema.yaml. Exit code 1 when any finding is blocking. The printed
+result is a summary: the verdict line, every blocking finding with its fix, and the other findings by rule id
+(lapis_design.summary); `--out PATH` writes the full report as JSON and `--json` prints it.
 
 By default, plan-layer rules come from the CLI's shared slop/rules.yaml. A font lock is read from
 ROOT/.lapis/fonts.lock.json when present, and a keep's design evidence is looked up in the file the plan
@@ -26,7 +28,7 @@ it gets one schema.invalid finding. The exit-plan hook, the release gate, and th
 
 Usage:
   lapis-design plan check PLAN [--rules RULES] [--lock LOCK] [--schema SCHEMA]
-                               [--root ROOT] [--lazuli-db DB] [--format json|text]
+                               [--root ROOT] [--lazuli-db DB] [--out PATH] [--json]
   lapis-design plan check --from-markdown HARNESS_PLAN.md [...]   # validate the
          lapis-plan block embedded in a harness plan (read-only; "-" reads stdin)
   lapis-design plan check PLAN --summary   # markdown summary for harness plans; a plan that fails
@@ -50,6 +52,7 @@ import yaml
 from jsonschema import Draft202012Validator
 
 from lapis_design import __version__, font_license, shared_dir, system_fonts
+from lapis_design.summary import finding_lines, rest_lines, skipped_note
 
 _YAML_LOADER = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
 
@@ -967,21 +970,18 @@ def run(plan_path: Path | None, rules_path: Path | None, lock_path: Path | None,
     }
 
 
-def skipped_note(summary: dict) -> str:
-    """`, 21 skipped: not judged` for a summary with skipped findings, else nothing: a skipped finding
-    was not judged and is never a defect."""
-    return f", {summary['skipped']} skipped: not judged" if summary.get("skipped") else ""
-
-
-def _format_text(report: dict) -> Iterable[str]:
-    s = report["summary"]
-    yield f"plan_check {report['tool']['version']}: {s['blocking']} blocking, {s['total']} total{skipped_note(s)}"
-    for f in report["findings"]:
-        mark = "BLOCK" if f["blocking"] else f["severity"]["create"].upper()
-        where = f.get("location", {}).get("path", "")
-        yield f"  [{mark}] {f['rule_id']} {where} — {f['observed']}"
-        if f.get("fix"):
-            yield f"          fix: {f['fix']}"
+def _format_text(report: dict, out: Path | None = None) -> list[str]:
+    """The printed result: the verdict line, each blocking finding with its fix, the open ones with their text, and
+    the rest by rule id."""
+    s, findings = report["summary"], report["findings"]
+    here = report["target"].get("plan")
+    lines = [f"plan_check {report['tool']['version']}: {s['blocking']} blocking, {s['total']} total"
+             f"{skipped_note(s)}" + (f" -> {out}" if out else "")]
+    lines += finding_lines((f for f in findings if f["blocking"]), here=here)
+    lines += rest_lines(findings, here, detail_open=True)
+    if findings and not out:
+        lines.append("  every finding in full: --json, or -o PATH to write the report")
+    return lines
 
 
 def default_lock(root: Path, explicit: Path | None) -> Path | None:
@@ -1040,15 +1040,19 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design plan check") -
                     help="harness plan markdown containing a lapis-plan block ('-' for stdin)")
     ap.add_argument("--summary", action="store_true",
                     help="print a markdown summary of the plan and exit; a plan that fails the schema gets "
-                         "the findings report (per --format) and exit 1 instead, and a summary does not "
-                         "mean the plan has no blocking findings")
+                         "the findings report (summary, or JSON with --json) and exit 1 instead, and a summary "
+                         "does not mean the plan has no blocking findings")
     ap.add_argument("--rules", type=Path, help="default: slop/rules.yaml in the CLI's shared contracts")
     ap.add_argument("--lock", type=Path, help="default: ROOT/.lapis/fonts.lock.json when present")
     ap.add_argument("--schema", type=Path, help="default: plan/schema.yaml in the CLI's shared contracts")
     ap.add_argument("--root", type=Path, default=Path("."))
     ap.add_argument("--lazuli-db", type=Path,
                     help="lazuli database with font measurements (default: $LAZULI_DB, else user cache if present)")
-    ap.add_argument("--format", choices=["json", "text"], default="text")
+    ap.add_argument("--format", choices=["json", "text"], default="text",
+                    help="text: the verdict, each blocking finding with its fix, and the other findings by rule "
+                         "id (default); json: the full report")
+    ap.add_argument("--json", action="store_true", help="print the full report as JSON, as --format json")
+    ap.add_argument("-o", "--out", type=Path, help="write the full report as JSON to this file")
     args = ap.parse_args(argv)
     plan, label = _UNLOADED_PLAN, None
     if args.from_markdown:
@@ -1103,10 +1107,17 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design plan check") -
     except LockError as exc:
         print(f"plan check: {exc}", file=sys.stderr)
         return 2
-    if args.format == "json":
+    if args.out:
+        try:
+            args.out.parent.mkdir(parents=True, exist_ok=True)
+            args.out.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        except OSError as exc:
+            print(f"plan check: {args.out} cannot be written: {exc}", file=sys.stderr)
+            return 2
+    if args.json or args.format == "json":
         print(json.dumps(report, ensure_ascii=False, indent=2))
     else:
-        print("\n".join(_format_text(report)))
+        print("\n".join(_format_text(report, args.out)))
     return 1 if report["summary"]["blocking"] else 0
 
 

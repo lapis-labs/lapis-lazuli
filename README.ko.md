@@ -4,19 +4,22 @@
 
 Claude Code, Codex, Oh-My-Pi 같은 하네스로 웹 화면을 만드는 개발자용이에요. 막는 발견마다 규칙 이름과 고칠 방법이 붙어요. [English](README.md)
 
-캠핑장 예약 화면의 [예시 계획](docs/examples/site-booking-ko.yaml)을, 코드가 생기기 전에 lazuli 폰트 DB가 없는 기계에서 검사한 출력이에요(아홉 가지 발견 중 다섯은 뺐어요).
+캠핑장 예약 화면의 [예시 계획](docs/examples/site-booking-ko.yaml)을, 코드가 생기기 전에 lazuli 폰트 DB가 없는 기계에서 검사한 출력이에요.
 
 ```console
 $ lapis-design plan check docs/examples/site-booking-ko.yaml
 plan_check 0.2.0: 3 blocking, 9 total, 3 skipped: not judged
   [BLOCK] plan.uncompared-decision explorations — 7 open decisions with no comparison recorded in explorations: type roles body; palette; layout; motion; direction; copy slots headline, cta
-          fix: Record each open decision in explorations - two or more candidates with their sources, what they were compared on, the chosen one, and why the runner-up lost; a decision the contract or the brief fixes says so with fixed_by
-  [WARN] copy.buzzwords content.key_copy[*].text — "최적의" (buzzwords) in the headline key copy: "최적의 캠핑 경험을 선사합니다"; "경험을 선사" (buzzwords) in the headline key copy: "최적의 캠핑 경험을 선사합니다"
-          fix: Add a defaults entry for copy.buzzwords: reject it with a reason, or keep it naming one keep_when id (governed-term, brand-voice-with-proof). Name the user action, the handoff removed, or the verifiable capability
+      fix: Record each open decision in explorations - two or more candidates with their sources, what they were compared on, the chosen one, and why the runner-up lost; a decision the contract or the brief fixes says so with fixed_by
   [BLOCK] copy.vague-cta content.key_copy[?slot=cta].text — "계속하기" (vague_cta) in the cta key copy: "계속하기"
-          fix: Add a defaults entry for copy.vague-cta: reject it with a reason, or keep it naming one keep_when id (step-title-states-outcome). Name the outcome of the action in the label
+      fix: Add a defaults entry for copy.vague-cta: reject it with a reason, or keep it naming one keep_when id (step-title-states-outcome). Name the outcome of the action in the label
   [BLOCK] font.no-lock tokens.type.lock — type roles are set but no fonts lock was given
-          fix: Run `lazuli lock` for each named face: Pretendard.
+      fix: Run `lazuli lock` for each named face: Pretendard.
+  [WARN] color.sage-soft-field tokens.color.roles[?role=identity|interaction].oklch — 1 of 1 colors fall in the region: [[0.5, 0.12, 150]]
+  [WARN] copy.buzzwords content.key_copy[*].text — "최적의" (buzzwords) in the headline key copy: "최적의 캠핑 경험을 선사합니다"; "경험을 선사" (buzzwords) in the headline key copy: "최적의 캠핑 경험을 선사합니다"
+  [WARN] copy.name-swap content.key_copy[*].text — the headline key copy "최적의 캠핑 경험을 선사합니다" names no world material, subject term, number, date, or proper name, so nothing in it depends on this product
+  not judged: no lazuli database given, so planned families have no measured features — type.serif-luxury-display, type.overused-neutral-grotesque, type.costume-monospace
+  every finding in full: --json, or -o PATH to write the report
 ```
 
 `plan.uncompared-decision`은 글꼴·팔레트·배치·움직임·방향·핵심 문구를 후보끼리 견주지 않고 정한 계획을 막고, `copy.buzzwords`는 `"최적의"`와 `"경험을 선사"`를 경고하고, `copy.vague-cta`는 `"계속하기"`를, `font.no-lock`은 폰트 역할만 정하고 폰트 잠금이 없는 계획을 막아요.

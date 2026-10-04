@@ -7,19 +7,22 @@ For developers who build web interfaces with Claude Code, Codex, Oh-My-Pi, or an
 harness and want each blocking finding tied to a named rule and a fix. [한국어](README.ko.md)
 
 An [example plan for a campsite booking page](docs/examples/site-booking-en.yaml), checked before any
-code exists, on a machine without a lazuli font database (five of nine findings left out):
+code exists, on a machine without a lazuli font database:
 
 ```console
 $ lapis-design plan check docs/examples/site-booking-en.yaml
 plan_check 0.2.0: 3 blocking, 9 total, 3 skipped: not judged
   [BLOCK] plan.uncompared-decision explorations — 7 open decisions with no comparison recorded in explorations: type roles body; palette; layout; motion; direction; copy slots headline, cta
-          fix: Record each open decision in explorations - two or more candidates with their sources, what they were compared on, the chosen one, and why the runner-up lost; a decision the contract or the brief fixes says so with fixed_by
-  [WARN] copy.buzzwords content.key_copy[*].text — "elevate" (buzzwords) in the headline key copy: "Elevate your camping experience"
-          fix: Add a defaults entry for copy.buzzwords: reject it with a reason, or keep it naming one keep_when id (governed-term, brand-voice-with-proof). Name the user action, the handoff removed, or the verifiable capability
+      fix: Record each open decision in explorations - two or more candidates with their sources, what they were compared on, the chosen one, and why the runner-up lost; a decision the contract or the brief fixes says so with fixed_by
   [BLOCK] copy.vague-cta content.key_copy[?slot=cta].text — "continue" (vague_cta) in the cta key copy: "Continue"
-          fix: Add a defaults entry for copy.vague-cta: reject it with a reason, or keep it naming one keep_when id (step-title-states-outcome). Name the outcome of the action in the label
+      fix: Add a defaults entry for copy.vague-cta: reject it with a reason, or keep it naming one keep_when id (step-title-states-outcome). Name the outcome of the action in the label
   [BLOCK] font.no-lock tokens.type.lock — type roles are set but no fonts lock was given
-          fix: Run `lazuli lock` for each named face: Pretendard.
+      fix: Run `lazuli lock` for each named face: Pretendard.
+  [WARN] color.sage-soft-field tokens.color.roles[?role=identity|interaction].oklch — 1 of 1 colors fall in the region: [[0.5, 0.12, 150]]
+  [WARN] copy.buzzwords content.key_copy[*].text — "elevate" (buzzwords) in the headline key copy: "Elevate your camping experience"
+  [WARN] copy.name-swap content.key_copy[*].text — the headline key copy "Elevate your camping experience" names no world material, subject term, number, date, or proper name, so nothing in it depends on this product
+  not judged: no lazuli database given, so planned families have no measured features — type.serif-luxury-display, type.overused-neutral-grotesque, type.costume-monospace
+  every finding in full: --json, or -o PATH to write the report
 ```
 
 Once the page runs on localhost, `lapis-design render check` captures it in Chromium from 320 to

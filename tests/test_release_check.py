@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 import json
 import os
+import re
 import sqlite3
 from pathlib import Path
 
@@ -11,7 +12,7 @@ import pytest
 import yaml
 from jsonschema import Draft202012Validator
 
-from lapis_design import shared_dir
+from lapis_design import release_check, shared_dir
 from lapis_design.cli import main as cli_main
 from lazuli import db
 from lazuli.catalog import net
@@ -1230,18 +1231,44 @@ def test_printed_result_gives_both_parts_then_names_what_did_not_run(project, ca
     capsys.readouterr()
     gate(project)
     output = project / ".lapis/release/kiln-shop-landing.json"
-    assert capsys.readouterr().out.splitlines() == [
+    assert capsys.readouterr().out.splitlines()[:2] == [
         f"release_gate: 15 blocking = 2 defects + 13 without evidence, 17 findings -> {output}",
         "  without evidence: 1 inputs missing, 1 inputs stale, 1 widths not captured, 3 themes not captured, "
         "2 probes incomplete, 1 backend insufficient, 1 lint layers not run, 1 requirements not verified, "
         "1 critic reports missing, 1 licenses unchecked"]
 
 
-def test_printed_result_without_missing_evidence_has_one_line(project, capsys):
+def test_printed_result_lists_every_finding_by_kind_and_the_report_holds_the_rest(project, capsys):
+    mixed_project(project)
+    capsys.readouterr()
+    code, report = gate(project)
+    printed = capsys.readouterr().out
+    assert code == 1
+    marks = {}
+    for line in printed.splitlines():
+        if match := re.match(r"  \[(BLOCK|NOT RUN|CONFIRM)\] (\S+)", line):
+            marks.setdefault(match[2], match[1])
+    for finding in report["findings"]:
+        kind = ("CONFIRM" if not finding["blocking"] else
+                "NOT RUN" if finding["rule_id"] in release_check.NO_EVIDENCE else "BLOCK")
+        assert marks[finding["rule_id"]] == kind, finding["rule_id"]
+    assert "ux.example" in printed and "release.study-reference" in printed
+    assert "reviewer must decide" in printed                             # the skipped finding the gate carries
+
+
+def test_json_prints_the_report_the_gate_wrote(project, capsys):
+    mixed_project(project)
+    capsys.readouterr()
+    code, report = gate(project, "--json")
+    assert code == 1 and json.loads(capsys.readouterr().out) == report
+
+
+def test_printed_result_without_missing_evidence_names_only_what_to_confirm(project, capsys):
     update(project, "plans/kiln-shop-landing.yaml", lambda d: d["tokens"]["color"].update(themes=["light", "high-contrast"]))
     settle(project)
     capsys.readouterr()
     gate(project, "--static")
     output = project / ".lapis/release/kiln-shop-landing.json"
     assert capsys.readouterr().out.splitlines() == [
-        f"release_gate: 0 blocking = 0 defects + 0 without evidence, 1 findings -> {output}"]
+        f"release_gate: 0 blocking = 0 defects + 0 without evidence, 1 findings -> {output}",
+        "  [CONFIRM] release.theme-unchecked high-contrast theme needs a manual check"]

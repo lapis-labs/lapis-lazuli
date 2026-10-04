@@ -20,6 +20,7 @@ from lapis_design.lint.engine import open_lazuli
 from lapis_design.plan_check import (LazuliDBUpgradeError, PlanOverLimit, check_expansion, check_non_string_keys,
                                      check_schema, default_lazuli_db, default_lock, load_yaml, read_plan,
                                      run as check_plan, yaml_reason)
+from lapis_design.summary import finding_lines
 
 PROBES = ("controls", "commits", "keyboard", "dialogs", "choices", "forms", "states", "urgency",
           "time_limits", "history", "pointer", "motion", "scroll", "permissions", "media", "flows", "console")
@@ -209,15 +210,22 @@ def _summary(findings: list[dict]) -> dict:
             "no_evidence": no_evidence, "to_confirm": len(findings) - len(blocking), "not_run": not_run}
 
 
-def _result_lines(summary: dict, output: Path) -> list[str]:
+def _result_lines(report: dict, output: Path) -> list[str]:
     """The printed result: the counts in two parts, then what did not run, so a reader can tell a check
-    to run from a defect to repair."""
+    to run from a defect to repair, then each finding: defects, the checks and inputs still missing, and what the
+    user confirms."""
+    summary, findings = report["summary"], report["findings"]
     lines = [f"release_gate: {summary['blocking']} blocking = {summary['defects']} defects + "
              f"{summary['no_evidence']} without evidence, {summary['total']} findings -> {output}"]
     if summary["no_evidence"]:
         causes = [f"{summary['not_run'][key]} {name}" for key, name in NO_EVIDENCE.values()
                   if key in summary["not_run"]]
         lines.append(f"  without evidence: {', '.join(causes)}")
+    here = report["target"].get("plan")
+    blocking = [f for f in findings if f["blocking"]]
+    lines += finding_lines((f for f in blocking if f["rule_id"] not in NO_EVIDENCE), "BLOCK", here)
+    lines += finding_lines((f for f in blocking if f["rule_id"] in NO_EVIDENCE), "NOT RUN", here)
+    lines += finding_lines((f for f in findings if not f["blocking"]), "CONFIRM", here)
     return lines
 
 
@@ -437,6 +445,9 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design release check"
     parser.add_argument("--root", type=Path, default=Path("."))
     parser.add_argument("--static", action="store_true")
     parser.add_argument("--offline", action="store_true")
+    parser.add_argument("--json", action="store_true",
+                        help="print the full report as JSON instead of the summary (the report file is written "
+                             "either way)")
     argv = sys.argv[1:] if argv is None else argv
     try:
         args = parser.parse_args(argv)
@@ -489,7 +500,8 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design release check"
                                 exit_code=2, full_run=True, root=args.root)
         return 2
     attempts.clear(args.task, "release", args.root)
-    print("\n".join(_result_lines(result["summary"], output)))
+    print(json.dumps(result, ensure_ascii=False, indent=2) if args.json
+          else "\n".join(_result_lines(result, output)))
     return 1 if result["summary"]["blocking"] else 0
 
 

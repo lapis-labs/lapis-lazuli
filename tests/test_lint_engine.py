@@ -486,11 +486,11 @@ def test_lint_report_records_source_tree_and_font_lock(tmp_path):
 def test_the_command_exits_0_without_blocking_findings(tmp_path, capsys):
     rules = write_rules(tmp_path, [rule("layout.plan", {"plan": det("test-echo", "hero outranks the task")},
                                         create="warn")])
-    assert lint_cli.main(["--rules", str(rules), "--plan", str(SHARED / "plan/example.plan.yaml")]) == 0
+    assert lint_cli.main(["--rules", str(rules), "--plan", str(SHARED / "plan/example.plan.yaml"), "--json"]) == 0
     assert json.loads(capsys.readouterr().out)["summary"] == {"blocking": 0, "total": 1, "skipped": 0}
 
 
-def test_the_summary_counts_skipped_findings_and_the_printed_line_says_they_were_not_judged(tmp_path, capsys):
+def test_the_printed_result_says_what_was_skipped_and_why(tmp_path, capsys):
     rules = write_rules(tmp_path, [rule("layout.a", {"plan": det("test-echo", "hero outranks the task")}),
                                    rule("layout.b", {"plan": det(skipped="no extract given")}),
                                    rule("layout.c", {"plan": det(skipped="no lock given")})])
@@ -499,14 +499,56 @@ def test_the_summary_counts_skipped_findings_and_the_printed_line_says_they_were
                           "-o", str(out)]) == 1
     assert json.loads(out.read_text(encoding="utf-8"))["summary"] == {"blocking": 1, "total": 3, "skipped": 2}
     assert capsys.readouterr().out.splitlines() == [
-        f"slop_lint: 1 blocking, 3 findings, 2 skipped: not judged -> {out}"]
+        f"slop_lint: 1 blocking, 3 findings, 2 skipped: not judged -> {out}",
+        f"  scope: layers plan; rules from {rules}",
+        "  [BLOCK] layout.a hero outranks the task",
+        "      fix: Do the specific thing",
+        "  not judged (input): no extract given — layout.b",
+        "  not judged (input): no lock given — layout.c"]
 
 
-def test_the_printed_line_leaves_out_skipped_when_nothing_was_skipped(tmp_path, capsys):
+def test_the_verdict_line_leaves_out_skipped_when_nothing_was_skipped(tmp_path, capsys):
     rules = write_rules(tmp_path, [rule("layout.a", {"plan": det("test-echo", "hero outranks the task")})])
     out = tmp_path / "lint.json"
     lint_cli.main(["--rules", str(rules), "--plan", str(SHARED / "plan/example.plan.yaml"), "-o", str(out)])
-    assert capsys.readouterr().out.splitlines() == [f"slop_lint: 1 blocking, 1 findings -> {out}"]
+    assert capsys.readouterr().out.splitlines()[0] == f"slop_lint: 1 blocking, 1 findings -> {out}"
+
+
+def test_the_printed_result_says_when_the_run_was_narrowed(tmp_path, capsys):
+    rules = write_rules(tmp_path, [rule("layout.a", {"plan": det("test-echo", "hero outranks the task")}),
+                                   rule("layout.b", {"plan": det("test-echo", "second finding")})])
+    out = tmp_path / "lint.narrow.json"
+    lint_cli.main(["--rules", str(rules), "--plan", str(SHARED / "plan/example.plan.yaml"), "--rule", "layout.a",
+                   "-o", str(out)])
+    printed = capsys.readouterr().out
+    assert "narrowed by --rule layout.a" in printed and "layout.b" not in printed
+
+
+def test_the_printed_result_names_every_blocking_finding_and_stays_short(tmp_path, capsys):
+    long = "the observed text runs on " * 24
+    blocking = [rule(f"layout.b{i}", {"plan": det("test-echo", f"blocking {i}: {long}")}) for i in range(6)]
+    quiet = [rule(f"layout.w{i}", {"plan": det("test-echo", f"warning {i}: {long}")}, create="warn")
+             for i in range(20)]
+    rules = write_rules(tmp_path, blocking + quiet + [rule("layout.s", {"plan": det(skipped="no extract given")})])
+    out = tmp_path / "lint.json"
+    code = lint_cli.main(["--rules", str(rules), "--plan", str(SHARED / "plan/example.plan.yaml"), "-o", str(out)])
+    printed = capsys.readouterr().out
+    report = json.loads(out.read_text(encoding="utf-8"))
+    assert code == 1 and report["summary"]["blocking"] == 6
+    for finding in report["findings"]:
+        if finding["blocking"]:
+            assert f"[BLOCK] {finding['rule_id']} " in printed and "Do the specific thing" in printed
+    assert str(out) in printed and "layout.s" in printed and "no extract given" in printed
+    assert all(f"layout.w{i}" in printed for i in range(20))        # open findings are named, not dropped
+    assert long not in printed and len(printed) < len(out.read_text(encoding="utf-8")) / 4
+
+
+def test_json_prints_the_report_the_file_holds(tmp_path, capsys):
+    rules = write_rules(tmp_path, [rule("layout.plan", {"plan": det("test-echo", "hero outranks the task")})])
+    out = tmp_path / "lint.json"
+    argv = ["--rules", str(rules), "--plan", str(SHARED / "plan/example.plan.yaml"), "-o", str(out)]
+    assert lint_cli.main(argv + ["--json"]) == 1
+    assert json.loads(capsys.readouterr().out) == json.loads(out.read_text(encoding="utf-8"))
 
 
 def test_unusable_inputs_exit_2(tmp_path, capsys):

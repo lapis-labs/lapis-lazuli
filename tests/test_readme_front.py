@@ -66,7 +66,7 @@ def test_console_output_names_the_current_version(readme):
 
 
 @pytest.mark.parametrize("readme", READMES)
-def test_console_excerpt_matches_plan_check_without_database(readme, tmp_path):
+def test_console_output_matches_plan_check_without_database(readme, tmp_path):
     shown = console(readme)
     argv = shlex.split(shown[0].removeprefix("$ "))
     assert argv[:3] == ["lapis-design", "plan", "check"]
@@ -82,17 +82,7 @@ def test_console_excerpt_matches_plan_check_without_database(readme, tmp_path):
         cwd=ROOT, env=environment, capture_output=True, text=True, timeout=30,
     )
     assert result.returncode == 1, result.stderr  # The example deliberately has blocking findings.
-    output = result.stdout.splitlines()
-    excerpt = [output[0]]
-    selected = {"plan.uncompared-decision", "copy.buzzwords", "copy.vague-cta", "font.no-lock"}
-    include = False
-    for line in output[1:]:
-        finding = re.match(r"\s+\[(?:BLOCK|WARN|INFO)\] (\S+)", line)
-        if finding:
-            include = finding.group(1) in selected
-        if include:
-            excerpt.append(line)
-    assert shown[1:] == excerpt
+    assert shown[1:] == result.stdout.splitlines()
 
 
 def test_output_examples_in_the_outputs_guide_carry_the_current_version():

@@ -291,7 +291,7 @@ def test_many_key_copy_items_still_reach_copy_rules(tmp_path):
     plan["content"]["key_copy"] = [{"slot": "cta", "text": "A handmade piece"} for _ in range(1849)]
     plan["content"]["key_copy"].append({"slot": "cta", "text": "Click here"})
     path = write_plan(tmp_path, yaml.safe_dump(plan, allow_unicode=True))
-    result = timed_call(tmp_path, "slop", "lint", "--plan", str(path), limit=5)
+    result = timed_call(tmp_path, "slop", "lint", "--plan", str(path), "--json", limit=5)
     assert result.returncode == 1, result.stderr
     findings = json.loads(result.stdout)["findings"]
     assert any(f["rule_id"] == "copy.vague-cta" and f["location"]["path"] ==

@@ -48,9 +48,25 @@ def test_a_narrowed_behavior_check_writes_beside_the_full_session_and_leaves_it_
     result = behavior(project, "--probe", "console", "--context", "d")
     assert result.returncode == 0, result.stderr
     assert str(Path(".lapis/behavior/t.narrow.json")) in result.stdout
+    assert "not selected (--probe)" in result.stdout and "skipped" in result.stdout    # what the run left out is said
     assert json.loads((sessions / "t.narrow.json").read_text())["source"]["task"] == "t"
     assert {name: value for name, value in digest(sessions).items() if name in before} == before
     assert set(digest(sessions)) == {"t.json", "t.narrow.json"}
+
+
+def test_the_printed_coverage_names_each_partial_and_skipped_probe_with_its_reason():
+    from lapis_design.behavior_check import _coverage_lines
+    coverage = [{"probe": "controls", "status": "ran", "contexts": ["m"]},
+                {"probe": "dialogs", "status": "not-applicable", "contexts": ["m"]},
+                {"probe": "flows", "status": "partial", "reason": "m/start-trial: abandoned (goal not reached)"},
+                {"probe": "pointer", "status": "partial", "reason": "m/start-trial: abandoned (goal not reached)"},
+                {"probe": "scroll", "status": "partial", "reason": "d/space: need 7083px remaining, have 3924px"},
+                {"probe": "motion", "status": "skipped", "reason": "not selected (--probe)"}]
+    assert _coverage_lines(coverage) == [
+        "  coverage: 1 ran, 3 partial, 1 skipped, 1 not-applicable",
+        "  partial flows, pointer — m/start-trial: abandoned (goal not reached)",
+        "  partial scroll — d/space: need 7083px remaining, have 3924px",
+        "  skipped motion — not selected (--probe)"]
 
 
 @pytest.mark.browser

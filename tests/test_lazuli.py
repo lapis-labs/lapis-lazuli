@@ -398,6 +398,21 @@ def test_local_fonts_command_summary_and_session_hook(env, tmp_path, capsys):
     assert "changed since the last scan" in capsys.readouterr().out
 
 
+def test_local_fonts_table_lists_the_limit_and_says_how_many_more_while_json_lists_every_family(
+        env, tmp_path, capsys):
+    for index in range(5):
+        build(env["user"] / f"Face{index}.ttf", family=f"Family {index}")
+    assert cli.main(["local", "fonts", "--limit", "2"]) == 0
+    table = capsys.readouterr().out
+    assert table.count("Family ") == 2 and "3 more families" in table and "--limit" in table
+    assert cli.main(["local", "fonts", "--limit", "5"]) == 0
+    assert "more families" not in capsys.readouterr().out
+    assert cli.main(["local", "fonts", "--limit", "2", "--json"]) == 0
+    assert len(json.loads(capsys.readouterr().out)) == 5
+    with pytest.raises(SystemExit):
+        cli.main(["local", "fonts", "--limit", "0"])
+
+
 def test_doctor_reports_and_fails_only_on_blockers(env, tmp_path, capsys, monkeypatch):
     assert cli.main(["doctor"]) == 0
     out = capsys.readouterr().out

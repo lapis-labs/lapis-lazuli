@@ -11,6 +11,7 @@ import os
 import re
 import sys
 import tempfile
+from collections import Counter
 from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -26,6 +27,7 @@ from lapis_design.behavior_check.driver import Driver, MissingSyntheticValues
 from lapis_design.behavior_check.scope import PER_BOX, BoxScope
 from lapis_design.behavior_check.session import PROBE_NAMES, Session
 from lapis_design.plan_check import read_plan_or_raise
+from lapis_design.summary import REASON_CAP, clip
 
 
 def _stub_reference(path: Path) -> str | None:
@@ -232,8 +234,26 @@ def _check(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
         return 2
     if args.full_run:
         attempts.clear(args.task, "behavior")
-    print(f"{len(document['contexts'])} contexts, {len(document['nodes'])} nodes, "
-          f"{len(document['coverage'])} coverage entries -> {output}")
+    print("\n".join([f"{len(document['contexts'])} contexts, {len(document['nodes'])} nodes, "
+                     f"{len(document['coverage'])} coverage entries -> {output}",
+                     *_coverage_lines(document["coverage"])]))
+    return 0
+
+
+def _coverage_lines(coverage: list[dict]) -> list[str]:
+    """What the probes did, so a run's partial and skipped probes are read without opening the session: the count
+    per status, then a line for each status and reason with the probes it names. A probe that found nothing to
+    exercise (`not-applicable`) is only counted."""
+    counts = Counter(entry["status"] for entry in coverage)
+    lines = ["  coverage: " + ", ".join(f"{counts[status]} {status}" for status in
+                                         ("ran", "partial", "skipped", "not-applicable") if counts[status])]
+    reasons: dict[tuple[str, str], list[str]] = {}
+    for entry in coverage:
+        if entry["status"] in ("partial", "skipped"):
+            reasons.setdefault((entry["status"], clip(entry.get("reason") or "", REASON_CAP)), []).append(entry["probe"])
+    for (status, reason), probes in reasons.items():
+        lines.append(f"  {status} {', '.join(dict.fromkeys(probes))}" + (f" — {reason}" if reason else ""))
+    return lines
     return 0
 
 

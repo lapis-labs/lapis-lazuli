@@ -71,7 +71,7 @@ def test_recursive_yaml_alias_does_not_change_example_findings(tmp_path, monkeyp
     assert cli.main(["plan", "check", str(path), "--rules", str(REAL_RULES),
                      "--lock", str(LOCK), "--format", "json"]) == 0
     assert json.loads(capsys.readouterr().out)["findings"] == expected
-    assert cli.main(["slop", "lint", "--plan", str(path)]) == 0
+    assert cli.main(["slop", "lint", "--plan", str(path), "--json"]) == 0
     assert json.loads(capsys.readouterr().out)["findings"] == lint_expected
     event = {"tool_input": {"plan": harness_md(plan)}, "cwd": str(tmp_path)}
     monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path))
@@ -251,7 +251,7 @@ def test_corrupt_user_cache_db_is_ignored_once_but_explicit_and_env_databases_er
 
     plan = write_plan(tmp_path, base_plan())
     args = ["plan", "check", str(plan), "--format", "json"]
-    lint_args = ["slop", "lint", "--plan", str(plan), "--layer", "plan"]
+    lint_args = ["slop", "lint", "--plan", str(plan), "--layer", "plan", "--json"]
     baseline_code = cli.main(args)
     baseline = json.loads(capsys.readouterr().out)
     database = paths.db_path()
@@ -468,7 +468,7 @@ def test_slop_and_mcp_share_plan_check_project_lock_and_cached_db_defaults(
     monkeypatch.chdir(tmp_path)
     assert cli.main(["plan", "check", str(plan), "--format", "json"]) == 0
     checked = json.loads(capsys.readouterr().out)
-    assert cli.main(["slop", "lint", "--plan", str(plan), "--layer", "plan"]) == 0
+    assert cli.main(["slop", "lint", "--plan", str(plan), "--layer", "plan", "--json"]) == 0
     linted = json.loads(capsys.readouterr().out)
     defaults = {r["id"] for r in yaml.safe_load(REAL_RULES.read_text())["rules"]
                 if r["class"] == "default" and "plan" in r.get("layers", [])}
@@ -483,7 +483,7 @@ def test_slop_and_mcp_share_plan_check_project_lock_and_cached_db_defaults(
     project_lock.write_text("not a lock", encoding="utf-8")
     assert cli.main(["slop", "lint", "--plan", str(plan), "--layer", "plan"]) == 2
     capsys.readouterr()
-    assert cli.main(["slop", "lint", "--plan", str(plan), "--layer", "plan",
+    assert cli.main(["slop", "lint", "--plan", str(plan), "--layer", "plan", "--json",
                      "--lock", str(LOCK), "--lazuli-db", str(paths.db_path())]) == 0
     assert relevant(json.loads(capsys.readouterr().out)) == relevant(checked)
     assert relevant(mcp_server.slop_lint(plan=str(plan), layers=["plan"], lock=str(LOCK),
@@ -495,7 +495,7 @@ def test_slop_and_mcp_share_plan_check_project_lock_and_cached_db_defaults(
     assert cli.main(["slop", "lint", "--plan", str(plan), "--layer", "plan",
                      "--lock", str(LOCK)]) == 2
     assert "missing.db" in capsys.readouterr().err
-    assert cli.main(["slop", "lint", "--plan", str(plan), "--layer", "plan",
+    assert cli.main(["slop", "lint", "--plan", str(plan), "--layer", "plan", "--json",
                      "--lock", str(LOCK), "--lazuli-db", str(cached_db)]) == 0
     assert relevant(json.loads(capsys.readouterr().out)) == relevant(checked)
     assert relevant(mcp_server.slop_lint(plan=str(plan), layers=["plan"], lock=str(LOCK),
@@ -1012,3 +1012,29 @@ def test_text_line_leaves_out_skipped_when_no_finding_was_skipped(tmp_path, monk
     code, text = check_text(tmp_path, monkeypatch, capsys, "--rules", str(rules))
     assert text.splitlines()[0] == (f"plan_check {plan_check.VERSION}: {summary['blocking']} blocking, "
                                     f"{summary['total']} total")
+
+
+def test_printed_result_names_every_blocking_finding_with_its_fix_and_the_file_holds_the_report(
+        tmp_path, monkeypatch, capsys):
+    from lazuli import paths
+
+    monkeypatch.setattr(paths, "cache_dir", lambda: tmp_path / "empty-cache")
+    monkeypatch.delenv("LAZULI_DB", raising=False)
+    monkeypatch.chdir(tmp_path)
+    plan = base_plan()
+    plan["tokens"]["color"]["roles"].append({"name": "clay", "role": "identity", "oklch": [0.61, 0.13, 41]})
+    path = write_plan(tmp_path, plan)
+    out = tmp_path / "report" / "plan-check.json"
+    assert cli.main(["plan", "check", str(path), "--lock", str(LOCK), "-o", str(out)]) == 1
+    printed = capsys.readouterr().out
+    report = json.loads(out.read_text(encoding="utf-8"))
+    blocking = [f for f in report["findings"] if f["blocking"]]
+    assert blocking and printed.splitlines()[0].endswith(f"-> {out}")
+    for finding in blocking:
+        assert f"[BLOCK] {finding['rule_id']}" in printed
+        assert not finding.get("fix") or finding["fix"][:60] in printed
+    skipped = [f["rule_id"] for f in report["findings"] if f["status"] == "skipped"]
+    assert skipped and all(rule in printed for rule in skipped)             # a skipped notice is never dropped
+    assert len(printed) < len(out.read_text(encoding="utf-8")) / 2
+    assert cli.main(["plan", "check", str(path), "--lock", str(LOCK), "--json"]) == 1
+    assert json.loads(capsys.readouterr().out) == report

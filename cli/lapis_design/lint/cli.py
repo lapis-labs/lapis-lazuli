@@ -10,7 +10,9 @@ working directory.
 Layers default to every layer whose input was given (plan, source, render, behavior), plus review
 in review mode when a plan or an extract was given.
 
-Output follows src/shared/slop/finding.schema.yaml with tool `slop_lint`: to --out, or stdout. A run narrowed by
+Output follows src/shared/slop/finding.schema.yaml with tool `slop_lint`. The printed result is a summary: the
+verdict line, every blocking finding with its fix, and the other findings by rule id; `-o OUT` writes the full
+report as JSON and `--json` prints it. A run narrowed by
 --layer or --rule belongs in .lapis/lint/<task>.narrow.json, not in the full report the release gate reads.
 When an optional CJK analyzer runs, `analyzers` names its locale and installed version.
 A source or corpus file that is a link resolving outside the folder it was found in is not read, and a
@@ -22,7 +24,7 @@ Usage:
   lapis-design slop lint [--rules RULES] [--plan PLAN] [--extract EXTRACT] [--session SESSION]
                          [--source DIR] [--ledger LEDGER] [--lock LOCK] [--ref PROFILE ...]
                          [--corpus DIR|FILE] [--lazuli-db DB] [--mode create|review]
-                         [--layer LAYER ...] [--rule ID ...] [-o OUT]
+                         [--layer LAYER ...] [--rule ID ...] [-o OUT] [--json]
 """
 from __future__ import annotations
 
@@ -42,7 +44,8 @@ from lapis_design import shared_dir
 from lapis_design.lint import engine
 from lapis_design.lint.types import Context
 from lapis_design.plan_check import (default_lazuli_db, default_lock, expansion_problem, non_string_key_paths,
-                                     read_design_text, read_plan, skipped_note)
+                                     read_design_text, read_plan)
+from lapis_design.summary import finding_lines, rest_lines, skipped_note
 
 SCHEMAS = {
     "rules": ("slop", "rules.schema.yaml"),
@@ -237,6 +240,33 @@ def run(*, rules: Path | None = None, plan: Path | None = None, extract: Path | 
     return report
 
 
+def _scope_line(scope: dict) -> str:
+    """What ran: the layers, and whatever left part of the input out (a narrowed rule set, links that were not read)."""
+    parts = ["layers " + ", ".join(scope["layers"])]
+    if "rules" in scope:
+        parts.append("narrowed by --rule " + ", ".join(scope["rules"]))
+    if "rules_file" in scope:
+        parts.append(f"rules from {scope['rules_file']}")
+    for kind, links in (scope.get("unread_links") or {}).items():
+        shown = ", ".join(links[:3]) + (f" (+{len(links) - 3} more)" if len(links) > 3 else "")
+        parts.append(f"{len(links)} {kind} link(s) not read: {shown}")
+    return "  scope: " + "; ".join(parts)
+
+
+def _summary_lines(report: dict, out: Path | None) -> list[str]:
+    """The printed result: the verdict, the scope, each blocking finding with its fix, the others by rule id."""
+    s, findings = report["summary"], report["findings"]
+    lines = [f"slop_lint: {s['blocking']} blocking, {s['total']} findings{skipped_note(s)}"
+             + (f" -> {out}" if out else "")]
+    if report.get("scope"):
+        lines.append(_scope_line(report["scope"]))
+    lines += finding_lines((f for f in findings if f["blocking"]), here=report["target"].get("plan"))
+    lines += rest_lines(findings)
+    if findings and not out:
+        lines.append("  every finding in full: --json, or -o PATH to write the report")
+    return lines
+
+
 def main(argv: list[str] | None = None, prog: str = "lapis-design slop lint") -> int:
     ap = argparse.ArgumentParser(prog=prog, description=__doc__.split("\n")[0])
     ap.add_argument("--rules", type=Path, help="default: slop/rules.yaml in the CLI's shared contracts")
@@ -258,8 +288,10 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design slop lint") ->
                     help="rule id or glob pattern (repeatable). Narrows the run: write it with "
                          "-o .lapis/lint/<task>.narrow.json")
     ap.add_argument("-o", "--out", type=Path,
-                    help="write the report here instead of stdout (the full report is .lapis/lint/<task>.json, "
+                    help="write the full report as JSON here (the full report is .lapis/lint/<task>.json, "
                          "which the release gate reads, so a run narrowed by --layer or --rule goes elsewhere)")
+    ap.add_argument("--json", action="store_true",
+                    help="print the full report as JSON instead of the summary")
     args = ap.parse_args(argv)
     try:
         report = run(rules=args.rules, plan=args.plan, extract=args.extract, session=args.session,
@@ -273,8 +305,10 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design slop lint") ->
         print(f"slop lint: {exc}", file=sys.stderr)
         return 2
     s = report["summary"]
-    print(f"slop_lint: {s['blocking']} blocking, {s['total']} findings{skipped_note(s)} -> {args.out}"
-          if args.out else text)
+    if args.json:
+        print(text)
+    else:
+        print("\n".join(_summary_lines(report, args.out)))
     return 1 if s["blocking"] else 0
 
 

@@ -159,6 +159,7 @@ def session_summary() -> str | None:
 # Label kinds shown in the table; JSON carries every kind. Labels carry their source: `user` is the user's own
 # class (`lazuli class`), which outranks the catalogs and gets its own line.
 TABLE_LABEL_KINDS = ("genre", "subclass", "usage", "feel", "license")
+TABLE_LIMIT = 25        # families the table lists by default: an agent re-reads every line it prints
 
 
 def _catalog_text(catalog: dict) -> str | None:
@@ -195,13 +196,17 @@ def main(argv: list[str] | None = None, prog: str = "lazuli local fonts") -> int
     ap.add_argument("--summary", action="store_true", help="short inventory summary, as printed at session start")
     ap.add_argument("--origin", choices=("system", "user", "adobe-sync"),
                     help="only faces that came from this origin (adobe-sync: Adobe Fonts faces the system lists)")
-    ap.add_argument("--json", action="store_true", help="families with faces and measurements as JSON")
+    ap.add_argument("--json", action="store_true", help="every family with its faces and measurements as JSON")
+    ap.add_argument("--limit", type=int, default=TABLE_LIMIT, metavar="N",
+                    help=f"families the table lists (default {TABLE_LIMIT}); --json lists every family")
     ap.add_argument("--rescan", action="store_true",
                     help="re-read every file and Adobe Fonts face, not only changed ones")
     ap.add_argument("--no-measure", action="store_true", help="scan without measuring new faces")
     args = ap.parse_args(argv)
     if args.origin and args.summary:
         ap.error("--origin does not apply to --summary, which counts every origin")
+    if args.limit < 1:
+        ap.error("--limit must be at least 1")
     try:
         scan.roots()                                         # a bad LAZULI_FONT_ROOTS is a usage error
     except scan.RootsError as exc:
@@ -227,7 +232,10 @@ def main(argv: list[str] | None = None, prog: str = "lazuli local fonts") -> int
             json.dump(families, sys.stdout, ensure_ascii=False, indent=1)
             print()
         else:
-            print(_table(families))
+            print(_table(families[:args.limit]))
+            if len(families) > args.limit:
+                print(f"{len(families) - args.limit} more families; narrow with --family or --origin, "
+                      f"or raise --limit (--json lists every family)")
         print(f"scanned {result.files} files{f' and {result.adobe} Adobe Fonts faces' if result.adobe else ''}: "
               f"{result.added} new, {result.updated} changed, {result.removed} gone; "
               f"measured {measured} faces", file=sys.stderr)
