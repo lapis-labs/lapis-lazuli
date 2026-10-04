@@ -4,14 +4,14 @@
 
 Read the section the form or recovery decision needs, by heading; the rest are other decisions.
 
-- Operating conditions: recording a situation that changes the form in `brief.constraints`
-- From the goal to the fields: which fields to ask, in what order and grouping
+- Operating conditions: task/expertise density, constrained-device priorities, and situation evidence
+- From the goal to the fields: field order and grouping, including changes with the keyboard open
 - Checking and messages: when to validate and how to word what the person sees
 - Waiting, retrying, and not knowing: pending states, duplicate submits, offline and unknown outcomes
 - Review and consent: the review step before a binding commit and how the commit is named
 - Korean forms: name, phone, address, and similar field conventions for a Korean service
 - The kiln shop: the worked reservation example
-- Check: the behavior probes to run and the findings to read
+- Check: behavior probes, evidence limits, and user validation before consequential information hiding
 
 This file backs the skill's **Flows**, **States**, **Commitments**, **Choices without pressure**, the
 form bullet under **Interaction**, and the stub's `values`. The plan has no form field, so the
@@ -37,8 +37,16 @@ For a misunderstood action, distinguish unnoticed control, misleading term, and 
 ownership or state. Ask for a pre-action prediction, then compare it with the real result; one
 failed click establishes no mental model. Repair the signifier, vocabulary, or behavior at its
 actual owner. Teaching a changed model must preserve identifiers, routes, and permissions unless
-separately authorized. Keep required and frequent expert controls visible; disclosure is for
-optional detail, not a mechanical menu-item limit or a way to hide inherent task complexity.
+separately authorized. Choose guidance and density by task, familiarity, repeated use, or an
+explicit preference, not desktop versus phone alone; record the decision in
+`layout.procedure.density_and_checks`. Keep required labels and frequent expert controls visible.
+Disclosure is for optional detail, not a menu-item limit or a way to hide inherent task complexity.
+
+On constrained devices or connections, protect the first task: essential text and controls must
+be available before optional media. Reserve media dimensions and choose a stable fallback from
+the actual loading or failure state. Exercise that task under the promised device and connection
+conditions, not only a warm-cache render. Asset delivery belongs to the `lapis` visual-assets
+reference; waiting and recovery are below.
 
 ## From the goal to the fields
 
@@ -69,6 +77,12 @@ in one input-shaped surface. A count belongs only where the product has a real l
   Name stages for tasks. If branching changes what remains, show the known stage and uncertainty,
   not an invented completion percentage. Keep entries on Back and warn before an earlier answer
   clears later ones. Preserve a short coherent form when splitting adds only navigation.
+
+When an answer reveals, removes, or reorders required fields, describe that transition in the
+flow: what appears, what remains, and how the next required field is found without an unexpected
+focus move. Preserve the active field and keep it and the next action reachable with the native
+keyboard open. Exercise reveal, correction, and Back on the intended device with its keyboard,
+not just a resized viewport. The navigation reference's **Across widths** owns competing fixed edges.
 
 ## Checking and messages
 
@@ -213,6 +227,13 @@ context, motive, safe data, and an outcome without teaching labels or a route; r
 separately from independent completion. Regression checks establish the defined contract,
 not usability; analytics shows only instrumented states, not motive or causality. A protocol
 is planned coverage until executed, never a participant finding or population rate.
+
+Before hiding or removing information that could change a consequential task or choice, test
+the predicted task with likely users, including whether they find the missing detail and
+understand its consequence. A layout render establishes hierarchy, not comprehension. If that
+validation is unavailable, keep the information visible and record the simplification as an
+unvalidated hypothesis in `claims.proposed`, not a proven improvement. Priority sources and
+secondary-tool triggers belong to `navigation.md`, **Structure before chrome**.
 
 What no check does:
 

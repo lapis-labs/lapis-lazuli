@@ -26,6 +26,9 @@ This file backs plan step 8. The plan holds the nine fields of `layout.procedure
 (`id`, `archetype`, `answers`), `layout.signature`, and `tokens.space` (`base_px`, `scale`). Measure,
 leading, and the type scale are in `type.md`; what each screen and section archetype is made
 of is in `archetypes.md`.
+For priority sources, secondary-tool triggers, and narrow-table comparison, use `lps-ux`'s
+navigation reference; its forms-and-recovery reference owns task/expertise density,
+constrained-device first-task protection, and user validation before consequential information hiding.
 
 ```yaml
 layout:

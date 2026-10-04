@@ -4,14 +4,14 @@
 
 Read the section the navigation decision needs, by heading; the rest are other decisions.
 
-- Structure before chrome: content structure, destinations, and the levels the product has
+- Structure before chrome: content structure, destinations, priority sources, and secondary-tool triggers
 - Labels: naming destinations and actions, including Korean labels
-- Choose the navigation model: global, local, and contextual navigation and the pattern for each
+- Choose the navigation model: global, local, contextual, and host-owned navigation
 - Navigation or not: link, button, or other control, from what activating it does
 - Where am I, and the way back: current place, breadcrumbs, history, return paths
 - Search: when to add it and how Korean input changes it
 - Long collections: paging, loading more, and filtering large lists
-- Across widths: what a width change keeps and what it may change
+- Across widths: what a width change keeps, including comparison in narrow tables
 - The kiln shop: the worked navigation example
 - Check: the behavior probes to run after changing navigation
 
@@ -39,6 +39,9 @@ menu over vague groups is still vague, and search does not replace grouping.
 2. **Name the tasks and the nouns.** Write each top task with its circumstance and outcome, then the
    nouns that persist across tasks. They are the object model the interface shows: not the database
    schema, not the team's org chart.
+   For each first-priority item, name the source of its rank: an observed task, supplied evidence,
+   or a service policy. Keep `layout.procedure.priority` entries as visible labels; record the
+   source alongside the decision in `claims.proposed`, marking an inferred need as a hypothesis.
 
    ```text
    Task: a visitor on a phone wants to reserve one piece before this firing sells out.
@@ -74,6 +77,12 @@ The strong path names objects and state, so each step predicts the next.
 In a redesign the existing structure is learned behavior. Keep routes, labels, and saved links unless
 the brief gives evidence or the user authorizes a change; write what must survive in
 `brief.constraints`, and redirect every route that moves.
+
+For a secondary tool, record the user need, trigger, and any supplied frequency evidence in
+`layout.procedure.relationships`. Surface it where that trigger occurs and keep a discoverable
+route outside that state. Low frequency alone is not a reason to remove safety, support, or
+access tools, nor to fill the default view with them. For consequential hiding decisions, use
+the user-validation requirement in `forms-and-recovery.md`, **Check**.
 
 ## Labels
 
@@ -128,6 +137,11 @@ navigation bar by default: a shop with one page and its details needs a way home
 | an ongoing feed | load more, or infinite scroll | restored position, an end state | footer content that can never be reached |
 
 For any pattern, decide the current-item mark, overflow, the compact form, and the keyboard model.
+
+For an embedded app, record the host contract in `brief.constraints`: who owns navigation,
+Back/close behavior, and identity surfaces, and which slots the product may brand. Preserve
+host-owned chrome instead of adding a competing shell or duplicate identity. Product navigation
+and branding stay within the allowed slots; a host's rules are not defaults for standalone apps.
 
 - **Tabs** switch peer views and keep the object's context. As a tab set (`role="tablist"`), arrow keys
   move between tabs and Tab leaves the set; as links to routes, each is a plain link and the current
@@ -252,6 +266,12 @@ region or become a select. Never add destinations because the window grew.
 - A bottom bar, a sticky commit button, a banner, the on-screen keyboard, and the safe area can all
   claim the bottom edge. Say in the plan which navigation must stay; the `lapis` layout step decides
   the stacking, and the focused control is never covered (`ux.focus-obscured`).
+
+For a narrow table, name the fields the task compares before moving columns. Keep those fields
+aligned across records; secondary cells may become labeled details within each row, or a
+discoverable full-record view. Do not move comparison fields into separate disclosures. Record
+the transformation in `layout.procedure.responsive`; the `lapis` table archetype owns the wider
+structure and contained-scroll option.
 
 ## The kiln shop
 

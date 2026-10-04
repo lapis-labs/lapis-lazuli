@@ -27,16 +27,16 @@ and the stub (`.lapis/stub.yaml`) that `behavior check` drives.
 1. Read the plan's `brief`, `flows`, `content`, and `layout`, and `PRODUCT.md` for the real rules:
    prices, renewal terms, what an account is needed for, what can be undone.
 2. List what a person comes to do (the goal), where they start, and how they know it is done.
-3. When the surface has more than one destination, or the task adds, renames, or moves one, settle
-   the structure before the flows: which destinations exist, what they are called, and how people
-   move among them and back. For grouping and labels, the navigation model at each width, current
-   location, Back and deep links, search with Korean input, and long collections, read
-   `references/navigation.md`.
+3. When a surface has multiple destinations, changes one, places secondary tools, runs inside a
+   host shell, or adapts a comparison table, read `references/navigation.md`. It covers priority sources,
+   tool triggers, host ownership, grouping and labels, navigation at each width, narrow tables,
+   current location, Back and deep links, search with Korean input, and long collections.
 4. When a flow collects input or can fail partway - a form, sign-up, booking, checkout, a slow or
    unanswered request - read `references/forms-and-recovery.md` for the fields, when they are checked,
    messages, retry and unknown outcomes, consent inside a form, Korean form conventions, and the stub's
    values.
-5. For consequential operating conditions, read `references/forms-and-recovery.md`.
+5. For operating constraints, task/expertise density, or consequential information hiding, read
+   `references/forms-and-recovery.md`.
 
 References open with a `## Sections` index; read the section a decision needs, found by its heading, not the whole file.
 

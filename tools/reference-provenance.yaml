@@ -1169,6 +1169,26 @@ references:
       the behavior probes and the by-hand column), and the pitfalls, matrix, and cross-reference sections:
       sketches, product names, implementation detail, and boilerplate.'
   external:
+  - kind: read for principles
+    name: GOV.UK - Start by learning user needs
+    url: https://www.gov.uk/service-manual/user-research/start-by-learning-user-needs
+    date_read: '2026-10-05'
+    used_for: Traceable sources for first-priority items; inferred needs remain hypotheses.
+  - kind: read for principles
+    name: Toss - Bad reference uses
+    url: https://toss.tech/article/bad-reference-uses
+    date_read: '2026-10-05'
+    used_for: Secondary tools at their evidenced trigger, with a discoverable route; no company layout copied.
+  - kind: read for principles
+    name: Apps in Toss - Consumer UX guide
+    url: https://developers-apps-in-toss.toss.im/design/consumer-ux-guide
+    date_read: '2026-10-05'
+    used_for: Explicit host/product ownership of shell and identity slots; no host-specific chrome made a default.
+  - kind: read for principles
+    name: SAP Fiori v1.148 - Responsiveness and adaptiveness
+    url: https://www.sap.com/design-system/fiori-design-web/v1-148/discover/sap-design-system/vision-and-mission/responsiveness-adaptiveness
+    date_read: '2026-10-05'
+    used_for: Narrow-table secondary cells as labeled row details while comparison fields stay aligned.
   - kind: method
     name: Information architecture as organization, labeling, navigation, and search systems, and the
       users-content-context triad (Rosenfeld, Morville, and Arango, Information Architecture for the Web
@@ -1220,8 +1240,9 @@ references:
   - kind: practice
     name: Korean web and app navigation label habits (a 전체 tab or 전체 메뉴 button, 마이페이지 as a catch-all)
     used_for: Korean labels. Added while drafting.
-  skill_body_pointer: For grouping and labels, the navigation model at each width, current location, Back and
-    deep links, search with Korean input, and long collections, read `references/navigation.md`.
+  skill_body_pointer: For priority sources, secondary-tool triggers, host ownership, grouping and labels,
+    navigation at each width, narrow tables, current location, Back and deep links, search with Korean
+    input, and long collections, read `references/navigation.md`.
   left_for_later:
   - 'lps-ux: filter architecture and states, saved views, selection scope and bulk-action states, table row
     interaction (layout.md hands these to lps-ux; navigation.md covers only filter and page state in the URL
@@ -1895,6 +1916,31 @@ references:
       wrong-and-right table, the local feedback specimen and its exercise, and boilerplate: placement, mechanism, and
       overlay choices left for the later lps-ux interaction reference.'
   external:
+  - kind: read for principles
+    name: GOV.UK - Start by learning user needs
+    url: https://www.gov.uk/service-manual/user-research/start-by-learning-user-needs
+    date_read: '2026-10-05'
+    used_for: Likely-user task validation before consequential information hiding; renders are not comprehension evidence.
+  - kind: read for principles
+    name: Toss - Signup process
+    url: https://toss.tech/article/toss-signup-process
+    date_read: '2026-10-05'
+    used_for: Dynamic required-field transitions exercised with the real keyboard open, without prescribing reversed fields or one field per step.
+  - kind: read for principles
+    name: GitHub Primer - Responsive
+    url: https://primer.style/product/getting-started/foundations/responsive
+    date_read: '2026-10-05'
+    used_for: Protecting essential first-task text and controls on constrained devices and connections.
+  - kind: read for principles
+    name: Daangn SEED V3 - Loading
+    url: https://v3.seed-design.io/patterns/loading
+    date_read: '2026-10-05'
+    used_for: Stable reserved media space and fallback tied to the actual loading state.
+  - kind: read for principles
+    name: SAP Fiori v1.148 - Responsiveness and adaptiveness
+    url: https://www.sap.com/design-system/fiori-design-web/v1-148/discover/sap-design-system/vision-and-mission/responsiveness-adaptiveness
+    date_read: '2026-10-05'
+    used_for: Task and repeated-use context rather than screen width alone when choosing guidance and density.
   - kind: standard
     name: WCAG 2.2 SC 3.3.1 Error Identification, 3.3.2 Labels or Instructions, 3.3.3 Error Suggestion, 3.3.4 Error
       Prevention (Legal, Financial, Data), 3.3.7 Redundant Entry, 3.3.8 Accessible Authentication (Minimum), 1.3.5
@@ -1929,8 +1975,8 @@ references:
     name: Korean identity-verification providers returning a confirmed name and birth date through their own window
       (no product named in the text); text-message codes that confirm access to a phone number, not identity
     used_for: The separate identity-verification and phone-number-verification bullets. Added while drafting.
-  skill_body_pointer: 'When a flow collects input or can fail partway - a form, sign-up, booking, checkout, a slow or
-    unanswered request - read `references/forms-and-recovery.md` (SKILL.md, At the start, step 4).'
+  skill_body_pointer: 'For input and recovery, operating constraints, task/expertise density, or consequential
+    information hiding, read `references/forms-and-recovery.md` (SKILL.md, At the start, steps 4-5).'
   left_for_later:
   - 'lps-ux with adoption-and-account-lifecycle: the onboarding and learning aids of forms-onboarding-and-checkout
     (wizard, checklist, tour, sample data, sandbox, novice-to-expert movement, retirement rules).'
