@@ -1,5 +1,18 @@
 # Motion
 
+## Sections
+
+Read the section a motion decision needs, by heading; the rest are other decisions.
+
+- What motion is for: the job each moving element has, and what to remove when it has none
+- Timing and easing: durations, easing, and distance by purpose
+- Interruption and choreography: stable states, legal transitions, interruption, sequencing
+- Scroll, navigation, and transitions: scroll and route enhancement that still works with animation off
+- Reduced motion: what `respect` covers and the branch each effect needs
+- Choosing a layer and delivering authored motion: native or library animation, and delivering authored moments
+- What the checks read: which motion rules read what, and what they cannot see
+- Handoff to lps-system: the purposes, durations, and curve roles to pass on
+
 This file backs the plan's motion decisions: the motion dial in `direction.dials`, and `tokens.motion`,
 where `respect` is the only accepted value for `reduced_motion` and `principles` holds one string per decision. `lps-system`
 turns the principles into duration, easing, and distance tokens; this file decides what they say, what

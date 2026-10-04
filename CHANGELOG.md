@@ -99,6 +99,9 @@ after text.
   warns.
 - `release/GATE.md`: `release.license-unconfirmed` also lists a license recorded `restricted`, and no longer lists an
   `open-source-other` or `noonnu` font whose research is `verified` from a document.
+- `release/GATE.md`, Output: the printed result of `release check` lists each finding after the two count lines
+  (`[BLOCK]` defects, `[NOT RUN]` missing evidence, `[CONFIRM]` findings that do not block), and `--json` prints
+  the whole report. The report file and the exit codes do not change.
 
 ### Added
 
@@ -200,6 +203,18 @@ after text.
 
 ### Changed
 
+- The checks print a summary and keep the full report in its file, so the agent that runs them re-reads less on every
+  later turn. `plan check`, `slop lint`, and `release check` print the verdict line, every blocking finding with its
+  rule id, where, fix, and text cut at 200 characters, the open and waived findings by rule id, and one line per cause
+  and reason for the findings that were not judged; `--json` prints the report as before (`plan check` also keeps
+  `--format json`), `plan check -o PATH` writes it, and `slop lint -o` already did. `behavior check` adds the count per
+  coverage status and a line for each partial or skipped probe with its reason. `lazuli local fonts` lists 25 families
+  and `lazuli search` 8 candidates by default, each with a line saying how many more there are (`--limit`; `--json`
+  of `local fonts` lists every family). README's first screen shows the new `plan check` output in full.
+- Every skill reference of 120 lines or more opens with a `## Sections` index, one line per section with the decision
+  it serves, and the skill bodies tell the agent to read the section it needs by heading; a test keeps each index in
+  step with its file. The `lapis` and `ultramarine` bodies say to edit the part that changes, not rewrite a file or the
+  plan, and to rerun the narrowest check while fixing and the full set once at the end.
 - Open-licensed fonts may be found online, fetched from the family's official source, bundled with their license
   text, and locked; an installed font may ship once its license is verified and its real source locked. The rule that
   only files the user supplies enter a project is gone from `lzl-fonts`, `lapis` (step 7 and `references/type.md`), and

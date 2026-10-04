@@ -1,5 +1,20 @@
 # Data visualization
 
+## Sections
+
+Read the section a chart or data-view decision needs, by heading; the rest are other decisions.
+
+- Start from the question: what the reader asks, which settles the form before any polish
+- Choose the form: which chart or table answers each question, and what to settle first
+- Honest scales: baselines, axes, and ranges that keep a comparison valid
+- Labels, annotation, and uncertainty: titles that state the question, annotation, uncertainty
+- Dashboards and analysis views: one job per region (monitor, diagnose, compare, act)
+- Data color: scale and color rules a chart adds to `color.md`
+- Access to a chart's values: the nonvisual task, table or text equivalent
+- Keyboard, touch, and updates: interaction that earns its place, and live updates
+- Building it: the access contract first, then the renderer
+- What the checks cover: what the checks read about a data region and what they cannot
+
 This file backs the `data-visualization` frame (`brief.product_frame`) and any chart, map, or data table inside another frame. Region order is in `archetypes.md`, a chart's place, span, and rank in `layout.md`, and the choice of a data scale in `color.md`; this file decides what is inside a data region. The examples continue the pottery page's firing log, with synthetic numbers.
 
 | Decision | Where it lands in the plan |

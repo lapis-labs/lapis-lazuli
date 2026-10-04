@@ -117,6 +117,7 @@ version control and tell the user.
 - Several findings on one package are one decision, not several fixes.
 - For numerical bounds, recognition vocabulary, and what a missed match cannot establish in motion,
   data regions, and forms, read `references/check-bounds.md`.
+- References open with a `## Sections` index; read the section a finding needs, found by its heading, not the whole file.
 
 ## Run the critic
 
@@ -135,7 +136,7 @@ The critic judges in a context that did not make the design, reading only the in
 ## Hand fixes back
 
 1. Group the fixes by the plan field they change. The maker changes the plan first (the `lapis`
-   skill in repair mode), then the code.
+   skill in repair mode), then the code, editing the part that changes rather than rewriting a file or the plan.
 2. Each fix spends a world material, the signature, or a plan decision. A different named default
    is not a fix.
 3. A repair loop is three rounds at most per task unless the user set another number; a round is

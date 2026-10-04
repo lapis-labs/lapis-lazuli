@@ -1,5 +1,21 @@
 # Color decisions
 
+## Sections
+
+Read the section a color decision needs, by heading; the rest are other decisions.
+
+- Answer the six axes: what counts as an answer for medium, task structure, content colors, identity, environment, tone
+- Content colors first: the interface's stance toward the colors the content brings
+- Roles and how many colors each needs: the role set and how many members each takes
+- Relations and palettes from world materials: building two palettes and choosing the relations to test
+- Author in OKLCH: writing and editing values by lightness, chroma, and hue
+- Themes: which themes ship, why dark is not inversion, high contrast
+- Interaction and status: keeping action, link, focus, selection, and status apart; the focus indicator
+- Data scales: choosing a sequential, diverging, or categorical scale from what the data means
+- Contrast and color vision: the contrast minimums to measure and the color-vision checks
+- Physical color standards and print: when the user has a paint or ink code or the medium is print
+- Handoff to lps-system: what to pass on for ramps, aliases, and per-theme assignments
+
 The procedure behind plan step 6. The result is `tokens.color`; turning it into ramps, aliases, and files is the job of `lps-system`.
 
 ```yaml

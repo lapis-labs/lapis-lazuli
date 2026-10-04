@@ -86,6 +86,7 @@ reference counts when you have looked at it: search for candidates beyond web de
 `.lapis/references/<task>.md`. Read `references/exploration.md` for the steps and the record. If the user's
 words forbid network use or lookups during the work and nobody can be asked, follow them: decline the step
 with their quoted line instead (section 5 there).
+The reference opens with a `## Sections` index; read the step you are on, found by its heading, not the whole file.
 References inform relations and decisions; never copy assets, text, or a layout wholesale.
 
 ## Reference notes

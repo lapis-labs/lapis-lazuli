@@ -1,5 +1,27 @@
 # Layout
 
+## Sections
+
+Read the step or section the plan field needs, by heading; the rest are other fields.
+
+- The nine steps: the order of the procedure; read only the step you are writing
+- 1. Content inventory - `content_inventory`: what is on the screen and how large each item can get
+- 2. Priority - `priority`: which item decides whether the screen did its one job
+- 3. Screen mode - `screen_mode`: whether the reader decides, works, reads, or takes in
+- 4. Reading order - `reading_order`: the sequence for a reader, a screen reader, and the keyboard
+- 5. Relationships - `relationships`: how items relate, chosen before the container
+- 6. Archetype - `archetype`: the task structure that carries the first priority
+- 7. Grid - `grid`: the lines, columns, and widths each kind of content may run
+- 8. Responsive - `responsive`: what each region does as the width changes
+- 9. Density and checks - `density_and_checks`: how much each view holds and what shows the layout holds
+- Sections and the signature: `layout.sections` entries, their answers, and the signature
+- Spacing - `tokens.space`: the base unit, the scale, spacing that states relationships
+- Relations the composition holds: hierarchy written as relations a render can show
+- Grids, lines, and margins: grid kinds, margins and hit areas, the job of each line
+- Responsive behavior: per-region transformations, viewport or container queries, the 320 px requirements, CJK
+- Density and data-heavy screens: collections, tables, sticky context, scanning and comparison
+- Check after rendering: reading the extract against the plan
+
 This file backs plan step 8. The plan holds the nine fields of `layout.procedure`, `layout.sections`
 (`id`, `archetype`, `answers`), `layout.signature`, and `tokens.space` (`base_px`, `scale`). Measure,
 leading, and the type scale are in `type.md`; what each screen and section archetype is made

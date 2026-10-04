@@ -1,5 +1,14 @@
 # The brief record, and what it seeds
 
+## Sections
+
+Read the section for the part of the record being written, by heading; the rest are other parts.
+
+- Shape: the headings and items of the brief record
+- Rounds: one message of at most six questions and its answers
+- The plan seed: the plan file written from what the record settled
+- The DESIGN.md seed: when a `DESIGN.md` may be proposed and what it holds
+
 The record is `.lapis/answers/<task>.md`: the file the exit gate reads a relayed person's replies from, so a
 person's answers and a run's own sit together. `lapis-design next` counts it as a brief record when it has a
 `## Found` section and an `## Answers` section with text, and when every `[assumed]` item gives its `Basis:`. It

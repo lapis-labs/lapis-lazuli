@@ -1,5 +1,20 @@
 # Structure and navigation
 
+## Sections
+
+Read the section the navigation decision needs, by heading; the rest are other decisions.
+
+- Structure before chrome: content structure, destinations, and the levels the product has
+- Labels: naming destinations and actions, including Korean labels
+- Choose the navigation model: global, local, and contextual navigation and the pattern for each
+- Navigation or not: link, button, or other control, from what activating it does
+- Where am I, and the way back: current place, breadcrumbs, history, return paths
+- Search: when to add it and how Korean input changes it
+- Long collections: paging, loading more, and filtering large lists
+- Across widths: what a width change keeps and what it may change
+- The kiln shop: the worked navigation example
+- Check: the behavior probes to run after changing navigation
+
 This file backs the skill's start (where a person starts and how they know it is done), `flows`
 (`start` and `done` are routes), the **Returning** bullet under the states, and **Interaction**. The
 plan has no navigation field, so the decisions land in existing ones: destinations in

@@ -1,5 +1,15 @@
 # Check bounds
 
+## Sections
+
+Read the section for the finding being interpreted, by heading; the rest are other findings.
+
+- Motion at rest and under the reduced preference: what the motion checks see at rest and under reduced motion
+- Motion inventory and scrolling: what the motion inventory, animation-package, and scroll probes can and cannot reach
+- Data-region extraction and contrast: the contrast minimums, compact access and controls, long rendered lists
+- Status results and form recovery: announced results, timed work, duplicate commits, and urgency or scarcity claims
+- Related wording boundaries: how urgency and quoted-proof wording is recognized, and where recognition stops
+
 Read this when interpreting a motion, data-region, or form finding. These are observation boundaries,
 not values to design toward. A missing match can mean that the surface was outside the probe's reach.
 Use the rule's evidence and coverage before deciding whether to repair. Names and attributes describe

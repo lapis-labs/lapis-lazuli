@@ -79,6 +79,8 @@ For the roles a string can have, error and empty-state wording by cause, confirm
 copy, register notes for Korean, Japanese, and Chinese, messages with variables, and what an edit must
 preserve, read `references/interface-copy.md`.
 
+The reference opens with a `## Sections` index; read the section for the string being written, found by its heading, not the whole file.
+
 - **Labels and buttons.** Short, parallel, and the same word as the destination or result. The
   visible label is the start of the accessible name.
 - **Errors.** Name what happened and what to do next, near the field or action, without blame,

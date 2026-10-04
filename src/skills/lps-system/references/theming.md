@@ -1,5 +1,17 @@
 # Theming
 
+## Sections
+
+Read the section the theme decision needs, by heading; the rest are other decisions.
+
+- A theme reassigns roles: what a theme is and why it is not a filter over finished screens
+- Selecting a theme: the written precedence of forced mode, stored choice, system preference, and default
+- What a theme covers besides tokens: native controls, autofill, embedded frames, code, charts, maps, and assets per theme
+- High contrast, forced colors, and other preferences: separate assignments for contrast and forced-color modes
+- Brands and supported combinations: varying identity seams across brands and themes
+- Themes in files: how a theme is written in the plan and in token files
+- Check a theme: states and components to exercise in each supported theme
+
 This file backs `tokens.color.themes`, the `theme` of each color role entry, and the skill's rule
 that semantic color tokens map to ramp steps per theme, with dark as its own mapping. The `lapis`
 skill decides each theme's role values and the order in which a dark or high-contrast theme is

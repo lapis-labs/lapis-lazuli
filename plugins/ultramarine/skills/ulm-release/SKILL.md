@@ -63,6 +63,8 @@ says how.
 
 For product-specific manual acceptance and operational handoff beyond built-in checks, read `references/production-evidence.md`.
 
+References open with a `## Sections` index; read the section a step needs, found by its heading, not the whole file.
+
 ## What blocks
 
 - Any blocking finding from the plan checks, lint, or the critic.

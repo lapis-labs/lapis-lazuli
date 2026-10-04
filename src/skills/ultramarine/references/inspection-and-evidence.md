@@ -1,5 +1,20 @@
 # Inspection and evidence
 
+## Sections
+
+Read the section for what you have in hand, by heading; the rest are other cases.
+
+- Inspect, do not change: what an inspection request allows
+- What each kind of evidence supports: the claim a screenshot, source, live site, or report can carry
+- Route by what you have: the steps to run for a build, a screenshot, source only, or a page that is not ours
+- Manual accessibility scope: choosing a sample and what a manual pass covers
+- Heuristic inspection: inspecting a consequential task and its failure path
+- Write down each finding: the smallest record someone else could repeat
+- When the critic did not run: how to report a judgment made without the critic
+- Conflicts, failures, and when to stop: what to do when surfaces disagree or a check fails
+- What not to say: claims the evidence does not support
+- Rules to read: source rules that find things themselves
+
 This file backs a review of something that already exists: a build of ours, a screenshot, a page
 that is not ours, a native screen, or a problem the user describes. It says what you may touch, what
 each kind of evidence supports, which route fits what you have, and how to report what was not

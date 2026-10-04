@@ -56,6 +56,7 @@ name in lowercase letters and hyphens, which the exit gate uses too.
 6. **Write the record** and seed the plan (`references/record.md`), each round's answers under its own heading and
    at most six items under each; `next` counts them. With no `DESIGN.md` and a lasting product surface, propose a
    seed for it there instead of inventing visual decisions.
+   The record reference opens with a `## Sections` index; read the part being written, found by its heading.
 7. Run `lapis-design next --task <task>` and do the step it names.
 
 ## What a question may not be

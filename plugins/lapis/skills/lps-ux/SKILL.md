@@ -38,6 +38,8 @@ and the stub (`.lapis/stub.yaml`) that `behavior check` drives.
    values.
 5. For consequential operating conditions, read `references/forms-and-recovery.md`.
 
+References open with a `## Sections` index; read the section a decision needs, found by its heading, not the whole file.
+
 ## Flows - `flows`
 
 Write one entry per flow the surface starts or finishes: the primary flow, and every flow that

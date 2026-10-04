@@ -1,5 +1,21 @@
 # Visual regression
 
+## Sections
+
+Read the section for the step you are on, by heading; the rest are other steps.
+
+- The baseline: which earlier build to compare with and how to capture it
+- Write down what may change first: the intended differences, written before opening a screenshot
+- Hold the conditions: data, dates, fonts, and state held fixed so a difference is real
+- Pair the captures: pairing viewports by width, theme, reduced motion, and browser chrome
+- Compare in this order: from state and structure down to pixels
+- Noise or change: telling rendering noise from a real change
+- Mask only what cannot be held still: when a masked region is acceptable
+- Coverage: the pairs the gate requires and the ones to say were not compared
+- Korean text: checking rendered fonts before reading any difference in Hangul
+- Classify and report: the class of each difference and what happens to it
+- Worked example: the pottery page after a repair: one difference followed through to the report
+
 This file backs the render step of the full set and the part of the report that says what changed
 and what was not checked. Of the render, the gate (`../shared/release/GATE.md`) asks only that every
 width and theme is in the extract; lint judges that render against the rules and the plan, and the

@@ -1,5 +1,22 @@
 # Recurring defaults on generated pages
 
+## Sections
+
+Read the section whose default the plan or draft meets, by heading; the rest are other decisions.
+
+- Opening: whether the split hero, product mock, and floating panels stay or the opening comes from the content
+- Section order and the close: the feature, steps, plans, questions, banner, footer sequence
+- Cards and modules: cards everywhere, nested cards, equal icon tiles, bento filler
+- Plans: the three-card price row with a lifted middle plan
+- Palette: the recurring palettes (sage and cream, indigo, near-black with acid green, teal)
+- Type and headline treatment: one neutral sans, tracked capital labels, one accented word in a title
+- Headlines and wording: two-sentence, negation, and less-more headline moves
+- What the page says about itself: demo and fictional-data notices, how often and where
+- Icons and imagery: thin icon sets, cloud and shield proof, pictures drawn from CSS shapes
+- Data and fixtures: invented files, equal metric cards, a chart with no question
+- Motion: idle loops, a reveal on every section, hover zoom
+- Per-genre packages: the defaults that arrive together for a kind of page, and the counter-package that worked
+
 What generated pages share before the subject has been read, why each shared choice weakens a page, and what to
 do instead. Read it with the default cards (`../shared/slop/cards.yaml`) and the rules they name
 (`../shared/slop/rules.yaml`). It describes pages from a corpus of about 120 generated landing pages, booking forms,

@@ -1,5 +1,21 @@
 # Tokens
 
+## Sections
+
+Read the section for the token layer being written, by heading; the rest are other layers.
+
+- From authorized assets to roles: starting a provisional direction from one authoritative asset
+- The token graph: layers of tokens and which may point at which
+- Names: naming by purpose and state, never by appearance or position
+- Color: from roles to ramps and aliases: ramps, semantic aliases, and per-theme mappings from `tokens.color.roles`
+- Masters and renditions: the OKLCH master and the values derived from it for each target
+- Type tokens: one composite token per role, stacks, sizes, and fallbacks
+- Space, radius, surfaces, and icons: space primitives and semantic tokens, shape, surfaces, icon sizes
+- Motion tokens: durations and easings by purpose
+- The interchange file: exporting in the design-tokens interchange format
+- DESIGN.md entries: what `DESIGN.md` records about tokens, roles, and reasons
+- Check before handing over: the pairs, states, and themes to measure
+
 This file backs the skill's token layers, color, type, space, shape and surfaces, motion, and
 `DESIGN.md` sections. It turns the plan's `tokens` fields (`color`, `type`, `space`, `shape`,
 `surface`, `icons`, `motion`) into a token graph, token files, and `DESIGN.md` entries, and reads

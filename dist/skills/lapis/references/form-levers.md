@@ -1,5 +1,25 @@
 # Form levers
 
+## Sections
+
+Read the section for the lever or step at hand, by heading; the rest are other levers.
+
+- Write each lever as one sentence: the lever, what visibly changes, the world material it comes from
+- Start from a tension, write a concept: the live tension and the relation that answers it
+- Compare an open direction: specimens that tune one cause or compare two governing relations
+- Carry the relation into production: what must stay recognizable when a study becomes the page
+- Allocate the levers: which sections carry a lever and how far it spreads
+- Scale and space: the largest element and what it is set against
+- Density: where the page is dense and where open, by task
+- Rhythm and order: what returns and what changes across sections
+- Tension and asymmetry: the axis, the anchor, edges, crops, overlaps
+- Material and texture: each surface treatment, its job, where it applies
+- Type as form: whether form lives in the glyph, word, line, or sequence
+- Motif: the recurring element, what stays fixed and what may change
+- Response as a lever: what an action changes and how the visitor sees it (experience surfaces)
+- Open meaning, fixed consequences: what no lever may touch
+- What the checks read: which checks read levers and what they cannot judge
+
 This file backs plan step 4. The plan holds `direction.concept`, `direction.levers`, and `layout.signature`; the sections below also reach the fields where a lever lands. Each section names a decision, the plan field that records it, and what checks it, or says that nothing does. Examples come from invented subjects: a ferry timetable, a seed library, and a lighthouse museum.
 
 For a named style or regional direction, read `style-branches.md` to separate the transferable

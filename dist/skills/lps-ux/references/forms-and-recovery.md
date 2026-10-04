@@ -1,5 +1,18 @@
 # Forms and recovery
 
+## Sections
+
+Read the section the form or recovery decision needs, by heading; the rest are other decisions.
+
+- Operating conditions: recording a situation that changes the form in `brief.constraints`
+- From the goal to the fields: which fields to ask, in what order and grouping
+- Checking and messages: when to validate and how to word what the person sees
+- Waiting, retrying, and not knowing: pending states, duplicate submits, offline and unknown outcomes
+- Review and consent: the review step before a binding commit and how the commit is named
+- Korean forms: name, phone, address, and similar field conventions for a Korean service
+- The kiln shop: the worked reservation example
+- Check: the behavior probes to run and the findings to read
+
 This file backs the skill's **Flows**, **States**, **Commitments**, **Choices without pressure**, the
 form bullet under **Interaction**, and the stub's `values`. The plan has no form field, so the
 decisions land in existing ones: what a flow may demand in `flows[].requires`, open questions in

@@ -1,5 +1,27 @@
 # Interface copy
 
+## Sections
+
+Read the section for the string being written, by heading; the rest are other strings.
+
+- One owner for every string: which string answers which reader question, and who owns it
+- Labels, buttons, and fields: naming controls, fields, and headings
+- Errors: what an error names, and what it keeps
+- Empty, loading, success, and other states: the cause behind each state and its text
+- Confirmations and destructive actions: naming the object, the consequence, and each button
+- Consent, price, and leaving: price, renewal, consent, and cancellation wording at the decision
+- Claims, proof, and real content: the strength a claim may state and the fact behind it
+- Preserve the proposition when editing: routing a complaint before rewriting copy
+- Register and language: the one register value and notes; then the section for the language you write in
+- Korean: register levels (haeyo and others), honorific and wording conventions
+- Japanese: politeness level (desu-masu or da-dearu) and script mix
+- Chinese: script and region first, vocabulary by market, punctuation
+- One state in four languages: one state written in English, Korean, Japanese, and Chinese
+- Messages with variables, numbers, and dates: whole messages per case, plurals, dates
+- One voice, one term per thing: voice and terminology across the product
+- The kiln shop: the worked copy example
+- Check: the copy rules `plan check` and lint apply
+
 This file backs the skill's **Interface text** and the plan's `content`: `content.voice` (register and
 notes) and the `content.key_copy` slots `cta`, `nav`, `empty-state`, and `error`. Where a message
 appears, how long it stays, what is announced, and where focus goes belong to the `lps-ux` skill; this

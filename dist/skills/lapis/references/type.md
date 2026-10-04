@@ -1,5 +1,22 @@
 # Type
 
+## Sections
+
+Read the section a type decision needs, by heading; the rest are other decisions.
+
+- Exploring and shipping: which faces are candidates, which may be fetched and bundled, what to do offline
+- Roles per script: which roles the surface needs and what each is chosen for and tested with
+- Choosing a face for each role: the decision table with the plan field and the check for each choice
+- Reading faces and voice faces: choosing body, ui, and caption faces apart from display faces
+- Pairing across roles and scripts: one family or a pair, and the shape of the system
+- Matching Latin with Hangul, kana, and Han: pairing Latin with a CJK face by rendering mixed lines
+- Setting Korean, Japanese, and Chinese: language tags, stacks, line breaking, punctuation, tracking
+- Paragraphs and reading: measure, leading, heading attachment, lists, emphasis
+- Scale and responsive type: base size, ratio, fluid sizes
+- Numerals, data, and code: figure styles, tabular numbers, monospace use
+- Display and expressive type: when display type is earned and how far it goes
+- Delivery that changes the choice: payload, subsetting, fallback stacks, loading
+
 This file backs plan step 7. The plan holds `tokens.type.roles` (role, family, weights, scripts,
 source), `tokens.type.scale` (`base_px`, `ratio`), `tokens.type.lock`, and the comparison behind each
 choice in `explorations`; measure, leading, tracking, numerals, and font stacks become implementation

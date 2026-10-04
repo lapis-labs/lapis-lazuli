@@ -1,5 +1,16 @@
 # Exploring references for a design run
 
+## Sections
+
+Read the step you are on, by heading; the rest are later steps.
+
+- 1. Find candidates: searches that name the subject's own world, and where to look
+- 2. Capture: capturing each reference with `lazuli ref capture`, one at a time, at a human pace
+- 3. Look: opening each capture and reading its order, scale, density, HTML, and CSS
+- 4. Write the record: the shape of `.lapis/references/<task>.md`
+- 5. No network, or no lookups: the two honest records for a step that cannot run
+- 6. Carry it into the plan: citing the record and naming the source of each candidate
+
 The `references` step of `lapis-design next` comes after the brief and before the plan of a create run. A
 run that picks its own references from memory, or reads about them, brings back a list of encyclopedia
 pages and a page that looks like every other page. A reference is evidence only when you have looked at

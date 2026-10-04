@@ -112,6 +112,9 @@ decision has no comparison, or whose type candidates are all generic families, i
 Work in this order; each step fills the named plan fields. The schema is
 `shared/plan/schema.yaml`.
 
+Each reference opens with a `## Sections` index, one line per section with the decision it serves. Read the index, then only the
+sections the step needs, found by their headings; do not read a whole reference file.
+
 ### 1. Brief and claims - `brief`, `claims`
 
 `product_frame` is the surface's task, not the company's category. `one_job` is the single job this
@@ -341,6 +344,8 @@ crosses platforms, `references/platforms.md`; for email or a host-controlled sur
 `references/email.md`; for an authorized 3D asset, `references/3d.md`.
 
 - Follow the plan. When implementation forces a change, change the YAML first and tell the user.
+- Edit the part that changes, one block of a file or one field of the plan; do not rewrite a whole file or the plan, which
+  would also overwrite what the plan records as approved, kept, or waived.
 - Tokens become variables; no raw values in components.
 - Build every state a component has: default, hover, focus, active, disabled, loading, empty, error.
 - Record each image, icon set, or generated asset in `.lapis/assets.ledger.json`
@@ -353,6 +358,8 @@ crosses platforms, `references/platforms.md`; for email or a host-controlled sur
 Checks during work stay small; the full set runs once at the release gate.
 When repeating a repair, follow the bounds and final full run in `ultramarine`'s
 `repair-loop.md` reference; do not turn a missing check into another edit.
+While fixing, rerun the narrowest check that observes the change (one width, one probe, one lint layer or rule) and run the
+full set once, after the last change.
 
 
 1. `lapis-design slop lint --plan .lapis/plans/<task>.yaml --source <source dir> -o .lapis/lint/<task>.json`.

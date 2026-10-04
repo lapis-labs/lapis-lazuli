@@ -1,5 +1,17 @@
 # Archetypes
 
+## Sections
+
+Read the section the layout step needs, by heading; each archetype and product frame is its own block, found by name.
+
+- Choose the screen archetype: choosing the screen's task structure from the one job and the ranked inventory
+- Screen archetypes: one block each for landing, pricing, dashboard, list-detail, table, form, settings, feed, editor, checkout, auth, onboarding, search, entity-detail, empty-error, docs
+- Combine at a task seam: when one screen links to another archetype instead of merging
+- Inside the archetype: the relation inside each region of the chosen archetype
+- Requirements and locales at every width: the width and CJK rules the archetypes inherit
+- Section archetypes: section kinds, ordered by the reader's questions, the opening, proof after the claim, rhythm
+- Product frames: what each `brief.product_frame` adds, one block per frame
+
 This file backs plan step 8 at its archetype step. The plan holds `layout.procedure.archetype` (one id
 for the screen), `layout.sections[].archetype` (one id per section), and each section's `answers`; the
 last part lists what each `brief.product_frame` adds. The other eight steps, grids, spacing, hierarchy

@@ -47,6 +47,8 @@ for a supplied design document, tool export, or generated specification, `refere
 For names, the token graph, turning each `tokens` field into ramps, aliases, and token files, the
 interchange format, `DESIGN.md` entries, and what the checks read, read `references/tokens.md`.
 
+References open with a `## Sections` index; read the section for the token layer at hand, found by its heading, not the whole file.
+
 ## Color
 
 Start from `tokens.color` in the plan: the OKLCH value of each role and the rules behind them
