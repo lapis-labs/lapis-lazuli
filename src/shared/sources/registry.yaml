@@ -675,10 +675,22 @@ sources:
     name: Apps in Toss developer center
     url: https://developers-apps-in-toss.toss.im/
     type: [search]
-    good_for: policy and component guidance for Toss mini-apps, with llms.txt and per-page Markdown
+    good_for: policy and component guidance for Toss mini-apps, including the Toss Design System (TDS) components and the consumer UX guide, with llms.txt and per-page Markdown
     access: read
     terms_url: https://developers-apps-in-toss.toss.im/
-    checked_at: "2026-09-26"
+    checked_at: "2026-10-05"
+    note: robots.txt allows all paths and says AI input and search are welcome; a source to study for how steps and flows are staged on a phone, not to copy - the TDS Mobile UI kit has its own license page and no component, mark, or look is taken
+
+  - id: karrot-seed
+    name: SEED Design System (Karrot)
+    url: https://seed-design.io/
+    type: [search]
+    good_for: how a large Korean consumer app stages flows and moves between steps, with component and principle pages
+    access: read
+    terms_url: https://github.com/daangn/seed-design
+    license: Apache-2.0
+    checked_at: "2026-10-05"
+    note: robots.txt allows all paths and the repository is Apache-2.0; the Karrot name and marks are not part of that license - a source to study, not to copy
 
   - id: shadcn-ui
     name: shadcn/ui
