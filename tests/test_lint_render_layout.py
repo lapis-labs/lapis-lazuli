@@ -576,6 +576,106 @@ def test_a_split_opening_hits_at_create_gate_as_a_default():
     assert (rule["class"], rule["severity"]["create"]) == ("default", "gate")
 
 
+# ---------------------------------------------------------------- opening-empty-area
+
+def left_stack(x=130, heading_w=620, button_x=None, extra=(), runs=(), header=False, width=1440, heading_lines=1):
+    """The first screen of a page with only a short stack: a heading, one line of text, and a button, all at `x`
+    unless `button_x` moves the button; `extra` boxes and `runs` come on top. `header` adds a logo link above the
+    stack and a navigation bar."""
+    boxes = [box(1, "section", 0, 0, width, 900), box(2, "heading", x, 200, heading_w, 70, parent=1),
+             box(3, "text", x, 290, 500, 24, parent=1), box(4, "button", x if button_x is None else button_x, 340, 180, 48, parent=1)]
+    texts = [run(1, 2, "Fire once a month", "display", 56, lines=heading_lines),
+             run(2, 3, "Wheel-thrown bowls, fired once a month."), run(3, 4, "See the bowls", "ui", 14)]
+    if header:
+        boxes += [box(5, "link", 130, 20, 120, 30, parent=1), box(6, "nav", 700, 20, 600, 30, parent=1),
+                  box(7, "link", 700, 20, 80, 30, parent=6)]
+        texts += [run(4, 5, "Kiln", "ui", 16), run(5, 7, "Bowls", "nav", 14)]
+    return extract(viewport(width, [*boxes, *extra], [*texts, *runs]))
+
+
+def photo(x=780, y=150, w=560, h=500, **media):
+    return box(10, "media", x, y, w, h, parent=1, media={"kind": "img", "loaded": True, **media})
+
+
+def table_rows(first_y, count):
+    """A table: `count` rows of four cells across the content width, 50 px apart from `first_y`."""
+    boxes, texts, n = [], [], 20
+    for row in range(count):
+        for col, cell in enumerate(("Piece", "Glaze", "Fired", "Price")):
+            boxes.append(box(n, "text", 130 + col * 300, first_y + row * 50, 250, 24, parent=1))
+            texts.append(run(n, n, f"{cell} {row}"))
+            n += 1
+    return boxes, texts
+
+
+def empty_opening(page, **threshold):
+    return lint("layout.unearned-empty-opening", extract=page, threshold=threshold)
+
+
+def test_a_short_left_stack_beside_nothing_is_an_unearned_empty_opening():
+    [hit] = empty_opening(left_stack()).hits
+    assert hit.observed == ('the first screen holds the heading "Fire once a month" in a left column 33% of the page '
+                            'wide, and 100% of the area beside it stays empty over 100% of the viewport height while '
+                            'content fills 4% of the viewport (at 1440 px)')
+    assert hit.location == {"viewport": 1440, "box": bid(2)}
+
+
+def test_a_heading_in_a_wide_box_is_as_wide_as_its_text_only_when_a_control_shows_the_stack_is_left_aligned():
+    assert len(empty_opening(left_stack(heading_w=1180)).hits) == 1       # the button sits on the heading's left edge
+    assert observed(empty_opening(left_stack(heading_w=1180, button_x=630))) == []     # nothing says where the text sits
+
+
+def test_a_real_table_below_the_stack_fills_the_first_view_and_a_thin_strip_does_not():
+    rows, texts = table_rows(540, 6)
+    assert observed(empty_opening(left_stack(extra=rows, runs=texts))) == []
+    strip, strip_texts = table_rows(540, 1)
+    assert len(empty_opening(left_stack(extra=strip, runs=strip_texts)).hits) == 1
+
+
+def test_a_picture_or_a_boxed_panel_beside_the_stack_is_content_and_an_abstract_object_is_not():
+    assert observed(empty_opening(left_stack(extra=[photo()]))) == []
+    panel = [box(10, "card", 780, 150, 560, 450, parent=1, style=PANEL), box(11, "text", 820, 200, 300, 30, parent=10)]
+    assert observed(empty_opening(left_stack(extra=panel, runs=[run(10, 11, "Last firing 14:02")]))) == []
+    assert len(empty_opening(left_stack(extra=[photo(decorative=True)])).hits) == 1
+    assert len(empty_opening(left_stack(extra=[photo(placeholder=True)])).hits) == 1
+    wrapper = box(10, "section", 0, 0, 1440, 900, parent=1, style={"background": [0.2, 0.01, 60]})
+    assert len(empty_opening(left_stack(extra=[wrapper])).hits) == 1             # a painted background holds nothing
+
+
+@pytest.mark.parametrize("page", [
+    left_stack(x=360, heading_w=720, button_x=630),            # a centered stack
+    left_stack(x=720),                                         # a stack on the right is not judged
+    left_stack(heading_w=1180, heading_lines=2),               # type that runs across the page
+], ids=["centered", "right", "type-across-the-page"])
+def test_stacks_that_are_not_short_and_on_the_left_do_not_hit(page):
+    assert observed(empty_opening(page)) == []
+
+
+def test_the_logo_and_navigation_above_the_stack_are_not_part_of_it():
+    [hit] = empty_opening(left_stack(header=True)).hits
+    assert "in a left column 33% of the page wide" in hit.observed and "over 94% of the viewport height" in hit.observed
+
+
+def test_every_bound_is_the_rules_threshold():
+    page = left_stack()
+    assert observed(empty_opening(page, empty_share_max=1.0)) == []
+    assert observed(empty_opening(page, band_height_share_max=1.0)) == []
+    assert observed(empty_opening(page, occupancy_min=0.0)) == []
+    assert observed(empty_opening(page, stack_width_share_min=0.3)) == []
+    rows, texts = table_rows(540, 6)
+    assert len(empty_opening(left_stack(extra=rows, runs=texts), below_height_share_min=0.9).hits) == 1
+
+
+def test_only_the_desktop_capture_is_judged():
+    phone = viewport(390, [box(1, "heading", 20, 100, 350, 120)], [run(1, 1, "Fire once a month", "display", 40)])
+    assert empty_opening(extract(phone)).skipped.startswith("the extract has no capture at desktop width")
+
+
+def test_an_unearned_empty_opening_warns_and_never_gates():
+    rule = next(r for r in RULES["rules"] if r["id"] == "layout.unearned-empty-opening")
+    assert (rule["class"], rule["severity"]) == ("quality", {"create": "warn", "review": "P3"})
+
+
 
 # ---------------------------------------------------------------- reading-path
 

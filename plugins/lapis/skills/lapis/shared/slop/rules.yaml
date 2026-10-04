@@ -773,6 +773,30 @@ rules:
     - plan: direction.read.surface_mode
       has:
       - experience
+- id: layout.unearned-empty-opening
+  why: The first screen is a short column on the left with the heading, a few lines, and a button, and
+    nothing in the rest of it, so the opening says little and the space beside it stands for nothing the
+    visitor needs
+  better: Pull the real content the page is about into the first view - the record, list, search, booking,
+    comparison, or work - and recompose the opening's width, height, and order around it; deleting the
+    object that stood beside the column, centering the column, or drawing a stand-in for the empty side
+    is not a repair
+  keep_when:
+  - id: contract-fixes-opening
+    when: the design contract or the brief fixes a left-aligned opening with this much open space, and
+      the plan says so
+    evidence:
+    - design
+    - brief
+  - id: poster-opening
+    when: the subject's own composition is the point, such as an exhibition, a venue, or a release, the
+      brief asks for that poster-like opening, and the capture shows the space doing that work
+    evidence:
+    - brief
+  - id: typographic-opening
+    when: 'type carries the width: the heading is set large enough to fill the opening and the capture
+      shows it does'
+    evidence: none
 - id: layout.wrapped-navigation
   why: Navigation wraps to two lines at common desktop widths, consuming the opening and destabilizing
     scanning

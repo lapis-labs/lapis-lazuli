@@ -102,6 +102,18 @@ after text.
 - `release/GATE.md`, Output: the printed result of `release check` lists each finding after the two count lines
   (`[BLOCK]` defects, `[NOT RUN]` missing evidence, `[CONFIRM]` findings that do not block), and `--json` prints
   the whole report. The report file and the exit codes do not change.
+- `slop/rules.yaml`, `slop/detectors.yaml` (one rule, one detector): the new quality rule `layout.unearned-empty-opening` (warns in
+  create mode, P3 in review, never gates; waiver scope `rule`) and its render detector `opening-empty-area` read the
+  first viewport of every desktop capture for a short stack on the left (the largest heading with the lede, labels, and
+  controls connected to it) with nothing beside it: the stack narrower than 60% of the page, more than 80% of the area
+  beside it empty over a band taller than 55% of the viewport, text, controls, and media filling under 25% of it, and
+  no wide content (nearly as wide as the page's widest row, at least 18% of the viewport tall) below the stack. Meaningful
+  media and boxed panels that hold content beside the stack count as content; fills, borders, gradients, and
+  decorative or placeholder media do not. The extract stores boxes, not the ink in them, so a one-line text box wider
+  than its text is read as wide as the text only when a control or a narrower box at the stack's left edge shows the
+  stack is left-aligned (a miss otherwise, never a false hit). Its `keep_when` cases are `contract-fixes-opening`,
+  `poster-opening`, and `typographic-opening`. All six bounds are unvalidated seeds from the split-bypass study; a
+  stack on the right and abstract objects or chips beside the stack are not judged.
 
 ### Added
 

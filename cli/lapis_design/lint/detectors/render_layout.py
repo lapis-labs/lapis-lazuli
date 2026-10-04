@@ -1175,6 +1175,218 @@ def opening_split(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
     return Result(hits=_merge(desktop, lambda page: _opening_splits(page, area_min, chars_max)))
 
 
+# ---------------------------------------------------------------- opening-empty-area
+
+# Seeds, like every number in the rule that reads them. The extract stores boxes and not the ink inside them,
+# so a page is read from its boxes, and only the stack's own width may shrink to the text it holds.
+_EMPTY_ROW_WIDE = 0.6              # a row of content this share of the page wide is the page's content, not an opening stack
+_EMPTY_FOLLOW_WIDE = 0.5           # a row or box below the stack this share of the page wide ends the opening's band
+_EMPTY_GAP = (48, 0.6)             # px plus this many heading sizes: the widest gap inside one stack
+_EMPTY_BESIDE = 48                 # px: a part this close beside the stack's right edge is in its row
+_EMPTY_EDGE = 4                    # px: left edges this close are one edge
+_EMPTY_NARROWER = 0.85             # a box this much narrower than the heading's box shows where the stack aligns
+_EMPTY_SIDE = 0.4                  # a stack is on the left when its center is no further than this share from the left edge
+_EMPTY_PAD = 16                    # px between the stack and the region beside it
+_EMPTY_OBJECT = 0.06               # a boxed panel with content fills the opening when it covers this share of the viewport
+_EMPTY_TIGHT = 1.3                 # a one-line text box up to this times its text is wrapped tight around it
+_EMPTY_ADVANCE = {"hang": 1.0, "kana": 1.0, "hani": 1.0}     # em per character; 0.6 for any other script
+_EMPTY_FLOW = ("text", "control")
+_EMPTY_KEYS = ("stack_width_share_min", "empty_share_max", "band_height_share_max", "occupancy_min",
+               "below_width_share_min", "below_height_share_min")
+
+
+@dataclass
+class _Info:
+    """One thing in the first viewport that tells the visitor something: text, a control, meaningful media, or a
+    boxed panel that holds content (a mock or a figure, which layout.split-hero and the critic judge)."""
+    box: str
+    kind: str          # "text", "control", "media", or "object"
+    x: float
+    y: float
+    w: float
+    h: float           # what the content fills: a text box counts only as tall as its set lines
+    set_w: float       # what one line of text is estimated to fill; the box's width for anything else
+    known: bool        # the content fills its box, so the box's left edge is the content's left edge
+
+    def ink(self, aligned: bool) -> tuple[float, float]:
+        """Left and right edge of what the content fills. A one-line text box wider than its text is as wide as
+        the text when the stack is left-aligned and as wide as the box otherwise: the extract cannot say where
+        text sits in a wider box, and a wider answer never calls a page empty."""
+        return self.x, self.x + (self.set_w if aligned and not self.known else self.w)
+
+    def rect(self, aligned: bool | None = None) -> dict:
+        """The box, or with `aligned` the ink in it."""
+        left, right = (self.x, self.x + self.w) if aligned is None else self.ink(aligned)
+        return {"x": left, "y": self.y, "w": right - left, "h": self.h}
+
+
+def _text_fill(runs: list[dict], box: dict) -> tuple[float, float, bool]:
+    """(width, height, tight) a text box's runs are estimated to fill: wrapped text fills its box's width; one
+    line is as wide as its characters advance, and the box is tight when it is no wider than that."""
+    height = min(box["h"], 1.1 * sum((r.get("lines") or 1) * (r.get("size_px") or 16) * max(r.get("line_height") or 1.2, 1.0)
+                                     for r in runs) + 4)
+    if any((r.get("lines") or 1) >= 2 for r in runs):
+        return box["w"], height, True
+    widest = max((r.get("measure_chars") or r.get("chars") or len(r.get("text", ""))) * (r.get("size_px") or 16)
+                 * (_EMPTY_ADVANCE.get(r.get("script"), 0.6) + (r.get("letter_spacing_em") or 0)) for r in runs)
+    return min(box["w"], widest), height, box["w"] <= _EMPTY_TIGHT * widest
+
+
+def _opening_items(page: _Page, heading: str) -> list[_Info]:
+    """What the first viewport holds outside navigation: text, controls, media that is not decorative, a
+    placeholder, or unloaded, and boxed panels that hold content. Text inside a control does not count twice (the
+    control stands for it); a box's own fill, border, shadow, and gradient never count, and aria-hidden text
+    does, because it is on the screen."""
+    items: list[_Info] = []
+    controls: set[str] = set()
+    around = {heading, *page.ancestors(heading)}
+    view = page.width * page.height
+    for ident in page.pre_order():
+        box, r = page.by_id[ident], page.rect(ident)
+        if (r["w"] <= 0 or r["h"] <= 0 or r["y"] >= page.height or r["y"] + r["h"] <= 0
+                or r["x"] >= page.width or r["x"] + r["w"] <= 0 or _in_nav(page, ident)
+                or any(a in controls for a in page.ancestors(ident))):
+            continue
+        if box["role"] in _CONTROLS:
+            controls.add(ident)
+            items.append(_Info(ident, "control", r["x"], r["y"], r["w"], r["h"], r["w"], True))
+            continue
+        media = box.get("media")
+        if (box["role"] == "media" or media) and not (
+                media and (media.get("decorative") or media.get("placeholder") or not media.get("loaded"))):
+            items.append(_Info(ident, "media", r["x"], r["y"], r["w"], r["h"], r["w"], True))
+        elif (box["role"] in _SPLIT_OBJECT_ROLES and ident not in around and heading not in page.ancestors(ident)
+              and _area(r) >= _EMPTY_OBJECT * view and r["h"] >= _SPLIT_HEIGHT * page.height
+              and _SPLIT_WIDTH[0] * page.width <= r["w"] <= _SPLIT_WIDTH[1] * page.width
+              and _split_object_kind(page, ident) == "a boxed panel"):
+            items.append(_Info(ident, "object", r["x"], r["y"], r["w"], r["h"], r["w"], True))
+        runs = page.runs_by_box.get(ident)
+        if runs:
+            width, height, tight = _text_fill(runs, r)
+            items.append(_Info(ident, "text", r["x"], r["y"], r["w"], height, width, tight))
+    return items
+
+
+def _item_rows(items: list[_Info]) -> list[dict]:
+    """Text and controls grouped into rows by their boxes: an item joins the row it overlaps vertically by half
+    of the shorter of the two."""
+    rows: list[dict] = []
+    for item in sorted((i for i in items if i.kind in _EMPTY_FLOW), key=lambda i: i.y):
+        if (match := next((r for r in rows if min(r["y1"], item.y + item.h) - max(r["y0"], item.y)
+                           >= 0.5 * min(r["y1"] - r["y0"], item.h)), None)) is None:
+            rows.append({"y0": item.y, "y1": item.y + item.h, "x0": item.x, "x1": item.x + item.w, "items": [item]})
+        else:
+            match["y1"] = max(match["y1"], item.y + item.h)
+            match["x0"], match["x1"] = min(match["x0"], item.x), max(match["x1"], item.x + item.w)
+            match["items"].append(item)
+    return rows
+
+
+def _empty_openings(page: _Page, bound: dict[str, float]) -> Iterable[_Obs]:
+    """A short left stack (the heading and the lede, labels, and controls attached to it) with no content beside
+    it, and none wide enough below it to fill the first viewport. The stack is the heading plus what is
+    connected to it, above and below, until a row as wide as the page's content starts."""
+    heading = _opening_heading(page)
+    if heading is None:
+        return
+    items = _opening_items(page, heading)
+    inside = {heading, *page.descendants(heading)}
+    seeds = [i for i in items if i.kind in _EMPTY_FLOW and i.box in inside]
+    if not seeds:
+        return
+    width, height = page.width, page.height
+    size = max((r.get("size_px") or 0) for r in page.subtree_runs(heading))
+    gap = _EMPTY_GAP[0] + _EMPTY_GAP[1] * size
+    left, widest, first = min(i.x for i in seeds), max(i.w for i in seeds), min(i.y for i in seeds)
+    top, bottom = first, max(i.y + i.h for i in seeds)
+    # Left-aligned when a box narrower than the heading's, or a control, sits on the heading's left edge below it.
+    aligned = any(i.kind in _EMPTY_FLOW and i.known and i.box not in inside and abs(i.x - left) <= _EMPTY_EDGE
+                  and i.w <= _EMPTY_NARROWER * widest and first <= i.y <= bottom + 2 * gap for i in items)
+    rows = _item_rows(items)
+    row_of = {id(i): row for row in rows for i in row["items"]}
+
+    def wide(row: dict) -> bool:
+        return row["x1"] - row["x0"] >= _EMPTY_ROW_WIDE * width
+
+    stop = min((r["y0"] for r in rows if r["y0"] >= bottom - _EMPTY_EDGE and wide(r)), default=height)
+    members = {id(i): i for i in seeds}
+    e0, e1 = min(i.ink(aligned)[0] for i in seeds), max(i.ink(aligned)[1] for i in seeds)
+    grown = True
+    while grown:
+        grown = False
+        for i in items:
+            if (i.kind not in _EMPTY_FLOW or id(i) in members or wide(row_of[id(i)]) or i.y >= stop
+                    or max(i.y - bottom, top - (i.y + i.h), 0) > gap
+                    or (i.kind == "control" and i.y + i.h <= first + _EMPTY_EDGE)     # a header's logo or link
+                    or not e0 - _EMPTY_EDGE <= i.x < e1 + _EMPTY_BESIDE):
+                continue
+            members[id(i)] = i
+            e0, e1 = min(e0, i.ink(aligned)[0]), max(e1, i.ink(aligned)[1])
+            top, bottom = min(top, i.y), max(bottom, i.y + i.h)
+            grown = True
+    share = (e1 - e0) / width
+    if share >= bound["stack_width_share_min"] or (e0 + e1) / 2 > _EMPTY_SIDE * width:
+        return
+
+    others = [i for i in items if id(i) not in members]
+    navs = [n for n in (page.rect(i) for i in page.pre_order() if page.by_id[i]["role"] == "nav") if n["y"] < height]
+    band_top = max([0.0, *(i.y + i.h for i in others if i.y + i.h <= top + _EMPTY_EDGE),
+                    *(n["y"] + n["h"] for n in navs if n["y"] + n["h"] <= top + _EMPTY_EDGE)])
+    below_rows = [r for r in rows if r["y0"] >= bottom - _EMPTY_EDGE and not any(id(i) in members for i in r["items"])]
+    below_blocks = [i for i in others if i.kind not in _EMPTY_FLOW and i.y >= bottom - _EMPTY_EDGE]
+    band_bottom = min([height,
+                       *(r["y0"] for r in below_rows if r["x1"] - r["x0"] >= _EMPTY_FOLLOW_WIDE * width),
+                       *(i.y for i in below_blocks if i.w >= _EMPTY_FOLLOW_WIDE * width)])
+    region = {"x": e1 + _EMPTY_PAD, "y": band_top, "w": width - e1 - _EMPTY_PAD, "h": band_bottom - band_top}
+    if region["w"] <= 0 or region["h"] <= 0:
+        return
+    band = region["h"] / height
+    beside = []
+    for i in others:
+        rect = i.rect()
+        w = min(rect["x"] + rect["w"], region["x"] + region["w"]) - max(rect["x"], region["x"])
+        h = min(rect["y"] + rect["h"], region["y"] + region["h"]) - max(rect["y"], region["y"])
+        if w > 0 and h > 0:
+            beside.append({"x": max(rect["x"], region["x"]), "y": max(rect["y"], region["y"]), "w": w, "h": h})
+    empty = 1 - _union_area(beside) / _area(region)
+    shown = []
+    for i in items:
+        rect = i.rect(aligned if id(i) in members else None)
+        w = min(rect["x"] + rect["w"], width) - max(rect["x"], 0)
+        h = min(rect["y"] + rect["h"], height) - max(rect["y"], 0)
+        if w > 0 and h > 0:
+            shown.append({"x": max(rect["x"], 0), "y": max(rect["y"], 0), "w": w, "h": h})
+    occupancy = _union_area(shown) / (width * height)
+    # Content below the stack fills the first view when it is nearly as wide as the page's widest row, and tall.
+    near = bound["below_width_share_min"] * max(r["x1"] - r["x0"] for r in rows)
+    deep = [(r["y0"], r["y1"]) for r in below_rows if r["x1"] - r["x0"] >= near]
+    deep += [(i.y, i.y + i.h) for i in below_blocks if i.w >= near]
+    visible = min(height, max(b for _, b in deep)) - min(a for a, _ in deep) if deep else 0
+    if (empty <= bound["empty_share_max"] or band <= bound["band_height_share_max"]
+            or occupancy >= bound["occupancy_min"] or visible >= bound["below_height_share_min"] * height):
+        return
+    label = max(page.subtree_runs(heading), key=lambda r: r.get("size_px") or 0).get("text", "")
+    title = " ".join(label.split())[:40]
+    yield _Obs(("empty-opening", heading),
+               f'the first screen holds the heading "{title}" in a left column {share:.0%} of the page wide, and '
+               f'{empty:.0%} of the area beside it stays empty over {band:.0%} of the viewport height while '
+               f'content fills {occupancy:.0%} of the viewport', box=heading)
+
+
+@detector("opening-empty-area", layers=("render",))
+def opening_empty_area(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
+    pages = _pages(ctx)
+    if isinstance(pages, str):
+        return Result(skipped=pages)
+    bound = {key: _bound(det, key) for key in _EMPTY_KEYS}
+    if any(value is None for value in bound.values()):
+        return _no_bound(", ".join(_EMPTY_KEYS))
+    desktop = [p for p in pages if p.width >= _DESKTOP]
+    if not desktop:
+        return Result(skipped="the extract has no capture at desktop width, and narrower captures stack by design")
+    return Result(hits=_merge(desktop, lambda page: _empty_openings(page, bound)))
+
+
 # ---------------------------------------------------------------- reading-path
 
 @detector("reading-path", layers=("render",))

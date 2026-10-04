@@ -4,7 +4,7 @@
 
 Read the section whose default the plan or draft meets, by heading; the rest are other decisions.
 
-- Opening: whether the split hero, product mock, and floating panels stay or the opening comes from the content
+- Opening: whether the split hero, product mock, and floating panels stay or the opening comes from the content, and what to do when the object is removed and an empty column is left
 - Section order and the close: the feature, steps, plans, questions, banner, footer sequence
 - Cards and modules: cards everywhere, nested cards, equal icon tiles, bento filler
 - Plans: the three-card price row with a lifted middle plan
@@ -59,8 +59,16 @@ that see it. Rules marked * are statistical or lexical leads; the critic judges 
   opening without it. A working preview labelled as an illustration is evidence; a real confirmation inside a
   captured task is not decoration; an annotated diagram names its parts. A strip of comparable, verified facts
   (supported platforms, a stated retention) helps an immediate evaluation.
-- **Rules.** `layout.split-hero`, `layout.hero-before-priority`, `component.fake-app-window`,
-  `component.floating-chips`, `imagery.css-illustration`, `copy.vague-cta`.
+- **When the object is only removed.** The same short column of heading, a few lines, and a button now stands beside
+  empty space or beside a drawn stand-in, and that is not a new opening. Ask what the space stands for. Pull the
+  content the page is about into the first view - the record, list, search, booking, comparison, or the work itself -
+  and recompose the opening's width, height, and order around it, so the introduction is short and the content has
+  the width. Centering the column, or putting a mock, chips, or a drawing back, only moves the gap. Left alignment and
+  open space are not the defect: keep them where type large enough to carry the width, a record or picture already
+  visible in the first view, or a poster-like composition (an exhibition, a venue, a release) holds them, and show it
+  in the first view at desktop width.
+- **Rules.** `layout.split-hero`, `layout.unearned-empty-opening`, `layout.hero-before-priority`,
+  `component.fake-app-window`, `component.floating-chips`, `imagery.css-illustration`, `copy.vague-cta`.
 
 ## Section order and the close
 
