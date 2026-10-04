@@ -13,6 +13,23 @@ by default. Name the goal, observable signal, counter-signal, and evaluation win
 A naturally episodic service may succeed without frequent return; inactivity is no permission to
 contact someone or infer dissatisfaction.
 
+For an iteration decision, define eligibility/exposure, numerator and denominator, time window,
+exclusions, segments and known blind spots before reading results. Keep task outcome separate
+from diagnostic, operational and harm/access guardrails; more clicks, time or return visits can
+mean friction. Changing exclusions or attribution after seeing results is exploratory analysis,
+not the original test.
+
+Preserve existing event meaning during visual changes. A client attempt, server acceptance and
+authoritative completion are different events; a screenshot or handler declaration cannot prove
+one correctly deduplicated result. The existing instrumentation owner exercises controlled paths
+and checks missing/duplicate/delayed events, eligibility and concurrent release effects under the
+supplied privacy policy. This guidance authorizes no new telemetry or live experiment.
+
+Analytics can locate frequency and sequence, not explain motivation; studies can expose a mechanism,
+not population prevalence without suitable sampling. Review outcome and guardrails together at
+the product's natural cadence, accounting for outages, seasonality and exposure. Do not wait for
+a metric to repair an already reproduced consequential task or accessibility failure.
+
 Give owners, contributors, and reviewers paths to their own outcome. A shared task may need another
 person; explain whose participation and authority are needed, preview the invite, and preserve work
 when it expires or is declined. Do not require contact import. Returning actors need current role,

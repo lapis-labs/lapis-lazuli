@@ -111,6 +111,8 @@ Process-color numbers mean something only inside an output condition the printer
 profile; lazuli has no profile lookup. Never guess a profile or convert by arithmetic; when none is
 named, report the gap and the question for the printer.
 
+For mismatches between tools, tags, displays, or physical samples, read `references/color-management.md`.
+
 ## Hand back
 
 Per code, return one of these to `lapis` or the user; never fill a gap with a guess:

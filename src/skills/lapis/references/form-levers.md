@@ -2,6 +2,9 @@
 
 This file backs plan step 4. The plan holds `direction.concept`, `direction.levers`, and `layout.signature`; the sections below also reach the fields where a lever lands. Each section names a decision, the plan field that records it, and what checks it, or says that nothing does. Examples come from invented subjects: a ferry timetable, a seed library, and a lighthouse museum.
 
+For a named style or regional direction, read `style-branches.md` to separate the transferable
+relation from a costume, platform compatibility claim, or national stereotype.
+
 ## Write each lever as one sentence
 
 | Decision | Plan field | What checks it |

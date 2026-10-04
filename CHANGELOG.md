@@ -61,6 +61,11 @@ after text.
 
 ### Added
 
+- Recover4 closes the final 40 unexamined migration sources: 27 compact recoveries, four current-owner
+  matches and nine explicit exclusions. References cover platform/host contracts, spatial assets,
+  style branches without stereotypes, color interpretation, interoperable handoff, component/CSS
+  ownership, iteration evidence and product-specific release limits. No new CLI, SDK, access policy,
+  schema or release gate is implied; old corpus tools and execution ledgers are intentionally excluded.
 - `lapis/references/anti-slop.md`: one guide to the defaults generated pages share - per domain what it looks like, why it reads as generated, what to do instead, and honest exceptions - with a short list of per-genre packages. `lapis` links it from the Defaults step and the critic from package drift.
 - Anti-slop rules from the catalog of 123 generated pages (55 observations): `layout.pricing-trio-recommendation` (three priced cards with a set-apart middle), `component.floating-chips` (short boxed labels over the edge of the opening's object), `copy.stock-reassurance` and `copy.template-offer-terms` (lexicons `reassurance_phrases` and `offer_terms`), `color.sage-soft-field`, `color.violet-indigo-accent`, `color.acid-on-black`, and `color.teal-accent` (OKLCH field-and-accent pairs from the render palette, and an accent region at plan time), and `layout.reassurance-landing` with the package `reassurance-landing`. All are default rules that warn in create mode; a plan keeps or rejects each by its `keep_when` case. The new card `category-palette` holds the four palettes.
 

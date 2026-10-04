@@ -58,6 +58,8 @@ last shipped or was approved, or one captured from the project's history - and r
 differences the plan does not explain right after the verdict; `references/visual-regression.md`
 says how.
 
+For product-specific manual acceptance and operational handoff beyond built-in checks, read `references/production-evidence.md`.
+
 ## What blocks
 
 - Any blocking finding from the plan checks, lint, or the critic.

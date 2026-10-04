@@ -2204,6 +2204,9 @@ references:
   - path: references/design-systems/documentation-and-governance.md
     taken: 'Recover3 (2026-10-04), lines 44–82, 84–141, 159–194, 196–318, 380–408, 438–453: consumer-visible contract, compatibility axes, migration mechanism versus acceptance evidence, documentation, owner and actual deprecation/removal boundaries; condensed and reworded.'
     dropped: New governance artifacts, fixed release policy or dates, vendor CLI commands, new publishing/upgrade authorization and compatibility shims as a default.
+  - path: references/production/design-ops-and-collaboration.md
+    taken: "Recover4 (2026-10-04), lines 27-72,114-144,163-188: Feedback classes, accountable decisions, superseding history, preservation and bounded handoff. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
   license: CC-BY-4.0
   attribution: 'Adapted from design-and-frontend by SJY051 (2026), CC BY 4.0; compact restatement with existing approval and clean-cutover boundaries retained.'
 - reference: lps-ux/references/product-lifecycles.md
@@ -2220,6 +2223,9 @@ references:
   - path: references/ux-methodology/help-and-service-recovery.md
     taken: 'Recover3 (2026-10-04), lines 34–115, 117–232, 301–322: lowest capable layer, unavailable support, open-request continuity, warm/cold transfer, minimal scoped context and confirmed resolution; condensed and reworded.'
     dropped: Ticketing/back-end architecture, invented staff/channel capacity, SLAs, bulk logs and synthetic case details.
+  - path: references/production/metrics-and-iteration.md
+    taken: "Recover4 (2026-10-04), lines 48-65,96-160,176-204: Eligibility, exposure, denominators, windows, exclusions, event meaning, outcomes and guardrails with method limits. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
   license: CC-BY-4.0
   attribution: 'Adapted from design-and-frontend by SJY051 (2026), CC BY 4.0; condensed and mapped to existing flows/claims, with no new policy or operational permission.'
 - reference: lzl-research/references/user-studies.md
@@ -2313,3 +2319,110 @@ references:
   skill_body_pointer: For what these defaults look like on a page and the per-genre packages, read references/anti-slop.md.
   license: CC-BY-4.0
   attribution: 'Adapted from design-and-frontend by SJY051 (2026), CC BY 4.0, and written from the 2026-10-04 catalog of generated pages; the AntiSlop project (MIT) shaped the format, and none of its text is copied.'
+- reference: lzl-color/references/color-management.md
+  sources:
+  - path: references/color/color-spaces-and-management.md
+    taken: "Recover4 (2026-10-04), lines 31-114,133-153,202-208: Coordinates, encoding, linear light, reference white, measurement, profile and HDR distinctions; discrepancy tracing. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
+  license: CC-BY-4.0
+  attribution: Adapted from design-and-frontend by SJY051 (2026), CC BY 4.0; condensed, merged and generalized in Recover4 with source ranges and final decisions in recovery-map.tsv.
+- reference: lps-system/references/interop.md
+  sources:
+  - path: references/interop/figma.md
+    taken: "Recover4 (2026-10-04), lines 30-59,86-99,161-203: URL versus access gates; collection/mode/alias/revision preservation and generated-code evidence limits. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
+  - path: references/interop/handoff-and-specs.md
+    taken: "Recover4 (2026-10-04), lines 30-67,97-145,221-264,276-310: Buildable task/state/behavior/owner handoff, source lineage and explicit unverified acceptance. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
+  - path: references/interop/opendesign.md
+    taken: "Recover4 (2026-10-04), lines 16-18,106-165: Creative-prose dialect versus token schema; unknown values and conversion loss. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
+  - path: references/technology/json-render-and-design-systems.md
+    taken: "Recover4 (2026-10-04), lines 31-48,74-80,261-307: Finite catalogs and structural/props/resource/server boundaries; visibility and partial-patch limits. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
+  license: CC-BY-4.0
+  attribution: Adapted from design-and-frontend by SJY051 (2026), CC BY 4.0; condensed, merged and generalized in Recover4 with source ranges and final decisions in recovery-map.tsv.
+- reference: lapis/references/platforms.md
+  sources:
+  - path: references/platforms/android-and-material.md
+    taken: "Recover4 (2026-10-04), lines 138-206: Current-window adaptation, system Back and stable destinations, role pairs and optional dynamic-color verification. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
+  - path: references/platforms/cross-platform.md
+    taken: "Recover4 (2026-10-04), lines 29-207: Outcome and data parity, actual target seams and permission/accessibility evidence. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
+  - path: references/platforms/desktop.md
+    taken: "Recover4 (2026-10-04), lines 68-106,152-179,200-225: Window/document/quit distinctions, discoverable commands, keyboard layouts, file and restoration contracts. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
+  - path: references/platforms/ios-and-apple-platforms.md
+    taken: "Recover4 (2026-10-04), lines 69-167: Semantic text scaling, safe areas, navigation/presentation and native-material versus web-approximation limits. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
+  - path: references/platforms/web.md
+    taken: "Recover4 (2026-10-04), lines 31-100,135-152: URLs/history, native form assistance, DOM order, delayed scripts and hydration evidence. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
+  license: CC-BY-4.0
+  attribution: Adapted from design-and-frontend by SJY051 (2026), CC BY 4.0; condensed, merged and generalized in Recover4 with source ranges and final decisions in recovery-map.tsv.
+- reference: lapis/references/email.md
+  sources:
+  - path: references/platforms/email-and-embedded-surfaces.md
+    taken: "Recover4 (2026-10-04), lines 78-227,252-282: Delivered-message evidence, live text and script-complete fallback, client transformations and host Back/permission boundaries. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
+  license: CC-BY-4.0
+  attribution: Adapted from design-and-frontend by SJY051 (2026), CC BY 4.0; condensed, merged and generalized in Recover4 with source ranges and final decisions in recovery-map.tsv.
+- reference: ulm-release/references/production-evidence.md
+  sources:
+  - path: references/production/production-readiness-checklist.md
+    taken: "Recover4 (2026-10-04), lines 26-54,74-89,121-138,155-207: Product support scope, manual and operational evidence, unverified handoff without new gates or waivers. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
+  license: CC-BY-4.0
+  attribution: Adapted from design-and-frontend by SJY051 (2026), CC BY 4.0; condensed, merged and generalized in Recover4 with source ranges and final decisions in recovery-map.tsv.
+- reference: lapis/references/style-branches.md
+  sources:
+  - path: references/styles/brutalism-and-neo-brutalism.md
+    taken: "Recover4 (2026-10-04), lines 29-59,86-127,145-153: Raw document structure versus graphic border systems; task/state/reflow defects remain defects. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
+  - path: references/styles/glass-neumorphism-and-liquid.md
+    taken: "Recover4 (2026-10-04), lines 29-89,127-165: Transparent layers versus soft extrusion and native material; real backdrops, states and solid alternatives. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
+  - path: references/styles/maximalism-y2k-and-retro.md
+    taken: "Recover4 (2026-10-04), lines 29-39,102-150: Original archive versus revival, focal order and stable reading/action layers. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
+  - path: references/styles/modernist-swiss-and-international.md
+    taken: "Recover4 (2026-10-04), lines 29-38,62-68,97-106,135-152: Constructive geometry versus information alignment, content-driven reflow and meaningful labels without universal neutrality. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
+  - path: references/styles/regional-design-cultures.md
+    taken: "Recover4 (2026-10-04), lines 29-56,73-77,153-176: Named locale/task evidence; company/platform/language/aesthetic layers without national personality or automatic research. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
+  - path: references/styles/skeuomorphism-flat-and-material.md
+    taken: "Recover4 (2026-10-04), lines 29-41,65-106,117-126,152-163: Operation mapping versus surface simulation; minimal simulation, flat signifiers and bounded platform influence. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
+  license: CC-BY-4.0
+  attribution: Adapted from design-and-frontend by SJY051 (2026), CC BY 4.0; condensed, merged and generalized in Recover4 with source ranges and final decisions in recovery-map.tsv.
+- reference: lapis/references/implementation.md
+  sources:
+  - path: references/technology/component-libraries.md
+    taken: "Recover4 (2026-10-04), lines 29-90: Native/headless/styled/copied/custom ownership and difficult real-consumer evidence. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
+  - path: references/technology/implementation-patterns.md
+    taken: "Recover4 (2026-10-04), lines 180-186,228-243,270-282: Dismissal versus completed save, open responsive swaps and state/focus/hydration verification. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
+  - path: references/technology/styling-approaches.md
+    taken: "Recover4 (2026-10-04), lines 29-38,89-103,314-348: Styling authority, layer/chunk order, actual font application and shared CSS ownership in production cold/navigation paths. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
+  - path: references/visual-assets/svg-reuse-and-authoring.md
+    taken: "Recover4 (2026-10-04), lines 33-146,148-185: Authoritative reuse, graphic versus interface structure, embedding trust and viewBox/ID/notice preservation. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
+  license: CC-BY-4.0
+  attribution: Adapted from design-and-frontend by SJY051 (2026), CC BY 4.0; condensed, merged and generalized in Recover4 with source ranges and final decisions in recovery-map.tsv.
+- reference: lapis/references/3d.md
+  sources:
+  - path: references/technology/threejs-asset-integration.md
+    taken: "Recover4 (2026-10-04), lines 34-61,74-97,354-356,360-416: Task-earned runtime 3D, required decoders, teardown, load/context fallback and parser limits. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
+  - path: references/visual-assets/blender-asset-preparation.md
+    taken: "Recover4 (2026-10-04), lines 34-79,97-144,154-196: Original/working/derivative separation, script/dependency boundaries, link/copy choice, rig transforms and exported size/material loss. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
+  - path: references/visual-assets/three-dimensional-assets.md
+    taken: "Recover4 (2026-10-04), lines 32-45,69-110,112-201: Representation choice, runtime readiness, decoded/GPU cost, external controls and the complete non-canvas task. Condensed and generalized."
+    dropped: Full templates, historical execution records, vendor/version recipes, new schemas, automatic access, installs and operational capabilities; current owner and authorization boundaries remain authoritative.
+  license: CC-BY-4.0
+  attribution: Adapted from design-and-frontend by SJY051 (2026), CC BY 4.0; condensed, merged and generalized in Recover4 with source ranges and final decisions in recovery-map.tsv.
