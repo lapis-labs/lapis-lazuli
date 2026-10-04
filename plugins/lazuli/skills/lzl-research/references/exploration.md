@@ -4,6 +4,7 @@
 
 Read the step you are on, by heading; the rest are later steps.
 
+- 0. Receive hints: a recorded rotating starting set, and the independent search it does not replace
 - 1. Find candidates: searches that name the subject's own world, and where to look
 - 2. Capture: capturing each reference with `lazuli ref capture`, one at a time, at a human pace
 - 3. Look: opening each capture and reading its order, scale, density, HTML, and CSS
@@ -16,6 +17,21 @@ run that picks its own references from memory, or reads about them, brings back 
 pages and a page that looks like every other page. A reference is evidence only when you have looked at
 it: the picture, and for a web page its HTML and CSS too. The step's check counts the files that show you
 did, not the quality of the looking.
+
+## 0. Receive hints
+
+Run `lazuli hints` to choose the nearest field, then `lazuli hints --field <field> --task <task>`. It offers
+three starting points sorted by a task/date/field/URL hash and records their URLs, field, and date in
+`.lapis/references/<task>.hints.json`. Repeating that field reprints the original draw, even on another day.
+`--date YYYY-MM-DD` selects a rotation for a new task; use `--field none` only when no field fits.
+
+Hints are starting points, not a canon, and their recognition does not establish usability or the current
+design. Access policies still apply. Find at least as many references beyond the **whole hints list**, not
+just this draw, as were offered (normally three). A URL on a hint's host and below its path is still from
+the list; a source with no URL may be an independent find. The CLI checks this alongside the existing
+six-reference and kind rules. Study whichever offered pages help, reject ones that do not, and search
+the subject's world yourself. Do not read the entire data file to find a preferred draw.
+
 
 ## 1. Find candidates
 
@@ -104,6 +120,9 @@ The check wants at least six references, at least three kinds and two outside `w
 images, every capture a real file, `source_facts` that state a value for each `web-ui` reference, and no more
 than two text-only references. A reference is text-only when its capture is not an image or its page is an
 encyclopedia; it counts toward the six and toward nothing else.
+The recorded hints offer must also exist, and at least as many references must be agent-found beyond the
+whole list as were offered. Put the actual independent sources in the same `references` array; do not
+label a listed page independent merely because it was not offered in this rotation.
 
 Take relations, not surfaces: order, ratio, rhythm, density, a label's job, how a table is ruled. Leave
 assets, text, brand colors, marks, the exact type pairing, and any signature composition. A result close to

@@ -20,3 +20,11 @@ items:
   view: summary
   path: sources/registry.schema.yaml
   summary: LapisLazuli source registry schema — v0 draft
+- id: sources-hints
+  view: summary
+  path: sources/hints.yaml
+  summary: Hints to start a search, not a canon; no captures or copied page text.
+- id: sources-hints-schema
+  view: summary
+  path: sources/hints.schema.yaml
+  summary: Rotating reference hints are separate from the access-policy source registry.

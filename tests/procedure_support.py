@@ -11,7 +11,7 @@ from pathlib import Path
 import yaml
 from PIL import Image
 
-from lapis_design import shared_dir
+from lapis_design import hints, shared_dir
 from lapis_design.cli import main as cli_main
 
 TASK = "kiln-shop-landing"
@@ -159,5 +159,6 @@ def references_text(entries: list[dict], captures: str | None = "study-only") ->
 def write_references(root: Path, at: int = 50, task: str = TASK) -> list[dict]:
     """A references record that passes, with its captures, modified at second `at`."""
     entries = reference_entries(root, task)
+    hints.draw(root, task, "none", "2026-10-05")                  # these tests exercise evidence, not genre selection
     record(root, "references", references_text(entries), at, task)
     return entries

@@ -16,6 +16,7 @@ Read these, and nothing the maker wrote to justify itself beyond them:
 - the slop lint report: `.lapis/lint/<task>.json`
 - `PRODUCT.md` and `DESIGN.md` when the plan's `context` names them
 - the user's project taste, when given: `.lapis/taste.md`
+- the task's reference record and its own study captures: `.lapis/references/<task>.md`, `.lapis/references/<task>/`
 
 If the extract or lint report is missing, say which and stop; ask for
 `lapis-design render check` and `lapis-design slop lint` first.
@@ -41,6 +42,17 @@ captures or the session cannot show a step). Name the capture, box, or session s
 Requirement coverage, notices, and a quiet lint report are a floor, not the verdict. A walk that fails, or completes
 only after a long scroll or a guess, is a finding (`review.task-walkthrough`: the walk in `observed`, the task and
 width in `basis` and `location`), whatever the checks found. Write every walk in the report's `walkthroughs` field.
+
+## Then: compare with the references
+
+After the task walk, set our rendered page beside two or three references the agent actually captured and
+looked at under `.lapis/references/<task>/`, at 390 and 1440. Ask: would a visitor pick ours over these, and
+why not? Compare information choice, genre structure, action access, phone arrangement, and section rhythm,
+not borrowed finish. Record each in `comparisons`; a consequential shortfall is `review.reference-comparison`
+(class `default`, severity `{create: warn, review: P3}`, `blocking: false`) for the maker, not a new gate.
+Name the study capture and our capture or boxes behind the judgement. If fewer references or widths are
+available, say which comparison could not be made; do not invent one or request new outside pages.
+
 
 ## What to judge
 
@@ -91,6 +103,11 @@ Write one report in the findings format that `slop lint` also writes:
   `consequence`, and `fix`
 - `walkthroughs` (optional, one entry per task and width): `task`, `viewport` (1440 or 390), `first_look`,
   `read_or_scrolled_past`, `stuck` (leave it out when you did not get stuck), `completed`, and `refs`.
+- `comparisons` (optional, one entry per reference and width): `reference` (the study capture), `viewport`
+  (390 or 1440), `would_choose_ours` (`yes`, `no`, or `unknown`), `why` (a visitor consequence), and `refs`
+  (our captures or boxes). For example: `{reference: ".lapis/references/demo/museum/390.png", viewport: 390,
+  would_choose_ours: "no", why: "Ours hides today's hours below two screens of art", refs:
+  [".lapis/renders/demo.shots/390.png"]}`.
 
 What goes in the fields:
 

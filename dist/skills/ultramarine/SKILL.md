@@ -140,6 +140,8 @@ The critic judges in a context that did not make the design, reading only the in
 - Hand it the visitor-task walk (`references/critic.md`, First: walk the visitor's tasks): one to three tasks from the
   brief, walked on the 1440 and 390 captures, recorded in the report's `walkthroughs`. Coverage of requirements and
   notices is a floor; a walk that fails is a finding whatever the checks say.
+- After the walk, compare ours with two or three of the agent's own reference captures at 390 and 1440;
+  record visitor-choice reasons in `comparisons` (`references/critic.md`, Then: compare with the references).
 
 ## Hand fixes back
 

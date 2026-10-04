@@ -89,6 +89,18 @@ properties:
         stuck: { type: string }                        # where the walk stopped or turned back; absent when it did not
         completed: { enum: ["yes", "partly", "no", "not-walked"] }   # not-walked: the capture or the session could not show the step
         refs: { type: array, items: { type: string } } # capture files, box ids, or session steps the walk rests on
+  comparisons:                                     # critic: own reference captures beside ours; optional, no gate reads it
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [reference, viewport, would_choose_ours, why, refs]
+      properties:
+        reference: { type: string, minLength: 1 }     # a study capture under .lapis/references/<task>/
+        viewport: { enum: [390, 1440] }
+        would_choose_ours: { enum: ["yes", "no", "unknown"] }
+        why: { type: string, minLength: 8 }           # a visitor consequence, not a score or a finish preference
+        refs: { type: array, minItems: 1, items: { type: string } }
 
 $defs:
   finding:

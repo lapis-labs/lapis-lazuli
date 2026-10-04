@@ -259,3 +259,17 @@ items:
     consumers:
       lazuli: full
       lzl-research: summary
+
+  - id: sources-hints
+    kind: data
+    path: sources/hints.yaml
+    note: v0; starting points, not a canon; lazuli hints records three rotating examples and requires independent finds
+    consumers:
+      lzl-research: summary
+
+  - id: sources-hints-schema
+    kind: contract
+    path: sources/hints.schema.yaml
+    note: v0; URLs and facts with our own one-line study questions, separate from access policies
+    consumers:
+      lzl-research: summary

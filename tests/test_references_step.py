@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from lapis_design import attempts, gate, next_step, order, references
+from lapis_design import attempts, gate, hints, next_step, order, references
 from lapis_design.cli import main as cli_main
 from procedure_support import (BRIEF_RECORD, FACTS, TASK, finish, make_project, record, reference_entries,
                                references_text, save, update, write_references)
@@ -37,6 +37,7 @@ def step_of(root: Path) -> str:
 
 
 def write(root: Path, entries: list[dict], **kwargs) -> None:
+    hints.draw(root, TASK, "none", "2026-10-05")
     record(root, "references", references_text(entries, **kwargs), 100)
 
 

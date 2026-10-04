@@ -383,6 +383,8 @@ and book; see which line is delayed now) and do them on the 1440 and 390 capture
 what you had to read or scroll past, and where you got stuck. A page that passes every check can still fail the walk.
 Read `.lapis/taste.md` against the plan and captures too; report a conflict or an `against` stance as a non-blocking
 `review.taste-conflict` finding for the user to confirm, not as permission to override their words.
+After the walk, compare ours beside two or three of your own reference captures at 390 and 1440; say why a visitor
+would not choose ours, following the critic's reference-comparison step, without turning it into a score or gate.
 
 
 1. `lapis-design slop lint --plan .lapis/plans/<task>.yaml --source <source dir> -o .lapis/lint/<task>.json`.

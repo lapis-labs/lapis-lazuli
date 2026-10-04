@@ -14,6 +14,8 @@ an existing file under the task's folder, each one its own; every `web-ui` refer
 state a value; and at most two text-only references. A reference is text-only when its capture is not an image
 (a page saved as text) or its page is an encyclopedia: reading about a thing is not looking at it, so a
 text-only reference counts toward the total and toward nothing else.
+The task also records a rotating hints offer (`hints.py`); at least as many references must be agent-found
+beyond the whole hints list as were offered. Hints do not replace searching or change access policies.
 
 A run with no network records that with `lapis-design next --unavailable references` (attempts.py), which
 `next` counts as the step done and reports as a step that did not run. The command first tries one plain GET
@@ -40,7 +42,7 @@ from urllib.parse import urlsplit
 
 import yaml
 
-from lapis_design import attempts, waiting
+from lapis_design import attempts, hints, waiting
 
 STEP = "references"
 KINDS = {
@@ -144,6 +146,12 @@ def problems(root: Path, task: str) -> list[str]:
     if data is None:
         return [why or "it cannot be read"]
     found: list[str] = []
+    offered = hints.read(root, task)
+    if offered is None:
+        found.append(f"no valid hints offer is recorded; run `lazuli hints --field <nearest-field-or-none> --task {task}`")
+    elif (own := hints.agent_found(data["references"])) < len(offered["offered"]):
+        found.append(f"it lists {own} agent-found references beyond the whole hints list; at least "
+                     f"{len(offered['offered'])} are needed, as many as the recorded offer")
     if data.get("captures") != STUDY_ONLY:
         found.append(f"it does not say `captures: {STUDY_ONLY}`")
     base = folder(root, task).resolve()
@@ -313,6 +321,11 @@ def why(task: str, found: list[str], planned: bool) -> str:
         lead,
         "A reference counts when you have looked at it, not when you have read about it: an encyclopedia or any text",
         "page is not a visual reference. Follow the lzl-research skill's exploration guide.",
+        "(0) Pick the nearest field from `lazuli hints`, then record its rotating offer with",
+        f"`lazuli hints --field <field> --task {task}` (`none` only when no field fits). These are starting points,",
+        "not a canon: find at least as many agent-found references beyond the whole hints list as were offered,",
+        "not just beyond this draw. The offer is saved in .lapis/references/<task>.hints.json; repeating the same",
+        "field keeps its original date and offer.",
         "(1) Search for candidates (WebSearch, or `lazuli search --type source <words>` for where to look) in worlds",
         "beyond web design: the subject's own field, print, signage, objects, archives, works. Do not only recall",
         "addresses.",
