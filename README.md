@@ -7,11 +7,11 @@ For developers who build web interfaces with Claude Code, Codex, Oh-My-Pi, or an
 harness and want each blocking finding tied to a named rule and a fix. [한국어](README.ko.md)
 
 An [example plan for a campsite booking page](docs/examples/site-booking-en.yaml), checked before any
-code exists, on a machine without a lazuli font database (four of eight findings left out):
+code exists, on a machine without a lazuli font database (five of nine findings left out):
 
 ```console
 $ lapis-design plan check docs/examples/site-booking-en.yaml
-plan_check 0.2.0: 3 blocking, 8 total, 3 skipped: not judged
+plan_check 0.2.0: 3 blocking, 9 total, 3 skipped: not judged
   [BLOCK] plan.uncompared-decision explorations — 7 open decisions with no comparison recorded in explorations: type roles body; palette; layout; motion; direction; copy slots headline, cta
           fix: Record each open decision in explorations - two or more candidates with their sources, what they were compared on, the chosen one, and why the runner-up lost; a decision the contract or the brief fixes says so with fixed_by
   [WARN] copy.buzzwords content.key_copy[*].text — "elevate" (buzzwords) in the headline key copy: "Elevate your camping experience"

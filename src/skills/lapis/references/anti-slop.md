@@ -1,8 +1,8 @@
 # Recurring defaults on generated pages
 
 What generated pages share before the subject has been read, why each shared choice weakens a page, and what to
-do instead. Read it with the default cards (`shared/slop/cards.yaml`) and the rules they name
-(`shared/slop/rules.yaml`). It describes pages from a corpus of about 120 generated landing pages, booking forms,
+do instead. Read it with the default cards (`../shared/slop/cards.yaml`) and the rules they name
+(`../shared/slop/rules.yaml`). It describes pages from a corpus of about 120 generated landing pages, booking forms,
 dashboards, and editorial pages; a count is a sign that a choice is a default, not a rate for any other site.
 
 A default is a choice that needs a reason, not a ban. For each one your plan or draft meets, record `keep` with

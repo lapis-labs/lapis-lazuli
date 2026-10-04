@@ -4,11 +4,11 @@
 
 Claude Code, Codex, Oh-My-Pi 같은 하네스로 웹 화면을 만드는 개발자용이에요. 막는 발견마다 규칙 이름과 고칠 방법이 붙어요. [English](README.md)
 
-캠핑장 예약 화면의 [예시 계획](docs/examples/site-booking-ko.yaml)을, 코드가 생기기 전에 lazuli 폰트 DB가 없는 기계에서 검사한 출력이에요(여덟 가지 발견 중 넷은 뺐어요).
+캠핑장 예약 화면의 [예시 계획](docs/examples/site-booking-ko.yaml)을, 코드가 생기기 전에 lazuli 폰트 DB가 없는 기계에서 검사한 출력이에요(아홉 가지 발견 중 다섯은 뺐어요).
 
 ```console
 $ lapis-design plan check docs/examples/site-booking-ko.yaml
-plan_check 0.2.0: 3 blocking, 8 total, 3 skipped: not judged
+plan_check 0.2.0: 3 blocking, 9 total, 3 skipped: not judged
   [BLOCK] plan.uncompared-decision explorations — 7 open decisions with no comparison recorded in explorations: type roles body; palette; layout; motion; direction; copy slots headline, cta
           fix: Record each open decision in explorations - two or more candidates with their sources, what they were compared on, the chosen one, and why the runner-up lost; a decision the contract or the brief fixes says so with fixed_by
   [WARN] copy.buzzwords content.key_copy[*].text — "최적의" (buzzwords) in the headline key copy: "최적의 캠핑 경험을 선사합니다"; "경험을 선사" (buzzwords) in the headline key copy: "최적의 캠핑 경험을 선사합니다"

@@ -54,8 +54,8 @@ Work through these in order. Lint findings already report what they observed; do
    render contradicts is `unearned`.
 6. **Package drift.** When rejected defaults were replaced by another named package - dark and
    luminous traded for warm and editorial, or either for hard edges - report the new package.
-   The recurring defaults and per-genre packages to compare against are in the lapis skill's
-   `references/anti-slop.md`, when that skill is installed.
+   The lapis skill's anti-slop guide lists the recurring defaults and per-genre packages to compare
+   against, when that skill is installed.
 
 Compare beneath the finish: content priority, evidence, role assignment, imagery, and action.
 Paper colors and a serif replacing luminous gradients, or hard shadows replacing round cards,
