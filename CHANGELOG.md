@@ -54,6 +54,11 @@ after text.
 ### Added
 
 - `lapis/references/visual-assets.md`: image-job selection, protected crops and coherent sets, semantic icon contact sheets, and fact/inference/proposal separation for supplied assets.
+- Recovered fifteen predecessor sources into compact references for source-family adoption and component seams,
+  consumer migration/governance, role-aware lifecycle/AI/moderation/support flows, and bounded user-study
+  interpretation, plus expressive media alternatives, purpose-based image evidence, action-model diagnosis,
+  and heuristic inspection. Five more sources were compared with existing owners without duplicating their
+  text; style/brief catalogs, new operational permissions, fixed scoring/counts, and conflicting gates were omitted.
 
 - `explorations` in the plan records, for each open decision, two or more candidates with their sources (for type:
   `local`, `catalog:<name>`, `adobe`, `commercial:<foundry>`, `generic`), what they were compared on (`specimen`,

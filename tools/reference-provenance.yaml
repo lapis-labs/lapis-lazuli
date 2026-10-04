@@ -1489,6 +1489,9 @@ references:
     the particle rewrites, and the counter 점.'
 - reference: ultramarine/references/inspection-and-evidence.md
   sources:
+  - path: references/ux-methodology/usability-heuristics-and-evaluation.md
+    taken: 'Recover3 (2026-10-04), lines 26–30, 136–142, 144–223: task-scoped independent inspection, atomic merge by consequence, severity-direction boundary, and remedy exercise; condensed and reworded in Heuristic inspection.'
+    dropped: Named ten-heuristic catalog, fixed evaluator counts, score tables and participant/prevalence claims.
   - path: references/design-feedback/inspection-and-evidence.md
     taken: 'Inspection as read-only: a request to inspect, review, or audit never authorizes source or token edits,
       plan changes, account actions, or deployment, and a visible defect is no emergency permission; the evidence
@@ -1777,6 +1780,9 @@ references:
     changed to remove a source overlap without changing its effect.'
 - reference: lps-ux/references/forms-and-recovery.md
   sources:
+  - path: references/fundamentals/perception-and-psychology.md
+    taken: 'Recover3 (2026-10-04), lines 119–177, 189–201, 255–264: distinguish unnoticed action, misleading term and conceptual-model failure using prediction, then repair the actual owner; protected identities and task-appropriate disclosure. Generalized to under 100 words in Operating conditions.'
+    dropped: Named psychology frameworks, universal memory/choice limits, historical numeric thresholds, fixed Gestalt cue rankings and controlled color studies; existing grouping owner remains intact.
   - path: references/product-types/forms-onboarding-and-checkout.md
     taken: 'The field inventory questions (needed, when, already known, accurately suppliable) as one test for
       removing, deferring, prefilling, or explaining a field; blocking only on a real prerequisite, which became the
@@ -2090,6 +2096,9 @@ references:
   - 'Throwaway Python smoke exercised boundaries for large text, easing overshoot, scoped urgency, clock exclusion, status recognition, quote continuation/attribution and the reduced capture matrix. build.collect emitted check-bounds and its pointer in both install surfaces. The new migration tracking test passed; final project-wide acceptance checks belong to the integration owner.'
 - reference: lapis/references/form-levers.md
   sources:
+  - path: references/art-direction/expressive-interfaces.md
+    taken: 'Recover3 (2026-10-04), lines 127–148, 150–169, 173–207, 209–220: task-preserving medium alternatives, spatial index identity, truthful data mapping and freshness, sound-state equivalence and exercised evidence limits; condensed into Response as a lever using existing fields.'
+    dropped: Full hypothetical sequences, new sensing/persistence/feed/recording capabilities, sound/renderer implementation recipes and a separate QA framework.
   - path: references/art-direction/formal-experimentation.md
     taken: 'CR1–CR3 (2026-10-03), lines 129–264: controlled tuning versus whole-relation exploration, smallest-useful-specimen chooser, disproof before making, proposition then obligations, and consequence-led dispositions using existing explorations and claims.'
     dropped: Mandatory specimen quotas, new study schemas, causal audience claims, a polished-hero acceptance shortcut, and code templates.
@@ -2153,6 +2162,9 @@ references:
     dropped: Scores, quotas, named package bans, prevalence and authorship claims; the existing findings and repair contracts remain authoritative.
 - reference: lapis/references/visual-assets.md
   sources:
+  - path: references/fundamentals/iconography-and-imagery.md
+    taken: 'Recover3 (2026-10-04), lines 132–159, 188–201, 212–235: purpose-specific text alternatives, current/illustrative screenshot evidence, intrinsic dimensions, critical-image loading and truthful failure content; condensed in Crop and set. Earlier image/icon grammar was compared, not copied again.'
+    dropped: Asset acquisition, generated-image tool permissions, third-party license assumptions, package names, complete HTML and mandatory image slots.
   - path: references/visual-assets/image-selection-and-art-direction.md
     taken: 'V1–V2 (2026-10-03), lines 34–61, 84–94, 125–178: image-job/evidence/substitute chooser, real-slot crop protection and continuity, distinct media roles, truthful grading.'
     dropped: Source browsing/acquisition and licensing procedures, provider choices, fixed aspect ratios, brief templates and implementation recipes; crop notes use claims.proposed with ledger ids because the ledger has no crop fields.
@@ -2171,3 +2183,52 @@ references:
   - path: references/research/reference-and-inspiration-digging.md
     taken: 'R3 (2026-10-03), lines 223–263: transfer/stop/local-disproof comparison with collection and expert-workflow counterexamples; landing places in existing plan decisions and explorations.'
     dropped: R1 automatic traversal, distinctive maker surfaces, unowned cultural authority and new transfer record formats.
+- reference: lps-system/references/system-contracts.md
+  sources:
+  - path: references/design-systems/adopting-existing-systems.md
+    taken: 'Recover3 (2026-10-04), lines 29–125, 264–335: authorized family reconciliation, present/absent/unread, exact values and substitutions, adopt/extend/build and hardest-task proof; condensed, merged and reworded.'
+    dropped: Vendor profiles, current implementation/license assertions, full example manifest and unrequested acquisitions.
+  - path: references/design-systems/building-from-scratch.md
+    taken: 'Recover3 (2026-10-04), lines 19–57, 188–190, 327–347: completion relative to agreed artifacts/consumers, local-first ownership, demand-led promotion and package boundary; condensed and merged.'
+    dropped: Fixed token scales, seeded design artifacts, minimum component catalog, universal time box and expanded delivery scope.
+  - path: references/design-systems/component-architecture.md
+    taken: 'Recover3 (2026-10-04), lines 41–123, 157–221, 281–292, 327–342: anatomy, controlled state identity, primitive/parts/recipe ownership, node/ref/event/value composition and plain option identity with consumer proof; condensed and generalized.'
+    dropped: Framework-specific JSX/API examples, package choice catalog and product logic in generic controls.
+  - path: references/design-systems/design-system-anatomy.md
+    taken: 'Recover3 (2026-10-04), lines 26–39, 95–106, 136–164, 211–250: layer boundaries, repeated-task sharing, independent properties and bounded slots, authority and consumer demand; merged into the reference instead of growing the skill body.'
+    dropped: Maturity ladder, organization-size prescriptions, role-creation recipe, vanity counts and full worked example.
+  license: CC-BY-4.0
+  attribution: 'Adapted from design-and-frontend by SJY051 (2026); original documentation license in LICENSE.md. Changes are condensed, merged, generalized and mapped to existing LapisLazuli owners; source ranges/commit/date are in recovery-map.tsv.'
+- reference: ulm-maintain/references/system-governance.md
+  sources:
+  - path: references/design-systems/documentation-and-governance.md
+    taken: 'Recover3 (2026-10-04), lines 44–82, 84–141, 159–194, 196–318, 380–408, 438–453: consumer-visible contract, compatibility axes, migration mechanism versus acceptance evidence, documentation, owner and actual deprecation/removal boundaries; condensed and reworded.'
+    dropped: New governance artifacts, fixed release policy or dates, vendor CLI commands, new publishing/upgrade authorization and compatibility shims as a default.
+  license: CC-BY-4.0
+  attribution: 'Adapted from design-and-frontend by SJY051 (2026), CC BY 4.0; compact restatement with existing approval and clean-cutover boundaries retained.'
+- reference: lps-ux/references/product-lifecycles.md
+  sources:
+  - path: references/ux-methodology/adoption-and-account-lifecycle.md
+    taken: 'Recover3 (2026-10-04), lines 34–102, 104–164, 168–215, 289–291: first/repeat value, role-aware return, distinct exit actions, missing policy and preserved approved exit; condensed and reworded.'
+    dropped: Vendor policies, invented billing/retention/rejoin promises, separate hypothesis schema, fixed metric cadence and full fixtures.
+  - path: references/ux-methodology/ai-product-interactions.md
+    taken: 'Recover3 (2026-10-04), lines 32–180, 199–240, 242–309, 386–399: task surface, truth types, scope, controls, revision/authority, retention, evidence and accessible streaming with manual failure specimens; condensed and generalized.'
+    dropped: Provider/runtime implementation, fixed confidence/cost values, hidden reasoning, new checks and illustrative receipts as actual outcomes.
+  - path: references/ux-methodology/community-safety-and-moderation.md
+    taken: 'Recover3 (2026-10-04), lines 32–87, 89–147, 149–240, 257–341, 343–372, 428–430: policy/system/interface truth, personal effects, evidence/confidentiality, durable notices/appeal, recusal, mixed batch and restoration state; condensed and generalized.'
+    dropped: Platform/jurisdiction-specific rules, emergency protocols, sanctions, universal appeal/confidentiality promises, SLAs and full hypothetical workbench.
+  - path: references/ux-methodology/help-and-service-recovery.md
+    taken: 'Recover3 (2026-10-04), lines 34–115, 117–232, 301–322: lowest capable layer, unavailable support, open-request continuity, warm/cold transfer, minimal scoped context and confirmed resolution; condensed and reworded.'
+    dropped: Ticketing/back-end architecture, invented staff/channel capacity, SLAs, bulk logs and synthetic case details.
+  license: CC-BY-4.0
+  attribution: 'Adapted from design-and-frontend by SJY051 (2026), CC BY 4.0; condensed and mapped to existing flows/claims, with no new policy or operational permission.'
+- reference: lzl-research/references/user-studies.md
+  sources:
+  - path: references/ux-methodology/usability-testing-and-metrics.md
+    taken: 'Recover3 (2026-10-04), lines 28–156, 158–196, 198–298: study-purpose/protocol distinction, neutral tasks, assistance, timing, measures/denominators, standardized-scale limits, goals/signals/metrics and experiment assumptions; condensed without named scales.'
+    dropped: Named questionnaire formula and benchmark bands, fixed sample counts, fabricated population claims, new instruments and unrequested study execution.
+  - path: references/ux-methodology/user-research.md
+    taken: 'Recover3 (2026-10-04), lines 28–107, 109–151, 153–238, 240–299: decision-method fit, population and sample context, neutral past-episode evidence, method limits, traceable synthesis and scoped consent/non-fabrication; condensed and generalized.'
+    dropped: Mandatory artifact templates, fixed sample ranges, invented archetypes/emotions, recruitment or upload permissions and external read expansion.
+  license: CC-BY-4.0
+  attribution: 'Adapted from design-and-frontend by SJY051 (2026), CC BY 4.0; Q30 owner retained, with planning/interpretation explicitly separated from execution and access.'

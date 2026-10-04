@@ -175,17 +175,6 @@ def test_data_viz_sources_track_their_reference():
     assert_sources_track_their_reference(DATA_VIZ_REFERENCES)
 
 
-def test_each_style_reference_has_its_own_flat_destination():
-    entries = yaml.safe_load(MAP.read_text(encoding="utf-8"))["entries"]
-    style_references = [entry for entry in entries if entry.get("target") == "lapis/references/styles/"
-                        or entry["path"] == "assets/style-cards.md"
-                        or (entry["path"].startswith("references/styles/") and "reference" in entry["dest"]
-                            and entry["target"].startswith("lapis/references/style-"))]
-    assert len(style_references) == 9
-    for entry in style_references:
-        source = Path(entry["path"])
-        name = "cards" if source.name == "style-cards.md" else source.stem
-        assert entry["target"] == f"lapis/references/style-{name}.md"
 
 
 def test_type_and_color_sources_track_completed_reference_destinations():

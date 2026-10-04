@@ -1,7 +1,7 @@
 # LapisLazuli 도메인 이관 지도 — 기계용 v0 (문서 "도메인 이관 지도"에서 생성)
 version: 0
 generated: '2026-09-24'
-updated: '2026-10-03'   # Recover2: 우선순위 15개 대조. 10개 추가 회수·4개 기존 존재·1개 제외; 파일별 인용·변환·커밋·날짜는 저장소 밖 recovery-map.tsv가 단일 추적 소유자
+updated: '2026-10-04'   # Recover3: 다음 20개 대조. 15개 참조 회수·5개 기존 존재; 인용·변환·커밋·날짜는 recovery-map.tsv
 status_legend:
   todo: 시작 전
   partial: 일부 행선지 완료 (done에 적은 것)
@@ -99,9 +99,10 @@ entries:
   words: 3328
   dest:
   - reference
-  target: lapis
-  note: bold-expression과 합칠지 판단
-  status: todo
+  target: lapis/references/form-levers.md
+  note: 대체 매체·공간 index·데이터/소리의 상태 진실을 Response as a lever에 압축; 가상 예제·새 능력·별도 검사 체계는 제외
+  status: done
+  done: [reference]
 - path: references/art-direction/formal-experimentation.md
   words: 3736
   dest:
@@ -259,15 +260,18 @@ entries:
   dest:
   - card
   target: lapis
-  status: todo
+  status: done
+  done: [card]
+  note: 현재 소유자의 evidence/Reporting과 대조; 고정 답변 분량·옵션 수·새 원장은 제외, brief/interview는 GrillSkill에 출처 전달
 - path: references/creative-workflows/brief-inference.md
   words: 2121
   dest:
   - card
   - schema
   target: lapis
-  note: brief·direction 필드
-  status: todo
+  note: 현재 brief·claims·Design Read·dial·프레임으로 기존 존재 확인; optional Design Read와 interview gate는 현 계약에 승격하지 않음
+  status: done
+  done: [card, schema]
 - path: references/creative-workflows/design-brainstorming.md
   words: 1897
   dest:
@@ -290,7 +294,9 @@ entries:
   dest:
   - card
   target: lapis
-  status: todo
+  status: done
+  done: [card]
+  note: 기존 context/claims/explorations·근거/보호/Reporting 대조; 새 원장·역할·interview 확인 의무는 제외, 질문 출처는 GrillSkill에 전달
 - path: references/design-feedback/bounded-closed-loop.md
   words: 4069
   dest:
@@ -332,8 +338,10 @@ entries:
   words: 3054
   dest:
   - reference
-  target: lps-system
-  status: todo
+  target: lps-system/references/system-contracts.md
+  status: done
+  done: [reference]
+  note: 승인된 원본 family의 present/absent/unread·정확값·대체물·완료 경계와 채택 proof를 압축; vendor profile은 제외
 - path: references/design-systems/asset-led-system-building.md
   words: 3329
   dest:
@@ -346,20 +354,26 @@ entries:
   words: 2569
   dest:
   - reference
-  target: lps-system
-  status: todo
+  target: lps-system/references/system-contracts.md
+  status: done
+  done: [reference]
+  note: agreed consumer/artifact 범위·local-first·수요 기반 승격과 package 소유권을 압축; 고정 scale·seed·새 artifact 의무는 제외
 - path: references/design-systems/component-architecture.md
   words: 2638
   dest:
   - reference
-  target: lps-system
-  status: todo
+  target: lps-system/references/system-contracts.md
+  status: done
+  done: [reference]
+  note: anatomy·primitive/parts/recipe·ref/event/value 소유권·plain option identity와 consumer proof로 압축; 라이브러리별 API 예제는 제외
 - path: references/design-systems/design-system-anatomy.md
   words: 2616
   dest:
-  - card
-  target: lps-system
-  status: todo
+  - reference
+  target: lps-system/references/system-contracts.md
+  status: done
+  done: [reference]
+  note: layer·제품 논리의 경계·수요와 책임·독립 property/slot을 참조로 흡수; 카드 확장·성숙도 순위는 제외
 - path: references/design-systems/design-tokens.md
   words: 2941
   dest:
@@ -373,9 +387,10 @@ entries:
   words: 3892
   dest:
   - reference
-  target: ulm-maintain 참조
-  note: Q30. ulm-maintain 참조로(알린 뒤). 판 관리와 폐기
-  status: todo
+  target: ulm-maintain/references/system-governance.md
+  note: public consumer effect·독립 version 축·mechanism/evidence 분리·수명/owner를 압축; 새 게시·upgrade 권한이나 shim은 추가하지 않음
+  status: done
+  done: [reference]
 - path: references/design-systems/theming-and-dark-mode.md
   words: 3024
   dest:
@@ -528,7 +543,9 @@ entries:
   - merge
   target: lapis/references/visual-assets.md
   merge: visual-assets
-  status: todo
+  status: done
+  done: [merge]
+  note: 기존 image job/crop/icon과 대조 후 purpose별 alt·근거 screenshot·dimension/loading/failure만 추가; 자산 취득 권한은 불변
 - path: references/fundamentals/motion.md
   words: 1653
   dest:
@@ -543,9 +560,10 @@ entries:
   words: 4753
   dest:
   - merge
-  target: lapis/references/layout.md
-  note: Q30. 측정 가능한 원리만 이름 붙은 틀 없이 100단어 이하로 lapis에 합침(묶음 단서는 layout.md에 이미 있음)
-  status: todo
+  target: lps-ux/references/forms-and-recovery.md
+  note: 기존 grouping과 대조; 행동 진단(signifier/term/model)·예측 질문·보호/전문가 disclosure를 이름 붙은 틀 없이 100단어 미만으로 압축
+  status: done
+  done: [merge]
 - path: references/fundamentals/shape-elevation-and-surfaces.md
   words: 3639
   dest:
@@ -853,7 +871,9 @@ entries:
   - schema
   - card
   target: plan.brief.product_frame + lapis
-  status: todo
+  status: done
+  done: [schema, card]
+  note: 현재 product_frame·per-surface mode·12 baseline·brief/claims와 기존 존재 확인; 고정 dial 산술·새 frame 기준은 승격하지 않음
 - path: references/product-types/portfolio-and-personal.md
   words: 1898
   dest:
@@ -1255,20 +1275,26 @@ entries:
   words: 3686
   dest:
   - reference
-  target: lps-ux
-  status: todo
+  target: lps-ux/references/product-lifecycles.md
+  status: done
+  done: [reference]
+  note: first/repeat value·역할별 return·서로 다른 exit verb·정책 unknown과 기존 exit 보호를 압축; vendor 정책/SLA/metric 수치는 제외
 - path: references/ux-methodology/ai-product-interactions.md
   words: 4388
   dest:
   - reference
-  target: lps-ux
-  status: todo
+  target: lps-ux/references/product-lifecycles.md
+  status: done
+  done: [reference]
+  note: task object·5 truth·stop/retry/accept·revision/authority·retention·stream announcement를 압축; 새 runtime/AI 검사는 없음
 - path: references/ux-methodology/community-safety-and-moderation.md
   words: 5028
   dest:
   - reference
-  target: lps-ux
-  status: todo
+  target: lps-ux/references/product-lifecycles.md
+  status: done
+  done: [reference]
+  note: personal control/정책/receipt 분리·confidentiality·appeal·bulk/notice partial 상태를 압축; 제재·법률·응급·운영 규칙은 만들지 않음
 - path: references/ux-methodology/content-design.md
   words: 2412
   dest:
@@ -1300,8 +1326,10 @@ entries:
   words: 3606
   dest:
   - reference
-  target: lps-ux
-  status: todo
+  target: lps-ux/references/product-lifecycles.md
+  status: done
+  done: [reference]
+  note: 가장 낮은 capable layer·지원 불가의 정직한 표시·warm/cold handoff·최소 context·진짜 종료를 압축; support capability/SLA 발명 없음
 - path: references/ux-methodology/information-architecture.md
   words: 2030
   dest:
@@ -1332,15 +1360,18 @@ entries:
   words: 2485
   dest:
   - reference
-  target: ultramarine
-  status: todo
+  target: ultramarine/references/inspection-and-evidence.md
+  status: done
+  done: [reference]
+  note: independent inspection·behavior/consequence별 merge·척도 방향/희소성 오해·re-exercise를 압축; 이름 붙은 10점표와 fixed evaluator 수는 제외
 - path: references/ux-methodology/usability-testing-and-metrics.md
   words: 2640
   dest:
   - lazuli
-  target: lzl-research 참조
-  note: Q30. lzl-research 참조로(알린 뒤). 이름 붙은 척도는 일반적으로 설명
-  status: todo
+  target: lzl-research/references/user-studies.md
+  note: 기존 Q30 소유자를 유지; formative/benchmark·protocol·assistance·denominator·척도/experiment의 근거 한계를 일반화; 실행·모집·추가 읽기 권한 없음
+  status: done
+  done: [lazuli]
 - path: references/ux-methodology/user-flow-design-and-testing.md
   words: 5253
   dest:
@@ -1361,9 +1392,10 @@ entries:
   words: 2793
   dest:
   - lazuli
-  target: lzl-research 참조
-  note: Q30. lzl-research 참조로(알린 뒤)
-  status: todo
+  target: lzl-research/references/user-studies.md
+  note: 기존 Q30 소유자를 유지; decision별 method·population·consent·traceable synthesis를 압축; 고정 표본 수·발명된 persona/연구 근거는 제외
+  status: done
+  done: [lazuli]
 - path: references/ux-methodology/ux-process-overview.md
   words: 1960
   dest:
@@ -1713,8 +1745,10 @@ entries:
   words: 1843
   dest:
   - reference
-  target: lapis/references/style-cards.md
-  status: todo
+  target: lapis/references/form-levers.md
+  status: done
+  done: [reference]
+  note: 혼합 영향 소유권·real-content 비교·production 전이 기존 존재 확인; 20 style 카탈로그/anti-default는 AntiSlopRules에 출처 전달, 복사하지 않음
 - path: assets/type-scale-cheatsheet.md
   words: 845
   dest: *id010

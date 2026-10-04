@@ -27,6 +27,8 @@ checked against a baseline. It decides no design; a redesign goes to the `lapis`
 - Protect what users and other code rely on: states, focus, copy, URLs and history, form payloads,
   analytics events, storage keys, public exports. Matching screenshots do not prove these.
 
+For shared component/token migrations and consumer release evidence, read `references/system-governance.md`.
+
 ## Capture a baseline
 
 Serve the current build on a host that is ours (loopback, a private address, or a `.test` name

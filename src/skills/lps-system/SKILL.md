@@ -27,6 +27,8 @@ work has a contract to follow.
 2. Find the adopted primitives: component library, theme API, CSS custom properties, native style
    objects. New tokens plug into them; nothing bypasses them.
 
+For source-family adoption, system scope, or component APIs, read `references/system-contracts.md`.
+
 ## Token layers
 
 - **Primitives** hold values: color ramp steps, type sizes, space steps, radii, durations. Nothing

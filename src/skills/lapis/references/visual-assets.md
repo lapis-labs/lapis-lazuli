@@ -32,6 +32,14 @@ Keep a set coherent through light, distance, grade, background, and crop rhythm.
 can coexist with distinct named layers. Never grade product color, documentary evidence, or skin
 tone to fit the palette.
 
+Derive text alternatives from the image's purpose in this context, not its filename or generation
+prompt: empty for redundant decoration, action/destination for a functional image, the relevant
+differentiator for a product, and nearby equivalent information for a complex diagram. A screenshot
+needs its supporting state, privacy-safe data, current/illustrative status, and readable evidence;
+dramatic perspective is no substitute. Reserve intrinsic dimensions, keep key text usable on image
+failure, and test loading at the actual slot; lazy-loading the critical opening image is not a
+universal performance improvement.
+
 ## Icons
 
 Build a contact sheet from actual navigation, actions, objects, states, and domain concepts.

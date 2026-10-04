@@ -180,6 +180,15 @@ A motif must not read as state: a split field that also looks selected misleads.
 
 Response is a lever only when an action changes something a visitor can perceive through a relation they can learn; a trail that follows the cursor and changes nothing is atmosphere, so call it that. Write in `principles` what the visitor can do, what the work changes, and what it does not do. Keep trials reversible with a visible stop. Timing and interruption are in `motion.md`.
 
+An alternative preserves the task and useful relationship, not necessarily the same frozen frame.
+Keep a spatial index and its detail identity usable without the renderer; a screen's distances imply
+no geography or similarity unless documented. Data-driven expression shows source, age, missingness,
+and the mapped observation; intermediate motion is not a measured value and stale data never moves
+as if fresh. Sound is a separate optional channel: blocked playback must not show “playing”, and
+sound-off and reduced motion are different conditions. Invent no sensing, storage, feed, or recording
+capability to rescue a study. Exercise rapid reversal and unavailable media against the existing
+state owner; a screenshot proves neither input equivalence nor persistence.
+
 ## Open meaning, fixed consequences
 
 | Decision | Plan field | What checks it |
