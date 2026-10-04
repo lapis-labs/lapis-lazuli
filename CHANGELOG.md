@@ -130,9 +130,6 @@ after text.
   `plan` phase (two sets), and the gate's continuation for `brief` carries no approval note, since no plan exists
   yet. `lapis` points its start step at `lps-brief`, and the waiting message says to keep the record when approval
   replies are added to it.
-
-### Changed
-
 - `lapis` and `ultramarine` open with a short Done block: done is when `lapis-design next` says done, a missing or
   invalid input is never done, a blocking release verdict is a result to report, a run with nobody to ask records
   `approval: {state: assumed, reason: ...}` and goes on, and checks on 127.0.0.1 are not network use. The plan gate
