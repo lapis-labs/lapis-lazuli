@@ -245,5 +245,9 @@ def main(argv: list[str] | None = None, prog: str = "lazuli ref") -> int:
         print(f"  note: {note}")
     if kept:
         print(f"  study copies: {kept} ({', '.join(sorted(p.name for p in kept.iterdir()))})")
-        print("  for study only: look at them, never ship them or copy them into a page")
+        pictures = [p for p in sorted(kept.iterdir()) if p.suffix in (".png", ".jpg", ".jpeg", ".gif", ".webp")
+                    and p.name != "768.png"]
+        print(f"  look before you cite it: open {', '.join(str(p) for p in pictures)} with your image viewer "
+              "(Claude Code: Read the path); a relation that describes a picture you did not open is invented")
+        print("  for study only: never ship the copies or copy them into a page")
     return 0

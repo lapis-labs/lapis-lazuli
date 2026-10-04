@@ -158,9 +158,11 @@ after text.
   nothing else. A run that cannot reach the network records it with `next --unavailable references --reason`, which
   sends one plain GET first and refuses the record when it works (a smoke run recorded "the brief says no network"
   as its reason); `next` counts a record as done and the finished run reports it as not looked at. A brief's
-  no-network or no-external-assets line never excuses
-  the step, and the step text says so. Without `--task`, `next` also takes the task of the newest counted references
-  record. Existing create plans without a record return to the step, as they did for the brief.
+  no-network or no-external-assets line never excuses the step, and the step text says so. The check cannot tell
+  whether a capture image was opened (a smoke run wrote "seen in the image" without a single Read of one); the step
+  text and the capture's own report name the pictures to open first. Without `--task`, `next` also takes the task of
+  the newest counted references record. Existing create plans without a record return to the step, as they did for
+  the brief.
 - `lzl-research` lets a run find and study references itself in the `references` step, at a human pace and through the
   same source registry, robots.txt, and per-host pace (`refused` and `browser-link` sources stay refused); it reads
   only pages and pictures the user named outside that step. `lapis` points to it from its start step and from the

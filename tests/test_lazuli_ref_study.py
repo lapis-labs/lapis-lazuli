@@ -214,3 +214,13 @@ def test_the_css_scan_reads_declarations_and_skips_selectors_and_data_urls():
     text = "\n".join(lines)
     assert "font: 16px/1.5 Inter ×1" in text and "--logo" not in text and "hover" not in text
     assert "font-size: none found" in text and "media-query breakpoints: none found" in text
+
+
+def test_the_report_names_the_pictures_to_open_before_a_relation_is_written(site_with_sheet, project, capsys):
+    """A smoke run described pictures it never opened; the capture's own report now says which to open."""
+    assert run(project, "capture", URL, "--rights", "reference-only") == 0
+    assert "look before you cite" not in capsys.readouterr().out                   # no study copies, nothing to open
+    assert run(project, "capture", URL, "--rights", "reference-only", "--task", "kiln-shop") == 0
+    line = next(l for l in capsys.readouterr().out.splitlines() if "look before you cite" in l)
+    kept = project / FOLDER / "ref-invalid-work"
+    assert str(kept / "1440.png") in line and str(kept / "390.png") in line and "768.png" not in line
