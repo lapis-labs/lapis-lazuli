@@ -40,7 +40,8 @@ a plan; when `.lapis/plans/<task>.yaml` exists, read it first.
   incomparable); never delete them unasked.
 - **Project** `.lapis/`: lazuli writes only `fonts.lock.json` (`lazuli lock`,
   `shared/fonts/lock.schema.yaml`) and `refs/<slug>.json` (`lazuli ref`, validated against
-  `shared/render/extract.schema.yaml`; an invalid profile is never written).
+  `shared/render/extract.schema.yaml`; an invalid profile is never written). `lazuli fetch` writes an
+  open-licensed family's font files and license text into the project folder it is told, nothing else.
 - Never move `LAZULI_DB` into the project to work around sandbox or permission limits; if a
   project-local database is unavoidable, keep it outside version control and tell the user.
   It holds this machine's font inventory, including Adobe-derived rows, and is not a project asset.
@@ -52,16 +53,17 @@ a plan; when `.lapis/plans/<task>.yaml` exists, read it first.
 
 ## Every request follows these rules
 
-One module reaches the network, and only when a command asks; `lazuli search` and `lazuli lock`
-never do. The rules below hold for every request lazuli sends itself. What a captured reference
-page embeds (images, stylesheets, fonts, frames) is checked against the registry only.
+One module reaches the network, and only when a command asks; `lazuli search`, `lazuli lock`, and
+`lazuli license` never do. The rules below hold for every request lazuli sends itself. What a captured
+reference page embeds (images, stylesheets, fonts, frames) is checked against the registry only.
 
 - **Registry first** (`lazuli sources`; `shared/sources/registry.yaml`, fields in
   `shared/sources/registry.schema.yaml`). `adapter`: a catalog adapter collects it on command
-  (`lazuli catalog sync` or `lookup`). `read`: `lazuli read` may fetch one page the user asked
-  for. `browser-link`: never requested; the user gets the link. `refused`: the terms forbid tools;
-  nothing is sent. An unlisted host may be read. Every redirect hop is judged again, by the
-  registry and by that host's robots.txt, before it is requested.
+  (`lazuli catalog sync` or `lookup`; `lazuli fetch` reads one family's folder of the Google Fonts
+  repository, and writes nothing unless every file checks out). `read`: `lazuli read` may fetch one
+  page the user asked for. `browser-link`: never requested; the user gets the link. `refused`: the
+  terms forbid tools; nothing is sent. An unlisted host may be read. Every redirect hop is judged
+  again, by the registry and by that host's robots.txt, before it is requested.
 - **robots.txt first.** A disallowed path, or a robots.txt answered with 401, 403, 429, or a
   server error, blocks the request. A robots.txt that redirects is followed hop by hop, up to five.
 - **Pace.** Requests to one source, and each redirect hop to its own host, wait for the larger of
@@ -83,6 +85,10 @@ Exit 2 is a usage error or missing input everywhere. Exit 1 means:
 - `ref`: refused by the registry, robots.txt, a block or sign-in page, or rights the page cannot
   meet.
 - `lock`: the existing lock is unreadable or invalid. An unchanged entry and `--dry-run` exit 0.
+- `fetch`: blocked, refused by the registry or robots.txt, or a file that failed its checks (nothing is
+  written). A family it cannot fetch (not in the Google Fonts catalog, a license the lock has no kind for)
+  or an `--into` outside the project is exit 2.
+- `license`: exit 2 for a family the lazuli database does not know; it sends nothing.
 - `class remove`: no class to remove.
 - `color lookup`: an incomplete code, such as one without its library suffix.
 - `catalog sync` or `lookup`: a source failed or was blocked, the user declined the requests, or
@@ -97,7 +103,7 @@ Paths use the plan path grammar; `shared/plan/schema.yaml` holds the lookup fiel
 |---|---|---|
 | `tokens.type.roles[*]` with `brief.platform` | `lazuli search --script <code> --role <role>`, plus `--delivery web` for `web`, `--delivery app` for `ios`, `android`, `desktop`, `embedded` | `lzl-fonts` |
 | `brief.locales`, `tokens.type.roles[*].scripts` | `--script`: `kore` Korean, `jpan` Japanese, `hans` or `hant` Chinese, or the plan's own code | `lzl-fonts` |
-| `tokens.type.roles[*].family` once chosen, `task.id` | `lazuli lock "<family>" --role <role> --task <task.id>` into `.lapis/fonts.lock.json`, the default `tokens.type.lock` | `lzl-fonts` |
+| `tokens.type.roles[*].family` once chosen, `task.id` | `lazuli lock "<family>" --role <role> --task <task.id>` into `.lapis/fonts.lock.json`, the default `tokens.type.lock`; before it, `lazuli license "<family>"` for a license to research and `lazuli fetch "<family>" --into <folder>` for an open-licensed family's files | `lzl-fonts` |
 | `tokens.color.roles[*].system_code` | `lazuli color lookup <system> <code>`; `lazuli color record` for a value the user has | `lzl-color` |
 | `tokens.color.roles[*].oklch` near a standard | `lazuli search --type color "oklch(<L> <C> <H>)"`: nearest codes, never an identity | `lzl-color` |
 | `references[*]` by `kind`, with `rights` | `lazuli ref capture <url>`, `profile <image-or-url>`, or `system <path-or-url>`, with `--rights <rights>`; in the `references` step also `--task <task>` for study copies | `lzl-research` |

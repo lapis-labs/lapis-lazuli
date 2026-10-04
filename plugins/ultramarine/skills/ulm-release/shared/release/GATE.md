@@ -116,7 +116,7 @@ license facts). Its `layer` is where the evidence is missing: `render` for width
 | `release.procedure-order` | a plan in `mode: create` whose page code came before its brief, references, or plan, by one of two readings: the first-write record `.lapis/order/<task>.json`, which `lapis-design hook pre-write` writes when a page write goes through while `next` still asked for one of them, or, with no such record, every page source file (markup, style, and script files outside hidden and generated folders) last modified before the brief record or the references record. A plan revised after the page says nothing, so the plan's own time is not read. Lifted by a plan that cites `.lapis/answers/<task>.md` in `context.other` and lists the existing code as a candidate (`source: existing-code`) of a `direction` exploration. Layer `plan`, `evidence.type: source`; blocking, class `requirement`, only when `LAPIS_UNATTENDED=1`, and then a defect, not a missing input; otherwise class `quality`, `{create: warn, review: P2}`, not blocking |
 | `release.license-changed` | a catalog font's current license kind differs from the lock |
 | `release.license-unchecked` | a catalog font's license could not be refreshed: the source blocked the request, answered in a form the adapter cannot read, the family was not found, or `--offline` was given |
-| `release.license-unconfirmed` | a font's license is declared by the user (`license.source_class: user-declared`), comes with a subscription sync, or is unknown, including a catalog font whose lock and refreshed catalog both say `unknown`. Class `quality`, `{create: warn, review: P2}`, not blocking: listed first so the user reconfirms it |
+| `release.license-unconfirmed` | a font's license is declared by the user (`license.source_class: user-declared`), is recorded `restricted` by the license research (naming its restrictions), comes with a subscription sync, or is unknown, including a catalog font whose lock and refreshed catalog both say `unknown`. Class `quality`, `{create: warn, review: P2}`, not blocking: listed first so the user reconfirms it |
 
 ## Skipped findings and the critic
 
@@ -148,7 +148,10 @@ with its usual robots.txt, pacing, and sign-in rules, and maps the catalog's lic
 
 A different kind is `release.license-changed`. Per-use grants are not compared, because catalogs
 carry none. Families whose source is `adobe-sync`, `user-installed`, `foundry-purchase`,
-`open-source-other`, or `noonnu` get `release.license-unconfirmed`. `sandoll` families are refreshed
+`open-source-other`, or `noonnu` get `release.license-unconfirmed`, except an `open-source-other` or
+`noonnu` family whose license research is `verified` from a document (`license.research.outcome`, with
+`source_class` `rights-holder` or `provider`): that license was read from its own document and needs no
+second reading. A `restricted` outcome is listed for any source but `system`. `sandoll` families are refreshed
 and, because their grants depend on the user's subscription, also get `release.license-unconfirmed`.
 Families whose `source` is `system` are left to the plan checks whatever their
 `license.source_class`, since the plan checks already block a system face with no delivery path for

@@ -8,13 +8,19 @@ tokens.
 ## Exploring and shipping
 
 Read the local inventory and the catalogs, and take open-licensed libraries, commercial foundries, and
-Adobe Fonts as candidates to explore and brainstorm with. Their licensing, purchase, or activation goes
-to the user for approval; nothing is bought, downloaded, or activated for them.
+Adobe Fonts as candidates to explore and brainstorm with. An open-licensed family (OFL and similar) may
+be found online, fetched from its official source, and bundled with its license text
+(`lazuli fetch "<family>" --into <folder>` for a Google Fonts family, the steps in `lzl-fonts` for another
+official release); an installed face whose license was verified may be bundled too. A commercial family
+needs the user's approval to license, and an Adobe face stays on the user's own Adobe account and web
+project: nothing is bought or activated for them. A font whose license is not found at first is
+researched before it is judged (`lzl-fonts`, License research); one still unknown after that stays a
+candidate and does not ship.
 
-Offline shipping leaves three outcomes: an installed named face with a fallback stack, OFL files the
-user supplies for the project, or a generic family that won a recorded comparison against a named
-face. A generic family alone is a choice, not a fallback: it has to win the comparison in
-`explorations`.
+Offline, shipping leaves three outcomes: an installed named face with a fallback stack, open-licensed
+files already in the project or installed with a verified license, or a generic family that won a
+recorded comparison against a named face. A generic family alone is a choice, not a fallback: it has to
+win the comparison in `explorations`.
 
 ## Roles per script
 
@@ -68,15 +74,17 @@ Work down the rows. "Not checked" means only the report shows the work.
 | For each open role group, set two or three candidates in the real copy of every locale (see Specimen below), read their measured facts (`why`, class, weights, scripts, delivery), and record the choice and why the runner-up lost | `explorations[*]`: `compared_on`, `chosen`, `runner_up_lost` | the same rule reads a `chosen` among the candidates, a specimen or render in `compared_on`, and a `runner_up_lost` |
 | Hangul and Latin: one face that draws both, or a Hangul face with a Latin companion as two entries | `tokens.type.roles[*].scripts` | `type.font-fallback` reads a rendered page for text drawn in a face other than the requested one. `scripts` also limits the neutral-grotesque region to Latin |
 | Record each choice: `role`, one `family` name, `weights`, `scripts`, `source` | `tokens.type.roles[*]` | the schema; `type.single-neutral-sans` reads whether two or more roles all name one family; `type.overused-neutral-grotesque`, `type.serif-luxury-display`, and `type.costume-monospace` read measured features, so they need the lazuli database |
-| Lock with the delivery path: `lazuli lock "<family>" --role <role> --task <task>`. An Adobe face on a web plan adds `--source adobe-sync --delivery adobe-web-project` | `tokens.type.lock` | `font.no-lock` (no lock given), `font.not-locked` (a family missing from it), `font.no-web-delivery` (no web delivery path), `font.channel-mismatch` (files from a source that cannot ship them), `font.use-unknown` (no recorded grant for a planned use) |
+| Lock with the delivery path: `lazuli lock "<family>" --role <role> --task <task>`. An Adobe face on a web plan adds `--source adobe-sync --delivery adobe-web-project`; bundled files add `--source`, `--source-url`, `--files`, `--notice`, and the research that read their license (`--research`, `--evidence`) | `tokens.type.lock` | `font.no-lock` (no lock given), `font.not-locked` (a family missing from it), `font.no-web-delivery` (no web delivery path), `font.channel-mismatch` (files from a source that cannot ship them), `font.license-unresearched` (files would ship under a license nobody looked for), `font.license-unknown` (looked for and not found), `font.use-unknown` (no recorded grant for a planned use), `font.license-restricted` (a license that allows the use only within recorded conditions) |
 | An intended `system-ui` (an operate screen, a tight budget, email) is a candidate like any other: it wins by comparison on each platform in `brief.platform`, against a named face | `explorations` (`chosen: system-ui`); `defaults`: `type.overused-neutral-grotesque`, `keep`, `keep_when: won-comparison`, `evidence: { exploration: system-ui }`, a `basis`, and a `reason` naming the platforms seen | the generic-family finding below; the keep waives only when a complete comparison in `explorations` chose that face for a role that uses it |
 | No database: set `LAZULI_DB` to a writable path, run `lazuli local fonts` and `lazuli catalog sync`, then `lazuli search --license open --delivery web`, and lock a family the user or `DESIGN.md` names with `--source`, `--delivery`, `--postscript`. With nothing to name, use `system-ui`, add one `claims.unresolved` line, report it first, and ask the user to name a face or to fix the platform's own face in the brief (`fixed_by: brief`) | `claims.unresolved` | `plan.uncompared-decision` and the finding below stay open until then |
 
 **Specimen.** One throwaway page per task under `.lapis/specimens/`, never shipped. For each
 candidate, one column with the page's own title, a real paragraph, a control, an error line, and the
 figures, in every locale of `brief.locales`, at the sizes the roles will use; keep the system face or
-the current face as a control. Installed faces draw by name. A catalog face that is not installed
-cannot be drawn without fetching it, so compare it on `lazuli search` evidence and let `compared_on`
+the current face as a control. Installed faces draw by name. A catalog face that is not installed can be
+drawn once its files are fetched (an open-licensed family only: `lazuli fetch "<family>" --into
+.lapis/specimens/<task>/fonts/<slug>`; the fetch is for the specimen, and only the face that wins is
+bundled and locked); otherwise compare it on `lazuli search` evidence and let `compared_on`
 cover only what was drawn. Capture it with `lapis-design render check .lapis/specimens/<task>.html
 --task <task>-specimen --width 390` and view the screenshots beside the extract at size.
 
