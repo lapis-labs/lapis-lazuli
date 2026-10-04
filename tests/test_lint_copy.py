@@ -928,7 +928,13 @@ def test_a_status_the_product_reports_is_not_change_log_narration(lang, text):
 
 SELF_DESCRIPTION = [("en", "Click the button below to see how the page works."), ("en", "This section explains what the studio does."),
                     ("ko", "아래 버튼을 클릭하면 예약 화면을 확인할 수 있어요."), ("ko", "이 섹션에서는 도자기를 보여줍니다."),
-                    ("ja", "下のボタンをクリックすると予約画面をご覧いただけます。"), ("ja", "このセクションでは作品を紹介しています。")]
+                    ("ja", "下のボタンをクリックすると予約画面をご覧いただけます。"), ("ja", "このセクションでは作品を紹介しています。"),
+                    # the flow narrating itself instead of asking for the next thing
+                    ("en", "In the next step you will enter your patient details."),
+                    ("en", "Once you pick a date and time, you'll move on to the next step."),
+                    ("ko", "다음 단계에서 환자 정보를 입력합니다."), ("ko", "날짜와 시간을 선택하면 다음으로 이동해요."),
+                    ("ko", "다음 화면에서는 예약 내용을 확인하게 됩니다."),
+                    ("ja", "次のステップでお客様情報を入力します。"), ("zh", "下一步将输入患者信息。")]
 
 
 @pytest.mark.parametrize("lang,text", SELF_DESCRIPTION)
@@ -936,9 +942,16 @@ def test_the_page_describing_itself_is_meta_text(lang, text):
     assert len(meta(doc(("feature-grid", [r(text)]), lang=lang)).hits) == 1
 
 
-@pytest.mark.parametrize("text", ["Click the button to continue.", "Use the filters to narrow the list."])
+@pytest.mark.parametrize("text", ["Click the button to continue.", "Use the filters to narrow the list.",
+                                  "Next: patient details", "Enter your name as it appears on your ID."])
 def test_an_instruction_that_does_not_point_at_the_page_is_not_self_description(text):
     assert meta(doc(("feature-grid", [r(text)]))).hits == []
+
+
+@pytest.mark.parametrize("text", ["다음 단계", "다음 단계로 이동", "환자 정보 입력", "2단계 · 환자 정보 입력",
+                                  "이름은 신분증에 적힌 대로 입력해 주세요."])
+def test_a_step_title_or_a_field_hint_is_not_flow_narration(text):
+    assert meta(doc(("feature-grid", [r(text)]), lang="ko")).hits == []
 
 
 @pytest.mark.parametrize("lang,text", [("en", "Dev note: wire up the backend later."), ("en", "Replace this with real content."),
