@@ -2,8 +2,9 @@
 
 The record is `.lapis/answers/<task>.md`: the file the exit gate reads a relayed person's replies from, so a
 person's answers and a run's own sit together. `lapis-design next` counts it as a brief record when it has a
-`## Found` section and an `## Answers` section with text, and when every `[assumed]` item gives its `Basis:`.
-It judges nothing else.
+`## Found` section and an `## Answers` section with text, and when every `[assumed]` item gives its `Basis:`. It
+also counts the rounds (below) and returns the step `brief` when a round holds more than six items or a third
+round appears. It judges nothing else.
 
 ## Shape
 
@@ -51,6 +52,24 @@ A `Basis:` says why that answer and not another: the lookup it came from, or "ca
 A relayed run's replies go in as `[declared]` items under their question, in a later round's own
 `## Answers (round 2)` heading. When the plan exists and asks for approval, add those replies under their own
 heading and keep what the file holds; overwriting the record sends the run back to `brief`.
+
+## Rounds
+
+A round is one message of at most six questions and the answers to it. In the record a round is the list items
+under one answers heading:
+
+| Round | Heading |
+|---|---|
+| 1 | `## Answers` |
+| 2 | `## Answers (round 2)` |
+
+`next` counts the items under each heading, tagged or not, and returns the step `brief` when one holds more than
+six, or when a third round appears (`## Answers (round 3)`, or a line such as `Round 3 of 3.`). Items all under
+`## Answers` are round 1, so put a second round's under its own heading. An answer is one item: the request's own
+statements share one `[declared]` item per question they settle, not one item per fact, and what the project or a
+lookup gave belongs in `Found`. A sub-list inside an item is not counted. `.lapis/questions/<task>.md` holds the
+round being asked; its numbered questions are counted the same way, and more than six returns `brief` instead of
+`waiting-for-user`.
 
 ## The plan seed
 

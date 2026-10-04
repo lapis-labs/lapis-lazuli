@@ -20,9 +20,12 @@ license: MIT AND CC-BY-4.0
 - When a person will answer, a user or an operator who relays replies, write the questions the plan needs (the
   brief before it, or its approval) to `.lapis/questions/<task>.md` and stop with them as your last message: `next`
   says `waiting-for-user` and the exit gate lets that stop pass, twice before a plan and once after, never for a
-  file of fewer than two words. Record the replies in `.lapis/answers/<task>.md`, the brief record: keep what it
-  holds, add approval replies under their own heading, cite it in the plan (`context.other`), and run `next` again.
-- A brief's no-network line limits what the page loads; checks on 127.0.0.1 are not network use.
+  file of fewer than two words or a brief set of more than six numbered questions. Record the replies in
+  `.lapis/answers/<task>.md`, the brief record: keep what it holds, add approval replies under their own heading,
+  cite it in the plan (`context.other`), and run `next` again.
+- A no-network or no-external-assets line in the brief limits what the shipped page loads; looking things up and
+  capturing references for study is part of the work and needs no extra permission. Checks on 127.0.0.1 are not
+  network use.
 - The order is brief, references, plan, then code: write no markup, style, script, or component file while `next` names
   `brief`, `references`, or a plan step. Page code written first comes back as `plan-order`, and an unattended run's
   page writes may be refused until then.
@@ -67,7 +70,8 @@ A small edit inside an established system needs no plan. Say so and make the edi
 5. Before the plan of a create run, look at references yourself: `next` names `references` until
    `.lapis/references/<task>.md` passes. Search, capture with `lazuli ref ... --task <task>`, open the
    captures, and read a page's HTML and CSS, as the `lzl-research` skill's exploration guide describes.
-   A brief's no-network line limits what the page loads, never this research.
+   A no-network or no-external-assets line in the brief limits what the shipped page loads; looking things up and
+   capturing references for study is part of the work and needs no extra permission.
 
 ## Direction principles
 

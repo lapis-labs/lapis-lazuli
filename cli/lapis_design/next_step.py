@@ -226,6 +226,9 @@ def evaluate(root: Path, task: str, page: str | None = None) -> dict:
     found = waiting.pending(root, task, "approval" if plan_exists else "plan", gate.load(root, task).get("waits"))
     if found is None:
         return result
+    if (found["phase"] == "plan" or step["id"] == brief.STEP) and (over := brief.questions_problem(root, task)):
+        cut = _step(brief.STEP, brief.over_why(task, over))      # questions past the cap are cut, never waited on
+        return {**result, "step": cut, "reason": cut["why"]}
     wait = _step(waiting.STEP, waiting.why(task, found, step["id"]))
     return {**result, "state": waiting.STEP, "step": wait, "then": step, "waiting": found, "reason": wait["why"]}
 
@@ -248,8 +251,8 @@ def _steps(root: Path, task: str, page: str | None) -> dict:
     try:
         plan = read_plan(paths["plan"])
     except FileNotFoundError:
-        if reason := brief.record_problem(root, task):
-            return state(_step(brief.STEP, brief.why(task, reason, planned=False)), False)
+        if owed := brief.owed(root, task, planned=False):
+            return state(_step(brief.STEP, owed), False)
         if found := _references_owed(root, task):
             return state(_step(references.STEP, references.why(task, found, planned=False)), False)
         return state(_step("plan", f"Write the plan at {plan_rel} before any code or check, and cite the brief record "
@@ -269,8 +272,8 @@ def _steps(root: Path, task: str, page: str | None) -> dict:
         why = plan.problem if isinstance(plan, PlanOverLimit) else "the plan is not a mapping"
         return state(_step("plan-fix", f"{plan_rel}: {why}", check, shared / "plan" / "schema.yaml"), False)
     if plan.get("mode") == "create":
-        if reason := brief.record_problem(root, task):
-            return state(_step(brief.STEP, brief.why(task, reason, planned=True)), False)
+        if owed := brief.owed(root, task, planned=True):
+            return state(_step(brief.STEP, owed), False)
         if found := _references_owed(root, task):
             return state(_step(references.STEP, references.why(task, found, planned=True)), False)
 

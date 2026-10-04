@@ -263,7 +263,10 @@ files beside it; the database file itself does not change.
   then `references`, then `plan` (task from `$LAPIS_TASK`, else the project folder's name); otherwise it prints one line
   and never blocks.
   The `brief` step (`brief.py`) is asked for while a run with no plan, or a plan in `create` mode, has no brief record:
-  `.lapis/answers/<task>.md` with a `## Found` and an `## Answers` section whose `[assumed]` items give a `Basis:`.
+  `.lapis/answers/<task>.md` with a `## Found` and an `## Answers` section whose `[assumed]` items give a `Basis:`, at
+  most six items under each answers heading (`## Answers` is round 1, `## Answers (round 2)` round 2) and no third
+  round; a pending set in `.lapis/questions/<task>.md` of more than six numbered questions is cut the same way
+  (`brief.owed`, `brief.questions_problem`), so the step is `brief` and the run does not wait.
   The `references` step (`references.py`) follows it on the same terms: `.lapis/references/<task>.md`, a fenced `yaml`
   block of at least six references, each with a `capture` file under `.lapis/references/<task>/` (three kinds and two
   outside `web-ui` among the images, `source_facts` for `web-ui`, at most two text-only); a run with no network records

@@ -157,6 +157,21 @@ after text.
 
 ### Changed
 
+- `lapis-design next` holds the brief to its question cap. Runs recorded 11 and 8 answers in round 1 although
+  `lps-brief` allows six questions a round and two rounds. `brief.py` now counts the list items under each answers
+  heading of `.lapis/answers/<task>.md` (`## Answers` is round 1, `## Answers (round 2)` round 2, a `Round N`
+  subheading inside the section starts that round, a sub-list inside an item is not counted) and returns the step
+  `brief`, with the count and the fix in its message, when a round holds more than six or a round past the second
+  appears (a heading, or a `Round 3 of 3.` line). The numbered questions of a pending set in
+  `.lapis/questions/<task>.md` are counted the same way while no plan exists or the brief is the step: more than six
+  returns `brief` instead of `waiting-for-user`, so the exit gate continues the run instead of letting it stop on
+  them. A set of approval questions after the plan is not capped. `lps-brief/references/record.md` gets a `Rounds`
+  section that makes the boundary explicit; `lps-brief` and `lapis` point at it.
+- One sentence in `lps-brief`, `lapis` (the Done block and the references step of "At the start of a task"), and the
+  `references` step text of `next`: a no-network or no-external-assets line in the brief limits what the shipped page
+  loads, and looking things up and capturing references for study is part of the work and needs no extra permission
+  (an unattended run stopped to ask whether the line forbade the reference captures). `lps-brief` also says its
+  restriction to pages the user named holds in the brief, and that the `references` step after it looks at others.
 - `copy.meta-text`: a bare "Preview", "Sample", "Example", or "Test" label is no longer a demo badge (a column or chip of that name is content); `version N` is a build label only with a dotted number, and a build label is read only in runs of eight words or fewer, so "Version 3" in a version history and "built with care" no longer hit.
 - `lapis-design next` and the exit gate name `brief` before `plan`: a project folder with no plan, and an unattended
   run that wrote none, are first sent to the brief record and then to the plan. The brief's questions wait in the

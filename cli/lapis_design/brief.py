@@ -12,6 +12,11 @@ from: `[declared]` (the user said it), `[known]` (a source says it), `[assumed]`
 guessed and why rather than guessing silently. Nothing here judges whether the answers are good; it keeps
 the record from being an empty file, an unsorted copy of replies, or a guess with no reason.
 
+The questions are capped, and the cap is counted where the files show it. A round is the list items under one
+answers heading: `## Answers` is round 1, `## Answers (round 2)` round 2; more than `PER_ROUND` items under one,
+or a round past `ROUNDS`, sends the run back to `brief`. The questions file `waiting.py` reads holds the round
+being asked, and its numbered questions are counted the same way. The count is of list items, tagged or not.
+
 Stdlib only: the stop hook imports this at the end of every turn.
 """
 from __future__ import annotations
@@ -31,6 +36,15 @@ _HEADING = re.compile(r"^(#{1,6})\s+(.*?)\s*#*\s*$")
 _ITEM = re.compile(r"^\s{0,3}(?:[-*+]|\d+[.)])\s+(.*)$")
 _TAG = re.compile(r"^[*_`]*\[(declared|known|assumed|open)\]", re.IGNORECASE)
 _BASIS = re.compile(r"\bbasis\b\s*:\s*(\S.*)", re.IGNORECASE | re.DOTALL)
+_ROUND = re.compile(r"\bround\s*(\d+)", re.IGNORECASE)
+_ROUND_LINE = re.compile(r"^\W*round\s+(\d+)\s+of\s+\d+", re.IGNORECASE | re.MULTILINE)   # "Round 2 of 2."
+_NUMBERED = re.compile(r"^\s{0,3}\**Q?\d+[.):]\**\s+\S", re.IGNORECASE)                 # a numbered question
+
+
+def _name(title: str) -> str:
+    """A heading's first word in lower case ("" for a heading with no word)."""
+    words = re.findall(r"[^\W\d_]+", title.lower())
+    return words[0] if words else ""
 
 
 def sections(text: str) -> dict[str, str]:
@@ -42,8 +56,7 @@ def sections(text: str) -> dict[str, str]:
     found: dict[str, list[str]] = {}
     for n, (start, level, title) in enumerate(heads):
         end = next((i for i, other, _ in heads[n + 1:] if other <= level), len(lines))
-        words = re.findall(r"[^\W\d_]+", title.lower())
-        found.setdefault(words[0] if words else "", []).extend(lines[start + 1:end])
+        found.setdefault(_name(title), []).extend(lines[start + 1:end])
     return {name: "\n".join(body) for name, body in found.items()}
 
 
@@ -84,6 +97,89 @@ def record_problem(root: Path, task: str) -> str | None:
     return problem(text)
 
 
+def _top_level(lines: list[str]) -> int:
+    """The list items among `lines` that sit at the outermost indent, so a sub-list inside an answer adds nothing."""
+    indents = [len(line) - len(line.lstrip()) for line in lines if _ITEM.match(line)]
+    return indents.count(min(indents)) if indents else 0
+
+
+def answer_rounds(text: str) -> dict[int, int]:
+    """The list items in each round's answers, by round number. `## Answers` is round 1 and `## Answers (round 2)`
+    round 2; a `Round N` subheading inside an answers section starts that round there."""
+    lines = text.splitlines()
+    heads = [(i, len(m.group(1)), m.group(2)) for i, line in enumerate(lines) if (m := _HEADING.match(line))]
+    counts: dict[int, int] = {}
+    covered = 0                                    # an answers heading inside another answers section is read there
+    for n, (start, level, title) in enumerate(heads):
+        if start < covered or _name(title) != "answers":
+            continue
+        end = next((i for i, other, _ in heads[n + 1:] if other <= level), len(lines))
+        covered = end
+        number = int(named.group(1)) if (named := _ROUND.search(title)) else 1
+        chunk: list[str] = []
+        for line in lines[start + 1:end]:
+            sub = _HEADING.match(line)
+            if sub and (named := _ROUND.search(sub.group(2))):
+                counts[number] = counts.get(number, 0) + _top_level(chunk)
+                number, chunk = int(named.group(1)), []
+            else:
+                chunk.append(line)
+        counts[number] = counts.get(number, 0) + _top_level(chunk)
+    return counts
+
+
+def rounds_problem(text: str, where: str) -> str | None:
+    """How the answers in `text` break the cap, or None when they keep it: at most `PER_ROUND` items in a round and no
+    round past `ROUNDS`. A line such as `Round 2 of 2.` also names the round the record is in."""
+    counts = answer_rounds(text)
+    latest = max([*counts, *(int(number) for number in _ROUND_LINE.findall(text))], default=0)
+    if latest > ROUNDS:
+        return (f"{where} records a round {latest}, and the brief has at most {ROUNDS} rounds: after round {ROUNDS} go on, "
+                "with what is still open as `[open]` or an `[assumed]` default with its `Basis:`")
+    for number in sorted(counts):
+        if counts[number] > PER_ROUND:
+            return (f"{where} holds {counts[number]} answers in round {number}, and a round holds at most {PER_ROUND}: "
+                    f"rank what is still open by how much the answer changes the page, keep the top {PER_ROUND}, and "
+                    "leave out what the request or a lookup already answered (that is a `Found` line)")
+    return None
+
+
+def cap_problem(root: Path, task: str) -> str | None:
+    """How `.lapis/answers/<task>.md` under `root` breaks the cap on questions, or None when it keeps it."""
+    path = waiting.answers_path(root, task)
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    return rounds_problem(text, path.relative_to(root).as_posix())
+
+
+def questions_problem(root: Path, task: str) -> str | None:
+    """How `.lapis/questions/<task>.md` under `root` breaks the cap, or None when it keeps it. The file holds the
+    round being asked: its numbered questions, those under a `Questions` heading when it has one."""
+    path = waiting.questions_path(root, task)
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    body = sections(text).get("questions", "")
+    asked = sum(1 for line in (body if body.strip() else text).splitlines() if _NUMBERED.match(line))
+    if asked > PER_ROUND:
+        return (f"{path.relative_to(root).as_posix()} numbers {asked} questions, and a round asks at most {PER_ROUND}: "
+                f"keep the top {PER_ROUND} by how much the answer changes the page, drop the rest, and write the file again")
+    return None
+
+
+def owed(root: Path, task: str, planned: bool) -> str | None:
+    """What the `brief` step says while the brief is not in order, or None when it is: the record is missing or no
+    record (`why`), or its rounds break the cap on questions (`over_why`)."""
+    if reason := record_problem(root, task):
+        return why(task, reason, planned)
+    if over := cap_problem(root, task):
+        return over_why(task, over)
+    return None
+
+
 def why(task: str, reason: str, planned: bool) -> str:
     """What the `brief` step tells the run to do. `planned` says a plan already exists without the record."""
     record = waiting.answers_path(Path("."), task).as_posix()
@@ -99,7 +195,19 @@ def why(task: str, reason: str, planned: bool) -> str:
             "answer them yourself. Write the record to "
             f"{record}: a `## Found` section (what you read or looked up, with sources, or why nothing could be) and an "
             "`## Answers` section whose items start with [declared] (the user said it), [known] (a source says it), "
-            "[assumed] (your own choice, followed by `Basis:` and the reason) or [open]. Then cite the record from the "
+            "[assumed] (your own choice, followed by `Basis:` and the reason) or [open]; a second round goes under its "
+            "own `## Answers (round 2)` heading. Then cite the record from the "
             "plan's `context.other` and carry what it settled into `brief`, `claims`, and `world_materials`; never put an "
             "[assumed] answer in `claims.known` or `claims.declared`. A repair of named findings needs no brief: write "
             "its plan with `mode: repair`.")
+
+
+def over_why(task: str, reason: str) -> str:
+    """What the `brief` step says when the questions or answers break the cap; `reason` is from `cap_problem` or
+    `questions_problem`."""
+    record = waiting.answers_path(Path("."), task).as_posix()
+    questions = waiting.questions_path(Path("."), task).as_posix()
+    return (f"The brief is over its question cap: {reason}. The cap is {PER_ROUND} questions a round and {ROUNDS} rounds. "
+            f"A round is the list items under one answers heading of {record} (`## Answers` is round 1, "
+            f"`## Answers (round 2)` round 2), or the numbered questions of the one message in {questions}. Fix the "
+            f"file, then run `lapis-design next --task {task}` again.")

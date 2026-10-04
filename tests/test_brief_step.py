@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from lapis_design import brief, next_step
+from lapis_design import brief, gate, next_step
 from lapis_design.cli import main as cli_main
 from procedure_support import BRIEF_RECORD, TASK, ask, make_project, record, reply, save, update
 
@@ -135,3 +135,106 @@ def test_the_task_of_a_run_that_only_recorded_its_brief_is_found_by_the_record(b
     save(bare, "plans/older-plan.yaml", {})
     os.utime(bare / ".lapis/plans/older-plan.yaml", (100, 100))
     assert next_step.resolve_task(bare) == "kiln-remake"               # the newest of plans, questions, and records
+
+
+def answered(first: int, count: int) -> str:
+    """`count` assumed answers numbered from `first`."""
+    return "".join(f"- [assumed] Q{n} Which glaze goes first? The celadon. Basis: the kiln's own price list.\n"
+                   for n in range(first, first + count))
+
+
+def rounds_of(*counts: int, header: str = "Round 1 of 2.") -> str:
+    """A brief record with one answers heading per round, each holding that many answers."""
+    text = f"# Brief: kiln shop\n\n{header}\n\n## Found\nThe studio fires once a month: PRODUCT.md.\n\n"
+    first = 1
+    for number, count in enumerate(counts, start=1):
+        text += f"## Answers{'' if number == 1 else f' (round {number})'}\n\n{answered(first, count)}\n"
+        first += count
+    return text
+
+
+WITHIN_THE_CAP = [
+    ("six answers in one round", rounds_of(6)),
+    ("two rounds of six", rounds_of(6, 6)),
+    ("a second round under a subheading of Answers",
+     "## Found\nPRODUCT.md read.\n## Answers\n### Round 1\n" + answered(1, 6) + "### Round 2\n" + answered(7, 6)),
+    ("a sub-list inside an answer is no further answer",
+     "## Found\nPRODUCT.md read.\n## Answers\n" + "".join(
+         f"- [assumed] Q{n} Who buys? Buyers. Basis: the price list.\n  - the studio's own newsletter list\n"
+         for n in range(1, 7))),
+]
+
+
+@pytest.mark.parametrize("case, text", WITHIN_THE_CAP, ids=[case for case, _ in WITHIN_THE_CAP])
+def test_a_record_within_six_answers_a_round_and_two_rounds_goes_on_to_the_references(bare, case, text):
+    record(bare, "answers", text, 100)
+    assert step_of(bare) == "references", case
+
+
+OVER_THE_CAP = [
+    ("seven answers in the first round", rounds_of(7), "holds 7 answers in round 1"),
+    ("eleven answers under one heading", rounds_of(11), "holds 11 answers in round 1"),
+    ("seven answers in the second round", rounds_of(3, 7), "holds 7 answers in round 2"),
+    ("a third round", rounds_of(2, 2, 2), "records a round 3"),
+    ("a header that says round 3", rounds_of(4, header="Round 3 of 3."), "records a round 3"),
+]
+
+
+@pytest.mark.parametrize("case, text, part", OVER_THE_CAP, ids=[case for case, _, _ in OVER_THE_CAP])
+def test_a_record_with_a_round_past_six_answers_or_a_third_round_goes_back_to_the_brief_and_says_which(
+        bare, case, text, part):
+    record(bare, "answers", text, 100)
+    result = evaluated(bare)
+    assert result["step"]["id"] == "brief", case
+    assert part in result["step"]["why"] and f".lapis/answers/{TASK}.md" in result["step"]["why"], case
+    assert brief.problem(text) is None, case                           # a record in shape, over its cap
+
+
+def test_a_create_plan_whose_record_is_over_the_cap_goes_back_to_the_brief(tmp_path, monkeypatch):
+    monkeypatch.setenv("LAZULI_DB", "")
+    root = make_project(tmp_path)
+    assert step_of(root) == "release"
+    record(root, "answers", rounds_of(7), 50)
+    assert step_of(root) == "brief"
+
+
+def numbered(count: int) -> str:
+    return "".join(f"{n}. Question {n}?\n   Why: it changes the opening.\n   If you skip it, I assume: the usual.\n"
+                   for n in range(1, count + 1))
+
+
+def test_questions_over_the_cap_are_cut_before_the_run_waits_on_them(bare):
+    ask(bare, numbered(7), 200)
+    result = evaluated(bare)
+    assert (result["state"], result["step"]["id"]) == ("needs-step", "brief")
+    assert "numbers 7 questions" in result["step"]["why"] and f".lapis/questions/{TASK}.md" in result["step"]["why"]
+    ask(bare, numbered(6), 300)                                        # written again, cut to six
+    assert evaluated(bare)["state"] == "waiting-for-user"
+    ask(bare, "## Found\n- The studio fires monthly (PRODUCT.md)\n- Nothing on prices\n- No logo found\n\n## Questions\n"
+        + numbered(6), 400)
+    assert evaluated(bare)["state"] == "waiting-for-user"              # the findings are no questions
+
+
+def test_a_second_round_of_questions_over_the_cap_is_cut_too(bare):
+    record(bare, "answers", BRIEF_RECORD, 100)
+    ask(bare, numbered(7), 200)
+    result = evaluated(bare)
+    assert (result["state"], result["step"]["id"]) == ("needs-step", "brief")
+
+
+def test_the_questions_of_the_plans_approval_are_not_the_briefs_to_cap(tmp_path, monkeypatch):
+    monkeypatch.setenv("LAZULI_DB", "")
+    root = make_project(tmp_path)
+    ask(root, numbered(7), 200)
+    assert evaluated(root)["state"] == "waiting-for-user"
+
+
+def test_the_exit_gate_continues_an_unattended_run_that_asked_more_than_it_may(tmp_path, monkeypatch):
+    monkeypatch.setenv("LAZULI_DB", "")
+    folder = tmp_path / "Kiln Shop"
+    folder.mkdir()
+    ask(folder, numbered(7), 200, task="kiln-shop")
+    stop = gate.stop_output(folder, "s1", task="kiln-shop")
+    assert stop["decision"] == "block" and "Next step: brief." in stop["reason"] and "numbers 7 questions" in stop["reason"]
+    ask(folder, numbered(6), 300, task="kiln-shop")
+    assert gate.stop_output(folder, "s1", task="kiln-shop") is None
