@@ -64,6 +64,7 @@ uv run lazuli sources --type color          # source registry (src/shared/source
 uv run lazuli color lookup pantone "186 C"  # codes and links only; values only from `lazuli color record`
 uv run lazuli read https://example.com/page   # one requested page as Markdown, within registry and robots.txt
 uv run lazuli ref capture https://example.com/ --rights reference-only   # -> .lapis/refs/<slug>.json
+uv run lazuli ref capture https://example.com/ --rights reference-only --task demo   # + study copies in .lapis/references/demo/<slug>/
 uv run lazuli setup                        # installs a model from a release manifest (src/shared/models/SETUP.md); exits 1 until one is published
 uv run python tools/build/build.py       # regenerate plugins/, dist/, catalogs, package.json from src/
 uv run python tools/build/build.py --check   # CI: fail when committed outputs drift from src/
@@ -131,7 +132,9 @@ files beside it; the database file itself does not change.
 - Render checks capture hosts that are ours without a flag; a public host only with `--public`, and
   never a source-registry host or a host in the plan's `references`, even after a redirect
   (`cli/lapis_design/render/hosts.py`). Pages that are not ours go through `lazuli ref capture`.
-- Reference captures load only URLs the user gave, never sign in or submit forms, and keep what the
+- Reference captures load only URLs the user gave, or the ones a run chose itself in the `references` step (`--task`,
+  which keeps study copies in `.lapis/references/<task>/`, git-ignored, never shipped), never sign in or submit forms,
+  and keep what the
   render schema allows for the source's rights. The capture browser runs without a proxy, whatever
   proxy the environment sets, and cannot reach a host the source registry marks `refused` or
   `browser-link`: its launch rules leave those names unresolved, so no request the page makes gets
@@ -246,7 +249,8 @@ files beside it; the database file itself does not change.
   release gate reads both.
 - `release check` lives in `cli/lapis_design/release_check.py`: it runs the plan checks itself, reads the lint, session, extract, and critic reports, rechecks catalog font licenses through `lazuli.catalog`, and writes the gate report; it never captures or drives a page.
 - `next` lives in `cli/lapis_design/next_step.py`: `lapis-design next --task demo [--json]` runs `release_check.run(...,
-  offline=True)` on the files and returns the one step still to take (`brief`, `plan`, `plan-fix`, `plan-flows`,
+  offline=True)` on the files and returns the one step still to take (`brief`, `references`, `plan`, `plan-fix`,
+  `plan-flows`,
   `plan-explorations`, `fonts-lock`, `stub`, `ledger`, `render`, `behavior`, `lint`, `critic`, `release`) with its exact
   command or schema, or `done`; it judges nothing the gate already judges, and `done` is a complete procedure, not a
   passing gate. `render check`, `behavior check`, and `release check` write `.lapis/attempts/<task>/<step>.json`
@@ -255,9 +259,14 @@ files beside it; the database file itself does not change.
   is ever recorded. `lapis-design hook stop` (`gate.py`) is the exit gate every harness asks: with a plan in reach and
   `LAPIS_UNATTENDED=1` it continues the agent with that step, three times in a row for one step and fifteen in a
   session at most (state in `.lapis/gate/<task>.json`); an unattended run with no plan owes one, so its step is `brief`,
-  then `plan` (task from `$LAPIS_TASK`, else the project folder's name); otherwise it prints one line and never blocks.
+  then `references`, then `plan` (task from `$LAPIS_TASK`, else the project folder's name); otherwise it prints one line
+  and never blocks.
   The `brief` step (`brief.py`) is asked for while a run with no plan, or a plan in `create` mode, has no brief record:
   `.lapis/answers/<task>.md` with a `## Found` and an `## Answers` section whose `[assumed]` items give a `Basis:`.
+  The `references` step (`references.py`) follows it on the same terms: `.lapis/references/<task>.md`, a fenced `yaml`
+  block of at least six references, each with a `capture` file under `.lapis/references/<task>/` (three kinds and two
+  outside `web-ui` among the images, `source_facts` for `web-ui`, at most two text-only); a run with no network records
+  `next --unavailable references --reason`, which counts as done and is reported as not looked at.
   A run that stopped to ask its user (`waiting.py`: `.lapis/questions/<task>.md` newer than `.lapis/answers/<task>.md`)
   makes `next` say `waiting-for-user` and the gate let the stop pass without a continue: two sets before a plan, one
   after (`waits` in the gate state).

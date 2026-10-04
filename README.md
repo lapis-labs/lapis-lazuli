@@ -63,7 +63,10 @@ need the CLI on your PATH (see [CLI and optional components](INSTALLATION.md#cli
 
 1. Before any code, `lps-brief` reads the project, looks up what can be found about the subject, and asks
    only what stays open (with nobody to ask, it answers itself and marks each answer assumed); it writes
-   `.lapis/answers/<task>.md`. Then `lapis` turns the request and that record into a plan file,
+   `.lapis/answers/<task>.md`. Then it looks at references itself: it searches for them, captures pages and
+   pictures under the source registry's rules, opens the captures, reads the pages' HTML and CSS, and records what
+   it saw in `.lapis/references/<task>.md` (six or more, three kinds, two outside web design; the captures are
+   for study only and stay local). Then `lapis` turns the request and those records into a plan file,
    `.lapis/plans/<task>.yaml`: brief, world materials, type and color roles, layout, key copy, the candidates
    compared for each open decision, and a keep-or-reject decision on every named default.
    `lapis-design plan check` validates it.
@@ -155,10 +158,13 @@ Run either with `--help` for the commands and options.
 - **Touch real accounts.** Behavior checks use a stub or an isolated local backend with synthetic
   data, never real accounts, credentials, or payment methods, and they never store typed values,
   query strings, headers, or request bodies.
-- **Keep more of a reference than its rights allow.** Reference captures load only URLs you give,
-  never sign in or submit forms, and keep only what the source's rights allow. A reference-only
-  capture keeps no copy, alt text, accessible names, or screenshots, only keyed signatures and
-  perceptual hashes.
+- **Keep more of a reference than its rights allow.** Reference captures load only URLs you give, or the
+  pages and pictures a run finds itself in its references step (at a human pace, through the same source
+  registry and robots.txt; a `refused` source stays refused), never sign in or submit forms, and keep only
+  what the source's rights allow. A reference-only profile keeps no copy, alt text, accessible names, or
+  screenshots, only keyed signatures and perceptual hashes. The run's own study copies (screenshots, a
+  page's HTML and stylesheets, a picture) sit in `.lapis/references/<task>/`, are git-ignored, and never
+  ship or enter the page.
 - **Take your fonts, or act for you on font sites.** Font files are read, never copied or converted
   into a project; only files you supply for shipping enter one. lazuli never signs in, downloads,
   activates, buys, or accepts terms for you. The database of your fonts stays in your user cache.

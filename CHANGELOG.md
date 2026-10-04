@@ -57,7 +57,11 @@ after text.
   brief record and the place a relayed person's replies go; `next` without `--task` also takes the task of the newest
   counted answers file. `install/harnesses.yaml` lists the new skill `lps-brief` in the `lapis` plugin;
   `src/shared/index.yaml` gives it the plan schema (full) and the source registry (summary).
+- `render/extract.schema.yaml`: `reference.captured_by` also takes `agent-exploration`, for a source the run chose in
+  the references step. `release/GATE.md`: the `next` step `references` (record format and counting rules above),
+  and `--unavailable references` beside `--unavailable critic`; `attempts.py` takes the step `references`.
 - `slop/rules.yaml`, `slop/detectors.yaml`, `slop/cards.yaml` (nine rules, two detectors, one card): new detectors `pricing-offers` and `palette-family`, a `floating-chips` kind of `decorative-dom`, and a `paired-headings` check of `rhythm-variance` that extends `copy.uniform-rhythm` (a first heading, or three or more headings, built as two or three short sentences; new keep cases `approved-headline` and `distinct-facts`). `section-sequence` compares a page from its first hero with a repeated archetype counted once, takes `min_sections`, and `layout.template-section-sequence` gains the spine hero > feature-grid > pricing > faq > cta and a four-section minimum. New lists `reassurance_phrases`, `offer_terms`, and `recommendation_badges`; `color.acid-on-black` joins the package `dark-luminous`.
+- `slop/rules.yaml`, `slop/detectors.yaml`, `slop/cards.yaml`, `slop/rules.schema.yaml`, `plan/schema.yaml` (one rule, one detector, one card, one evidence kind): the split opening is a default of its own. `layout.split-hero` (default, gate in create mode) reads the first viewport of every desktop capture with the new render detector `opening-split`: the largest display or heading run, with another text box or a control, stands on one side and an image, a drawing, or a filled or bordered panel stands on the other (either side; 20-70% of the width, 6% of the viewport or more; text-only second columns and prose panels do not hit; phone captures stack on purpose and are not judged). Its cases are `won-comparison`, `contract-fixes-opening`, `evidentiary-capture`, `task-in-opening`, and `record-beside-claim`; the card `split-opening` groups it. The new evidence kind `composition` (`evidence.composition` in a `defaults` keep) is the chosen candidate of a layout comparison in `explorations` that was rendered (`compared_on` has `render`) and weighed another candidate. `copy.meta-text` reads English, Korean, Japanese, and Chinese: the kinds `fiction-notice`, `change-log`, `developer-notes`, `placeholder-apology`, and `self-description` join the existing ones, `demo-badges` and `fiction-notice` share one allowance (one short notice in the footer or a small persistent label; a notice in the opening, in a heading, in the middle of the page, or after the quiet one is a hit; a notice and its translation count once; a plan whose brief does not ask for a notice allows none), the case `qualified-disclosure` adds "said once there and not again elsewhere", and the list `leftover_phrases` gains Japanese and change-narration phrases.
 
 ### Added
 
@@ -127,14 +131,40 @@ after text.
   `[assumed]` with its basis. The record `.lapis/answers/<task>.md` seeds the plan's `brief`, `context`, `claims`
   (assumed answers only in `claims.proposed`), and `world_materials`, and proposes a `DESIGN.md` seed instead of
   inventing visual decisions. References: `questions.md`, `research.md`, `record.md`. The skill count is twelve.
+- `lazuli ref capture` and `lazuli ref profile` take `--task <task>`, which marks the source as the run's own choice
+  (`reference.captured_by: agent-exploration`) and keeps study copies in `.lapis/references/<task>/<slug>/`: a
+  capture's three screenshots, the page's HTML, up to six of its stylesheets read through the registry, robots.txt, and
+  pace, and `facts.md` (a digest of the type, color, and layout the source states); a picture's file. The folder holds
+  a `.gitignore` that excludes everything in it. `lazuli ref profile` also takes the address of a picture (one GET
+  through the same checks; a page is refused as not a picture) and keeps the downloaded copy in the lazuli cache.
+  Without `--task` nothing changes: screenshots and image copies stay in the cache, and the profile says
+  `captured_by: user-request`.
+- The anti-slop guide's Opening entry names the split hero as a default of its own and says what an opening derives from (the content's relation, the subject's own objects, the visitor's sequence); a new entry, "What the page says about itself", says what a page must show and what it must not. `lapis` and `lps-copy` say the same in two short passages.
 
 ### Changed
 
+- `copy.meta-text`: a bare "Preview", "Sample", "Example", or "Test" label is no longer a demo badge (a column or chip of that name is content); `version N` is a build label only with a dotted number, and a build label is read only in runs of eight words or fewer, so "Version 3" in a version history and "built with care" no longer hit.
 - `lapis-design next` and the exit gate name `brief` before `plan`: a project folder with no plan, and an unattended
   run that wrote none, are first sent to the brief record and then to the plan. The brief's questions wait in the
   `plan` phase (two sets), and the gate's continuation for `brief` carries no approval note, since no plan exists
   yet. `lapis` points its start step at `lps-brief`, and the waiting message says to keep the record when approval
   replies are added to it.
+- `lapis-design next` and the exit gate name `references` after `brief` and before `plan` in create mode (a plan in
+  `mode: create` without the record is sent back to it; redesign and repair plans never are). The record is
+  `.lapis/references/<task>.md`, one fenced `yaml` block of at least six references with a capture file each; the
+  check reads the record and the files: three kinds and two outside `web-ui` among the references seen as images, a
+  different capture file for each, `source_facts` that state a value for each `web-ui` reference, and at most two
+  text-only references (a capture that is no image, or an encyclopedia page), which count toward the six and toward
+  nothing else. A run that cannot reach the network records it with `next --unavailable references --reason`, which
+  sends one plain GET first and refuses the record when it works (a smoke run recorded "the brief says no network"
+  as its reason); `next` counts a record as done and the finished run reports it as not looked at. A brief's
+  no-network or no-external-assets line never excuses
+  the step, and the step text says so. Without `--task`, `next` also takes the task of the newest counted references
+  record. Existing create plans without a record return to the step, as they did for the brief.
+- `lzl-research` lets a run find and study references itself in the `references` step, at a human pace and through the
+  same source registry, robots.txt, and per-host pace (`refused` and `browser-link` sources stay refused); it reads
+  only pages and pictures the user named outside that step. `lapis` points to it from its start step and from the
+  References step of the plan; both say references inform relations and decisions and are never copied wholesale.
 - `lapis` and `ultramarine` open with a short Done block: done is when `lapis-design next` says done, a missing or
   invalid input is never done, a blocking release verdict is a result to report, a run with nobody to ask records
   `approval: {state: assumed, reason: ...}` and goes on, and checks on 127.0.0.1 are not network use. The plan gate

@@ -1,6 +1,6 @@
 ---
 name: lzl-research
-description: Finds where to look and reads what the user asks for - the source registry and its access policies, single pages as Markdown, reference profiles of pages, images, and design systems, reference notes, and claims labeled confirmed or lead. Use for references, "make it like this site", competitor, trend, and art research, and checking a source.
+description: Finds where to look and reads what the user asks for - the source registry and its access policies, single pages as Markdown, reference profiles of pages, images, and design systems, reference notes, and claims labeled confirmed or lead. Use for references, "make it like this site", competitor, trend, and art research, checking a source, and a design run's `references` step, where you look for and study references yourself.
 license: MIT AND CC-BY-4.0
 ---
 
@@ -12,8 +12,9 @@ never decides the design: it hands `lapis` profiles and notes, which `lapis` rec
 
 ## Limits that always hold
 
-- Capture only pages, images, and files the user named; read only pages the user asked for. Search
-  results and registry entries are leads: give them as links, and read the ones the user picks.
+- Outside the references step below, capture only pages, images, and files the user named and read only
+  pages the user asked for. Search results and registry entries are leads: give them as links, and
+  read the ones the user picks.
 - Sources marked `refused` or `browser-link` are never requested; give the link and the reason.
 - Never sign in, submit a form, or get around a block, CAPTCHA, or rate limit. Never buy access or
   accept terms for the user.
@@ -26,7 +27,8 @@ source is good for and how lazuli may reach it. `lazuli search --type source <wo
 by name, use, or site; `--kind` narrows by type and `--access` by policy.
 
 - `adapter`: a lazuli catalog collects it at a human pace; `lazuli read` may also read a page.
-- `read`: `lazuli read` and `lazuli ref` may fetch a page the user asked for, within robots.txt.
+- `read`: `lazuli read` and `lazuli ref` may fetch a page the user asked for, or one the references
+  step chose, within robots.txt.
 - `browser-link`: a link for the user only; the entry's `reason` says why.
 - `refused`: the terms forbid automated access; nothing is requested, and the entry cites them.
 
@@ -58,14 +60,32 @@ format of our own renders); `shared/render/DERIVED.md` defines each value.
 - `lazuli ref capture <url>`: the page at 390, 768, and 1440 px, at the site's pace; it follows no
   links and types nothing. What the page embeds (images, stylesheets, fonts, frames) loads unless it
   comes from a `refused` or `browser-link` host; the profile's notes count what was left out.
-- `lazuli ref profile <image>`: an OKLCH palette with area shares from a local image.
+- `lazuli ref profile <image-or-url>`: an OKLCH palette with area shares from a local image, or from a
+  picture at an address (one GET through the registry, robots.txt, and the pace; a page is for `capture`).
 - `lazuli ref system <path-or-url>`: type scale, color roles, and state rules from design-token JSON
   or a `DESIGN.md` in a known dialect.
 
 Take the rights from the user: `own` for their material, `licensed` when a license covers this use,
 `reference-only` otherwise. A reference-only profile keeps no copy, alt text, accessible names, or
-screenshots: text only as keyed signatures, images only as perceptual hashes. Screenshots and image
-copies stay in the lazuli cache.
+screenshots: text only as keyed signatures, images only as perceptual hashes. Without `--task`,
+screenshots and image copies stay in the lazuli cache.
+
+`--task <task>` is for the references step below: it marks the source as the run's own choice
+(`captured_by: agent-exploration`) and keeps study copies in `<project>/.lapis/references/<task>/<slug>/`:
+a capture's three screenshots, the page's HTML and up to six stylesheets (read through the same
+registry, robots.txt, and pace), and `facts.md`, a digest of the type, color, and layout that source
+states; a picture's file. The folder excludes itself from git. The copies are for study only: never
+ship them or copy them into a page.
+
+## Explore references
+
+A create run's `lapis-design next` names `references` after the brief. Here you choose sources yourself,
+at a human pace, through the registry and policies above: a `refused` or `browser-link` source stays so,
+and a brief's no-network or no-external-assets line limits what the page loads, never this research. A
+reference counts when you have looked at it: search for candidates beyond web design, capture them with
+`--task <task>`, open the capture images, read a page's saved HTML and CSS, then write
+`.lapis/references/<task>.md`. Read `references/exploration.md` for the steps and the record.
+References inform relations and decisions; never copy assets, text, or a layout wholesale.
 
 ## Reference notes
 

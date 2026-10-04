@@ -16,7 +16,8 @@ It decides nothing visual; type, color, layout, and motion stay with `lapis` and
 ## Done
 
 `.lapis/answers/<task>.md` is a brief record (`references/record.md`) and the plan cites it. For a create
-plan, `lapis-design next --task <task>` returns the step `brief` until that holds, then moves on to `plan`.
+plan, `lapis-design next --task <task>` returns the step `brief` until that holds, then moves on to `references`
+(the run looks at references itself; see `lapis`) and then `plan`.
 The task id is `$LAPIS_TASK`, else the id the plan or the questions already use, else the project folder's
 name in lowercase letters and hyphens, which the exit gate uses too.
 

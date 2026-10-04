@@ -64,7 +64,7 @@ Keep it bounded: a few reads, chosen by the open areas, and stop when they are c
 - Never sign in, submit a form, get past a block or CAPTCHA, or accept terms for the user.
 - Pages the user named, such as their site or a competitor they pointed at, are read with `lazuli read`,
   and captured as references only through `lazuli ref capture` with the rights the user gives. Another
-  site's design is not looked up here.
+  site's design is not looked up here: the `references` step that follows the brief does that (`lzl-research`).
 - What you know without a source is still useful: it becomes an `[assumed]` answer whose basis says it is
   general knowledge of the field, never a `[known]` fact.
 

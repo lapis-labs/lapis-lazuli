@@ -64,6 +64,10 @@ A small edit inside an established system needs no plan. Say so and make the edi
    (a relayed run: see Done), and writes `.lapis/answers/<task>.md`, which `next` asks for until it exists on a
    create plan. Assumed answers go to `claims.proposed`, never `known` or `declared`. A repair asks only what its
    findings leave open.
+5. Before the plan of a create run, look at references yourself: `next` names `references` until
+   `.lapis/references/<task>.md` passes. Search, capture with `lazuli ref ... --task <task>`, open the
+   captures, and read a page's HTML and CSS, as the `lzl-research` skill's exploration guide describes.
+   A brief's no-network line limits what the page loads, never this research.
 
 ## Direction principles
 
@@ -190,9 +194,13 @@ shell.
 
 ### 5. References - `references`
 
-Only pages the user gave. Capture each with `lazuli ref capture <url> --rights <rights>` and record
-rights, mode, what to take (relations: rhythm, ratios, sequence), and what to leave (brand colors,
-illustrations, copy). Take relations, never surfaces.
+Pages the user gave, and the references you looked at in the `references` step (cite
+`.lapis/references/<task>.md` in `context.other`). Capture a page the user gave with
+`lazuli ref capture <url> --rights <rights>`; the run's own captures already have profiles in
+`.lapis/refs/`. Record rights, mode, what to take (relations: rhythm, ratios, sequence, a label's
+job), and what to leave (brand colors, illustrations, copy, the type pairing). References inform
+relations and decisions: take relations, never assets, text, or a layout wholesale, and name the
+reference as the `source` of the `explorations` candidate it shaped.
 
 ### 6. Color - `tokens.color`
 
@@ -251,6 +259,11 @@ choosing the screen archetype, section kinds and their order, and what each prod
 Sketch two structures that group the content differently and compare them on the real content before
 choosing (`explorations`, decision `layout`).
 
+Derive the opening from the content's own relation, the subject's own objects, or the sequence the
+visitor follows. A column with the large heading beside a column with an image or mock is a named
+default (`split-opening`); it stays only when it won a rendered comparison against an opening built
+without it, or another `keep_when` of `layout.split-hero` holds.
+
 A chart, map, or other data view inside a section has its own decisions: choosing the form from the
 question, scales and annotation, text and keyboard access to its values, data color, and what an
 implementation must satisfy. For those, read `references/data-viz.md`.
@@ -267,6 +280,11 @@ product's: if it stays true, rewrite it around a fact, number, or world material
 for the headline, subhead, and cta and keep the stronger (`explorations`, decision `copy`). Detailed
 copy work belongs to the `lps-copy` skill.
 
+Decide what the page must show - the subject and the visitor's task - and what it must not: how it
+was made, that it is a demo, what changed. A notice the brief requires, such as "this page uses
+fictional example data", appears once, as a short line in the footer or a small persistent label,
+never in the hero, a heading, or beside each section (`copy.meta-text`).
+
 ### 10. Flows and stub - `flows`, `.lapis/stub.yaml`
 
 For interactive work, list the primary flow and every flow that joins, pays, consents, or leaves.
@@ -281,8 +299,9 @@ decide each of its rules that applies:
 - **keep** with a basis - `brief`, `contract`, or `requirement` - a `keep_when` naming one of the
   rule's ids in `shared/slop/rules.yaml`, a reason that says how this plan meets that case, and the
   `evidence` that case lists: a quoted line of `brief`, a `DESIGN.md#token` of the contract in
-  `context.design`, a world material, a source, the face that won in `explorations`, or a ledger
-  asset. A keep whose id is not the rule's, or whose case lists evidence the keep lacks, waives
+  `context.design`, a world material, a source, the face or the opening that won a rendered
+  comparison in `explorations`, or a ledger asset. A keep whose id is not the rule's, or whose case
+  lists evidence the keep lacks, waives
   nothing; a rule that lists no case takes no keep, and no entry lifts `plan.uncompared-decision`.
 - **reject** and take one of the card's routes. A route spends a world material, the signature, or
   a plan decision; it never swaps one card for another (rejecting the dark luminous package by

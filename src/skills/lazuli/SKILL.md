@@ -97,7 +97,7 @@ Paths use the plan path grammar; `shared/plan/schema.yaml` holds the lookup fiel
 | `tokens.type.roles[*].family` once chosen, `task.id` | `lazuli lock "<family>" --role <role> --task <task.id>` into `.lapis/fonts.lock.json`, the default `tokens.type.lock` | `lzl-fonts` |
 | `tokens.color.roles[*].system_code` | `lazuli color lookup <system> <code>`; `lazuli color record` for a value the user has | `lzl-color` |
 | `tokens.color.roles[*].oklch` near a standard | `lazuli search --type color "oklch(<L> <C> <H>)"`: nearest codes, never an identity | `lzl-color` |
-| `references[*]` by `kind`, with `rights` | `lazuli ref capture <url>`, `profile <image>`, or `system <path-or-url>`, with `--rights <rights>` | `lzl-research` |
+| `references[*]` by `kind`, with `rights` | `lazuli ref capture <url>`, `profile <image-or-url>`, or `system <path-or-url>`, with `--rights <rights>`; in the `references` step also `--task <task>` for study copies | `lzl-research` |
 | `sources[*].ref`, paths or URLs | `lazuli sources` or `lazuli search --type source <words>`, then `lazuli read <url>` | `lzl-research` |
 
 Choosing a font or color, and writing any plan field, including `references[*].profile`, stays
