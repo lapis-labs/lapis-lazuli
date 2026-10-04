@@ -504,6 +504,9 @@ references:
   - kind: practice
     name: modern-web-guidance css-layout guide, GoogleChrome/modern-web-guidance at 84ae725 (Apache-2.0)
     used_for: Subgrid so repeated objects line their inner facts up across siblings without equal heights. Rewritten; the CSS recipe, the dense auto-flow advice, and the support claims were not taken
+  - kind: practice
+    name: Impeccable, pbakaus/impeccable at 508d7e8 (Apache-2.0), layout and responsive guidance; Anthropic frontend-design skill, anthropics/claude-plugins-official at ab024cd (Apache-2.0)
+    used_for: The phone as its own arrangement of the task (what the first view holds, what moves, what is cropped or dropped, the navigation's phone form). Rewritten; no text copied. Counting the screens that stacking costs, and the narrow-capture row of the table, are the maintainers' addition from the blind evaluation of 2026-10-04; the sources do not state them
   skill_body_pointer: For the nine fields with worked examples, the spacing scale (`tokens.space`), grids,
     responsive primitives, density, and what to check after rendering, read `references/layout.md`.
   license: CC-BY-4.0
@@ -707,6 +710,12 @@ references:
   - kind: practice
     name: Anthropic frontend-design skill, anthropics/claude-plugins-official at ab024cd (Apache-2.0), SKILL.md
     used_for: Structure as something the subject's information shapes, not a layout list. Rewritten; no text copied
+  - kind: practice
+    name: Anthropic frontend-design skill, anthropics/claude-plugins-official at ab024cd (Apache-2.0); Impeccable, pbakaus/impeccable at 508d7e8 (Apache-2.0), surface modes
+    used_for: The first view as the surface's own task, document, or work before a category hero; equal icon cards not standing in for hierarchy. Rewritten; no text copied
+  - kind: measurement
+    name: Blind evaluation of 2026-10-04 (22 answers on generated pages), the evaluator's written reasons
+    used_for: The genre structures of an article or news page, an exhibition, and a booking in steps on a phone, and the choice of dashboard measures. The public design systems named as study sources are in the source registry (src/shared/sources/registry.yaml), not in skill text. Not text from the sources
   skill_body_pointer: For choosing the screen archetype, section kinds and their order, and what each product frame
     adds, read `references/archetypes.md`.
   license: CC-BY-4.0
@@ -1476,6 +1485,9 @@ references:
   - kind: practice
     name: Chinese quotation marks by region (curly quotes on the mainland, corner brackets in Taiwan)
     used_for: Chinese punctuation follows the region. Added while drafting; the sources do not mention quotes.
+  - kind: practice
+    name: Anthropic frontend-design skill, anthropics/claude-plugins-official at ab024cd (Apache-2.0), copy guidance
+    used_for: Words that serve the user's next decision, without reassurance or narration of the interface. Rewritten; no text copied. Choosing a dashboard's measures from the operator's decisions, and the flow that narrates its next step, come from the blind evaluation of 2026-10-04
   skill_body_pointer: For the roles a string can have, error and empty-state wording by cause, confirmations,
     consent and price copy, register notes for Korean, Japanese, and Chinese, messages with variables, and what
     an edit must preserve, read `references/interface-copy.md`.
@@ -2206,6 +2218,9 @@ references:
   - kind: practice
     name: Superloopy frontend references (impeccable.md, anti-slop.md), beefiker/superloopy at 9a812cb (MIT, Copyright (c) 2026; the license file names no holder)
     used_for: One read and one refinement pass of the rendered direction, then a report of what remains, in Carry the relation into production. Rewritten; no text copied; the full rule is kept in ultramarine's repair-loop.md
+  - kind: practice
+    name: Anthropic frontend-design skill, anthropics/claude-plugins-official at ab024cd (Apache-2.0)
+    used_for: Carrying the subject's material past the hero picture into headings, products, tables, and controls. Rewritten; no text copied
   skill_body_pointer: For how each lever works and where it lands in the plan, read `references/form-levers.md`.
   license: CC-BY-4.0
   attribution: 'Additions of 2026-10-05 adapted from design-and-frontend by SJY051 (2026), CC BY 4.0; condensed and rewritten, mapped to the existing owners, with no external text copied. The external work above keeps its own license.'
@@ -2386,6 +2401,15 @@ references:
   - kind: measurement
     name: Left-stack opening study of 2026-10-04 (143 generated first screens and 130 pages of good examples), maintainers' working notes
     used_for: The guide for an opening whose object was removed. The study found the pattern on 1 of 143 screens strictly and 9 of 143 in the opening band, judged no screen a defect, and found deliberate poster openings among the strict cases, so the guide keeps left alignment and open space where something holds them. Counts are kept out of the reference text.
+  - kind: practice
+    name: Impeccable slop catalog, impeccable.style/slop and pbakaus/impeccable at 508d7e8 (Apache-2.0)
+    used_for: The pattern vocabulary behind type.oversized-icon-tile, layout.repeated-section-shape, layout.metric-tile-opening, type.headline-emphasis-formula, and the nested-card and identical-card findings. The catalog's names appear only in rule provenance; the detectors and the wording are our own
+  - kind: practice
+    name: taste-skill, Leonxlnx/taste-skill at ce26fc2 (MIT)
+    used_for: A stated context overrides a default dial, behind judging a split, a center, a serif, or a green by why it is here. Rewritten; its forced split bias was not taken
+  - kind: measurement
+    name: Blind evaluation of 2026-10-04 (8 sets and 14 pairs of generated pages, 22 answers), the evaluator's written reasons
+    used_for: The phone width, page rhythm, cards without rank, headline formula, green-as-default, dashboard measures, and flow-narration entries
   skill_body_pointer: For what these defaults look like on a page and the per-genre packages, read references/anti-slop.md.
   license: CC-BY-4.0
   attribution: 'Adapted from design-and-frontend by SJY051 (2026), CC BY 4.0, and written from the 2026-10-04 catalog of generated pages; the AntiSlop project (MIT) shaped the format, and none of its text is copied.'

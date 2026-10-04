@@ -78,6 +78,8 @@ preserve, read `references/interface-copy.md`.
 
 The reference opens with a `## Sections` index; read the section for the string being written, found by its heading, not the whole file.
 
+- **What to show.** Decide the information before the words: what the reader decides next and what the genre always
+  shows. A dashboard counts what a decision hangs on, and a flow asks for the next thing instead of announcing it.
 - **Labels and buttons.** Short, parallel, and the same word as the destination or result. The
   visible label is the start of the accessible name.
 - **Errors.** Name what happened and what to do next, near the field or action, without blame,

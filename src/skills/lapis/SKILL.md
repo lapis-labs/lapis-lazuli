@@ -275,6 +275,11 @@ visitor follows. A column with the large heading beside a column with an image o
 default (`split-opening`); it stays only when it won a rendered comparison against an opening built
 without it, or another `keep_when` of `layout.split-hero` holds.
 
+Open on the surface's own task, document, or work before a category hero; a genre has a structure of its own (a
+news page, an exhibition, a booking in steps; `references/archetypes.md`, Genre structures). Compose the phone as its
+own arrangement of the task, not the wide page in one column, and look at its first view and its length yourself: a
+rail or a bar of items does not carry over (`references/layout.md`, the phone as its own arrangement).
+
 A chart, map, or other data view inside a section has its own decisions: choosing the form from the
 question, scales and annotation, text and keyboard access to its values, data color, and what an
 implementation must satisfy. For those, read `references/data-viz.md`.
@@ -295,6 +300,9 @@ Decide what the page must show - the subject and the visitor's task - and what i
 was made, that it is a demo, what changed. A notice the brief requires, such as "this page uses
 fictional example data", appears once, as a short line in the footer or a small persistent label,
 never in the hero, a heading, or beside each section (`copy.meta-text`).
+
+For a dashboard or a report, choose what to count from the decisions the reader makes; a total nobody acts on does
+not earn the first view.
 
 ### 10. Flows and stub - `flows`, `.lapis/stub.yaml`
 

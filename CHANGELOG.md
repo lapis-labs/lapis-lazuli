@@ -12,6 +12,22 @@ All notable changes are recorded here. The format follows
 Local contract changes, made here and not from a kit diff; the handoff records each one with its before and
 after text.
 
+- `slop/rules.yaml` (206 rules, 103 detectors), from the blind evaluation of 2026-10-04: eight warn-level rules and eight
+  detectors, all thresholds seeds that are not validated. Phone width: `layout.compact-desktop-navigation`
+  (`compact-navigation`: a rail at a page edge, or a bar whose items run off the page, wrap, or crowd one row, in the 320
+  and 390 px captures), `layout.compact-object-opening` (`compact-opening`: an image or drawing that fills 30% of the
+  first phone view below the heading), `layout.compact-empty-length` (`compact-length`: bands a quarter of the screen
+  tall with nothing to read or press, 15% of a page of four screens or more). Hierarchy: `type.oversized-icon-tile`
+  (`icon-tile-cards`), `layout.repeated-section-shape` (`section-shapes`), `layout.flat-section-rhythm`
+  (`section-rhythm`), `layout.metric-tile-opening` (`metric-tiles`). Type: `type.headline-emphasis-formula`
+  (`headline-emphasis`: a closing phrase in italic or a second typeface). `color.gradient-headline` takes
+  `accent_share_max` (two thirds; the detector's old limit was half) and reads the least chromatic color of a headline
+  as its ink, and a headline broken into sibling heading boxes is one headline. `copy.meta-text` self-description
+  gains the flow that narrates its next step in English, Korean, Japanese, and Chinese. `slop/cards.yaml` gains
+  `big-numbers` and `headline-formula` and extends `label-above-heading`, `template-page`, and `category-palette`
+  (green as a default family). `sources/registry.yaml` gains `karrot-seed` and describes the TDS pages of
+  `apps-in-toss` as study sources. The reference edits (phone arrangement, genre structures, page rhythm, cards
+  without rank, information choice) and their sources are in `tools/reference-provenance.yaml` and `NOTICE`.
 - `slop/rules.yaml` (186 rules, 91 detectors): every `keep_when` entry is `{ id, when }` with an id that is unique
   within its rule (140 entries in 99 rules); `type.overused-neutral-grotesque` gains the case `won-comparison`; the
   new rule `plan.uncompared-decision` (domain `plan`, quality, gate in create mode, no waiver) and its detector
