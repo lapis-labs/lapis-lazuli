@@ -148,6 +148,11 @@ Match density to the task: a reader new to the categories needs explanation besi
 
 Write what is stable (a question, a caption position, an interval), what varies, and when repetition should stop. No field holds these, so they go in the lever sentence and are not checked.
 
+Rhythm changes where the question changes: from claim to evidence, evidence to decision, decision to terms. There
+the ground, the density, or the structure should change, and inside one reading it should not. A page of one ground
+and one shape and a page that alternates grounds by rote both leave the reader without that mark
+(`layout.flat-section-rhythm`, `layout.repeated-section-shape`); neither check asks you to alternate.
+
 Rhythm has scales: within a group, across sections, and through the whole page. A variation inside one section does not
 repair a repetitive journey. Name the recurring unit, what stays stable, what changes, and the content event that
 interrupts it: a collection can keep one label rhythm while a selected item's full record makes the expansion, and
@@ -186,6 +191,9 @@ instead of forcing the same collision or crop. Record the comparison in the layo
 "Add texture" is not a decision. Name what varies: grain scale, direction, density, contrast against the ground, edge character, depth cue, and whether it is local or global. Grain that suits a large image turns to noise at small size, so judge it at the rendered size.
 
 Prefer a trace from the subject to an overlay: a scanned log sheet, a measured mark, a real tool edge. Say whether each trace is documented, commissioned, or purely graphic, and imply no age, wear, or provenance the material lacks. Keep documentary photographs untreated and text clear of texture. Test by removing it: if nothing specific remains, the content never was specific. `job` is where the plan says what a treatment tells the reader; one that only sets atmosphere can say so.
+
+Carry the material past the hero picture: into headings, product names, tables, and controls, so the same grammar is
+there wherever the reader looks. A material kept in one picture decorates one section.
 
 ## Type as form
 
@@ -247,6 +255,9 @@ Form may leave interpretation open and consequences never. A repeated mark can s
 | `layout.card-everything`, `layout.monotonous-spacing` | share of content in cards; section against group gaps | whether density suits the task |
 | `layout.template-section-sequence`, `layout.zigzag` | order of section kinds; alternating media and text rows | whether the order follows the reader's questions |
 | `layout.symmetry-excess`, `layout.equal-siblings` | centering on one axis; look-alike siblings the plan ranks differently | whether tension is intended |
+| `layout.flat-section-rhythm`, `layout.repeated-section-shape` | one ground and mostly one shape across sections; consecutive sections that are each a heading over a row of cards | whether a change of ground marks a real change of content |
+| `type.headline-emphasis-formula`, `type.oversized-icon-tile`, `layout.metric-tile-opening` | a closing phrase set in italic or another typeface; icon tiles larger than their headings across a group; a row of big-number tiles in the first view | whether the phrase, the icon, or the number earns its place |
+| `layout.compact-desktop-navigation`, `layout.compact-object-opening`, `layout.compact-empty-length` | a kept rail or crowded bar, an image filling the first phone view below the heading, empty bands in the phone page | whether the phone arrangement serves the task |
 | `surface.decorative-grid-texture`, `surface.glass-everywhere` | grid-like background patterns; backdrop blur on panels | whether a treatment has a job |
 | `type.caps-prose`, `type.costume-monospace` | runs of capital letters; monospace outside code and data | whether a type treatment fits its word |
 | `layout.missing-signature` | a written signature; a marked element | whether it carries the page |

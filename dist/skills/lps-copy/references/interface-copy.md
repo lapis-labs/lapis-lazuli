@@ -5,6 +5,7 @@
 Read the section for the string being written, by heading; the rest are other strings.
 
 - One owner for every string: which string answers which reader question, and who owns it
+- Decide what the screen must show: the information before the words - the decision the reader makes next, what the genre always shows, what a dashboard counts, and a flow that narrates itself
 - Labels, buttons, and fields: naming controls, fields, and headings
 - Errors: what an error names, and what it keeps
 - Empty, loading, success, and other states: the cause behind each state and its text
@@ -82,6 +83,24 @@ when that is true.
   change-log narration ("We updated...", "I fixed...", "...has been improved"; 수정했어요, 개선되었습니다;
   修正しました, 改善されました), the page explaining itself ("This section shows...", "Click the button below to...";
   이 섹션에서는 …, このセクションでは…), developer and test notes, and an apology for a part that was never built.
+
+## Decide what the screen must show
+
+Decide the information before the words. Ask what this reader has to decide or do next on this surface, what they
+must see to do it, and what the genre of the surface always shows: a booking, the choice so far and what comes next;
+an exhibition, the dates, place, hours, and admission; a news page, the headline, deck, byline, and date. A line that
+stays true when the subject is swapped carries none of it.
+
+- **A dashboard counts what a decision hangs on.** What is late, full, or failing, the next arrival, a queue against
+  its limit, each with its limit or its change. For every number ask which decision changes with it; with no answer,
+  there is no number. Totals nobody acts on (vehicles running, routes in service) suit a report, not the first view
+  of a console.
+- **A flow does not describe itself.** "In the next step you will enter your details" (다음 단계에서 정보를 입력합니다)
+  says what the next screen says anyway. The step title, the field labels, and the button name the work. Say only
+  what the screen cannot: what to have ready, what will be shared, what happens after the commit
+  (`copy.meta-text`).
+- **A repeated slogan gives nothing to decide with.** Cut it, or replace it with the fact: a time, a price, a place,
+  a state.
 
 ## Labels, buttons, and fields
 

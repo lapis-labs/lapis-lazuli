@@ -721,6 +721,41 @@ rules:
   waiver:
     scope: value
   verify: static
+- id: type.headline-emphasis-formula
+  class: default
+  domain: type
+  layers:
+  - render
+  - review
+  severity:
+    create: warn
+    review: P3
+  detect:
+    render:
+      detector: headline-emphasis
+      threshold:
+        emphasis_share_max: 0.65
+        size_px_min: 24
+  why: A headline that sets its closing phrase in italic or in a second typeface - a line, a break, then
+    the emphasized phrase - is the formula that generated pages share, so the emphasis comes from the
+    type switch and not from the words
+  better: Write one headline whose words carry the emphasis and set it in one voice; change type inside
+    a heading only for a phrase the reader should hear differently, such as a title, a quotation, or a
+    term
+  keep_when:
+  - id: term-or-title-in-heading
+    when: the set-apart phrase is a title, a quotation, a foreign term, or a name that is set that way
+      wherever it appears
+    evidence: none
+  - id: publication-headline-style
+    when: the publication's own headline style sets this device and the design contract or the brief names
+      it
+    evidence:
+    - design
+    - brief
+  waiver:
+    scope: value
+  verify: review
 - id: type.eyebrow-kicker
   class: default
   domain: type
@@ -805,6 +840,33 @@ rules:
   waiver:
     scope: rule
   verify: static
+- id: type.oversized-icon-tile
+  class: default
+  domain: type
+  layers:
+  - render
+  - review
+  severity:
+    create: warn
+    review: P3
+  detect:
+    render:
+      detector: icon-tile-cards
+      threshold:
+        repeats_max: 2
+        tile_px_min: 48
+        tile_to_text_min: 1.5
+  why: Each item of a group opens with an icon in a tile set larger than the heading beside it, so the
+    decoration outweighs the point it introduces and every point looks alike
+  better: Set the icon at the text's scale beside the heading, or drop it; keep an icon where readers
+    need it to recognize a category or an action, and let the heading and the content carry the rank
+  keep_when:
+  - id: icon-is-the-content
+    when: the icons are what the group shows, such as a symbol set offered for choice or a legend
+    evidence: none
+  waiver:
+    scope: rule
+  verify: review
 - id: type.oversized-display
   class: quality
   domain: type
@@ -1380,10 +1442,12 @@ rules:
         - display
         - heading
         include_accent_word: true
+      threshold:
+        accent_share_max: 0.66
   packages:
   - dark-luminous
-  why: Gradient text or one accent-colored word is the headline's main emphasis, substituting a color
-    effect for title craft
+  why: Gradient text or an accent-colored word or closing phrase is the headline's main emphasis, a color
+    effect where the words should carry it, and the color means nothing the reader can name
   better: Write a precise title; use a solid role color or image emphasis only when it clarifies meaning
   keep_when:
   - id: encoded-state
@@ -1687,7 +1751,9 @@ rules:
   packages:
   - reassurance-landing
   why: A sage or forest green accent on a soft tinted field is the calm, trustworthy palette that care
-    and safety subjects get by category, whatever the subject's own colors are
+    and safety subjects get by category, and generated pages now hand it to subjects that have nothing
+    green in them - software, transit, shops, wellness - so green has become a default family, chosen
+    for the feeling it gives and not from the subject's own colors
   better: Take the field and the accent from the subject's own materials and content colors, and give
     the accent the one role the page needs it for
   keep_when:
@@ -2917,6 +2983,204 @@ rules:
   waiver:
     scope: value
   verify: static
+- id: layout.repeated-section-shape
+  class: default
+  domain: layout
+  layers:
+  - render
+  - review
+  severity:
+    create: warn
+    review: P3
+  detect:
+    render:
+      detector: section-shapes
+      threshold:
+        repeats_max: 1
+  why: Consecutive sections are each a heading over a row of cards, so the sections differ in words and
+    color and not in structure, and the layout barely responds to what each section holds
+  better: Give each section the structure its content relation needs - a table, a sequence, a comparison,
+    one large item with notes, running text - and cut or merge sections that only repeat a shape
+  keep_when:
+  - id: parallel-sets
+    when: the sections hold parallel sets, such as the same facts for each of several products or places,
+      where the repeated structure is what makes them comparable
+    evidence: none
+  waiver:
+    scope: rule
+  verify: review
+- id: layout.flat-section-rhythm
+  class: quality
+  domain: layout
+  layers:
+  - render
+  - review
+  severity:
+    create: warn
+    review: P3
+  detect:
+    render:
+      detector: section-rhythm
+      threshold:
+        sections_min: 4
+        screens_min: 3
+        same_shape_share_min: 0.6
+        band_delta_e_min: 0.05
+  why: Every section sits on one background and most neighbours share one shape, so nothing marks where
+    the content changes and a long page reads as one slab with no rank
+  better: Change the ground where the content changes - a band of another tone, a different density, a
+    section given more room - and let sections that belong to one reading share a ground; contrast marks
+    a real change of content, it is not decoration
+  keep_when:
+  - id: continuous-reading
+    when: the page is one continuous text or one record, such as an article, a document, or a form, and
+      a change of ground would cut the reading
+    evidence: none
+  - id: space-and-structure-carry-rhythm
+    when: the contract fixes one field for the page and the rhythm comes from space, scale, and structure
+      that the capture shows
+    evidence:
+    - design
+  waiver:
+    scope: value
+  verify: review
+- id: layout.metric-tile-opening
+  class: default
+  domain: layout
+  layers:
+  - render
+  - review
+  severity:
+    create: warn
+    review: P3
+  detect:
+    render:
+      detector: metric-tiles
+      threshold:
+        tiles_min: 3
+  why: A row of tiles, each a big number over a small label, opens the page, so totals that would fit
+    any product take the first view and say nothing about what to decide or do
+  better: Open with what the reader must decide or act on - the exception, the next arrival, what is late
+    or full - and show a number only when a decision hangs on it, with its limit or its change beside
+    it; keep totals nobody acts on out of the first view
+  keep_when:
+  - id: decision-numbers
+    when: each number is what the reader decides by in this task, such as a threshold, a queue length,
+      or a balance, and its limit or change is beside it
+    evidence:
+    - brief
+    - source
+  - id: numbers-are-the-subject
+    when: the numbers are the subject, such as a result, a scoreboard, or a report
+    evidence:
+    - brief
+  waiver:
+    scope: rule
+  verify: review
+- id: layout.compact-desktop-navigation
+  class: quality
+  domain: layout
+  layers:
+  - render
+  - review
+  severity:
+    create: warn
+    review: P2
+  detect:
+    render:
+      detector: compact-navigation
+      threshold:
+        rail_width_share_max: 0.45
+        rail_height_share_min: 0.6
+        row_items_min: 5
+  why: At phone width the desktop navigation is still there - a rail of icons takes a column from every
+    screen, or a bar of items runs past the edge, wraps inside an item, or crowds one row - so the phone
+    page is the desktop composition squeezed and not a layout made for the width
+  better: Compose the phone navigation on its own - a few destinations in one place the thumb reaches,
+    the current place named at the top, the rest reachable from the content - and keep the rail and the
+    wide bar for the widths that have room for them
+  keep_when:
+  - id: tool-rail-by-design
+    when: the surface is a tool whose phone use is a persistent rail, such as a map, an editor, or a chat
+      client, and the brief or the contract says so
+    evidence:
+    - brief
+    - design
+  waiver:
+    scope: value
+  verify: review
+- id: layout.compact-object-opening
+  class: quality
+  domain: layout
+  layers:
+  - render
+  - review
+  severity:
+    create: warn
+    review: P3
+  detect:
+    render:
+      detector: compact-opening
+      threshold:
+        object_view_share_min: 0.3
+  why: The first phone view is the heading and then an image or drawing that fills a third of the screen,
+    the object that stood beside the heading on the desktop pushed below it, so the page gets longer and
+    the first view shows the least informative part
+  better: Design the phone opening as its own composition - the proposition, the one thing to do, and
+    a trimmed or cropped object only if it carries information - and move the object after the content
+    it supports or drop it at this width; do not stack the desktop columns
+  keep_when:
+  - id: object-is-the-content
+    when: the image or drawing is the subject itself, such as the artwork, the object on sale, or the
+      product at work, and the phone view is meant to show it
+    evidence:
+    - brief
+    - asset:
+        kind:
+        - photo
+        - screenshot
+        - video
+        role:
+        - evidentiary
+  - id: opening-composed-for-phone
+    when: the phone opening was composed on purpose with the object at that size, and the plan's layout
+      names it
+    evidence:
+    - plan: layout.procedure.reading_order
+      present: true
+  waiver:
+    scope: value
+  verify: review
+- id: layout.compact-empty-length
+  class: quality
+  domain: layout
+  layers:
+  - render
+  - review
+  severity:
+    create: warn
+    review: P3
+  detect:
+    render:
+      detector: compact-length
+      threshold:
+        band_height_share_min: 0.28
+        empty_share_min: 0.15
+        screens_min: 4
+  why: Much of the phone page is bands a quarter of the screen tall or more with nothing in them to read
+    or press - the desktop's pictures and gaps stacked one under another - so the page is long for what
+    it says
+  better: Fit the phone page to its content - crop or drop the objects that only fill a column on the
+    desktop, bring related content closer, and let a long page be long because of what it holds
+  keep_when:
+  - id: images-are-the-content
+    when: the page is a gallery, a portfolio, or an exhibition whose images are the content the phone
+      reader came for
+    evidence:
+    - brief
+  waiver:
+    scope: value
+  verify: review
 - id: layout.occluded-text
   class: requirement
   domain: layout

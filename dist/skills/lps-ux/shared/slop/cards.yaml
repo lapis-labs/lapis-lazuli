@@ -32,13 +32,13 @@ cards:
   # ------------------------------------------------------------------ type
   - id: label-above-heading
     name: Label above every heading
-    cue: Most sections open with something small above the heading - a tracked capital label, an index number, a badge, or an icon tile - and it would read the same in every section.
+    cue: Most sections open with something small above the heading - a tracked capital label, an index number, a badge, or an icon tile - and it would read the same in every section; or each item of a group opens with an icon tile that outweighs the heading it introduces.
     routes:
       - Let the heading carry the proposition and delete the label.
       - Where readers need context, write a specific label that names a category, scope, state, or real step that differs between sections.
       - Vary each section's opening by what the section holds.
     decide: [layout.sections, content.key_copy]
-    rules: [type.eyebrow-kicker, type.heading-badge, type.icon-tile-heading, layout.decorative-numbering]
+    rules: [type.eyebrow-kicker, type.heading-badge, type.icon-tile-heading, type.oversized-icon-tile, layout.decorative-numbering]
 
   - id: one-neutral-voice
     name: One neutral voice
@@ -49,6 +49,16 @@ cards:
       - Keep the neutral face for body text and record why readability or the platform decides it.
     decide: [tokens.type.roles]
     rules: [type.overused-neutral-grotesque, type.single-neutral-sans]
+
+  - id: headline-formula
+    name: Headline formula
+    cue: The headline is a line, a break, and a closing phrase set in italic or another typeface, so the emphasis comes from the type switch and not from the words.
+    routes:
+      - Write one headline whose words carry the emphasis, set in one voice.
+      - Name what the page is for in plain words, and set a quoted title or a term in italic only where it is one.
+      - Compare headline candidates on the surface's own copy and choose the one that needs no styling to be heard.
+    decide: [content.key_copy, tokens.type.roles]
+    rules: [type.headline-emphasis-formula]
 
   - id: premium-serif
     name: Premium serif
@@ -92,7 +102,7 @@ cards:
 
   - id: category-palette
     name: Category palette
-    cue: The colors came with the category - calm green for care and safety, indigo for software, near-black with an acid accent for anything young, teal for health - and nothing in the subject asked for them.
+    cue: The colors came with the category - calm green for care and safety, and by now for software, transit, wellness, and shops alike, indigo for software, near-black with an acid accent for anything young, teal for health - and nothing in the subject asked for them. Green is a default family of its own, reached for because it feels safe and fresh and not because the subject has green in it.
     routes:
       - Take the field and the accent from world_materials - the subject's own objects, paper, packaging, or places.
       - Choose the accent for the one role the page needs it for, then check the content colors against it.
@@ -141,13 +151,13 @@ cards:
   # ------------------------------------------------------------------ layout
   - id: template-page
     name: Template page
-    cue: The page structure was picked before the content was ranked - a centered or split hero, the category's usual section order, a middle plan set apart as the pick, image and text rows that alternate, everything on one axis.
+    cue: The page structure was picked before the content was ranked - a centered or split hero, the category's usual section order, a middle plan set apart as the pick, image and text rows that alternate, sections that repeat one shape with new words, everything on one axis.
     routes:
       - Rank the content first, then choose the composition that expresses that order, conventional or not.
       - Order sections by the questions the reader brings; give each section the structure its content relation needs.
       - Build the page around the signature instead of a hero shell.
     decide: [layout.procedure, layout.sections, layout.signature]
-    rules: [layout.hero-before-priority, layout.template-section-sequence, layout.pricing-trio-recommendation, layout.reassurance-landing, layout.zigzag, layout.symmetry-excess, layout.typical-composition]
+    rules: [layout.hero-before-priority, layout.template-section-sequence, layout.repeated-section-shape, layout.pricing-trio-recommendation, layout.reassurance-landing, layout.zigzag, layout.symmetry-excess, layout.typical-composition]
 
   - id: split-opening
     name: Split opening
@@ -168,6 +178,16 @@ cards:
       - Group with space and rules; keep a surface only where it has its own role.
     decide: [layout.sections, layout.procedure.relationships]
     rules: [layout.card-everything, layout.nested-cards, layout.equal-siblings, layout.bento-filler]
+
+  - id: big-numbers
+    name: Big numbers first
+    cue: The first view is a row of tiles, each a big number over a small label - totals and counts that would fit any product - before anything the reader has to decide or do.
+    routes:
+      - Open with what the reader must decide or act on - the exception, the next arrival, what is late or full - and give it the rank.
+      - Show a number only where a decision hangs on it, with its limit or its change beside it.
+      - Take the measures from the task and its people, and leave out totals nobody acts on.
+    decide: [content.key_copy, layout.procedure.relationships, layout.procedure.reading_order]
+    rules: [layout.metric-tile-opening]
 
   # ------------------------------------------------------------------ component and imagery
   - id: improvised-icons

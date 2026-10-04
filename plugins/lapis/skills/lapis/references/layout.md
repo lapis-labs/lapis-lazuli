@@ -18,7 +18,7 @@ Read the step or section the plan field needs, by heading; the rest are other fi
 - Spacing - `tokens.space`: the base unit, the scale, spacing that states relationships
 - Relations the composition holds: hierarchy written as relations a render can show
 - Grids, lines, and margins: grid kinds, the alignment lines a page carries, subgrid, margins and hit areas, the job of each line
-- Responsive behavior: per-region transformations, viewport or container queries, the 320 px requirements, CJK
+- Responsive behavior: per-region transformations, the phone as its own arrangement, viewport or container queries, the 320 px requirements, CJK
 - Density and data-heavy screens: collections, tables, sticky context, scanning and comparison
 - Check after rendering: reading the extract against the plan, and the hierarchy without its finishing cues
 
@@ -220,6 +220,11 @@ For each region and width, write its order, whether it reflows, stacks, changes 
 inside its own labeled region, moves to a secondary view or disclosure, or is removed because it was a
 decorative duplicate, and its density. Name the intrinsic primitive each region uses and its
 parameters.
+
+Write the phone as its own arrangement of the task, not the wide page in one column: what the first view holds,
+what moves to a secondary view, which large object is cropped, moved, or dropped, and the navigation's phone form.
+Then count what stacking costs: how many screens the page runs, and how far the first action and the next piece of
+information sit from the top.
 
 ```yaml
 responsive: >
@@ -425,6 +430,21 @@ For each region, choose one per width:
 Density can move either way per width: one record at a time on a phone, more context in a wide window.
 Navigation transformations belong to the `lps-ux` skill.
 
+### The phone as its own arrangement
+
+Narrow is a different setting for the task, not less width. Decide it region by region before reflowing anything.
+
+- **First view.** Name what the first phone view holds: the task, or the heading with the one action. An object that
+  stood beside the heading on the wide layout does not drop under it by default. Crop it, shrink it, put it after the
+  content it supports, or leave it out at this width.
+- **Navigation.** A rail, a wide bar of items, and a breadcrumb row do not carry over. Give the phone a few
+  destinations in one place the thumb reaches, the current place named at the top, and the rest reachable from the
+  content.
+- **Length.** Count the screens the page runs and how much of them holds nothing to read or press. A page may be long
+  because of what it holds, not because of what it stacked.
+- **Order.** The phone's order follows the visitor's decisions, which can differ from the wide reading order; reading
+  order and focus order still match the visual order.
+
 ### Where a width change goes
 
 Render the minimum and maximum real content, then narrow and widen the container until hierarchy,
@@ -578,6 +598,7 @@ is what you planned. Comparing widths needs a capture at each width.
 | `sections` and `section_sequence` | the rendered sections follow `layout.sections` in order. The render names only its own kinds, so a section with your own id (`signature`, `list`) shows as `other` or as the nearest kind: a gallery of priced cards with buttons can read as `pricing`. Treat a kind you did not plan as a question about that section's structure, never as a label to work around |
 | structure between widths | regions reorder, collapse, and change density as `responsive` says, not only scale |
 | the 320 capture | no page-level horizontal scroll, no clipped or covered text, every region and action still present |
+| the narrow captures (320, 390) | the first view holds the task, or the heading with its action, not an object pushed below the heading; the navigation is the phone's own; bands with nothing to read or press are a small part of the page length |
 
 When a measurement disagrees with the plan, change the implementation, or change the plan and say why;
 never adjust the plan to fit an accident. Independent review belongs to `ultramarine`.
@@ -588,3 +609,6 @@ grouping stay. Compare what you see with `priority` and `relationships`. When th
 channel on the same content (type, edge, contrast, or interval) before combining fixes. Record what was visible and
 where the reading stopped: it does not measure attention, comprehension, or task success, and reading the source
 alone does not do it.
+
+A capture with no overflow and a plan that declares the phone arrangement are not the result. Look at the first view and
+the scroll cost at 390 yourself, and say what still falls short.

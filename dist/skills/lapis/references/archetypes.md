@@ -9,7 +9,7 @@ Read the section the layout step needs, by heading; each archetype and product f
 - Combine at a task seam: when one screen links to another archetype instead of merging
 - Inside the archetype: the relation inside each region of the chosen archetype
 - Requirements and locales at every width: the width and CJK rules the archetypes inherit
-- Section archetypes: section kinds, ordered by the reader's questions, what a content unit is, the opening and what its first view holds, proof after the claim, rhythm
+- Section archetypes: section kinds, ordered by the reader's questions, what a content unit is, the opening and what its first view holds, genre structures (an article or news page, an exhibition, a booking in steps), proof after the claim, rhythm
 - Product frames: what each `brief.product_frame` adds, one block per frame
 
 This file backs plan step 8 at its archetype step. The plan holds `layout.procedure.archetype` (one id
@@ -90,10 +90,13 @@ is what the inventory must hold first; **Question** is the default to question.
 - **Job.** Show current state and exceptions, and route to the work.
 - **Regions.** `navigation + scope and time range → exceptions → primary measure | context → required actions → secondary trends → routes to detail`.
 - **Decide.** Time range, the baseline per measure, thresholds and owners, drill-down routes, how stale
-  data looks, spans by importance. On compact screens exceptions and actions come before trends.
+  data looks, spans by importance. Which measures it shows, each chosen from a decision the operator makes (what is
+  late, full, or failing; the next arrival; a queue against its limit); a count of everything in service is context
+  at most. On compact screens exceptions and actions come before trends.
 - **Needs.** The decisions it supports and, per measure, its period, unit, comparison, source, and
   freshness.
-- **Question.** A grid of equal metric cards and charts that support no decision.
+- **Question.** A first row of total tiles nobody acts on, and a grid of equal metric cards and charts that support no
+  decision.
 
 ### `list-detail`
 
@@ -325,12 +328,18 @@ recipes. A live surface needs behavior that exists, and a static record can carr
 changes only its colors and the order of its middle sections has kept one organization, whatever its sections are
 called (`layout.md`, step 6).
 
+Equal icon cards never stand in for hierarchy. Text to be read is a document; fields to compare are rows or a table;
+one operated region is one deck; independent products are a gallery. Choose the form from what the content is.
+
 ### The opening
 
 The first view shows this surface's job and a useful way into its content. On a persuading page that is the
 proposition and the action, and nothing else in it competes with them. Where the subject comes first (a record, a
 list, a tool, an artifact), the leading element can be an item that is available, an exception, or the artifact
 itself, with a short proposition as the only text it needs.
+
+The first view belongs to the surface's own task, document, or work before any category hero: a booking opens on the
+current choice, an article on its headline and deck, an exhibition on the visit and the works.
 
 - A persuading opening says who it is for, what changes, and what to do next, with one primary action and at most one
   secondary route. When a small label sits above the heading, walk `label-above-heading`.
@@ -353,6 +362,29 @@ itself, with a short proposition as the only text it needs.
 | a familiar product with a short message | a concise centered opening |
 | a technical tool | the proposition with a real artifact: a request and its response, a command and its output |
 | a portfolio or an experience | the work or the subject first, identity and controls clear |
+| an article or a news report | the publication's head: headline, deck, byline and date, then the lead and running text |
+| an exhibition | the title with dates, place, hours, and admission, beside the works |
+| a booking or another task in steps | the current step and the choices so far, one decision per view |
+
+### Genre structures
+
+A genre has a structure of its own. Take the order of the page from it, and let it decide the first view before a
+category hero does.
+
+- **An article or a news page.** Follow the publication's structure: masthead, headline and deck, byline and date,
+  the lead, then the body as running text, with figures, quotations, and related reading placed as a publication
+  places them. A news page lays out a front page: the lead item largest, the rest ranked by news value in columns of
+  different sizes, with datelines and kickers as labels. No split hero, and no summary row under the title that the
+  deck already says.
+- **An exhibition.** Open with the visit - dates, place, hours, admission - and the works themselves, authorized or
+  plainly marked as illustration. The interpretation follows. A visitor deciding whether to go needs the visit
+  first.
+- **A booking or another task in steps.** On a phone, run it as a single-page flow with one decision per view: the
+  current step named at the top, the choices so far kept in sight, the next step reached by a transition that keeps
+  the place (a slide or a sheet, with a reduced-motion form), and a back that keeps what was entered. The wide layout
+  may show the steps together. The public design-system writing of the large Korean consumer apps, which the source
+  registry lists, is the place to study how a flow is staged and how its steps move; study the principles, and copy
+  none of their components, marks, or look.
 
 ### Proof after the claim
 
@@ -373,8 +405,9 @@ itself, with a short proposition as the only text it needs.
 - Spacing states the argument: tight inside one claim, wider between evidence units, widest at a turn in
   the argument. The proximity relations and the scale are in `layout.md`.
 - A new background or surface marks a real turn, such as proposition to proof, story to customer
-  evidence, or decision to support and legal. It never exists only to stripe the page. Variety comes
-  from spans and relations on one shared grid, not from arbitrary offsets.
+  evidence, or decision to support and legal. It never exists only to stripe the page; a page that alternates
+  grounds by rote is as flat as one that keeps a single ground. Variety comes from spans and relations on one
+  shared grid, not from arbitrary offsets.
 - Repetition is earned by repeated content. When one capability needs a demonstration and another is a
   policy note, give them different kinds. Alternating media and text rows fit while each row answers a
   distinct question with a real artifact; after a short run, change the structure, and never reverse
