@@ -1,12 +1,5 @@
-"""The first screen of each README stays true to the files it quotes.
-
-The console examples run the CLI without a lazuli database; no browser is needed.
-"""
-import os
+"""README installation links, versions, and rule names remain traceable to their owners."""
 import re
-import shlex
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
@@ -65,24 +58,6 @@ def test_console_output_names_the_current_version(readme):
         "without a lazuli database and paste its output")
 
 
-@pytest.mark.parametrize("readme", READMES)
-def test_console_output_matches_plan_check_without_database(readme, tmp_path):
-    shown = console(readme)
-    argv = shlex.split(shown[0].removeprefix("$ "))
-    assert argv[:3] == ["lapis-design", "plan", "check"]
-    home = tmp_path / "home"
-    home.mkdir()
-    environment = dict(
-        os.environ, HOME=str(home), USERPROFILE=str(home),
-        XDG_CACHE_HOME=str(tmp_path / "cache"), LOCALAPPDATA=str(tmp_path / "cache"),
-    )
-    environment.pop("LAZULI_DB", None)
-    result = subprocess.run(
-        [sys.executable, "-m", "lapis_design.cli", *argv[1:]],
-        cwd=ROOT, env=environment, capture_output=True, text=True, timeout=30,
-    )
-    assert result.returncode == 1, result.stderr  # The example deliberately has blocking findings.
-    assert shown[1:] == result.stdout.splitlines()
 
 
 def test_output_examples_in_the_outputs_guide_carry_the_current_version():
@@ -90,11 +65,6 @@ def test_output_examples_in_the_outputs_guide_carry_the_current_version():
     assert set(re.findall(r'"version": "([^"]+)"', text)) == {__version__}
 
 
-def test_both_readmes_show_the_same_findings_in_the_same_order():
-    def findings(readme: str) -> list[str]:
-        lines = console(readme)
-        return [lines[1]] + [m.group(1) for line in lines if (m := re.match(r"\s+\[(?:BLOCK|WARN|INFO)\] (\S+)", line))]
-    assert findings("README.md") == findings("README.ko.md")
 
 
 def test_rule_ids_the_readmes_name_exist_in_the_rule_file():

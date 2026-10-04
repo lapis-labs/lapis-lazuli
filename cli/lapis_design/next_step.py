@@ -40,7 +40,7 @@ from typing import Any
 
 import yaml
 
-from lapis_design import attempts, brief, gate, references, release_check, shared_dir, waiting
+from lapis_design import attempts, brief, gate, references, release_check, shared_dir, taste, waiting
 from lapis_design.lint.cli import problems
 from lapis_design.plan_check import PlanOverLimit, read_plan, yaml_reason
 from lapis_design.summary import NOT_JUDGED
@@ -466,7 +466,7 @@ def _steps(root: Path, task: str, page: str | None) -> dict:
     floor = ""
     if current and not document["summary"]["blocking"]:
         floor = f" No defects found; not judged by any check: {NOT_JUDGED}."
-    return state(None, interactive, f"The procedure is complete; {verdict}.{looked}{floor} Report that verdict, the "
+    return state(None, interactive, f"The procedure is complete; {verdict}.{looked}{floor}{taste.done(root, task, plan)} Report that verdict, the "
                  "checks that did not run and why, and what remains for the user. Passing the gate is not required "
                  "to stop, and a pass says nothing about whether the page is good.")
 

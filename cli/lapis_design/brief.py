@@ -196,7 +196,8 @@ def why(task: str, reason: str, planned: bool) -> str:
             f"{record}: a `## Found` section (what you read or looked up, with sources, or why nothing could be) and an "
             "`## Answers` section whose items start with [declared] (the user said it), [known] (a source says it), "
             "[assumed] (your own choice, followed by `Basis:` and the reason) or [open]; a second round goes under its "
-            "own `## Answers (round 2)` heading. Then cite the record from the "
+            "own `## Answers (round 2)` heading. Keep only user-given taste in .lapis/taste.md; otherwise write "
+            "`Taste: not given` under Found and its answer as [open], never [assumed]. Then cite the record from the "
             "plan's `context.other` and carry what it settled into `brief`, `claims`, and `world_materials`; never put an "
             "[assumed] answer in `claims.known` or `claims.declared`. A repair of named findings needs no brief: write "
             "its plan with `mode: repair`.")

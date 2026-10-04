@@ -11,7 +11,7 @@ code exists, on a machine without a lazuli font database:
 
 ```console
 $ lapis-design plan check docs/examples/site-booking-en.yaml
-plan_check 0.2.0: 3 blocking, 9 total, 3 skipped: not judged
+plan_check 0.2.0: 3 blocking, 10 total, 3 skipped: not judged
   [BLOCK] plan.uncompared-decision explorations — 7 open decisions with no comparison recorded in explorations: type roles body; palette; layout; motion; direction; copy slots headline, cta
       fix: Record each open decision in explorations - two or more candidates with their sources, what they were compared on, the chosen one, and why the runner-up lost; a decision the contract or the brief fixes says so with fixed_by
   [BLOCK] copy.vague-cta content.key_copy[?slot=cta].text — "continue" (vague_cta) in the cta key copy: "Continue"
@@ -21,9 +21,13 @@ plan_check 0.2.0: 3 blocking, 9 total, 3 skipped: not judged
   [WARN] color.sage-soft-field tokens.color.roles[?role=identity|interaction].oklch — 1 of 1 colors fall in the region: [[0.5, 0.12, 150]]
   [WARN] copy.buzzwords content.key_copy[*].text — "elevate" (buzzwords) in the headline key copy: "Elevate your camping experience"
   [WARN] copy.name-swap content.key_copy[*].text — the headline key copy "Elevate your camping experience" names no world material, subject term, number, date, or proper name, so nothing in it depends on this product
+  [WARN] taste.unrecorded direction.taste — User taste is unrecorded for this task.
   not judged: no lazuli database given, so planned families have no measured features — type.serif-luxury-display, type.overused-neutral-grotesque, type.costume-monospace
   every finding in full: --json, or -o PATH to write the report
 ```
+
+The example declares `own-reading`; without a project taste file or task brief, taste remains unrecorded.
+That warning does not block: record only the user's taste, or `Taste: not given` in the task brief.
 
 Once the page runs on localhost, `lapis-design render check` captures it in Chromium from 320 to
 1440 px, and `lapis-design behavior check` records a scripted session against a stub backend.

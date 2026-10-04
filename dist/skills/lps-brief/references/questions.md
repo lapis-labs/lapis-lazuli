@@ -13,16 +13,16 @@ answered is gone, and one whose answer would only move a value (a color, a radiu
 | 3 | **What they lose**: the concrete worst case without the product, how fast it happens, what they use today | No incident, cost, or failure is named | The headline's claim, the opening object, which proof is shown |
 | 4 | **The one action and its terms**: what the visitor does next, price and plan count, trial, what happens after | The call to action is generic | The pricing section (or none), the CTA's outcome, `flows` |
 | 5 | **What can be claimed**: facts, figures, customers, certifications, regions, guarantees the product can stand behind, and what it must never say | The project holds no claims list | The proof section, any figure strip, the limits of the copy |
-| 6 | **Beliefs and refused words**: what the owner thinks the field gets wrong, the sentence they would defend, phrases and looks they refuse (competitors' clichés, styles they were burned by) | Only a look word is given | `direction.concept`, the copy register, which defaults are rejected |
+| 6 | **Beliefs**: what the owner thinks the field gets wrong, the sentence they would defend | Only a look word is given | `direction.concept`, the copy register |
 | 7 | **Constraints and fixed assets**: marks, colors, faces that must stay, `DESIGN.md`, stack and delivery format, locales, accessibility or legal duties, what the page may not load | No contract file; the request lists only some limits | What is fixed and what is open for exploration |
 | 8 | **Success**: the one measure, when someone will look at it, what failure looks like | The request has no outcome | `brief.one_job`, what gets cut |
-| 9 | **References the owner already has**: pages, screens, or ads they like or dislike, and what in each they mean | The request names none | `references` (the user's pages only, each with what to take and what to leave) |
+| 9 | **Taste**: likes, dislikes, reference names or URLs, what to avoid, desired feel, and fixed elements, in the person's own words | `.lapis/taste.md` has no user-given items | `direction.taste`, reference take/leave, refusals the user must confirm if challenged |
 | 10 | **What exists**: real photos, product screens, copy, logos, data, and who supplies them | The project holds no assets | The asset ledger, drawn versus real imagery, what is labeled synthetic |
 
 Rank by consequence. An answer that changes what the page is about and asks of the visitor (1 to 4) outranks
-one that changes what it may say (5 and 6), which outranks one that changes what is fixed (7), which outranks
-one that changes how it is judged or sourced (8 to 10). Two questions that cannot be answered independently
-are not asked in one round: ask the first and let the second wait for round two.
+one that changes what it may say or which refusals it must honor (5, 6, and taste), which outranks what is fixed
+(7), then what is judged or sourced (8 and 10). Do not ask twice for a refusal or a fixed element already given.
+Two questions that cannot be answered independently are not asked in one round.
 
 ## Shape of a question
 
@@ -39,6 +39,10 @@ One decision, at most two clauses. Concrete enough to answer in a sentence. Neve
   the plan if the question goes unanswered, so write one you could stand behind.
 - A question that cannot have a sensible default says so ("no default; the page will say nothing about
   it"), and an unanswered one is recorded `[open]`.
+- Taste has no assumed default. Ask once, inside round one's six-question cap:
+  "What do you like or dislike, which references should I study, and what should I avoid or keep fixed?"
+  Why: guides the direction and makes a conflict visible for you to confirm.
+  If skipped: no taste was given; the direction is my own reading. Record `[open]`, not `[assumed]`.
 
 ## The message
 

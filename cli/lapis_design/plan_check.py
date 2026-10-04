@@ -51,7 +51,7 @@ from typing import Any, Iterable, NamedTuple
 import yaml
 from jsonschema import Draft202012Validator
 
-from lapis_design import __version__, font_license, shared_dir, system_fonts
+from lapis_design import __version__, font_license, shared_dir, system_fonts, taste
 from lapis_design.summary import finding_lines, floor_lines, rest_lines, skipped_note
 
 _YAML_LOADER = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
@@ -821,6 +821,42 @@ def check_references(plan: dict, root: Path, plan_file: str) -> list[dict]:
     return out
 
 
+def check_taste(plan: dict, root: Path, plan_file: str) -> list[dict]:
+    """Record provenance and mentioned refusals; meaning and polarity belong to the critic."""
+    if plan.get("mode") == "repair":
+        return []
+    task = plan["task"]["id"]
+    current, user = taste.state(root, task), taste.read(root)
+    entry = (plan.get("direction") or {}).get("taste") or {}
+    out = []
+
+    def warn(rule: str, observed: str, fix: str, where: str = "direction.taste") -> None:
+        out.append(finding(f"taste.{rule}", "default", observed, blocking=False, create="warn", review="P2",
+                           path=where, file=plan_file, fix=fix))
+
+    if current == "given":
+        if not taste.cited(plan):
+            warn("not-cited", "The project has user-given taste, but the direction does not cite what it follows.",
+                 "Set direction.taste.source to .lapis/taste.md and follows to the user's lines the direction follows.")
+    elif entry.get("source") != "own-reading":
+        warn("own-reading-unsaid", "No user taste was given; the direction does not name its own reading.",
+             "Set direction.taste.source to own-reading; do not invent the person's preferences.")
+    if current == "unrecorded" and plan.get("mode") == "create":
+        warn("unrecorded", "User taste is unrecorded for this task.",
+             "Keep user-given taste in .lapis/taste.md, or record Taste: not given under the brief's Found heading.")
+    lines = [*user["dislikes"], *user["avoid"]]
+    acknowledged = {item["line"] for item in entry.get("dislikes") or []}
+    for line in taste.touched(plan, lines):
+        if line not in acknowledged:
+            warn("dislike-touched", f"The direction mentions a user refusal: {line}",
+                 "Quote the line in direction.taste.dislikes with stance clear or against and why; ask the user to confirm a conflict.")
+    for index, item in enumerate(entry.get("dislikes") or []):
+        if item["line"] not in lines:
+            warn("line-unknown", f"The refusal ledger names no Dislikes or Avoid item: {item['line']}",
+                 "Use an exact Dislikes or Avoid item from .lapis/taste.md.", f"direction.taste.dislikes[{index}]")
+    return out
+
+
 # Exit flows and the kinds of flow each may reverse (behavior/DERIVED.md, Flows)
 EXIT_PAIRS = {
     "cancel-subscription": {"subscribe", "purchase"},
@@ -958,6 +994,7 @@ def run(plan_path: Path | None, rules_path: Path | None, lock_path: Path | None,
         lock = load_lock(lock_path) if lock_path and lock_path.exists() else None
         findings += check_fonts(plan, lock, plan_file)
         findings += check_references(plan, root, plan_file)
+        findings += check_taste(plan, root, plan_file)
         findings += check_flows(plan, plan_file)
     blocking = sum(1 for f in findings if f["blocking"])
     return {

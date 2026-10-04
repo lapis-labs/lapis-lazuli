@@ -26,6 +26,8 @@ license: MIT AND CC-BY-4.0
   file of fewer than two words or a brief set of more than six numbered questions. Record the replies in
   `.lapis/answers/<task>.md`, the brief record: keep what it holds, add approval replies under their own heading,
   cite it in the plan (`context.other`), and run `next` again.
+- Report whether taste was given and cited, not given (the direction is your own reading), or unrecorded;
+  `.lapis/taste.md` and `direction.taste` are described in `lps-brief`'s record guide.
 - Follow the user's words. When they forbid network use, lookups, or downloads during the work and nobody can be
   asked, do not look things up and do not stop: decline the references step with their line, as the brief record
   holds it (`lapis-design next --task <task> --declined references --brief-line "<the line>"`), and plan from local
@@ -71,6 +73,7 @@ A small edit inside an established system needs no plan. Say so and make the edi
    (a relayed run: see Done), and writes `.lapis/answers/<task>.md`, which `next` asks for until it exists on a
    create plan. Assumed answers go to `claims.proposed`, never `known` or `declared`. A repair asks only what its
    findings leave open.
+   Read project taste once and reuse it; without given taste, record `Taste: not given`, never an assumed preference.
 5. Before the plan of a create run, look at references yourself: `next` names `references` until
    `.lapis/references/<task>.md` passes. Search, capture with `lazuli ref ... --task <task>`, open the
    captures, and read a page's HTML and CSS, as the `lzl-research` skill's exploration guide describes. If the
@@ -378,6 +381,8 @@ full set once, after the last change.
 Before you report, walk the page yourself as its visitor: take one to three tasks from the brief (find today's hours
 and book; see which line is delayed now) and do them on the 1440 and 390 captures, noting where you looked first,
 what you had to read or scroll past, and where you got stuck. A page that passes every check can still fail the walk.
+Read `.lapis/taste.md` against the plan and captures too; report a conflict or an `against` stance as a non-blocking
+`review.taste-conflict` finding for the user to confirm, not as permission to override their words.
 
 
 1. `lapis-design slop lint --plan .lapis/plans/<task>.yaml --source <source dir> -o .lapis/lint/<task>.json`.

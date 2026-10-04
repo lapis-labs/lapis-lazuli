@@ -6,6 +6,7 @@ Read the section for the part of the record being written, by heading; the rest 
 
 - Shape: the headings and items of the brief record
 - Rounds: one message of at most six questions and its answers
+- Project taste: the user's reusable taste file, absent taste, and the plan's stance on refusals
 - The plan seed: the plan file written from what the record settled
 - The DESIGN.md seed: when a `DESIGN.md` may be proposed and what it holds
 
@@ -28,6 +29,7 @@ Round 1 of 2. How it was answered: <a person in the session | relayed by an oper
 - <fact> - <URL and date> (lead)
 - Not looked up: <reason, when a lookup could not run>
 - Not found: <what you looked for>
+- Taste: .lapis/taste.md | not given
 
 ## Answers
 
@@ -80,6 +82,43 @@ lookup gave belongs in `Found`. A sub-list inside an item is not counted. `.lapi
 round being asked; its numbered questions are counted the same way, and more than six returns `brief` instead of
 `waiting-for-user`.
 
+## Project taste
+
+Read `.lapis/taste.md` before asking. It belongs to the project, not the task: reuse given items on the next
+task without asking again. Only the person's words go here, from the request, a session reply, or an operator's
+relay. A look word such as "modern" is not a preference to invent. Update the file when the user changes it.
+
+```markdown
+# Taste
+Given by: <the user in the session | relayed by an operator | the request>, <YYYY-MM-DD>
+
+## Likes
+- <the user's words>
+## Dislikes
+- <the user's words>
+## References
+- <a name or URL the user gave>
+## Avoid
+- <the user's words>
+## Feel
+<one or two lines in the user's words; a list is also fine>
+## Fixed
+- <the user's words>
+```
+
+Leave ungiven sections empty. With nobody to ask, or when the user skips taste, do not create an empty or
+invented taste file: write `Taste: not given` under the task brief's `Found` and the unanswered question as
+`[open]`. A given file has at least one item; otherwise the task is `not-given` when that Found line exists,
+and `unrecorded` when neither exists.
+
+In the plan, set `direction.taste.source` to `.lapis/taste.md`, `follows` to the lines the direction follows,
+and cite the file in `context.other`. Without given taste, use `source: own-reading`. When the direction
+mentions a Dislikes or Avoid item, quote it exactly in `direction.taste.dislikes` with `stance: clear`
+(the choice avoids it) or `against` (the choice conflicts), and a `why` of at least eight characters.
+`against` is not permission: the critic and self-check report the conflict as a non-blocking finding for the
+user to confirm. The lexical plan check is only a lead; it cannot read negation or synonyms.
+
+
 ## The plan seed
 
 When `.lapis/plans/<task>.yaml` does not exist, write that file with only the fields the record settled, so the
@@ -116,6 +155,8 @@ defaults: []
 - `world_materials` are things, never adjectives. Take them from the lookups and the project; with none
   found, from the mechanism the research describes.
 - A fact that only the record states stays traceable: end each claim with `(answers: Q<n>)`.
+- Add `.lapis/taste.md` to `context.other` only when it holds user-given items; carry its provenance and refusals
+  into `direction.taste` as described in "Project taste", not into assumed claims.
 
 ## The DESIGN.md seed
 

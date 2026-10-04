@@ -12,6 +12,11 @@ All notable changes are recorded here. The format follows
 Local contract changes, made here and not from a kit diff; the handoff records each one with its before and
 after text.
 
+- Project taste stays in `.lapis/taste.md`, only in the user's words; unanswered taste is `[open]` and
+  `Taste: not given` in the task brief. The optional plan `direction.taste` cites its source, followed lines,
+  and an explicit stance on mentioned refusals. Plan-check taste findings warn, never gate, and repair skips
+  them; the critic and self-check report conflicts for the user to confirm. `next` done states the taste's
+  provenance or absence. The six-question cap is unchanged.
 - Checks are a floor, not a score: `slop lint`, `plan check`, `release check`, and `next` done end a result in which nothing
   blocks with one line, `no defects found; not judged: genre fit, information choice, the visitor's task at phone and
   desktop width` (`no blocking findings` when open findings remain), and `next` says a pass is no word on whether the

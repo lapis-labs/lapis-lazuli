@@ -22,6 +22,7 @@ claims:
   unresolved: []
 world_materials: [site map with deck numbers, deck size in metres, power hookup posts, check-in 14:00 and check-out 11:00, quiet hours from 22:00, rain refund table]
 direction:
+  taste: { source: own-reading }
   read:
     text: "Reading this as: checkout / Operate on web for occasional campers, subject-derived language, constrained by phone use at opening time; dials V/M/D = 3/2/6"
     surface_mode: [operate]

@@ -16,6 +16,7 @@ Read these, and nothing the maker wrote to justify itself beyond them:
 - the behavior session, when there is one: `.lapis/behavior/<task>.json`
 - the slop lint report: `.lapis/lint/<task>.json`
 - `PRODUCT.md` and `DESIGN.md` when the plan's `context` names them
+- the user's project taste, when given: `.lapis/taste.md`
 
 If the extract or lint report is missing, say which and stop; ask for
 `lapis-design render check` and `lapis-design slop lint` first.
@@ -69,6 +70,10 @@ Work through these in order. Lint findings already report what they observed; do
    luminous traded for warm and editorial, or either for hard edges - report the new package.
    The lapis skill's anti-slop guide lists the recurring defaults and per-genre packages to compare
    against, when that skill is installed.
+7. **Taste conflicts.** Read the user's Likes, Dislikes, References, Avoid, Feel, and Fixed against the plan and
+   captures. Report a visible conflict, and every `direction.taste.dislikes` item with stance `against`, as
+   `review.taste-conflict` (class `default`, severity `{create: warn, review: P3}`, `blocking: false`) for the
+   user to confirm. Quote the user's line and the conflicting choice; an agent's own reading is not user taste.
 
 Compare beneath the finish: content priority, evidence, role assignment, imagery, and action.
 Paper colors and a serif replacing luminous gradients, or hard shadows replacing round cards,

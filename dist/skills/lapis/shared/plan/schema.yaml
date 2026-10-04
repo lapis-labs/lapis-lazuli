@@ -96,6 +96,23 @@ properties:
     type: object
     additionalProperties: false
     properties:
+      taste:                                         # optional: user taste, distinct from the agent's reading
+        type: object
+        additionalProperties: false
+        required: [source]
+        properties:
+          source: { type: string, minLength: 1 }       # .lapis/taste.md or own-reading
+          follows: { $ref: "#/$defs/strings" }
+          dislikes:
+            type: array
+            items:
+              type: object
+              additionalProperties: false
+              required: [line, stance, why]
+              properties:
+                line: { type: string, minLength: 1 }   # exact Dislikes or Avoid item
+                stance: { enum: [against, clear] }     # against needs the user's confirmation, not a waiver
+                why: { type: string, minLength: 8 }
       read:                                          # the Design Read
         type: object
         additionalProperties: false

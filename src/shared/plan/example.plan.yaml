@@ -22,6 +22,7 @@ claims:
   unresolved: [Delivery regions]
 world_materials: [firing log sheet, glaze numbers, kiln temperature curve, foot-ring marks]
 direction:
+  taste: { source: own-reading }
   read:
     text: "Reading this as: e-commerce / Persuade + Operate on web for craft lovers, subject-derived language, constrained by mobile-first reading"
     surface_mode: [persuade, operate]

@@ -41,10 +41,13 @@ name in lowercase letters and hyphens, which the exit gate uses too.
 3. **Choose the questions** (`references/questions.md`). List what is still open, rank it by how much the
    answer would change the page, and keep the top six at most. Drop what a source answered and what changes
    nothing. Each question gives its reason and the default you will assume if it goes unanswered.
+   Include one compact taste question in round one, inside that cap, unless `.lapis/taste.md` already has
+   user-given items; reuse those across tasks (`references/record.md`, "Project taste").
 4. **Ask, by who can answer.** Read the `LAPIS_UNATTENDED` environment variable; a headless one-shot run is not
    unattended by itself, because its last message still reaches the person who started it.
-   - **Nobody can answer**: `LAPIS_UNATTENDED=1` with no relay, or the user said not to ask. Answer each question
-     yourself from the research, mark it `[assumed]` with its basis, and go on.
+   - **Nobody can answer**: `LAPIS_UNATTENDED=1` with no relay, or the user said not to ask. Answer factual questions
+     yourself from the research, mark choices `[assumed]` with their basis, and go on. Taste stays `[open]` and
+     `Taste: not given` goes under `Found`; never invent preferences.
    - **An operator relays replies**: their instructions say so. Write the same message to
      `.lapis/questions/<task>.md` and stop with it as your last message; `next` says `waiting-for-user` and the
      exit gate lets the stop pass. Record the replies when they come.
@@ -62,13 +65,13 @@ name in lowercase letters and hyphens, which the exit gate uses too.
 ## What a question may not be
 
 - Something the project or a lookup would have told you.
-- A taste vote on adjectives or palettes. Ask for facts and consequences; `lapis` compares candidates on the
-  page's own content.
+- A taste vote on adjectives or palettes. The compact taste question asks for the person's own words, names,
+  and refusals, not a menu (`references/questions.md`); `lapis` compares candidates on the page's own content.
 - A request to approve the plan; approval is its own step.
 - A seventh question, or a third round.
 
-An unanswered question is not a refusal to choose: its default is used and recorded `[assumed]`. "No
-preference", "your call", and silence all mean that.
+An unanswered factual question uses its recorded default. "No preference", "your call", or silence on taste
+means `Taste: not given`, not an `[assumed]` preference.
 
 ## Limits that always hold
 
