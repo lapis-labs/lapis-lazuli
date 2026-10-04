@@ -55,6 +55,8 @@ RAW_HEADERS = {**_GITHUB_API, "Accept": "application/vnd.github.raw+json"}      
 JSON_HEADERS = {**_GITHUB_API, "Accept": "application/vnd.github+json"}
 LICENSE_DIRS = {"ofl": "OFL-1.1", "apache": "Apache-2.0", "ufl": "UFL-1.0"}
 SPECIMEN_URL = "https://fonts.google.com/specimen/{}"
+REPO_API = "https://api.github.com/repos/google/fonts"
+REPO_PAGE = "https://github.com/google/fonts"
 
 _CATEGORY = {"Sans Serif": "sans", "Serif": "serif", "Display": "display", "Handwriting": "hand", "Monospace": "mono"}
 _STROKE = {"Sans Serif": "sans", "Serif": "serif", "Slab Serif": "slab"}
@@ -136,6 +138,11 @@ def axis_label(tag: str, low: float, high: float) -> CatalogLabel:
 
 def _slug(family: str) -> str:
     return re.sub(r"[^a-z0-9]", "", family.lower())
+
+
+def repository_path(license_dir: str, family: str) -> str:
+    """A family's folder in the google/fonts repository: its license directory and its slug."""
+    return f"{license_dir}/{_slug(family)}"
 
 
 def _listing(text: str) -> list[dict]:
