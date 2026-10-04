@@ -72,7 +72,8 @@ repository.
 4. Projects that shaped ideas and vocabulary
 
 These projects informed the plan fields, the slop rule families, and the structure of the skills.
-No text was copied from them. Their licenses are given so their terms are easy to find.
+No text was copied from them; a reference that restates one of their ideas in its own words names the project
+here. Their licenses and owners are given so their terms are easy to find.
 
 - Impeccable, https://github.com/pbakaus/impeccable (Apache-2.0): surface modes, task vocabulary,
   audit and improvement patterns.
@@ -86,6 +87,19 @@ No text was copied from them. Their licenses are given so their terms are easy t
   subject-grounded direction.
 - AntiSlop, a skill of recurring generated-interface patterns (MIT, Copyright (c) 2026 Miqdad Badjuber):
   the per-domain way of describing a pattern with its honest exceptions.
+- scroll-craft, https://github.com/nateherkai/scroll-craft (MIT, Copyright (c) 2026 Nate Herk): comparing
+  page structure apart from its finish, and page organizations that change the opening, navigation, content
+  unit, and ending together.
+- StyleSeed, https://github.com/bitjaru/styleseed (MIT, Copyright (c) 2026 StyleSeed Contributors): the
+  first view's job and its focal point.
+- Open Design, https://github.com/nexu-io/open-design (Apache-2.0; its imagegen-frontend-web skill is MIT,
+  Copyright (c) 2026 Leonxlnx): composition anchors as a way to look past the mirrored arrangement.
+- designer-skills, https://github.com/julianoczkowski/designer-skills (Apache-2.0): alignment lines shared by
+  text and image across sections.
+- modern-web-guidance, https://github.com/GoogleChrome/modern-web-guidance (Apache-2.0): subgrid for lining
+  up the facts inside sibling objects.
+- motion-design, https://github.com/LottieFiles/motion-design-skill (MIT, Copyright (c) 2025 LottieFiles):
+  rhythm that changes at more than one scale.
 
 tools/reference-provenance.yaml names the standards and other works behind each skill reference.
 

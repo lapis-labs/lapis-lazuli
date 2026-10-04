@@ -264,11 +264,12 @@ relationships, archetype, grid, responsive behavior, density and checks. Choose 
 related before choosing a container. Every section answers one question a reader brings
 (`answers`). For the nine fields with worked examples, the spacing scale (`tokens.space`), grids,
 responsive primitives, density, and what to check after rendering, read `references/layout.md`; for
-choosing the screen archetype, section kinds and their order, and what each product frame adds, read
-`references/archetypes.md`.
+choosing the screen archetype, section kinds and their order, what a content unit is, and what each product frame
+adds, read `references/archetypes.md`.
 
 Sketch two structures that group the content differently and compare them on the real content before
-choosing (`explorations`, decision `layout`).
+choosing (`explorations`, decision `layout`); `references/layout.md`, step 6, says how to compare them apart from
+their finish.
 
 Derive the opening from the content's own relation, the subject's own objects, or the sequence the
 visitor follows. A column with the large heading beside a column with an image or mock is a named

@@ -350,7 +350,7 @@ references:
       grid choice by content; span by priority and minimum width; baseline grids optional and never a reason to
       clip; viewport versus container by ownership; breakpoints where content fails; safe-area insets measured from
       the live boundary; density modes that remap a few tokens; bounded optical correction; visible bounds versus
-      hit areas.
+      hit areas. LayoutMine (2026-10-05) lines 94-106 and 195-205 add named alignment lines shared across modules of different span.
     dropped: 'The named published spacing systems, the per-width pixel grid example, the pricing worked example,
       the container-query code sample, the platform safe-area API names, and the matrix and pitfalls: product names,
       example values, platform specifics for the later platforms reference, and boilerplate.'
@@ -376,12 +376,12 @@ references:
       with identical treatment only for true peers; one focal point per screen state; enclosure only for true groups;
       symmetry only where content is balanced; rank surviving without color. Also the four levers with one-lever-at-a-time
       diagnosis, visual weight across channels, sections ordered by the reader''s questions, per-region responsive
-      composition, and geometry scores as leads rather than verdicts.'
+      composition, and geometry scores as leads rather than verdicts. LayoutMine (2026-10-05), lines 84-101, 256-279, and 313-324 add comparing page structure apart from its finish (opening, navigation, sequence, comparison, ending) and take the squint procedure back as a hierarchy inspection without finishing cues (the first three masses, headings and actions alone, color and enclosure taken away) with one channel at a time and its limit, that it measures no attention or comprehension.'
     dropped: 'The composition archetypes table: shapes, not task structures; split and centered survive as opening
       forms in references/archetypes.md, master-detail as list-detail, the rest as grid kinds and the symmetry relation
       in layout.md. Also the hero rebuild with type values (type.md), the dashboard hierarchy example (the dashboard
       entry of archetypes.md covers its order), the title, eyebrow, and numbering test (served by the label-above-heading
-      card), the contour and internal-line study (a later visual-assets reference), the squint procedure, research
+      card), the contour and internal-line study (a later visual-assets reference), research
       citations, and the matrix and pitfalls (boilerplate).'
   - path: references/layout/responsive-and-adaptive.md
     taken: Responsive, adaptive, and intrinsic together; content order first, with no positive tabindex and no reordering
@@ -406,6 +406,18 @@ references:
       causes, the dashboard hierarchy list, chart selection, the named product study, and the fraud-review example:
       interaction and state design for lps-ux, the dashboard order kept only in the dashboard entry of archetypes.md, chart choice for
       the later data visualization reference, and product names.'
+  - path: references/artistic-methods/tension-balance-and-asymmetry.md
+    taken: 'LayoutMine (2026-10-05), lines 239-280, 293-324: two arrangements of the same ranked content that change what governs space, each with its narrow sequence and cost; reject by content priority, not novelty. Condensed into layout.md step 6.'
+    dropped: 'The chair-repair worked comparison, the variable table, and the axis study list.'
+  - path: references/layout/marketing-sections-and-rhythm.md
+    taken: 'LayoutMine (2026-10-05), lines 88-98, 143-154, 172-203: named alignment lines carried through a page with spans chosen from the relation; a mapping from each real unit to its width, priority, boundary, and narrow order. Condensed into layout.md step 5 and Grid kinds.'
+    dropped: 'The section recipes, the 7-by-2 counts, and the observability look.'
+  - path: references/styles/modernist-swiss-and-international.md
+    taken: 'LayoutMine (2026-10-05), lines 64-84, 97-106: a few named lines shared while spans change with the relation.'
+    dropped: 'The palette, the folio, the twelve-column rule, and the visible grid as a look.'
+  - path: references/styles/bento-and-modern-saas.md
+    taken: 'LayoutMine (2026-10-05), lines 50-87, 176-188: units mapped to cells by importance, and no cell that only completes a shape.'
+    dropped: 'The cell counts, elevation and clickability rules, and the minimum number of varied cells.'
   external:
   - kind: method
     name: Intrinsic layout primitives (stack, box, center, cluster, sidebar, switcher, cover, grid, frame, reel,
@@ -471,8 +483,31 @@ references:
     name: Tabular typesetting (numbers end-aligned by place value, shared units in headers, one format per value
       type)
     used_for: Columns, rows, and alignment
+  - kind: practice
+    name: scroll-craft, nateherkai/scroll-craft at 75d81f7 (MIT, Copyright (c) 2026 Nate Herk), references/uniqueness.md
+    used_for: Comparing two pages as structures with the finish set aside (opening, navigation, sequence, ending). Rewritten; no text copied. The fingerprint ledger, the four-of-six difference gate, and the required new interaction were not taken
+  - kind: practice
+    name: Anthropic frontend-design skill, anthropics/claude-plugins-official at ab024cd (Apache-2.0), SKILL.md
+    used_for: Comparing compositions in prose with a rough sketch before building. Rewritten; no text copied; no change to the license terms of the source
+  - kind: practice
+    name: Open Design imagegen-frontend-web, nexu-io/open-design at 53231d4 (that skill is MIT, Copyright (c) 2026 Leonxlnx; the rest of the project is Apache-2.0)
+    used_for: A list of composition anchors as a way to look for another idea than the mirrored arrangement. Rewritten; the minimum anchor count, the image per section, and the model image generation were not taken
+  - kind: practice
+    name: Impeccable, pbakaus/impeccable at 508d7e8 (Apache-2.0), reference/layout.md
+    used_for: Squinting at the page and reading structure before any mechanical scan. Rewritten; the detector, the two subagents, and the clean-scan gate were not taken
+  - kind: practice
+    name: designer-skills frontend-design, julianoczkowski/designer-skills at c259656 (Apache-2.0)
+    used_for: Text and image sharing alignment lines across sections. Rewritten; the national mood recipes and the whitespace multiples were not taken
+  - kind: practice
+    name: AntiSlop antislop-ui, miqdadbadjuber/anti-slop at 91f12ec (MIT, Copyright (c) 2026 Miqdad Badjuber)
+    used_for: Separating the flagship unit from the supporting ones when mapping content to space. Rewritten; no text copied
+  - kind: practice
+    name: modern-web-guidance css-layout guide, GoogleChrome/modern-web-guidance at 84ae725 (Apache-2.0)
+    used_for: Subgrid so repeated objects line their inner facts up across siblings without equal heights. Rewritten; the CSS recipe, the dense auto-flow advice, and the support claims were not taken
   skill_body_pointer: For the nine fields with worked examples, the spacing scale (`tokens.space`), grids,
     responsive primitives, density, and what to check after rendering, read `references/layout.md`.
+  license: CC-BY-4.0
+  attribution: 'Additions of 2026-10-05 adapted from design-and-frontend by SJY051 (2026), CC BY 4.0; condensed and rewritten, mapped to the existing owners, with no external text copied. The external works above keep their own licenses.'
   left_for_later:
   - 'lps-ux: navigation transformations; hover, pointer, keyboard, and orientation behavior; table anatomy and row
     interaction; filter architecture and states; saved views; selection and bulk-action states; paging and virtualization;
@@ -624,6 +659,12 @@ references:
       feedback, and reduced-motion treatment (lapis/references/motion.md), onboarding and difficulty, copy voices
       (lps-copy), monetization ethics (lps-ux and its behavior rules), accessibility settings, metrics, dials, pitfalls,
       and the matrix.
+  - path: references/artistic-methods/rhythm-time-and-narrative.md
+    taken: 'LayoutMine (2026-10-05), lines 65-90: a collection, an account, an explanation, and a comparison each deciding what a content unit is, with the opening, navigation, ordinary content, and ending following from it. Condensed into the section Decide what a content unit is.'
+    dropped: 'The temporal-relation tables, the interruption definitions, and any narrative arc as a required shape.'
+  - path: references/layout/layout-decision-procedure.md
+    taken: 'LayoutMine (2026-10-05), lines 247-259, 289-298: the first view as a diagnosis of what it shows and what the space around the leading element does, with evidence kept beside the claim when their relation is the opening and required content growing under text enlargement. Reconciles The opening with the real-record openings in anti-slop.md.'
+    dropped: 'Any rule that the opening must fit the viewport, a word or line cap, and the procedure steps already in layout.md.'
   external:
   - kind: practice
     name: Widely used interface patterns (master-detail, data grid, wizard, dashboard, feed, settings index, docs
@@ -657,8 +698,19 @@ references:
   - kind: practice
     name: Bento-grid modular composition trend
     used_for: The modules section id and its condition (unequal, independent capabilities only)
+  - kind: practice
+    name: scroll-craft, nateherkai/scroll-craft at 75d81f7 (MIT, Copyright (c) 2026 Nate Herk), references/uniqueness.md
+    used_for: Page organizations that change the opening, the navigation, the content unit, and the ending together (an object index, chapters, an annotated artifact, a matched comparison). Rewritten; no text copied. The fixed canvas, the kinetic headline, the pinned call to action, the palette and device bans, and the page-length rule were not taken
+  - kind: practice
+    name: StyleSeed workflows ss-build and ss-page, bitjaru/styleseed at 257ec70 (MIT, Copyright (c) 2026 StyleSeed Contributors)
+    used_for: The first view's job and one focal point. Rewritten; no text copied; the registry, recipes, and the compiler were not taken
+  - kind: practice
+    name: Anthropic frontend-design skill, anthropics/claude-plugins-official at ab024cd (Apache-2.0), SKILL.md
+    used_for: Structure as something the subject's information shapes, not a layout list. Rewritten; no text copied
   skill_body_pointer: For choosing the screen archetype, section kinds and their order, and what each product frame
     adds, read `references/archetypes.md`.
+  license: CC-BY-4.0
+  attribution: 'Additions of 2026-10-05 adapted from design-and-frontend by SJY051 (2026), CC BY 4.0; condensed and rewritten, mapped to the existing owners, with no external text copied. The external works above keep their own licenses.'
   left_for_later:
   - 'lps-ux: selection, focus, deep links, validation timing, auth method order and recovery, onboarding permission
     timing, feed live updates, editor undo and autosave, checkout failure handling, queue semantics, bulk actions,
@@ -2121,11 +2173,11 @@ references:
     taken: Response is not agency; a lever only when an action changes something perceivable through a learnable relation; writing what the visitor can do, what the work changes, and what it does not do; reversible trials.
     dropped: The seven-condition response table, mapping-quality table, contribution and co-production governance, the instruction and interpreter roles, discovery cues, and the authored-rule precedent; they need fields for ownership, persistence, and moderation that the plan does not have.
   - path: references/artistic-methods/rhythm-time-and-narrative.md
-    taken: Static order, density and recurrence; narrative optional. AR3 (2026-10-03), lines 30–90, 98–110 adds authored/visitor/condition/static structure selection linked to layout.sections and lever prose.
+    taken: Static order, density and recurrence; narrative optional. AR3 (2026-10-03), lines 30–90, 98–110 adds authored/visitor/condition/static structure selection linked to layout.sections and lever prose. LayoutMine (2026-10-05), lines 98-110 and 146-176 add rhythm at three scales (within a group, across sections, through the page), the recurring unit with the content event that interrupts it, and the limit that a local animation cannot repair a repetitive page.
     dropped: Temporal-relation and return-use tables, interruption definitions, waiting cases and cultural pacing; motion.md owns motion contracts and no new sensing/feed capability is authorized.
   - path: references/artistic-methods/tension-balance-and-asymmetry.md
-    taken: Balance as perceived relation and not a computed center or mirror symmetry; weight rising and falling with contrast, isolation, edge, and specificity; semantic weight of price, warning, and selected state; choosing an axis on purpose; force that must be received, redirected, released, or suspended; crop and overlap limits.
-    dropped: The force vocabulary glossary, the bounded-evidence summary of the balance study, the weight-variable table, the axis study list, the density and void control lists, and the worked comparisons.
+    taken: Balance as perceived relation and not a computed center or mirror symmetry; weight rising and falling with contrast, isolation, edge, and specificity; semantic weight of price, warning, and selected state; choosing an axis on purpose; force that must be received, redirected, released, or suspended; crop and overlap limits. LayoutMine (2026-10-05), lines 91-113, 144-167, 225-237, and 243-280 add holding the content fixed to compare a dominant edge, two unequal axes, and a corner anchor, naming the counterweight and what the empty space does (surround, separate, channel, or hold a pause), and the composition specimen of two arrangements of one task.
+    dropped: The force vocabulary glossary, the bounded-evidence summary of the balance study, the weight-variable table, the rest of the axis study list, the density and void control lists, and the worked comparisons.
   - path: references/artistic-methods/texture-materiality-and-tactility.md
     taken: Naming what varies in a texture; cues that agree on light, substrate, and depth; subject traces over overlays; documented, commissioned, or purely graphic origin; no implied age or provenance; removing the texture as a test; a treatment states its job.
     dropped: The evidence-class table, the four-term distinction between visual texture and haptics, the variable table with low and high ends, the light, roughness, depth, and process question lists, the material coherence map, and all haptic content.
@@ -2144,7 +2196,12 @@ references:
   - kind: practice
     name: A practitioner account of interactive installations (Rokeby), as cited in the source
     used_for: A response lever must change something perceivable through a relation the visitor can learn
+  - kind: practice
+    name: motion-design director guidance on narrative structure and choreography, LottieFiles/motion-design-skill at f9a8a04 (MIT, Copyright (c) 2025 LottieFiles)
+    used_for: Rhythm as a recurring unit that changes at more than one scale, and hierarchy that survives movement. Rewritten; no text copied. The four acts, the duration shares, the animated-share quota, and the closing-button recipe were not taken
   skill_body_pointer: For how each lever works and where it lands in the plan, read `references/form-levers.md`.
+  license: CC-BY-4.0
+  attribution: 'Additions of 2026-10-05 adapted from design-and-frontend by SJY051 (2026), CC BY 4.0; condensed and rewritten, mapped to the existing owners, with no external text copied. The external work above keeps its own license.'
   inspected_2026_10_02:
   - 'Plan fields were read in plan/schema.yaml: direction (concept, levers, dials, read.surface_mode), tokens.type.scale, tokens.surface.treatments (name and job required, where), tokens.shape.rule, tokens.motion.principles, layout.procedure fields, layout.sections, layout.signature, brief.constraints and brief.locales, claims.proposed.'
   - 'Rule readings were checked in rules.yaml, detectors.yaml, and the detector code: layout.unanchored-lever (lint/detectors/copy.py plan-anchored-text), type.flat-hierarchy and type.oversized-display (render_type.py type_hierarchy: oversized reads display-role runs only), layout.card-everything and layout.monotonous-spacing and layout.zigzag and layout.equal-siblings and layout.symmetry-excess (render_layout.py), surface.decorative-grid-texture and surface.glass-everywhere (render_visual.py surface_effects and the source-pattern detector), type.caps-prose (text-metrics with no role filter), type.costume-monospace (plan roles display, heading, body, ui through the lazuli database), layout.missing-signature (plan-missing in create mode; render derived.py marked element or plan signature text as not-verified), the behavior rules, and the rights rules through the asset ledger.'

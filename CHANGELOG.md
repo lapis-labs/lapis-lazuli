@@ -215,6 +215,18 @@ after text.
 
 ### Changed
 
+- The layout references gain ten compact procedures from the layout-mining report, each in the owner it belongs to
+  (`layout.md`, `archetypes.md`, `form-levers.md`, `anti-slop.md`; their section indexes are updated): comparing two
+  page structures with the finish set aside, and two arrangements of the same ranked content inside one task
+  archetype, recorded in the layout `explorations` with `compared_on` `sketch` or `render` (`layout.md` step 6, a row
+  of the specimen table in `form-levers.md`); what a page's content unit is, apart from the task archetype
+  (`archetypes.md`); what the first view holds and what the space around the leading element does, which reconciles
+  The opening with the real-record openings in `anti-slop.md`; the counterweight and what the empty space does,
+  rhythm at three scales, a map from each real unit to its width, named alignment lines carried through a page, subgrid
+  for lining up the facts inside sibling objects, and the hierarchy inspection without finishing cues (squint, read
+  headings and actions, take away color and enclosure). `NOTICE` and `tools/reference-provenance.yaml` name the
+  works the ideas came from with their licenses (MIT and Apache-2.0 projects, and the author's own CC BY 4.0
+  predecessor); no passage is copied.
 - The checks print a summary and keep the full report in its file, so the agent that runs them re-reads less on every
   later turn. `plan check`, `slop lint`, and `release check` print the verdict line, every blocking finding with its
   rule id, where, fix, and text cut at 200 characters, the open and waived findings by rule id, and one line per cause

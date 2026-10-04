@@ -9,7 +9,7 @@ Read the section the layout step needs, by heading; each archetype and product f
 - Combine at a task seam: when one screen links to another archetype instead of merging
 - Inside the archetype: the relation inside each region of the chosen archetype
 - Requirements and locales at every width: the width and CJK rules the archetypes inherit
-- Section archetypes: section kinds, ordered by the reader's questions, the opening, proof after the claim, rhythm
+- Section archetypes: section kinds, ordered by the reader's questions, what a content unit is, the opening and what its first view holds, proof after the claim, rhythm
 - Product frames: what each `brief.product_frame` adds, one block per frame
 
 This file backs plan step 8 at its archetype step. The plan holds `layout.procedure.archetype` (one id
@@ -315,14 +315,32 @@ Rows are alphabetical. A page's order comes from its reader's questions (below),
    keep it only when the reader's questions genuinely run in that order, and record why in `defaults`;
    otherwise return to step 2.
 
+### Decide what a content unit is
+
+Inside the chosen task archetype, decide what a content unit is, and let the opening, the navigation, the ordinary
+content, and the ending follow from that. A collection can open on one item and use an index of its objects; a
+substantial account can use chapters and direct links to them; an explanation can be built around a real artifact and
+its annotations; a comparison can keep its matched criteria together all the way down. These are alternatives, not
+recipes. A live surface needs behavior that exists, and a static record can carry the same argument. A page that
+changes only its colors and the order of its middle sections has kept one organization, whatever its sections are
+called (`layout.md`, step 6).
+
 ### The opening
 
-The opening holds the proposition and the action; nothing else in it competes with them.
+The first view shows this surface's job and a useful way into its content. On a persuading page that is the
+proposition and the action, and nothing else in it competes with them. Where the subject comes first (a record, a
+list, a tool, an artifact), the leading element can be an item that is available, an exception, or the artifact
+itself, with a short proposition as the only text it needs.
 
-- It says who it is for, what changes, and what to do next, with one primary action and at most one
+- A persuading opening says who it is for, what changes, and what to do next, with one primary action and at most one
   secondary route. When a small label sits above the heading, walk `label-above-heading`.
-- Proof comes right after the opening, not inside it. A logo strip, metrics, and extra copy packed into
-  the opening bury the proposition.
+- Evidence stays beside the claim when their relation is the opening: a restore point and its time, an artifact and
+  its caption. Secondary proof, a logo strip, metrics, or extra copy, comes right after the opening, where it does
+  not bury the proposition.
+- Judge the space around the leading element as part of the composition: does it set the element apart, give it
+  scale, or show the next region? A small column of text beside an empty field that stands for nothing is not a
+  repair for a split opening; bring the content into the first view and recompose width, height, and order
+  (`anti-slop.md`, Opening).
 - A split opening works when its second region is evidence, media, or a distinct decision. A heading on
   one side with its explanation on the other is one reading path cut in two.
 - The opening grows with larger text, longer translations, and legal qualifications; never clip,

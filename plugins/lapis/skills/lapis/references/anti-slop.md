@@ -25,7 +25,8 @@ dashboards, and editorial pages; a count is a sign that a choice is a default, n
 A default is a choice that needs a reason, not a ban. For each one your plan or draft meets, record `keep` with
 one of the rule's `keep_when` cases and the evidence it lists, or `reject` and take a route that spends a world
 material, the signature, or a plan decision. Replacing one named package with another (calm green for violet,
-cream and serif for dark glass) is not a route. When a default is the honest answer, say what makes it so.
+cream and serif for dark glass) is not a route; compare a replacement as a structure without its finish
+(`layout.md`, step 6). When a default is the honest answer, say what makes it so.
 
 Each entry: what it looks like, why it reads as generated, what to do instead, honest exceptions, and the rules
 that see it. Rules marked * are statistical or lexical leads; the critic judges them against the page.

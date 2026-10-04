@@ -9,18 +9,18 @@ Read the step or section the plan field needs, by heading; the rest are other fi
 - 2. Priority - `priority`: which item decides whether the screen did its one job
 - 3. Screen mode - `screen_mode`: whether the reader decides, works, reads, or takes in
 - 4. Reading order - `reading_order`: the sequence for a reader, a screen reader, and the keyboard
-- 5. Relationships - `relationships`: how items relate, chosen before the container
-- 6. Archetype - `archetype`: the task structure that carries the first priority
+- 5. Relationships - `relationships`: how items relate, chosen before the container, and the width each real unit needs
+- 6. Archetype - `archetype`: the task structure that carries the first priority, and two arrangements of one task when the composition is open
 - 7. Grid - `grid`: the lines, columns, and widths each kind of content may run
 - 8. Responsive - `responsive`: what each region does as the width changes
 - 9. Density and checks - `density_and_checks`: how much each view holds and what shows the layout holds
 - Sections and the signature: `layout.sections` entries, their answers, and the signature
 - Spacing - `tokens.space`: the base unit, the scale, spacing that states relationships
 - Relations the composition holds: hierarchy written as relations a render can show
-- Grids, lines, and margins: grid kinds, margins and hit areas, the job of each line
+- Grids, lines, and margins: grid kinds, the alignment lines a page carries, subgrid, margins and hit areas, the job of each line
 - Responsive behavior: per-region transformations, viewport or container queries, the 320 px requirements, CJK
 - Density and data-heavy screens: collections, tables, sticky context, scanning and comparison
-- Check after rendering: reading the extract against the plan
+- Check after rendering: reading the extract against the plan, and the hierarchy without its finishing cues
 
 This file backs plan step 8. The plan holds the nine fields of `layout.procedure`, `layout.sections`
 (`id`, `archetype`, `answers`), `layout.signature`, and `tokens.space` (`base_px`, `scale`). Measure,
@@ -162,6 +162,12 @@ relationships:
   - "notice signup: structural region - one rule above it, no box"
 ```
 
+Map the real units before drawing cells: item, the question it answers, the relation, its useful width, its priority,
+its boundary, and its order at a narrow width. A pottery page's kiln curve may need a broad field, the firing log
+aligned rows, and the next opening one short line beside the reserve action. Use one shared view only when those
+units must be inspected together; otherwise let them follow one another. No cell exists to finish a rectangle, and a
+shared grid does not put a card around every unit.
+
 ### 6. Archetype - `archetype`
 
 *Which recurring task structure carries the first priority?*
@@ -172,6 +178,19 @@ and combine two only at a clear boundary, such as an overview that leads to a se
 `archetypes.md` describes each screen archetype and the section archetypes that
 `layout.sections` uses. Record the runner-up and why it lost in `explorations` (decision `layout`),
 so the same structure does not return under another name.
+
+A task archetype does not settle the composition. When the opening or a major region would still be generic, sketch
+two viable arrangements of the same ranked content inside the chosen archetype and change what governs space: an
+artifact with its facts attached against a question-led flow, a whole-and-detail relation against one repeated
+record axis. Draw the narrow sequence and one ordinary section in each, and render the relation a sketch cannot
+decide. Reject by content priority and cost, not novelty; the mirror image of one arrangement is not a second one.
+
+Compare the two as structures, not as finishes. With palette, type, corners, and section labels set aside, say what
+the opening holds, what navigation is for, the order of the content, what is compared, and how the page ends.
+Removing a hero's object, flattening cards, or renaming sections leaves that structure as it was and is not an
+alternative. A familiar structure stays when the task earns it: change the relation that is unresolved, not the
+vocabulary a check reads. Record the pair in `explorations` (decision `layout`, `compared_on` `sketch`, and `render`
+for a relation that was rendered).
 
 ```yaml
 archetype: list-detail
@@ -332,6 +351,14 @@ same content. Visual weight adds up across channels (`color.md`); judge the dens
   their own scroll region.
 - Take the grid from a world material when one has it: a log sheet's ruled columns, a ledger's rows, a
   specimen card's fields. The example plan's lever "log-sheet grid" is this move.
+- Carry a few named lines through the page: the reading edge, the artifact edge, the action edge, and any deliberate
+  bleed. A narrow explanation, a broad comparison, and a captioned image can take different spans and keep those lines.
+  Choose each span from the relation and its minimum useful width, not from the section's place in a template; at a
+  turn in the argument change what the content demands or its field, not the alignment system.
+- When repeated objects must line their inner facts up across siblings, let the parent own the comparison tracks
+  (`subgrid` on that axis, where the supported browsers allow it) and let variable content grow instead of clipping
+  to equal heights. Field-by-field comparison is a semantic table, not cards built to imitate one. Packing that
+  moves items out of source order moves them away from reading and keyboard order too.
 - A baseline grid never justifies clipping or fixed heights; wrapped headings, larger text,
   translations, and error messages push it.
 - Size by content (`minmax()`, `fit-content`) before any fixed height, and use logical properties
@@ -554,3 +581,10 @@ is what you planned. Comparing widths needs a capture at each width.
 
 When a measurement disagrees with the plan, change the implementation, or change the plan and say why;
 never adjust the plan to fit an accident. Independent review belongs to `ultramarine`.
+
+Inspect the hierarchy without its finishing cues. Squint to name the first three visible masses; read only the
+headings and actions to follow the argument; take away color and enclosure in the mind to see whether rank and
+grouping stay. Compare what you see with `priority` and `relationships`. When the cause stays unclear, change one
+channel on the same content (type, edge, contrast, or interval) before combining fixes. Record what was visible and
+where the reading stopped: it does not measure attention, comprehension, or task success, and reading the source
+alone does not do it.

@@ -6,13 +6,13 @@ Read the section for the lever or step at hand, by heading; the rest are other l
 
 - Write each lever as one sentence: the lever, what visibly changes, the world material it comes from
 - Start from a tension, write a concept: the live tension and the relation that answers it
-- Compare an open direction: specimens that tune one cause or compare two governing relations
+- Compare an open direction: specimens that tune one cause or compare two governing relations, and the arrangement of one task
 - Carry the relation into production: what must stay recognizable when a study becomes the page
 - Allocate the levers: which sections carry a lever and how far it spreads
 - Scale and space: the largest element and what it is set against
 - Density: where the page is dense and where open, by task
-- Rhythm and order: what returns and what changes across sections
-- Tension and asymmetry: the axis, the anchor, edges, crops, overlaps
+- Rhythm and order: what returns and what changes across sections, and at which scale
+- Tension and asymmetry: the axis, the anchor, the counterweight and what the empty space does, edges, crops, overlaps
 - Material and texture: each surface treatment, its job, where it applies
 - Type as form: whether form lives in the glyph, word, line, or sequence
 - Motif: the recurring element, what stays fixed and what may change
@@ -78,6 +78,7 @@ comprehension, or preference without audience evidence.
 | density | one populated ordinary region |
 | motion continuity | minimal interaction with its reduced branch |
 | direction beyond the opening | opening, ordinary content, and one utility state |
+| composition of one task | two sketched arrangements of the same ranked content, the narrow sequence, and one ordinary section (`layout.md`, step 6) |
 
 State what observation would reject the direction before making the specimen. Use real material
 or label its limit. A polished hero alone settles no system.
@@ -143,6 +144,12 @@ Match density to the task: a reader new to the categories needs explanation besi
 
 Write what is stable (a question, a caption position, an interval), what varies, and when repetition should stop. No field holds these, so they go in the lever sentence and are not checked.
 
+Rhythm has scales: within a group, across sections, and through the whole page. A variation inside one section does not
+repair a repetitive journey. Name the recurring unit, what stays stable, what changes, and the content event that
+interrupts it: a collection can keep one label rhythm while a selected item's full record makes the expansion, and
+a narrative can run from the whole to a detail and back. Repeated rows do not take unrelated layouts for variety, a
+local animation cannot make a repetitive page change, and the order of still content can supply the change.
+
 Decide who controls order: an authored sequence, visitor-chosen comparison, a documented external
 condition, or a static field with several entry paths. Each changes adjacency, recurrence, and
 return. Whole/detail order can carry time without motion. Do not invent a triumph narrative for
@@ -158,6 +165,13 @@ capabilities and provenance; put order in `layout.sections` and return in the le
 Balance is a perceived relation, neither mirror symmetry nor a computed center of mass. Weight rises with contrast, isolation, edge position, and a specific subject, and falls with clustering; one small isolated sailing number can counter a large pale photograph. Weight also follows meaning: a price, warning, or selected state keeps its prominence whatever a composition diagram prefers. Choose an axis on purpose: a baseline, a strong edge, a corner anchor, or the center. If every alignment is broken nothing reads; if all share one axis, rank cannot show.
 
 An implied continuation that collides with content or looks clipped is breakage. Crop only as far as subject and task survive. Overlap joins and ranks, but never over text. Write the axis and anchor in `grid`, the unequal peers in `relationships`.
+
+When placement feels unresolved, hold the content fixed and compare a dominant edge, two unequal axes, and a corner
+anchor. Name the leading mass, its counterweight, and what the empty space does: surround, separate, channel, or hold
+a pause. A small specific fact can counter a large pale picture, and the areas need not be equal. Keep the price,
+status, qualifier, and action attached to what they govern, and at a narrow width keep the relation through order
+instead of forcing the same collision or crop. Record the comparison in the layout exploration (`compared_on`
+`sketch`, `render` when rendered).
 
 ## Material and texture
 
