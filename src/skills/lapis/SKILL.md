@@ -288,6 +288,9 @@ decide each of its rules that applies:
 
 ### 12. Sources - `sources`
 
+For what these defaults look like on a page, why they read as generated, and the per-genre packages, read
+`references/anti-slop.md`.
+
 List every document, page, and file the plan relied on.
 
 ## Plan gate

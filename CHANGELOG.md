@@ -50,8 +50,19 @@ after text.
   `states`, and `font.synthetic`) is unknown, not absent from the page. `paint_order` is absent on a box that left
   before the paint order was read, and `font.fallback` on a run whose font could not be read. Extracts without
   `unmeasured` stay valid.
+- `release/GATE.md`: the `next` step `brief`, first in the procedure. A run with no plan file, or a plan in
+  `mode: create`, whose `.lapis/answers/<task>.md` is not a brief record gets it; a record has a `## Found` and an
+  `## Answers` section with text, and every answer tagged `[assumed]` gives a `Basis:` (`[declared]`, `[known]`,
+  `[open]` are the other tags). Redesign and repair plans are never sent back to it. The answers file is both the
+  brief record and the place a relayed person's replies go; `next` without `--task` also takes the task of the newest
+  counted answers file. `install/harnesses.yaml` lists the new skill `lps-brief` in the `lapis` plugin;
+  `src/shared/index.yaml` gives it the plan schema (full) and the source registry (summary).
+- `slop/rules.yaml`, `slop/detectors.yaml`, `slop/cards.yaml` (nine rules, two detectors, one card): new detectors `pricing-offers` and `palette-family`, a `floating-chips` kind of `decorative-dom`, and a `paired-headings` check of `rhythm-variance` that extends `copy.uniform-rhythm` (a first heading, or three or more headings, built as two or three short sentences; new keep cases `approved-headline` and `distinct-facts`). `section-sequence` compares a page from its first hero with a repeated archetype counted once, takes `min_sections`, and `layout.template-section-sequence` gains the spine hero > feature-grid > pricing > faq > cta and a four-section minimum. New lists `reassurance_phrases`, `offer_terms`, and `recommendation_badges`; `color.acid-on-black` joins the package `dark-luminous`.
 
 ### Added
+
+- `lapis/references/anti-slop.md`: one guide to the defaults generated pages share - per domain what it looks like, why it reads as generated, what to do instead, and honest exceptions - with a short list of per-genre packages. `lapis` links it from the Defaults step and the critic from package drift.
+- Anti-slop rules from the catalog of 123 generated pages (55 observations): `layout.pricing-trio-recommendation` (three priced cards with a set-apart middle), `component.floating-chips` (short boxed labels over the edge of the opening's object), `copy.stock-reassurance` and `copy.template-offer-terms` (lexicons `reassurance_phrases` and `offer_terms`), `color.sage-soft-field`, `color.violet-indigo-accent`, `color.acid-on-black`, and `color.teal-accent` (OKLCH field-and-accent pairs from the render palette, and an accent region at plan time), and `layout.reassurance-landing` with the package `reassurance-landing`. All are default rules that warn in create mode; a plan keeps or rejects each by its `keep_when` case. The new card `category-palette` holds the four palettes.
 
 - `lapis/references/visual-assets.md`: image-job selection, protected crops and coherent sets, semantic icon contact sheets, and fact/inference/proposal separation for supplied assets.
 - Recovered fifteen predecessor sources into compact references for source-family adoption and component seams,

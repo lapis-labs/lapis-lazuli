@@ -2232,3 +2232,84 @@ references:
     dropped: Mandatory artifact templates, fixed sample ranges, invented archetypes/emotions, recruitment or upload permissions and external read expansion.
   license: CC-BY-4.0
   attribution: 'Adapted from design-and-frontend by SJY051 (2026), CC BY 4.0; Q30 owner retained, with planning/interpretation explicitly separated from execution and access.'
+- reference: lps-brief/SKILL.md
+  sources:
+  - path: references/workflow.md
+    taken: 'GrillSkill (2026-10-04), section 7 (lines 185-198): ask only what changes the work, the smallest independent set, defer a dependent question, "I do not know" and no answer as supported outcomes, recommendations as proposals; a question round, not an interview.'
+    dropped: The rule against any fixed question cap (the brief caps a round at six and the rounds at two, by decision), the one-at-a-time rhythm, and the explicit-interview mode with confirmation gates.
+  - path: references/creative-workflows/brief-inference.md
+    taken: 'GrillSkill (2026-10-04), lines 26-37: read the actual artifacts before inferring from adjectives; a look word does not choose a style; quiet constraints override preference.'
+    dropped: The frames, dials, and starting-hypothesis tables, which `lapis` already owns.
+  external:
+  - kind: practice
+    name: Grilling skill, @fernado03/pi-flow 0.2.8 (MIT)
+    used_for: Find every fact in the workspace before asking, give a recommended answer with each question; the one-question-at-a-time and wait-for-confirmation rules were not taken, by decision
+  - kind: practice
+    name: designer-skills grill-me and design-brief, julianoczkowski/designer-skills at c259656 (Apache-2.0)
+    used_for: Explore the project before asking and give a recommendation per question; the brief as a saved file per feature; scanning for existing tokens and components before the interview
+  - kind: practice
+    name: Superpowers brainstorming, obra/superpowers at 8ca22db (MIT)
+    used_for: Write the understanding back so it can be corrected, separating what was said from assumptions; reflect rather than re-ask what the request already supplies; a hard gate before implementation
+  - kind: practice
+    name: AntiSlop R-37, miqdadbadjuber/anti-slop at 91f12ec (MIT)
+    used_for: A design built with no direction is labeled as such; when nobody can be asked, say so rather than fall back silently; direction is the owner's, not the agent's
+  - kind: practice
+    name: Taste skill V2 section 0.C, Leonxlnx/taste-skill at ce26fc2 (MIT)
+    used_for: If the brief can be read confidently, do not ask; ask only when the readings genuinely diverge
+  - kind: study
+    name: explore-grill experiment, local report ~/.cache/lapis-pi/explore-grill/REPORT.md (2026-10-03, n=2 per arm)
+    used_for: What the question round left out of the dossier (the loss cases, the owner's beliefs, the refused words, every limit), that self-directed search never ran when optional, and that information about the subject changed the pages more than any instruction
+  skill_body_pointer: lapis/SKILL.md step 4 of "At the start of a task" points to lps-brief.
+- reference: lps-brief/references/questions.md
+  sources:
+  - path: references/creative-workflows/design-brainstorming.md
+    taken: 'GrillSkill (2026-10-04), lines 26-38: collect the subject before naming a style (task, audience and stakes, the subject''s own objects and language, real content, approved brand, references and what matters in each, fixed constraints).'
+    dropped: Safe / Fresh / Wild, direction cards, the mutation menu, and the worked cookware directions, which belong to `lapis` explorations.
+  - path: references/workflow.md
+    taken: 'GrillSkill (2026-10-04), lines 189-190: independent questions together, dependent ones deferred; a recommendation only where evidence supports one.'
+    dropped: The global rule against a question cap and the one-at-a-time preference.
+  external:
+  - kind: study
+    name: explore-grill experiment, local report ~/.cache/lapis-pi/explore-grill/REPORT.md (2026-10-03)
+    used_for: The areas a six-question round covered and the ones it dropped; the order is a judgment, not a measured effect
+  skill_body_pointer: Read references/questions.md to choose and ask the questions.
+- reference: lps-brief/references/research.md
+  sources:
+  - path: references/research/reference-and-inspiration-digging.md
+    taken: 'GrillSkill (2026-10-04), lines 78-103: the claim-labeling idea only: confirmed (read, with URL and date) versus lead, and reposts as one source; the lookup targets are the subject''s mechanism, failure, rules, vocabulary, and materials.'
+    dropped: Reference boards, automatic traversal, and any capture of another site; the existing lzl-research limits stay authoritative.
+  external:
+  - kind: practice
+    name: designer-skills design-brief codebase scan, julianoczkowski/designer-skills at c259656 (Apache-2.0)
+    used_for: Scanning tokens, components, themes, fonts, and existing pages before interviewing; generalized here to files of any stack
+  skill_body_pointer: Read references/research.md for what to read and look up before asking.
+- reference: lps-brief/references/record.md
+  sources:
+  - path: assets/design-brief-template.md
+    taken: 'GrillSkill (2026-10-04), the stance that unknown facts are marked and assumptions are never turned into findings; users, positioning, claims to avoid, constraints, brand commitments, evidence on hand, open decisions as the content of a record.'
+    dropped: The full PRODUCT.md template and its table layouts; the record uses the existing plan fields instead of a new file format.
+  - path: references/creative-workflows/answer-calibration.md
+    taken: 'GrillSkill (2026-10-04), lines 99-123: the distinction between reported and observed, and keeping an unanswered decision open rather than settling it silently.'
+    dropped: Answer-size calibration and confirmation gates.
+  external:
+  - kind: practice
+    name: Superpowers brainstorming write-back, obra/superpowers at 8ca22db (MIT)
+    used_for: A short note the owner can recognize and correct, with what was said kept apart from what was assumed
+  skill_body_pointer: Read references/record.md for the record's shape and what it seeds.
+  license: CC-BY-4.0
+  attribution: 'Adapted from design-and-frontend by SJY051 (2026), CC BY 4.0; condensed, with the question caps and the assumed/declared status vocabulary of this repository.'
+- reference: lapis/references/anti-slop.md
+  sources:
+  - path: references/quality/anti-slop.md
+    taken: The per-domain shape (looks like, why it reads as generated, what to do instead, honest exceptions), the rule that a named default needs a recorded reason and is not a ban, and the diagnosis that swapping one named package for another is no repair.
+    dropped: The 107-row catalog table (it lives in slop/rules.yaml and cards.yaml) and every named product or framework.
+  external:
+  - kind: practice
+    name: AntiSlop skill (MIT, Copyright (c) 2026 Miqdad Badjuber), UI sections
+    used_for: The idea of describing recurring generated-page patterns by domain with an honest exception for each; no text was copied.
+  - kind: measurement
+    name: Generated-page catalog of 2026-10-04 (123 pages, 55 observations), maintainers' working notes
+    used_for: What recurs, per genre; counts are kept out of the reference text except as a general sign.
+  skill_body_pointer: For what these defaults look like on a page and the per-genre packages, read references/anti-slop.md.
+  license: CC-BY-4.0
+  attribution: 'Adapted from design-and-frontend by SJY051 (2026), CC BY 4.0, and written from the 2026-10-04 catalog of generated pages; the AntiSlop project (MIT) shaped the format, and none of its text is copied.'
