@@ -51,6 +51,15 @@ when that is true.
   beside the action, work that will be lost before the save, close, or reset. The same notice as a chip
   on every card or a suffix on every toast is `copy.decorative-metadata` and `copy.meta-text`. Test
   setup and reviewer instructions belong to the developer handoff.
+- **What the page must show, and what it must not.** Decide first what the visitor needs: the subject and the
+  task. Leave out how the page was made, that it is a demo beyond one notice, and what changed since the last
+  version. When the brief requires a notice that the data is fictional, write one short line in the footer or a
+  small persistent label, in the page's language, never in the hero, a heading, or beside each section; a
+  translation beside it is the same notice. Cut each of these in any language (`copy.meta-text`): "this is not
+  a real exhibition" under the title, a demo or fake-data warning repeated per section or in a questions list,
+  change-log narration ("We updated...", "I fixed...", "...has been improved"; 수정했어요, 개선되었습니다;
+  修正しました, 改善されました), the page explaining itself ("This section shows...", "Click the button below to...";
+  이 섹션에서는 …, このセクションでは…), developer and test notes, and an apology for a part that was never built.
 
 ## Labels, buttons, and fields
 

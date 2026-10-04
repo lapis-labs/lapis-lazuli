@@ -317,12 +317,18 @@ lists:
       - 最受欢迎
       - 热门
   leftover_phrases:
-    as_of: 2026-09
+    as_of: 2026-10
     values:
       en:
       - certainly
       - i hope this helps
       - as requested
+      - here is the updated
+      - here's the updated
+      - i've updated the
+      - i have updated the
+      - i've made the following changes
+      - let me know if you'd like
       ko:
       - 물론입니다
       - 물론이죠
@@ -333,6 +339,17 @@ lists:
       - 말씀하신 대로
       - 좋은 질문
       - 아래는 요청하신
+      - 수정된 버전은 다음과 같아요
+      - 수정한 버전입니다
+      ja:
+      - もちろんです
+      - お役に立てれば
+      - ご要望どおり
+      - ご要望通り
+      - ご指摘のとおり
+      - 以下にまとめました
+      - 修正版は以下のとおりです
+      - 必要であればお知らせください
   placeholder_entities:
     as_of: 2026-09
     values:
@@ -2330,6 +2347,62 @@ rules:
   - id: priority-calls-for-shell
     when: the ranked content genuinely calls for the conventional shell
     evidence: none
+  waiver:
+    scope: rule
+  verify: review
+- id: layout.split-hero
+  class: default
+  domain: layout
+  layers:
+  - render
+  - review
+  severity:
+    create: gate
+    review: P3
+  detect:
+    render:
+      detector: opening-split
+      threshold:
+        object_area_share_min: 0.06
+        text_chars_max: 450
+  why: The first screen is divided in two, a column with the large heading, a short paragraph, and the
+    buttons beside a column with an image, drawing, or product mock - the composition generated pages
+    open with whatever the subject, so changing the subject changes a noun and nothing else
+  better: Derive the opening from the content's own relation (the object and its state, a question and
+    its answer, before and after), from the subject's own objects at their real arrangement, or from the
+    sequence the visitor follows; the split stays only when it is what that derivation gives
+  keep_when:
+  - id: won-comparison
+    when: the split won a rendered comparison against an opening built from the same content without it
+    evidence:
+    - composition
+  - id: contract-fixes-opening
+    when: the design contract or the brief fixes a two-column opening and the plan says so
+    evidence:
+    - design
+    - brief
+  - id: evidentiary-capture
+    when: the second column is a real capture of the subject itself - the product at work, the artwork,
+      the object on sale - recorded in the asset ledger as evidence
+    evidence:
+    - asset:
+        kind:
+        - photo
+        - screenshot
+        - video
+        role:
+        - evidentiary
+  - id: task-in-opening
+    when: the second column is the interface the visitor came to use, such as a booking panel or a search,
+      and the first column says what it is for
+    evidence: none
+  - id: record-beside-claim
+    when: the second column is one record of the subject's real state, such as a restore point with its
+      time, shown beside the claim it supports, and the plan's relationships between its contents name
+      that pair
+    evidence:
+    - plan: layout.procedure.relationships
+      present: true
   waiver:
     scope: rule
   verify: review
@@ -5357,15 +5430,26 @@ rules:
         - producer-facing
         - repeated-heading-body
         - demo-badges
+        - fiction-notice
         - build-labels
         - chat-leftovers
-  why: Copy addresses the builder, the prompt, or QA instead of the user, or repeats what the hierarchy
-    already says
-  better: Keep one decision-relevant message; move implementation and test notes to the developer handoff
+        - change-log
+        - developer-notes
+        - placeholder-apology
+        - self-description
+  why: Copy tells the visitor how the page was made instead of serving the subject - a demo or fictional-data
+    notice in the opening, in a heading, or repeated past the one the brief asks for; change-log narration;
+    the page describing itself; developer and test notes; an apology for a part nobody built - or addresses
+    the builder, the prompt, or QA, or repeats what the hierarchy already says
+  better: Show the subject and the visitor's task, and leave out how the page was made, that it is a demo,
+    and what changed. When the brief requires a notice that the data is fictional, state it once, short,
+    in the footer or a small persistent label, never in the hero, a heading, or beside each section; move
+    implementation and test notes to the developer handoff
   keep_when:
   - id: qualified-disclosure
     when: a consequential disclosure - simulation, non-delivery, privacy, persistence, consent, eligibility,
-      recovery, safety, or legal - placed once at the decision it qualifies
+      recovery, safety, or legal - that the visitor needs at the decision it qualifies, said once there
+      and not again elsewhere
     evidence: none
   - id: compatibility-label
     when: a version, build, or environment label where compatibility or availability depends on it
