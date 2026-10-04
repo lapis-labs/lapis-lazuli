@@ -44,6 +44,7 @@ class Profile:
     summary: dict                                                   # what the report shows
     omitted: list[tuple[str, str]] = field(default_factory=list)    # (field, why it is left out)
     notes: list[str] = field(default_factory=list)                  # also written to reference.notes
+    files: dict[str, Path] = field(default_factory=dict)            # what `--task` keeps for study (name to file)
 
 
 def slugify(text: str) -> str:

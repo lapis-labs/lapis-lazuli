@@ -67,7 +67,7 @@ properties:
     required: [rights]
     properties:
       rights: { enum: [own, licensed, reference-only] }
-      captured_by: { enum: [user-request] }           # capture only what the user asked for
+      captured_by: { enum: [user-request, agent-exploration] }   # who chose the source: the user, or the run (--task)
       notes: { type: string }
 
   # Rendered web results (render, site). One entry per captured viewport.

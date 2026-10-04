@@ -32,6 +32,7 @@ from lapis_design.sig_key import load_key
 from lapis_design.text_sig import key_id
 from lazuli import db, paths, sources
 from lazuli.catalog import net
+from lazuli.ref import study
 from lazuli.ref.common import (MIN_INTERVAL_S, InputError, Profile, Refused, cache_folder, fetch, is_url,
                                new_document, page_url)
 
@@ -268,16 +269,18 @@ class Capture:
     profile: Profile
     staging: Path
     shots: Path
+    source: study.Source | None = None
 
     def discard(self) -> None:
         """Remove what is left of the staging folder (nothing, once it has been put in place)."""
         shutil.rmtree(self.staging, ignore_errors=True)
 
 
-def capture_site(url: str, rights: str, slug: str) -> Capture:
-    """Capture the named page at every width into a staging folder and return it with the profile.
-    Nothing reaches refs/<slug>/ here: the caller publishes the folder together with the profile and
-    then calls `discard()`. A capture that stops as blocked or fails leaves no staging folder."""
+def capture_site(url: str, rights: str, slug: str, *, with_source: bool = False) -> Capture:
+    """Capture the named page at every width into a staging folder and return it with the profile, and with
+    `with_source` the page's own HTML and stylesheets (`study.read_source`). Nothing reaches refs/<slug>/
+    here: the caller publishes the folder together with the profile and then calls `discard()`. A capture
+    that stops as blocked or fails leaves no staging folder."""
     if not is_url(url):
         raise InputError(f"not an http(s) URL: {url}")
     interval, response = fetch(url)
@@ -285,7 +288,7 @@ def capture_site(url: str, rights: str, slug: str) -> Capture:
     shots = cache_folder(slug)
     key = load_key()
     viewports = []
-    named = None
+    named = source = None
     last = net._clock()
     try:
         conn = db.connect(paths.db_path())
@@ -323,6 +326,8 @@ def capture_site(url: str, rights: str, slug: str) -> Capture:
                     viewports.append(vp)
             if named.blocked is not None:                       # a navigation seen while the browser closed
                 raise named.blocked
+            if with_source:                                     # the page's HTML and stylesheets, paced like the rest
+                source = study.read_source(final_url, response, recorder)
     except sqlite3.Error as exc:
         raise InputError(f"lazuli database error: {exc}") from exc
     except (PlaywrightError, ValueError, OSError) as exc:
@@ -349,4 +354,4 @@ def capture_site(url: str, rights: str, slug: str) -> Capture:
     if named is not None and named.unsent:
         profile.notes.append(f"at least {len(named.unsent)} page requests to refused or browser-link "
                              "hosts were blocked")
-    return Capture(profile, staging, shots)
+    return Capture(profile, staging, shots, source)

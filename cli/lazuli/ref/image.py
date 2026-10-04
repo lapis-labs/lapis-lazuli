@@ -14,7 +14,7 @@ installed, so they are left out and the report says so.
 """
 from __future__ import annotations
 
-import shutil
+import io
 from pathlib import Path
 
 import numpy as np
@@ -22,7 +22,8 @@ from PIL import Image
 
 from lapis_design.render.color import from_oklab
 from lapis_design.render.fields.palette import _LINEAR, _lab
-from lazuli.ref.common import InputError, Profile, cache_folder, new_document
+from lazuli.ref import study
+from lazuli.ref.common import InputError, Profile, cache_folder, fetch, is_url, new_document, page_url
 
 MAX_WIDTH = 256
 CLUSTERS = 8
@@ -93,18 +94,35 @@ def palette(image: Image.Image) -> list[dict]:
     return sorted(results, key=lambda item: (-item["share"], item["oklch"]))
 
 
-def profile_image(path: Path, rights: str, slug: str) -> Profile:
+def _download(url: str) -> tuple[bytes, str, str]:
+    """The picture at `url`, its final address, and its content type. The source registry, robots.txt, and the
+    per-host pace apply as for a page (`common.fetch`); a page, not a picture, is for `lazuli ref capture`."""
+    _, response = fetch(url)
+    kind = response.headers.get("content-type", "").split(";")[0].strip().lower()
+    if not kind.startswith("image/"):
+        raise InputError(f"{response.url} is {kind or 'of an unknown type'}, not a picture; capture a page with "
+                         "`lazuli ref capture`")
+    if len(response.body) > study.MAX_IMAGE_BYTES:
+        raise InputError(f"{response.url} is {len(response.body):,} bytes, over the {study.MAX_IMAGE_BYTES:,} "
+                         "a reference picture may have")
+    return response.body, response.url, kind
+
+
+def profile_image(source: str | Path, rights: str, slug: str) -> Profile:
+    """The profile of a local picture, or of the picture at an http(s) address, which is downloaded once."""
+    web = is_url(str(source))
     try:
-        with Image.open(path) as image:
+        body, label, content_type = _download(str(source)) if web else (Path(source).read_bytes(), str(source), "")
+        with Image.open(io.BytesIO(body)) as image:
             colors = palette(image)
+            suffix = study.image_extension(content_type, image.format) if web else Path(source).suffix.lower()
     except OSError as exc:
-        raise InputError(f"cannot read the image {path}: {exc}") from exc
-    copy = cache_folder(slug) / f"image{path.suffix.lower()}"
+        raise InputError(f"cannot read the image {source}: {exc}") from exc
+    copy = cache_folder(slug) / f"image{suffix}"
     copy.parent.mkdir(parents=True, exist_ok=True)
-    if copy.resolve() != path.resolve():
-        shutil.copyfile(path, copy)
+    copy.write_bytes(body)
     document = new_document("image", rights)
-    document["source"]["path"] = str(path)
+    document["source"].update({"url": page_url(label)} if web else {"path": str(source)})
     document["image"] = {"path": str(copy), "palette": colors}
     summary = {"colors": len(colors), "largest_share": colors[0]["share"], "image_copy": str(copy)}
-    return Profile(document, summary, omitted=list(OMITTED))
+    return Profile(document, summary, omitted=list(OMITTED), files={copy.name: copy})
