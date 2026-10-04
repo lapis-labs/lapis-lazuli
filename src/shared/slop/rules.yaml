@@ -3591,13 +3591,28 @@ rules:
     severity: { create: gate, review: P1 }
     detect:
       source: { detector: asset-ledger, params: { check: license } }
-    why: An asset or font ships under an unknown license, from an unknown origin, or without a record of where its license document is kept
-    better: Find the governing license for the exact item from the rights holder or provider, record where it is kept, or replace the asset
+    why: An asset or font ships under a license that stayed unknown after it was looked for, from an unknown origin, or without a record of where its license document is kept
+    better: Ask the user, or replace the asset or font with one whose license you can read from the rights holder or provider and record where it is kept
     waiver: { scope: none }
     verify: static
     provenance:
       - { kind: method, source: "skill:references/research/brand-and-ip-guardrails.md#asset-catalogs-and-acquisition" }
       - { kind: method, source: "skill:references/fonts/license-risk-screening.md#risk-pattern-screen" }
+
+  - id: rights.license-unresearched
+    class: requirement
+    domain: rights
+    layers: [source]
+    severity: { create: gate, review: P1 }
+    detect:
+      source: { detector: asset-ledger, params: { check: license } }
+    why: A font ships under a license nobody has looked for, so "unknown" only means it was not read, and the lock holds no record of any search
+    better: Research the license before deciding (the font's own records, the foundry's page, the terms of whatever installed it) and record what you find; ship only a font whose license the research verified
+    waiver: { scope: none }
+    verify: static
+    provenance:
+      - { kind: method, source: "skill:references/fonts/license-risk-screening.md#risk-pattern-screen" }
+      - { kind: method, source: "skill:references/fonts/licensing-and-entitlements.md#metadata-is-evidence-not-a-grant" }
 
   - id: rights.license-hint-only
     class: quality
@@ -3666,7 +3681,7 @@ rules:
     severity: { create: gate, review: P1 }
     detect:
       source: { detector: asset-ledger, params: { check: notices } }
-    why: Distributed fonts, icons, or other licensed files ship without the license and copyright notices their license requires
+    why: Distributed fonts, icons, or other licensed files ship without the license and copyright notices their license requires, or the recorded notice file holds something other than the license text
     better: Ship the license text and copyright notice with the files, in a licenses folder or an about screen; a visible credit does not replace them
     waiver: { scope: none }
     verify: static

@@ -705,13 +705,46 @@ def test_font_use_grants(tmp_path):
     assert "font.use-unknown" not in ids(report, blocking=True)
 
 
-def test_an_unknown_license_overrides_recorded_grants(tmp_path):
+def lock_license(tmp_path, license_record, **fields):
     import json
     lock = json.loads(LOCK.read_text(encoding="utf-8"))
-    lock["fonts"][0]["license"]["kind"] = "unknown"
+    lock["fonts"][0]["license"] = license_record
+    lock["fonts"][0].update(fields)
     path = tmp_path / "fonts.lock.json"
     path.write_text(json.dumps(lock), encoding="utf-8")
-    assert "font.use-unknown" in ids(run(tmp_path, base_plan(), lock=path), blocking=True)
+    return path
+
+
+SEARCH = {"via": "web-search", "note": "searched: Gowun Batang font license", "checked_at": "2026-10-04"}
+
+
+def test_an_unknown_license_overrides_recorded_grants_and_says_whether_it_was_researched(tmp_path):
+    path = lock_license(tmp_path, {"kind": "unknown", "uses": {"web": "allowed"}, "checked_at": "2026-10-04"})
+    report = run(tmp_path, base_plan(), lock=path)
+    assert [f["rule_id"] for f in report["findings"]].count("font.license-unresearched") == 1   # one, not one per use
+    assert "font.license-unresearched" in ids(report, blocking=True)
+    assert "font.use-unknown" not in ids(report) and "font.license-unknown" not in ids(report)
+    researched = {"kind": "unknown", "checked_at": "2026-10-04", "research": {
+        "outcome": "unknown-after-research", "evidence": [SEARCH], "note": "no license page found for it"}}
+    report = run(tmp_path, base_plan(), lock=lock_license(tmp_path, researched))
+    assert "font.license-unknown" in ids(report, blocking=True) and "font.license-unresearched" not in ids(report)
+    [finding] = [f for f in report["findings"] if f["rule_id"] == "font.license-unknown"]
+    assert "no license page found for it" in finding["observed"] and "ask the user" in finding["fix"]
+    hosted = lock_license(tmp_path, researched, delivery="google-fonts-api", source="google-fonts")
+    report = run(tmp_path, base_plan(), lock=hosted)                          # the provider serves it: no files ship
+    assert "font.use-unknown" in ids(report, blocking=False) and not ids(report, blocking=True)
+
+
+def test_a_restricted_license_warns_with_its_conditions(tmp_path):
+    record = {"kind": "commercial-perpetual", "uses": {"web": "allowed-with-conditions"}, "checked_at": "2026-10-04",
+              "source_class": "rights-holder", "research": {
+                  "outcome": "restricted", "restrictions": ["web use on one domain only"],
+                  "evidence": [{"via": "rights-holder-page", "url": "https://foundry.example/license",
+                                "quote": "one domain", "checked_at": "2026-10-04"}]}}
+    report = run(tmp_path, base_plan(), lock=lock_license(tmp_path, record))
+    [finding] = [f for f in report["findings"] if f["rule_id"] == "font.license-restricted"]
+    assert not finding["blocking"] and "web use on one domain only" in finding["observed"]
+    assert not ids(report, blocking=True)
 
 
 def test_app_platforms_need_an_app_grant(tmp_path):

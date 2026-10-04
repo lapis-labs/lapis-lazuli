@@ -14,7 +14,7 @@ from typing import Any
 
 import yaml
 
-from lapis_design import __version__, attempts, gate, order, references, shared_dir
+from lapis_design import __version__, attempts, font_license, gate, order, references, shared_dir
 from lapis_design.lint.cli import LintError, _load, problems
 from lapis_design.lint.engine import open_lazuli
 from lapis_design.plan_check import (LazuliDBUpgradeError, PlanOverLimit, check_expansion, check_non_string_keys,
@@ -25,6 +25,7 @@ PROBES = ("controls", "commits", "keyboard", "dialogs", "choices", "forms", "sta
           "time_limits", "history", "pointer", "motion", "scroll", "permissions", "media", "flows", "console")
 CATALOGS = {"google-fonts", "fontsource", "fontshare", "sandoll"}
 UNCONFIRMED = {"adobe-sync", "user-installed", "foundry-purchase", "open-source-other", "noonnu"}
+OPEN_CHANNELS = {"open-source-other", "noonnu"}      # a license read from its own document needs no second reading
 LICENSE_KINDS = {"OFL-1.1": "ofl", "Apache-2.0": "apache", "KOGL-1": "kogl-1", "system": "system",
                  "commercial": ("commercial-subscription", "commercial-perpetual")}
 # The gate's own blocking findings that report a check that did not run or an input that is missing
@@ -125,7 +126,14 @@ def _licenses(fonts: list[dict], offline: bool) -> list[dict]:
             family = font["family"]
             if source == "system":
                 continue
-            if (source in UNCONFIRMED or source == "sandoll"
+            research = font["license"].get("research") or {}
+            verified = (font_license.state(font) == "researched" and research["outcome"] == "verified"
+                        and font["license"].get("source_class") in ("rights-holder", "provider"))
+            if research.get("outcome") == "restricted":
+                output.append(_finding("license-unconfirmed", f"{family}: the license is restricted "
+                                       f"({'; '.join(research.get('restrictions', []))}); the user confirms the use",
+                                       layer="source", asset=family, warning=True, source=True))
+            elif ((source in UNCONFIRMED and not (verified and source in OPEN_CHANNELS)) or source == "sandoll"
                     or font["license"].get("source_class") == "user-declared"):
                 output.append(_finding("license-unconfirmed", f"{family}: license needs user confirmation",
                                        layer="source", asset=family, warning=True, source=True))

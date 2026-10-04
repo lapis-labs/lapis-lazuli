@@ -261,8 +261,66 @@ def test_fonts_that_ship_need_a_grant_and_a_clean_channel():
     font = copy.deepcopy(example("fonts/example.fonts.lock.json")["fonts"][0])
     font["license"]["uses"] = {}
     assert rules(check_font(font)) == ["rights.license-unknown"]
-    font["license"]["kind"] = "unknown"
-    assert "rights.license-unknown" in rules(check_font(font))
+
+
+LICENSE_TEXT = ("Copyright 2021 The Gowun Batang Project Authors\n\nThis Font Software is licensed under the SIL Open "
+                "Font License, Version 1.1.\n\nSIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n")
+
+
+def bundled(tmp_path, notice_text=LICENSE_TEXT):
+    """The example's first font, with its notice file written under a project root."""
+    font = copy.deepcopy(example("fonts/example.fonts.lock.json")["fonts"][0])
+    notice = tmp_path / font["notices"][0]
+    notice.parent.mkdir(parents=True, exist_ok=True)
+    if notice_text is not None:
+        notice.write_text(notice_text, encoding="utf-8")
+    return font
+
+
+def test_a_bundled_open_font_with_its_license_text_and_research_is_accepted(tmp_path):
+    assert check_font(bundled(tmp_path), root=tmp_path) == []
+    apache = bundled(tmp_path, "Apache License\nVersion 2.0, January 2004\n")
+    apache["license"]["kind"] = "apache"
+    assert check_font(apache, root=tmp_path) == []
+
+
+def test_a_bundled_font_whose_notice_is_not_the_license_text_is_flagged(tmp_path):
+    for text in ("", "404: Not Found", "Gowun Batang, a Korean serif.\nSee the website for terms.\n"):
+        hits = check_font(bundled(tmp_path, text), root=tmp_path)
+        assert [(h["rule_id"], h["observed"]) for h in hits] == [
+            ("rights.notice-missing", "no notice file holds the ofl license text")]
+    apache = bundled(tmp_path)                                         # the OFL text is not the Apache License
+    apache["license"]["kind"] = "apache"
+    assert rules(check_font(apache, root=tmp_path)) == ["rights.notice-missing"]
+    bare = tmp_path / "bare"
+    assert rules(check_font(bundled(bare, None), root=bare)) == ["rights.notice-missing"]   # no file at all
+
+
+def test_a_bundled_font_with_only_a_hint_for_its_license_is_flagged(tmp_path):
+    for hint in ("catalog-summary", "file-metadata"):
+        font = bundled(tmp_path)
+        font["license"]["source_class"] = hint
+        del font["license"]["research"]
+        assert rules(check_font(font, root=tmp_path)) == ["rights.license-hint-only"]
+    font = bundled(tmp_path)
+    del font["files"], font["modified"], font["notices"]                # not shipped: nothing to evidence yet
+    font["license"]["source_class"] = "catalog-summary"
+    assert check_font(font, root=tmp_path) == []
+
+
+def test_an_unknown_license_is_never_researched_or_unknown_after_research(tmp_path):
+    font = bundled(tmp_path)
+    font["license"] = {"kind": "unknown", "checked_at": "2026-10-04"}
+    [never] = check_font(font, root=tmp_path)
+    assert never["rule_id"] == "rights.license-unresearched" and "no research is recorded" in never["observed"]
+    font["license"]["research"] = {
+        "outcome": "unknown-after-research", "note": "no license in the folder, none on the foundry page",
+        "evidence": [{"via": "web-search", "note": "searched: Gowun Batang font license", "checked_at": "2026-10-04"}]}
+    [searched] = check_font(font, root=tmp_path)
+    assert searched["rule_id"] == "rights.license-unknown"
+    assert "no license in the folder, none on the foundry page" in searched["observed"]
+    del font["files"], font["modified"], font["notices"]                # a candidate that does not ship is no hit
+    assert check_font(font, root=tmp_path) == []
 
 
 def test_app_bundled_fonts_need_an_app_grant():

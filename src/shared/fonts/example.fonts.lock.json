@@ -9,8 +9,21 @@
       "postscript_names": ["GowunBatang-Regular", "GowunBatang-Bold"],
       "scripts": ["hang", "latn"],
       "source": "google-fonts",
+      "source_url": "https://github.com/google/fonts/tree/main/ofl/gowunbatang",
       "catalog_match": {"catalog": "google-fonts", "key": "gowunbatang", "method": "exact_family", "confidence": 1.0},
-      "license": {"kind": "ofl", "uses": {"web": "allowed", "app": "allowed-with-conditions"}, "url": "https://openfontlicense.org", "checked_at": "2026-09-24", "source_class": "provider"},
+      "license": {
+        "kind": "ofl",
+        "uses": {"web": "allowed", "app": "allowed-with-conditions"},
+        "url": "https://openfontlicense.org",
+        "checked_at": "2026-09-24",
+        "source_class": "rights-holder",
+        "research": {
+          "outcome": "verified",
+          "evidence": [
+            {"via": "license-file", "url": "https://github.com/google/fonts/blob/main/ofl/gowunbatang/OFL.txt", "quote": "This Font Software is licensed under the SIL Open Font License, Version 1.1.", "checked_at": "2026-09-24"}
+          ]
+        }
+      },
       "delivery": "self-host",
       "files": ["public/fonts/gowun-batang/*.woff2"],
       "modified": "woff-unchanged",
@@ -24,6 +37,7 @@
       "postscript_names": ["Pretendard-Regular", "Pretendard-SemiBold"],
       "scripts": ["hang", "latn"],
       "source": "open-source-other",
+      "source_url": "https://github.com/orioncactus/pretendard",
       "license": {"kind": "ofl", "uses": {"web": "allowed", "app": "allowed-with-conditions"}, "checked_at": "2026-09-24", "source_class": "provider"},
       "delivery": "self-host",
       "files": ["public/fonts/pretendard/*.woff2"],

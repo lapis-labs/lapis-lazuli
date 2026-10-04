@@ -911,6 +911,30 @@ def test_system_font_with_user_declared_license_is_left_to_plan_checks(project):
     assert "release.license-unconfirmed" not in ids(result)
 
 
+def researched_font(source, outcome, family):
+    entry = font(source, family=family)
+    entry["license"].update(source_class="rights-holder", research={
+        "outcome": outcome, "evidence": [{"via": "rights-holder-page", "url": "https://foundry.example/license",
+                                          "checked_at": "2026-09-27"}], **(
+            {"restrictions": ["one domain only"]} if outcome == "restricted" else {})})
+    return entry
+
+
+def test_a_license_read_from_its_own_document_is_not_listed_but_a_restricted_one_is(project, monkeypatch):
+    fonts = [researched_font("open-source-other", "verified", "Read Open"),
+             researched_font("noonnu", "verified", "Read Korean"),
+             researched_font("open-source-other", "restricted", "Limited"),
+             researched_font("foundry-purchase", "verified", "Bought"),
+             font("open-source-other", family="Never Read")]
+    update(project, "fonts.lock.json", lambda d: d["fonts"].extend(fonts))
+    requested = catalog_responses(monkeypatch, project, {})
+    code, result = online(project)
+    listed = {f["location"]["asset"]: f["observed"] for f in result["findings"]
+              if f["rule_id"] == "release.license-unconfirmed"}
+    assert sorted(listed) == ["Bought", "Limited", "Never Read"]          # the purchase and the unread one stay listed
+    assert "one domain only" in listed["Limited"] and requested == []
+
+
 
 def test_second_sandoll_refresh_error_invalidates_first_family_too(project, monkeypatch):
     from lazuli.catalog import sandoll

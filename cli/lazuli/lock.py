@@ -11,6 +11,7 @@ Where each fact comes from, first match wins:
                     coverage; the lock
   source            --source; the lock; the installed faces' origin (`user` is `user-installed`: provenance
                     unknown); the catalog that lists the family
+  source_url        --source-url; the lock (the page, folder, or release the shipped files came from)
   catalog_match     the best catalog match in the DB (source priority, then confidence); the lock
   license           license flags (`user-declared`, or the class --license-class names); a declared license
                     already in the lock (rights-holder, provider, user-declared); otherwise a hint, never
@@ -18,6 +19,11 @@ Where each fact comes from, first match wins:
                     resolved by source priority (`catalog-summary`), the installed files' license records
                     (`file-metadata`). Grants per use (`uses`) come only from --use. Without a URL, ofl and
                     apache point at their license text.
+  research          only --research, --evidence VIA [URL] (each with --quote or --evidence-note),
+                    --restriction, and --research-note; the evidence list replaces the recorded one, and
+                    the license class follows it (a license file or the rights holder's page: rights-holder;
+                    a distributor's or installer's terms: provider). A quote from a license file must
+                    appear in a --notice file. The schema refuses a record that contradicts itself.
   delivery          --delivery; the lock; a default from the source (system-only for system,
                     adobe-web-project for adobe-sync, google-fonts-api for google-fonts, else not-deliverable)
   files, modified, notices, fallback   flags; the lock
@@ -57,7 +63,7 @@ from pathlib import Path, PurePath
 import yaml
 from jsonschema import Draft202012Validator, FormatChecker
 
-from lapis_design import shared_dir
+from lapis_design import font_license, shared_dir
 from lazuli import coretext, db, paths, scan
 from lazuli.catalog import labels, match, store
 
@@ -83,10 +89,12 @@ DECLARED_CLASSES = ("rights-holder", "provider", "user-declared")
 MODIFIED_NEEDS_RFN = frozenset({"subset", "converted", "rebuilt"})   # schema: OFL + these need reserved_names
 
 SHIPPED_NAME_IDS = (1, 4, 6, 16)
-FIELD_ORDER = ("role", "used_by", "family", "postscript_names", "scripts", "source", "catalog_match", "license",
-               "delivery", "files", "modified", "reserved_names", "shipped_names", "notices", "notices_embedded",
-               "fallback")
-LICENSE_ORDER = ("kind", "uses", "url", "checked_at", "source_class")
+FIELD_ORDER = ("role", "used_by", "family", "postscript_names", "scripts", "source", "source_url", "catalog_match",
+               "license", "delivery", "files", "modified", "reserved_names", "shipped_names", "notices",
+               "notices_embedded", "fallback")
+LICENSE_ORDER = ("kind", "uses", "url", "checked_at", "source_class", "research")
+RESEARCH_ORDER = ("outcome", "evidence", "restrictions", "note")
+EVIDENCE_ORDER = ("via", "url", "quote", "note", "checked_at")
 
 
 class MissingInput(Exception):
@@ -264,6 +272,11 @@ class FileRecords:
     copyright: list[str] = field(default_factory=list)        # ID 0
     license: list[str] = field(default_factory=list)          # ID 13
     license_url: list[str] = field(default_factory=list)      # ID 14
+    trademark: list[str] = field(default_factory=list)        # ID 7
+    manufacturer: list[str] = field(default_factory=list)     # ID 8
+    designer: list[str] = field(default_factory=list)         # ID 9
+    vendor_url: list[str] = field(default_factory=list)       # ID 11
+    designer_url: list[str] = field(default_factory=list)     # ID 12
     coverage: list[dict] = field(default_factory=list)
     notices_embedded: bool = True                             # every face has IDs 0 and 13
     error: str | None = None
@@ -298,7 +311,9 @@ def read_file(path: Path, face_index: int | None = None) -> FileRecords:
                 continue
             table = font["name"]
             for target, ids in ((out.names, SHIPPED_NAME_IDS), (out.postscript, (6,)), (out.copyright, (0,)),
-                                (out.license, (13,)), (out.license_url, (14,))):
+                                (out.license, (13,)), (out.license_url, (14,)), (out.trademark, (7,)),
+                                (out.manufacturer, (8,)), (out.designer, (9,)), (out.vendor_url, (11,)),
+                                (out.designer_url, (12,))):
                 target += [t for t in _records(table, *ids) if t not in target]
             out.notices_embedded &= bool(_records(table, 0)) and bool(_records(table, 13))
             out.coverage.append(json.loads(scan.describe(font)["coverage_json"]))
@@ -422,7 +437,34 @@ def _ordered(entry: dict) -> dict:
     out = {k: entry[k] for k in FIELD_ORDER if entry.get(k) is not None}
     if "license" in out:
         out["license"] = {k: out["license"][k] for k in LICENSE_ORDER if out["license"].get(k) is not None}
+        research = out["license"].get("research")
+        if research:
+            research = {k: research[k] for k in RESEARCH_ORDER if research.get(k) is not None}
+            research["evidence"] = [{k: item[k] for k in EVIDENCE_ORDER if item.get(k) is not None}
+                                    for item in research.get("evidence", [])]
+            out["license"]["research"] = research
     return out
+
+
+def _squash(text: str) -> str:
+    return " ".join(text.split()).casefold()
+
+
+def _research(old: dict | None, args, today: str) -> dict | None:
+    """The license research record: the recorded one, changed by --research, --evidence, --restriction, and
+    --research-note. Evidence flags replace the recorded list (give all of it); the schema judges the result."""
+    if not (args.research or args.evidence or args.restriction or args.research_note):
+        return old
+    research = dict(old or {})
+    if args.evidence:
+        research["evidence"] = [{**item, "checked_at": today} for item in args.evidence]
+    if args.research:
+        research["outcome"] = args.research
+    if args.restriction:
+        research["restrictions"] = list(dict.fromkeys(args.restriction))
+    if args.research_note:
+        research["note"] = args.research_note
+    return research
 
 
 def build_entry(old: dict | None, facts: Facts, args, project: Path, notes: list[str]) -> dict:
@@ -501,22 +543,39 @@ def build_entry(old: dict | None, facts: Facts, args, project: Path, notes: list
     best = facts.matches[0] if facts.matches else None
     entry["catalog_match"] = ({"catalog": best["source"], "key": best["key"], "method": best["method"],
                                "confidence": best["confidence"]} if best else old.get("catalog_match"))
+    entry["source_url"] = args.source_url or old.get("source_url")
 
     # license
     old_license = old.get("license") or {}
-    declared_before = old_license.get("source_class") in DECLARED_CLASSES
-    if args.license_kind or args.use or args.license_url or args.license_class:
+    declared_before = old_license.get("source_class") in DECLARED_CLASSES or "research" in old_license
+    researching = bool(args.research or args.evidence or args.restriction or args.research_note)
+    if args.license_kind or args.use or args.license_url or args.license_class or researching:
         base = old_license if declared_before else {}
-        kind = args.license_kind or base.get("kind")
+        kind = args.license_kind or base.get("kind") or ("unknown" if args.research == "unknown-after-research" else None)
         if not kind:
             raise MissingInput("give --license-kind with the other license flags (no declared license is locked "
                                "yet, and a catalog or file hint is never promoted to a declaration)")
         same_kind = kind == base.get("kind")
         uses = {**(base.get("uses") or {}), **dict(args.use or ())} if same_kind else dict(args.use or ())
+        research = _research(base.get("research") if same_kind else None, args, today)
+        outcome = (research or {}).get("outcome")
+        for item in (research or {}).get("evidence", []):
+            if (item["via"] == "license-file" and item.get("quote") and notice_texts
+                    and not any(_squash(item["quote"]) in _squash(text) for text in notice_texts)):
+                raise MissingInput(f"the quote {item['quote']!r} is not in any --notice file: quote the license text "
+                                   "as the file holds it")
+        if outcome in ("verified", "restricted"):
+            source_class = args.license_class or font_license.implied_class(research.get("evidence", [])) or "user-declared"
+        elif outcome == "unknown-after-research":
+            source_class = args.license_class
+        else:
+            source_class = args.license_class or "user-declared"
+        document = next((i["url"] for i in (research or {}).get("evidence", [])
+                         if i["via"] in font_license.DOCUMENT_EVIDENCE and i.get("url")), None)
         entry["license"] = {"kind": kind, "uses": uses or None,
-                            "url": args.license_url or (base.get("url") if same_kind else None)
-                            or LICENSE_TEXT_URLS.get(kind),
-                            "checked_at": today, "source_class": args.license_class or "user-declared"}
+                            "url": args.license_url or (document if outcome in ("verified", "restricted") else None)
+                            or (base.get("url") if same_kind else None) or LICENSE_TEXT_URLS.get(kind),
+                            "checked_at": today, "source_class": source_class, "research": research}
     elif declared_before:
         entry["license"] = dict(old_license)
     else:
@@ -581,6 +640,14 @@ def build_entry(old: dict | None, facts: Facts, args, project: Path, notes: list
     if mine:
         notes.append(f"class {', '.join(mine)} comes from your class ({store.USER_SOURCE}): a hint for choosing, "
                      "not a license fact; it stays in the lazuli DB and is not written to the lock")
+    if entry["files"]:
+        state = font_license.state(entry)
+        if state == "unknown":
+            notes.append("the license is unknown after research: these files do not ship; ask the user, or choose "
+                         "another family")
+        if entry["source"] == "user-installed":
+            notes.append("user-installed files do not ship: once the license is verified (record it with --research "
+                         "verified and --evidence), lock the real source of the files with --source")
     return _ordered(entry)
 
 
@@ -641,6 +708,32 @@ def _use(text: str) -> tuple[str, str]:
     return use, grant
 
 
+class _Evidence(argparse.Action):
+    """`--evidence VIA [URL]`: one more evidence item; `--quote` and `--evidence-note` after it complete it."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        schema = lock_schema()
+        item_props = (schema["properties"]["fonts"]["items"]["properties"]["license"]["properties"]["research"]
+                      ["properties"]["evidence"]["items"]["properties"])
+        via, rest = values[0], values[1:]
+        if via not in item_props["via"]["enum"] or len(rest) > 1 or (
+                rest and not re.fullmatch(item_props["url"]["pattern"], rest[0])):
+            parser.error(f"--evidence expects VIA [URL] with VIA in {', '.join(item_props['via']['enum'])} and "
+                         "an http(s) URL without a query or fragment")
+        item = {"via": via, **({"url": rest[0]} if rest else {})}
+        namespace.evidence = [*(namespace.evidence or []), item]
+
+
+def _attach(key: str):
+    class Attach(argparse.Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            if not namespace.evidence:
+                parser.error(f"{option_string} completes the --evidence before it; give --evidence first")
+            namespace.evidence[-1][key] = values
+
+    return Attach
+
+
 def _parser(prog: str, schema: dict) -> argparse.ArgumentParser:
     props = schema["properties"]["fonts"]["items"]["properties"]
     ap = argparse.ArgumentParser(prog=prog, description="Write or update the project's fonts lock "
@@ -650,6 +743,8 @@ def _parser(prog: str, schema: dict) -> argparse.ArgumentParser:
     ap.add_argument("--task", required=True, metavar="ID", help="the plan task that uses the font (used_by)")
     ap.add_argument("--project", type=Path, default=Path("."), metavar="DIR", help="project folder (default: .)")
     ap.add_argument("--source", choices=props["source"]["enum"], help="where the shipped files come from")
+    ap.add_argument("--source-url", metavar="URL",
+                    help="the official page, repository folder, or release the shipped files came from")
     ap.add_argument("--delivery", choices=props["delivery"]["enum"])
     ap.add_argument("--postscript", nargs="+", action="extend", metavar="NAME",
                     help="PostScript names, for a family the DB does not know")
@@ -666,6 +761,21 @@ def _parser(prog: str, schema: dict) -> argparse.ArgumentParser:
                     help="what the license grants per use, e.g. web=allowed app=allowed-with-conditions")
     ap.add_argument("--license-class", choices=DECLARED_CLASSES,
                     help="who states the license facts you give (default: user-declared)")
+    research = lic["research"]["properties"]
+    ap.add_argument("--research", choices=research["outcome"]["enum"],
+                    help="where the license research ended: verified (a document grants the planned uses), "
+                         "restricted (it grants use only within --restriction), or unknown-after-research")
+    ap.add_argument("--evidence", nargs="+", action=_Evidence, metavar="VIA [URL]", default=None,
+                    help="one place looked at, in order (one flag per place; the list replaces the recorded one): "
+                         + ", ".join(research["evidence"]["items"]["properties"]["via"]["enum"]))
+    ap.add_argument("--quote", action=_attach("quote"), metavar="TEXT",
+                    help="the source's own words that grant or restrict; completes the --evidence before it")
+    ap.add_argument("--evidence-note", action=_attach("note"), metavar="TEXT",
+                    help="your words: what was searched or what the page does not say; completes the --evidence "
+                         "before it")
+    ap.add_argument("--restriction", nargs="+", action="extend", metavar="TEXT",
+                    help="a condition the license puts on the planned use (with --research restricted)")
+    ap.add_argument("--research-note", metavar="TEXT", help="what was searched and what was found")
     ap.add_argument("--reserved-name", nargs="+", action="extend", metavar="NAME",
                     help="reserved font names the license declares")
     ap.add_argument("--reserved-name-permission", action=argparse.BooleanOptionalAction, default=None,
@@ -676,8 +786,9 @@ def _parser(prog: str, schema: dict) -> argparse.ArgumentParser:
     return ap
 
 
-FACT_FLAGS = ("source", "delivery", "postscript", "files", "modified", "notice", "license_kind", "license_url",
-              "use", "license_class", "reserved_name", "fallback")
+FACT_FLAGS = ("source", "source_url", "delivery", "postscript", "files", "modified", "notice", "license_kind",
+              "license_url", "use", "license_class", "research", "evidence", "restriction", "research_note",
+              "reserved_name", "fallback")
 
 
 def main(argv: list[str] | None = None, prog: str = "lazuli lock") -> int:
@@ -688,6 +799,9 @@ def main(argv: list[str] | None = None, prog: str = "lazuli lock") -> int:
     for glob in args.files or ():
         if not re.match(pattern, glob):
             ap.error(f"--files {glob!r}: give paths relative to the project, without '..'")
+    url_pattern = schema["properties"]["fonts"]["items"]["properties"]["source_url"]["pattern"]
+    if args.source_url and not re.fullmatch(url_pattern, args.source_url):
+        ap.error(f"--source-url {args.source_url!r}: give an http(s) URL without a query or fragment")
     project = args.project
     if not project.is_dir():
         ap.error(f"--project {str(project)!r} is not a folder")

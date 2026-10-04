@@ -15,7 +15,7 @@ the governing document, not to edit the check.
 | Input | Where | Notes |
 |---|---|---|
 | Asset ledger | `.lapis/assets.ledger.json` | Media other than fonts. Absent ledger = no entries. |
-| Fonts lock | `.lapis/fonts.lock.json` | Fonts only; `files`, `notices`, `modified`, `reserved_names`, `shipped_names`. |
+| Fonts lock | `.lapis/fonts.lock.json` | Fonts only; `files`, `notices`, `modified`, `reserved_names`, `shipped_names`, `license.source_class`, `license.research`. |
 | Shipped files | the scan roots | Default roots `public`, `static`, `assets`, `src/assets`, `app`, `src/app`, `ios`, `android/app/src/main/res`, `android/app/src/main/assets`; the ledger's `scan` replaces them and adds excludes. Hidden directories, `node_modules`, `Pods`, and `build` are skipped. |
 | Render extracts | render/extract.schema.yaml | Only extracts with `source.kind: render`. Reference captures are never checked. |
 | Today | the run date | Used for expiry only. |
@@ -99,7 +99,10 @@ Visible credit and traveling notices are separate obligations and are checked se
   `notices_embedded` records that the notices sit inside the shipped files and survive the build
   (a font's name records, a header comment kept in each file). `apache` always needs a file: it asks
   for a copy of the license text.
-- **Notices, fonts.** A fonts lock entry with `files` and license kind `ofl` or `apache` → the same.
+- **Notices, fonts.** A fonts lock entry with `files` and license kind `ofl` or `apache` → the same,
+  and a notice file that exists must name the license it stands for (`open font license` or `apache
+  license`, ignoring case and spacing); when files exist and none does, `notice-missing`. An empty
+  file, a page that was not found, or a README is no license text.
 
 ## Reserved font names — `rights.reserved-font-name`
 
@@ -108,14 +111,28 @@ when `reserved_names` is not recorded; otherwise, with declared names and no per
 any `shipped_names` value contains a reserved name (case-insensitive) or when `shipped_names` is not
 recorded. `woff-unchanged` (compressed only, data and metadata kept) is not a modification.
 
-## Fonts at release — `rights.use-outside-license`, `rights.license-unknown`
+## Fonts at release — `rights.use-outside-license`, `rights.license-unknown`, `rights.license-unresearched`, `rights.license-hint-only`
 
 plan_check judges fonts when the plan is written (`font.*` findings). The lock can change afterwards,
 so a fonts lock entry with `files` is checked again as shipped: `source` `adobe-sync`, `sandoll`,
-`system`, or `user-installed` → `use-outside-license`; license kind `unknown` → `license-unknown`;
-with delivery `self-host` (the web grant) or `app-bundle` (the app grant), a `not-allowed` grant →
-`use-outside-license` and an absent or `unknown` one → `license-unknown`. Server, document, and editor
-grants are recorded for review.
+`system`, or `user-installed` → `use-outside-license`; with delivery `self-host` (the web grant) or
+`app-bundle` (the app grant), a `not-allowed` grant → `use-outside-license` and an absent or `unknown`
+one → `license-unknown`; `license.source_class` `catalog-summary` or `file-metadata` →
+`license-hint-only`. Server, document, and editor grants are recorded for review.
+
+License kind `unknown` is read with the research record (`license.research`, fonts/lock.schema.yaml):
+
+| `license.research` | Meaning | Hit on shipped files | plan_check finding |
+|---|---|---|---|
+| absent | nobody looked | `license-unresearched` | `font.license-unresearched` |
+| `outcome: unknown-after-research` (with `evidence` and a `note`) | looked, found nothing; a candidate only | `license-unknown`, naming the note | `font.license-unknown` |
+| `outcome: verified` | a document was read and grants the planned uses; needs `source_class` `rights-holder` or `provider`, a known kind, and an evidence item that is a document, not a name record or a search | none by itself | none |
+| `outcome: restricted` | the document grants use only within `restrictions` | none by itself: the grants decide; the release gate lists it for the user | `font.license-restricted` (a warning) |
+
+A known license with no research record (an older lock, or a declaration the user made) is judged by its
+kind, grants, and class as before. Evidence `license-file` on an entry with `files` needs its copy in
+`notices`. The record is what the agent says it read; the checks compare it with the files and each
+other, and `lazuli lock` checks a quote from a license file against the notice file.
 
 ## Marks — `rights.unverified-mark`
 

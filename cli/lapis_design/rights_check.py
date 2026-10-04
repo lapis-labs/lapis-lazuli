@@ -19,6 +19,7 @@ import sys
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from lapis_design import font_license
 from lapis_design.ours import literal_ours, source_is_ours
 
 DEFAULT_ROOTS = ["public", "static", "assets", "src/assets", "app", "src/app", "ios", "android/app/src/main/res",
@@ -49,7 +50,7 @@ HINT_CLASSES = {"catalog-summary", "file-metadata"}
 PLATFORM_CHANNELS = {"web", "ios", "android", "desktop", "email", "embedded"}
 CLAIMED_RELATIONSHIPS = {"customer", "partner", "press"}            # need confirmed authorization
 RELEASE_KINDS = {"photo", "video"}
-FONT_NOTICE_KINDS = {"ofl", "apache"}
+FONT_NOTICE_KINDS = {"ofl": "open font license", "apache": "apache license"}   # the name a notice holding the text bears
 FONT_MODIFIED = {"subset", "converted", "rebuilt"}
 NON_SHIPPABLE_SOURCES = {"adobe-sync", "sandoll", "system", "user-installed"}   # as in plan_check
 SHIPPING_DELIVERY = {"self-host": "web", "app-bundle": "app"}      # deliveries that hand out the files
@@ -219,6 +220,18 @@ def _notices(subject: str, notices: list[str], embedded: bool, root: Path | None
 
 # ---------------------------------------------------------------- fonts lock entries
 
+def _license_text(subject: str, notices: list[str], root: Path | None, kind: str) -> list[dict]:
+    """A notice file that exists must hold the license text it stands for: an empty file, a page that was
+    not found, or a README is no license evidence."""
+    if root is None:
+        return []
+    texts = [" ".join((root / n).read_bytes()[:400_000].decode("utf-8", errors="replace").lower().split())
+             for n in notices if (root / n).is_file()]
+    if texts and not any(FONT_NOTICE_KINDS[kind] in text for text in texts):
+        return [_hit("notice-missing", "source", subject, f"no notice file holds the {kind} license text")]
+    return []
+
+
 def check_font(entry: dict, root: Path | None = None) -> list[dict]:
     """Release-time checks for a locked font. A font with `files` ships its files."""
     fam, lic, out = entry["family"], entry.get("license", {}), []
@@ -227,7 +240,12 @@ def check_font(entry: dict, root: Path | None = None) -> list[dict]:
         if entry.get("source") in NON_SHIPPABLE_SOURCES:
             out.append(_hit("use-outside-license", "source", fam, f"files from source {entry['source']} ship"))
         if lic.get("kind") == "unknown":
-            out.append(_hit("license-unknown", "source", fam, "font license is unknown"))
+            if font_license.state(entry) == "unknown":
+                out.append(_hit("license-unknown", "source", fam, "font license unknown after research (" +
+                                lic["research"].get("note", "no note") + "); it ships only after the user decides"))
+            else:
+                out.append(_hit("license-unresearched", "source", fam,
+                                "font license is unknown and no research is recorded"))
         elif entry.get("delivery") in SHIPPING_DELIVERY:
             use = SHIPPING_DELIVERY[entry["delivery"]]
             grant = (lic.get("uses") or {}).get(use, "unknown")
@@ -235,8 +253,12 @@ def check_font(entry: dict, root: Path | None = None) -> list[dict]:
                 out.append(_hit("use-outside-license", "source", fam, f"{entry['delivery']} files without a {use} grant"))
             elif grant == "unknown":
                 out.append(_hit("license-unknown", "source", fam, f"no recorded {use} grant for {entry['delivery']} files"))
+        if lic.get("source_class") in font_license.HINT_CLASSES:
+            out.append(_hit("license-hint-only", "source", fam, f"license taken from a {lic['source_class']}"))
         if lic.get("kind") in FONT_NOTICE_KINDS:
-            out += _notices(fam, entry.get("notices", []), entry.get("notices_embedded", False), root, lic["kind"])
+            notices = entry.get("notices", [])
+            out += _notices(fam, notices, entry.get("notices_embedded", False), root, lic["kind"])
+            out += _license_text(fam, notices, root, lic["kind"])
     if lic.get("kind") == "ofl" and entry.get("modified") in FONT_MODIFIED:
         rfn = entry.get("reserved_names")
         if rfn is None:

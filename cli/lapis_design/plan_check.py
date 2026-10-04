@@ -49,7 +49,7 @@ from typing import Any, Iterable, NamedTuple
 import yaml
 from jsonschema import Draft202012Validator
 
-from lapis_design import __version__, shared_dir, system_fonts
+from lapis_design import __version__, font_license, shared_dir, system_fonts
 
 _YAML_LOADER = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
 
@@ -695,6 +695,22 @@ def check_contract(plan: dict, root: Path, plan_file: str) -> list[dict]:
     return out
 
 
+def _unknown_license_finding(entry: dict, state: str, where: str, plan_file: str) -> dict:
+    """The blocking finding for files that would ship under a license nobody has read: research not made yet,
+    or made and found nothing."""
+    if state == "unknown":
+        note = entry["license"]["research"].get("note", "no note")
+        return finding("font.license-unknown", "requirement",
+                       f"the license of {entry['family']!r} is unknown after research ({note}), and its files would ship",
+                       blocking=True, create="gate", review="P1", path=where, file=plan_file,
+                       fix="Do not ship it: keep it a candidate, and ask the user or choose another family.")
+    return finding("font.license-unresearched", "requirement",
+                   f"the license of {entry['family']!r} was never researched, and its files would ship",
+                   blocking=True, create="gate", review="P1", path=where, file=plan_file,
+                   fix="Research the license first (the font's own records, the foundry's page, the installer's terms) "
+                       "and record what you find with `lazuli lock --research`; see lzl-fonts, License research.")
+
+
 def check_fonts(plan: dict, lock: dict | None, plan_file: str) -> list[dict]:
     roles = resolve(plan, "tokens.type.roles[*]")
     if not roles:
@@ -747,6 +763,9 @@ def check_fonts(plan: dict, lock: dict | None, plan_file: str) -> list[dict]:
                                blocking=True, create="gate", review="P0", path=where, file=plan_file,
                                fix="Ship files from the upstream release or a purchased license that covers the use, "
                                    "or use a hosted delivery path."))
+        known = lic.get("kind", "unknown") != "unknown"
+        state = font_license.state(entry)
+        stated = False                              # one finding says where the research of an unknown license stands
         for use, ships in needed:
             grant = "unknown" if lic.get("kind") == "unknown" else (lic.get("uses") or {}).get(use, "unknown")
             if grant == "not-allowed":
@@ -755,7 +774,11 @@ def check_fonts(plan: dict, lock: dict | None, plan_file: str) -> list[dict]:
                                    blocking=True, create="gate", review="P0", path=where, file=plan_file,
                                    fix="Obtain a license for this use or choose another font."))
             elif grant == "unknown":
-                if ships:
+                if ships and not known:
+                    if not stated:
+                        out.append(_unknown_license_finding(entry, state, where, plan_file))
+                        stated = True
+                elif ships:
                     out.append(finding("font.use-unknown", "requirement",
                                        f"no recorded {use} grant for {entry['family']!r}, whose files would ship",
                                        blocking=True, create="gate", review="P1", path=where, file=plan_file,
@@ -765,6 +788,12 @@ def check_fonts(plan: dict, lock: dict | None, plan_file: str) -> list[dict]:
                                        f"no recorded {use} grant for {entry['family']!r}",
                                        blocking=False, create="warn", review="P2", path=where, file=plan_file,
                                        fix="Confirm the hosted delivery terms cover this use."))
+        if known and (lic.get("research") or {}).get("outcome") == "restricted" and any(ships for _, ships in needed):
+            out.append(finding("font.license-restricted", "quality",
+                               f"the license of {entry['family']!r} is restricted: "
+                               + "; ".join(lic["research"].get("restrictions", [])),
+                               blocking=False, create="warn", review="P2", path=where, file=plan_file,
+                               fix="Keep the use within these terms, or get the user's approval before shipping."))
         if lic.get("source_class") in ("catalog-summary", "file-metadata"):
             out.append(finding("font.license-hint-only", "quality",
                                f"the license of {entry['family']!r} comes from a {lic['source_class']}",

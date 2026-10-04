@@ -18,9 +18,14 @@ from lazuli.catalog.store import CatalogFamily, CatalogFont, CatalogLabel
 from synthetic_fonts import build
 
 SHARED = shared_dir()
-OFL_BODY = ('"Reserved Font Name" refers to any names specified as such after the copyright statement(s).\n'
+OFL_BODY = ("SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n"
+            '"Reserved Font Name" refers to any names specified as such after the copyright statement(s).\n'
             "No Modified Version of the Font Software may use the Reserved Font Name(s) unless explicit written "
             "permission is granted by the corresponding Copyright Holder.\n")
+GRANT = ("Permission is hereby granted, free of charge, to any person obtaining a copy of the Font Software, to use, "
+         "study, copy, merge, embed, modify, redistribute, and sell modified and unmodified copies of the Font Software")
+OFL_URL = "https://github.com/google/fonts/blob/0123456789abcdef0123456789abcdef01234567/ofl/testsans/OFL.txt"
+SOURCE_URL = "https://github.com/google/fonts/tree/0123456789abcdef0123456789abcdef01234567/ofl/testsans"
 
 
 @pytest.fixture(autouse=True)
@@ -286,3 +291,116 @@ def test_a_generated_lock_satisfies_plan_check(fonts_db, capsys):
     assert run(fonts_db, "System Serif", "--role", "ui", "--task", "demo", capsys=capsys)[0] == 0
     report = plan_check.run(plan_path, None, lock_path, SHARED / "plan" / "schema.yaml", fonts_db.project)
     assert [f["rule_id"] for f in report["findings"] if f["blocking"]] == ["font.no-web-delivery"]
+
+
+def bundle_test_sans(env) -> None:
+    shipped = env.project / "public" / "fonts" / "test-sans"
+    build(shipped / "TestSans-Regular.ttf", family="Test Sans")
+    (shipped / "OFL.txt").write_text(f"Copyright 2026 Tests\n\n{OFL_BODY}\n{GRANT}, subject to the following "
+                                     "conditions:\n", encoding="utf-8")
+
+
+VERIFIED = ["--source", "google-fonts", "--source-url", SOURCE_URL, "--delivery", "self-host",
+            "--files", "public/fonts/test-sans/*.ttf", "--modified", "none",
+            "--notice", "public/fonts/test-sans/OFL.txt", "--license-kind", "ofl",
+            "--use", "web=allowed", "app=allowed-with-conditions", "--research", "verified",
+            "--evidence", "license-file", OFL_URL, "--quote", GRANT]
+
+
+def test_a_bundled_open_font_is_locked_with_its_source_license_text_and_evidence(fonts_db, capsys):
+    """Acceptance: files, license file, and a lock written by `lazuli lock` pass the rights and font checks."""
+    bundle_test_sans(fonts_db)
+    code, out = run(fonts_db, "Test Sans", "--role", "body", "--task", "demo", *VERIFIED, capsys=capsys)
+    assert code == 0
+    entry = read_lock(fonts_db)["fonts"][0]
+    assert lock.validate(read_lock(fonts_db)) == []
+    assert entry["source_url"] == SOURCE_URL
+    license_record = entry["license"]
+    assert license_record["source_class"] == "rights-holder"                    # implied by the evidence
+    assert license_record["url"] == OFL_URL                                     # the document that was read
+    research = license_record["research"]
+    assert research["outcome"] == "verified"
+    assert research["evidence"] == [{"via": "license-file", "url": OFL_URL, "quote": GRANT,
+                                     "checked_at": license_record["checked_at"]}]
+    assert rights_check.check_font(entry, root=fonts_db.project) == []
+    plan = yaml.safe_load((SHARED / "plan" / "example.plan.yaml").read_text(encoding="utf-8"))
+    plan["task"]["id"] = "demo"
+    plan["brief"]["platform"] = ["web"]
+    plan["tokens"]["type"]["roles"] = [{"role": "body", "family": "Test Sans", "scripts": ["latn"]}]
+    plan_path = fonts_db.project / "plan.yaml"
+    plan_path.write_text(yaml.safe_dump(plan, allow_unicode=True), encoding="utf-8")
+    report = plan_check.run(plan_path, None, fonts_db.project / ".lapis" / "fonts.lock.json",
+                            SHARED / "plan" / "schema.yaml", fonts_db.project)
+    assert [f["rule_id"] for f in report["findings"] if f["rule_id"].startswith("font.")] == []
+
+
+def test_a_quote_the_license_file_does_not_hold_is_refused(fonts_db, capsys):
+    bundle_test_sans(fonts_db)
+    args = [a if a != GRANT else "Fonts may be used for anything, no conditions" for a in VERIFIED]
+    code, _ = run(fonts_db, "Test Sans", "--role", "body", "--task", "demo", *args, capsys=capsys)
+    assert code == 2 and "is not in any --notice file" in capsys.readouterr().err
+    assert not (fonts_db.project / ".lapis").exists()
+
+
+def test_research_that_contradicts_itself_is_never_written(fonts_db, capsys):
+    bundle_test_sans(fonts_db)
+    base = ["Test Sans", "--role", "body", "--task", "demo"]
+    a_search_only = ["--evidence", "web-search", "--evidence-note", "searched: Test Sans font license"]
+    cases = {
+        "does not contain": [*VERIFIED[:-5], *a_search_only],                        # a search is no document
+        "'restrictions' is a required property": [*VERIFIED[:-6], "restricted", *VERIFIED[-5:]],
+        "'user-declared' is not one of": [*VERIFIED, "--license-class", "user-declared"],
+        "'outcome' is a required property": [a for a in VERIFIED if a not in ("--research", "verified")],
+        "'notices' is a required property": [a for a in VERIFIED       # the license file's copy is the notice
+                                             if a not in ("--notice", "public/fonts/test-sans/OFL.txt")],
+    }
+    for message, flags in cases.items():
+        code, _ = run(fonts_db, *base, *flags, capsys=capsys)
+        assert code == 2 and message in capsys.readouterr().err, message
+    assert not (fonts_db.project / ".lapis").exists()
+    with pytest.raises(SystemExit) as stop:                                          # --quote needs its evidence
+        lock.main([*base, "--quote", "words", "--project", str(fonts_db.project)])
+    assert stop.value.code == 2
+
+
+def test_unknown_after_research_is_recorded_kept_and_replaced_by_a_later_finding(fonts_db, capsys):
+    searched = ["--research", "unknown-after-research", "--evidence", "web-search", "--evidence-note",
+                "searched: Test Sans font license", "--research-note", "no license in its folder, none on the maker page"]
+    code, out = run(fonts_db, "Test Sans", "--role", "body", "--task", "demo", *searched, capsys=capsys)
+    assert code == 0
+    license_record = out["entry"]["license"]
+    assert license_record["kind"] == "unknown" and "source_class" not in license_record
+    assert license_record["research"]["outcome"] == "unknown-after-research"
+    assert license_record["research"]["evidence"][0]["via"] == "web-search"
+    code, out = run(fonts_db, "Test Sans", "--role", "body", "--task", "demo", capsys=capsys)
+    assert out["action"] == "unchanged"                                              # the research is kept
+    bundle_test_sans(fonts_db)
+    code, out = run(fonts_db, "Test Sans", "--role", "body", "--task", "demo", *VERIFIED, capsys=capsys)
+    assert code == 0 and out["entry"]["license"]["research"]["outcome"] == "verified"
+    assert out["entry"]["license"]["uses"]["web"] == "allowed"
+
+
+def test_installed_files_ship_only_once_the_real_source_and_license_are_recorded(fonts_db, capsys):
+    """A locally installed font is usable here; its copy ships when its license was verified and its source named."""
+    bundle_test_sans(fonts_db)
+    flags = [a for a in VERIFIED if a not in ("--source", "google-fonts", "--source-url", SOURCE_URL)]
+    code, out = run(fonts_db, "Test Sans", "--role", "body", "--task", "demo", *flags, capsys=capsys)
+    assert code == 0 and out["entry"]["source"] == "user-installed"
+    assert any("user-installed files do not ship" in note for note in out["notes"])
+    assert [h["rule_id"] for h in rights_check.check_font(out["entry"], root=fonts_db.project)] == [
+        "rights.use-outside-license"]
+    code, out = run(fonts_db, "Test Sans", "--role", "body", "--task", "demo", "--source", "open-source-other",
+                    "--source-url", "https://foundry.example/test-sans", capsys=capsys)
+    assert code == 0 and rights_check.check_font(out["entry"], root=fonts_db.project) == []
+
+
+def test_a_bundled_font_nobody_researched_is_flagged_where_it_is_locked(fonts_db, capsys):
+    bundle_test_sans(fonts_db)
+    code, out = run(fonts_db, "Test Sans", "--role", "body", "--task", "demo", "--source", "open-source-other",
+                    "--delivery", "self-host", "--files", "public/fonts/test-sans/*.ttf", "--modified", "none",
+                    capsys=capsys)
+    assert code == 0
+    entry = out["entry"]                                                   # the catalog's OFL label is a hint only
+    assert entry["license"]["source_class"] == "catalog-summary" and "research" not in entry["license"]
+    assert {h["rule_id"] for h in rights_check.check_font(entry, root=fonts_db.project)} == {
+        "rights.license-hint-only", "rights.license-unknown", "rights.notice-missing"}
