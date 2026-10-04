@@ -258,7 +258,7 @@ packages:
     hit_when: { min_members: 4 }
     observed: { eras: [2026], note: "feature, plan, and question sections with a recommended middle plan, floating status panels, comfort wording, and a calm green or indigo palette" }
     provenance:
-      - { kind: measurement, source: "slop catalog 2026-10-04 saas-sequence and companions", note: "the members co-occur on 49 to 68 of 69 backup landing pages; a counter-package of restore-specific openings appears on 8 of 8 pages made with a grilled brief" }
+      - { kind: measurement, source: "slop catalog 2026-10-04 saas-sequence and companions", note: "the members co-occur on 49 to 68 of 69 backup landing pages; a counter-package of restore-specific openings appears on all 8 pages of one Claude Code cohort with the lapis plan procedure (2 of them with a grilled brief), so the effect of the questions alone is not separated" }
   # Behavior packages name a mechanism made of several deceptive or coercive findings. Each member
   # is already reported on its own; the package rule groups them in the report so they are fixed together.
   subscription-trap:
