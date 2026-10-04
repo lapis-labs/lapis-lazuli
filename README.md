@@ -108,7 +108,7 @@ come from. `lapis-design` runs the checks for `lapis` and `ultramarine`; `lazuli
 | | `ulm-maintain` | Maintains an existing frontend (refactors, upgrades, performance, design debt) in small checked steps from a captured baseline. |
 | | `ulm-release` | Runs the release gate and writes the report that says whether the checks it ran allow shipping. |
 | `lazuli` | `lazuli` | Runs the `lazuli` CLI and maps plan fields to its lookups. |
-| | `lzl-fonts` | Gives font facts with evidence: inventory, catalog labels, ranked candidates, licenses, script coverage; writes the fonts lock. |
+| | `lzl-fonts` | Gives font facts with evidence: inventory, catalog labels, ranked candidates, licenses (researched and recorded when not found at first), script coverage; fetches open-licensed families with their license text; writes the fonts lock. |
 | | `lzl-color` | Checks color system codes and keeps your own values for them. |
 | | `lzl-research` | Finds where to look and reads what you ask for: source registry, single pages, reference profiles, notes. |
 
@@ -143,7 +143,9 @@ Run either with `--help` for the commands and options.
   terms forbid automated collection as lazuli reads the terms (not legal advice; the Adobe Fonts
   site and noonnu, terms read on 2026-09-26), the source registry refuses its hosts: lazuli sends nothing to
   them and gives you a link. This collection limit does not restrict recommending, choosing, or
-  locking fonts, including licensed Adobe Fonts.
+  locking fonts, including licensed Adobe Fonts. `lazuli fetch` downloads one open-licensed Google
+  Fonts family's files and license text from the `google/fonts` repository under the same rules, and
+  writes nothing unless every file checks out.
 - **Open Adobe Fonts files.** Fonts an Adobe Fonts subscription activates are listed through the
   operating system's font API on macOS (Core Text) and measured from glyphs the system draws; only
   derived numbers are kept, and the files are never opened. Windows has no such listing, so Adobe

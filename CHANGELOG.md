@@ -78,6 +78,27 @@ after text.
   a run whose user's words forbid the lookups and who cannot ask declines the step with the user's line, which has to
   be in the brief record or the plan's `brief.constraints`; `next` goes on to the plan, and the plan's `explorations`
   still compare candidates from local material.
+- `fonts/lock.schema.yaml` (`version` stays 0; every new field is optional): `source_url` (the page, folder, or
+  release the shipped files came from) and `license.research`, the record of how the license was looked for:
+  `outcome` (`verified`, `restricted`, `unknown-after-research`), `evidence` (items with `via`, `url`, `quote`, `note`,
+  `checked_at`; `via` is `font-metadata`, `license-file`, `rights-holder-page`, `distributor-page`,
+  `installer-terms`, or `web-search`), `restrictions`, and `note`. The schema refuses a record that contradicts itself:
+  a verified or restricted outcome needs a document among its evidence (not a name record or a search), a known kind,
+  and class `rights-holder` or `provider`; a restricted one its restrictions; unknown-after-research kind `unknown` and
+  a note; license-file evidence on an entry with `files` a notice. `fonts/example.fonts.lock.json` records both.
+  Before: the lock held the license kind, grants, URL, and class, so "unknown" could mean never looked at or looked
+  at and not found, and nothing said where shipped files came from. After: no `research` means never researched.
+- `assets/CHECKS.md` and `slop/rules.yaml`: the new rule `rights.license-unresearched` (requirement; gate in create
+  mode, P1 in review; no waiver). Shipped font files under license kind `unknown` hit `rights.license-unresearched`
+  when `license.research` is absent and `rights.license-unknown` when it says `unknown-after-research` (before, both
+  were `rights.license-unknown`); shipped fonts whose class is `catalog-summary` or `file-metadata` also hit
+  `rights.license-hint-only`, and a notice file that exists and does not name the license (`open font license`,
+  `apache license`) hits `rights.notice-missing`. The `why` and `better` of `rights.license-unknown` and the `why`
+  of `rights.notice-missing` say so. Plan checks: `font.license-unresearched` and `font.license-unknown` (blocking)
+  replace the per-use `font.use-unknown` for files that would ship under an unknown kind, and `font.license-restricted`
+  warns.
+- `release/GATE.md`: `release.license-unconfirmed` also lists a license recorded `restricted`, and no longer lists an
+  `open-source-other` or `noonnu` font whose research is `verified` from a document.
 
 ### Added
 
@@ -163,9 +184,28 @@ after text.
   Without `--task` nothing changes: screenshots and image copies stay in the cache, and the profile says
   `captured_by: user-request`.
 - The anti-slop guide's Opening entry names the split hero as a default of its own and says what an opening derives from (the content's relation, the subject's own objects, the visitor's sequence); a new entry, "What the page says about itself", says what a page must show and what it must not. `lapis` and `lps-copy` say the same in two short passages.
+- `lazuli fetch FAMILY --into DIR` fetches an open-licensed Google Fonts family's top-level `.ttf` and `.otf` files and
+  license text from the google/fonts repository at one pinned commit, through the catalog request layer (registry,
+  robots.txt, the 3 s pace, a stop on a block). It writes nothing unless every file matches the repository's own hash,
+  starts like a font, and (the license text) names the license; it never overwrites a file that differs, refuses a
+  family under a license the lock has no kind for, and prints the `lazuli lock` flags for the fetched files.
+- `lazuli license FAMILY` prints, read-only and without a request, what the installed files say about their own license
+  (copyright, license text and URL, trademark, manufacturer, designer, vendor and designer URLs), the license-looking
+  files beside them, the likely installer (operating system, Adobe Fonts, a font manager by its folder name, a user or
+  project folder), catalog labels, the research the lock holds, and search phrases. An Adobe Fonts activation prints no
+  file record, and none of its files is opened.
+- `lazuli lock` takes `--source-url`, `--research`, `--evidence VIA [URL]` with `--quote` or `--evidence-note`,
+  `--restriction`, and `--research-note`; the license class follows the evidence, a quote from a license file must
+  be in a `--notice` file, and a research record that contradicts itself is refused.
 
 ### Changed
 
+- Open-licensed fonts may be found online, fetched from the family's official source, bundled with their license
+  text, and locked; an installed font may ship once its license is verified and its real source locked. The rule that
+  only files the user supplies enter a project is gone from `lzl-fonts`, `lapis` (step 7 and `references/type.md`), and
+  `ulm-maintain`, which now describe the fetch, the manual route for another official release, and the license
+  research a font gets before it is judged (verified, restricted, or unknown after research). Adobe Fonts, commercial
+  fonts, the source registry's access policies, and the human pace are unchanged.
 - A brief that forbids lookups no longer deadlocks the references step. An unattended run read "Use no
   network requests, external services, downloads, or external assets" as forbidding research during the work, would
   not capture references or write a false `--unavailable` record (which now refuses while the network works), and the

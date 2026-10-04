@@ -59,6 +59,8 @@ uv run lazuli catalog status
 uv run lazuli search --script hang --role body --license open   # ranked font candidates with evidence
 uv run lazuli search --type color '#336699'   # nearest computed HLC/RAL-design codes and your own records
 uv run lazuli lock "Family" --role body --task demo --dry-run    # pins facts in .lapis/fonts.lock.json
+uv run lazuli license "Family"              # what a font says about its own license, and where to look (read-only, no request)
+uv run lazuli fetch "Family" --into public/fonts/family   # an open-licensed Google Fonts family's files and license text into the project
 uv run lazuli class set "Family" --genre min-bu-ri --subclass rounded   # your class for a font; user cache only, outranks catalogs
 uv run lazuli sources --type color          # source registry (src/shared/sources/) with access policies
 uv run lazuli color lookup pantone "186 C"  # codes and links only; values only from `lazuli color record`
@@ -181,6 +183,11 @@ files beside it; the database file itself does not change.
   reads them (not legal advice; the Adobe Fonts site, noonnu as of 2026-09-26), gets a `REFUSED` adapter
   that sends nothing and gives links. That has nothing to do with recommending, choosing, or locking
   Adobe Fonts.
+- `lazuli fetch` downloads font files only from the google/fonts repository, for a family the catalog
+  lists under a license the lock has a kind for, through the same request layer (registry, robots.txt, the
+  3 s pace, a stop on a block), and writes nothing unless every file passes its checks (the repository's
+  own hash, a font's first bytes, the license text naming the license). Adobe Fonts are never fetched,
+  opened, or copied, and `lazuli license` reads no file of theirs and sends nothing.
 - Every redirect of a request lazuli sends itself is followed by hand, one hop at a time: each hop
   is checked against the source registry and that host's robots.txt before it is requested, and a
   hop to a `refused` or `browser-link` host is never sent. A robots.txt that redirects is followed

@@ -72,7 +72,7 @@ LapisLazuli는 검사가 찾은 것을 알려 줄 뿐이고, 접근성이나 법
 | | `ulm-maintain` | 기존 프런트엔드를 유지보수해요. 리팩터링, 업그레이드, 성능, 디자인 부채를 캡처한 기준선에서 작은 단계로 검사하며 처리해요. |
 | | `ulm-release` | 릴리스 관문을 돌리고, 돌린 검사가 내보내기를 허용하는지 알려 주는 보고서를 써요. |
 | `lazuli` | `lazuli` | `lazuli` CLI를 실행하고 계획 필드를 조회 명령에 이어 줘요. |
-| | `lzl-fonts` | 폰트 사실을 근거와 함께 알려 줘요. 인벤토리, 카탈로그 분류, 순위 후보, 라이선스, 문자 체계 커버리지를 다루고 폰트 잠금을 써요. |
+| | `lzl-fonts` | 폰트 사실을 근거와 함께 알려 줘요. 인벤토리, 카탈로그 분류, 순위 후보, 라이선스, 문자 체계 커버리지를 다루고, 라이선스를 처음에 못 찾아도 조사해 근거를 기록하며, 오픈 라이선스 폰트는 공식 출처에서 받아 라이선스 문서와 함께 담고 폰트 잠금을 써요. |
 | | `lzl-color` | 색 체계 코드를 확인하고 사용자가 밝힌 값을 기록해 둬요. |
 | | `lzl-research` | 어디를 볼지 찾고, 요청한 것만 읽어요. 출처 등록부, 페이지 하나, 레퍼런스 프로필, 노트예요. |
 
@@ -178,7 +178,8 @@ Markdown 파일을 다시 쓸 때는 출처를 밝히고, 라이선스 링크를
 | `cli/lazuli/db/migrations/` | lazuli DB 마이그레이션 (SQLite 3.34 이상, FTS5 trigram). `0002_color.sql`은 사용자가 기록한 색 체계 값(`color_record`, 화면 샘플은 항상 탐지 전용), `0003_user_label.sql`은 사용자가 알려 준 폰트 분류(`user_label`, 카탈로그 분류보다 우선)예요. 둘 다 다시 만들 수 없는 사용자 데이터예요. `0004_adobe_core_text.sql`은 Adobe 폴더의 파일을 열어 모았던 행을 지우고, 다음 스캔에서 Core Text로 다시 모으게 해요 |
 | `cli/lazuli/catalog/` | `lazuli catalog sync\|lookup\|status`: 카탈로그에서 사람이 붙인 분류·라이선스를 사람 수준 속도로 받아 사용자 캐시에만 두고, 설치된 폰트와 PostScript 이름·패밀리 이름(한국어 이름 포함)·느슨한 이름으로 매칭해요. Google Fonts·Fontsource·Fontshare·안심글꼴은 스냅숏, 시스템 폰트 표는 번들, 산돌은 요청 시 조회(10초 간격)예요. Adobe Fonts 사이트와 눈누는 lazuli가 약관을 읽고 자동 수집을 금지한다고 해석해서(법률 조언은 아니에요) 요청 없이 브라우저 링크만 줘요. 이 수집 제한은 폰트를 추천하고 고르고 잠그는 일과는 상관없어요 |
 | `cli/lazuli/` | `lazuli local fonts [--summary] [--family NAME] [--json]`: OS·사용자 폴더의 폰트를 읽기 전용으로 스캔하고(바뀐 파일만 다시 읽음), macOS에서는 Adobe Fonts가 켜 둔 폰트를 운영체제 폰트 API(Core Text)로 나열해 이름과 커버리지를 읽고 시스템이 그린 글리프로 재요(Adobe 폴더의 파일은 열지 않아요. Windows에는 Adobe 폰트가 없어요). PANOSE 라틴(굵기·비례·대비·x높이, 세리프 여부)과 한중일 확장(부리 비, 획 대비, 네모틀 편차, 라틴 대비 굵기)을 재서 사용자 캐시의 lazuli DB에 둬요. `lazuli doctor`는 SQLite·캐시·인벤토리·폰트 폴더·Adobe 폰트 수(macOS)·브라우저를 점검해요. 테스트는 코드로 만든 작은 합성 폰트를 써서 저장소에 폰트 파일이 없어요 |
-| `cli/lazuli/lock.py`, `search.py` | `lazuli lock`: 고른 폰트의 출처·라이선스·배포 경로를 그 시점에 `.lapis/fonts.lock.json`에 고정해요. 카탈로그·파일 메타데이터의 라이선스는 힌트로만 적고, 용도별 허가는 사용자가 밝힌 것만 적어요. `lazuli search`: 문자 체계·역할·분류·라이선스·배포 경로·비슷한 폰트(측정 거리)로 후보와 근거를 순위대로 돌려줘요. `--type color`·`--type source`는 아래 모듈로 넘겨요 |
+| `cli/lazuli/lock.py`, `search.py` | `lazuli lock`: 고른 폰트의 출처·라이선스·배포 경로를 그 시점에 `.lapis/fonts.lock.json`에 고정해요. 카탈로그·파일 메타데이터의 라이선스는 힌트로만 적고, 용도별 허가는 사용자가 밝힌 것만 적어요. `--source-url`은 파일을 받은 곳을, `--research`·`--evidence`는 라이선스를 어디서 찾아 읽었는지(주소·인용문·날짜)와 조사가 어디서 끝났는지(`verified`, `restricted`, `unknown-after-research`)를 적어요. `lazuli search`: 문자 체계·역할·분류·라이선스·배포 경로·비슷한 폰트(측정 거리)로 후보와 근거를 순위대로 돌려줘요. `--type color`·`--type source`는 아래 모듈로 넘겨요 |
+| `cli/lazuli/fetch.py`, `license.py` | `lazuli fetch FAMILY --into DIR`: google/fonts 저장소의 오픈 라이선스 패밀리 파일과 라이선스 문서를 고정한 커밋에서 받아요. 저장소가 밝힌 해시, 폰트 파일의 첫 바이트, 라이선스 문서가 그 라이선스를 말하는지를 모두 확인한 뒤에야 쓰고, 내용이 다른 기존 파일은 덮어쓰지 않아요. `lazuli license FAMILY`: 설치된 폰트가 스스로 밝힌 저작권·라이선스·제작자 기록, 같은 폴더의 라이선스 파일 이름, 설치한 관리자 추정, 카탈로그 라벨, 잠금에 기록된 조사 상태를 읽기 전용으로 보여 주고 요청은 보내지 않아요. Adobe Fonts로 켠 폰트는 파일을 열지 않아요 |
 | `cli/lazuli/color.py`, `sources.py` | `lazuli color lookup\|record`: 색 체계 코드를 정규화하고 공식 링크를 줘요. HLC·RAL DESIGN SYSTEM plus는 좌표라 OKLCH 근삿값을 계산하고, Pantone·RAL CLASSIC·NCS·Munsell·Freetone은 코드와 링크만 저장소에 두고 값은 사용자 기록에서만 가져와요(접미사 없는 Pantone 번호는 불완전한 사양으로 알려요). `lazuli sources`는 출처 등록부를 보여 줘요 |
 | `cli/lazuli/read.py`, `cli/lazuli/ref/` | `lazuli read URL`: 사용자가 요청한 페이지 하나를 등록부 정책과 robots.txt 안에서 Markdown으로 읽어요(`--render`는 스크립트로 그리는 페이지용). `lazuli ref capture\|profile\|system`: 레퍼런스 프로필을 렌더 추출 형식으로 `.lapis/refs/<slug>.json`에 써요. `reference-only` 캡처는 문구·대체 텍스트·이름·스크린숏 없이 키 서명과 지각 해시만 남겨요 |
 | `cli/lazuli/setup.py` | `lazuli setup`: 공개된 임베딩 모델과 배포 목록 형식이 아직 없어서, 그렇다고 알리고 종료 코드 1로 끝나요 |
@@ -214,6 +215,8 @@ uv run lazuli catalog sync
 uv run lazuli catalog status
 uv run lazuli search --script hang --role body --license open
 uv run lazuli lock "Family" --role body --task demo --dry-run
+uv run lazuli license "Family"
+uv run lazuli fetch "Family" --into public/fonts/family
 uv run lazuli sources --type color
 uv run lazuli color lookup pantone "186 C"
 uv run lazuli read https://example.com/page

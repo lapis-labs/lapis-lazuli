@@ -89,7 +89,8 @@ under the same conditions. Lab numbers, `metrics.cls` included, are never field 
 Some causes have rules: `code.image-dimensions` (unsized images shift content),
 `code.unvirtualized-list` (virtualize only for measured volume, keeping focus and find-in-page),
 and `type.font-fallback` (text left in a fallback face; late swaps show in `shift_sources`). Font
-files enter the project only when the user supplies them for shipping; a subset keeping a reserved
+files enter the project as open-licensed files bundled with their license text and locked
+(`lzl-fonts`), or as files the user supplies for shipping; a subset keeping a reserved
 name trips `rights.reserved-font-name`. A speedup that drops content, labels, states, or reduced
 motion is a regression.
 

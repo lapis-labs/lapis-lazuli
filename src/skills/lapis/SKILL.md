@@ -230,22 +230,26 @@ choosing one:
 2. Candidates: `lazuli search --script <script> --role <role>`, narrowed with `--category`,
    `--license open`, `--delivery web`, `--installed`, or `--similar-to "<family>"`; run
    `lazuli catalog sync` when `lazuli catalog status` shows no snapshot. Open-licensed libraries,
-   commercial foundries, and Adobe Fonts are all candidates to explore and brainstorm with; licensing,
-   purchase, or activation goes to the user.
+   commercial foundries, and Adobe Fonts are all candidates to explore and brainstorm with; an
+   open-licensed family may be fetched and bundled, and a commercial license or an Adobe activation goes
+   to the user.
 3. Specimen: set two or three candidates, at least one a named face, in the page's real copy (title,
    paragraph, control, figures, every locale) on a throwaway page under `.lapis/specimens/`, and look
    at it: `lapis-design render check .lapis/specimens/<task>.html --task <task>-specimen --width 390`
    leaves screenshots beside its extract.
 4. Record the comparison in `explorations`; lock each chosen named face with
    `lazuli lock "<family>" --role <role> --task <task>`, which records source, license, and delivery path.
+   Files that ship are fetched from the family's official source with their license text
+   (`lazuli fetch`), and the license behind any font that ships is researched and recorded
+   (`lzl-fonts`); a font whose license stays unknown after that does not ship.
 
-Offline shipping leaves three outcomes: an installed named face with a fallback stack, OFL files the
-user supplies for the project, or a generic family that won the comparison. A generic family alone is a
-choice that must win it, not a fallback. Body faces are chosen for reading on the target platform;
-display faces for the subject's voice. For Korean text keep the face's default tracking at body sizes
-and set `word-break: keep-all` on Korean text blocks. For roles per script, choosing a face for each
-role, pairing Latin with Hangul, kana, or Han, CJK line breaking, measure and leading, scale, numerals,
-and display type, read `references/type.md`.
+Offline, shipping leaves three outcomes: an installed named face with a fallback stack, open-licensed
+files already in the project or installed with a verified license, or a generic family that won the
+comparison. A generic family alone is a choice that must win it, not a fallback. Body faces are chosen
+for reading on the target platform; display faces for the subject's voice. For Korean text keep the
+face's default tracking at body sizes and set `word-break: keep-all` on Korean text blocks. For roles
+per script, choosing a face for each role, pairing Latin with Hangul, kana, or Han, CJK line breaking,
+measure and leading, scale, numerals, and display type, read `references/type.md`.
 
 ### 8. Layout - `layout.procedure`, `layout.sections`
 
