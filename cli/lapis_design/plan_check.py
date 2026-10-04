@@ -44,7 +44,7 @@ import sqlite3
 import sys
 from pathlib import Path
 from itertools import chain
-from typing import Any, Iterable
+from typing import Any, Iterable, NamedTuple
 
 import yaml
 from jsonschema import Draft202012Validator
@@ -143,37 +143,71 @@ class PlanOverLimit:
         self.problem = problem
 
 
-def _scan(text: str, limit: int) -> tuple[bool, bool]:
-    """`(too_deep, divergent)` for YAML text, read from the C parser's events in one pass.
+class _Scan(NamedTuple):
+    too_deep: bool                       # collections nest deeper than the limit
+    question: int | None                 # index of the first `?` in a plain scalar of a flow collection
+    explicit_key: int | None             # index of the first `?` key indicator that opens a pair in a flow list
+    quoted: list[tuple[int, int]]        # spans of the quoted scalars, kept only when the text has a tab
 
-    `too_deep`: collections nest deeper than `limit`; the scan stops at the first event past it, so a
-    50,000-level block costs no more than a shallow one. Tokens would undercount: an indentless block list
-    makes no token per level.
 
-    `divergent`: libyaml 0.2.5 reads something PyYAML's pure-Python scanner, and so every tool built on
-    `yaml.safe_load`, refuses. Two readings are known, both about a `?` in a flow collection: a plain scalar
-    that holds one (`{ answers: What now? }`: libyaml keeps the text, PyYAML ends the scalar at the `?` and
-    fails), and an explicit key opening a pair inside a flow list (`[? a: b]`, `[?]]`: libyaml also lets a stray
-    `]` through). The scan reads the whole text for them unless it is too deep."""
+def _scan(text: str, limit: int, spans: bool = False) -> _Scan:
+    """What the C parser's events say about `text`, in one pass.
+
+    `too_deep`: the scan stops at the first event past the limit, so a 50,000-level block costs no more than a
+    shallow one. Tokens would undercount: an indentless block list makes no token per level.
+
+    `question` and `explicit_key`: the two readings of a `?` in a flow collection that libyaml 0.2.5 accepts and
+    PyYAML's pure-Python scanner, and so every tool built on `yaml.safe_load`, does not. A plain scalar that holds
+    one (`{ answers: What now? }`): libyaml keeps the text, PyYAML ends the scalar at the `?` and then fails, always.
+    An explicit key opening a pair inside a flow list (`[? a: b]`, `[?]]`: libyaml also lets a stray `]` through):
+    PyYAML reads the first and refuses the second. Both are found even when the text is too deep."""
     depth = flow = 0
-    divergent = False
+    question = explicit_key = None
+    quoted: list[tuple[int, int]] = []
     for event in yaml.parse(text, Loader=_YAML_LOADER):
         if isinstance(event, yaml.ScalarEvent):
-            if flow and not event.style and "?" in event.value:        # plain: '' from libyaml, None from PyYAML
-                divergent = True
+            if event.style in ("'", '"'):
+                if spans:              # a span starts at the quote: an anchor or tag before it is not quoted text
+                    start, end = event.start_mark.index, event.end_mark.index
+                    quoted.append((max(text.find(event.style, start, end), start), end))
+            elif flow and question is None and "?" in event.value:     # plain: '' from libyaml, None from PyYAML
+                question = max(text.find("?", event.start_mark.index, event.end_mark.index), event.start_mark.index)
         elif isinstance(event, (yaml.MappingStartEvent, yaml.SequenceStartEvent)):
             depth += 1
             if event.flow_style:
                 index = event.start_mark.index
-                if flow and isinstance(event, yaml.MappingStartEvent) and text[index:index + 1] == "?":
-                    divergent = True
+                if flow and explicit_key is None and isinstance(event, yaml.MappingStartEvent) \
+                        and text[index:index + 1] == "?":
+                    explicit_key = index
                 flow += 1
             if depth > limit:
-                return True, divergent
+                return _Scan(True, question, explicit_key, quoted)
         elif isinstance(event, (yaml.MappingEndEvent, yaml.SequenceEndEvent)):
             depth -= 1
             flow -= bool(flow)             # a flow collection holds only flow ones, so an end seen inside one is its own
-    return False, divergent
+    return _Scan(False, question, explicit_key, quoted)
+
+
+def _stray_tab(text: str, quoted: list[tuple[int, int]]) -> int | None:
+    """Index of the first tab that is not inside a quoted scalar, or None. PyYAML's pure-Python scanner refuses
+    such a tab (outside a comment) and libyaml reads it as blank space; a tab inside a quoted scalar is text to both."""
+    at = 0
+    for start, end in [*quoted, (len(text), len(text))]:
+        found = text.find("\t", at, start)
+        if found >= 0:
+            return found
+        at = end
+    return None
+
+
+def _refusal(text: str, index: int, problem: str) -> yaml.parser.ParserError:
+    """The error PyYAML would give for `problem` at `text[index]`, with its line and column."""
+    column = index - (text.rfind("\n", 0, index) + 1)
+    mark = yaml.error.Mark("<unicode string>", index, text.count("\n", 0, index), column, text, index)
+    return yaml.parser.ParserError(None, None, problem, mark)
+
+
+PURE_READ_MAX = 64 * 1024     # a text up to this size may be read by the pure-Python loader (about 0.15 s here)
 
 
 def parse_plan(text: str) -> Any:
@@ -181,23 +215,40 @@ def parse_plan(text: str) -> Any:
     nested deeper than MAX_PLAN_DEPTH is not parsed: the result is a PlanOverLimit. A YAML error
     propagates as yaml.YAMLError.
 
-    A plan reads the same on every install and in every other tool built on `yaml.safe_load`. The document is
-    read with libyaml when it is installed (a megabyte of padding costs a fraction of a second, where the
-    pure-Python loader takes seconds), except where the two readers differ, and then PyYAML's pure-Python safe
-    loader reads it, which names the fault with its line and column or reads the plan as everyone else does:
-    text libyaml cannot read, text `_scan` finds libyaml reading more leniently, and text with a tab, which the
-    pure-Python scanner refuses wherever it is not inside a quoted or block scalar or a comment (libyaml reads
-    it as blank space). Both readers stay out of a text over the limits, and the pure-Python one never sees a
-    text nested deeper than the limit."""
+    A plan reads as `yaml.safe_load` reads it, and a plan another tool refuses is refused here, wherever libyaml
+    would read more. The document is read with libyaml when it is installed (800 KB of padding costs about 0.5 s
+    where the pure-Python loader takes seconds), and the readings `_scan` and `_stray_tab` find libyaml accepting
+    and PyYAML refusing are refused at their position without reading the text again: a `?` inside a plain
+    scalar of a flow collection, an explicit `?` key in a flow list, and a tab outside a quoted scalar. Of the
+    last two PyYAML reads some (`[? a: b]`; a tab in a comment), so a text up to PURE_READ_MAX is left to the
+    pure-Python loader, which then decides and names the fault; a larger one is refused. A text libyaml cannot
+    read goes to the pure-Python loader the same way, and a larger one gets libyaml's own error. The pure-Python
+    loader never sees a text over the limits or nested deeper than the limit, so no padding makes a read slow."""
     if len(text) > MAX_PLAN_BYTES or len(text.encode("utf-8", "surrogatepass")) > MAX_PLAN_BYTES:
         return PlanOverLimit(PLAN_TOO_LARGE)
+    small = len(text) <= PURE_READ_MAX
+    tabbed = "\t" in text
     try:
-        too_deep, divergent = _scan(text, MAX_PLAN_DEPTH)
+        scan = _scan(text, MAX_PLAN_DEPTH, tabbed)
     except yaml.YAMLError:
-        too_deep, divergent = False, True       # libyaml could not read it: the strict reader names the fault
-    if too_deep:
+        if small:
+            return yaml.safe_load(text)         # PyYAML names the fault, or reads what libyaml refuses
+        raise
+    if scan.too_deep:
         return PlanOverLimit(PLAN_TOO_DEEP)
-    return yaml.load(text, Loader=yaml.SafeLoader if divergent or "\t" in text else _YAML_LOADER)
+    if scan.question is not None:
+        raise _refusal(text, scan.question, "found a `?` inside a plain scalar of a flow collection; "
+                       "quote the value")
+    if scan.explicit_key is not None:
+        if small:
+            return yaml.safe_load(text)
+        raise _refusal(text, scan.explicit_key, "found a `?` key indicator inside a flow list; "
+                       "write the pair as `key: value`")
+    if tabbed and (tab := _stray_tab(text, scan.quoted)) is not None:
+        if small:
+            return yaml.safe_load(text)
+        raise _refusal(text, tab, "found a tab outside a quoted string; indent and separate with spaces")
+    return yaml.load(text, Loader=_YAML_LOADER)
 
 
 def read_plan(path: Path) -> Any:

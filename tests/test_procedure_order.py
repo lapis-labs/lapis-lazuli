@@ -48,10 +48,11 @@ def test_the_plan_a_run_wrote_with_an_unquoted_question_mark_is_sent_back_with_i
 
     result = next_step.evaluate(tmp_path, task)
     assert result["step"]["id"] == "plan-fix"
-    assert "expected ',' or '}', but got '?' at 160:95" in result["step"]["why"]
+    assert "found a `?` inside a plain scalar of a flow collection; quote the value at 160:95" in result["step"]["why"]
     assert "quote a string that holds `?`" in result["step"]["why"]
     assert cli_main(["plan", "check", str(plan)]) == 2
-    assert "cannot be read: expected ',' or '}', but got '?' at 160:95" in capsys.readouterr().err
+    assert "cannot be read: found a `?` inside a plain scalar of a flow collection; quote the value at 160:95" in \
+        capsys.readouterr().err
 
 
 def corrupt(text: str) -> str:

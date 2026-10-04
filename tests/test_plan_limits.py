@@ -12,7 +12,7 @@ import time
 import pytest
 import yaml
 
-from lapis_design import shared_dir
+from lapis_design import plan_check, shared_dir
 from lapis_design.lint import cli as lint_cli
 
 SHARED = shared_dir()
@@ -234,6 +234,55 @@ def test_extension_padding_cannot_delay_hook_denial(tmp_path):
     text = "x-pad: [" + "[], " * 199_999 + "[]]\n" + yaml.safe_dump(plan, allow_unicode=True)
     message = decision(timed_call(tmp_path, "hook", "exit-plan", input=hook_event(text), limit=10))
     assert "copy.vague-cta" in message
+
+
+PADDING = "x-pad: [" + "[], " * 199_999 + "[]]\n"
+# what libyaml reads and PyYAML's pure-Python loader (so every other tool) refuses, with what the refusal says
+LIBYAML_ONLY = {
+    "question-mark": ("x-note: { answers: What now? }\n", "found a `?` inside a plain scalar of a flow collection"),
+    "explicit-key": ("x-note: [? a: b]\n", "found a `?` key indicator inside a flow list"),
+    "tab": ("x-note:\tfine\n", "found a tab outside a quoted string"),
+}
+
+
+@pytest.mark.parametrize("kind", list(LIBYAML_ONLY))
+def test_padding_cannot_delay_the_refusal_of_what_only_libyaml_reads(tmp_path, kind):
+    trigger, said = LIBYAML_ONLY[kind]
+    text = PADDING + trigger + yaml.safe_dump(example(), allow_unicode=True)
+    message = decision(timed_call(tmp_path, "hook", "exit-plan", input=hook_event(text), limit=10))
+    assert "could not be checked: ParserError" in message and said in message
+
+
+def best_of_three(read, text: str) -> float:
+    best = float("inf")
+    for _ in range(3):
+        start = time.perf_counter()
+        try:
+            read(text)
+        except yaml.YAMLError:
+            pass
+        best = min(best, time.perf_counter() - start)
+    return best
+
+
+@functools.cache
+def padding_read_time() -> float:
+    return best_of_three(plan_check.parse_plan, PADDING + yaml.safe_dump(example(), allow_unicode=True))
+
+
+@pytest.mark.parametrize("kind", list(LIBYAML_ONLY))
+def test_refusing_what_only_libyaml_reads_costs_less_than_reading_the_padding(kind):
+    """Machine-independent: the pure-Python loader takes several times as long as libyaml on the padding, and a
+    refusal that reads the text with it would show here, whatever the speed of the runner."""
+    plain = padding_read_time()
+    refused = best_of_three(plan_check.parse_plan,
+                            PADDING + LIBYAML_ONLY[kind][0] + yaml.safe_dump(example(), allow_unicode=True))
+    assert refused < 2 * plain, f"{refused:.2f} s to refuse, {plain:.2f} s to read the same padding"
+
+
+def test_padding_with_a_tab_inside_a_quoted_string_is_still_read():
+    plan = plan_check.parse_plan(PADDING + 'x-note: "one\ttwo"\n' + yaml.safe_dump(example(), allow_unicode=True))
+    assert plan["x-note"] == "one\ttwo" and plan["task"] == example()["task"]
 
 
 def test_many_key_copy_items_still_reach_copy_rules(tmp_path):

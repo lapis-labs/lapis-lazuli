@@ -181,8 +181,11 @@ SAFE_LOAD_PARITY = {
     "explicit-key-in-a-flow-list": "x-note: [? a: b]\n",
     "tab-after-the-colon": "brief:\tfine\n",
     "tab-in-a-flow-list": "locales: [en,\ten]\n",
+    "tab-in-a-comment": "brief: fine # a\tb\n",
+    "tab-before-a-quoted-scalar-after-an-anchor": 'x-note: &n\t"one"\n',
     "libyaml-refuses-a-colon-before-the-bracket": "locales: [en:]\n",
     "tab-in-a-quoted-scalar": 'brief: "one\ttwo"\n',
+    "tab-in-a-multiline-quoted-scalar": 'brief: "one\n  \ttwo"\n',
     "question-mark-in-a-quoted-scalar": "locales: ['what?', \"why?\"]\nbrief: { subject: 'Why?' }\n",
     "question-mark-in-a-block-scalar": "brief: |\n  What?\n  Why?\nlocales: [en]\n",
     "question-mark-in-a-block-plain-scalar": "brief: What does this do for me?\nlocales: [en]\n",
@@ -190,10 +193,11 @@ SAFE_LOAD_PARITY = {
 
 
 def read_as(read, text: str):
+    """What `read` makes of `text`: its value, or only that it refused (each reader words a refusal its own way)."""
     try:
         return "read", read(text)
-    except yaml.YAMLError as exc:
-        return "refused", str(exc)
+    except yaml.YAMLError:
+        return "refused", None
 
 
 @pytest.mark.parametrize("text", list(SAFE_LOAD_PARITY.values()), ids=list(SAFE_LOAD_PARITY))

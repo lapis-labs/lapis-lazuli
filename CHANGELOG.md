@@ -297,12 +297,15 @@ after text.
   accepts a `?` inside a plain scalar of a flow collection (`{ answers: What does this do for me? }`) that PyYAML's
   pure-Python loader, and every other tool built on `yaml.safe_load`, refuses; `plan check` found 0 blocking
   findings and the procedure ended on a plan nobody else could parse (the brief-saas-1 run). Plans are now read as
-  `yaml.safe_load` reads them: libyaml reads a plan, unless the events show a `?` in a plain scalar of a flow
-  collection or an explicit `?` key opening a pair in a flow list, the text holds a tab, or libyaml cannot read it;
-  PyYAML's pure-Python loader then reads it. Such a plan is exit 2 from `plan check` and `release check` and
-  `plan-fix` from `next`, which now names the line and column and says to quote the string. A megabyte of padding
-  still costs a fraction of a second (the pure-Python loader alone took 11 s on the CI runners and failed
-  `test_extension_padding_cannot_delay_hook_denial`).
+  `yaml.safe_load` reads them. libyaml reads the plan, and the three readings it accepts and the pure-Python loader
+  refuses are refused where they stand, exit 2 from `plan check` and `release check` and `plan-fix` from `next`,
+  with the line and column: a `?` inside a plain scalar of a flow collection (quote the value), an explicit `?` key
+  opening a pair in a flow list, and a tab outside a quoted scalar. PyYAML reads `[? a: b]` and a tab in a comment, so
+  a plan of at most 65,536 characters goes to the pure-Python loader to decide, and a larger one is refused; the
+  same limit applies to a plan libyaml cannot read, which the pure-Python loader reads or names the fault of, and a
+  larger one gets libyaml's error. Reading every plan with the pure-Python loader took 11 s on the CI runners for
+  `test_extension_padding_cannot_delay_hook_denial` (limit 10 s); 800 KB of padding, alone or with any of the three
+  readings, now costs 0.4 s or less here, and the pure-Python loader never reads a larger plan.
 - `render check` exited 2 with `Page.evaluate: getComputedStyle: parameter 1 is not of type 'Element'` (or a
   `KeyError` on a box id) on a page that rebuilds its chart and text when the window resizes. Chromium sends a
   `resize` event to the window and to `visualViewport` for every full-page screenshot, although neither size

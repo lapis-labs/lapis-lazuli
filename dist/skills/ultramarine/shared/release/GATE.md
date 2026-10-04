@@ -30,11 +30,14 @@ reports record the paths they read as given and the gate resolves them against `
   dates, times, sets, and pairs), gets one `schema.invalid` finding and no further schema check.
   A plan larger than 1,000,000 bytes, or nested more than 100 levels deep, gets that one finding
   before it is parsed; `plan check`, lint, the exit-plan hook, and MCP apply the same limits. The plan is
-  read as `yaml.safe_load` reads it, so every install and every other tool built on it agrees: libyaml reads
-  the text when it is installed, and PyYAML's pure-Python safe loader reads what libyaml reads differently
-  (a `?` inside a plain scalar of a `{ }` or `[ ]` collection, an explicit `?` key opening a pair in a `[ ]`
-  list, a tab) or cannot read at all. Text that loader refuses is exit 2 and `plan-fix` with its line and
-  column (quote a string that holds a `?`).
+  read as `yaml.safe_load` reads it, so every install and every other tool built on it agrees. libyaml reads
+  the text when it is installed (800 KB of padding takes about half a second), and three readings that libyaml
+  accepts and PyYAML's pure-Python loader refuses are refused at their line and column, exit 2 and `plan-fix`,
+  without reading the text again: a `?` inside a plain scalar of a `{ }` or `[ ]` collection (quote the value),
+  an explicit `?` key opening a pair in a `[ ]` list, and a tab outside a quoted scalar (indent and separate with
+  spaces). The last two are PyYAML's to decide when the plan is at most 65,536 characters (it reads
+  `[? a: b]` and a tab in a comment); a larger plan is refused. A plan libyaml cannot read is read by the
+  pure-Python loader up to that size, which names the fault or reads it; a larger one gets libyaml's error.
 - The lazuli database is `LAZULI_DB` when set, else the user cache. The checks read measured features
   from it read-only and never create or migrate it for that; the license refresh (below) opens it
   through the lazuli catalog layer, as `lazuli catalog lookup` does, which creates or upgrades it when
