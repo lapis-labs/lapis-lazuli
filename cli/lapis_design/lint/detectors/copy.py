@@ -235,18 +235,25 @@ _PRODUCER = {loc: [re.compile(p) for p in pats] for loc, pats in {
 }.items()}
 _BUILD_LABELS = {loc: [re.compile(p) for p in pats] for loc, pats in {
     "any": [r"(?<![\w.])v\d+\.\d+(?:\.\d+)?(?:-[\w.]+)?\b", r"\blocalhost\b|\b127\.0\.0\.1\b", r"\bcommit\s+[0-9a-f]{7,40}\b"],
-    "en": [r"\b(?:build|version|ver\.|release)\s*#?\s*\d[\w.]*", r"\b(?:dev|staging|preview)\s+(?:build|environment|server|mode)\b",
-           r"\bbuilt with\s+\S|\bgenerated (?:by|with)\s+\S"],
-    "ko": [r"(?:버전|빌드)\s*\d", r"(?:개발|스테이징)\s*(?:서버|환경|모드|빌드)"],
-    "ja": [r"(?:バージョン|ビルド)\s*\d"],
-    "zh": [r"(?:版本|构建)\s*\d"],
+    "en": [r"\bbuild\s*#?\s*\d[\w.]*|\b(?:version|ver\.|release)\s*#?\s*\d+\.\d[\w.]*",
+           r"\b(?:dev|staging|preview)\s+(?:build|environment|server|mode)\b",
+           r"\bbuilt with\s+(?!(?:care|love|passion|pride|privacy|purpose|intention\w*|attention|heart|you|your|us|our|"
+           r"an?|the|no|every|each|craft\w*)\b)\S|\bgenerated (?:by|with)\s+(?!users?\b|you\b|the\b)\S"],
+    "ko": [r"버전\s*\d+\.\d|빌드\s*#?\d", r"(?:개발|스테이징)\s*(?:서버|환경|모드|빌드)"],
+    "ja": [r"バージョン\s*\d+\.\d|ビルド\s*#?\d"],
+    "zh": [r"版本\s*\d+\.\d|构建\s*#?\d"],
 }.items()}
 _DEMO_BADGES = {loc: [re.compile(p) for p in pats] for loc, pats in {
     "any": [],
-    "en": [r"^(?:demo|beta|alpha|preview|sample|mock|mockup|prototype|placeholder|example|test|wip|draft)"
-           r"(?:\s+(?:mode|data|version|only|build))?$"],
-    "ko": [r"^(?:데모|베타|샘플|예시|시안|테스트|목업|미리보기)(?:\s*(?:모드|데이터|버전))?$"],
-    "ja": [r"^(?:デモ|ベータ|サンプル|テスト)(?:版|モード)?$"],
+    "en": [r"^(?:(?:interactive|live|local|product|offline|design|concept)\s+)?"
+           r"(?:demo|beta|alpha|mock|mockup|prototype|placeholder|wip|concept)"
+           r"(?:\s+(?:mode|data|version|only|build|preview|site|page))?$",
+           r"^(?:interactive|live|local|offline|design|concept|product)\s+(?:preview|sample|example|test)$",
+           r"^(?:preview|sample|example|test|draft)\s+(?:mode|data|version|only|build)$"],
+    "ko": [r"^(?:데모|베타|목업|시안|체험판|시연)(?:\s*(?:모드|데이터|버전|화면))?$",
+           r"^(?:샘플|예시|테스트|미리보기)\s*(?:모드|데이터|버전|화면)$"],
+    "ja": [r"^(?:デモ|ベータ|ダミー)(?:版|モード|画面)?$",
+           r"^(?:サンプル|テスト|仮|見本)(?:版|モード|画面|データ)$"],
     "zh": [r"^(?:演示|测试|示例|样例|内测)(?:版|模式)?$"],
 }.items()}
 _AMBIENT = {loc: [re.compile(p) for p in pats] for loc, pats in {
@@ -259,9 +266,152 @@ _AMBIENT = {loc: [re.compile(p) for p in pats] for loc, pats in {
     "ja": [r"営業中|稼働中|現地時間"],
     "zh": [r"营业中|运行正常|系统正常|当地时间"],
 }.items()}
-_META_KINDS_PLAN = ("producer-facing", "demo-badges", "build-labels", "chat-leftovers")
-_META_KINDS_RENDER = ("producer-facing", "repeated-heading-body", "demo-badges", "build-labels", "chat-leftovers",
-                      "decorative-metadata-strip", "ambient-status")
+
+
+def _by_locale(table: dict[str, list[str]]) -> dict[str, list[re.Pattern]]:
+    return {loc: [re.compile(p) for p in pats] for loc, pats in table.items()}
+
+
+# A notice that the page, its data, or its subject is not real: the one disclosure a brief may ask for.
+_NOTICE = _by_locale({
+    "any": [],
+    "en": [r"\b(?:fictional|fictitious|imaginary|invented|made[- ]up|fake)\b",
+           r"\b(?:sample|example|dummy|demo|demonstration|placeholder|test|mock)\s+"
+           r"(?:data|content|figures|numbers|names|text|reviews|testimonials)\b",
+           r"\b(?:this|the)\s+(?:\w+\s+){0,2}?(?:page|site|website|app|workspace|feature|article|story|screen)\s+"
+           r"(?:is|was|uses|contains|runs|simulates|only|does not|doesn't|has no)\b[^.!?]{0,90}"
+           r"\b(?:demo|demonstration|prototype|concept|preview|simulat\w+|example|sample|mock\w*|local|offline)\b",
+           r"\b(?:this|the)\s+(?:(?:local|interactive|live|product|standalone|offline|design|concept)\s+)*"
+           r"(?:demo|demonstration|prototype|simulation|mockup|preview)\b(?!\s+(?:of|for|video|reel))",
+           r"\b(?:in|for|on)\s+(?:this|the)\s+(?:local\s+)?(?:demo|demonstration|prototype|preview|concept)\b",
+           r"\b(?:local|offline)\s+(?:demo|demonstration|preview|prototype|concept)\b",
+           r"\bdemo\s+(?:signup|sign-up|form|reservation|booking|checkout|preview|mode|data|version|site)\b",
+           r"\b(?:product|service|offline|illustrative|local)\s+concept\b|\bconcept\s+(?:website|site|page|pricing)\b"
+           r"|\ban?\s+(?:(?:product|service|offline|illustrative|local|design|proposed|working)\s+)?concept\b"
+           r"(?!\s+(?:car|store|art|design|album|in|of|that|which)\b)",
+           r"\bnot (?:a|an) (?:real|actual|genuine)\b|\b(?:isn't|is not|aren't|are not) (?:a |an )?(?:real|actual|genuine)\b"
+           r"|\bno real\b",
+           r"\b(?:preview|demo|test|sample) only\b",
+           r"\bworking title\b"],
+    "ko": [r"가상의|가상\s?(?:데이터|도시|병원|의원|인물|매장|서비스|회사|전시|미술관|브랜드)",
+           r"허구|실존하지",
+           r"실제(?:로)?\s?(?:존재|운영|영업|판매|진료|예약|주문|결제|운행|접수|전시)?[^.。]{0,24}(?:않|아닙|아니|없)",
+           r"(?:예시|샘플|시연|테스트|체험|데모)\s?(?:용|데이터|화면|페이지|버전|사이트|문구|목적)",
+           r"시뮬레이션\s?(?:입니다|이에요|이며|이고|화면|페이지|용)",
+           r"더미|임시\s?데이터"],
+    "ja": [r"架空|フィクション",
+           r"(?:サンプル|ダミー|テスト|仮)(?:の)?(?:データ|テキスト|情報|店舗|商品|内容)|仮のサンプル",
+           r"(?:デモ|体験|サンプル|テスト|見本)(?:用|版|サイト|ページ|画面)",
+           r"(?:実在|実際の)[^。]{0,12}(?:ありません|ではありません|しません|行われません|できません|されません)",
+           r"モックアップ|シミュレーション(?:です|用|画面)"],
+    "zh": [r"虚构|示例数据|演示数据|仅(?:供|用于)演示|并非真实|不是真实|非真实",
+           r"(?:本|此)(?:页面|网站|站点)(?:仅|为|是)[^。]{0,16}(?:演示|示例|原型|概念)"],
+})
+# Narration of what the builder changed.
+_PAGE_EN = (r"(?:page|layout|design|section|hero|header|footer|navigation|navbar|button|heading|headline|copy|text|"
+            r"wording|styles?|styling|colou?rs?|palette|typography|fonts?|spacing|animations?|responsiveness|mobile|"
+            r"accessibility|contrast|code|markup|css|content|ui|interface|site|website|landing page)")
+_PAGE_KO = (r"(?:페이지|레이아웃|디자인|섹션|히어로|헤더|푸터|내비게이션|버튼|제목|헤드라인|문구|텍스트|문장|스타일|색상|배색|"
+            r"폰트|글꼴|간격|애니메이션|반응형|모바일|접근성|대비|코드|마크업|콘텐츠|화면|ui|인터페이스)")
+_PAGE_JA = (r"(?:ページ|レイアウト|デザイン|セクション|ヒーロー|ヘッダー|フッター|ナビゲーション|ボタン|見出し|キャッチコピー|"
+            r"文言|テキスト|文章|スタイル|配色|カラー|フォント|余白|アニメーション|レスポンシブ|モバイル|アクセシビリティ|"
+            r"コントラスト|コード|マークアップ|コンテンツ|画面|ui|インターフェース)")
+_CHANGED_EN = (r"(?:updated|fixed|improved|refactored|redesigned|reworked|rewrote|rewritten|tweaked|adjusted|changed|"
+               r"modified|simplified|refined|polished|cleaned up|removed|added|replaced|swapped|reorganized|"
+               r"restructured|optimi[sz]ed|revised)")
+_CHANGE_LOG = _by_locale({
+    "any": [],
+    "en": [rf"\b(?:i|we)(?:'ve|\s+have)?\s+(?:just\s+|now\s+|also\s+)?{_CHANGED_EN}\s+"
+           rf"(?:the\s+|this\s+|your\s+|our\s+|some\s+|all\s+|its\s+)?(?:\w+\s+){{0,2}}?{_PAGE_EN}\b",
+           rf"\b{_PAGE_EN}\s+(?:has|have|was|were)\s+(?:also\s+|now\s+)*(?:been\s+)?{_CHANGED_EN}\b",
+           r"\b(?:here(?:'s| is)|below is)\s+the\s+(?:updated|revised|new|improved|fixed)\s+(?:version|page|design|layout|code)\b",
+           r"\b(?:i|we)(?:'ve|\s+have)?\s+made\s+(?:the\s+following|these|some|a few)\s+(?:changes|updates|improvements|fixes|adjustments)\b",
+           r"\b(?:changes|updates|improvements|fixes)\s+(?:made|applied|included)\s*[:.]"],
+    "ko": [rf"{_PAGE_KO}(?:을|를|이|가|은|는|도)?\s*(?:[^\s.!?]{{1,8}}\s+)?"
+           r"(?:수정|개선|변경|추가|삭제|제거|교체|정리|보완|리팩터링|업데이트|재구성|재설계|조정|최적화)"
+           r"(?:했|하였|해\s?두었|해\s?드렸|되었|됐)",
+           r"(?:수정|개선|변경|업데이트|반영)(?:한|된)\s*(?:버전|내용|사항)\s*(?:입니다|이에요|은\s*다음)",
+           r"(?:아래|다음)(?:와|과)\s*같이\s*(?:수정|개선|변경)(?:했|하였)"],
+    "ja": [rf"{_PAGE_JA}(?:を|が|は|も)?[^。\s]{{0,8}}(?:修正|改善|変更|追加|削除|更新|調整|最適化|見直し|刷新|整理|リファクタリング)"
+           r"(?:し(?:ました|た)|いたしました|され(?:ました|た)|済み)",
+           r"(?:修正|改善|変更|更新)(?:した|しました)(?:バージョン|内容|点)(?:は|です)",
+           r"(?:以下|下記)の(?:ように|とおり|通り)(?:修正|改善|変更)(?:しました|いたしました)"],
+    "zh": [r"(?:页面|布局|设计|版块|按钮|标题|文案|样式|配色|字体|间距|动画|代码)(?:已|已经)?(?:被)?(?:修改|优化|改进|调整|更新|修复)(?:了|完成)",
+           r"我(?:已|已经|刚)(?:修改|优化|修复|更新)了"],
+})
+# The page explaining itself instead of its subject.
+_SELF_DESCRIPTION = _by_locale({
+    "any": [],
+    "en": [r"\b(?:this|the)\s+(?:section|page|screen|card|panel|block|hero|banner|module|component|widget|table|chart|form|area)\s+"
+           r"(?:explains|demonstrates|gives you|lets you|allows you|lets visitors|allows visitors|is designed to|is meant to|"
+           r"will show|helps you)\b",
+           r"\b(?:click|tap|press|select|use)\s+(?:on\s+)?(?:the\s+)?(?:\w+\s+){0,2}?"
+           r"(?:button|link|icon|tab|card|toggle|form|filters?|controls?|search)\s+(?:below|above)\s+to\b",
+           r"\bbelow you(?:'ll| will| can)\s+(?:find|see|read|get)\b|\bhere you(?:'ll| will| can)\s+(?:find|see|read|get)\b",
+           r"\bscroll(?: down)? to (?:see|find|read|learn|explore|discover)\b",
+           r"\bas (?:shown|seen|described|listed|explained) (?:below|above)\b",
+           r"\bthe (?:\w+\s+){0,2}(?:below|above)\s+(?:shows?|lists?|displays?|explains?|describes?)\b",
+           r"\b(?:this|the)\s+(?:landing page|webpage|web page|website|site)\s+(?:was|is)\s+(?:designed|built|made|created|written)\s+"
+           r"(?:to|for|with|using)\b",
+           r"\bwelcome to (?:this|my|our) (?:demo|page|prototype|landing page|site)\b"],
+    "ko": [r"(?:이|본)\s*(?:섹션|페이지|화면|영역|카드|표|차트|폼|패널|블록)(?:은|는|에서는|에서|에는)\s*[^.!?]{0,40}"
+           r"(?:보여줍니다|보여드립니다|보여줘요|보여요|확인할\s*수\s*있습니다|확인할\s*수\s*있어요|소개합니다|소개해요|설명합니다|"
+           r"설명해요|안내합니다|안내해요|나타냅니다|담고\s*있습니다|담았어요|담았습니다)",
+           r"(?:아래|위)(?:의)?\s*(?:버튼|링크|카드|양식|폼|탭)[을를]?\s*(?:클릭|눌러|눌러서|선택)[^.!?]{0,12}"
+           r"(?:하면|하여|해서|해\s*주세요|해보세요|하세요)",
+           r"스크롤(?:을)?\s*(?:내려|하여|해서)",
+           r"이\s*(?:랜딩\s*페이지|웹\s*페이지|웹사이트|사이트)(?:는|은)\s*[^.!?]{0,20}(?:만들었|제작했|제작되었|디자인했|디자인되었)"],
+    "ja": [r"(?:この|本)(?:セクション|ページ|画面|エリア|カード|表|グラフ|フォーム|パネル|ブロック)(?:では|は|には)[^。]{0,40}"
+           r"(?:紹介|表示|説明|案内|掲載|ご覧いただけ|確認でき|示)(?:して|し)(?:います|ます|おります|ています)?",
+           r"(?:下|上)(?:の|記の)(?:ボタン|リンク|カード|フォーム|タブ)を(?:クリック|押|タップ|選択)(?:して|すると|してください|し)",
+           r"スクロール(?:して|すると)(?:ご覧|確認|見)",
+           r"このサイトは[^。]{0,20}(?:作成|制作|デザイン)(?:されました|しました|いたしました)"],
+    "zh": [r"(?:本|此)(?:页面|区块|板块)(?:展示|介绍|说明|用于)"],
+})
+# Notes between builders and testers.
+_DEV_NOTES = _by_locale({
+    "any": [],
+    "en": [r"\b(?:dev(?:eloper)?|qa|internal)\s+(?:note|notes|only)\b|\bnote to self\b",
+           r"\bfor (?:testing|qa|debugging|development)(?: (?:only|purposes))?\b",
+           r"\b(?:test|dummy|mock(?:ed)?|stub(?:bed)?|seed) (?:data|account|user|page|mode|build|email|content)\b",
+           r"\bdebug(?:ging)?\s+(?:mode|info|panel|output|log)\b",
+           r"\bhard-?coded\b",
+           r"\b(?:replace|swap)\s+(?:this\s+)?with\s+(?:real|actual|final|production)\b|\bwill be replaced\b"
+           r"|\bto be (?:implemented|replaced|added|filled in|wired)\b|\bnot (?:yet )?implemented\b|\bimplement(?:ed)? later\b"],
+    "ko": [r"(?:개발자|개발|내부|qa)\s*(?:메모|노트|참고|용도)|테스트(?:용|\s*(?:데이터|계정|페이지|모드|이메일))|디버그|하드코딩"
+           r"|목업\s*데이터|임시\s*(?:문구|텍스트|이미지|데이터)|추후\s*(?:교체|구현|추가|수정)|구현\s*예정|나중에\s*(?:교체|구현)"
+           r"|구현되지\s*않"],
+    "ja": [r"(?:開発|内部|qa)(?:者)?(?:メモ|ノート|用)|テスト(?:用|データ|アカウント|ページ|モード)|デバッグ|ハードコード"
+           r"|モックデータ|仮の(?:文言|テキスト|画像|データ)|後で(?:差し替え|実装|追加|修正)|実装予定|未実装|差し替え予定"],
+    "zh": [r"开发(?:备注|笔记)|测试(?:用|数据|账号|页面)|调试|硬编码|占位|待实现|稍后替换"],
+})
+# An apology for a part that was never built.
+_APOLOGY = _by_locale({
+    "any": [],
+    "en": [r"\b(?:sorry|apologi[sz]e|apologies|unfortunately|regret)\b.{0,60}"
+           r"\b(?:demo|prototype|not (?:yet )?(?:implemented|built|ready|working|functional)|coming soon|"
+           r"under construction|placeholder|still being (?:built|developed|worked on)|work in progress)\b",
+           r"\b(?:this|that)\s+(?:feature|section|page|link|button|option)\s+(?:is\s+not|isn't)\s+(?:yet\s+)?"
+           r"(?:implemented|built|functional|wired up)\b",
+           r"\bnot available in (?:this|the) (?:demo|prototype|preview)\b",
+           r"\b(?:is|are) (?:disabled|unavailable) in (?:this|the) (?:demo|prototype|preview)\b"],
+    "ko": [r"(?:죄송|양해|불편).{0,40}(?:데모|개발\s*중|구현되지|미구현)",
+           r"(?:이\s*)?(?:기능|링크|버튼|페이지)(?:은|는)\s*(?:데모|이\s*화면)에서(?:는)?\s*(?:지원|제공|사용|동작)(?:하지|되지|할\s*수\s*없)"],
+    "ja": [r"(?:申し訳|恐れ入り|すみません).{0,30}(?:デモ|開発中|未実装|実装されて)",
+           r"この(?:機能|リンク|ボタン|ページ)は(?:デモ|現在)[^。]{0,12}(?:対応していません|利用できません|実装されていません)"],
+    "zh": [r"(?:抱歉|对不起).{0,30}(?:演示|暂未实现|尚未实现|开发中|未实现)"],
+})
+_NOTICE_KINDS = ("demo-badges", "fiction-notice")
+_TEXT_KINDS = ("change-log", "developer-notes", "placeholder-apology", "self-description")
+_META_KINDS_PLAN = ("producer-facing", "demo-badges", "fiction-notice", "build-labels", "chat-leftovers", *_TEXT_KINDS)
+_META_KINDS_RENDER = ("producer-facing", "repeated-heading-body", "demo-badges", "fiction-notice", "build-labels",
+                      "chat-leftovers", *_TEXT_KINDS, "decorative-metadata-strip", "ambient-status")
+_PLAN_PLACE = {"headline": "hero", "subhead": "hero", "cta": "hero", "nav": "hero",
+               "empty-state": "body", "error": "body"}      # the other slots hold a quiet line
+_HEADER_BAND = 120                   # px from the top: a short label here is a persistent label, not a notice
+_QUIET_FOOT = 0.8                    # share of the page height below which a line is in the foot of the page
+_NOTICE_WORDS = 30                   # a quiet notice is a short line: at most this many words,
+_NOTICE_CHARS = 120                  # or this many characters in unspaced scripts
 _STRIP_SPLIT = re.compile(r"\s+[·•∙|｜/]\s+")
 _STRIP_GLYPHS = set("·•∙|｜/ ")
 
@@ -334,6 +484,8 @@ class _Page:
     sections: list[str]             # section box ids in order; empty when sections are unknown
     archetypes: list[str | None]    # one per section
     has_roles: bool
+    view_height: float = 900.0      # visible height of the capture
+    doc_height: float = 0.0         # bottom of the lowest box
 
     def loc(self, ctx: Context) -> dict:
         out: dict = {"viewport": self.width} if self.width else {}
@@ -532,7 +684,9 @@ def _build_page(ctx: Context) -> _Page | str:
             in_nav=role == "nav" or any(b.get("role") == "nav" for b in chain),
             list_box=next((b["id"] for b in chain if b.get("role") == "list"), None),
             weight=t.get("weight"), transform=t.get("transform")))
-    return _Page(width, segs, boxes, section_ids, [a for _, a in sections], any(s.role for s in segs))
+    view = vp.get("height") or (900 if (width or 0) >= 1024 else 844)
+    bottom = max((b["rect"]["y"] + b["rect"]["h"] for b in boxes.values() if b.get("rect")), default=0.0)
+    return _Page(width, segs, boxes, section_ids, [a for _, a in sections], any(s.role for s in segs), view, bottom)
 
 
 def _render_segs(ctx: Context, rule: dict) -> tuple[_Page, list[_Seg]] | Result:
@@ -1688,9 +1842,10 @@ def placeholder_genericness(ctx: Context, det: dict, rule: dict, layer: str) -> 
 
 # ---------------------------------------------------------------- meta-text
 
-def _table_hits(segs: list[_Seg], table: dict[str, list[re.Pattern]], what: str, evidence: str,
-                unjudged: set[str], *, whole_run: bool = False) -> list[Hit]:
-    hits = []
+def _table_matches(segs: list[_Seg], table: dict[str, list[re.Pattern]], unjudged: set[str], *,
+                   whole_run: bool = False) -> list[tuple[_Seg, str]]:
+    """The copy that the table's patterns for its locale (and `any`) match, with the matched text."""
+    found = []
     for s in segs:
         pats = table["any"] + table.get(s.locale or "", [])
         if (s.locale or "") not in table:
@@ -1699,10 +1854,104 @@ def _table_hits(segs: list[_Seg], table: dict[str, list[re.Pattern]], what: str,
         for rx in pats:
             m = rx.search(text)
             if m:
-                hits.append(Hit(observed=f'{what} "{m.group(0).strip() or _clip(s.text, 40)}" in the {s.where}: '
-                                         f'"{_clip(s.text)}"', location=dict(s.loc), evidence=evidence))
+                found.append((s, m.group(0).strip() or _clip(s.text, 40)))
                 break
-    return hits
+    return found
+
+
+def _table_hits(segs: list[_Seg], table: dict[str, list[re.Pattern]], what: str, evidence: str,
+                unjudged: set[str], *, whole_run: bool = False) -> list[Hit]:
+    return [Hit(observed=f'{what} "{matched}" in the {s.where}: "{_clip(s.text)}"', location=dict(s.loc), evidence=evidence)
+            for s, matched in _table_matches(segs, table, unjudged, whole_run=whole_run)]
+
+
+def _brief_asks_for_notice(plan: dict | None) -> bool | None:
+    """Whether the brief says the page uses fictional or sample data; None when there is no plan to ask."""
+    if plan is None:
+        return None
+    brief = plan.get("brief") or {}
+    lines = [brief.get("subject"), brief.get("one_job"), brief.get("audience"), *(brief.get("constraints") or ())]
+    text = _fold(" ".join(str(line) for line in lines if line))
+    return any(rx.search(text) for patterns in _NOTICE.values() for rx in patterns)
+
+
+def _in_footer(page: _Page, seg: _Seg) -> bool:
+    return (page.archetype(seg.section) == "footer"
+            or any((b.get("a11y") or {}).get("role") == "contentinfo" for b in _chain(page.boxes, seg.box)))
+
+
+def _short(text: str) -> bool:
+    return _chars(text) <= _NOTICE_CHARS if _UNSPACED.search(text) else _tokens(text) <= _NOTICE_WORDS
+
+
+def _label_sized(text: str) -> bool:
+    return _chars(text) <= 30 if _UNSPACED.search(text) else _tokens(text) <= 8
+
+
+def _placement(page: _Page | None, seg: _Seg, label: str) -> str:
+    """Where a notice sits: in a heading, in the opening, in the middle of the page, or in a quiet place - the
+    footer, a short line at the foot of the page, or a short badge in the header band. A plan's key copy sits
+    by its slot."""
+    if page is None:
+        return _PLAN_PLACE.get(seg.role or "other", "quiet")
+    if seg.role in ("heading", "display") or seg.box_role == "heading":
+        return "heading"
+    if _in_footer(page, seg):
+        return "quiet"
+    archetype = page.archetype(seg.section)
+    rect = (page.boxes.get(seg.box or "") or {}).get("rect")
+    if rect is None:
+        return "hero" if archetype == "hero" else "body"
+    middle = rect["y"] + rect["h"] / 2
+    if label == "demo badge" and archetype != "hero" and middle < _HEADER_BAND and _tokens(seg.text) <= 3:
+        return "quiet"
+    if (middle >= _QUIET_FOOT * page.doc_height and _short(seg.text)
+            and (seg.section is None or seg.section == len(page.sections) - 1)):
+        return "quiet"
+    return "hero" if archetype == "hero" or middle < page.view_height else "body"
+
+
+def _notice_hits(ctx: Context, page: _Page | None, segs: list[_Seg], kinds: list[str], evidence: str,
+                 gaps: dict[str, set[str]]) -> tuple[list[Hit], set]:
+    """Fictional-data and demo notices, and demo badges: a brief may ask for one, so exactly one is allowed, in a
+    quiet place. A notice in a heading, in the opening, or in the middle of the page is meta text, and so is
+    every notice after the quiet one. When the plan's brief does not ask for a notice, none is allowed."""
+    usable = [s for s in segs if s.control not in ("button", "link")]       # an action label is not a disclosure
+    found: list[tuple[_Seg, str, str]] = []
+    if "fiction-notice" in kinds:
+        found += [(s, "demo notice", m) for s, m in _table_matches(usable, _NOTICE, gaps["fiction-notice"])]
+    if "demo-badges" in kinds:
+        taken = {id(s) for s, _, _ in found}
+        pool = [s for s in usable if id(s) not in taken]
+        if page is not None:
+            pool = _ambient_outside_records(page, pool)
+        found += [(s, "demo badge", m) for s, m in _table_matches(pool, _DEMO_BADGES, gaps["demo-badges"], whole_run=True)]
+    found.sort(key=lambda f: f[0].order)
+    claimed = {s.loc.get("path") for s, _, _ in found}
+    unit: list[int] = []                    # a notice and its translation beside it (same section, other locale) are one
+    for i, (s, label, _) in enumerate(found):
+        twin = next((j for j in range(i) if found[j][1] == label and found[j][0].locale != s.locale
+                     and found[j][0].section == s.section and abs(found[j][0].order - s.order) <= 2), None)
+        unit.append(i if twin is None else unit[twin])
+    asked = _brief_asks_for_notice(ctx.plan)
+    placed = [_placement(page, found[u][0], found[u][1]) for u in unit]
+    quiet = sorted({u for u, place in zip(unit, placed) if place == "quiet"})
+    allowed = None if asked is False or not quiet else min(quiet, key=lambda u: (
+        page is None or not _in_footer(page, found[u][0]), _tokens(found[u][0].text), u))
+    hits = []
+    for i, ((s, label, _), u, place) in enumerate(zip(found, unit, placed)):
+        if u == allowed:
+            continue
+        if place == "quiet" and asked is not False:
+            why = "repeated: the page already has one in a quiet place"
+        else:
+            why = {"heading": "in a heading", "hero": f"in the {s.where}" if page is None else "in the opening",
+                   "body": f"in the middle of the page ({s.where})", "quiet": "in a quiet place"}[place]
+            if asked is False:
+                why += ", and the brief does not ask for one"
+        others = [o.loc["path"] for j, (o, _, _) in enumerate(found) if unit[j] != u][:4]
+        hits.append(Hit(observed=f'{label} {why}: "{_clip(s.text)}"', location=dict(s.loc), evidence=evidence, refs=others))
+    return hits, claimed
 
 
 def _chat_leftovers(ctx: Context, segs: list[_Seg], key: str, evidence: str, unjudged: set[str]) -> list[Hit]:
@@ -1782,17 +2031,35 @@ def meta_text(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
     evidence = "plan" if page is None else "measurement"
     hits: list[Hit] = []
     gaps: dict[str, set[str]] = defaultdict(set)     # kind -> locales it could not judge
+    taken: set = set()                                # copy that has a hit: one hit per run, by the first kind
+
+    def add(new: list[Hit]) -> None:
+        hits.extend(new)
+        taken.update(h.location.get("path") for h in new)
+
+    def fresh() -> list[_Seg]:
+        return [s for s in segs if s.loc.get("path") not in taken]
+
+    if any(k in usable for k in _NOTICE_KINDS):
+        notice_hits, noticed = _notice_hits(ctx, page, segs, usable, evidence, gaps)
+        add(notice_hits)
+        taken |= noticed
     if "producer-facing" in usable:
-        hits += _table_hits(segs, _PRODUCER, "producer-facing text", evidence, gaps["producer-facing"])
+        add(_table_hits(fresh(), _PRODUCER, "producer-facing text", evidence, gaps["producer-facing"]))
     if "build-labels" in usable:
-        hits += _table_hits(segs, _BUILD_LABELS, "build or environment label", evidence, gaps["build-labels"])
-    if "demo-badges" in usable:
-        hits += _table_hits(segs, _DEMO_BADGES, "demo badge", evidence, gaps["demo-badges"], whole_run=True)
+        add(_table_hits([s for s in fresh() if _label_sized(s.text)], _BUILD_LABELS, "build or environment label",
+                        evidence, gaps["build-labels"]))
     if "chat-leftovers" in usable:
         key = _family_key(ctx, det, "leftover_phrases")
         if isinstance(key, Result):
             return key
-        hits += _chat_leftovers(ctx, segs, key, evidence, gaps[f"chat-leftovers (list {key})"])
+        add(_chat_leftovers(ctx, fresh(), key, evidence, gaps[f"chat-leftovers (list {key})"]))
+    for kind, table, what in (("change-log", _CHANGE_LOG, "change-log narration"),
+                              ("placeholder-apology", _APOLOGY, "placeholder apology"),
+                              ("developer-notes", _DEV_NOTES, "developer or test note"),
+                              ("self-description", _SELF_DESCRIPTION, "the page describing itself")):
+        if kind in usable:
+            add(_table_hits(fresh(), table, what, evidence, gaps[kind]))
     if page is not None and "repeated-heading-body" in usable:
         heads = [s for s in segs if s.role in ("heading", "display")]
         for s in segs:

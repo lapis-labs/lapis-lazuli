@@ -794,6 +794,183 @@ def test_meta_text_on_korean_copy():
     assert plain.hits == [] and plain.skipped is None
 
 
+NOTICES = {"en": "This page uses fictional example data.",
+           "ko": "이 페이지는 가상의 예시 데이터를 사용하는 화면입니다.",
+           "ja": "このページは架空の店舗で、仮のサンプルデータを使用しています。"}
+TITLES = {"en": "Fire once a month", "ko": "한 달에 한 번 구워요", "ja": "月に一度、焼きます"}
+BODIES = {"en": "Wheel-thrown bowls, fired once a month.", "ko": "물레로 빚은 사발을 한 달에 한 번 구워요.",
+          "ja": "ろくろで挽いた器を月に一度焼きます。"}
+
+
+def notice_page(lang, *, hero=(), middle=(), footer=(), heading=None):
+    """A hero with the title, a middle section with one line of body copy, and a footer; each argument lists the
+    notices that go in that part (strings), and `heading` is a notice set as a heading."""
+    return doc(("hero", [r(TITLES[lang], "display"), *[r(t, "caption") for t in hero]]),
+               ("feature-grid", [r(BODIES[lang]), *[r(t) for t in middle], *([r(heading, "heading")] if heading else [])]),
+               ("footer", [r(t, "caption") for t in footer] or [r("© 2026")]), lang=lang)
+
+
+def meta(extract, plan=None):
+    return lint("copy.meta-text", extract=extract, plan=plan)
+
+
+@pytest.mark.parametrize("lang", ["en", "ko", "ja"])
+def test_the_one_notice_in_the_footer_is_not_meta_text(lang):
+    result = meta(notice_page(lang, footer=[NOTICES[lang]]))
+    assert result.skipped is None and result.hits == []
+
+
+@pytest.mark.parametrize("lang", ["en", "ko", "ja"])
+def test_a_notice_in_the_hero_is_meta_text_and_the_footer_one_stays(lang):
+    hits = meta(notice_page(lang, hero=[NOTICES[lang]], footer=[NOTICES[lang]])).hits
+    assert [h.observed for h in hits] == [f'demo notice in the opening: "{NOTICES[lang]}"']
+
+
+@pytest.mark.parametrize("lang", ["en", "ko", "ja"])
+def test_a_notice_set_as_a_heading_is_meta_text(lang):
+    hits = meta(notice_page(lang, heading=NOTICES[lang], footer=[NOTICES[lang]])).hits
+    assert [h.observed for h in hits] == [f'demo notice in a heading: "{NOTICES[lang]}"']
+
+
+@pytest.mark.parametrize("lang", ["en", "ko", "ja"])
+def test_a_notice_in_the_middle_of_the_page_and_a_second_in_the_footer_are_repeats(lang):
+    mid = meta(notice_page(lang, middle=[NOTICES[lang]], footer=[NOTICES[lang]])).hits
+    assert [h.observed.split(":")[0] for h in mid] == ["demo notice in the middle of the page (body run)"]
+    twice = meta(notice_page(lang, footer=[NOTICES[lang], NOTICES[lang]])).hits
+    assert [h.observed.split(":")[0] for h in twice] == ["demo notice repeated"]
+    assert twice[0].refs and twice[0].location["path"] != twice[0].refs[0]
+
+
+def test_a_notice_and_its_translation_side_by_side_count_once():
+    page = doc(("hero", [r(TITLES["ko"], "display", lang="ko")]),
+               ("footer", [r(NOTICES["ko"], "caption", lang="ko"), r(NOTICES["en"], "caption", lang="en")]))
+    result = meta(page)
+    assert result.skipped is None and result.hits == []
+    spread = doc(("hero", [r(TITLES["ko"], "display", lang="ko")]),
+                 ("feature-grid", [r(NOTICES["ko"], lang="ko")]), ("footer", [r(NOTICES["en"], "caption", lang="en")]))
+    assert len(meta(spread).hits) == 1                        # the Korean one in the middle; the English footer stays
+
+
+def test_a_notice_that_is_a_long_paragraph_is_not_a_quiet_line():
+    long_note = "This page uses fictional example data. " + "Prices are shown in dollars and include tax. " * 4
+    page = doc(("hero", [r(TITLES["en"], "display")]), ("feature-grid", [r(BODIES["en"]), r(long_note)]),
+               ("footer", [r(NOTICES["en"], "caption")]))
+    assert [h.observed.split(":")[0] for h in meta(page).hits] == ["demo notice in the middle of the page (body run)"]
+
+
+@pytest.mark.parametrize("text", ["Try the demo", "Book a demo"])
+def test_an_action_label_that_says_demo_is_not_a_disclosure(text):
+    page = doc(("hero", [r(TITLES["en"], "display"), r(text, "ui")]), ("footer", [r("© 2026", "caption")]))
+    assert meta(page).hits == []
+
+
+def test_a_demo_badge_in_the_hero_is_flagged_but_one_beside_the_logo_is_the_one_notice():
+    hero = doc(("hero", [r(TITLES["en"], "display"), r("LIVE DEMO", "label")]), ("footer", [r("© 2026", "caption")]))
+    assert [h.observed for h in meta(hero).hits] == ['demo badge in the opening: "LIVE DEMO"']
+    header = doc(("other", [r("LIVE DEMO", "label")]), ("hero", [r(TITLES["en"], "display")]),
+                 ("footer", [r("© 2026", "caption")]))
+    assert meta(header).hits == []
+
+
+@pytest.mark.parametrize("word", ["Preview", "Sample"])
+def test_a_bare_column_label_is_not_a_demo_badge(word):
+    assert meta(doc(("hero", [r(TITLES["en"], "display")]), ("footer", [r(word, "caption")]))).hits == []
+
+
+def asked(plan_, *constraints):
+    plan_["brief"]["constraints"] = list(constraints)
+    return plan_
+
+
+def test_without_a_brief_that_asks_for_it_even_the_quiet_notice_is_meta_text():
+    page = notice_page("en", footer=[NOTICES["en"]])
+    [hit] = meta(page, plan()).hits
+    assert hit.observed == f'demo notice in a quiet place, and the brief does not ask for one: "{NOTICES["en"]}"'
+    ask = asked(plan(), "State once on the page that it uses fictional example data")
+    assert meta(page, ask).hits == []
+
+
+def test_a_korean_brief_that_asks_for_the_notice_allows_it():
+    page = notice_page("ko", footer=[NOTICES["ko"]])
+    assert len(meta(page, plan(locales=("ko",))).hits) == 1
+    assert meta(page, asked(plan(locales=("ko",)), "가상의 예시 데이터를 쓴다고 한 번만 밝혀 주세요")).hits == []
+
+
+def test_plan_key_copy_may_hold_one_notice_in_the_other_slot_and_none_in_the_headline():
+    ask = asked(plan([("headline", "A demo page with fictional data"), ("other", NOTICES["en"])]),
+                "State once on the page that it uses fictional example data")
+    hits = lint("copy.meta-text", "plan", plan=ask).hits
+    assert [h.observed for h in hits] == ['demo notice in the headline key copy: "A demo page with fictional data"']
+    quiet = asked(plan([("headline", "Fire once a month"), ("other", NOTICES["en"])]),
+                  "State once on the page that it uses fictional example data")
+    assert lint("copy.meta-text", "plan", plan=quiet).hits == []
+
+
+CHANGE_LOG = [("en", "I fixed the layout and improved the spacing."), ("en", "The footer has been improved."),
+              ("en", "We updated the headline copy for clarity."), ("ko", "레이아웃을 개선했어요."),
+              ("ko", "히어로 섹션을 수정했습니다."), ("ja", "レイアウトを修正しました。"),
+              ("ja", "ヒーローセクションが改善されました。")]
+
+
+@pytest.mark.parametrize("lang,text", CHANGE_LOG)
+def test_change_log_narration_is_meta_text(lang, text):
+    [hit] = meta(doc(("feature-grid", [r(text)]), lang=lang)).hits
+    assert hit.observed.startswith("change-log narration")
+
+
+@pytest.mark.parametrize("lang,text", [("en", "Your profile has been updated."),
+                                       ("en", "We updated our privacy policy on 3 May."),
+                                       ("ko", "프로필이 업데이트되었습니다."), ("ja", "プロフィールを更新しました。")])
+def test_a_status_the_product_reports_is_not_change_log_narration(lang, text):
+    result = meta(doc(("feature-grid", [r(text)]), lang=lang))
+    assert result.skipped is None and result.hits == []
+
+
+SELF_DESCRIPTION = [("en", "Click the button below to see how the page works."), ("en", "This section explains what the studio does."),
+                    ("ko", "아래 버튼을 클릭하면 예약 화면을 확인할 수 있어요."), ("ko", "이 섹션에서는 도자기를 보여줍니다."),
+                    ("ja", "下のボタンをクリックすると予約画面をご覧いただけます。"), ("ja", "このセクションでは作品を紹介しています。")]
+
+
+@pytest.mark.parametrize("lang,text", SELF_DESCRIPTION)
+def test_the_page_describing_itself_is_meta_text(lang, text):
+    assert len(meta(doc(("feature-grid", [r(text)]), lang=lang)).hits) == 1
+
+
+@pytest.mark.parametrize("text", ["Click the button to continue.", "Use the filters to narrow the list."])
+def test_an_instruction_that_does_not_point_at_the_page_is_not_self_description(text):
+    assert meta(doc(("feature-grid", [r(text)]))).hits == []
+
+
+@pytest.mark.parametrize("lang,text", [("en", "Dev note: wire up the backend later."), ("en", "Replace this with real content."),
+                                       ("ko", "개발자 메모: 결제 연동은 추후 구현"), ("ko", "추후 교체 예정입니다."),
+                                       ("ja", "開発メモ：決済は後で実装"), ("ja", "後で差し替え予定です。")])
+def test_developer_and_test_notes_are_meta_text(lang, text):
+    [hit] = meta(doc(("feature-grid", [r(text)]), lang=lang)).hits
+    assert hit.observed.startswith("developer or test note")
+
+
+@pytest.mark.parametrize("lang,text", [("en", "Sorry, this feature is not implemented yet."), ("en", "Unfortunately this part is still being built."),
+                                       ("ko", "죄송합니다. 이 기능은 아직 개발 중이에요."),
+                                       ("ja", "申し訳ありません。この機能はまだ開発中です。")])
+def test_an_apology_for_a_part_nobody_built_is_meta_text(lang, text):
+    [hit] = meta(doc(("feature-grid", [r(text)]), lang=lang)).hits
+    assert hit.observed.startswith("placeholder apology")
+
+
+@pytest.mark.parametrize("lang,text", [("en", "Sorry, this size is not available."), ("ko", "죄송합니다. 지원하지 않는 브라우저입니다."),
+                                       ("ja", "申し訳ありません。ただいま準備中です。")])
+def test_an_apology_for_a_real_state_is_not_a_placeholder_apology(lang, text):
+    result = meta(doc(("feature-grid", [r(text)]), lang=lang))
+    assert result.skipped is None and result.hits == []
+
+
+def test_a_build_label_is_a_label_not_a_sentence_and_version_history_is_content():
+    assert meta(doc(("feature-grid", [r("Version 3", "caption")]))).hits == []
+    long = "All packs need synth version 1.2 or later, installed and licensed on the same machine as your host."
+    assert meta(doc(("feature-grid", [r(long)]))).hits == []
+    assert "build or environment label" in observed(meta(doc(("feature-grid", [r("v1.2.3", "caption")]))))
+
+
 def test_decorative_metadata_strip_and_ambient_status():
     extract = doc(("hero", [r("Seoul · Est. 2024 · Open daily", "caption"), r("All systems operational", "label")]))
     kinds = observed(lint("copy.decorative-metadata", extract=extract))

@@ -191,11 +191,14 @@ lists:
       ja: [人気, おすすめ, 一番人気]
       zh: [推荐, 最受欢迎, 热门]
   leftover_phrases:
-    as_of: 2026-09
+    as_of: 2026-10
     values:
-      en: [certainly, i hope this helps, as requested]
+      en: [certainly, i hope this helps, as requested, here is the updated, here's the updated, i've updated the,
+           i have updated the, i've made the following changes, let me know if you'd like]
       ko: [물론입니다, 물론이죠, 도움이 되었으면, 도움이 되길, 도움이 되셨길, 요청하신 대로, 말씀하신 대로,
-           좋은 질문, 아래는 요청하신]
+           좋은 질문, 아래는 요청하신, 수정된 버전은 다음과 같아요, 수정한 버전입니다]
+      ja: [もちろんです, お役に立てれば, ご要望どおり, ご要望通り, ご指摘のとおり, 以下にまとめました,
+           修正版は以下のとおりです, 必要であればお知らせください]
   placeholder_entities:
     as_of: 2026-09
     values:
@@ -1206,9 +1209,6 @@ rules:
       - { kind: taxonomy, source: "checklist#LAY-01", note: "fix pointer layout/layout-decision-procedure.md" }
       - { kind: taxonomy, source: "anti-slop#layout.1" }
 
-  - id: layout.equal-siblings
-    class: default
-    domain: layout
   - id: layout.split-hero
     class: default
     domain: layout
@@ -1229,6 +1229,9 @@ rules:
     provenance:
       - { kind: measurement, source: "slop catalog 2026-10-04 split-hero", note: "a large heading on one side and an object on the other on 83 of 123 generated pages, 65 of 69 backup landing pages" }
 
+  - id: layout.equal-siblings
+    class: default
+    domain: layout
     layers: [render]
     severity: { create: gate, review: P3 }
     detect:
@@ -3156,11 +3159,11 @@ rules:
         - { when: "repetition obscures a consequential disclosure", review: P1 }
     detect:
       plan: { detector: meta-text, path: "content.key_copy[*].text" }
-      render: { detector: meta-text, family: leftover_phrases, params: { kinds: [producer-facing, repeated-heading-body, demo-badges, build-labels, chat-leftovers] } }
-    why: Copy addresses the builder, the prompt, or QA instead of the user, or repeats what the hierarchy already says
-    better: Keep one decision-relevant message; move implementation and test notes to the developer handoff
+      render: { detector: meta-text, family: leftover_phrases, params: { kinds: [producer-facing, repeated-heading-body, demo-badges, fiction-notice, build-labels, chat-leftovers, change-log, developer-notes, placeholder-apology, self-description] } }
+    why: Copy tells the visitor how the page was made instead of serving the subject - a demo or fictional-data notice in the opening, in a heading, or repeated past the one the brief asks for; change-log narration; the page describing itself; developer and test notes; an apology for a part nobody built - or addresses the builder, the prompt, or QA, or repeats what the hierarchy already says
+    better: Show the subject and the visitor's task, and leave out how the page was made, that it is a demo, and what changed. When the brief requires a notice that the data is fictional, state it once, short, in the footer or a small persistent label, never in the hero, a heading, or beside each section; move implementation and test notes to the developer handoff
     keep_when:
-      - { id: qualified-disclosure, when: "a consequential disclosure - simulation, non-delivery, privacy, persistence, consent, eligibility, recovery, safety, or legal - placed once at the decision it qualifies", evidence: none }
+      - { id: qualified-disclosure, when: "a consequential disclosure - simulation, non-delivery, privacy, persistence, consent, eligibility, recovery, safety, or legal - that the visitor needs at the decision it qualifies, said once there and not again elsewhere", evidence: none }
       - { id: compatibility-label, when: "a version, build, or environment label where compatibility or availability depends on it", evidence: none }
     waiver: { scope: value }
     verify: review

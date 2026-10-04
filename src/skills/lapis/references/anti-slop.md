@@ -130,11 +130,35 @@ that see it. Rules marked * are statistical or lexical leads; the critic judges 
   promised where the outcome could be named.
 - **Instead.** Give each heading one fact in whatever shape that fact has. Name what is kept, when, and how it
   comes back; let the comfort follow. State the terms the business has, once, beside the action they qualify.
-  Use sourced numbers or label sample data where it is shown. Derive a name from the product and its audience.
+  Use sourced numbers, and say once that sample data is sample data (see "What the page says about itself").
 - **Exceptions.** A campaign line the brief fixes. Real terms and measurements. A fictional exercise name. A
   contrast that corrects a real misconception.
 - **Rules.** `copy.uniform-rhythm`, `copy.stock-reassurance`*, `copy.template-offer-terms`*,
   `copy.fabricated-proof`, `copy.contrast-frame`, `copy.placeholder-content`, `copy.name-swap`.
+
+## What the page says about itself
+
+- **Looks like.** A notice that the page is a demo or uses fictional data, in the hero, under a heading, beside a
+  form, in an answer of the questions list ("Does this demo upload my files?"), and again in the footer, each time
+  in new words; a "Demo", "Live preview", or "Concept" badge on the mock and in the logo line; "not a real
+  exhibition" under the title. Sentences that explain the page instead of its subject ("This section shows...",
+  "Click the button below to try it"). Narration of what changed ("We updated the layout", "the spacing has been
+  improved"). Developer and test notes ("test data only", "replace with real content"). An apology for a part
+  nobody built ("not available in the demo"). Korean and Japanese pages do the same in their own register
+  (이 페이지는 가상의 …입니다, このページは架空の…です).
+- **Reads as generated because** the writer addressed whoever asked for the page and not the visitor, so the page
+  keeps explaining how it was made. The visitor of the exhibition came for the exhibition and the visitor of the
+  shop for the sweets; every notice is a sentence about something else, and each repeat weakens the one that
+  matters.
+- **Instead.** Before writing a line, decide what the page has to show - the subject and the visitor's task - and
+  what it must not carry: how it was made, that it is a demo beyond one notice, what changed since the last
+  version. When the brief requires a notice, write it once, short, in a quiet place: the footer or a small
+  persistent label. Never put it in the hero, a heading, or beside each section. A notice and its translation
+  beside it are one notice. The rest of a demo's limits belong in the handoff, not on the page.
+- **Exceptions.** A consequential disclosure the visitor needs where they decide (a simulated payment, a form that
+  sends nothing while the visitor may type private details), said once there and not again. A version or build
+  label where compatibility depends on it. A brief that gives the notice's wording.
+- **Rules.** `copy.meta-text`, `copy.decorative-metadata`, `copy.placeholder-content`.
 
 ## Icons and imagery
 
