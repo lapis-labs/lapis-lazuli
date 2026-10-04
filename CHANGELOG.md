@@ -12,12 +12,20 @@ All notable changes are recorded here. The format follows
 Local contract changes, made here and not from a kit diff; the handoff records each one with its before and
 after text.
 
-- `slop/rules.yaml` (206 rules, 103 detectors), from the blind evaluation of 2026-10-04: eight warn-level rules and eight
+- Checks are a floor, not a score: `slop lint`, `plan check`, `release check`, and `next` done end a result in which nothing
+  blocks with one line, `no defects found; not judged: genre fit, information choice, the visitor's task at phone and
+  desktop width` (`no blocking findings` when open findings remain), and `next` says a pass is no word on whether the
+  page is good. No count, finding, exit code, or gate rule changes (`release/GATE.md`, Output).
+- `slop/finding.schema.yaml`: the optional top-level `walkthroughs` on a findings report, written by the critic (the
+  visitor's one to three tasks from the brief, walked at 1440 and 390: `task`, `viewport`, `first_look`,
+  `read_or_scrolled_past`, `stuck`, `completed`, `refs`), and the critic judgement id `review.task-walkthrough`.
+  Nothing reads the field and the gate is unchanged; `src/agents/critic.md` leads with the walk.
+- `slop/rules.yaml` (206 rules, 103 detectors), from the user's page review of 2026-10-04: eight warn-level rules and eight
   detectors, all thresholds seeds that are not validated. Phone width: `layout.compact-desktop-navigation`
   (`compact-navigation`: a rail at a page edge, or a bar whose items run off the page, wrap, or crowd one row, in the 320
-  and 390 px captures), `layout.compact-object-opening` (`compact-opening`: an image or drawing that fills 30% of the
+  and 390 px captures), `layout.compact-object-opening` (`compact-opening`: an image or drawing that fills at least 0.3 of the
   first phone view below the heading), `layout.compact-empty-length` (`compact-length`: bands a quarter of the screen
-  tall with nothing to read or press, 15% of a page of four screens or more). Hierarchy: `type.oversized-icon-tile`
+  tall with nothing to read or press, a share of 0.15 of a page of four screens or more). Hierarchy: `type.oversized-icon-tile`
   (`icon-tile-cards`), `layout.repeated-section-shape` (`section-shapes`), `layout.flat-section-rhythm`
   (`section-rhythm`), `layout.metric-tile-opening` (`metric-tiles`). Type: `type.headline-emphasis-formula`
   (`headline-emphasis`: a closing phrase in italic or a second typeface). `color.gradient-headline` takes

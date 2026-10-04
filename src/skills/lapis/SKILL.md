@@ -375,6 +375,10 @@ When repeating a repair, follow the bounds and final full run in `ultramarine`'s
 While fixing, rerun the narrowest check that observes the change (one width, one probe, one lint layer or rule) and run the
 full set once, after the last change.
 
+Before you report, walk the page yourself as its visitor: take one to three tasks from the brief (find today's hours
+and book; see which line is delayed now) and do them on the 1440 and 390 captures, noting where you looked first,
+what you had to read or scroll past, and where you got stuck. A page that passes every check can still fail the walk.
+
 
 1. `lapis-design slop lint --plan .lapis/plans/<task>.yaml --source <source dir> -o .lapis/lint/<task>.json`.
    It needs no browser, so run it after every change to styles or markup: it finds literal colors,
