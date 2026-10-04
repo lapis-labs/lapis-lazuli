@@ -20,11 +20,11 @@ metadata:
   to edit a report or waive a finding.
 - With nobody to ask (`LAPIS_UNATTENDED=1`), record `approval: {state: assumed, reason: ...}` in the plan and go on;
   `approved` is only a person's.
-- When a person will answer, a user or an operator who relays replies, write the questions the plan needs (grilling
-  before it, or its approval) to `.lapis/questions/<task>.md` and stop with them as your last message: `next` says
-  `waiting-for-user` and the exit gate lets that stop pass, twice before a plan and once after, never for a file of
-  fewer than two words. Record the replies in `.lapis/answers/<task>.md`, cite them in the plan (`context.other`,
-  `claims.declared`), and run `next` again.
+- When a person will answer, a user or an operator who relays replies, write the questions the plan needs (the
+  brief before it, or its approval) to `.lapis/questions/<task>.md` and stop with them as your last message: `next`
+  says `waiting-for-user` and the exit gate lets that stop pass, twice before a plan and once after, never for a
+  file of fewer than two words. Record the replies in `.lapis/answers/<task>.md`, the brief record: keep what it
+  holds, add approval replies under their own heading, cite it in the plan (`context.other`), and run `next` again.
 - A brief's no-network line limits what the page loads; checks on 127.0.0.1 are not network use.
 
 lapis turns a request into a design contract - the plan file `.lapis/plans/<task>.yaml` - and then
@@ -60,8 +60,10 @@ A small edit inside an established system needs no plan. Say so and make the edi
    including the `DESIGN.md` dialect. Report conflicting records instead of merging them.
 2. Read `.lapis/plans/<task>.yaml` if it exists and continue it; a different task gets a new id.
 3. If this session has no font inventory summary, run `lazuli local fonts --summary`.
-4. Ask only questions whose answers change the plan, as the smallest independent set (a relayed run: see Done).
-   Otherwise write a reversible assumption into `claims.proposed` and continue.
+4. Before the plan of a new surface or a redesign, run `lps-brief`: it reads, looks up, asks only what stays open
+   (a relayed run: see Done), and writes `.lapis/answers/<task>.md`, which `next` asks for until it exists on a
+   create plan. Assumed answers go to `claims.proposed`, never `known` or `declared`. A repair asks only what its
+   findings leave open.
 
 ## Direction principles
 

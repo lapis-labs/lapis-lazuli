@@ -6,7 +6,7 @@ LapisLazuli is design skills for AI agents in 3 plugins, plus the CLI their hook
 
 | Plugin | What it does | Skills |
 |---|---|---|
-| `lapis` | Design direction, plans, and named defaults for new UI and redesigns | `lapis`, `lps-ux`, `lps-copy`, `lps-system` |
+| `lapis` | Design direction, plans, and named defaults for new UI and redesigns | `lapis`, `lps-brief`, `lps-ux`, `lps-copy`, `lps-system` |
 | `ultramarine` | Render checks, slop and rights review, and a separate critic | `ultramarine`, `ulm-maintain`, `ulm-release` |
 | `lazuli` | Local fonts and colors, catalogs, references, and the lazuli CLI | `lazuli`, `lzl-fonts`, `lzl-color`, `lzl-research` |
 
@@ -408,6 +408,7 @@ These commands do not install the CLI. The Hermes plugin hook and MCP server run
 
 ```sh
 hermes skills install lapis-labs/lapis-lazuli/dist/skills/lapis --yes
+hermes skills install lapis-labs/lapis-lazuli/dist/skills/lps-brief --yes
 hermes skills install lapis-labs/lapis-lazuli/dist/skills/lps-ux --yes
 hermes skills install lapis-labs/lapis-lazuli/dist/skills/lps-copy --yes
 hermes skills install lapis-labs/lapis-lazuli/dist/skills/lps-system --yes
@@ -448,6 +449,7 @@ The install script asks before this step. Update refuses to move a pinned plugin
 
 ```sh
 hermes skills uninstall lapis
+hermes skills uninstall lps-brief
 hermes skills uninstall lps-ux
 hermes skills uninstall lps-copy
 hermes skills uninstall lps-system
@@ -531,6 +533,7 @@ npx -y skills update -g -y
 
 ```sh
 npx -y skills remove lapis -g -a <agent> -y
+npx -y skills remove lps-brief -g -a <agent> -y
 npx -y skills remove lps-ux -g -a <agent> -y
 npx -y skills remove lps-copy -g -a <agent> -y
 npx -y skills remove lps-system -g -a <agent> -y
@@ -615,7 +618,7 @@ An HTML file path or `file://` URL also works: the checks serve its folder read-
 
 ### Unattended runs
 
-`lapis-design next --task <task>` prints the one step of the procedure still to do, from the files under `.lapis/`, until it says done; done means every step ran on real inputs, not that the release gate passes. A harness's stop event can ask it: the exit gate continues an agent that is about to stop with that step only when `LAPIS_UNATTENDED=1` is set in the environment the harness runs in, and otherwise prints one line and never blocks. `LAPIS_UNATTENDED=1` is for an operator's design run: the gate is then active even when the agent wrote no plan, and its step is `plan`, named for the project folder unless `LAPIS_TASK` says otherwise; do not set it for other work. It continues at most three times in a row for one step and fifteen times in a session, then lets the agent stop and records the step that was left in `.lapis/gate/<task>.json`. A run that must ask its user something, grilling before the plan or the plan's approval, while you relay the answers, writes the questions to `.lapis/questions/<task>.md` and stops: `lapis-design next` says `waiting-for-user`, and the gate lets that stop pass without counting a continue, for two sets of questions before a plan exists and one after. A file of fewer than two words, or a set past those limits, is continued like any other stop; the agent records your answers in `.lapis/answers/<task>.md` and carries on. Claude Code and Codex run it as the lapis plugin's `Stop` hook, Oh-My-Pi as `session_stop` and pi as `agent_before_settle` in the lapis exit-gate extension. Codex runs a plugin hook only after you trust it in `/hooks`, or for one run with `--dangerously-bypass-hook-trust` (use it only in an isolated `CODEX_HOME` whose hook sources you vetted); an untrusted hook is skipped without any message, so the gate is silently absent and the agent stops as it would without it. Without the gate the skills say to run `lapis-design next` by hand. Use reasoning or thinking at high or above for the agent that makes the work: in our runs, a low setting skipped the procedure.
+`lapis-design next --task <task>` prints the one step of the procedure still to do, from the files under `.lapis/`, until it says done; done means every step ran on real inputs, not that the release gate passes. A harness's stop event can ask it: the exit gate continues an agent that is about to stop with that step only when `LAPIS_UNATTENDED=1` is set in the environment the harness runs in, and otherwise prints one line and never blocks. `LAPIS_UNATTENDED=1` is for an operator's design run: the gate is then active even when the agent wrote no plan, and its step is `brief` and then `plan`, named for the project folder unless `LAPIS_TASK` says otherwise; do not set it for other work. It continues at most three times in a row for one step and fifteen times in a session, then lets the agent stop and records the step that was left in `.lapis/gate/<task>.json`. Before the plan, a create run owes a brief record, `.lapis/answers/<task>.md`: what it read and looked up, and its answers to the questions the design needs. With nobody to ask it answers them itself and marks every answer `[assumed]` with its basis. A run that should ask its user instead, the brief's questions or the plan's approval, while you relay the answers, must be told so in its instructions; it then writes the questions to `.lapis/questions/<task>.md` and stops: `lapis-design next` says `waiting-for-user`, and the gate lets that stop pass without counting a continue, for two sets of questions before a plan exists and one after. A file of fewer than two words, or a set past those limits, is continued like any other stop; the agent records your answers in `.lapis/answers/<task>.md` and carries on. Claude Code and Codex run it as the lapis plugin's `Stop` hook, Oh-My-Pi as `session_stop` and pi as `agent_before_settle` in the lapis exit-gate extension. Codex runs a plugin hook only after you trust it in `/hooks`, or for one run with `--dangerously-bypass-hook-trust` (use it only in an isolated `CODEX_HOME` whose hook sources you vetted); an untrusted hook is skipped without any message, so the gate is silently absent and the agent stops as it would without it. Without the gate the skills say to run `lapis-design next` by hand. Use reasoning or thinking at high or above for the agent that makes the work: in our runs, a low setting skipped the procedure.
 
 ## Update and uninstall
 

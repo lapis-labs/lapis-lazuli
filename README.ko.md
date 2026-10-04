@@ -50,7 +50,7 @@ LapisLazuli는 검사가 찾은 것을 알려 줄 뿐이고, 접근성이나 법
 
 ## 작동 방식
 
-1. 코드를 쓰기 전에 `lapis`가 요청을 계획 파일 `.lapis/plans/<task>.yaml`로 바꿔요. 브리프, 세계 재료, 폰트·색 역할, 레이아웃, 핵심 문구, 열린 결정마다 견준 후보, 이름 붙은 기본값마다 유지·거절 판단이 들어가요. `lapis-design plan check`가 이 계획을 검사해요.
+1. 코드를 쓰기 전에 `lps-brief`가 프로젝트를 읽고, 대상에 대해 찾을 수 있는 것을 찾아보고, 그래도 남은 것만 물어요. 물어볼 사람이 없으면 스스로 답하고 답마다 가정이라고 표시해요. 결과는 `.lapis/answers/<task>.md`에 남아요. 그다음 `lapis`가 요청과 이 기록을 계획 파일 `.lapis/plans/<task>.yaml`로 바꿔요. 브리프, 세계 재료, 폰트·색 역할, 레이아웃, 핵심 문구, 열린 결정마다 견준 후보, 이름 붙은 기본값마다 유지·거절 판단이 들어가요. `lapis-design plan check`가 이 계획을 검사해요.
 2. 구현하는 동안 에이전트는 계획을 따라요. `lps-ux`, `lps-copy`, `lps-system`이 흐름, 문구, 디자인 시스템을 맡아요.
 3. 구현이 끝나면 `ultramarine`이 내 렌더에 `lapis-design`을 돌려요. 최대 아홉 가지 조건(너비 320~1440px, 라이트·다크, 모션 줄이기, 모바일 브라우저 UI)으로 캡처하고, 스텁 백엔드에서 작업 흐름을 끝까지 돌려 보고, 뻔해 보이거나 기만적인 패턴과 빠진 권리 기록을 린트하고, 측정으로 판단할 수 없는 것은 별도의 평가자에게 넘겨요. 마지막 관문은 `ulm-release`예요.
 4. 어느 단계에서든 `lazuli`가 요청할 때 사실을 가져다줘요. 이 컴퓨터의 폰트, 카탈로그의 분류와 라이선스, 색 체계 코드, 페이지 하나, 레퍼런스 프로필이에요.
@@ -64,6 +64,7 @@ LapisLazuli는 검사가 찾은 것을 알려 줄 뿐이고, 접근성이나 법
 | 플러그인 | 스킬 | 하는 일 |
 |---|---|---|
 | `lapis` | `lapis` | 새 인터페이스, 리디자인, 시각 방향을 코드 전에 계획하고, CLI가 검사하는 계획 파일로 남겨요. |
+| | `lps-brief` | 계획 전에 개성 있는 디자인에 필요한 사실을 모아요. 읽고, 찾아보고, 한 번에 최대 여섯 개만 묻고, 찾은 것·들은 것·가정한 것을 기록해요. |
 | | `lps-ux` | 흐름, 상태, 내비게이션이 동작하고 복구되도록 설계하고, 그것을 검사할 스텁을 써요. |
 | | `lps-copy` | 대상 언어로, 화면마다 하나의 어조로, 대상의 사실에 바탕해 인터페이스 문구를 써요. |
 | | `lps-system` | 계획의 결정을 디자인 시스템으로 바꿔요. OKLCH 색 단계, 글자 크기 체계, 간격, 모션, 테마, `DESIGN.md`예요. |
@@ -134,7 +135,7 @@ Markdown 파일을 다시 쓸 때는 출처를 밝히고, 라이선스 링크를
 
 아래는 저장소를 고치는 사람을 위한 자료예요.
 
-스킬은 열한 개예요: `lapis`, `lps-copy`, `lps-ux`, `lps-system`, `ultramarine`, `ulm-maintain`, `ulm-release`, `lazuli`, `lzl-fonts`, `lzl-color`, `lzl-research`(`src/skills/<이름>/SKILL.md`). 평가자는 `src/agents/critic.md`이고, 빌드가 두 에이전트 파일(`plugins/ultramarine/agents/critic.md`, `dist/codex/agents/ulm-critic.toml`)로 만들어요.
+스킬은 열두 개예요: `lapis`, `lps-brief`, `lps-copy`, `lps-ux`, `lps-system`, `ultramarine`, `ulm-maintain`, `ulm-release`, `lazuli`, `lzl-fonts`, `lzl-color`, `lzl-research`(`src/skills/<이름>/SKILL.md`). 평가자는 `src/agents/critic.md`이고, 빌드가 두 에이전트 파일(`plugins/ultramarine/agents/critic.md`, `dist/codex/agents/ulm-critic.toml`)로 만들어요.
 
 ### 계약 (`src/shared/`)
 

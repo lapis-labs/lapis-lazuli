@@ -1,0 +1,496 @@
+# LapisLazuli plan file schema — v0 draft
+# Location: .lapis/plans/<task-id>.yaml in the project (one file per task)
+# Written by: lapis / Checked by: plan_check (schema validation first, then code checks for
+#   defaults matching, decision evidence, contract consistency, font inventory/delivery, and reference rights)
+# Status: v0. Fields will be refined through local testing.
+
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/plan.v0.json
+title: LapisLazuli plan
+type: object
+additionalProperties: false
+patternProperties:
+  "^x-": {}                       # experimental fields only with the x- prefix
+required: [version, mode, task, brief, defaults]
+
+properties:
+  version: { const: 0 }
+  mode: { enum: [create, redesign, repair] }
+
+  task:
+    type: object
+    additionalProperties: false
+    required: [id, title]
+    properties:
+      id: { type: string, pattern: "^[a-z0-9][a-z0-9-]{1,63}$" }
+      title: { type: string, minLength: 1 }
+
+  # Who approved the plan before the work followed it. `approved` is the user's own approval and only
+  # a person sets it; a run with nobody to ask records `assumed` and says why. The release gate lists an
+  # assumed approval for the user to confirm and never counts it as approval.
+  approval:
+    type: object
+    additionalProperties: false
+    required: [state]
+    properties:
+      state: { enum: [approved, assumed] }
+      reason: { type: string, minLength: 8 }           # why no person approved it (assumed only)
+    if: { required: [state], properties: { state: { const: assumed } } }
+    then: { required: [reason] }
+
+  # Contract documents that were actually read. If DESIGN.md exists, tokens only reference it.
+  context:
+    type: object
+    additionalProperties: false
+    properties:
+      product: { $ref: "#/$defs/path_or_null" }
+      design:
+        oneOf:
+          - type: "null"
+          - type: object
+            additionalProperties: false
+            required: [path, dialect]
+            properties:
+              path: { type: string }
+              dialect: { enum: [google, opendesign, stitch-legacy, unknown] }
+      other: { type: array, items: { type: string } }
+
+  brief:
+    type: object
+    additionalProperties: false
+    required: [subject, one_job, platform, locales, product_frame]
+    properties:
+      subject: { type: string, minLength: 3 }
+      one_job: { type: string, minLength: 3 }        # the single job this screen must do
+      audience: { type: string }
+      platform:
+        type: array
+        minItems: 1
+        items: { enum: [web, ios, android, desktop, email, embedded] }
+      locales:
+        type: array
+        minItems: 1
+        items: { type: string, pattern: "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$" }   # BCP 47
+      product_frame:                                 # the surface's task, not the company category
+        enum: [marketing-landing, saas-dashboard-admin, consumer-mobile-app, e-commerce,
+               content-editorial-docs, forms-onboarding-checkout, developer-tools,
+               data-visualization, fintech-regulated, internal-tools, portfolio-personal,
+               games-entertainment, other]
+      constraints: { type: array, items: { type: string } }   # context-of-use constraints
+
+  # Keep known / declared / proposed / unresolved apart when moving a direction into implementation
+  claims:
+    type: object
+    additionalProperties: false
+    properties:
+      known: { $ref: "#/$defs/strings" }
+      declared: { $ref: "#/$defs/strings" }
+      proposed: { $ref: "#/$defs/strings" }
+      unresolved: { $ref: "#/$defs/strings" }
+
+  world_materials:                                   # concrete materials drawn from the subject
+    type: array
+    items: { type: string, minLength: 2 }
+
+  direction:
+    type: object
+    additionalProperties: false
+    properties:
+      read:                                          # the Design Read
+        type: object
+        additionalProperties: false
+        required: [surface_mode, style_frame]
+        properties:
+          text: { type: string }                     # "Reading this as: ..." in one or two sentences
+          surface_mode:
+            type: array
+            minItems: 1
+            items: { enum: [persuade, operate, read, experience] }
+          style_frame: { enum: [inherit, named, undecided, subject-derived] }
+          style_name: { type: string, minLength: 1 } # the look the request named, in its own words; required when style_frame is named
+          constraint_frame: { $ref: "#/$defs/strings" }
+        if: { required: [style_frame], properties: { style_frame: { const: named } } }
+        then: { required: [style_name] }
+      dials:                                         # proposal controls, not quality scores
+        type: object
+        additionalProperties: false
+        properties:
+          variance: { type: integer, minimum: 1, maximum: 10 }   # 1 conventional -> 10 experimental
+          motion: { type: integer, minimum: 1, maximum: 10 }     # 1 static -> 10 cinematic
+          density: { type: integer, minimum: 1, maximum: 10 }    # 1 airy -> 10 cockpit
+      concept: { type: string }                      # a concept that starts from a live tension
+      levers: { $ref: "#/$defs/strings" }            # form levers, one sentence each: the lever, what visibly changes, and the world material it comes from (layout.unanchored-lever)
+
+  references:
+    type: array
+    items: { $ref: "#/$defs/reference" }
+
+  tokens:
+    type: object
+    additionalProperties: false
+    properties:
+      color: { $ref: "#/$defs/color_tokens" }
+      type: { $ref: "#/$defs/type_tokens" }
+      space:
+        type: object
+        properties:
+          base_px: { type: number, exclusiveMinimum: 0 }
+          scale: { type: array, items: { type: number } }
+      motion:
+        type: object
+        properties:
+          reduced_motion: { const: respect }         # requirement: honor reduced-motion settings
+          principles: { $ref: "#/$defs/strings" }
+      shape: { $ref: "#/$defs/shape_tokens" }        # optional: radius steps by component role
+      surface: { $ref: "#/$defs/surface_tokens" }    # optional: elevation levels and treatments with their jobs
+      icons: { $ref: "#/$defs/icon_tokens" }         # optional: one icon family and how it is drawn
+
+  layout:
+    type: object
+    additionalProperties: false
+    properties:
+      procedure:                                     # the nine-step layout decision procedure
+        type: object
+        additionalProperties: false
+        properties:
+          content_inventory: { $ref: "#/$defs/strings" }
+          priority: { $ref: "#/$defs/strings" }
+          screen_mode: { type: string }
+          reading_order: { $ref: "#/$defs/strings" }
+          relationships: { $ref: "#/$defs/strings" }
+          archetype: { type: string }
+          grid: { type: string }
+          responsive: { type: string }
+          density_and_checks: { type: string }
+      sections:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [id, answers]
+          properties:
+            id: { type: string }
+            archetype: { type: string }
+            answers: { type: string, minLength: 3 }  # the user question this section answers
+      signature: { type: string }                    # the element unique to this task
+
+  content:
+    type: object
+    additionalProperties: false
+    properties:
+      real_copy: { type: boolean }
+      source: { type: string }
+      voice:
+        type: object
+        properties:
+          register: { enum: [haeyo, hapnida, haera, desu-masu, da-dearu, zh-formal, zh-casual, en-formal, en-casual, other] }
+          notes: { type: string }
+      key_copy:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [slot, text]
+          properties:
+            slot: { enum: [headline, subhead, cta, nav, empty-state, error, other] }
+            text: { type: string, minLength: 1 }     # written in the target locale
+            locale: { type: string }
+
+  # Task flows that behavior_check runs end to end in the rendered output (behavior/DERIVED.md).
+  # An exit flow (cancel, delete, withdraw, unsubscribe) names the flow it reverses in `pair`, so the
+  # effort of leaving can be compared with the effort of joining.
+  flows:
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [id, kind, goal, start, done]
+      properties:
+        id: { type: string, pattern: "^[a-z0-9][a-z0-9-]{0,63}$" }
+        kind:
+          enum: [primary, purchase, subscribe, cancel-subscription, signup, delete-account,
+                 grant-consent, withdraw-consent, unsubscribe, recover]
+        goal: { type: string, minLength: 3 }         # what the user is trying to get done
+        start: { type: string, pattern: "^/[^?#]*$" } # route where the flow begins; an exit flow with a pair starts where its pair starts
+        done:                                        # how the driver knows the goal was reached
+          type: object
+          additionalProperties: false
+          minProperties: 1
+          properties:
+            route: { type: string, pattern: "^/[^?#]*$" }   # * matches one path segment
+            text: { type: string, minLength: 1 }            # visible text, in the target locale
+        pair: { type: string, pattern: "^[a-z0-9][a-z0-9-]{0,63}$" }
+        requires:                                    # prerequisites the flow may legitimately ask for
+          type: array
+          items: { enum: [account, sign-in, identity, payment, address, age, reauth] }
+        requires_reason: { type: string, minLength: 8 }   # why an account, identity check, or reauthentication is needed
+        max_steps: { type: integer, minimum: 1 }
+      # An account, identity check, or reauthentication excuses behavior findings, so it needs a reason
+      if:
+        required: [requires]
+        properties: { requires: { contains: { enum: [account, identity, reauth] } } }
+      then: { required: [requires_reason] }
+
+  # Evidence for each open decision: the candidates that were compared and why the winner won (rule
+  # plan.uncompared-decision reads it). A decision the contract or the brief fixes says so with `fixed_by`
+  # and needs no candidates.
+  #   type                          `covers` lists the roles the entry decides; a candidate's `source` is local
+  #                                 (installed here), adobe, catalog:<name>, commercial:<foundry>, or generic
+  #                                 (a generic family: the platform's own face)
+  #   copy                          `covers` lists the key_copy slots
+  #   palette, layout, motion, direction   one entry each; `source` says where a candidate came from: a world
+  #                                 material, a reference, a sketch of your own, or generic (the default for
+  #                                 this kind of page)
+  explorations:
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [decision]
+      properties:
+        decision: { enum: [type, palette, layout, motion, direction, copy] }
+        covers:
+          type: array
+          minItems: 1
+          items: { enum: [display, heading, body, ui, data, code, caption, headline, subhead, cta, nav, empty-state, error, other] }
+        candidates:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [name, source]
+            properties:
+              name: { type: string, minLength: 1 }       # a family for type, a one-sentence relation for direction
+              source: { type: string, minLength: 1 }
+              note: { type: string }
+        compared_on: { type: array, items: { enum: [specimen, render, sketch] } }   # specimen: the page's real copy set in each candidate
+        chosen: { type: string, minLength: 1 }           # the name of one candidate
+        runner_up_lost: { type: string, minLength: 8 }   # why the closest alternative lost
+        fixed_by: { enum: [contract, brief] }
+        reason: { type: string, minLength: 8 }           # what fixes the decision; required with fixed_by
+      allOf:
+        - if: { required: [decision], properties: { decision: { enum: [type, copy] } } }
+          then: { required: [covers] }
+        - if: { required: [decision], properties: { decision: { const: type } } }
+          then:
+            properties:
+              candidates:
+                items:
+                  properties:
+                    source: { pattern: "^(local|adobe|generic|catalog:[^\\s:]+|commercial:\\S.*)$" }
+        - if: { required: [fixed_by] }
+          then: { required: [reason] }
+
+  defaults:                                          # decisions on the named defaults that were hit
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [id, decision, basis, reason]
+      properties:
+        id: { type: string, pattern: "^[a-z]+(\\.[a-z0-9-]+)+$" }
+        decision: { enum: [keep, reject] }
+        basis: { enum: [brief, contract, requirement] }
+        keep_when: { type: string, pattern: "^[a-z0-9]+(-[a-z0-9]+)*$" }   # a keep names one keep_when id of its rule (shared/slop/rules.yaml); the check waives the finding only when it is one
+        evidence:                                    # what the case's `evidence` in shared/slop/rules.yaml asks a keep for; the check waives only when an alternative of the case holds
+          type: object
+          additionalProperties: false
+          minProperties: 1
+          properties:
+            design: { type: string, pattern: "^[^#]*#[^#\\s][^#]*$" }   # a token of the context.design file, as DESIGN.md#colors.accent
+            brief: { type: string, minLength: 8 }       # a line of brief, quoted
+            material: { type: string, minLength: 2 }    # an entry of world_materials
+            source: { type: string, minLength: 1 }      # the ref of an entry of sources
+            exploration: { type: string, minLength: 1 } # the chosen face of a type comparison in explorations
+            asset: { type: string, pattern: "^[a-z0-9][a-z0-9-]*$" }   # the id of an asset in .lapis/assets.ledger.json that this task uses
+        reason: { type: string, minLength: 8 }
+
+  sources:
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [ref]
+      properties:
+        ref: { type: string }                        # path or URL
+        note: { type: string }
+
+  proposed_design_changes:                           # required to use values that differ from DESIGN.md
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [path, to, reason]
+      properties:
+        path: { type: string }                       # e.g. DESIGN.md#colors.primary
+        from: {}
+        to: {}
+        reason: { type: string, minLength: 8 }
+
+  output_condition:                                  # print work only
+    type: object
+    properties:
+      medium: { type: string }
+      profile: { type: string }
+
+# In create mode, materials, sources, direction, and layout are mandatory
+allOf:
+  - if: { properties: { mode: { const: create } } }
+    then:
+      required: [world_materials, sources, direction, layout]
+      properties:
+        world_materials: { minItems: 1 }
+        sources: { minItems: 1 }
+
+$defs:
+  strings: { type: array, items: { type: string } }
+  path_or_null: { oneOf: [ { type: "null" }, { type: string } ] }
+  oklch:
+    type: array
+    minItems: 3
+    maxItems: 3
+    prefixItems:
+      - { type: number, minimum: 0, maximum: 1 }       # L
+      - { type: number, minimum: 0, maximum: 0.5 }     # C
+      - { type: number, minimum: 0, maximum: 360 }     # H
+  decision_answer:
+    type: object
+    additionalProperties: false
+    required: [answer, status]
+    properties:
+      answer: { type: string }
+      status: { enum: [known, declared, proposed, unresolved] }
+
+  reference:
+    type: object
+    additionalProperties: false
+    required: [source, kind, rights, mode, take, leave]
+    properties:
+      source: { type: string }
+      kind: { enum: [site, image, system] }
+      rights: { enum: [own, licensed, reference-only] }
+      mode: { enum: [analyze, borrow, study, reuse] }
+      take: { type: array, minItems: 1, items: { type: string } }   # relations to take
+      leave: { type: array, items: { type: string } }               # what to leave behind
+      profile: { type: string }                                     # .lapis/refs/<slug>.json
+    # Allowed modes depend on rights: reference-only cannot be reused wholesale
+    if: { properties: { rights: { const: reference-only } } }
+    then: { properties: { mode: { enum: [analyze, borrow, study] } } }
+
+  color_tokens:
+    type: object
+    additionalProperties: false
+    properties:
+      decision:                                      # the six decision axes
+        type: object
+        additionalProperties: false
+        properties:
+          medium: { $ref: "#/$defs/decision_answer" }
+          task_structure: { $ref: "#/$defs/decision_answer" }
+          content_colors: { $ref: "#/$defs/decision_answer" }
+          identity: { $ref: "#/$defs/decision_answer" }
+          environment: { $ref: "#/$defs/decision_answer" }
+          tone: { $ref: "#/$defs/decision_answer" }
+      roles:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [name, role]
+          properties:
+            name: { type: string }
+            role: { enum: [field, foreground, identity, interaction, status, data, content] }
+            oklch: { $ref: "#/$defs/oklch" }
+            ref: { type: string }                     # e.g. DESIGN.md#colors.primary
+            theme: { enum: [light, dark, high-contrast] }   # the theme this value is for; absent means every theme
+            source_class:                             # where the value came from (vocab/color.yaml value_source_classes)
+              enum: [authored, provider, brand-approved, measured, published, computed, converted, nearest-match,
+                     screen-sample, unofficial]
+            system_code:                              # physical standard code, spec path only
+              type: object
+              properties:
+                system:                               # vocab/color.yaml system ids; `ral` stays for plans that used it
+                  enum: [pantone, ral, ral-classic, ral-design-plus, ncs, munsell, hlc, freetone, other]
+                code: { type: string }
+          oneOf:
+            - required: [oklch]
+            - required: [ref]
+      relations:
+        type: array
+        items: { enum: [tonal, neighboring, opposing, temperature-contrast, near-monochrome, multi-hue] }
+      themes: { type: array, items: { enum: [light, dark, high-contrast] } }
+      data_scales:
+        type: array
+        items: { enum: [categorical, sequential, diverging, cyclic] }
+
+  shape_tokens:
+    type: object
+    additionalProperties: false
+    properties:
+      radius:
+        type: object
+        additionalProperties: false
+        properties:
+          scale: { type: array, items: { type: number, minimum: 0 } }   # px steps in use
+          by_role:                                   # component role to px step, e.g. control: 6
+            type: object
+            additionalProperties: { type: number, minimum: 0 }
+      rule: { type: string }                         # why these corners, tied to a material or the platform
+
+  surface_tokens:
+    type: object
+    additionalProperties: false
+    properties:
+      elevation:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [level, means]
+          properties:
+            level: { type: integer, minimum: 0 }
+            means: { type: string }                  # what sits at this level, e.g. menus and popovers
+      borders: { type: string }                      # how boundaries are drawn
+      treatments:                                    # decorative or material treatments; each needs a job
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [name, job]
+          properties:
+            name: { type: string }                   # e.g. translucent panel, paper grain, offset shadow
+            job: { type: string }                    # what it tells the reader
+            where: { $ref: "#/$defs/strings" }
+
+  icon_tokens:
+    type: object
+    additionalProperties: false
+    properties:
+      family: { type: string }
+      source: { enum: [contract, library, drawn, none] }   # drawn: made for this project, recorded in the asset ledger
+      style: { enum: [outline, filled, duotone, mixed] }
+      stroke_px: { type: number, exclusiveMinimum: 0 }
+      sizes_px: { type: array, items: { type: number, exclusiveMinimum: 0 } }
+
+  type_tokens:
+    type: object
+    additionalProperties: false
+    properties:
+      roles:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [role, family]
+          properties:
+            role: { enum: [display, heading, body, ui, data, code, caption] }
+            family: { type: string, pattern: "^[^,]+$" }   # one family name, never a comma-separated stack; fallbacks go in the fonts lock
+            weights: { type: array, items: { type: integer, minimum: 1, maximum: 1000 } }
+            scripts: { type: array, items: { enum: [latn, cyrl, grek, hang, kana, hani, arab, hebr, thai] } }
+            source: { enum: [inventory, catalog, contract] }
+      scale:
+        type: object
+        properties:
+          base_px: { type: number, exclusiveMinimum: 0 }
+          ratio: { type: number, minimum: 1 }
+      lock: { type: string, default: .lapis/fonts.lock.json }

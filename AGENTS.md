@@ -5,7 +5,7 @@ The rules every session follows are at the end, because some harnesses read only
 
 | Plugin | Role | Skills |
 |---|---|---|
-| `lapis` | Direction, plans, named defaults for new UI and redesigns | `lapis`, `lps-ux`, `lps-copy`, `lps-system` |
+| `lapis` | Direction, plans, named defaults for new UI and redesigns | `lapis`, `lps-brief`, `lps-ux`, `lps-copy`, `lps-system` |
 | `ultramarine` | Render and behavior checks, slop and rights review, separate critic | `ultramarine`, `ulm-maintain`, `ulm-release` |
 | `lazuli` | Local fonts and colors, catalogs, references, the `lazuli` CLI | `lazuli`, `lzl-fonts`, `lzl-color`, `lzl-research` |
 
@@ -246,7 +246,7 @@ files beside it; the database file itself does not change.
   release gate reads both.
 - `release check` lives in `cli/lapis_design/release_check.py`: it runs the plan checks itself, reads the lint, session, extract, and critic reports, rechecks catalog font licenses through `lazuli.catalog`, and writes the gate report; it never captures or drives a page.
 - `next` lives in `cli/lapis_design/next_step.py`: `lapis-design next --task demo [--json]` runs `release_check.run(...,
-  offline=True)` on the files and returns the one step still to take (`plan`, `plan-fix`, `plan-flows`,
+  offline=True)` on the files and returns the one step still to take (`brief`, `plan`, `plan-fix`, `plan-flows`,
   `plan-explorations`, `fonts-lock`, `stub`, `ledger`, `render`, `behavior`, `lint`, `critic`, `release`) with its exact
   command or schema, or `done`; it judges nothing the gate already judges, and `done` is a complete procedure, not a
   passing gate. `render check`, `behavior check`, and `release check` write `.lapis/attempts/<task>/<step>.json`
@@ -254,11 +254,13 @@ files beside it; the database file itself does not change.
   a path the sandbox denies); `next` counts a record newer than the step's inputs as that step done, and nothing else
   is ever recorded. `lapis-design hook stop` (`gate.py`) is the exit gate every harness asks: with a plan in reach and
   `LAPIS_UNATTENDED=1` it continues the agent with that step, three times in a row for one step and fifteen in a
-  session at most (state in `.lapis/gate/<task>.json`); an unattended run with no plan owes one, so its step is `plan`
-  (task from `$LAPIS_TASK`, else the project folder's name); otherwise it prints one line and never blocks. A run that
-  stopped to ask its user (`waiting.py`: `.lapis/questions/<task>.md` newer than `.lapis/answers/<task>.md`) makes
-  `next` say `waiting-for-user` and the gate let the stop pass without a continue: two sets before a plan, one after
-  (`waits` in the gate state).
+  session at most (state in `.lapis/gate/<task>.json`); an unattended run with no plan owes one, so its step is `brief`,
+  then `plan` (task from `$LAPIS_TASK`, else the project folder's name); otherwise it prints one line and never blocks.
+  The `brief` step (`brief.py`) is asked for while a run with no plan, or a plan in `create` mode, has no brief record:
+  `.lapis/answers/<task>.md` with a `## Found` and an `## Answers` section whose `[assumed]` items give a `Basis:`.
+  A run that stopped to ask its user (`waiting.py`: `.lapis/questions/<task>.md` newer than `.lapis/answers/<task>.md`)
+  makes `next` say `waiting-for-user` and the gate let the stop pass without a continue: two sets before a plan, one
+  after (`waits` in the gate state).
 - `lazuli` lives in `cli/lazuli/`: `scan.py` (read-only inventory; `LAZULI_FONT_ROOTS` replaces the
   roots and turns the Core Text listing off), `coretext.py` (Adobe Fonts through Core Text on macOS,
   never through their files), `measure.py` (PANOSE Latin and the CJK extension per `vocab/type.yaml`; bump

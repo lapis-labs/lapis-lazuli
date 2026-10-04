@@ -114,6 +114,22 @@ after text.
   also takes the task of the newest questions file. The `lapis` Done block says how the replies reach the plan
   (`context.other`, `claims.declared`); after an answered set the gate's continuation no longer says nobody is present
   to approve, and tells the run to write `approved` only when the recorded answers approve the plan.
+- `lps-brief`, a skill in the `lapis` plugin that gets the information a design needs before the plan. It reads the
+  request and the project, looks up what the subject's world makes findable and records each source as confirmed or
+  a lead, and asks at most six questions per round, two rounds, ordered by how much each answer changes the page,
+  each with its reason and the default it will assume. A person in the session is asked in one message; a relayed run
+  writes the same message to `.lapis/questions/<task>.md`; with nobody to ask it answers itself and marks every answer
+  `[assumed]` with its basis. The record `.lapis/answers/<task>.md` seeds the plan's `brief`, `context`, `claims`
+  (assumed answers only in `claims.proposed`), and `world_materials`, and proposes a `DESIGN.md` seed instead of
+  inventing visual decisions. References: `questions.md`, `research.md`, `record.md`. The skill count is twelve.
+
+### Changed
+
+- `lapis-design next` and the exit gate name `brief` before `plan`: a project folder with no plan, and an unattended
+  run that wrote none, are first sent to the brief record and then to the plan. The brief's questions wait in the
+  `plan` phase (two sets), and the gate's continuation for `brief` carries no approval note, since no plan exists
+  yet. `lapis` points its start step at `lps-brief`, and the waiting message says to keep the record when approval
+  replies are added to it.
 
 ### Changed
 

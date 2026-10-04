@@ -19,6 +19,7 @@ items:
     lookup_fields: [version, task, brief, references, tokens, sources]
     consumers:
       lapis: full
+      lps-brief: full
       lps-ux: full
       lps-copy: full
       lps-system: full
@@ -249,6 +250,7 @@ items:
       lzl-color: full
       lzl-research: full
       lapis: summary
+      lps-brief: summary
 
   - id: sources-registry-schema
     kind: contract

@@ -15,7 +15,7 @@ $script:Experimental = @('pi', 'hermes')
 $script:CliName = 'CLI (lapis-design, lazuli)'
 $script:CliNeeds = 'uv or pipx'
 $script:SkillsOf = @{
-  'lapis' = @('lapis', 'lps-ux', 'lps-copy', 'lps-system')
+  'lapis' = @('lapis', 'lps-brief', 'lps-ux', 'lps-copy', 'lps-system')
   'ultramarine' = @('ultramarine', 'ulm-maintain', 'ulm-release')
   'lazuli' = @('lazuli', 'lzl-fonts', 'lzl-color', 'lzl-research')
 }

@@ -90,7 +90,7 @@ all_plugins() { [ "$LL_PLUGINS" = "$LL_ALL_PLUGINS" ]; }
 
 skills_of() {
   case $1 in
-  lapis) printf '%s' 'lapis lps-ux lps-copy lps-system' ;;
+  lapis) printf '%s' 'lapis lps-brief lps-ux lps-copy lps-system' ;;
   ultramarine) printf '%s' 'ultramarine ulm-maintain ulm-release' ;;
   lazuli) printf '%s' 'lazuli lzl-fonts lzl-color lzl-research' ;;
   esac

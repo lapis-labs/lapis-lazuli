@@ -61,9 +61,12 @@ need the CLI on your PATH (see [CLI and optional components](INSTALLATION.md#cli
 
 ## How it works
 
-1. Before any code, `lapis` turns a request into a plan file, `.lapis/plans/<task>.yaml`: brief,
-   world materials, type and color roles, layout, key copy, the candidates compared for each open
-   decision, and a keep-or-reject decision on every named default. `lapis-design plan check` validates it.
+1. Before any code, `lps-brief` reads the project, looks up what can be found about the subject, and asks
+   only what stays open (with nobody to ask, it answers itself and marks each answer assumed); it writes
+   `.lapis/answers/<task>.md`. Then `lapis` turns the request and that record into a plan file,
+   `.lapis/plans/<task>.yaml`: brief, world materials, type and color roles, layout, key copy, the candidates
+   compared for each open decision, and a keep-or-reject decision on every named default.
+   `lapis-design plan check` validates it.
 2. While the agent builds, it follows the plan; `lps-ux`, `lps-copy`, and `lps-system` cover flows,
    copy, and the design system.
 3. After it builds, `ultramarine` runs `lapis-design` on your own render: capture under up to nine
@@ -92,6 +95,7 @@ come from. `lapis-design` runs the checks for `lapis` and `ultramarine`; `lazuli
 | Plugin | Skill | What it does |
 |---|---|---|
 | `lapis` | `lapis` | Plans new interfaces, redesigns, and visual direction before code, in a plan file the CLI checks. |
+| | `lps-brief` | Gets the facts a distinctive design needs before the plan: reads, looks things up, asks at most six questions a round, and records what was found, said, and assumed. |
 | | `lps-ux` | Designs flows, states, and navigation so they work and recover, then writes the stub that lets them be checked. |
 | | `lps-copy` | Writes interface copy from the subject's facts, in the target language, with one register per surface. |
 | | `lps-system` | Turns a plan's decisions into a design system: OKLCH color ramps, type scale, spacing, motion, themes, `DESIGN.md`. |

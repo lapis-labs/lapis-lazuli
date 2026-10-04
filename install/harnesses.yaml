@@ -37,7 +37,7 @@ plugins:
   - name: lapis
     prefix: lps-
     description: Design direction, plans, and named defaults for new UI and redesigns
-    skills: [lapis, lps-ux, lps-copy, lps-system]
+    skills: [lapis, lps-brief, lps-ux, lps-copy, lps-system]
     hooks: [exit-plan, stop]
   - name: ultramarine
     prefix: ulm-
