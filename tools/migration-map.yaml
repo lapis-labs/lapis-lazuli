@@ -1,7 +1,7 @@
 # LapisLazuli 도메인 이관 지도 — 기계용 v0 (문서 "도메인 이관 지도"에서 생성)
 version: 0
 generated: '2026-09-24'
-updated: '2026-10-04'   # Recover3: 다음 20개 대조. 15개 참조 회수·5개 기존 존재; 인용·변환·커밋·날짜는 recovery-map.tsv
+updated: '2026-10-04'   # Recover4: 잔여 40개 대조 완료; 회수 27·기존 존재 4·제외 9
 status_legend:
   todo: 시작 전
   partial: 일부 행선지 완료 (done에 적은 것)
@@ -184,10 +184,12 @@ entries:
 - path: references/color/color-spaces-and-management.md
   words: 3187
   dest:
-  - lazuli
-  target: lzl-color 참조
-  note: Q30. lzl-color 참조로(알린 뒤). CSS 색 공간 부분은 lps-system을 가리키고 겹쳐 쓰지 않음
-  status: todo
+  - reference
+  target: lzl-color/references/color-management.md
+  note: 'R4(2026-10-04): 좌표·인코딩·선형광·백색점·물리 측정·프로필·HDR를 구분하고 불일치의 파이프라인을 추적하게 했어요. CSS 예제와 도구 기능은 제외해요.'
+  status: done
+  done:
+  - reference
 - path: references/color/color-systems-and-standards.md
   words: 3756
   dest:
@@ -636,8 +638,11 @@ entries:
   words: 2322
   dest:
   - reference
-  target: lps-system
-  status: todo
+  target: lps-system/SKILL.md
+  status: done
+  done:
+  - reference
+  note: 'R4(2026-10-04): dialect 확인·요청된 변환·값/손실 보존은 현행 lps-system에 이미 있어요. Google 기본 강제와 구 CLI 계약은 제외해요.'
 - path: references/interop/design-tokens-dtcg.md
   words: 2346
   dest:
@@ -650,17 +655,21 @@ entries:
 - path: references/interop/figma.md
   words: 3705
   dest:
-  - docs
   - reference
-  target: lps-system
-  note: 형식 수준만 참조로
-  status: todo
+  target: lps-system/references/interop.md
+  note: 'R4(2026-10-04): URL과 권한·접근 경로를 분리하고 collection/mode/alias/revision 보존과 생성 코드의 증거 한계를 압축했어요.'
+  status: done
+  done:
+  - reference
 - path: references/interop/handoff-and-specs.md
   words: 2889
   dest:
   - reference
-  target: lps-system + ulm-release
-  status: todo
+  target: lps-system/references/interop.md
+  status: done
+  done:
+  - reference
+  note: 'R4(2026-10-04): 상태·행동·소유자·미확인 항목과 실제 수락 조건을 기존 기록에 담는 handoff로 줄였어요.'
 - path: references/interop/interop-overview.md
   words: 1738
   dest:
@@ -671,11 +680,12 @@ entries:
 - path: references/interop/opendesign.md
   words: 2827
   dest:
-  - docs
   - reference
-  target: lps-system
-  note: 방언 부분만
-  status: todo
+  target: lps-system/references/interop.md
+  note: 'R4(2026-10-04): 창의적 prose 방언과 token schema를 구분하고 unknown·변환 손실을 남기게 했어요. 앱 명령·기본 전환은 제외해요.'
+  status: done
+  done:
+  - reference
 - path: references/interop/other-tools.md
   words: 3407
   dest:
@@ -740,42 +750,59 @@ entries:
   - merge
   target: lapis/references/platforms.md
   merge: platforms
-  status: todo
+  status: done
+  done:
+  - merge
+  note: 'R4(2026-10-04): 현재 창·Back·destination 유지와 role pair·선택적 dynamic palette 확인으로 압축했어요. 고정 척도/버전 수치는 제외해요.'
 - path: references/platforms/cross-platform.md
   words: 3525
   dest:
   - merge
   target: lapis/references/platforms.md
   merge: platforms
-  status: todo
+  status: done
+  done:
+  - merge
+  note: 'R4(2026-10-04): 의미/결과/data parity와 실제 플랫폼별 seam/권한/접근성 확인을 분리했어요. 프레임워크 목록은 제외해요.'
 - path: references/platforms/desktop.md
   words: 3116
   dest:
   - merge
   target: lapis/references/platforms.md
   merge: platforms
-  status: todo
+  status: done
+  done:
+  - merge
+  note: 'R4(2026-10-04): close/quit/document·메뉴·키보드·파일·창 복구의 서로 다른 계약을 압축했어요.'
 - path: references/platforms/email-and-embedded-surfaces.md
   words: 3331
   dest:
   - reference
   target: lapis/references/email.md
-  note: 한중일 폰트 제약
-  status: todo
+  note: 'R4(2026-10-04): 실제 배송물·읽기/동작 대체·문자권 fallback·client transformation과 host Back/permission 경계를 압축했어요. 호스트 API/발송 기능은 추가하지 않아요.'
+  status: done
+  done:
+  - reference
 - path: references/platforms/ios-and-apple-platforms.md
   words: 2414
   dest:
   - merge
   target: lapis/references/platforms.md
   merge: platforms
-  status: todo
+  status: done
+  done:
+  - merge
+  note: 'R4(2026-10-04): text scaling·safe area·navigation/presentation과 native material/웹 근사 경계를 압축했어요. OS별 수치는 제외해요.'
 - path: references/platforms/web.md
   words: 2185
   dest:
   - merge
   target: lapis/references/platforms.md
   merge: platforms
-  status: todo
+  status: done
+  done:
+  - merge
+  note: 'R4(2026-10-04): URL/history·native form assistance·DOM order와 delayed script/hydration 확인을 압축했어요.'
 - path: references/product-types/consumer-mobile-app.md
   words: 2244
   dest:
@@ -904,9 +931,11 @@ entries:
   words: 2351
   dest:
   - reference
-  target: ulm-maintain 참조
-  note: Q30. ulm-maintain 참조로(알린 뒤). 결정 기록과 넘기기
-  status: todo
+  target: ulm-maintain/references/system-governance.md
+  note: 'R4(2026-10-04): feedback 종류·결정 owner·superseding 기록·보존/제약 handoff를 기존 governance에 넣었어요. 위원회·별도 원장은 제외해요.'
+  status: done
+  done:
+  - reference
 - path: references/production/design-qa-and-visual-regression.md
   words: 3075
   dest:
@@ -927,16 +956,21 @@ entries:
 - path: references/production/metrics-and-iteration.md
   words: 2657
   dest:
-  - docs
   - reference
-  target: lps-ux
-  status: todo
+  target: lps-ux/references/product-lifecycles.md
+  status: done
+  done:
+  - reference
+  note: 'R4(2026-10-04): 분모/노출/기간/제외·event 의미·outcome/guardrail·증거의 방법별 한계를 압축했어요. telemetry/실험 권한은 추가하지 않아요.'
 - path: references/production/production-readiness-checklist.md
   words: 2734
   dest:
-  - card
-  target: ulm-release
-  status: todo
+  - reference
+  target: ulm-release/references/production-evidence.md
+  status: done
+  done:
+  - reference
+  note: 'R4(2026-10-04): 제품별 지원 범위·수동/운영 증거·미확인 handoff를 기존 gate 밖 참조로 분리했어요. checklist를 새 관문/waiver로 만들지 않아요.'
 - path: references/quality/accessibility-audit.md
   words: 2644
   dest:
@@ -1112,9 +1146,11 @@ entries:
   words: 1893
   dest:
   - reference
-  target: lapis/references/style-brutalism-and-neo-brutalism.md
-  note: 공통 틀로 압축
-  status: todo
+  target: lapis/references/style-branches.md
+  note: 'R4(2026-10-04): raw 구조와 graphic border 체계를 구분하고 action/state/reflow 실패를 style 예외로 숨기지 않게 했어요.'
+  status: done
+  done:
+  - reference
 - path: references/styles/design-history-timeline.md
   words: 3186
   dest:
@@ -1126,16 +1162,20 @@ entries:
   words: 2084
   dest:
   - reference
-  target: lapis/references/style-glass-neumorphism-and-liquid.md
-  note: 공통 틀로 압축
-  status: todo
+  target: lapis/references/style-branches.md
+  note: 'R4(2026-10-04): 투명 층과 soft extrusion·native material을 구분하고 실제 backdrop/state/solid alternative를 확인하게 했어요.'
+  status: done
+  done:
+  - reference
 - path: references/styles/maximalism-y2k-and-retro.md
   words: 2075
   dest:
   - reference
-  target: lapis/references/style-maximalism-y2k-and-retro.md
-  note: 공통 틀로 압축
-  status: todo
+  target: lapis/references/style-branches.md
+  note: 'R4(2026-10-04): 원 archive와 revival·초점/읽기/동작의 안정층을 구분했어요. 시대 효과 꾸러미와 역사적 인과 처방은 제외해요.'
+  status: done
+  done:
+  - reference
 - path: references/styles/minimalism-and-editorial.md
   words: 2354
   dest:
@@ -1148,23 +1188,29 @@ entries:
   words: 1975
   dest:
   - reference
-  target: lapis/references/style-modernist-swiss-and-international.md
-  note: 공통 틀로 압축
-  status: todo
+  target: lapis/references/style-branches.md
+  note: 'R4(2026-10-04): 구성 기하와 정보 정렬/순서를 구분하고 실제 reflow·일 있는 label을 비교하게 했어요. 고정 토큰·보편 중립 주장은 제외해요.'
+  status: done
+  done:
+  - reference
 - path: references/styles/regional-design-cultures.md
   words: 2392
   dest:
   - reference
-  target: lapis/references/style-regional-design-cultures.md
-  note: 동아시아 보강
-  status: todo
+  target: lapis/references/style-branches.md
+  note: 'R4(2026-10-04): named locale/task 근거와 회사/플랫폼/언어/미학의 층을 분리했어요. 국가 성격·회사 피부·자동 research 권한은 제외해요.'
+  status: done
+  done:
+  - reference
 - path: references/styles/skeuomorphism-flat-and-material.md
   words: 2110
   dest:
   - reference
-  target: lapis/references/style-skeuomorphism-flat-and-material.md
-  note: 공통 틀로 압축
-  status: todo
+  target: lapis/references/style-branches.md
+  note: 'R4(2026-10-04): 조작 mapping과 표면 흉내를 구분하고 최소 simulation·flat signifier·platform influence의 증거 경계를 넣었어요.'
+  status: done
+  done:
+  - reference
 - path: references/styles/style-catalog-and-selection.md
   words: 2760
   dest:
@@ -1187,13 +1233,19 @@ entries:
   dest:
   - reference
   target: lapis/references/implementation.md
-  status: todo
+  status: done
+  done:
+  - reference
+  note: 'R4(2026-10-04): stack/runtime/rendering·state ownership·hard path와 reversal cost 기준이 implementation.md에 이미 있어요. vendor 후보 목록은 제외해요.'
 - path: references/technology/component-libraries.md
   words: 2113
   dest:
   - reference
   target: lapis/references/implementation.md
-  status: todo
+  status: done
+  done:
+  - reference
+  note: 'R4(2026-10-04): native/headless/styled/copied/custom ownership과 어려운 실제 consumer의 증거 기준을 압축했어요. vendor 순위는 제외해요.'
 - path: references/technology/data-visualization-implementation.md
   words: 3649
   dest:
@@ -1216,13 +1268,19 @@ entries:
   dest:
   - reference
   target: lapis/references/implementation.md
-  status: todo
+  status: done
+  done:
+  - reference
+  note: 'R4(2026-10-04): dismiss 요청≠save 완료·open 중 presentation 전환과 state/focus/hydration 확인을 압축했어요. 전체 코드 조리법은 제외해요.'
 - path: references/technology/json-render-and-design-systems.md
   words: 2451
   dest:
   - reference
-  target: lps-system
-  status: todo
+  target: lps-system/references/interop.md
+  status: done
+  done:
+  - reference
+  note: 'R4(2026-10-04): finite catalog와 structural/props/resource/server authority를 분리하고 visibility/partial patch의 한계를 압축했어요. SDK 버전/실행 예제는 제외해요.'
 - path: references/technology/performance-and-quality-budgets.md
   words: 3155
   dest:
@@ -1238,14 +1296,20 @@ entries:
   dest:
   - reference
   target: lapis/references/implementation.md
-  status: todo
+  status: done
+  done:
+  - reference
+  note: 'R4(2026-10-04): styling authority·layer/chunk 순서·font 적용·공유 CSS owner를 실제 production cold/navigation 경로에서 확인하게 했어요.'
 - path: references/technology/threejs-asset-integration.md
   words: 3268
   dest:
   - merge
   target: lapis/references/3d.md
   merge: 3d
-  status: todo
+  status: done
+  done:
+  - merge
+  note: 'R4(2026-10-04): runtime 3D의 실제 task·필요 decoder·lifecycle teardown·load/context fallback·parser 한계를 압축했어요. SDK module·설치 기능은 제외해요.'
 - path: references/typography/multiscript-typesetting.md
   words: 2978
   dest:
@@ -1406,17 +1470,17 @@ entries:
 - path: references/validation/first-release-readiness.md
   words: 9405
   dest:
-  - repo
-  target: tools/
-  note: LapisLazuli 자체 릴리스 관문으로 재작성
-  status: todo
+  - drop
+  target: null
+  note: 'R4(2026-10-04): 구 P1/P2 corpus inventory·Google emitter·과거 실행 기록은 현행 release/build의 계약이 아니어서 제외해요. 새 관문·기능은 만들지 않아요.'
+  status: done
 - path: references/validation/prompt-smoke-tests.md
   words: 8721
   dest:
-  - repo
-  target: evals/
-  note: 시나리오만 씨앗으로, 실행 기록은 폐기
-  status: todo
+  - drop
+  target: null
+  note: 'R4(2026-10-04): 구 라우팅·Google 기본·과제 수·과거 응답 기록은 현행 계약과 달라 제외해요. 실제 새 fixture 없이 eval로 승격하지 않아요.'
+  status: done
 - path: references/visual-assets/asset-delivery-and-handoff.md
   words: 2244
   dest:
@@ -1430,11 +1494,12 @@ entries:
   words: 3455
   dest:
   - merge
-  - docs
   target: lapis/references/3d.md
   merge: 3d
-  note: 도구 절차는 docs
-  status: todo
+  note: 'R4(2026-10-04): 원본/working/derivative·실행/의존 경계·link/copy·rig transform·실제 크기/material loss를 압축했어요. 도구 명령·export script는 제외해요.'
+  status: done
+  done:
+  - merge
 - path: references/visual-assets/icon-systems-and-alternatives.md
   words: 2920
   dest:
@@ -1459,14 +1524,20 @@ entries:
   dest:
   - reference
   target: lapis/references/implementation.md
-  status: todo
+  status: done
+  done:
+  - reference
+  note: 'R4(2026-10-04): authoritative 재사용·graphic/구조 경계·embedding trust·viewBox/ID/notice 보존을 압축했어요. sanitizer/보안 기능은 추가하지 않아요.'
 - path: references/visual-assets/three-dimensional-assets.md
   words: 2421
   dest:
   - merge
   target: lapis/references/3d.md
   merge: 3d
-  status: todo
+  status: done
+  done:
+  - merge
+  note: 'R4(2026-10-04): 표현 선택·runtime readiness·GPU/decode cost·외부 control과 완전한 non-canvas task를 압축했어요. 공급자 목록·획득 기능은 제외해요.'
 - path: assets/accessibility-cheatsheet.md
   words: 916
   dest:
@@ -1773,36 +1844,40 @@ entries:
   done: [lazuli]
 - path: scripts/design_md_tools.py
   dest:
-  - cli
-  target: lapis-design
-  note: 표준 라이브러리 유지
-  status: todo
+  - drop
+  target: null
+  note: 'R4(2026-10-04): 구 parser/lint/import/export/contrast는 별도 Google 중심 CLI 계약이에요. 현행 lazuli ref system의 문서 읽기와 동등한 도구라 주장하지 않고 제외해요.'
+  status: done
 - path: scripts/test_design_md_tools.py
   dest:
-  - cli
-  target: lapis-design tests
-  status: todo
+  - drop
+  target: null
+  status: done
+  note: 'R4(2026-10-04): 회수하지 않은 구 CLI의 importer/contrast 계약 테스트예요. 새 CLI를 만들거나 현재 reader 테스트로 바꿔 기능 동등성을 주장하지 않고 제외해요.'
 - path: scripts/design_archive_inspect.py
   dest:
-  - cli
-  target: lapis-design
-  status: todo
+  - drop
+  target: null
+  status: done
+  note: 'R4(2026-10-04): ZIP/native binary inventory는 독립 CLI와 새 입력/출력 계약을 요구해요. 참조 회수만으로 구현 완료를 주장하지 않고 실행 도구 이관을 제외해요.'
 - path: scripts/figma_fetch.py
   dest:
-  - cli
-  target: lazuli
-  status: todo
+  - drop
+  target: null
+  status: done
+  note: 'R4(2026-10-04): 원격 REST+별도 snapshot/emitter 계약은 현행 참조 회수 범위를 넘어가므로 제외해요. 연결/권한 또는 기능 존재를 주장하지 않아요.'
 - path: scripts/design_skill_sanity_check.py
   dest:
-  - repo
-  target: tools/
-  note: 새 구조용으로 재작성
-  status: todo
+  - drop
+  target: null
+  note: 'R4(2026-10-04): 단일 구 corpus의 P1/P2·frontmatter·고정 footer 규칙은 현행 plugin 소유 구조와 달라 제외해요. 기존 build/test를 두 번째 checker로 복제하지 않아요.'
+  status: done
 - path: scripts/test_design_skill_sanity_check.py
   dest:
-  - repo
-  target: tools/
-  status: todo
+  - drop
+  target: null
+  status: done
+  note: 'R4(2026-10-04): 구 P1/P2 corpus/metadata/link 계약의 isolated fixture 테스트라 제외해요. 현행 structural tests를 같은 구현으로 보지 않아요.'
 - path: SKILL.md
   words: 2267
   dest:
@@ -1831,9 +1906,10 @@ entries:
   status: todo
 - path: KNOWN-LIMITATIONS.md
   dest:
-  - repo
-  target: docs/maintainers/
-  status: todo
+  - drop
+  target: null
+  status: done
+  note: 'R4(2026-10-04): 구 저장소 기능·실행 이력의 모음은 현행 계약 근거가 아니므로 복사하지 않아요. 지식/권한·증거 한계는 현행 도메인 소유자에 이미 분산되어 있어요.'
 - path: LICENSE.md
   words: 267
   dest:
@@ -1855,21 +1931,23 @@ entries:
 - path: references/00-navigation.md
   words: 6363
   dest:
-  - drop
   - merge
-  target: ultramarine 진단·수리 참조
+  target: ultramarine/references/repair-loop.md
   merge: review-and-repair
-  note: 라우터 문서라 폐기. 막연한 문제 → 진단 표만 진단·수리 참조로
-  status: todo
+  note: 'R4(2026-10-04): 현행 진단·수리 절차가 관찰/가설·보존·필요한 확인을 이미 소유해요. 구 전체 라우터와 자동 읽기 확대는 제외해요.'
+  status: done
+  done:
+  - merge
 - path: references/teaching-design.md
   words: 6354
   dest:
-  - docs
   - merge
-  target: docs/ + ultramarine 평가자 지시문
+  target: agents/critic.md + ultramarine/references/repair-loop.md
   merge: review-and-repair
-  note: 사람용 학습 경로와 연습은 docs. 비평 5단계(중립 목록, 의도, 원인, 보존과 수리, 검증)만 평가자 지시문 재료로
-  status: todo
+  note: 'R4(2026-10-04): 의도/관찰·원인·보존/수리·검증의 핵심은 critic/repair-loop에 이미 있어요. 사람용 학습 경로·진도·고정 과제 수는 스킬에 넣지 않아요.'
+  status: done
+  done:
+  - merge
 - path: references/source-bibliography.md
   words: 25381
   dest:
