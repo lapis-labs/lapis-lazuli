@@ -154,11 +154,12 @@ installed or cannot start, or a path the sandbox denies. A run narrowed by a fla
 somewhere other than the task's own path, leaves no record, and a full run that writes its report removes
 an older record. Nothing else is recorded: a missing or invalid input, a stub or plan that does not
 validate, a timeout, a finding, and a plan blocker are never the environment. A harness that cannot start
-a separate context for the critic records that with `lapis-design next --task <task> --unavailable critic
---reason <why>`, which writes the same record for the step `critic`.
+a separate context for the critic, or a harness with no network for the references, records that with
+`lapis-design next --task <task> --unavailable critic|references --reason <why>`, which writes the same record for
+that step.
 
 `lapis-design next --task <task>` runs this gate offline on the files and returns the one step still to
-take, with its exact command or schema: `brief`, `plan`, `plan-fix`, `plan-flows`, `plan-explorations`,
+take, with its exact command or schema: `brief`, `references`, `plan`, `plan-fix`, `plan-flows`, `plan-explorations`,
 `fonts-lock`, `stub`, `ledger`, `render`, `behavior`, `lint`, `critic`, `release`, or `done`. The gate's
 own findings that report a check that did not run or an input that is missing (the ten under
 `summary.not_run`, except `probe-incomplete`, `backend-insufficient`, `requirement-unverified`, and
@@ -173,6 +174,22 @@ a brief record gets it, and a redesign or repair plan never does. The file is a 
 (`[declared]`, `[known]`, and `[open]` are the other tags); nothing else about it is judged. The record is not a
 report of this gate, and the plan cites it from `context.other`.
 
+`references` comes next, the same way: a run with no plan file, or a plan in `mode: create`, whose
+`.lapis/references/<task>.md` is not a references record gets it after the brief, and a redesign or repair plan never
+does. The record is Markdown with one fenced `yaml` block holding `captures: study-only` and a `references` list. Each
+entry gives `url` (or `source`), `maker`, `kind` (`web-ui`, `print`, `signage`, `physical-object`, `archive`, or
+`media`), `decision`, `relation`, `id`, and a `capture`: an existing file under `.lapis/references/<task>/`, a different
+file for each reference; a `web-ui` entry also gives `source_facts` that state a value read from its HTML or CSS. A
+capture that is an image (PNG, JPEG, GIF, or WebP by its first bytes, at least 1 KB) is a reference seen; a capture that
+is anything else, or a page on an encyclopedia host, is text-only. The record needs at least six references, at most
+two text-only, and, among those seen as images, at least three kinds and two outside `web-ui`: a text-only reference
+counts toward the six and toward nothing else. The check reads the record and the files, not whether the looking was
+good, and a brief's no-network or no-external-assets line never excuses it. A run that cannot reach the network
+records that with `lapis-design next --task <task> --unavailable references --reason <why>`; the command sends one
+plain GET first and refuses the record when it works. The record is the same as for the critic: `next` goes on to the
+plan, and when the procedure is `done` its reason says no references were looked at. The captures are for study only,
+git-ignored, and never shipped or copied into the page.
+
 While questions the run wrote for its user are unanswered, `next` returns the state `waiting-for-user` instead
 of a step: `step.id` is `waiting-for-user` (stop, and wait for the answers), `then` is the step that comes
 after them, and `waiting` names the files and the `phase`, `plan` while there is no plan file and `approval`
@@ -185,7 +202,8 @@ questions file. A procedure that is `done` stays `done`. The exit gate (`lapis-d
 pass in `.lapis/gate/<task>.json` under `waits` (`plan`, `approval`, and `last`, the set's id): at most two sets
 while there is no plan file and one after it. A set is one text written once, so writing the same words again is a
 new set. Past the cap `next` and the gate name the step the files call for, as without questions. Without
-`--task`, `next` takes the task of the newest plan, counted questions file, or counted answers file.
+`--task`, `next` takes the task of the newest plan, counted questions file, counted answers file, or counted references
+record.
 
 ## What the gate does not do
 

@@ -38,9 +38,9 @@ def test_a_run_with_no_plan_and_no_record_is_sent_to_the_brief_before_the_plan(b
     assert result["step"]["command"] is None and f".lapis/answers/{TASK}.md" in result["step"]["why"]
 
 
-def test_a_brief_record_hands_the_run_on_to_the_plan(bare):
+def test_a_brief_record_hands_the_run_on_to_the_references(bare):
     record(bare, "answers", BRIEF_RECORD, 100)
-    assert step_of(bare) == "plan"
+    assert step_of(bare) == "references"
 
 
 def test_a_create_plan_without_a_record_goes_back_to_the_brief_and_the_other_modes_do_not(tmp_path, monkeypatch):
@@ -109,7 +109,7 @@ ACCEPTED = [
 @pytest.mark.parametrize("case, text", ACCEPTED, ids=[case for case, _ in ACCEPTED])
 def test_the_shapes_a_record_may_take_are_accepted(bare, case, text):
     record(bare, "answers", text, 100)
-    assert step_of(bare) == "plan", case
+    assert step_of(bare) == "references", case
 
 
 def test_questions_before_the_brief_wait_in_the_plan_phase_and_only_a_record_ends_the_wait(bare):
@@ -120,10 +120,10 @@ def test_questions_before_the_brief_wait_in_the_plan_phase_and_only_a_record_end
     result = evaluated(bare)
     assert (result["state"], result["step"]["id"]) == ("needs-step", "brief")
     reply(bare, ANSWERS, 400)
-    assert step_of(bare) == "plan"
+    assert step_of(bare) == "references"
     ask(bare, "3. Which glaze goes first?\n", 500)                     # a second round, newer than the record
     result = evaluated(bare)
-    assert (result["state"], result["then"]["id"]) == ("waiting-for-user", "plan")
+    assert (result["state"], result["then"]["id"]) == ("waiting-for-user", "references")
 
 
 def test_the_task_of_a_run_that_only_recorded_its_brief_is_found_by_the_record(bare):

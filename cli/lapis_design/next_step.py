@@ -1,10 +1,11 @@
 """`lapis-design next`: the one step of the LapisLazuli procedure that is still missing, read from the files.
 
 The procedure is: the brief record for a create run (`brief.py`: what the request, the project, and the subject
-say, with the answers a person gave or the run assumed), the plan, the plan check without a blocking finding,
-the inputs the checks need (fonts lock, stub for an interactive page, asset ledger), the full render, the
-behavior check for an interactive page, the full lint over every input, the critic, and the release gate's
-report. `next` returns the first step that is not done, with the exact command or schema to follow, or `done`.
+say, with the answers a person gave or the run assumed), the references record for a create run
+(`references.py`: what the run looked at, with captures to show it), the plan, the plan check without a blocking
+finding, the inputs the checks need (fonts lock, stub for an interactive page, asset ledger), the full render, the
+behavior check for an interactive page, the full lint over every input, the critic, and the release gate's report.
+`next` returns the first step that is not done, with the exact command or schema to follow, or `done`.
 
 What counts as done is what the release gate already decides: `release_check.run(..., offline=True)` is
 run on the files, and its findings that report a check that did not run or an input that is missing
@@ -35,7 +36,7 @@ from typing import Any
 
 import yaml
 
-from lapis_design import attempts, brief, gate, release_check, shared_dir, waiting
+from lapis_design import attempts, brief, gate, references, release_check, shared_dir, waiting
 from lapis_design.lint.cli import problems
 from lapis_design.plan_check import PlanOverLimit, read_plan
 
@@ -59,14 +60,14 @@ class NextError(Exception):
 
 
 def resolve_task(root: Path, task: str | None = None) -> str | None:
-    """`task`, else $LAPIS_TASK, else the task of the most recently written plan, set of questions, or brief
-    record under `root` (a run that has asked its questions or recorded its brief has no plan yet, and names the
-    task by them)."""
+    """`task`, else $LAPIS_TASK, else the task of the most recently written plan, set of questions, brief
+    record, or references record under `root` (a run that has asked its questions or recorded its brief has no
+    plan yet, and names the task by them)."""
     task = task or os.environ.get("LAPIS_TASK") or None
     if task:
         return task
     written = [*(root / ".lapis" / "plans").glob("*.yaml"),
-               *(p for folder in ("questions", "answers") for p in (root / ".lapis" / folder).glob("*.md")
+               *(p for folder in ("questions", "answers", "references") for p in (root / ".lapis" / folder).glob("*.md")
                  if waiting.counts(p))]
     written.sort(key=lambda p: p.stat().st_mtime, reverse=True)
     return next((p.stem for p in written if attempts.TASK.fullmatch(p.stem)), None)
@@ -126,6 +127,15 @@ def _newer(path: Path, inputs: list[Path]) -> bool:
 def _recorded(root: Path, task: str, step: str, inputs: list[Path]) -> bool:
     """A failure record of the environment for `step`, newer than what the step reads."""
     return attempts.read(root, task, step) is not None and _newer(attempts.path(root, task, step), inputs)
+
+
+def _references_owed(root: Path, task: str) -> list[str]:
+    """Why the references record is not one, or nothing when it is or when a fresh failure record of the
+    environment (no network) stands in for it."""
+    found = references.problems(root, task)
+    if found and _recorded(root, task, references.STEP, [references.record_path(root, task)]):
+        return []
+    return found
 
 
 def _stub_problem(path: Path) -> str | None:
@@ -237,10 +247,14 @@ def _steps(root: Path, task: str, page: str | None) -> dict:
     except FileNotFoundError:
         if reason := brief.record_problem(root, task):
             return state(_step(brief.STEP, brief.why(task, reason, planned=False)), False)
+        if found := _references_owed(root, task):
+            return state(_step(references.STEP, references.why(task, found, planned=False)), False)
         return state(_step("plan", f"Write the plan at {plan_rel} before any code or check, and cite the brief record "
-                           f"{waiting.answers_path(Path('.'), task).as_posix()} in its `context.other`: the brief, the "
-                           f"decisions and the candidates compared for each, and a keep or reject on every default "
-                           f"that applies. The schema is below and an example is {shared / 'plan/example.plan.yaml'}. "
+                           f"{waiting.answers_path(Path('.'), task).as_posix()} and the references record "
+                           f"{references.record_path(Path('.'), task).as_posix()} in its `context.other`: the brief, the "
+                           f"decisions and the candidates compared for each, what the references taught (in `references` "
+                           f"and the candidates' sources), and a keep or reject on every default that applies. The "
+                           f"schema is below and an example is {shared / 'plan/example.plan.yaml'}. "
                            "Then run the command to see what blocks.", check, shared / "plan" / "schema.yaml"), False)
     except (OSError, ValueError, yaml.YAMLError) as exc:
         return state(_step("plan-fix", f"{plan_rel} cannot be read: {(str(exc).splitlines() or [''])[0]}", check,
@@ -248,8 +262,11 @@ def _steps(root: Path, task: str, page: str | None) -> dict:
     if isinstance(plan, PlanOverLimit) or not isinstance(plan, dict):
         why = plan.problem if isinstance(plan, PlanOverLimit) else "the plan is not a mapping"
         return state(_step("plan-fix", f"{plan_rel}: {why}", check, shared / "plan" / "schema.yaml"), False)
-    if plan.get("mode") == "create" and (reason := brief.record_problem(root, task)):
-        return state(_step(brief.STEP, brief.why(task, reason, planned=True)), False)
+    if plan.get("mode") == "create":
+        if reason := brief.record_problem(root, task):
+            return state(_step(brief.STEP, brief.why(task, reason, planned=True)), False)
+        if found := _references_owed(root, task):
+            return state(_step(references.STEP, references.why(task, found, planned=True)), False)
 
     interactive = _interactive(plan, page_file, _json(paths["extract"]))
     try:
@@ -396,8 +413,11 @@ def _steps(root: Path, task: str, page: str | None) -> dict:
                    f"defects, {summary['no_evidence']} without evidence)")
     else:
         verdict = f"the release check could not run here ({release_record['reason']})"
-    return state(None, interactive, f"The procedure is complete; {verdict}. Report that verdict, the checks that "
-                 "did not run and why, and what remains for the user. Passing the gate is not required to stop.")
+    skipped = attempts.read(root, task, references.STEP) if plan.get("mode") == "create" and references.problems(
+        root, task) else None
+    looked = f" No references were looked at: {skipped['reason']}." if skipped else ""
+    return state(None, interactive, f"The procedure is complete; {verdict}.{looked} Report that verdict, the checks "
+                 "that did not run and why, and what remains for the user. Passing the gate is not required to stop.")
 
 
 def _text(result: dict) -> str:
@@ -420,9 +440,9 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design next") -> int:
     ap.add_argument("--url", help="the page the render and behavior commands name: an HTML file or an address on a "
                     "host that is ours (default: index.html, or one in dist/, build/, public/, out/)")
     ap.add_argument("--json", action="store_true", help="print the state as JSON")
-    ap.add_argument("--unavailable", choices=["critic"],
+    ap.add_argument("--unavailable", choices=["critic", "references"],
                     help="record that this step cannot run here, with --reason: a harness that cannot start a "
-                    "separate context for the critic")
+                    "separate context for the critic, or no network for the references")
     ap.add_argument("--reason", help="why --unavailable applies")
     args = ap.parse_args(argv)
     task = resolve_task(args.root, args.task)
@@ -433,8 +453,16 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design next") -> int:
     if bool(args.unavailable) != bool(args.reason and args.reason.strip()):
         ap.error("--unavailable and --reason go together")
     if args.unavailable:
+        reason = args.reason.strip().splitlines()[0]
+        if args.unavailable == references.STEP:
+            if (probe := references.unreachable()) is None:
+                print(f"next: the network is reachable from here ({references.PROBE_URL} answered), so the references "
+                      "step can run and no record was written; a brief's no-network line, a missing search tool, or a "
+                      "preference is no environment failure", file=sys.stderr)
+                return 2
+            reason = f"{reason} (probe of {references.PROBE_URL}: {probe})"
         command = ["lapis-design", "next", "--task", task, "--unavailable", args.unavailable]
-        if attempts.record(args.root, task, args.unavailable, command, None, args.reason.strip().splitlines()[0]) is None:
+        if attempts.record(args.root, task, args.unavailable, command, None, reason) is None:
             print(f"next: the {args.unavailable} record cannot be written under {args.root / '.lapis'}", file=sys.stderr)
             return 2
     try:

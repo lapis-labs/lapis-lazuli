@@ -9,7 +9,8 @@ import pytest
 
 from lapis_design import gate
 from lapis_design.cli import main as cli_main
-from procedure_support import BRIEF_RECORD, TASK, ask, finish, make_project, record, reply, save, touch
+from procedure_support import (BRIEF_RECORD, TASK, ask, finish, make_project, record, reply, save, touch,
+                               write_references)
 
 STATE = f".lapis/gate/{TASK}.json"
 
@@ -119,9 +120,9 @@ def next_state_without_plan(root: Path, task: str = TASK) -> dict:
     return next_step.evaluate(root, task)
 
 
-@pytest.mark.parametrize("recorded, step", [(False, "brief"), (True, "plan")])
+@pytest.mark.parametrize("records, step", [(0, "brief"), (1, "references"), (2, "plan")])
 def test_an_unattended_run_that_wrote_no_plan_is_continued_to_write_one_and_is_capped_like_any_step(
-        tmp_path, monkeypatch, recorded, step):
+        tmp_path, monkeypatch, records, step):
     """The failure this guards: the agent wrote a free-form PLAN.md and never the schema plan."""
     monkeypatch.delenv("LAPIS_TASK", raising=False)
     monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
@@ -129,8 +130,10 @@ def test_an_unattended_run_that_wrote_no_plan_is_continued_to_write_one_and_is_c
     folder = tmp_path / "Kiln Shop_Landing"
     folder.mkdir()
     (folder / "PLAN.md").write_text("# Plan\nA free-form plan.\n", encoding="utf-8")
-    if recorded:
+    if records:
         record(folder, "answers", BRIEF_RECORD, 100, task="kiln-shop-landing")
+    if records > 1:
+        write_references(folder, 110, task="kiln-shop-landing")
     env = {"LAPIS_UNATTENDED": "1"}
     event = {"cwd": str(folder), "session_id": "s1"}
     answers = [gate.decide(event, env) for _ in range(5)]
@@ -148,6 +151,9 @@ def test_a_run_that_recorded_its_brief_under_a_task_id_of_its_own_is_continued_u
     folder = tmp_path / "Kiln Shop"
     folder.mkdir()
     record(folder, "answers", BRIEF_RECORD, 100, task="pottery-landing")
+    answer = gate.decide({"cwd": str(folder), "session_id": "s1"}, {"LAPIS_UNATTENDED": "1"})
+    assert "task pottery-landing is not done. Next step: references." in answer["reason"]
+    write_references(folder, 110, task="pottery-landing")
     answer = gate.decide({"cwd": str(folder), "session_id": "s1"}, {"LAPIS_UNATTENDED": "1"})
     assert "task pottery-landing is not done. Next step: plan." in answer["reason"]
 
@@ -167,10 +173,13 @@ def test_an_unattended_run_that_answers_its_own_questions_must_mark_what_it_assu
     record(folder, "answers", "## Found\nThe request only; nothing else to read.\n## Answers\n"
            "- [assumed] Q1 Who buys? Small teams. Basis: the usual buyer of this kind of product; nobody to ask.\n",
            110, task="kiln-shop")
+    looking = gate.decide(event, env)["reason"]
+    assert "Next step: references." in looking and "approval: {state: assumed" not in looking
+    write_references(folder, 120, task="kiln-shop")
     done = gate.decide(event, env)["reason"]
     assert "Next step: plan." in done and "approval: {state: assumed" in done
     saved = json.loads((folder / ".lapis/gate/kiln-shop.json").read_text(encoding="utf-8"))
-    assert (saved["step"], saved["same"], saved["total"]) == ("plan", 1, 3)
+    assert (saved["step"], saved["same"], saved["total"]) == ("plan", 1, 4)
 
 
 @pytest.mark.parametrize("name, task", [("Kiln Shop_Landing", "kiln-shop-landing"), ("x", "design"), ("---", "design"),
@@ -268,9 +277,9 @@ def test_questions_asked_again_after_an_answer_are_waited_on_while_the_cap_allow
         outcomes.append(gate.stop_output(folder, "s1", task="kiln-shop"))
         reply(folder, ANSWERS, 210 + 20 * index, task="kiln-shop")
     assert outcomes[:2] == [None, None]                                   # two sets before a plan exist
-    assert outcomes[2]["decision"] == "block" and "Next step: plan." in outcomes[2]["reason"]
+    assert outcomes[2]["decision"] == "block" and "Next step: references." in outcomes[2]["reason"]
     saved = json.loads((folder / ".lapis/gate/kiln-shop.json").read_text(encoding="utf-8"))
-    assert saved["waits"]["plan"] == 2 and (saved["step"], saved["same"], saved["total"]) == ("plan", 1, 1)
+    assert saved["waits"]["plan"] == 2 and (saved["step"], saved["same"], saved["total"]) == ("references", 1, 1)
 
 
 def test_one_set_after_the_plan_and_the_two_before_it_are_counted_apart(project):
@@ -326,6 +335,9 @@ def test_a_run_whose_questions_were_answered_is_not_told_that_nobody_is_present(
     ask(folder, QUESTIONS, 200, task="kiln-shop")
     assert gate.stop_output(folder, "s1", task="kiln-shop") is None
     reply(folder, ANSWERS, 210, task="kiln-shop")
+    looking = gate.stop_output(folder, "s1", task="kiln-shop")["reason"]
+    assert "Next step: references." in looking and "approve the plan" not in looking and "approval" not in looking
+    write_references(folder, 220, task="kiln-shop")
     warm = gate.stop_output(folder, "s1", task="kiln-shop")["reason"]
     assert "Next step: plan." in warm and "No person is present" not in warm
     assert "A person's answers are recorded: write `approval: {state: approved}` only if they approve" in warm

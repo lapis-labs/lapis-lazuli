@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import json
 import os
+import random
 import shutil
 from pathlib import Path
 
 import yaml
+from PIL import Image
 
 from lapis_design import shared_dir
 from lapis_design.cli import main as cli_main
@@ -74,6 +76,7 @@ def make_project(root: Path) -> Path:
                                   "assets.ledger.json", f"lint/{TASK}.json", f"critic/{TASK}.json")):
         touch(root, name, 100 + index)
     record(root, "answers", BRIEF_RECORD, 50)                    # the brief record, older than the plan and any questions
+    write_references(root)                                       # the references record, as old
     return root
 
 
@@ -121,3 +124,40 @@ def ask(root: Path, text: str, at: int, task: str = TASK) -> Path:
 def reply(root: Path, text: str, at: int, task: str = TASK) -> Path:
     """The answers the run recorded: the brief record with the replies added under their own heading."""
     return record(root, "answers", f"{BRIEF_RECORD}\n## Replies\n\n{text}", at, task)
+
+
+def capture_file(root: Path, name: str, seed: int, task: str = TASK) -> str:
+    """An image under `.lapis/references/<task>/` that differs from every other seed's (noise does not shrink below
+    the record's size floor); returns its path as a record names it."""
+    path = root / ".lapis" / "references" / task / name
+    path.parent.mkdir(parents=True, exist_ok=True)
+    Image.frombytes("RGB", (24, 24), random.Random(seed).randbytes(24 * 24 * 3)).save(path)
+    return path.relative_to(root).as_posix()
+
+
+FACTS = "body 17px/1.55 in a serif, one 62ch column, ink #1a1a1a on #f4f0e8, rules 1px"
+
+
+def reference_entries(root: Path, task: str = TASK) -> list[dict]:
+    """Six references seen as images in four kinds, two of them outside web-ui and two of them web-ui with facts."""
+    kinds = ("web-ui", "web-ui", "print", "signage", "physical-object", "archive")
+    entries = []
+    for index, kind in enumerate(kinds, start=1):
+        entries.append({"id": f"ref-{index}", "url": f"https://museum.example/{kind}/{index}", "maker": f"Maker {index}",
+                        "kind": kind, "decision": "the order of the page",
+                        "capture": capture_file(root, f"ref-{index}.png", index, task),
+                        "relation": "take the ruled rhythm and the label's job; leave the type and the marks",
+                        **({"source_facts": FACTS} if kind == "web-ui" else {})})
+    return entries
+
+
+def references_text(entries: list[dict], captures: str | None = "study-only") -> str:
+    body = yaml.safe_dump({**({"captures": captures} if captures else {}), "references": entries}, sort_keys=False)
+    return f"# References: kiln shop landing\n\nThe captures are for study only.\n\n```yaml\n{body}```\n"
+
+
+def write_references(root: Path, at: int = 50, task: str = TASK) -> list[dict]:
+    """A references record that passes, with its captures, modified at second `at`."""
+    entries = reference_entries(root, task)
+    record(root, "references", references_text(entries), at, task)
+    return entries

@@ -20,9 +20,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-# render, behavior, and release record themselves; a critic that cannot start is recorded through
-# `lapis-design next --unavailable critic`, since no command of ours runs it
-STEPS = ("render", "behavior", "release", "critic")
+# render, behavior, and release record themselves; a critic that cannot start, or references that cannot be
+# looked at for want of a network, are recorded through `lapis-design next --unavailable <step>`, since no
+# command of ours runs them
+STEPS = ("render", "behavior", "release", "critic", "references")
 TASK = re.compile(r"[a-z0-9][a-z0-9-]{1,63}")
 KIND = "environment"
 
