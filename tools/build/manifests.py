@@ -17,9 +17,16 @@ HOOKS = {
     # Stop takes no matcher in either harness; the gate runs `lapis-design next`, which reads the plan and the
     # reports, so its timeout is longer than a session summary's
     "stop": {"event": "Stop", "matcher": None, "timeout": 60, "file": "shared"},
+    # PreToolUse on the file-edit tools: Claude Code names Write, Edit, and MultiEdit; Codex reports every file edit
+    # as `apply_patch`, which its matchers also accept as Edit or Write. Both read the matcher as an alternation, and
+    # a tool the hook has no page file for (an MCP tool that happens to match) gets no answer. The hook reads the
+    # plan and the records, as the gate does, so it has a timeout of its own
+    "pre-write": {"event": "PreToolUse", "matcher": "Write|Edit|MultiEdit|apply_patch", "timeout": 30,
+                  "file": "shared"},
 }
 # The extension each hook has under pi and Oh-My-Pi, which have no hooks.json; the file is under the plugin's
-# extensions/ folder and its source is named by the output that emits it (install/harnesses.yaml).
+# extensions/ folder and its source is named by the output that emits it (install/harnesses.yaml). The exit-gate
+# extension also registers the tool_call handler that runs `pre-write`, so that hook has no entry of its own.
 EXTENSIONS = {"session-start": "session-start.ts", "stop": "exit-gate.ts"}
 MCP_COMMAND = {"command": "lapis-design", "args": ["mcp"]}
 # The first sentence of the repository's GitHub About text, which the maintainers set by hand.

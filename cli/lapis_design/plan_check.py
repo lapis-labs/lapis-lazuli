@@ -161,12 +161,22 @@ def _nested_deeper_than(text: str, limit: int) -> bool:
 def parse_plan(text: str) -> Any:
     """Parse plan YAML text; the one reader of a plan for every entry point. Text over MAX_PLAN_BYTES or
     nested deeper than MAX_PLAN_DEPTH is not parsed: the result is a PlanOverLimit. A YAML error
-    propagates as yaml.YAMLError."""
+    propagates as yaml.YAMLError.
+
+    The size and depth guard reads events with libyaml when it is installed, which is fast and stops at the
+    first event past the limit. The document itself is then read with PyYAML's pure-Python safe loader, the
+    reader `yaml.safe_load` gives every other tool that opens a plan, so a plan parses the same on every
+    install: libyaml accepts a `?` inside a plain scalar of a flow collection (`{ answers: What now? }`) that
+    the pure-Python loader, and so any other reader built on it, refuses."""
     if len(text) > MAX_PLAN_BYTES or len(text.encode("utf-8", "surrogatepass")) > MAX_PLAN_BYTES:
         return PlanOverLimit(PLAN_TOO_LARGE)
-    if _nested_deeper_than(text, MAX_PLAN_DEPTH):
+    try:
+        too_deep = _nested_deeper_than(text, MAX_PLAN_DEPTH)
+    except yaml.YAMLError:
+        too_deep = False                  # the strict reader below names the fault, as it would without libyaml
+    if too_deep:
         return PlanOverLimit(PLAN_TOO_DEEP)
-    return yaml.load(text, Loader=_YAML_LOADER)
+    return yaml.safe_load(text)
 
 
 def read_plan(path: Path) -> Any:

@@ -240,7 +240,9 @@ properties:
   #   copy                          `covers` lists the key_copy slots
   #   palette, layout, motion, direction   one entry each; `source` says where a candidate came from: a world
   #                                 material, a reference, a sketch of your own, or generic (the default for
-  #                                 this kind of page)
+  #                                 this kind of page), or, when page code was written before the plan,
+  #                                 `existing-code` (a `direction` entry lists it so the plan can keep the code
+  #                                 only if it wins; release/GATE.md, `release.procedure-order`)
   explorations:
     type: array
     items:

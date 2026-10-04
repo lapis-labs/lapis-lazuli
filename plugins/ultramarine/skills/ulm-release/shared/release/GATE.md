@@ -29,7 +29,10 @@ reports record the paths they read as given and the gate resolves them against `
   booleans, null, finite numbers, and integers of at most 4,300 digits (YAML can also produce bytes,
   dates, times, sets, and pairs), gets one `schema.invalid` finding and no further schema check.
   A plan larger than 1,000,000 bytes, or nested more than 100 levels deep, gets that one finding
-  before it is parsed; `plan check`, lint, the exit-plan hook, and MCP apply the same limits.
+  before it is parsed; `plan check`, lint, the exit-plan hook, and MCP apply the same limits. The plan is
+  parsed with PyYAML's pure-Python safe loader whether or not libyaml is installed, so every install and every
+  other tool built on `yaml.safe_load` reads it the same way: text that loader refuses is exit 2 and `plan-fix`
+  with its line and column, among them a `?` inside a plain scalar of a `{ }` or `[ ]` collection (quote it).
 - The lazuli database is `LAZULI_DB` when set, else the user cache. The checks read measured features
   from it read-only and never create or migrate it for that; the license refresh (below) opens it
   through the lazuli catalog layer, as `lazuli catalog lookup` does, which creates or upgrades it when
@@ -104,6 +107,7 @@ license facts). Its `layer` is where the evidence is missing: `render` for width
 | `release.critic-missing` | there is no critic report, or its target names another extract |
 | `release.study-reference` | the plan uses a reference in study mode |
 | `release.approval-assumed` | the plan's `approval.state` is `assumed`: no person approved the plan, and its `reason` says why. Class `quality`, `{create: warn, review: P2}`, not blocking, layer `plan`: the user confirms the plan, which the gate never counts as approved |
+| `release.procedure-order` | a plan in `mode: create` whose page code came before its brief, references, or plan, by one of two readings: the first-write record `.lapis/order/<task>.json`, which `lapis-design hook pre-write` writes when a page write goes through while `next` still asked for one of them, or, with no such record, every page source file (markup, style, and script files outside hidden and generated folders) last modified before the brief record or the references record. A plan revised after the page says nothing, so the plan's own time is not read. Lifted by a plan that cites `.lapis/answers/<task>.md` in `context.other` and lists the existing code as a candidate (`source: existing-code`) of a `direction` exploration. Layer `plan`, `evidence.type: source`; blocking, class `requirement`, only when `LAPIS_UNATTENDED=1`, and then a defect, not a missing input; otherwise class `quality`, `{create: warn, review: P2}`, not blocking |
 | `release.license-changed` | a catalog font's current license kind differs from the lock |
 | `release.license-unchecked` | a catalog font's license could not be refreshed: the source blocked the request, answered in a form the adapter cannot read, the family was not found, or `--offline` was given |
 | `release.license-unconfirmed` | a font's license is declared by the user (`license.source_class: user-declared`), comes with a subscription sync, or is unknown, including a catalog font whose lock and refreshed catalog both say `unknown`. Class `quality`, `{create: warn, review: P2}`, not blocking: listed first so the user reconfirms it |
@@ -160,7 +164,7 @@ that step.
 
 `lapis-design next --task <task>` runs this gate offline on the files and returns the one step still to
 take, with its exact command or schema: `brief`, `references`, `plan`, `plan-fix`, `plan-flows`, `plan-explorations`,
-`fonts-lock`, `stub`, `ledger`, `render`, `behavior`, `lint`, `critic`, `release`, or `done`. The gate's
+`plan-order`, `fonts-lock`, `stub`, `ledger`, `render`, `behavior`, `lint`, `critic`, `release`, or `done`. The gate's
 own findings that report a check that did not run or an input that is missing (the ten under
 `summary.not_run`, except `probe-incomplete`, `backend-insufficient`, `requirement-unverified`, and
 `license-unchecked`, which are results of a check that ran) say which step comes back; the plan checks'
@@ -189,6 +193,19 @@ records that with `lapis-design next --task <task> --unavailable references --re
 plain GET first and refuses the record when it works. The record is the same as for the critic: `next` goes on to the
 plan, and when the procedure is `done` its reason says no references were looked at. The captures are for study only,
 git-ignored, and never shipped or copied into the page.
+
+`plan-order` comes after the plan's own blockers and before the fonts lock: a blocking `release.procedure-order` (an
+unattended run whose page code came before the brief, references, or plan) sends the run back to redo the direction
+from the brief, citing the brief record and comparing the existing code as one candidate of a `direction`
+exploration; the code stays only if it wins. A person's session is only told. Where a harness can ask before a
+file is written (Claude Code and Codex `PreToolUse`, the `tool_call` event of Oh-My-Pi and pi), `lapis-design hook
+pre-write` refuses an unattended create run's write of a page source file while `next` names `brief`, `references`,
+`plan`, `plan-fix`, or `plan-explorations`: `permissionDecision: deny` with the step named, at most three times in a
+row for one step, after which the write goes through and a write that came before the brief, references, or plan is
+recorded in `.lapis/order/<task>.json`. Writes under `.lapis/`, to files that are not page source, and outside the
+project are never refused. With no plan file the run counts as create only while the folder holds no page source. A
+session without `LAPIS_UNATTENDED=1` gets one `systemMessage` the first time and is never refused. The hook sees the
+harness's file-edit tools, so a page written through the shell is found afterwards, by file times.
 
 While questions the run wrote for its user are unanswered, `next` returns the state `waiting-for-user` instead
 of a step: `step.id` is `waiting-for-user` (stop, and wait for the answers), `then` is the step that comes

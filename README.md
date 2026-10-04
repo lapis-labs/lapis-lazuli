@@ -46,11 +46,11 @@ the full list is under [What it will not do](#what-it-will-not-do).
 
 | Harness | Status | Notes |
 |---|---|---|
-| [Claude Code](INSTALLATION.md#claude-code) | Verified (2.1.274, 2026-09-27; public install 2.1.277, 2026-09-30) | Plugins, session-start hook, plan-mode hook, exit gate, MCP server, critic subagent. |
-| [OpenAI Codex CLI](INSTALLATION.md#openai-codex-cli) | Verified (0.157.x, 2026-09-27; public install 0.159.0, 2026-09-30) | Plugins, session-start hook and exit gate (you trust both in `/hooks`), MCP server, critic as an agent file the installer copies. |
-| [Oh-My-Pi](INSTALLATION.md#oh-my-pi) | Verified (18.3.1, 2026-09-27; public install 18.4.4, 2026-09-30) | Plugins through its marketplace, session-start and exit-gate extensions, MCP server, critic as a task agent. |
+| [Claude Code](INSTALLATION.md#claude-code) | Verified (2.1.274, 2026-09-27; public install 2.1.277, 2026-09-30) | Plugins, session-start hook, plan-mode hook, exit gate, write guard, MCP server, critic subagent. |
+| [OpenAI Codex CLI](INSTALLATION.md#openai-codex-cli) | Verified (0.157.x, 2026-09-27; public install 0.159.0, 2026-09-30) | Plugins, session-start hook, exit gate, and write guard (you trust them in `/hooks`), MCP server, critic as an agent file the installer copies. |
+| [Oh-My-Pi](INSTALLATION.md#oh-my-pi) | Verified (18.3.1, 2026-09-27; public install 18.4.4, 2026-09-30) | Plugins through its marketplace, session-start and exit-gate extensions (the latter also guards writes), MCP server, critic as a task agent. |
 | [Other Agent Skills harnesses](INSTALLATION.md#other-agent-skills-harnesses) (Cursor, Gemini CLI, GitHub Copilot, opencode, Windsurf, Kiro CLI) | Listing verified through the `skills` CLI (1.7.0, 2026-09-30) | Skills only, plus an `AGENTS.md` snippet for the session summary and MCP setup. Each agent was not tested on its own. |
-| [pi](INSTALLATION.md#pi) | Experimental | Skills, a session-start extension, and an exit-gate extension; not yet confirmed on a real install. |
+| [pi](INSTALLATION.md#pi) | Experimental | Skills, a session-start extension, and an exit-gate extension that also guards writes; not yet confirmed on a real install. |
 | [Hermes Agent](INSTALLATION.md#hermes-agent) | Experimental | Skills, a Hermes plugin, and MCP; not yet confirmed on a real install. |
 
 The status comes from `install/harnesses.yaml`; the exact commands for each harness are in
@@ -84,7 +84,9 @@ To keep an unattended run on that path, `lapis-design next --task <task>` prints
 with its exact command, until it says done; done means every step ran on real inputs, not that the release
 gate passes. When an agent is about to stop, a stop hook (Claude Code, Codex) or extension (Oh-My-Pi, pi)
 asks it, and continues the agent with that step only if `LAPIS_UNATTENDED=1` is set; otherwise it prints one
-line and never blocks. Set the agent's reasoning or thinking level to high or above: in our runs, a low
+line and never blocks. The same switch holds the order, brief, references, plan, then code: a write of a page
+source file is refused with the step named until the brief, references, and plan exist. Set the agent's
+reasoning or thinking level to high or above: in our runs, a low
 setting skipped the procedure. Codex runs a plugin hook only after you trust it
 ([INSTALLATION.md](INSTALLATION.md#unattended-runs)).
 

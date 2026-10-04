@@ -105,12 +105,15 @@ complete rules and schemas wherever the plugin is cached.
 | lazuli | `hooks/hooks.json` (Claude Code and Codex) | `SessionStart` | `startup\|resume\|clear\|compact\|fork` | `session-start` | prints the inventory summary as context |
 | lapis | inline in `.claude-plugin/plugin.json` (Claude Code only) | `PermissionRequest` | `ExitPlanMode` | `exit-plan` | denies with findings when the plan's lapis-plan block has blocking findings, and denies when the block cannot be read or checked (cli/lapis_design/hooks.py) |
 | lapis | `hooks/hooks.json` (Claude Code and Codex) | `Stop` | none | `stop` | the exit gate (cli/lapis_design/gate.py): with a plan under the project and `LAPIS_UNATTENDED=1`, continues the agent with the step `lapis-design next` still asks for (`{"decision": "block", "reason": …}`), at most three times in a row for one step and fifteen in a session; an unattended run with no plan is continued to write one (step `plan`, task named for the project folder unless `LAPIS_TASK` is set); a run waiting for its user's answers (`.lapis/questions/<task>.md` newer than `.lapis/answers/<task>.md`) is let stop, two sets of questions before a plan and one after; otherwise prints a one-line `systemMessage` and never blocks; prints nothing with no plan and no unattended run, or when it fails |
+| lapis | `hooks/hooks.json` (Claude Code and Codex) | `PreToolUse` | `Write\|Edit\|MultiEdit\|apply_patch` | `pre-write` | the write guard (cli/lapis_design/order.py): with `LAPIS_UNATTENDED=1` and a create run whose brief, references, or plan `lapis-design next` still asks for (or whose plan has blockers), refuses a write of a page source file with `{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": …}}` naming the step, at most three times in a row for one step; writes under `.lapis/`, to other files, and outside the project pass; a person's session gets one `systemMessage` the first time; prints nothing on any failure of ours |
 
 Codex reads `hooks/hooks.json` by default, and its matchers are regular expressions, so the
 `fork` alternative never matches there. The plan check stays out of that file: Codex has no
 ExitPlanMode tool, and a hook in the file would still ask Codex users to trust it. The lapis plugin's
-`hooks/hooks.json` therefore holds the `stop` hook alone, and its Codex manifest names that file.
-`Stop` takes no matcher in either harness, so the hook has none.
+`hooks/hooks.json` therefore holds the `stop` and `pre-write` hooks, and its Codex manifest names that file.
+`Stop` takes no matcher in either harness, so that hook has none. Claude Code's file-edit tools are `Write`,
+`Edit`, and `MultiEdit`; Codex reports every file edit as `apply_patch` (its matchers also take `Edit` and
+`Write`) with the patch text in `tool_input.command`, and the hook reads the files from that text.
 
 ## MCP — `plugin-mcp`
 
@@ -144,6 +147,10 @@ per-request versions from 2026-07-28, so older and newer harness clients connect
   `systemMessage` goes to `ctx.ui.notify` when the host has a UI. Each host never fires the other's event,
   so both are registered, and a registration the host does not know is ignored. The CLI holds the rules
   (unattended switch, limits, state); a missing CLI, a failure, or output that is not JSON lets the agent stop.
+  The same file registers a `tool_call` handler, the write guard: for the write and edit tools it starts
+  `lapis-design hook pre-write` with the event JSON (`cwd`, `tool_name`, `tool_input`) and answers `{ block: true,
+  reason }` for a refusal. Both hosts block the tool when a `tool_call` handler fails or times out (30 seconds in
+  Oh-My-Pi), so the handler answers within 20 seconds and treats every failure as no answer.
 - `plugins/lapis/package.json` and `plugins/lazuli/package.json`: `{"name": "@lapis-labs/<plugin>-omp",
   "license": "MIT AND CC-BY-4.0", "private": true, "omp": {"extensions": ["./extensions/<file>.ts"]}}` with the
   extension each plugin's hooks name (`exit-gate.ts` for lapis, `session-start.ts` for lazuli).

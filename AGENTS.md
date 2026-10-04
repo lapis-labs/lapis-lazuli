@@ -213,10 +213,11 @@ files beside it; the database file itself does not change.
   `shared_dir()`, never through paths relative to the repository.
 - `dist/` holds committed skill outputs, so build Python wheels elsewhere
   (`uv build --out-dir build/wheels`).
-- Hooks call the plain command `lapis-design hook <name>` (`session-start`, `exit-plan`, `stop`), with
+- Hooks call the plain command `lapis-design hook <name>` (`session-start`, `exit-plan`, `stop`, `pre-write`), with
   bodies in `cli/lapis_design/hooks.py`; MCP is `lapis-design mcp` (`cli/lapis_design/mcp_server.py`,
-  official MCP Python SDK). Hooks run at every session start (`stop`, at every turn's end), so keep heavy imports out
-  of them; pi and Oh-My-Pi have no hooks.json, so the `exit-gate.ts` extension asks `hook stop` (install/OUTPUTS.md).
+  official MCP Python SDK). Hooks run at every session start (`stop`, at every turn's end; `pre-write`, before every
+  file edit), so keep heavy imports out of them; pi and Oh-My-Pi have no hooks.json, so the `exit-gate.ts` extension
+  asks `hook stop` and, from its `tool_call` handler, `hook pre-write` (install/OUTPUTS.md).
 - `render check` lives in `cli/lapis_design/render/`: `capture.py` (capture matrix, boxes, base
   text runs), field passes in `render/fields/` (`text`, `visual`, `interaction`, run in that
   order on the live page, each restoring what it changed), `derived.py`, and `extract.py`
@@ -270,6 +271,10 @@ files beside it; the database file itself does not change.
   A run that stopped to ask its user (`waiting.py`: `.lapis/questions/<task>.md` newer than `.lapis/answers/<task>.md`)
   makes `next` say `waiting-for-user` and the gate let the stop pass without a continue: two sets before a plan, one
   after (`waits` in the gate state).
+  The order brief, references, plan, then code is `order.py`: `hook pre-write` refuses an unattended create run's write
+  of a page source file while `next` names `brief`, `references`, `plan`, `plan-fix`, or `plan-explorations` (three
+  refusals for one step, then the write passes and is recorded in `.lapis/order/<task>.json`), and `release check`
+  reports page code that came first as `release.procedure-order`, which `next` turns into the step `plan-order`.
 - `lazuli` lives in `cli/lazuli/`: `scan.py` (read-only inventory; `LAZULI_FONT_ROOTS` replaces the
   roots and turns the Core Text listing off), `coretext.py` (Adobe Fonts through Core Text on macOS,
   never through their files), `measure.py` (PANOSE Latin and the CJK extension per `vocab/type.yaml`; bump

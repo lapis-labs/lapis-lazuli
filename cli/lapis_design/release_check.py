@@ -14,7 +14,7 @@ from typing import Any
 
 import yaml
 
-from lapis_design import __version__, attempts, shared_dir
+from lapis_design import __version__, attempts, gate, order, shared_dir
 from lapis_design.lint.cli import LintError, _load, problems
 from lapis_design.lint.engine import open_lazuli
 from lapis_design.plan_check import (LazuliDBUpgradeError, PlanOverLimit, check_expansion, check_non_string_keys,
@@ -232,8 +232,11 @@ def input_paths(root: Path, task: str) -> dict[str, Path]:
         ("ledger", "assets.ledger.json"))}
 
 
-def run(root: Path, task: str, *, static: bool = False, offline: bool = False) -> dict:
-    """Return the release report; ValueError only for an unreadable plan or invalid option."""
+def run(root: Path, task: str, *, static: bool = False, offline: bool = False,
+        unattended: bool | None = None) -> dict:
+    """Return the release report; ValueError only for an unreadable plan or invalid option. `unattended` says
+    whether nobody is at the keyboard (default: `LAPIS_UNATTENDED=1`): only then does `release.procedure-order`
+    block."""
     paths = input_paths(root, task)
     try:
         plan = read_plan(paths["plan"])
@@ -395,6 +398,12 @@ def run(root: Path, task: str, *, static: bool = False, offline: bool = False) -
         if ref.get("mode") == "study":
             findings.append(_finding("study-reference", f"reference {index} is used in study mode",
                                      layer="plan", refs=(str(paths["plan"]),)))
+    if found := order.violation(root, task, plan):
+        blocks = gate.is_unattended() if unattended is None else unattended
+        findings.append(_finding("procedure-order", order.describe(found) + ("" if blocks else
+                                 "; an unattended run is held to the order, a person's session only sees this"),
+                                 layer="plan", warning=not blocks, source=True,
+                                 refs=(found["path"], str(paths["plan"]))))
     if (plan.get("approval") or {}).get("state") == "assumed":
         findings.append(_finding("approval-assumed", f"no person approved this plan: {plan['approval']['reason']}",
                                  layer="plan", warning=True, refs=(str(paths["plan"]),)))

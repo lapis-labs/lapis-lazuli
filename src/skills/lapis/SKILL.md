@@ -23,6 +23,9 @@ license: MIT AND CC-BY-4.0
   file of fewer than two words. Record the replies in `.lapis/answers/<task>.md`, the brief record: keep what it
   holds, add approval replies under their own heading, cite it in the plan (`context.other`), and run `next` again.
 - A brief's no-network line limits what the page loads; checks on 127.0.0.1 are not network use.
+- The order is brief, references, plan, then code: write no markup, style, script, or component file while `next` names
+  `brief`, `references`, or a plan step. Page code written first comes back as `plan-order`, and an unattended run's
+  page writes may be refused until then.
 
 lapis turns a request into a design contract - the plan file `.lapis/plans/<task>.yaml` - and then
 into an implementation that follows it. The plan is written before code, checked by

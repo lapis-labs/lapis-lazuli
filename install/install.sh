@@ -544,7 +544,7 @@ h_codex() {
     if selected ultramarine; then
       step_copy 1 '' dist/codex/agents/ulm-critic.toml "$HOME"/.codex/agents/ulm-critic.toml
     fi
-    step_manual 'Open /hooks in Codex and trust the lazuli session-start hook and the lapis stop hook; neither runs until trusted'
+    step_manual 'Open /hooks in Codex and trust the lazuli session-start hook and the lapis stop and pre-write hooks; none of them runs until trusted'
     ;;
   update)
     begin 'OpenAI Codex CLI' codex

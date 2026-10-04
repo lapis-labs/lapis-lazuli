@@ -62,9 +62,23 @@ after text.
   and `--unavailable references` beside `--unavailable critic`; `attempts.py` takes the step `references`.
 - `slop/rules.yaml`, `slop/detectors.yaml`, `slop/cards.yaml` (nine rules, two detectors, one card): new detectors `pricing-offers` and `palette-family`, a `floating-chips` kind of `decorative-dom`, and a `paired-headings` check of `rhythm-variance` that extends `copy.uniform-rhythm` (a first heading, or three or more headings, built as two or three short sentences; new keep cases `approved-headline` and `distinct-facts`). `section-sequence` compares a page from its first hero with a repeated archetype counted once, takes `min_sections`, and `layout.template-section-sequence` gains the spine hero > feature-grid > pricing > faq > cta and a four-section minimum. New lists `reassurance_phrases`, `offer_terms`, and `recommendation_badges`; `color.acid-on-black` joins the package `dark-luminous`.
 - `slop/rules.yaml`, `slop/detectors.yaml`, `slop/cards.yaml`, `slop/rules.schema.yaml`, `plan/schema.yaml` (one rule, one detector, one card, one evidence kind): the split opening is a default of its own. `layout.split-hero` (default, gate in create mode) reads the first viewport of every desktop capture with the new render detector `opening-split`: the largest display or heading run, with another text box or a control, stands on one side and an image, a drawing, or a filled or bordered panel stands on the other (either side; 20-70% of the width, 6% of the viewport or more; text-only second columns and prose panels do not hit; phone captures stack on purpose and are not judged). Its cases are `won-comparison`, `contract-fixes-opening`, `evidentiary-capture`, `task-in-opening`, and `record-beside-claim`; the card `split-opening` groups it. The new evidence kind `composition` (`evidence.composition` in a `defaults` keep) is the chosen candidate of a layout comparison in `explorations` that was rendered (`compared_on` has `render`) and weighed another candidate. `copy.meta-text` reads English, Korean, Japanese, and Chinese: the kinds `fiction-notice`, `change-log`, `developer-notes`, `placeholder-apology`, and `self-description` join the existing ones, `demo-badges` and `fiction-notice` share one allowance (one short notice in the footer or a small persistent label; a notice in the opening, in a heading, in the middle of the page, or after the quiet one is a hit; a notice and its translation count once; a plan whose brief does not ask for a notice allows none), the case `qualified-disclosure` adds "said once there and not again elsewhere", and the list `leftover_phrases` gains Japanese and change-narration phrases.
+- `release/GATE.md`, `plan/schema.yaml`, `install/harnesses.yaml` and its schema: the order of the procedure, brief,
+  references, plan, then code. The finding `release.procedure-order` (a create plan whose page code came before its
+  brief, references, or plan: the first-write record `.lapis/order/<task>.json`, else every page file last modified
+  before the brief or references record; lifted by a plan that cites `.lapis/answers/<task>.md` and lists the
+  existing code, `source: existing-code`, in a `direction` exploration; blocking only with `LAPIS_UNATTENDED=1`), the
+  `next` step `plan-order`, the plugin hook `pre-write` and the harness mechanism `pre_write`. `GATE.md` also says a
+  plan is read with PyYAML's pure-Python safe loader, so text only libyaml accepts is exit 2 and `plan-fix`.
 
 ### Added
 
+- The write guard: `lapis-design hook pre-write` (`cli/lapis_design/order.py`) is the `PreToolUse` hook of the lapis
+  plugin on `Write|Edit|MultiEdit|apply_patch` in Claude Code and Codex, and a `tool_call` handler of the exit-gate
+  extension in Oh-My-Pi and pi. With `LAPIS_UNATTENDED=1`, a create run whose brief, references, or plan `next` still
+  asks for is refused the write of a page source file, with the step named (`permissionDecision: deny`); writes
+  under `.lapis/`, to other files, and outside the project pass, a refusal repeats at most three times for one step,
+  and a write that goes through before the brief, references, or plan is recorded and found by `release check`. A
+  person's session gets one line, once. The `lapis` Done block states the order.
 - Recover4 closes the final 40 unexamined migration sources: 27 compact recoveries, four current-owner
   matches and nine explicit exclusions. References cover platform/host contracts, spatial assets,
   style branches without stereotypes, color interpretation, interoperable handoff, component/CSS
@@ -263,6 +277,12 @@ after text.
 
 ### Fixed
 
+- `lapis-design next` said `done` for a plan only libyaml could read. The plan reader used libyaml's loader, which
+  accepts a `?` inside a plain scalar of a flow collection (`{ answers: What does this do for me? }`) that PyYAML's
+  pure-Python loader, and every other tool built on `yaml.safe_load`, refuses; `plan check` found 0 blocking
+  findings and the procedure ended on a plan nobody else could parse (the brief-saas-1 run). Plans are now read with
+  the pure-Python safe loader, so such a plan is exit 2 from `plan check` and `release check` and `plan-fix` from
+  `next`, which now names the line and column and says to quote the string.
 - `render check` exited 2 with `Page.evaluate: getComputedStyle: parameter 1 is not of type 'Element'` (or a
   `KeyError` on a box id) on a page that rebuilds its chart and text when the window resizes. Chromium sends a
   `resize` event to the window and to `visualViewport` for every full-page screenshot, although neither size

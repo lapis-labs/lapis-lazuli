@@ -73,7 +73,7 @@ $defs:
       skills: { type: array, minItems: 1, items: { $ref: "#/$defs/slug" } }   # the main skill shares the plugin name
       hooks:                                        # hook events this plugin registers (outputs say how)
         type: array
-        items: { enum: [session-start, exit-plan, stop] }
+        items: { enum: [session-start, exit-plan, stop, pre-write] }
       agents: { type: array, items: { $ref: "#/$defs/slug" } }
       mcp: { type: array, items: { $ref: "#/$defs/slug" } }   # MCP server names
 
@@ -137,7 +137,7 @@ $defs:
     type: object
     additionalProperties: false
     required: [id, name, detect, form, consumes, invoke, install, update, uninstall, verify,
-               session_start, critic, exit_gate, mcp, sources]
+               session_start, critic, exit_gate, pre_write, mcp, sources]
     properties:
       id: { $ref: "#/$defs/slug" }
       name: { type: string }
@@ -173,6 +173,7 @@ $defs:
       session_start: { $ref: "#/$defs/mechanism" }
       critic: { $ref: "#/$defs/mechanism" }
       exit_gate: { $ref: "#/$defs/mechanism" }          # what continues an unattended agent that is about to stop
+      pre_write: { $ref: "#/$defs/mechanism" }          # what refuses an unattended agent's page write before the brief and plan
       mcp: { $ref: "#/$defs/mechanism" }
       trust: { type: array, items: { type: string } }       # what the user must approve before parts run
       conflicts: { type: array, items: { type: string } }   # double loading and precedence traps

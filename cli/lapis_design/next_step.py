@@ -16,7 +16,10 @@ behavior check needs it, and a page with controls but no `flows` in the plan is 
 Done means the procedure is complete, not that the release passes: a blocking verdict is a result to
 report. A step is also done when its failure record is fresh (`attempts.py`): the check was tried and
 the environment, not an input, stopped it. A missing input, an invalid input, a timeout, a finding, or a
-plan blocker never counts as done; the step that creates or fixes it comes back.
+plan blocker never counts as done; the step that creates or fixes it comes back. So does a plan that cannot be
+read: it is read the way every other tool reads YAML (`plan_check.parse_plan`), never leniently, and its fault is
+named with its line and column. A blocking `release.procedure-order` (an unattended run whose page code came before
+its brief, references, or plan, `order.py`) sends the run to `plan-order`.
 
 While questions the run wrote for its user are unanswered (`waiting.py`), the state is `waiting-for-user`
 instead: its step says to stop and wait, and `then` is the step that comes after the answers.
@@ -38,7 +41,7 @@ import yaml
 
 from lapis_design import attempts, brief, gate, references, release_check, shared_dir, waiting
 from lapis_design.lint.cli import problems
-from lapis_design.plan_check import PlanOverLimit, read_plan
+from lapis_design.plan_check import PlanOverLimit, read_plan, yaml_reason
 
 PAGES = ("index.html", "dist/index.html", "build/index.html", "public/index.html", "out/index.html")
 CONTROLS = {"button", "input", "select", "textarea", "details", "dialog", "form"}
@@ -257,7 +260,10 @@ def _steps(root: Path, task: str, page: str | None) -> dict:
                            f"schema is below and an example is {shared / 'plan/example.plan.yaml'}. "
                            "Then run the command to see what blocks.", check, shared / "plan" / "schema.yaml"), False)
     except (OSError, ValueError, yaml.YAMLError) as exc:
-        return state(_step("plan-fix", f"{plan_rel} cannot be read: {(str(exc).splitlines() or [''])[0]}", check,
+        hint = (" Fix the YAML at that position (quote a string that holds `?`, `:`, `#`, or `,` inside `{ }` or "
+                "`[ ]`, or write the mapping in block style), then run the command." if isinstance(exc, yaml.YAMLError)
+                else "")
+        return state(_step("plan-fix", f"{plan_rel} cannot be read: {yaml_reason(exc)}.{hint}", check,
                            shared / "plan" / "schema.yaml"), False)
     if isinstance(plan, PlanOverLimit) or not isinstance(plan, dict):
         why = plan.problem if isinstance(plan, PlanOverLimit) else "the plan is not a mapping"
@@ -309,6 +315,7 @@ def _steps(root: Path, task: str, page: str | None) -> dict:
     by_path = {str(paths[name]): name for name in ("extract", "session", "lint", "critic", "lock", "ledger")}
     dark = ((_json(paths["extract"]) or {}).get("meta") or {}).get("dark_theme") is True
     need: set[str] = set()
+    out_of_order = ""
     for finding in findings:
         rule, observed = finding["rule_id"], finding["observed"]
         refs = finding["evidence"].get("refs") or []
@@ -323,6 +330,9 @@ def _steps(root: Path, task: str, page: str | None) -> dict:
             need.add("lint")
         elif rule == "release.critic-missing":
             need.add("critic")
+        elif rule == "release.procedure-order":
+            need.add("plan-order")
+            out_of_order = observed
     need -= {step for step, done in recorded.items() if done} | {""}
     from_plan_steps = {PLAN_STEPS.get(f["rule_id"], "plan-fix") for f in from_plan}
 
@@ -336,6 +346,16 @@ def _steps(root: Path, task: str, page: str | None) -> dict:
                            "`explorations` with two or more candidates, what they were compared on, the one chosen, and "
                            "why the runner-up lost. Compare them for real; do not invent a `fixed_by` or a keep to lift "
                            "it.", check, shared / "plan" / "schema.yaml"), interactive)
+    if "plan-order" in need:
+        return state(_step("plan-order", f"Page code came before the direction it should follow: {out_of_order}. Redo "
+                           f"the direction from the brief. Read the brief record .lapis/answers/{task}.md and the "
+                           "references record, and write the plan's `direction`, `layout`, and `explorations` as if the "
+                           "page did not exist, citing the brief record in `context.other`. Then add the existing code as "
+                           "one candidate (`source: existing-code`) of a `direction` exploration, compared on the same "
+                           "terms as the others and with a reason the runner-up lost. Keep the code only if it wins; "
+                           "rebuild the parts that lose. This step lifts when the plan cites the brief record and holds "
+                           "that candidate; it does not judge whether the comparison was fair.", check,
+                           shared / "plan" / "schema.yaml"), interactive)
     if "fonts-lock" in from_plan_steps or "fonts-lock" in need:
         commands = _lock_commands(plan, task)
         why = GENERIC_LOCK.format(task=task) + " " + (

@@ -486,7 +486,7 @@ function h_codex([string]$Phase) {
       if (Test-Selected 'ultramarine') {
         Invoke-Copy $true '' 'dist/codex/agents/ulm-critic.toml' (Get-HomePath '.codex/agents/ulm-critic.toml')
       }
-      Invoke-Manual 'Open /hooks in Codex and trust the lazuli session-start hook and the lapis stop hook; neither runs until trusted'
+      Invoke-Manual 'Open /hooks in Codex and trust the lazuli session-start hook and the lapis stop and pre-write hooks; none of them runs until trusted'
     }
     'update' {
       Start-Phase 'OpenAI Codex CLI' @('codex')

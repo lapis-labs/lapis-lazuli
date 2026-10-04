@@ -90,6 +90,7 @@ What gets installed:
 - Session summary: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `SessionStart startup|resume|clear|compact|fork`.
 - Separate critic: plugin agent, from `plugins/ultramarine/agents/`. Invoked as ultramarine:critic; the plan check runs from a hook inline in the lapis manifest.
 - Exit gate: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `Stop`. `lapis-design hook stop` continues the agent with the next step only when LAPIS_UNATTENDED=1 and says so in one line otherwise; at most 3 continues in a row for one step and 15 in a session.
+- Write guard: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `PreToolUse Write|Edit|MultiEdit`. `lapis-design hook pre-write` refuses a page source file's write with `permissionDecision: deny` only when LAPIS_UNATTENDED=1 and the brief, references, or plan of a create run is still owed; writes under .lapis/ and to other files pass, a person's session gets one `systemMessage`; a refusal repeats at most 3 times for one step.
 - MCP: plugin MCP configuration, from `plugins/lazuli/.mcp.json`. Server plugin:lazuli:lapis-lazuli; the command is the CLI on PATH.
 
 The harness also reads skills from: `~/.claude/skills`, `.claude/skills`, `plugin skills/`.
@@ -162,6 +163,7 @@ What gets installed:
 - Session summary: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `SessionStart startup|resume|clear|compact`. Matchers are regular expressions; the fork alternative never matches here.
 - Separate critic: agent file that the install script copies, from `dist/codex/agents/`. Plugins cannot ship subagents; the installer copies the TOML file.
 - Exit gate: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `Stop`. `lapis-design hook stop` continues the agent with the next step only when LAPIS_UNATTENDED=1 and says so in one line otherwise; the lapis plugin's hook needs trust like the lazuli one; Stop takes no matcher.
+- Write guard: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `PreToolUse apply_patch`. The same hook as in Claude Code: Codex reports every file edit as `apply_patch` (its matchers also take Edit and Write) with the patch text in `tool_input.command`, and takes the same `permissionDecision: deny`; the lapis plugin's hook needs trust like the others.
 - MCP: plugin MCP configuration, from `plugins/lazuli/.mcp.json`.
 
 The harness also reads skills from: `.agents/skills (cwd up to the repo root)`, `~/.agents/skills`.
@@ -184,7 +186,7 @@ curl -fsSL https://raw.githubusercontent.com/lapis-labs/lapis-lazuli/release/dis
 
 Copy https://raw.githubusercontent.com/lapis-labs/lapis-lazuli/release/dist/codex/agents/ulm-critic.toml to `~/.codex/agents/ulm-critic.toml`. Only with the `ultramarine` plugin. The install script asks before this step.
 
-By hand: Open /hooks in Codex and trust the lazuli session-start hook and the lapis stop hook; neither runs until trusted.
+By hand: Open /hooks in Codex and trust the lazuli session-start hook and the lapis stop and pre-write hooks; none of them runs until trusted.
 
 **Update**
 
@@ -243,6 +245,7 @@ Remove `~/.codex/agents/ulm-critic.toml`. Only with the `ultramarine` plugin. Th
 
 - which shell runs hook commands on Windows (the command is a plain program on PATH, so any should do)
 - browser and cache access on this host with 0.159.3 have not been reproduced: in the 2026-10-01 pilot with 0.159.2, headless `codex exec` under `workspace-write` with approval `never` failed to start Chromium with `bootstrap_check_in org.chromium.Chromium.MachPortRendezvousServer: Permission denied (1100)`, so render, behavior, and critic checks did not run; the lazuli user cache was also inaccessible
+- that the plugin's hooks/hooks.json `PreToolUse` entry runs after an install and trust: the 2026-10-04 check (verified below) gave Codex the same matcher and command through `-c hooks.PreToolUse=...`, not through an installed plugin
 
 Sources (checked 2026-09-25): <https://developers.openai.com/plugins/build/plugins>, <https://learn.chatgpt.com/docs/hooks>, <https://developers.openai.com/codex/skills>, <https://developers.openai.com/codex/subagents>.
 
@@ -263,6 +266,7 @@ What gets installed:
 - Session summary: extension, from `plugins/lazuli/extensions/session-start.ts`, event `session_start`. omp does not run hooks/hooks.json; a marketplace install links the plugin's package.json into ~/.omp/plugins/node_modules, and its omp.extensions load after a restart.
 - Separate critic: plugin agent, from `plugins/ultramarine/agents/`. Loaded as a task agent.
 - Exit gate: extension, from `plugins/lapis/extensions/exit-gate.ts`, event `session_stop`. Asks `lapis-design hook stop` and answers `{ decision: block }`, only when LAPIS_UNATTENDED=1; the lapis plugin's package.json links the extension.
+- Write guard: extension, from `plugins/lapis/extensions/exit-gate.ts`, event `tool_call`. The exit-gate extension also registers a `tool_call` handler for the write and edit tools; it asks `lapis-design hook pre-write` and answers `{ block: true, reason }`, only when LAPIS_UNATTENDED=1; a handler error or timeout blocks the tool in omp, so the extension answers within 20 seconds and treats any failure as no answer.
 - MCP: plugin MCP configuration, from `plugins/lazuli/.mcp.json`.
 
 The harness also reads skills from: `.omp/skills`, `~/.omp/agent/skills`, `.agents/skills`, `.claude/skills`.
@@ -337,6 +341,7 @@ What gets installed:
 - Session summary: extension, from `plugins/lazuli/extensions/session-start.ts`, event `session_start`.
 - Separate critic: instructions only: the skills say what to run by hand. pi has no subagents; the skill asks for a fresh session as the critic.
 - Exit gate: extension, from `plugins/lapis/extensions/exit-gate.ts`, event `agent_before_settle`. Asks `lapis-design hook stop` and continues the agent with a custom message and `continue: true`, only when LAPIS_UNATTENDED=1.
+- Write guard: extension, from `plugins/lapis/extensions/exit-gate.ts`, event `tool_call`. The same `tool_call` handler as in Oh-My-Pi, answering `{ block: true, reason }`, only when LAPIS_UNATTENDED=1.
 - MCP: not available. pi 1.0.0 has a built-in MCP client (servers in ~/.pi/agent/mcp.json or .pi/settings.json; a Python stdio server connected in a container on 2026-10-03), but the installer does not register lapis-lazuli there yet.
 
 The harness also reads skills from: `~/.pi/agent/skills`, `.pi/skills`, `~/.agents/skills`, `.agents/skills`.
@@ -383,6 +388,10 @@ Only when you remove every plugin. One package carries every plugin's skills, so
 - a git source has no subdirectory selector, so the repository root package.json carries the pi key
 - pi also reads ~/.agents/skills; do not install flat skills there alongside the package
 
+**Not yet confirmed**
+
+- that pi's `tool_call` event carries `toolName` and `input` as Oh-My-Pi's does: pi's extension docs show `toolName` and `{ block: true, reason }` only. The 2026-10-04 check was not run, because the saved ChatGPT login for the lapis-pi container had expired and a run would have refreshed it
+
 Sources (checked 2026-09-25): <https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/packages.md>, <https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/extensions.md>, <https://pi.dev>.
 
 ### Hermes Agent
@@ -398,6 +407,7 @@ What gets installed:
 - Session summary: Hermes plugin hook, from `plugins/hermes/lapis-lazuli/`, event `pre_llm_call when is_first_turn`. on_session_start ignores return values, so it cannot add context.
 - Separate critic: instructions only: the skills say what to run by hand.
 - Exit gate: instructions only: the skills say what to run by hand. No stop event is used; the skills say to run `lapis-design next --task \<task>` until it says done.
+- Write guard: instructions only: the skills say what to run by hand. No pre-write event is used; the lapis skill's Done block states the order, and `lapis-design next` and `release check` find a page written before its brief by file times.
 - MCP: registered with the harness's own command. hermes mcp add; tools appear as mcp_lapis-lazuli_\<tool>.
 
 The harness also reads skills from: `~/.hermes/skills`, `skills.external_dirs in ~/.hermes/config.yaml`.
@@ -507,6 +517,7 @@ What gets installed:
 - Session summary: instructions, from `dist/AGENTS.snippet.md`.
 - Separate critic: instructions only: the skills say what to run by hand.
 - Exit gate: instructions only: the skills say what to run by hand. No stop event is used; the skills say to run `lapis-design next --task \<task>` until it says done.
+- Write guard: instructions only: the skills say what to run by hand. No pre-write event is used; the lapis skill's Done block states the order, and `lapis-design next` and `release check` find a page written before its brief by file times.
 - MCP: instructions, from `dist/AGENTS.snippet.md`. The snippet shows the harness's own MCP registration for lapis-design mcp.
 
 **Install**
@@ -618,7 +629,7 @@ An HTML file path or `file://` URL also works: the checks serve its folder read-
 
 ### Unattended runs
 
-`lapis-design next --task <task>` prints the one step of the procedure still to do, from the files under `.lapis/`, until it says done; done means every step ran on real inputs, not that the release gate passes. A harness's stop event can ask it: the exit gate continues an agent that is about to stop with that step only when `LAPIS_UNATTENDED=1` is set in the environment the harness runs in, and otherwise prints one line and never blocks. `LAPIS_UNATTENDED=1` is for an operator's design run: the gate is then active even when the agent wrote no plan, and its step is `brief` and then `plan`, named for the project folder unless `LAPIS_TASK` says otherwise; do not set it for other work. It continues at most three times in a row for one step and fifteen times in a session, then lets the agent stop and records the step that was left in `.lapis/gate/<task>.json`. Before the plan, a create run owes a brief record, `.lapis/answers/<task>.md`: what it read and looked up, and its answers to the questions the design needs. With nobody to ask it answers them itself and marks every answer `[assumed]` with its basis. A run that should ask its user instead, the brief's questions or the plan's approval, while you relay the answers, must be told so in its instructions; it then writes the questions to `.lapis/questions/<task>.md` and stops: `lapis-design next` says `waiting-for-user`, and the gate lets that stop pass without counting a continue, for two sets of questions before a plan exists and one after. A file of fewer than two words, or a set past those limits, is continued like any other stop; the agent records your answers in `.lapis/answers/<task>.md` and carries on. Claude Code and Codex run it as the lapis plugin's `Stop` hook, Oh-My-Pi as `session_stop` and pi as `agent_before_settle` in the lapis exit-gate extension. Codex runs a plugin hook only after you trust it in `/hooks`, or for one run with `--dangerously-bypass-hook-trust` (use it only in an isolated `CODEX_HOME` whose hook sources you vetted); an untrusted hook is skipped without any message, so the gate is silently absent and the agent stops as it would without it. Without the gate the skills say to run `lapis-design next` by hand. Use reasoning or thinking at high or above for the agent that makes the work: in our runs, a low setting skipped the procedure.
+`lapis-design next --task <task>` prints the one step of the procedure still to do, from the files under `.lapis/`, until it says done; done means every step ran on real inputs, not that the release gate passes. A harness's stop event can ask it: the exit gate continues an agent that is about to stop with that step only when `LAPIS_UNATTENDED=1` is set in the environment the harness runs in, and otherwise prints one line and never blocks. `LAPIS_UNATTENDED=1` is for an operator's design run: the gate is then active even when the agent wrote no plan, and its step is `brief` and then `plan`, named for the project folder unless `LAPIS_TASK` says otherwise; do not set it for other work. It continues at most three times in a row for one step and fifteen times in a session, then lets the agent stop and records the step that was left in `.lapis/gate/<task>.json`. Before the plan, a create run owes a brief record, `.lapis/answers/<task>.md`: what it read and looked up, and its answers to the questions the design needs. With nobody to ask it answers them itself and marks every answer `[assumed]` with its basis. A run that should ask its user instead, the brief's questions or the plan's approval, while you relay the answers, must be told so in its instructions; it then writes the questions to `.lapis/questions/<task>.md` and stops: `lapis-design next` says `waiting-for-user`, and the gate lets that stop pass without counting a continue, for two sets of questions before a plan exists and one after. A file of fewer than two words, or a set past those limits, is continued like any other stop; the agent records your answers in `.lapis/answers/<task>.md` and carries on. Claude Code and Codex run it as the lapis plugin's `Stop` hook, Oh-My-Pi as `session_stop` and pi as `agent_before_settle` in the lapis exit-gate extension. Codex runs a plugin hook only after you trust it in `/hooks`, or for one run with `--dangerously-bypass-hook-trust` (use it only in an isolated `CODEX_HOME` whose hook sources you vetted); an untrusted hook is skipped without any message, so the gate is silently absent and the agent stops as it would without it. Without the gate the skills say to run `lapis-design next` by hand. The same switch turns on a write guard: the order is brief, references, plan, then code, and while a create run still owes one of them, an unattended agent's write of a page source file (HTML, CSS, script, or component) is refused with the next step named, as the lapis plugin's `PreToolUse` hook in Claude Code and Codex, and as a `tool_call` handler of the same extension in Oh-My-Pi and pi. Files under `.lapis/`, other files, and anything outside the project pass, a refusal repeats at most three times for one step, and a page written through the shell is found afterwards (`release.procedure-order`). A person's session sees one line, once, and is never refused. Use reasoning or thinking at high or above for the agent that makes the work: in our runs, a low setting skipped the procedure.
 
 ## Update and uninstall
 

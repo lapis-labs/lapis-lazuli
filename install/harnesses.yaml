@@ -38,7 +38,7 @@ plugins:
     prefix: lps-
     description: Design direction, plans, and named defaults for new UI and redesigns
     skills: [lapis, lps-brief, lps-ux, lps-copy, lps-system]
-    hooks: [exit-plan, stop]
+    hooks: [exit-plan, stop, pre-write]
   - name: ultramarine
     prefix: ulm-
     description: Render checks, slop and rights review, and a separate critic
@@ -96,10 +96,12 @@ harnesses:
     session_start: { via: plugin-hook, output: plugin-hooks, event: "SessionStart startup|resume|clear|compact|fork" }
     critic: { via: plugin-agent, output: claude-agents, note: "invoked as ultramarine:critic; the plan check runs from a hook inline in the lapis manifest" }
     exit_gate: { via: plugin-hook, output: plugin-hooks, event: Stop, note: "`lapis-design hook stop` continues the agent with the next step only when LAPIS_UNATTENDED=1 and says so in one line otherwise; at most 3 continues in a row for one step and 15 in a session" }
+    pre_write: { via: plugin-hook, output: plugin-hooks, event: "PreToolUse Write|Edit|MultiEdit", note: "`lapis-design hook pre-write` refuses a page source file's write with `permissionDecision: deny` only when LAPIS_UNATTENDED=1 and the brief, references, or plan of a create run is still owed; writes under .lapis/ and to other files pass, a person's session gets one `systemMessage`; a refusal repeats at most 3 times for one step" }
     mcp: { via: plugin-mcp, output: plugin-mcp, note: "server plugin:lazuli:lapis-lazuli; the command is the CLI on PATH" }
     conflicts:
       - "Oh-My-Pi can load plugins from Claude Code's install registry; with both installed, skills load twice and dedupe by name"
     verified:
+      - "2026-10-04, 2.1.285: `claude -p --model sonnet` with `--plugin-dir` for plugins/lapis, plugins/lazuli, and plugins/ultramarine, in a temporary folder with LAPIS_UNATTENDED=1 and the SaaS landing prompt (bypassPermissions): the `PreToolUse` hook (matcher Write|Edit|MultiEdit|apply_patch) let the brief record through, refused the model's first `Write` of index.html while the references record was owed (tool result `PreToolUse:Write hook error: LapisLazuli refuses this write: ...`, the file was not created), and let the first page `Write` through only after the brief, references, and plan existed (about 20 minutes later, after an operator reply to the model's question about the references); without LAPIS_UNATTENDED a `Write` of index.html under a create plan with no brief goes through with one `systemMessage` and a `first_page_write` record"
       - "2026-10-03, 2.1.285: `claude -p --plugin-dir plugins/lapis` with LAPIS_UNATTENDED=1 continues the agent once through the Stop hook (shown as Stop hook feedback with the next step); without the variable the hook prints a one-line systemMessage and the agent stops"
       - "2026-09-30, 2.1.277: from the public repository, `claude plugin marketplace add lapis-labs/lapis-lazuli@release` and `claude plugin install {plugin}@{catalog} -s user` install all three plugins at the release commit; a new session lists all eleven skills"
       - "2026-10-01, 2.1.285: `claude plugin marketplace update {catalog}` and `claude plugin update {plugin}@{catalog}` move all three plugins from 0.1.1 to 0.1.2 from the public repository; a new session lists all eleven skills"
@@ -130,7 +132,7 @@ harnesses:
       - run: [codex, plugin, add, "{plugin}@{catalog}"]
       - copy: { from: "dist/codex/agents/ulm-critic.toml", to: "~/.codex/agents/ulm-critic.toml" }
         confirm: true
-      - manual: "Open /hooks in Codex and trust the lazuli session-start hook and the lapis stop hook; neither runs until trusted"
+      - manual: "Open /hooks in Codex and trust the lazuli session-start hook and the lapis stop and pre-write hooks; none of them runs until trusted"
     update:
       - run: [codex, plugin, marketplace, upgrade, "{catalog}"]
         note: there is no per-plugin update; new skills appear in the next session
@@ -153,6 +155,7 @@ harnesses:
     session_start: { via: plugin-hook, output: plugin-hooks, event: "SessionStart startup|resume|clear|compact", note: "matchers are regular expressions; the fork alternative never matches here" }
     critic: { via: agent-file, output: codex-agents, note: "plugins cannot ship subagents; the installer copies the TOML file" }
     exit_gate: { via: plugin-hook, output: plugin-hooks, event: Stop, note: "`lapis-design hook stop` continues the agent with the next step only when LAPIS_UNATTENDED=1 and says so in one line otherwise; the lapis plugin's hook needs trust like the lazuli one; Stop takes no matcher" }
+    pre_write: { via: plugin-hook, output: plugin-hooks, event: "PreToolUse apply_patch", note: "the same hook as in Claude Code: Codex reports every file edit as `apply_patch` (its matchers also take Edit and Write) with the patch text in `tool_input.command`, and takes the same `permissionDecision: deny`; the lapis plugin's hook needs trust like the others" }
     mcp: { via: plugin-mcp, output: plugin-mcp }
     trust:
       - "every plugin hook needs trust for its exact hash via /hooks; a changed hook needs trust again"
@@ -164,7 +167,9 @@ harnesses:
     unverified:
       - "which shell runs hook commands on Windows (the command is a plain program on PATH, so any should do)"
       - "browser and cache access on this host with 0.159.3 have not been reproduced: in the 2026-10-01 pilot with 0.159.2, headless `codex exec` under `workspace-write` with approval `never` failed to start Chromium with `bootstrap_check_in org.chromium.Chromium.MachPortRendezvousServer: Permission denied (1100)`, so render, behavior, and critic checks did not run; the lazuli user cache was also inaccessible"
+      - "that the plugin's hooks/hooks.json `PreToolUse` entry runs after an install and trust: the 2026-10-04 check (verified below) gave Codex the same matcher and command through `-c hooks.PreToolUse=...`, not through an installed plugin"
     verified:
+      - "2026-10-04, 0.160.0: `codex exec --dangerously-bypass-hook-trust` with LAPIS_UNATTENDED=1 and a `PreToolUse` hook of the plugin's matcher and command: the model's `apply_patch` adding index.html to an empty folder is refused (`Command blocked by PreToolUse hook: LapisLazuli refuses this write: ...`) and index.html is not created; the hook's event carries the patch in `tool_input.command` with an absolute path, and `permissionDecision: deny` blocks it"
       - "2026-10-03, 0.160.0: with the built lapis plugin installed in an isolated CODEX_HOME and `codex exec --dangerously-bypass-hook-trust`, the plugin's Stop hook gets the session id and LAPIS_UNATTENDED, continues the agent with the next step three times, then the gate lets it stop; without the flag the untrusted hook is skipped and the output says nothing about it"
       - "2026-09-30, 0.159.0: from the public repository, `codex plugin marketplace add lapis-labs/lapis-lazuli --ref release` and `codex plugin add {plugin}@{catalog}` install all three plugins at the release commit; a new session lists all eleven skills as {plugin}:{skill}"
       - "2026-10-01, 0.159.2: `codex plugin marketplace upgrade {catalog}` moves all three plugins from 0.1.1 to 0.1.2 from the public repository; a new session lists all eleven skills as {plugin}:{skill}"
@@ -215,6 +220,7 @@ harnesses:
     session_start: { via: extension, output: session-extension, event: session_start, note: "omp does not run hooks/hooks.json; a marketplace install links the plugin's package.json into ~/.omp/plugins/node_modules, and its omp.extensions load after a restart" }
     critic: { via: plugin-agent, output: claude-agents, note: "loaded as a task agent" }
     exit_gate: { via: extension, output: gate-extension, event: session_stop, note: "asks `lapis-design hook stop` and answers `{ decision: block }`, only when LAPIS_UNATTENDED=1; the lapis plugin's package.json links the extension" }
+    pre_write: { via: extension, output: gate-extension, event: tool_call, note: "the exit-gate extension also registers a `tool_call` handler for the write and edit tools; it asks `lapis-design hook pre-write` and answers `{ block: true, reason }`, only when LAPIS_UNATTENDED=1; a handler error or timeout blocks the tool in omp, so the extension answers within 20 seconds and treats any failure as no answer" }
     mcp: { via: plugin-mcp, output: plugin-mcp }
     conflicts:
       - "reads .omp-plugin, then .claude-plugin manifests; never .codex-plugin"
@@ -222,6 +228,7 @@ harnesses:
     unverified:
       - "whether omp plugin marketplace add accepts a ref; neither the command's help nor docs/marketplace.md (18.4.3, read 2026-09-30) names one for any source form, so the catalog follows the default branch"
     verified:
+      - "2026-10-04, 18.5.0: `omp -p -e exit-gate.ts` with LAPIS_UNATTENDED=1: the `tool_call` handler refuses the model's `write` of index.html (the model then wrote the brief record under .lapis/), `.lapis/order/<task>.json` records `denied: {step: brief, count: 1}`, and index.html is not created"
       - "2026-10-03, 18.4.10: `omp -p -e exit-gate.ts` with LAPIS_UNATTENDED=1 fires session_stop in print mode (its agent_before_settle registration ignored); `{ decision: block }` continued the agent three times with the next step, then the gate let it stop and recorded the step"
       - "2026-09-30, 18.4.4: from the public repository, `omp plugin marketplace add lapis-labs/lapis-lazuli` (default branch release) and `omp plugin install --scope user {plugin}@{catalog}` install all three plugins at the release commit; a new session lists all eleven skills"
       - "2026-10-01, 18.4.5: `omp plugin marketplace update {catalog}` and `omp plugin upgrade --scope user {plugin}@{catalog}` move all three plugins from 0.1.1 to 0.1.2 from the public repository; a new session lists all eleven skills"
@@ -261,12 +268,15 @@ harnesses:
     session_start: { via: extension, output: session-extension, event: session_start }
     critic: { via: instructions, note: "pi has no subagents; the skill asks for a fresh session as the critic" }
     exit_gate: { via: extension, output: gate-extension, event: agent_before_settle, note: "asks `lapis-design hook stop` and continues the agent with a custom message and `continue: true`, only when LAPIS_UNATTENDED=1" }
+    pre_write: { via: extension, output: gate-extension, event: tool_call, note: "the same `tool_call` handler as in Oh-My-Pi, answering `{ block: true, reason }`, only when LAPIS_UNATTENDED=1" }
     mcp: { via: none, note: "pi 1.0.0 has a built-in MCP client (servers in ~/.pi/agent/mcp.json or .pi/settings.json; a Python stdio server connected in a container on 2026-10-03), but the installer does not register lapis-lazuli there yet" }
     trust:
       - "project packages load only after project trust"
     conflicts:
       - "a git source has no subdirectory selector, so the repository root package.json carries the pi key"
       - "pi also reads ~/.agents/skills; do not install flat skills there alongside the package"
+    unverified:
+      - "that pi's `tool_call` event carries `toolName` and `input` as Oh-My-Pi's does: pi's extension docs show `toolName` and `{ block: true, reason }` only. The 2026-10-04 check was not run, because the saved ChatGPT login for the lapis-pi container had expired and a run would have refreshed it"
     verified:
       - "2026-10-03, 1.0.0, in the lapis-pi:arms3 container with `--thinking high`: with LAPIS_UNATTENDED=1 the exit-gate extension (loaded with --extension, its session_stop registration ignored) continued the agent through agent_before_settle three times with the next step, then left `capped` in .lapis/gate/<task>.json"
     sources:
@@ -309,6 +319,7 @@ harnesses:
     session_start: { via: hermes-plugin-hook, output: hermes-plugin, event: "pre_llm_call when is_first_turn", note: "on_session_start ignores return values, so it cannot add context" }
     critic: { via: instructions }
     exit_gate: { via: instructions, note: "no stop event is used; the skills say to run `lapis-design next --task <task>` until it says done" }
+    pre_write: { via: instructions, note: "no pre-write event is used; the lapis skill's Done block states the order, and `lapis-design next` and `release check` find a page written before its brief by file times" }
     mcp: { via: cli-register, note: "hermes mcp add; tools appear as mcp_lapis-lazuli_<tool>" }
     trust:
       - "project skills load only after hermes skills trust"
@@ -350,6 +361,7 @@ harnesses:
     session_start: { via: instructions, output: agents-md-snippet }
     critic: { via: instructions }
     exit_gate: { via: instructions, note: "no stop event is used; the skills say to run `lapis-design next --task <task>` until it says done" }
+    pre_write: { via: instructions, note: "no pre-write event is used; the lapis skill's Done block states the order, and `lapis-design next` and `release check` find a page written before its brief by file times" }
     mcp: { via: instructions, output: agents-md-snippet, note: "the snippet shows the harness's own MCP registration for lapis-design mcp" }
     conflicts:
       - "Codex, pi, and Hermes have their own rows; the skills CLI's Codex target ~/.codex/skills is deprecated"

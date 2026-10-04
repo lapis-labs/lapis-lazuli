@@ -23,6 +23,13 @@ stop         Stop in the lapis plugin's hooks/hooks.json (Claude Code, Codex), a
              variable it prints a one-line `systemMessage` and never blocks. Output is Claude Code's and
              Codex's Stop JSON; the extensions translate it. With no plan and no unattended run, or on any
              failure of ours, it prints nothing.
+pre-write    PreToolUse on the file-edit tools in the lapis plugin's hooks/hooks.json (Claude Code: Write, Edit,
+             MultiEdit; Codex: apply_patch), and the tool_call handler of the lapis write-guard extension (Oh-My-Pi,
+             pi). The event JSON (`cwd`, `tool_input`) names the files a write touches. With `LAPIS_UNATTENDED=1`,
+             a create run whose brief, references, or plan is still owed has its writes of page source files
+             refused (order.py), as `hookSpecificOutput.permissionDecision: deny` with the next step named;
+             writes under `.lapis/`, to other files, and outside the project pass. A person's session gets one
+             `systemMessage` the first time and is never blocked. On any failure of ours it prints nothing.
 """
 from __future__ import annotations
 
@@ -133,8 +140,26 @@ def stop(stdin: TextIO, stdout: TextIO) -> int:
     return 0
 
 
+def pre_write(stdin: TextIO, stdout: TextIO) -> int:
+    try:
+        event = json.load(stdin)
+    except ValueError:
+        event = {}
+    try:
+        from lapis_design import order
+
+        out = order.decide(event if isinstance(event, dict) else {})
+    except Exception as exc:        # a bug of ours never keeps an agent from writing
+        print(f"lapis-design hook pre-write: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 0
+    if out:
+        print(json.dumps(out, ensure_ascii=False), file=stdout)
+    return 0
+
+
 HOOKS: dict[str, Callable[[TextIO, TextIO], int]] = {
     "exit-plan": exit_plan,
     "session-start": session_start,
     "stop": stop,
+    "pre-write": pre_write,
 }

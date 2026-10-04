@@ -165,11 +165,14 @@ def test_every_hook_a_plugin_lists_has_the_extension_pi_and_oh_my_pi_load():
         assert [Path(e).name for e in extensions] == [manifests.EXTENSIONS[h] for h in listed], p["name"]
 
 
-def test_the_stop_hook_takes_no_matcher_and_codex_gets_it_with_the_lapis_plugin():
+def test_the_stop_hook_takes_no_matcher_the_write_hook_takes_the_file_edit_tools_and_codex_gets_both():
     d = doc()
     lapis = next(p for p in d["plugins"] if p["name"] == "lapis")
     shared = manifests.hooks_json(lapis)["hooks"]
-    assert shared == {"Stop": [{"hooks": [{"type": "command", "command": "lapis-design hook stop", "timeout": 60}]}]}
+    assert shared["Stop"] == [{"hooks": [{"type": "command", "command": "lapis-design hook stop", "timeout": 60}]}]
+    assert shared["PreToolUse"] == [{"matcher": "Write|Edit|MultiEdit|apply_patch", "hooks": [
+        {"type": "command", "command": "lapis-design hook pre-write", "timeout": 30}]}]
+    assert set(shared) == {"Stop", "PreToolUse"}
     assert manifests.codex_manifest(d, lapis, "0.1.0", LICENSE)["hooks"] == "./hooks/hooks.json"
     assert "PermissionRequest" in manifests.claude_manifest(d, lapis, "0.1.0", LICENSE)["hooks"]   # exit-plan stays inline
 

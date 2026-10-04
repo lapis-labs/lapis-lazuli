@@ -55,7 +55,7 @@ VIA_LABELS = {
 }
 VIA_BY_HAND = "instructions only: the skills say what to run by hand"
 MECHANISMS = (("session_start", "Session summary"), ("critic", "Separate critic"), ("exit_gate", "Exit gate"),
-              ("mcp", "MCP"))
+              ("pre_write", "Write guard"), ("mcp", "MCP"))
 SH_VARS = {"plugin": "LL_plugin", "skill": "LL_skill", "agent": "LL_agent", "sha": "LL_sha"}
 PS_VARS = {"plugin": "$Plugin", "skill": "$Skill", "agent": "$Agent", "sha": "$script:Sha"}
 DOC_VARS = {"agent": "<agent>", "sha": "<commit>"}
@@ -936,7 +936,14 @@ class _Gen:
               "for one run with `--dangerously-bypass-hook-trust` (use it only in an isolated `CODEX_HOME` whose "
               "hook sources you vetted); an untrusted hook is skipped without any message, so the gate is silently "
               "absent and the agent stops as it would without it. Without the gate the skills say to run "
-              "`lapis-design next` by hand. Use reasoning or thinking at high or above for the agent that makes "
+              "`lapis-design next` by hand. The same switch turns on a write guard: the order is brief, references, "
+              "plan, then code, and while a create run still owes one of them, an unattended agent's write of a page "
+              "source file (HTML, CSS, script, or component) is refused with the next step named, as the lapis "
+              "plugin's `PreToolUse` hook in Claude Code and Codex, and as a `tool_call` handler of the same "
+              "extension in Oh-My-Pi and pi. Files under `.lapis/`, other files, and anything outside the project "
+              "pass, a refusal repeats at most three times for one step, and a page written through the shell is "
+              "found afterwards (`release.procedure-order`). A person's session sees one line, once, and is never "
+              "refused. Use reasoning or thinking at high or above for the agent that makes "
               "the work: in our runs, a low setting skipped the procedure.", "",
               "## Update and uninstall", "",
               f"`--update` runs each harness's update steps and reinstalls the CLI from `{self.ref}`. "

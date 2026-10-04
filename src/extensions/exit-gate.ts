@@ -1,5 +1,5 @@
 /**
- * LapisLazuli exit gate for pi and Oh-My-Pi (install/OUTPUTS.md, Session extension and packages).
+ * LapisLazuli exit gate and write guard for pi and Oh-My-Pi (install/OUTPUTS.md, Session extension and packages).
  *
  * When the agent is about to stop, this runs `lapis-design hook stop`, the command the lapis plugin's
  * Stop hook runs in Claude Code and Codex, and passes on what it decides: the next step of the procedure
@@ -12,18 +12,28 @@
  * other's event, so both are registered. The host API is imported as a type only, and the CLI is started
  * with node's child_process, which both hosts provide. A missing CLI, a failure, a timeout, or output
  * that is not the expected JSON lets the agent stop.
+ *
+ * Before a write or edit tool runs, both hosts fire `tool_call`, and this runs `lapis-design hook pre-write`,
+ * the command the lapis plugin's PreToolUse hook runs in Claude Code and Codex. Its refusal (only when
+ * LAPIS_UNATTENDED=1, while the brief, references, or plan of a create run is still owed) becomes
+ * `{ block: true, reason }`. Both hosts block the tool when a `tool_call` handler fails or runs past its
+ * budget (30 seconds in Oh-My-Pi), so this handler answers within 20 and turns every failure into no answer.
  */
 import { spawn } from "node:child_process";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 const COMMAND = "lapis-design";
-const ARGS = ["hook", "stop"];
+const STOP_ARGS = ["hook", "stop"];
+const WRITE_ARGS = ["hook", "pre-write"];
 const TIMEOUT_MS = 60_000; // the Stop hook's timeout in plugins/lapis/hooks/hooks.json
+const WRITE_TIMEOUT_MS = 20_000; // inside the hosts' 30 second budget for a tool_call handler
+const WRITE_TOOLS: Record<string, true> = { write: true, edit: true, multiedit: true, multi_edit: true, ast_edit: true, apply_patch: true };
 
 interface Answer {
 	decision?: string;
 	reason?: string;
 	systemMessage?: string;
+	hookSpecificOutput?: { permissionDecision?: string; permissionDecisionReason?: string };
 }
 
 // the parts of each host's context this file uses; both hosts provide them
@@ -34,11 +44,11 @@ interface Context {
 	sessionManager?: { getSessionId?: () => string };
 }
 
-function ask(event: object): Promise<Answer> {
+function ask(args: string[], timeoutMs: number, event: object): Promise<Answer> {
 	const { promise, resolve } = Promise.withResolvers<Answer>();
 	let out = "";
-	const child = spawn(COMMAND, ARGS, { stdio: ["pipe", "pipe", "ignore"] });
-	const timer = setTimeout(() => child.kill(), TIMEOUT_MS);
+	const child = spawn(COMMAND, args, { stdio: ["pipe", "pipe", "ignore"] });
+	const timer = setTimeout(() => child.kill(), timeoutMs);
 	child.stdout.on("data", (chunk) => (out += chunk));
 	child.stdin.on("error", () => {});
 	child.on("error", () => resolve({})); // the CLI is not installed or could not start
@@ -63,7 +73,7 @@ export default function lapisLazuliExitGate(pi: ExtensionAPI): void {
 		} catch {
 			// the fallback id keeps the count of this process together
 		}
-		const answer = await ask({ hook_event_name: "Stop", cwd: ctx.cwd, session_id: session });
+		const answer = await ask(STOP_ARGS, TIMEOUT_MS, { hook_event_name: "Stop", cwd: ctx.cwd, session_id: session });
 		if (answer.systemMessage && ctx.hasUI) {
 			try {
 				ctx.ui?.notify?.(answer.systemMessage, "info");
@@ -76,7 +86,7 @@ export default function lapisLazuliExitGate(pi: ExtensionAPI): void {
 	// each host's typed overloads name only its own events, so the registration is cast once
 	const on = pi.on.bind(pi) as unknown as (
 		event: string,
-		handler: (event: { outcome?: string }, ctx: Context) => unknown,
+		handler: (event: { outcome?: string; toolName?: string; input?: unknown }, ctx: Context) => unknown,
 	) => void;
 
 	on("session_stop", async (_event, ctx) => {
@@ -92,5 +102,24 @@ export default function lapisLazuliExitGate(pi: ExtensionAPI): void {
 			entries: [{ type: "custom_message", customType: "lapis-lazuli-gate", content: answer.reason, display: false }],
 			continue: true,
 		};
+	});
+
+	on("tool_call", async (event, ctx) => {
+		try {
+			if (!Object.hasOwn(WRITE_TOOLS, String(event.toolName).toLowerCase())) return;
+			const answer = await ask(WRITE_ARGS, WRITE_TIMEOUT_MS, {
+				hook_event_name: "PreToolUse",
+				cwd: ctx.cwd,
+				tool_name: event.toolName,
+				tool_input: event.input,
+			});
+			if (answer.systemMessage && ctx.hasUI) ctx.ui?.notify?.(answer.systemMessage, "info");
+			const refusal = answer.hookSpecificOutput;
+			if (refusal?.permissionDecision === "deny" && refusal.permissionDecisionReason) {
+				return { block: true, reason: refusal.permissionDecisionReason };
+			}
+		} catch {
+			// a failure here would block the tool in the host: no answer lets the write go on
+		}
 	});
 }

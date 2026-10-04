@@ -165,9 +165,10 @@ def test_unreadable_schema_has_one_reason_and_no_traceback(tmp_path, schema, sum
 
 
 def yaml_fault(text: str) -> tuple[str, str]:
-    """PyYAML's problem and its context (the "while parsing ..." lead-in) for invalid YAML `text`."""
+    """PyYAML's problem and its context (the "while parsing ..." lead-in) for invalid YAML `text`, as the plan
+    reader reports it."""
     with pytest.raises(yaml.MarkedYAMLError) as raised:
-        yaml.load(text, Loader=getattr(yaml, "CSafeLoader", yaml.SafeLoader))
+        plan_check.parse_plan(text)
     return raised.value.problem, raised.value.context
 
 

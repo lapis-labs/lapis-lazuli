@@ -1,0 +1,260 @@
+version: 0
+mode: create
+task: { id: brief-saas-1, title: Landing page for a cloud backup SaaS }
+approval:
+  state: assumed
+  reason: LAPIS_UNATTENDED=1 and no relay, so nobody could approve the plan before the page was revised to follow it.
+context:
+  product: null
+  design: null
+  other: [.lapis/answers/brief-saas-1.md]
+brief:
+  subject: A versioned, client-side-encrypted cloud backup service with a restore timeline (placeholder name Lodestow)
+  one_job: Get a small-team IT lead or founder to see that they can return to a clean snapshot after files are overwritten or encrypted, and start a free trial
+  audience: IT lead or founder at a small team, on a laptop, soon after a deleted folder or ransomware scare, comparing backup tools
+  platform: [web]
+  locales: [en]
+  product_frame: marketing-landing
+  constraints:
+    - Plain index.html, styles.css, app.js; no build step
+    - No network requests, external services, downloads or external assets
+    - State once on the page that it uses fictional example data
+    - No real company names or logos
+    - Icons and illustrations drawn with SVG or CSS
+    - Work only in the current folder
+claims:
+  known: []
+  declared:
+    - "Cloud backup SaaS landing page, modern and professional (answers: Q0)"
+    - "Fictional-data notice appears once on the page (answers: Q0)"
+  proposed:
+    - "Three per-user plans after a 14-day free trial; prices 10, 20, 40 per month, 20 percent off annually are placeholders; basis category norm (answers: Q1, Q4)"
+    - "Audience is a small-team IT lead or founder after a deleted-folder or ransomware scare; basis category norm and a lead on CISA guidance (answers: Q2)"
+    - "Without it, files are overwritten or encrypted with no clean earlier copy; basis a lead on CISA guidance, unread PDF (answers: Q3)"
+    - "Figures on the page (three regions, AES-256, 30-day history, 12,401 files) are invented placeholders, no certifications or customers claimed (answers: Q5)"
+    - "Refused words and looks - military-grade, unbreakable, 100 percent secure, company marks, stock padlock-and-cloud imagery (answers: Q6)"
+    - "Type uses the platform's own serif, sans and monospace stacks because no font file may ship; the specimen shows the named installed faces only as the comparison that lost on delivery, so rendering here is not what a visitor with other system fonts sees"
+    - "Product mechanism statements on the page are descriptions of the placeholder product, not evidence: continuous versioning and snapshots within minutes; mass-rename flagging with one-step rollback; keys that stay on the device; chunks stored in three regions; per-file restore by name, folder or date; retention from 30 days to 7 years with an audit log; per-file keys from a master key; a recovery kit; immutable history (answers: Q1, Q5)"
+  unresolved:
+    - "Real product name, brand colors and faces, existing assets, other locales (answers: Q7)"
+world_materials:
+  - Stack of timestamped snapshot slabs, newest on top
+  - Restore point slider through snapshots, some flagged for unusual activity
+  - File list with changed, renamed, rewritten and deleted states
+  - Encryption flow from device to ingest to three regions
+  - Recovery kit and encryption key
+  - Snapshot timestamps such as Yesterday, 21:00
+sources:
+  - { ref: .lapis/answers/brief-saas-1.md, note: the brief record with its Found section }
+  - { ref: "https://www.cisa.gov/sites/default/files/2023-05/StopRansomware_Guide_508c%20(1).pdf", note: "lead only; offline, encrypted, tested backups; the PDF could not be read here" }
+  - { ref: .lapis/specimens/brief-saas-1.html, note: type specimen in the page's real copy }
+direction:
+  read:
+    text: "Reading this as: marketing-landing / persuade on web for an IT lead or founder after a deleted-folder or ransomware scare, named modern and professional language, constrained by plain files with no network and drawn icons; dials V/M/D = 5/4/5."
+    surface_mode: [persuade]
+    style_frame: named
+    style_name: modern and professional
+    constraint_frame:
+      - "Modern and professional is read as a dependable explanation of one mechanism, not a look to reproduce: it assumes the reader needs to see how a restore is chosen, so the page leads with a working restore timeline and keeps the rest plain and ruled."
+  dials: { variance: 5, motion: 4, density: 5 }
+  concept: The page is organized around choosing a restore point. The first working object is the snapshot timeline with flagged and clean snapshots, and every later section answers a question a reader has once they have seen it (what is kept, how it starts, who can read it, what it costs).
+  levers:
+    - "Scale: the restore timeline of snapshot slabs sits directly under the headline at the width of the whole page, so the stack of timestamped snapshot slabs is the largest thing after the h1."
+    - "Material: the amber selected slab and red flagged slabs come from the restore point slider and its flagged snapshots, so colour marks state in the timeline and nowhere else."
+    - "Type as form: timestamps, file counts and file names are set in monospace because they are records, taken from the snapshot timestamps and the file list with changed, renamed, rewritten and deleted states."
+    - "Rhythm: features, plans and questions are bare rows divided by rules, with the encryption flow from device to ingest to three regions as the only diagram in the dark section."
+references: []
+tokens:
+  color:
+    decision:
+      medium: { answer: "Screen, light by default with one dark section for the encryption flow", status: proposed }
+      task_structure: { answer: "Pick a restore point, then judge the verdict and file list; state colour must separate flagged from clean from selected", status: proposed }
+      content_colors: { answer: "Red for flagged snapshots, amber for the selected clean snapshot, blue-grey for the rest of the timeline", status: proposed }
+      identity: { answer: "No brand colours supplied; the product name and palette are placeholders", status: unresolved }
+      environment: { answer: "Office laptop in daylight, with incident stress, so a cool near-white field and high text contrast", status: proposed }
+      tone: { answer: "Plain and dependable; colour carries state, not mood", status: proposed }
+    roles:
+      - { name: field, role: field, oklch: [0.984, 0.004, 250], source_class: authored }
+      - { name: field-2, role: field, oklch: [0.956, 0.007, 250], source_class: authored }
+      - { name: ink, role: foreground, oklch: [0.22, 0.035, 255], source_class: authored }
+      - { name: ink-2, role: foreground, oklch: [0.43, 0.03, 255], source_class: authored }
+      - { name: slate, role: identity, oklch: [0.44, 0.075, 245], source_class: authored }
+      - { name: amber, role: interaction, oklch: [0.80, 0.15, 75], source_class: authored }
+      - { name: warn, role: status, oklch: [0.52, 0.19, 27], source_class: authored }
+      - { name: snapshot-clean, role: data, oklch: [0.74, 0.05, 246], source_class: authored }
+      - { name: dark, role: field, oklch: [0.19, 0.035, 255], theme: dark, source_class: authored }
+    relations: [temperature-contrast]
+    themes: [light]
+  type:
+    roles:
+      - { role: display, family: ui-serif, weights: [600], scripts: [latn] }
+      - { role: heading, family: ui-serif, weights: [600], scripts: [latn] }
+      - { role: body, family: system-ui, weights: [400, 600], scripts: [latn] }
+      - { role: ui, family: system-ui, weights: [500, 600], scripts: [latn] }
+      - { role: data, family: ui-monospace, weights: [400, 600], scripts: [latn] }
+    scale: { base_px: 17, ratio: 1.25 }
+    lock: .lapis/fonts.lock.json
+  space:
+    base_px: 8
+    scale: [4, 8, 12, 16, 24, 32, 48, 64, 96, 112]
+  motion:
+    reduced_motion: respect
+    principles:
+      - "Band 4-6, transitions that explain a change: the selected snapshot slab slides out to the right and the verdict, counts and file list change with it; reduced motion jumps straight to the end state."
+      - "Section content fades up once on first view; reduced motion shows it at once."
+      - "No looping or ambient animation."
+  shape:
+    radius:
+      scale: [4, 8, 12]
+      by_role: { tag: 4, control: 8, panel: 12 }
+    rule: Small radii for controls and tags, 12 for the two real panels (timeline and encryption flow); plans, features and questions have no container.
+  surface:
+    elevation:
+      - { level: 0, means: page field and bare rows divided by rules }
+      - { level: 1, means: the restore timeline panel }
+    borders: One-pixel rules in the line colour divide rows and columns; a container border marks only the two panels.
+    treatments: []
+  icons:
+    family: Lodestow line icons
+    source: drawn
+    style: outline
+    stroke_px: 1.75
+    sizes_px: [20, 24]
+layout:
+  procedure:
+    content_inventory:
+      - Restore timeline (stack, slider, verdict, counts, file list)
+      - Six things the product keeps or does
+      - Three install steps
+      - Encryption flow and three key facts
+      - Three plans with a billing toggle
+      - Five questions
+      - Trial signup
+    priority:
+      - Restore timeline
+      - Trial call to action
+      - Encryption flow
+      - Plans
+      - Features
+      - Steps
+      - Questions
+    screen_mode: persuade
+    reading_order:
+      - Headline and call to action
+      - Restore timeline
+      - What is kept
+      - How it starts
+      - Who can read the data
+      - What it costs
+      - Questions
+      - Trial signup
+    relationships:
+      - The timeline is one object (stack, slider and panel read together) and is the only boxed content besides the encryption flow.
+      - Features, plans and questions are peers separated by rules, not boxes.
+      - Steps are an ordered process.
+    archetype: marketing-landing with the working object under the headline
+    grid: 12 columns, 1160 px container; headline 7 columns beside the lede and actions in 5; the timeline spans the full width; split sections use 5 and 7 columns
+    responsive: At 960 px split sections, the headline pair and the timeline panel stack to one column with the stack and slider first; below 640 px the feature rows become one column; the menu collapses to a toggle at 820 px.
+    density_and_checks: Medium density. Check at 390, 768 and 1280 px that the slider, the verdict and the file list are all visible without horizontal scroll, and that keyboard arrows move the slider.
+  sections:
+    - { id: hero, archetype: hero, answers: What does this do for me when my files are damaged? }
+    - { id: restore, archetype: product-demo, answers: How would I choose what to restore? }
+    - { id: features, archetype: feature-rows, answers: What does it keep and what can I do with it? }
+    - { id: how, archetype: process-steps, answers: How hard is it to start? }
+    - { id: security, archetype: diagram, answers: Who can read my data? }
+    - { id: pricing, archetype: pricing, answers: What does it cost and what changes between plans? }
+    - { id: faq, archetype: faq, answers: What would stop me from switching? }
+    - { id: start, archetype: signup, answers: How do I try it? }
+  signature: The restore timeline, a stack of timestamped snapshot slabs with a restore point slider where flagged snapshots are red and the selected clean snapshot slides out in amber.
+content:
+  real_copy: false
+  source: Written for this page; every figure, name and price is a labeled placeholder under the page's single fictional-data notice.
+  voice:
+    register: en-formal
+    notes: Direct and factual, second person. Describes the mechanism in the product's own terms (snapshot, restore point, recovery kit). Avoids military-grade, unbreakable and 100 percent secure.
+  key_copy:
+    - { slot: headline, text: Go back to the last clean snapshot., locale: en }
+    - { slot: subhead, text: "Lodestow keeps every version of every file, encrypted on your device before upload. When files are overwritten or encrypted, pick a snapshot from before and restore it.", locale: en }
+    - { slot: cta, text: Start 14-day trial, locale: en }
+flows:
+  - id: pick-restore-point
+    kind: primary
+    goal: Choose a clean snapshot on the restore timeline and restore it
+    start: /
+    done: { text: Nothing was restored }
+    max_steps: 3
+  - id: start-trial
+    kind: signup
+    goal: Enter a work email and start the 14-day trial
+    start: /
+    done: { text: nothing was sent or stored }
+    max_steps: 3
+explorations:
+  - decision: type
+    covers: [display, heading, body, ui, data]
+    candidates:
+      - { name: "Newsreader with Public Sans and Noto Sans Mono", source: "local", note: "serif headings, sans body, monospace records; installed here only, delivery system-only" }
+      - { name: "Plus Jakarta Sans with Noto Sans Mono", source: "local", note: "one sans voice for headings and body; installed here only" }
+      - { name: "Georgia with system-ui and the platform monospace", source: "generic", note: "the platform's own faces, serif headings, sans body, monospace records" }
+    compared_on: [specimen]
+    chosen: "Georgia with system-ui and the platform monospace"
+    runner_up_lost: The named-face pairing looked best in the specimen at 390 px, but the request allows only index.html, styles.css and app.js with no downloads or external assets, so no font file can ship and the face would exist only on machines that happen to have it; the platform stack keeps the same role split (serif headings, sans body, monospace records) on every visitor's machine.
+  - decision: palette
+    candidates:
+      - { name: "Cool near-white field with ink, blue-grey slabs and amber for the selection", source: "world material - restore point slider and flagged snapshots" }
+      - { name: "Cream field with teal slabs and amber accent", source: "generic", note: "the first build of this page" }
+    compared_on: [render]
+    chosen: Cool near-white field with ink, blue-grey slabs and amber for the selection
+    runner_up_lost: The cream and teal build came with the category and its cream field and teal accent did not mark any state; the cool field lets amber and red mean selected and flagged only.
+  - decision: layout
+    candidates:
+      - { name: "Headline then the working restore timeline at full width", source: "sketch of own - signature first" }
+      - { name: "Split hero with a static stack illustration, then the usual features, steps and demo", source: "generic", note: "the first build of this page" }
+    compared_on: [render]
+    chosen: Headline then the working restore timeline at full width
+    runner_up_lost: The split hero put a decorative stack and a floating result chip first and the demo fourth; placing the working timeline under the headline shows the one mechanism that answers the reader's worry before anything else.
+  - decision: motion
+    candidates:
+      - { name: "Band 4 - the selected slab slides out and the panel changes, one fade-up per section", source: "world material - restore point slider" }
+      - { name: "Band 2 - state changes only, no slide or fade", source: "generic" }
+    compared_on: [render]
+    chosen: Band 4 - the selected slab slides out and the panel changes, one fade-up per section
+    runner_up_lost: With no slide the selected snapshot is marked only by colour, and the slide shows which layer the panel describes; looping arrows and the entrance animation of the first build were dropped.
+  - decision: direction
+    candidates:
+      - { name: "The page is the act of choosing a restore point, with the timeline first and each section answering what follows from it", source: "world material - restore point slider" }
+      - { name: "The page is a feature tour in the category's usual order with a demo as one section", source: "generic" }
+    compared_on: [sketch]
+    chosen: The page is the act of choosing a restore point, with the timeline first and each section answering what follows from it
+    runner_up_lost: A feature tour fits any backup product unchanged; ordering by what a reader asks after seeing a flagged snapshot ties the sections to this product's mechanism.
+  - decision: copy
+    covers: [headline, subhead, cta]
+    candidates:
+      - { name: "Backups you can rewind, not just restore. / Start 14-day free trial", source: "generic", note: "first build" }
+      - { name: "Go back to the last clean snapshot. / Start 14-day trial", source: "world material - snapshot timestamps and flagged snapshots" }
+    compared_on: [specimen]
+    chosen: "Go back to the last clean snapshot. / Start 14-day trial"
+    runner_up_lost: The first headline is a not-X-but-Y shell that would fit any backup tool; the second names the object the page shows and the action the reader takes.
+defaults:
+  - id: type.overused-neutral-grotesque
+    decision: keep
+    basis: brief
+    keep_when: specified-face
+    evidence: { brief: "no network requests, external services, downloads, or external assets" }
+    reason: The request allows no font files to ship, so the sans face is the visitor's own system-ui; the platform picks it, and the page separates roles with a serif for headings and monospace for file names and counts.
+  - id: component.hand-drawn-icons
+    decision: keep
+    basis: brief
+    keep_when: uncovered-concept
+    evidence: { asset: page-icons }
+    reason: The request says to draw any icons with SVG or CSS and forbids external assets, so no icon library can load; every icon is one family on one 24-unit grid at one stroke, recorded in the asset ledger.
+  - id: layout.equal-siblings
+    decision: keep
+    basis: requirement
+    keep_when: peer-comparison
+    reason: The three plans, the five questions and the three steps are peers by construction, and the reader compares them side by side.
+  - id: layout.template-section-sequence
+    decision: keep
+    basis: requirement
+    keep_when: reader-question-order
+    reason: Section order follows the questions listed in layout.sections, starting with the restore timeline under the headline; it was not taken from a template.
