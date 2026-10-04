@@ -84,6 +84,8 @@ No text was copied from them. Their licenses are given so their terms are easy t
   browser behavior review.
 - Anthropic frontend-design skill, https://github.com/anthropics/skills (Apache-2.0):
   subject-grounded direction.
+- AntiSlop, a skill of recurring generated-interface patterns (MIT, Copyright (c) 2026 Miqdad Badjuber):
+  the per-domain way of describing a pattern with its honest exceptions.
 
 tools/reference-provenance.yaml names the standards and other works behind each skill reference.
 

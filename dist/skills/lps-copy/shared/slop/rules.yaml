@@ -358,6 +358,71 @@ rules:
     evidence:
     - material
     - brief
+- id: color.sage-soft-field
+  why: A sage or forest green accent on a soft tinted field is the calm, trustworthy palette that care
+    and safety subjects get by category, whatever the subject's own colors are
+  better: Take the field and the accent from the subject's own materials and content colors, and give
+    the accent the one role the page needs it for
+  keep_when:
+  - id: brand-color
+    when: an approved brand color
+    evidence:
+    - design
+    - brief
+  - id: green-subject
+    when: the subject itself is plants, land, herbs, or leaf, so green is its material
+    evidence:
+    - material
+    - brief
+- id: color.violet-indigo-accent
+  why: An indigo or violet accent on white borrows technical credibility from the software category instead
+    of from the product
+  better: Derive the accent from the product's own output or materials, and keep status colors separate
+    from the brand accent
+  keep_when:
+  - id: brand-color
+    when: an approved brand color
+    evidence:
+    - design
+    - brief
+  - id: content-derived
+    when: the accent is a color of the content itself, such as a product, a data series, or a photograph
+    evidence:
+    - material
+    - brief
+- id: color.acid-on-black
+  why: A near-black field with an acid yellow-green accent stands in for youth and energy whatever the
+    subject is
+  better: Choose the field and the accent from the subject's own material, and use the accent for the
+    one action or state it marks
+  keep_when:
+  - id: brand-color
+    when: an approved brand color
+    evidence:
+    - design
+    - brief
+  - id: genre-native
+    when: the subject's genre owns the pairing, such as a club night, a music release, or a game
+    evidence:
+    - brief
+    - plan: brief.product_frame
+      has:
+      - games-entertainment
+- id: color.teal-accent
+  why: A teal accent on a light field signals health, water, or finance by category rather than by the
+    subject's own colors
+  better: Take the accent from the subject's materials, and let a status color keep its own hue
+  keep_when:
+  - id: brand-color
+    when: an approved brand color
+    evidence:
+    - design
+    - brief
+  - id: water-subject
+    when: the subject's material is water, glass, or a clinical surface that is itself teal
+    evidence:
+    - material
+    - brief
 - id: color.competing-accents
   why: Several unrelated accent hues compete, so action, focus, status, data, and ornament become ambiguous
   better: Allocate each accent to a role and check its area and repetition; there is no universal accent
@@ -540,6 +605,17 @@ rules:
   - id: peer-comparison
     when: a genuine peer comparison of equal items
     evidence: none
+- id: layout.pricing-trio-recommendation
+  why: Three offerings with the middle one set apart as the pick arrive together, so the count and the
+    recommendation come from the template instead of from the plans and who each fits
+  better: Show the plans that exist, put the difference that decides between them first, and set one apart
+    only for a reason the buyer can check
+  keep_when:
+  - id: recommendation-has-a-reason
+    when: the brief or the source names the recommended plan and why it fits, and the card says so
+    evidence:
+    - brief
+    - source
 - id: layout.nested-cards
   why: Containers stack border on border without distinct ownership or behavior, obscuring relationships
   better: Group with space, rules, or one meaningful surface
@@ -555,6 +631,17 @@ rules:
   keep_when:
   - id: reader-question-order
     when: the reader's questions genuinely follow that order
+    evidence: none
+- id: layout.reassurance-landing
+  why: The landing page carries the category's reassurance set - its section order, a recommended middle
+    plan, floating status panels, comfort wording, stacked trial terms, paired slogan headings, and a
+    calm palette - so another subject would get the same page
+  better: Rank what this subject's visitor must decide and prove, then give each of those its own structure,
+    wording, and color from the subject's materials
+  keep_when:
+  - id: reader-question-order
+    when: the reader's questions genuinely follow that order and each member that hit is kept on its own
+      case
     evidence: none
 - id: layout.bento-filler
   why: A bento cell exists only to complete the grid shape, so empty modules advertise the template
@@ -766,6 +853,18 @@ rules:
     when: a labeled illustration where no product exists yet
     evidence:
     - brief
+- id: component.floating-chips
+  why: Short status, file, and proof panels float over the edge of the opening's main object, so small
+    reassurances decorate it instead of one real state sitting beside what it describes
+  better: Show one coherent demonstration with each state beside the object it belongs to, or leave the
+    panels out
+  keep_when:
+  - id: annotated-diagram
+    when: labeled callouts that explain parts of the object, each pointing at the part it names
+    evidence: none
+  - id: captured-state
+    when: the panels are live or captured state of a working product shown in the opening
+    evidence: none
 - id: component.generic-spinner
   why: One spinner for every wait ignores duration and layout and gives no sense of structure or preserved
     task
@@ -1244,12 +1343,22 @@ rules:
     when: a complete set that truly has three parts
     evidence: none
 - id: copy.uniform-rhythm
-  why: Sentence length barely varies and openings or endings repeat, so the rhythm follows a rule instead
-    of the content
-  better: Merge repeated structures and let sentence shape follow the content
+  why: Sentence length barely varies, openings or endings repeat, or headings are built as short sentence
+    pairs, so the rhythm follows a rule instead of the content
+  better: Merge repeated structures, name the one fact each heading carries, and let sentence shape follow
+    the content
   keep_when:
   - id: deliberate-anaphora
     when: deliberate anaphora in a speech, quotation, or campaign
+    evidence: none
+  - id: approved-headline
+    when: the brief or approved copy fixes the headline wording
+    evidence:
+    - brief
+    - source
+  - id: distinct-facts
+    when: each short sentence of a heading states a separate fact, and the pairing is not the cadence
+      of the whole page
     evidence: none
 - id: copy.generative-metaphor
   why: Imported metaphor families unrelated to the subject stand in for plain statements
@@ -1444,6 +1553,35 @@ rules:
     when: approved copy
     evidence:
     - brief
+- id: copy.stock-reassurance
+  why: Comfort wording recurs through the headings and lines of the page, promising a feeling where the
+    page could say what is kept, when, and how it comes back
+  better: Name what is protected or done, the moment it happens, and the way back; let the feeling follow
+    from that outcome
+  keep_when:
+  - id: outcome-named-beside
+    when: the same sentence or the next one names the concrete outcome the comfort rests on
+    evidence: none
+  - id: approved-wording
+    when: the brief or approved copy fixes the wording
+    evidence:
+    - brief
+    - source
+  - id: exact-quotation
+    when: an exact quotation of a real customer or document
+    evidence:
+    - source
+- id: copy.template-offer-terms
+  why: Trial, card, and cancellation terms stack under the calls to action as a set whether or not the
+    business set them, so the template invents commercial terms
+  better: State the terms the business has, once, beside the action they qualify, and leave out the ones
+    it does not have
+  keep_when:
+  - id: terms-given
+    when: the brief or the business's published terms give these terms
+    evidence:
+    - brief
+    - source
 - id: imagery.css-illustration
   why: CSS primitives assemble a pseudo-illustration from generic shapes that stand in for the subject
   better: Art-direct imagery from real objects, processes, or data

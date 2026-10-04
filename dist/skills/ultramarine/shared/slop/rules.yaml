@@ -223,6 +223,99 @@ lists:
       - 여기를 클릭
       - 여기 클릭
       - 바로가기
+  reassurance_phrases:
+    as_of: 2026-10
+    values:
+      en:
+      - peace of mind
+      - life happens
+      - worry-free
+      - stress-free
+      - rest easy
+      - sleep easy
+      - sleep soundly
+      - breathe easy
+      - sigh of relief
+      - nothing to worry about
+      - lose the worry
+      - less worry
+      - we've got you covered
+      - we've got your back
+      ko:
+      - 마음 편히
+      - 마음 편한
+      - 마음 편하게
+      - 걱정 없이
+      - 걱정 없는
+      - 걱정 마세요
+      - 걱정하지 마세요
+      - 안심하고
+      - 믿고 맡기
+      ja:
+      - ご安心
+      - 心配いりません
+      - 心配はいりません
+      zh:
+      - 放心
+      - 无忧
+      - 无后顾之忧
+  offer_terms:
+    as_of: 2026-10
+    values:
+      en:
+      - no credit card
+      - free trial
+      - cancel anytime
+      - cancel any time
+      - free forever
+      - no commitment
+      - no contract
+      - no setup fee
+      - no strings attached
+      - money-back guarantee
+      ko:
+      - 신용카드 없이
+      - 카드 등록 없이
+      - 언제든 해지
+      - 언제든지 해지
+      - 무료 체험
+      - 약정 없
+      ja:
+      - クレジットカード不要
+      - いつでも解約
+      - 無料トライアル
+      zh:
+      - 无需信用卡
+      - 随时取消
+      - 免费试用
+  recommendation_badges:
+    as_of: 2026-10
+    values:
+      en:
+      - most popular
+      - popular
+      - recommended
+      - best value
+      - best for
+      - sweet spot
+      - team favorite
+      - most chosen
+      - just right
+      - our pick
+      - most flexible
+      ko:
+      - 인기
+      - 추천
+      - 가장 많이
+      - 베스트
+      ja:
+      - 人気
+      - おすすめ
+      - 一番人気
+      zh:
+      - 推荐
+      - 最受欢迎
+      - 热门
   leftover_phrases:
     as_of: 2026-09
     values:
@@ -317,6 +410,7 @@ packages:
     - color.hero-halo
     - color.neon-glow
     - color.gradient-headline
+    - color.acid-on-black
     - surface.glass-everywhere
     - type.overused-neutral-grotesque
     - motion.pulse-without-status
@@ -358,6 +452,28 @@ packages:
       eras:
       - 2026
       note: thick outlines, offset shadows, saturated blocks, heavy grotesque
+  reassurance-landing:
+    members:
+    - layout.template-section-sequence
+    - layout.pricing-trio-recommendation
+    - component.floating-chips
+    - copy.stock-reassurance
+    - copy.template-offer-terms
+    - copy.uniform-rhythm
+    - color.sage-soft-field
+    - color.violet-indigo-accent
+    - color.teal-accent
+    structure:
+      scope: 'member hits on one landing page: the category''s section order, a recommended middle plan,
+        floating panels in the opening, comfort wording, stacked trial terms, headings in short sentence
+        pairs, and a category palette'
+    hit_when:
+      min_members: 4
+    observed:
+      eras:
+      - 2026
+      note: feature, plan, and question sections with a recommended middle plan, floating status panels,
+        comfort wording, and a calm green or indigo palette
   subscription-trap:
     members:
     - ux.hidden-subscription
@@ -1498,6 +1614,290 @@ rules:
   waiver:
     scope: value
   verify: static
+- id: color.sage-soft-field
+  class: default
+  domain: color
+  layers:
+  - plan
+  - render
+  severity:
+    create: warn
+    review: P3
+  detect:
+    plan:
+      detector: plan-palette-region
+      path: tokens.color.roles[?role=identity|interaction].oklch
+      region:
+        space: oklch
+        bounds:
+          h:
+          - 110
+          - 185
+          c:
+          - 0.04
+          - 0.22
+          l:
+          - 0.25
+          - 0.95
+        role: identity|interaction
+    render:
+      detector: palette-family
+      params:
+        accent:
+          bounds:
+            h:
+            - 110
+            - 185
+            c:
+            - 0.04
+            - 0.22
+            l:
+            - 0.25
+            - 0.95
+        field:
+          bounds:
+            l:
+            - 0.92
+            - 1.0
+            c:
+            - 0.003
+            - 0.05
+            h:
+            - 60
+            - 200
+        accent_min_share: 0.002
+        field_min_share: 0.2
+  packages:
+  - reassurance-landing
+  why: A sage or forest green accent on a soft tinted field is the calm, trustworthy palette that care
+    and safety subjects get by category, whatever the subject's own colors are
+  better: Take the field and the accent from the subject's own materials and content colors, and give
+    the accent the one role the page needs it for
+  keep_when:
+  - id: brand-color
+    when: an approved brand color
+    evidence:
+    - design
+    - brief
+  - id: green-subject
+    when: the subject itself is plants, land, herbs, or leaf, so green is its material
+    evidence:
+    - material
+    - brief
+  waiver:
+    scope: value
+  verify: static
+- id: color.violet-indigo-accent
+  class: default
+  domain: color
+  layers:
+  - plan
+  - render
+  severity:
+    create: warn
+    review: P3
+  detect:
+    plan:
+      detector: plan-palette-region
+      path: tokens.color.roles[?role=identity|interaction].oklch
+      region:
+        space: oklch
+        bounds:
+          h:
+          - 262
+          - 320
+          c:
+          - 0.09
+          - 0.37
+          l:
+          - 0.3
+          - 0.8
+        role: identity|interaction
+    render:
+      detector: palette-family
+      params:
+        accent:
+          bounds:
+            h:
+            - 262
+            - 320
+            c:
+            - 0.09
+            - 0.37
+            l:
+            - 0.3
+            - 0.8
+        field:
+          bounds:
+            l:
+            - 0.95
+            - 1.0
+            c:
+            - 0.0
+            - 0.03
+        accent_min_share: 0.002
+        field_min_share: 0.3
+  packages:
+  - reassurance-landing
+  why: An indigo or violet accent on white borrows technical credibility from the software category instead
+    of from the product
+  better: Derive the accent from the product's own output or materials, and keep status colors separate
+    from the brand accent
+  keep_when:
+  - id: brand-color
+    when: an approved brand color
+    evidence:
+    - design
+    - brief
+  - id: content-derived
+    when: the accent is a color of the content itself, such as a product, a data series, or a photograph
+    evidence:
+    - material
+    - brief
+  waiver:
+    scope: value
+  verify: static
+- id: color.acid-on-black
+  class: default
+  domain: color
+  layers:
+  - plan
+  - render
+  severity:
+    create: warn
+    review: P3
+  detect:
+    plan:
+      detector: plan-palette-region
+      path: tokens.color.roles[?role=identity|interaction].oklch
+      region:
+        space: oklch
+        bounds:
+          h:
+          - 100
+          - 140
+          c:
+          - 0.16
+          - 0.4
+          l:
+          - 0.8
+          - 1.0
+        role: identity|interaction
+    render:
+      detector: palette-family
+      params:
+        accent:
+          bounds:
+            h:
+            - 100
+            - 140
+            c:
+            - 0.16
+            - 0.4
+            l:
+            - 0.8
+            - 1.0
+        field:
+          bounds:
+            l:
+            - 0.0
+            - 0.22
+            c:
+            - 0.0
+            - 0.05
+        accent_min_share: 0.002
+        field_min_share: 0.25
+  packages:
+  - dark-luminous
+  why: A near-black field with an acid yellow-green accent stands in for youth and energy whatever the
+    subject is
+  better: Choose the field and the accent from the subject's own material, and use the accent for the
+    one action or state it marks
+  keep_when:
+  - id: brand-color
+    when: an approved brand color
+    evidence:
+    - design
+    - brief
+  - id: genre-native
+    when: the subject's genre owns the pairing, such as a club night, a music release, or a game
+    evidence:
+    - brief
+    - plan: brief.product_frame
+      has:
+      - games-entertainment
+  waiver:
+    scope: value
+  verify: static
+- id: color.teal-accent
+  class: default
+  domain: color
+  layers:
+  - plan
+  - render
+  severity:
+    create: warn
+    review: P3
+  detect:
+    plan:
+      detector: plan-palette-region
+      path: tokens.color.roles[?role=identity|interaction].oklch
+      region:
+        space: oklch
+        bounds:
+          h:
+          - 175
+          - 215
+          c:
+          - 0.06
+          - 0.2
+          l:
+          - 0.3
+          - 0.8
+        role: identity|interaction
+    render:
+      detector: palette-family
+      params:
+        accent:
+          bounds:
+            h:
+            - 175
+            - 215
+            c:
+            - 0.06
+            - 0.2
+            l:
+            - 0.3
+            - 0.8
+        field:
+          bounds:
+            l:
+            - 0.92
+            - 1.0
+            c:
+            - 0.0
+            - 0.05
+        accent_min_share: 0.002
+        field_min_share: 0.3
+  packages:
+  - reassurance-landing
+  why: A teal accent on a light field signals health, water, or finance by category rather than by the
+    subject's own colors
+  better: Take the accent from the subject's materials, and let a status color keep its own hue
+  keep_when:
+  - id: brand-color
+    when: an approved brand color
+    evidence:
+    - design
+    - brief
+  - id: water-subject
+    when: the subject's material is water, glass, or a clinical surface that is itself teal
+    evidence:
+    - material
+    - brief
+  waiver:
+    scope: value
+  verify: static
 - id: color.competing-accents
   class: quality
   domain: color
@@ -1958,6 +2358,37 @@ rules:
   waiver:
     scope: value
   verify: static
+- id: layout.pricing-trio-recommendation
+  class: default
+  domain: layout
+  layers:
+  - render
+  severity:
+    create: warn
+    review: P3
+  detect:
+    render:
+      detector: pricing-offers
+      list: recommendation_badges
+      params:
+        check: center-recommendation
+      threshold:
+        emphasis_signals_max: 1
+  packages:
+  - reassurance-landing
+  why: Three offerings with the middle one set apart as the pick arrive together, so the count and the
+    recommendation come from the template instead of from the plans and who each fits
+  better: Show the plans that exist, put the difference that decides between them first, and set one apart
+    only for a reason the buyer can check
+  keep_when:
+  - id: recommendation-has-a-reason
+    when: the brief or the source names the recommended plan and why it fits, and the card says so
+    evidence:
+    - brief
+    - source
+  waiver:
+    scope: value
+  verify: review
 - id: layout.nested-cards
   class: default
   domain: layout
@@ -2012,6 +2443,11 @@ rules:
           - pricing
           - faq
           - cta
+        - - hero
+          - feature-grid
+          - pricing
+          - faq
+          - cta
         max_distance: 0.34
     render:
       detector: section-sequence
@@ -2032,7 +2468,15 @@ rules:
           - pricing
           - faq
           - cta
+        - - hero
+          - feature-grid
+          - pricing
+          - faq
+          - cta
         max_distance: 0.34
+        min_sections: 4
+  packages:
+  - reassurance-landing
   why: Section order follows a category landing template, or unrelated sections repeat identical spans,
     instead of following the questions the reader brings
   better: Order sections by the reader's evaluation or task sequence, and vary structure when the content
@@ -2044,6 +2488,32 @@ rules:
   waiver:
     scope: rule
   verify: static
+- id: layout.reassurance-landing
+  class: default
+  domain: layout
+  layers:
+  - render
+  severity:
+    create: warn
+    review: P3
+  detect:
+    render:
+      detector: package-hit
+      params:
+        package: reassurance-landing
+  why: The landing page carries the category's reassurance set - its section order, a recommended middle
+    plan, floating status panels, comfort wording, stacked trial terms, paired slogan headings, and a
+    calm palette - so another subject would get the same page
+  better: Rank what this subject's visitor must decide and prove, then give each of those its own structure,
+    wording, and color from the subject's materials
+  keep_when:
+  - id: reader-question-order
+    when: the reader's questions genuinely follow that order and each member that hit is kept on its own
+      case
+    evidence: none
+  waiver:
+    scope: rule
+  verify: review
 - id: layout.bento-filler
   class: default
   domain: layout
@@ -2650,6 +3120,36 @@ rules:
     when: a labeled illustration where no product exists yet
     evidence:
     - brief
+  waiver:
+    scope: value
+  verify: review
+- id: component.floating-chips
+  class: default
+  domain: component
+  layers:
+  - render
+  - review
+  severity:
+    create: warn
+    review: P3
+  detect:
+    render:
+      detector: decorative-dom
+      params:
+        kind: floating-chips
+  packages:
+  - reassurance-landing
+  why: Short status, file, and proof panels float over the edge of the opening's main object, so small
+    reassurances decorate it instead of one real state sitting beside what it describes
+  better: Show one coherent demonstration with each state beside the object it belongs to, or leave the
+    panels out
+  keep_when:
+  - id: annotated-diagram
+    when: labeled callouts that explain parts of the object, each pointing at the part it names
+    evidence: none
+  - id: captured-state
+    when: the panels are live or captured state of a working product shown in the opening
+    evidence: none
   waiver:
     scope: value
   verify: review
@@ -4463,12 +4963,25 @@ rules:
         - sentence-length-variance
         - repeated-openings
         - repeated-endings
-  why: Sentence length barely varies and openings or endings repeat, so the rhythm follows a rule instead
-    of the content
-  better: Merge repeated structures and let sentence shape follow the content
+        - paired-headings
+  packages:
+  - reassurance-landing
+  why: Sentence length barely varies, openings or endings repeat, or headings are built as short sentence
+    pairs, so the rhythm follows a rule instead of the content
+  better: Merge repeated structures, name the one fact each heading carries, and let sentence shape follow
+    the content
   keep_when:
   - id: deliberate-anaphora
     when: deliberate anaphora in a speech, quotation, or campaign
+    evidence: none
+  - id: approved-headline
+    when: the brief or approved copy fixes the headline wording
+    evidence:
+    - brief
+    - source
+  - id: distinct-facts
+    when: each short sentence of a heading states a separate fact, and the pairing is not the cadence
+      of the whole page
     evidence: none
   waiver:
     scope: rule
@@ -5000,6 +5513,79 @@ rules:
   waiver:
     scope: rule
   verify: static
+- id: copy.stock-reassurance
+  class: default
+  domain: copy
+  layers:
+  - plan
+  - render
+  severity:
+    create: warn
+    review: P3
+  detect:
+    plan:
+      detector: copy-family-rate
+      path: content.key_copy[*].text
+      family: reassurance_phrases
+      params:
+        trigger: once
+    render:
+      detector: copy-family-rate
+      family: reassurance_phrases
+      params:
+        trigger: density
+        per: page
+  packages:
+  - reassurance-landing
+  why: Comfort wording recurs through the headings and lines of the page, promising a feeling where the
+    page could say what is kept, when, and how it comes back
+  better: Name what is protected or done, the moment it happens, and the way back; let the feeling follow
+    from that outcome
+  keep_when:
+  - id: outcome-named-beside
+    when: the same sentence or the next one names the concrete outcome the comfort rests on
+    evidence: none
+  - id: approved-wording
+    when: the brief or approved copy fixes the wording
+    evidence:
+    - brief
+    - source
+  - id: exact-quotation
+    when: an exact quotation of a real customer or document
+    evidence:
+    - source
+  waiver:
+    scope: value
+  verify: review
+- id: copy.template-offer-terms
+  class: default
+  domain: copy
+  layers:
+  - render
+  severity:
+    create: warn
+    review: P3
+  detect:
+    render:
+      detector: copy-family-rate
+      family: offer_terms
+      params:
+        trigger: co-occurrence
+  packages:
+  - reassurance-landing
+  why: Trial, card, and cancellation terms stack under the calls to action as a set whether or not the
+    business set them, so the template invents commercial terms
+  better: State the terms the business has, once, beside the action they qualify, and leave out the ones
+    it does not have
+  keep_when:
+  - id: terms-given
+    when: the brief or the business's published terms give these terms
+    evidence:
+    - brief
+    - source
+  waiver:
+    scope: value
+  verify: review
 - id: imagery.css-illustration
   class: default
   domain: imagery

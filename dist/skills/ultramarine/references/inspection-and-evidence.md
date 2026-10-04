@@ -96,6 +96,17 @@ content to a navigable region. Include the on-screen keyboard on temporary input
 scope. Record width, text setting, orientation, route, and state. Preserve authored relations that
 survive; change the failed constraint, not the whole visual grammar by default.
 
+## Heuristic inspection
+
+Inspect a consequential task and failure/return path, not random screens. Separate an orientation
+pass from an inspection pass; when several reviewers participate, retain independent observations
+before merging. Merge by behavior, consequence, and remedy, not by heuristic name; one issue need
+not appear under ten labels. “Minimalist” means removing task-irrelevant competition, not making
+every professional workspace sparse. Prioritize with the existing severity contract; do not mix
+positive craft ratings with oppositely directed problem scales or average them into usability.
+Expert inspection predicts plausible problems, not prevalence, audience preference, or success
+rates. Re-exercise the affected task after a remedy; cleaner default appearance is not resolution.
+
 ## Write down each finding
 
 Put the smallest record someone else could repeat beside the finding, in the report. A bare

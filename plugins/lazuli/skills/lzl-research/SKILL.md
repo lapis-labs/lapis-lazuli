@@ -110,6 +110,8 @@ Label each claim **confirmed** (you read the supporting text; give the URL and d
 (a snippet, a summary, a source named elsewhere). Reposts of one work are one source. Never invent
 quotations, page numbers, counts, or percentages.
 
+For study planning or interpretation of supplied, authorized user evidence, read `references/user-studies.md`.
+
 ## Competitive and comparative analysis
 
 - Name the decision, then the set: direct competitors, alternatives, adjacent tasks, and platform

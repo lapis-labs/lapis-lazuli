@@ -90,6 +90,16 @@ cards:
     decide: [tokens.color.roles, tokens.color.themes]
     rules: [color.dark-luminous, color.violet-blue-gradient, color.hero-halo, color.neon-glow, color.gradient-headline]
 
+  - id: category-palette
+    name: Category palette
+    cue: The colors came with the category - calm green for care and safety, indigo for software, near-black with an acid accent for anything young, teal for health - and nothing in the subject asked for them.
+    routes:
+      - Take the field and the accent from world_materials - the subject's own objects, paper, packaging, or places.
+      - Choose the accent for the one role the page needs it for, then check the content colors against it.
+      - Keep a category color where the brand already owns it, and record that.
+    decide: [tokens.color.roles, tokens.color.relations]
+    rules: [color.sage-soft-field, color.violet-indigo-accent, color.acid-on-black, color.teal-accent]
+
   - id: starter-surface
     name: Starter surface
     cue: The component library's starter look or a starter template stays, and the only change is a new palette or primary color.
@@ -131,13 +141,13 @@ cards:
   # ------------------------------------------------------------------ layout
   - id: template-page
     name: Template page
-    cue: The page structure was picked before the content was ranked - a centered or split hero, the category's usual section order, image and text rows that alternate, everything on one axis.
+    cue: The page structure was picked before the content was ranked - a centered or split hero, the category's usual section order, a middle plan set apart as the pick, image and text rows that alternate, everything on one axis.
     routes:
       - Rank the content first, then choose the composition that expresses that order, conventional or not.
       - Order sections by the questions the reader brings; give each section the structure its content relation needs.
       - Build the page around the signature instead of a hero shell.
     decide: [layout.procedure, layout.sections, layout.signature]
-    rules: [layout.hero-before-priority, layout.template-section-sequence, layout.zigzag, layout.symmetry-excess, layout.typical-composition]
+    rules: [layout.hero-before-priority, layout.template-section-sequence, layout.pricing-trio-recommendation, layout.reassurance-landing, layout.zigzag, layout.symmetry-excess, layout.typical-composition]
 
   - id: boxed-everything
     name: Everything in a box
@@ -161,13 +171,13 @@ cards:
 
   - id: stand-in-imagery
     name: Stand-in imagery
-    cue: Imagery stands in for the subject - a div-built app window, an illustration assembled from CSS shapes, a generic stock scene, a decorative jagged crop.
+    cue: Imagery stands in for the subject - a div-built app window, status panels floating around the hero object, an illustration assembled from CSS shapes, a generic stock scene, a decorative jagged crop.
     routes:
       - Use a real capture of the product, or a clearly labeled illustrative slot.
       - Art-direct imagery from the real objects, processes, or data in world_materials.
       - Choose crop and contour from the image content.
     decide: [world_materials, sources]
-    rules: [component.fake-app-window, imagery.css-illustration, imagery.generic-stock, imagery.jagged-clip]
+    rules: [component.fake-app-window, component.floating-chips, imagery.css-illustration, imagery.generic-stock, imagery.jagged-clip]
 
   # ------------------------------------------------------------------ motion
   - id: ambient-motion
@@ -222,9 +232,9 @@ cards:
 
   - id: generic-content
     name: Content that fits anywhere
-    cue: Names, companies, and phrasing could sit on any product - placeholder people, placeholder brands, the first phrasing that comes to mind.
+    cue: Names, companies, and phrasing could sit on any product - placeholder people, placeholder brands, the first phrasing that comes to mind, comfort wording, and trial terms that nobody set.
     routes:
       - Use representative, clearly synthetic content from the domain, including long and local names.
       - Rewrite around the subject's facts and world_materials instead of swapping synonyms.
     decide: [content.key_copy, content.source]
-    rules: [copy.placeholder-content, copy.typical-phrasing]
+    rules: [copy.placeholder-content, copy.typical-phrasing, copy.stock-reassurance, copy.template-offer-terms]

@@ -291,6 +291,9 @@ decide each of its rules that applies:
 `plan check` asks about the defaults it can see in the plan. Record the others as you meet them; a
 `keep` entry with a fitting `keep_when` is what stops a later check from gating that default.
 
+For what these defaults look like on a page, why they read as generated, and the per-genre packages, read
+`references/anti-slop.md`.
+
 ### 12. Sources - `sources`
 
 List every document, page, and file the plan relied on.

@@ -91,6 +91,7 @@ disabled, and busy. Each state says what happened and offers the next action.
 - Motion explains a change of state and has a reduced-motion branch.
 
 For notification channels, permissions, and lifecycles, read `references/notifications-and-attention.md`.
+For adoption/exit, AI-assisted work, moderation, or support handoffs, read `references/product-lifecycles.md`.
 
 ## Write the stub
 

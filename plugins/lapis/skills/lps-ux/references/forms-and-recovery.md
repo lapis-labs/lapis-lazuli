@@ -20,6 +20,13 @@ do not invent autosave, queueing, retention, or delegated access. Keep operator,
 current identity, and authority distinct; a helper relationship grants no account permission.
 Continue independent work while the named owner resolves those questions.
 
+For a misunderstood action, distinguish unnoticed control, misleading term, and wrong model of
+ownership or state. Ask for a pre-action prediction, then compare it with the real result; one
+failed click establishes no mental model. Repair the signifier, vocabulary, or behavior at its
+actual owner. Teaching a changed model must preserve identifiers, routes, and permissions unless
+separately authorized. Keep required and frequent expert controls visible; disclosure is for
+optional detail, not a mechanical menu-item limit or a way to hide inherent task complexity.
+
 ## From the goal to the fields
 
 Start from the goal, not the data model. For each field ask whether the goal fails without it, whether
