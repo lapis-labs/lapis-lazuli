@@ -165,7 +165,8 @@ clean, or editorial. When none matches, write in `direction.read.text` what the 
 the content. A style file says what the style assumes about the content and which plan fields make it
 this subject's; it is not a look to reproduce.
 
-For mixed style influences and their ownership, read `references/form-levers.md`.
+For mixed style influences and their ownership, read `references/form-levers.md`; for a named style
+or regional reference that is still an open direction, read `references/style-branches.md`.
 
 The motion dial has three bands: 1-3 feedback only, 4-6 transitions that explain a change, 7-10 authored
 moments. Write the band into `tokens.motion.principles` with a reduced-motion branch for each effect
@@ -331,7 +332,9 @@ List every document, page, and file the plan relied on.
 
 ## Implement
 
-For stack choice or platform adaptation, read `references/implementation.md`.
+For stack choice or platform adaptation, read `references/implementation.md`; for a surface that
+crosses platforms, `references/platforms.md`; for email or a host-controlled surface,
+`references/email.md`; for an authorized 3D asset, `references/3d.md`.
 
 - Follow the plan. When implementation forces a change, change the YAML first and tell the user.
 - Tokens become variables; no raw values in components.
