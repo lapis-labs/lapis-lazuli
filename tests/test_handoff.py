@@ -45,7 +45,11 @@ def project(tmp_path):
                       "constraints": ["Preserve keyboard recovery and reduced motion"]},
             "tokens": {"color": {"roles": [{"name": "paper", "role": "field", "oklch": [0.93, 0.01, 250]}],
                                   "themes": ["light", "dark"]}, "motion": {"reduced_motion": "respect"}},
-            "layout": {"sections": [{"id": "pieces", "archetype": "list", "answers": "Which piece is available"}]},
+            "layout": {"phone_task": {"decision": "Choose an available piece and reserve it",
+                                      "first_result": "#pieces li:first-child",
+                                      "before_result": ["piece list"],
+                                      "acceptance": "The first available piece and its reserve action show before any studio story"},
+                       "sections": [{"id": "pieces", "archetype": "list", "answers": "Which piece is available"}]},
             "content": {"real_copy": True, "voice": {"register": "haeyo"}, "key_copy": [
                 {"slot": "cta", "text": "예약하기", "locale": "ko-KR"},
                 {"slot": "error", "text": "예약하지 못했어요. 다시 시도해 주세요", "locale": "ko-KR"}]},
