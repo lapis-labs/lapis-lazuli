@@ -436,6 +436,9 @@ after text.
 
 ### Fixed
 
+- `render check` no longer stops with `max() iterable argument is empty` on a page where a box with a CSS gradient
+  is painted above every other box (for example a fixed bottom bar at the end of the page). Such a gradient is
+  recorded without `behind`.
 - `lapis-design next` said `done` for a plan only libyaml could read. The plan reader used libyaml's loader, which
   accepts a `?` inside a plain scalar of a flow collection (`{ answers: What does this do for me? }`) that PyYAML's
   pure-Python loader, and every other tool built on `yaml.safe_load`, refuses; `plan check` found 0 blocking

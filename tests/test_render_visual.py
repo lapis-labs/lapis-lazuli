@@ -69,6 +69,12 @@ def test_charts_paint_data_by_role_and_name_or_by_structure(visual_capture):
     assert guessed("230 200 0") == "content"   # role img, "Company logo"
 
 
+def test_gradient_painted_above_every_box_has_no_behind(visual_capture):
+    vp = visual_capture("visual-gradient-topmost.html")
+    gradients = [g for b in vp["boxes"] for g in b["style"].get("gradients", [])]
+    assert len(gradients) == 1 and "behind" not in gradients[0]
+
+
 def test_css_paint_icon_media_and_hashes(visual_capture):
     vp = visual_capture("visual-fields.html")
     boxes = vp["boxes"]

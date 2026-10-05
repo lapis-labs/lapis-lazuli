@@ -181,7 +181,7 @@ def _gradient(value: str, target: str, rect: dict, vp: dict, blur: float | None,
                       max(0, min(rect["y"] + rect["h"], b["rect"]["y"]+b["rect"]["h"]) -
                           max(rect["y"], b["rect"]["y"])), b["id"])
                      for b in others if b.get("paint_order", -1) > own["paint_order"])
-            if above and (best := max(above))[0] > 0:
+            if (best := max(above, default=(0, None)))[0] > 0:
                 item["behind"] = best[1]
             result.append(item)
     return result
