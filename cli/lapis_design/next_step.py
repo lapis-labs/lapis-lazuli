@@ -40,7 +40,7 @@ from typing import Any
 
 import yaml
 
-from lapis_design import attempts, brief, gate, references, release_check, shared_dir, taste, waiting
+from lapis_design import attempts, brief, draft, gate, references, release_check, shared_dir, taste, waiting
 from lapis_design.lint.cli import problems
 from lapis_design.plan_check import PlanOverLimit, read_plan, yaml_reason
 from lapis_design.summary import NOT_JUDGED
@@ -230,18 +230,30 @@ def evaluate(root: Path, task: str, page: str | None = None) -> dict:
     `waiting` names the questions and answers files. `page` is the page the render and behavior commands
     name; without it the usual entry file is used, and a page that cannot be found stays `<page>`.
     Raises NextError when the files cannot be read as a state."""
+    root = root.resolve()
     result = _steps(root, task, page)
     step = result["step"]
-    if step is None:
-        return result
     plan_exists = (root / ".lapis" / "plans" / f"{task}.yaml").exists()
     found = waiting.pending(root, task, "approval" if plan_exists else "plan", gate.load(root, task).get("waits"))
     if found is None:
         return result
+    shown = draft.links(root, task)
+    if shown or draft.path(root, task).is_file():
+        errors, summaries = draft.check(root, task, asked=shown)
+        if errors:
+            review = _step(draft.STEP, "Before showing the draft, review the exact page: " + _brief(errors)
+                           + ". Record the review and summarize it, including unresolved findings, to the owner.",
+                           f"lapis-design draft check --task {task}", shared_dir() / "release/draft.schema.yaml")
+            return {**result, "state": "needs-step", "step": review, "reason": review["why"]}
+        result["draft_review"] = summaries
+    if step is None:
+        return result
     if (found["phase"] == "plan" or step["id"] == brief.STEP) and (over := brief.questions_problem(root, task)):
-        cut = _step(brief.STEP, brief.over_why(task, over))      # questions past the cap are cut, never waited on
+        cut = _step(brief.STEP, brief.over_why(task, over))
         return {**result, "step": cut, "reason": cut["why"]}
-    wait = _step(waiting.STEP, waiting.why(task, found, step["id"]))
+    wait = _step(waiting.STEP, waiting.why(task, found, step["id"]) +
+                 (" Include the recorded draft review summary and every unresolved finding in that message."
+                  if result.get("draft_review") else ""))
     return {**result, "state": waiting.STEP, "step": wait, "then": step, "waiting": found, "reason": wait["why"]}
 
 

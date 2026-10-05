@@ -4,6 +4,11 @@
 version: 0
 skill: lapis
 items:
+- id: draft-review
+  view: full
+  path: release/draft.schema.yaml
+  summary: Pre-show review record, independent of the release gate. Written by the reviewer, never by
+    a check.
 - id: plan-schema
   view: full
   path: plan/schema.yaml

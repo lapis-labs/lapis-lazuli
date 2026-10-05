@@ -21,6 +21,8 @@ ultramarine checks designs; it does not make them. It runs the `lapis-design` ch
 render, reads the findings in order of authority, has a separate critic judge what measurement
 cannot, and hands each fix back to the maker. It reports what its checks found; it does not certify
 accessibility or legal conformance. The full pre-ship gate is `ulm-release`.
+Before a rendered draft is shown for feedback or approval, read `references/pre-show-review.md`.
+Review only the shown pages; a small iteration reviews its changed area and affected widths.
 
 ## Order of authority
 

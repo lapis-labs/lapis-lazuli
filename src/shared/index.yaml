@@ -13,6 +13,14 @@
 version: 0
 
 items:
+  - id: draft-review
+    kind: contract
+    path: release/draft.schema.yaml
+    note: pre-show pages and narrow review evidence; not a release verdict
+    consumers:
+      lapis: full
+      ultramarine: full
+
   - id: plan-schema
     kind: contract
     path: plan/schema.yaml

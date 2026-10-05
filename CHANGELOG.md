@@ -9,6 +9,12 @@ between minor versions; render extraction is v1 and the other contract formats a
 
 ### Fixed
 
+
+- Draft approval waits now require a current narrow review of every shown page, including pages
+  under `.lapis/specimens/`: capture/task/source links, visitor walks at the shown widths, finding
+  dispositions, changed-behavior evidence, and an independent critic for a new direction.
+  Pure questions remain allowed. The attended exit gate records unreviewed stops without blocking
+  the user's control; owner reports carry the review and unresolved findings, not a release claim.
 - Plugin/CLI version skew no longer turns argparse exit 2 into an endless Stop loop or denied writes.
   Every harness hook uses the separate `lapis-design-hook --plugin-version VERSION <name>` entry point:
   old installs lack it and fail open, while installed runners skip unknown arguments and mismatched

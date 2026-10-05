@@ -1,0 +1,74 @@
+# Pre-show review record, independent of the release gate. Written by the reviewer, never by a check.
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/draft.v0.json
+title: LapisLazuli draft presentation and review
+type: object
+additionalProperties: false
+required: [version, task, pages]
+properties:
+  version: {const: 0}
+  task: {type: string, pattern: '^[a-z0-9][a-z0-9-]+$'}
+  pages:
+    type: array
+    minItems: 1
+    items:
+      type: object
+      additionalProperties: false
+      required: [url, render_task, sources, direction, area, widths, behavior_changed]
+      properties:
+        url: {type: string, minLength: 3}
+        render_task: {type: string, minLength: 2}
+        sources: {type: array, minItems: 1, uniqueItems: true, items: {type: string, minLength: 1}}
+        direction: {enum: [new, iteration]}
+        area: {type: string, minLength: 3}
+        widths: {type: array, minItems: 1, uniqueItems: true, items: {enum: [320, 390, 768, 1440]}}
+        behavior_changed: {type: boolean}
+        review:
+          type: object
+          additionalProperties: false
+          required: [extracts, lint, handled, walkthroughs, summary, making_of]
+          properties:
+            extracts: {type: array, minItems: 1, items: {type: string}}
+            lint: {type: string, minLength: 1}
+            summary: {type: string, minLength: 8}
+            making_of: {type: string, minLength: 8}
+            behavior:
+              type: object
+              required: [refs, observed]
+              properties:
+                refs: {type: array, minItems: 1, items: {type: string}}
+                observed: {type: string, minLength: 8}
+            critic:
+              type: object
+              additionalProperties: false
+              required: [report, context, independent]
+              properties:
+                report: {type: string, minLength: 1}
+                context: {type: string, minLength: 3}
+                independent: {const: true}
+            walkthroughs:
+              type: array
+              minItems: 1
+              items:
+                type: object
+                required: [task, viewport, completed, first_look, read_or_scrolled_past, stuck, refs]
+                properties:
+                  task: {type: string, minLength: 3}
+                  viewport: {enum: [320, 390, 768, 1440]}
+                  completed: {enum: ['yes', partly, 'no']}
+                  first_look: {type: string, minLength: 3}
+                  read_or_scrolled_past: {type: string}
+                  stuck: {type: string}
+                  refs: {type: array, minItems: 1, items: {type: string}}
+            handled:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required: [report, finding, disposition, reason, refs]
+                properties:
+                  report: {type: string}
+                  finding: {type: integer, minimum: 0}
+                  disposition: {enum: [fixed, justified-keep, unresolved]}
+                  reason: {type: string, minLength: 8}
+                  refs: {type: array, minItems: 1, items: {type: string}}

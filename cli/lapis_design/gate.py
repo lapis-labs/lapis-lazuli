@@ -108,6 +108,9 @@ def continuation(result: dict[str, Any], first: bool, relayed: bool = False) -> 
                      f"the work and nobody can be asked, decline the step with their line as the step says, then run "
                      f"`lapis-design next --task {task}` again until it says done. Never write or edit a report, a lock, "
                      "or a failure record by hand.")
+    elif step["id"] == "draft-review":
+        parts.append("Write the review record from actual observations; never invent a capture, finding disposition, "
+                     "walkthrough, or independent critic. A draft review is not a release pass.")
     else:
         parts.append(f"A missing or invalid input and a plan blocker are not done: create or fix it, then run "
                      f"`lapis-design next --task {task}` again until it says done. Only a failure of the environment, "
@@ -166,6 +169,9 @@ def stop_output(project: Path, session: str = "", *, unattended: bool = True,
             save(step=None, same=0, total=state.get("total", 0))
         return None
     if not unattended:
+        if step["id"] == "draft-review":
+            save(step=state.get("step"), same=state.get("same", 0), total=state.get("total", 0),
+                 unreviewed_draft={"step": step["id"], "reason": step["why"]})
         return {"systemMessage": notice(result)}
     if result["state"] == waiting.STEP:                         # the run asked its user: no continue, none counted
         found = result["waiting"]

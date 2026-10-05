@@ -255,6 +255,24 @@ new set. Past the cap `next` and the gate name the step the files call for, as w
 `--task`, `next` takes the task of the newest plan, counted questions file, counted answers file, or counted references
 record.
 
+### Pre-show draft checkpoint
+
+An unanswered question that links a rendered local page, or has `.lapis/drafts/<task>.yaml`,
+does not become `waiting-for-user` until `draft check` accepts that record. Missing evidence is
+`draft-review`, even if the ordinary next step is ledger or release. Every shown page names its
+URL, render task, source files, changed area, and widths. A new direction needs 390/1440 captures,
+one visitor-task walk per width, source/render lint with every finding fixed, justified keep, or
+unresolved, and one independent critic. Behavior changes need scoped smoke/playback evidence.
+The review asks whether visible text is the product's message or this website's own making.
+A small iteration reviews only its changed area and affected widths; no new critic is required.
+The owner's message summarizes the review and unresolved findings. Open findings can remain
+honestly listed; the record is not a release pass. A pure question showing no draft stays allowed.
+
+The unattended exit gate requests `draft-review` under the existing continuation limits. An
+attended stop preserves the user's control and records `unreviewed_draft` with its warning; it
+does not count that stop as a reviewed approval. Full release checks remain separate.
+
+
 ## What the gate does not do
 
 It does not rerun captures, probes, or lint, judge design quality, or state a legal conclusion.

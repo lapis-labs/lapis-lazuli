@@ -374,6 +374,10 @@ crosses platforms, `references/platforms.md`; for email or a host-controlled sur
 ## Check while working
 
 Checks during work stay small; the full set runs once at the release gate.
+Before asking the owner to look at or approve a rendered draft, load `ultramarine` and follow its
+`references/pre-show-review.md`. Record the exact shown pages and narrow review in
+`.lapis/drafts/<task>.yaml`; `next` requires `draft-review` before that approval wait. A pure question
+with no draft stays allowed. This checkpoint is not the full release gate.
 When repeating a repair, follow the bounds and final full run in `ultramarine`'s
 `repair-loop.md` reference; do not turn a missing check into another edit.
 While fixing, rerun the narrowest check that observes the change (one width, one probe, one lint layer or rule) and run the
