@@ -106,9 +106,9 @@ setting skipped the procedure. Codex runs a plugin hook only after you trust it
 ## Plugins and skills
 
 `lapis` is the stone you start from: the plan, made from the subject's own materials. `ultramarine`
-is the pigment ground from it: the finished work, which the checks look at. The name `lazuli` comes
-from Lajward, the place the stone was mined, and it is where fonts, colors, licenses, and sources
-come from. `lapis-design` runs the checks for `lapis` and `ultramarine`; `lazuli` runs lookups.
+is the pigment ground from it: the finished work, which the checks look at. `lazuli`, the second word of
+the stone's name, is where fonts, colors, licenses, and sources come from. `lapis-design` runs the checks
+for `lapis` and `ultramarine`; `lazuli` runs lookups.
 
 | Plugin | Skill | What it does |
 |---|---|---|
