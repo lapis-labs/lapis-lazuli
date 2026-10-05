@@ -58,6 +58,39 @@ def _fresh(file: Path, inputs: list[Path]) -> bool:
     return all(file.stat().st_mtime_ns >= p.stat().st_mtime_ns for p in inputs)
 
 
+def _proof(root: Path, task: str, review: dict) -> list[dict]:
+    from lapis_design.plan_check import read_plan
+
+    rows = review.get("claim_evidence")
+    if not rows:
+        raise ValueError("record claim_evidence: required brief claims/proof -> actual shown output -> missing evidence")
+    plan = read_plan(root / ".lapis/plans" / f"{task}.yaml")
+    if not isinstance(plan, dict):
+        raise ValueError("the plan cannot supply the brief's required claims")
+    given = json.dumps({"brief": plan.get("brief"), "declared": (plan.get("claims") or {}).get("declared")}, ensure_ascii=False)
+    try:
+        given += " " + waiting.answers_path(root, task).read_text(encoding="utf-8")
+    except OSError:
+        pass
+    given = " ".join(given.casefold().split())
+    for row in rows:
+        cited = given
+        if source := row.get("source"):
+            context = plan.get("context") or {}
+            if source not in [context.get("product"), *(context.get("other") or [])]:
+                raise ValueError("claim_evidence source is not a brief document declared in context")
+            cited = " ".join(local(root, source).read_text(encoding="utf-8").casefold().split())
+        if " ".join(row["requirement"].casefold().split()) not in cited:
+            raise ValueError("claim_evidence requirement is not quoted from the brief or declared requirements")
+        if row["state"] == "shown" and (row["kind"] != "product-output" or not row["shown"] or row["missing"].strip()):
+            raise ValueError("a site study or missing output cannot satisfy a product-proof requirement")
+        if row["state"] != "shown" and len(row["missing"].strip()) < 8:
+            raise ValueError("partial/missing product proof must name the evidence still missing")
+        for ref in row["shown"]:
+            local(root, ref.partition("#")[0])
+    return rows
+
+
 def check(root: Path, task: str, *, asked: list[str] | None = None) -> tuple[list[str], list[dict]]:
     """Problems and owner-facing summaries. Open findings may remain, but none may go unreported."""
     from lapis_design.lint.cli import LintError, _load
@@ -76,6 +109,7 @@ def check(root: Path, task: str, *, asked: list[str] | None = None) -> tuple[lis
             review = page.get("review")
             if not review:
                 raise ValueError("no review recorded")
+            proof = _proof(root, task, review)
             sources = [local(root, p) for p in page["sources"]]
             if page["direction"] == "new" and not {390, 1440}.issubset(page["widths"]):
                 raise ValueError("a new direction needs 390 and 1440")
@@ -130,7 +164,22 @@ def check(root: Path, task: str, *, asked: list[str] | None = None) -> tuple[lis
                         continue
                     if i not in handled:
                         raise ValueError(f"{name} finding {i} ({finding['rule_id']}) has no fixed/justified-keep/unresolved disposition")
-                    dispositions.append({"rule_id": finding["rule_id"], **handled[i]})
+                    core = (tool == "critic" and
+                            (finding.get("approval_impact") == "core-product-explanation" or
+                             (finding["rule_id"] == "review.world-materials" and finding.get("approval_impact") != "ordinary")))
+                    resolved = (finding["status"] == "fixed" and handled[i]["disposition"] == "fixed"
+                                and handled[i].get("resolution_kind") == "product-output"
+                                and any(row["kind"] == "product-output" and row["state"] == "shown" for row in proof))
+                    if core and not resolved:
+                        errors.append(f"{page['url']}: core product explanation {finding['rule_id']} is still open "
+                                      f"({finding['status']}, {handled[i]['disposition']}); current settings/site-study "
+                                      "or a partial fix are not real product results")
+                    state = {"rule_id": finding["rule_id"], "approval_blocking": core and not resolved,
+                             "status": finding["status"], **handled[i]}
+                    if core and not resolved:
+                        state.update(status="open", disposition="unresolved", reported_status=finding["status"],
+                                     reported_disposition=handled[i]["disposition"])
+                    dispositions.append(state)
                 if set(handled) - set(range(len(report["findings"]))):
                     raise ValueError(f"{name} disposition names a nonexistent finding")
             if page["behavior_changed"]:
@@ -142,8 +191,8 @@ def check(root: Path, task: str, *, asked: list[str] | None = None) -> tuple[lis
                 raise ValueError("review record is older than its evidence; review the changed area again")
             summaries.append({"url": page["url"], "area": page["area"], "widths": page["widths"],
                               "summary": review["summary"], "making_of": review["making_of"],
-                              "walkthroughs": review["walkthroughs"], "findings": dispositions})
-        except (OSError, ValueError, KeyError, LintError) as exc:
+                              "walkthroughs": review["walkthroughs"], "claim_evidence": proof, "findings": dispositions})
+        except (OSError, ValueError, KeyError, LintError, yaml.YAMLError) as exc:
             errors.append(f"{page['url']}: {exc}")
     return errors, summaries
 

@@ -32,6 +32,20 @@ properties:
             lint: {type: string, minLength: 1}
             summary: {type: string, minLength: 8}
             making_of: {type: string, minLength: 8}
+            claim_evidence:
+              type: array
+              minItems: 1
+              items:
+                type: object
+                additionalProperties: false
+                required: [requirement, kind, state, shown, missing]
+                properties:
+                  requirement: {type: string, minLength: 8} # quoted brief/declared requirement
+                  source: {type: string, minLength: 1} # brief document declared in context; absent uses plan/answers
+                  kind: {enum: [product-output, site-study, not-shown]}
+                  state: {enum: [shown, partial, missing]}
+                  shown: {type: array, items: {type: string}}
+                  missing: {type: string}
             behavior:
               type: object
               required: [refs, observed]
@@ -72,3 +86,4 @@ properties:
                   disposition: {enum: [fixed, justified-keep, unresolved]}
                   reason: {type: string, minLength: 8}
                   refs: {type: array, minItems: 1, items: {type: string}}
+                  resolution_kind: {enum: [product-output, site-study, settings]} # core explanation needs real output, not settings

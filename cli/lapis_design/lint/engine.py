@@ -224,6 +224,12 @@ class _Run:
         defaults = (ctx.plan or {}).get("defaults") or []
         self.decisions = {d["id"]: d for d in defaults if isinstance(d, dict) and "id" in d}
         self.evidence = Sources(ctx.plan or {}, ctx.ledger, ctx.design_text, ctx.project_root)
+        actual_roles = [{"role": run.get("type_role", "unknown"), "family": font["rendered"],
+                         "scripts": [run["script"]] if run.get("script") else []}
+                        for view in (ctx.extract or {}).get("viewports", []) for run in view.get("text", [])
+                        if (font := run.get("font")) and font.get("rendered")]
+        self.render_evidence = Sources(ctx.plan or {}, ctx.ledger, ctx.design_text, ctx.project_root,
+                                       actual_roles if ctx.extract is not None else None)
         self.memo: dict[tuple[str, str], Result | None] = {}
         self._content: set[str] | None = None
 
@@ -372,7 +378,8 @@ class _Run:
             f["distance"] = hit.distance
         f["evidence"] = {"type": hit.evidence, **({"refs": list(hit.refs)} if hit.refs else {})}
         decision = self.decisions.get(rule["id"])
-        waived, unfit = plan_check.default_verdict(rule, decision, self.evidence)
+        waived, unfit = plan_check.default_verdict(rule, decision,
+                                                  self.render_evidence if layer == "render" else self.evidence)
         if waived:
             f["context"] = {"verdict": "earned", "basis": f"plan defaults entry ({decision.get('basis')}, {decision.get('keep_when')})"}
             f.update(blocking=False, status="waived",

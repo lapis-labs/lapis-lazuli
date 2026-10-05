@@ -284,6 +284,8 @@ The sections must exist and remain unchanged. With `LAPIS_CONTEXT` set, the cont
 without it, the explicit context identifier is a reusable attestation. This proves what was
 recorded as loaded, not comprehension or a critic's independence. Korean copy additionally
 requires the Korean section once the plan names that locale.
+Later phases also retain the load owed for copy/tokens already written in the plan; reaching the
+ledger, review, or release step cannot silently erase an unrecorded earlier sub-skill phase.
 
 Draft lint (`slop lint --draft .lapis/drafts/<task>.yaml --source . --extract <shown-extract>`)
 records `scope.draft` with the shown URL/task/source set, excluded specimen sources, and font
@@ -291,6 +293,17 @@ requested/rendered aliases. Its main findings are the shown page's; `specimen_fi
 `deferred_findings` are separate, never hidden passes. The draft checkpoint verifies that scope.
 A draft lint report is narrowed even if copied to a full-report path; the release gate refuses
 it as `release.layer-missing` and requires the ordinary full lint.
+
+Before approval, the review also maps each brief-required claim/proof to the actual output shown
+and the evidence still missing (`review.claim_evidence`). A website design study is not product
+output and cannot be recorded as a satisfied product-proof requirement; missing secondary examples
+may remain explicitly listed. The independent critic checks completeness against the brief.
+
+Core product-explanation findings (`approval_impact: core-product-explanation`, including
+`review.world-materials` unless the critic explicitly marks it ordinary) block pre-show approval
+regardless of their release warning severity. They stay open in the owner report after a partial
+fix or a settings-only display. Closing one requires a fresh fixed critic and real shown product
+output (`resolution_kind: product-output`), not a blanket keep. Other ordinary warnings are unchanged.
 
 
 ## What the gate does not do

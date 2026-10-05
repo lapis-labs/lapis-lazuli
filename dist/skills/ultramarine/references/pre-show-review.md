@@ -4,6 +4,7 @@
 
 - Presentation — bind every shown page to its source, render task, and affected widths.
 - Evidence — observe the exact draft and dispose its findings, without a release rerun.
+- Claim-to-evidence map — distinguish actual product output from this site's study and missing proof.
 - Owner report — summarize what was reviewed and what remains, not a quality score.
 
 ## Presentation
@@ -36,6 +37,10 @@ rendered draft and needs none of this. Add pages before collecting evidence; add
    Review the page's findings against its actual captures. For each non-skipped
    finding write a `handled` entry with its report path, zero-based `finding` index, `disposition`
    (`fixed`, `justified-keep`, or `unresolved`), reason, and capture/box/source `refs`.
+   For core product-explanation findings, also record `resolution_kind`; settings and the site's
+   design study are not actual product-output repairs. `review.world-materials` is approval-blocking
+   unless the critic explicitly scopes it as an ordinary non-core detail. Do not downgrade a
+   missing core explanation to a warning or a partial fix; other ordinary warnings stay ordinary.
    Fixes need observed evidence; a keep explains the actual page, not a new blanket waiver. Skipped
    checks remain not checked. Unresolved defects may be shown honestly; they never become a pass.
 3. Walk one to three visitor tasks from the brief at each shown width. Record `walkthroughs`: task,
@@ -53,6 +58,21 @@ rendered draft and needs none of this. Add pages before collecting evidence; add
    shown inputs, and record `review.critic` (report, context identifier, `independent: true`). Dispose
    its findings too. If none ran, the draft is not reviewed; report the missing prerequisite, never
    invent a pass. A small iteration reuses the direction's previous critic rather than rerunning it.
+
+### Claim-to-evidence map
+
+Before asking for approval, add `review.claim_evidence`: each brief-required claim/proof quotes
+its `requirement`, names the actual visible example/output in `shown` (existing files, optionally
+with a selector/box anchor), its `kind` (`product-output`, `site-study`, `not-shown`), its `state`
+(`shown`, `partial`, `missing`), and the evidence still `missing`. Include component before/after,
+process comparison, and real CLI output separately when the brief requires them. The critic checks
+this map's completeness against the brief; the tool verifies citations and record consistency.
+
+An interactive website design study can support the website's direction; it does not satisfy a
+product-proof requirement. It stays partial/missing in that map, never shown/satisfied. Not every
+secondary example must exist before a direction approval, but the report lists all missing proof.
+A core product-explanation finding stays open until real results address it; showing current
+settings or adding a candidate button is not the same repair.
 
 Write `review.summary` after the checks and observations. `lapis-design draft check --task <task>`
 validates this narrow record. `next` will not turn a draft approval question into `waiting-for-user`

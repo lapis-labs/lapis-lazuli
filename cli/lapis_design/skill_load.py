@@ -71,19 +71,35 @@ def missing(root: Path, task: str, skill: str) -> bool:
     return False
 
 
-def needed(result: dict) -> tuple[str, ...]:
+def needed(root: Path, task: str, result: dict) -> tuple[str, ...]:
     step = (result.get("step") or {}).get("id", "done")
+    if step in ("brief", "references") or (step == "waiting-for-user" and not result.get("draft_review")):
+        return ()
+    primary = []
     if step in ("plan", "plan-fix", "plan-explorations", "plan-order"):
-        return ("lps-copy", "lps-system")
-    if step == "fonts-lock":
-        return ("lps-system",)
-    if step in ("draft-review", "render", "behavior", "behavior-wait", "lint", "critic", "release") or result.get("draft_review"):
-        return ("ultramarine",)
-    return ()
+        primary += ["lps-copy", "lps-system"]
+    elif step == "fonts-lock":
+        primary += ["lps-system"]
+    elif step in ("draft-review", "render", "behavior", "behavior-wait", "lint", "critic", "release", "done") or result.get("draft_review"):
+        primary += ["ultramarine"]
+    # Reaching a later phase cannot erase the load owed for copy/tokens already written in the plan.
+    from lapis_design.plan_check import read_plan
+    import yaml
+
+    try:
+        plan = read_plan(root / ".lapis/plans" / f"{task}.yaml")
+        if isinstance(plan, dict):
+            if plan.get("content"):
+                primary.append("lps-copy")
+            if plan.get("tokens"):
+                primary.append("lps-system")
+    except (OSError, ValueError, yaml.YAMLError):
+        pass
+    return tuple(dict.fromkeys(primary))
 
 
 def apply(root: Path, task: str, result: dict) -> dict:
-    skills = needed(result)
+    skills = needed(root, task, result)
     result["skills"] = [{"name": s, "loaded": not missing(root, task, s), "sections": list(required(root, task, s))} for s in skills]
     absent = next((s for s in result["skills"] if not s["loaded"]), None)
     if absent is None:

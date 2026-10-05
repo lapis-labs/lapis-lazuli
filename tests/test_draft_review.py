@@ -45,6 +45,9 @@ def reviewed(root):
               "review": {"extracts": [".lapis/renders/shown-page.narrow.json"],
                          "lint": ".lapis/lint/shown-page.narrow.json", "handled": [],
                          "making_of": "Copy describes the kiln studio, not the page's font or design decisions.",
+                         "claim_evidence": [{"requirement": "Let visitors see this firing's pieces and reserve one",
+                                            "kind": "product-output", "state": "partial", "shown": ["shown-390.png"],
+                                            "missing": "Reservation backend is not implemented in this draft."}],
                          "critic": {"report": ".lapis/critic/shown-page.json", "context": "fresh critic session",
                                     "independent": True},
                          "walkthroughs": [{"task": "Find and reserve a piece", "viewport": w,
@@ -119,3 +122,54 @@ def test_small_iteration_reviews_only_its_changed_area_and_affected_width(projec
     page["review"]["walkthroughs"] = page["review"]["walkthroughs"][:1]
     save(project, f"drafts/{TASK}.yaml", record)
     assert next_step.evaluate(project, TASK)["state"] == "waiting-for-user"
+
+
+def test_an_approval_review_without_a_claim_to_evidence_map_is_incomplete(project):
+    record = reviewed(project)
+    record["pages"][0]["review"].pop("claim_evidence", None)
+    save(project, f"drafts/{TASK}.yaml", record)
+    assert next_step.evaluate(project, TASK)["step"]["id"] == "draft-review"
+
+
+@pytest.mark.parametrize("status, disposition", [("open", "unresolved"), ("fixed", "fixed")],
+                         ids=["nonblocking-core-gap", "settings-only-partial-fix"])
+def test_a_core_product_explanation_gap_does_not_pass_as_an_ordinary_warning(project, status, disposition):
+    record = reviewed(project)
+    finding = {"rule_id": "review.world-materials", "class": "quality",
+               "severity": {"create": "warn", "review": "P3"}, "layer": "review",
+               "observed": "The core product explanation is absent; current settings are not actual product results",
+               "blocking": False, "evidence": {"type": "review"}, "status": status}
+    update(project, "critic/shown-page.json", lambda d: d["findings"].append(finding))
+    record["pages"][0]["review"]["handled"] = [{"report": ".lapis/critic/shown-page.json", "finding": 0,
+        "disposition": disposition, "reason": "Only the current page settings are now shown", "refs": ["shown-390.png"]}]
+    save(project, f"drafts/{TASK}.yaml", record)
+    result = next_step.evaluate(project, TASK)
+    assert result["step"]["id"] == "draft-review"
+    finding_state = result["draft_review"][0]["findings"][0]
+    assert finding_state["approval_blocking"] is True
+    assert (finding_state["status"], finding_state["disposition"]) == ("open", "unresolved")
+
+
+def test_a_site_design_study_cannot_be_recorded_as_satisfied_product_proof(project):
+    record = reviewed(project)
+    record["pages"][0]["review"]["claim_evidence"][0].update(kind="site-study", state="shown", missing="")
+    save(project, f"drafts/{TASK}.yaml", record)
+    assert next_step.evaluate(project, TASK)["step"]["id"] == "draft-review"
+
+
+def test_real_product_output_and_a_fresh_fixed_critic_can_close_a_core_gap(project):
+    record = reviewed(project)
+    finding = {"rule_id": "review.world-materials", "class": "quality",
+               "severity": {"create": "warn", "review": "P3"}, "layer": "review",
+               "observed": "The firing log and actual pieces now explain the reservation result",
+               "blocking": False, "evidence": {"type": "review"}, "status": "fixed"}
+    update(project, "critic/shown-page.json", lambda d: d["findings"].append(finding))
+    review = record["pages"][0]["review"]
+    review["claim_evidence"][0].update(state="shown", missing="")
+    review["handled"] = [{"report": ".lapis/critic/shown-page.json", "finding": 0, "disposition": "fixed",
+                          "resolution_kind": "product-output", "reason": "Actual pieces and the reservation result are shown",
+                          "refs": ["shown-390.png"]}]
+    save(project, f"drafts/{TASK}.yaml", record)
+    result = next_step.evaluate(project, TASK)
+    assert result["state"] == "waiting-for-user"
+    assert result["draft_review"][0]["findings"][0]["approval_blocking"] is False

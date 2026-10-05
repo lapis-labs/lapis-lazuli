@@ -31,6 +31,10 @@ between minor versions; render extraction is v1 and the other contract formats a
   the plan unless the brief requests it. Korean locale variants also require the Korean section.
   Motion guidance treats content state and control feedback as one system, with a timing/easing
   scale, continuity, cancellation and reduced branches judged by actual playback, not screenshots.
+- Pre-show review also maps required product claims/proof to the actual visible output and what
+  is missing. The site's own design study cannot be marked as product proof. Core product-explanation
+  gaps block approval even if the critic's release severity is only a warning; settings-only or
+  partial repairs remain open, while unrelated ordinary warnings are not promoted.
 - Plugin/CLI version skew no longer turns argparse exit 2 into an endless Stop loop or denied writes.
   Every harness hook uses the separate `lapis-design-hook --plugin-version VERSION <name>` entry point:
   old installs lack it and fail open, while installed runners skip unknown arguments and mismatched

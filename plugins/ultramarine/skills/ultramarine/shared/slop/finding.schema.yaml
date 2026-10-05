@@ -156,6 +156,7 @@ $defs:
       consequence: { type: string }                  # effect on the user or the design
       fix: { type: string }                          # the corrective move
       blocking: { type: boolean }
+      approval_impact: {enum: [core-product-explanation, ordinary]} # critic's pre-show scope, not release severity
       package: { type: string }                      # package that was hit, if any
       distance: { type: number, minimum: 0 }         # typicality or reference distance, if used
       evidence:

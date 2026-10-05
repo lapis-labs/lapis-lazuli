@@ -773,3 +773,25 @@ def test_occluded_text_skips_without_paint_order():
     page = Page()
     page.run(page.box("heading", (0, 0, 400, 100)), "Headline", role="heading")
     assert "paint order" in lint("layout.occluded-text", extract(page)).skipped
+
+
+def test_a_rendered_heading_cannot_inherit_the_plans_body_comparison_waiver(lazuli):
+    from lapis_design.lint import engine
+
+    plan = {"tokens": {"type": {"roles": [{"role": "body", "family": "Grotesk Test", "scripts": ["latn"]}]}},
+            "explorations": [{"decision": "type", "covers": ["body"], "chosen": "Grotesk Test",
+                              "compared_on": ["specimen"],
+                              "candidates": [{"name": "Grotesk Test", "source": "local"},
+                                             {"name": "Oldstyle Test", "source": "local"}],
+                              "runner_up_lost": "The body copy is more legible in the reading comparison"}],
+            "defaults": [{"id": "type.overused-neutral-grotesque", "decision": "keep",
+                          "basis": "brief", "keep_when": "won-comparison",
+                          "evidence": {"exploration": "Grotesk Test"}, "reason": "It won the body comparison"}]}
+
+    def findings(role):
+        return [f for f in engine.lint(Context(rules=RULES, plan=plan,
+                    extract=extract(family_page(("Grotesk Test", {"role": role}))), lazuli=lazuli),
+                    ["render"], ["type.overused-neutral-grotesque"]) if f["status"] != "skipped"]
+
+    assert findings("heading")[0]["status"] == "open"
+    assert findings("body")[0]["status"] == "waived"

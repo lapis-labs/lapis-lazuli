@@ -259,7 +259,7 @@ def _evaluate(root: Path, task: str, page: str | None = None) -> dict:
             review = _step(draft.STEP, "Before showing the draft, review the exact page: " + _brief(errors)
                            + ". Record the review and summarize it, including unresolved findings, to the owner.",
                            f"lapis-design draft check --task {task}", shared_dir() / "release/draft.schema.yaml")
-            return {**result, "state": "needs-step", "step": review, "reason": review["why"]}
+            return {**result, "state": "needs-step", "step": review, "reason": review["why"], "draft_review": summaries}
         result["draft_review"] = summaries
     if step is None:
         return result

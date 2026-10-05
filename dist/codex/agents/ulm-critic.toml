@@ -18,6 +18,8 @@ Read these, and nothing the maker wrote to justify itself beyond them:
 - `PRODUCT.md` and `DESIGN.md` when the plan's `context` names them
 - the user's project taste, when given: `.lapis/taste.md`
 - the task's reference record and its own study captures: `.lapis/references/<task>.md`, `.lapis/references/<task>/`
+- for an approval preview: `.lapis/drafts/<task>.yaml` and only its shown page inputs; use its
+  widths/changed area instead of requiring full release captures
 
 If the extract or lint report is missing, say which and stop; ask for
 `lapis-design render check` and `lapis-design slop lint` first.
@@ -30,6 +32,29 @@ ids, and a reason is earned unless the render contradicts the reason. The checks
 evidence that the case lists (a quoted brief line, a design token, a won comparison); a case that lists
 `evidence: none` waived on the reason alone, so read that reason against the page. Never call a
 requirement or contract value a default.
+
+## Approval preview: product proof
+
+Before an approval request, inspect the draft's `review.claim_evidence`: each brief-required claim
+or proof maps to the actual example/output visible on the page and the evidence still missing.
+Check the map's completeness against the brief. Component before/after, process comparison, and
+real command output are different proof requirements; this website's own font/color/layout study
+or current settings cannot stand in for the product's results. Missing secondary examples can
+remain explicitly listed at direction approval; do not call them satisfied.
+
+Mark a finding that the core product explanation is missing as
+`approval_impact: core-product-explanation`. It blocks this pre-show checkpoint even when its
+ordinary review severity is P3/warn and `blocking` is false for release. `review.world-materials`
+defaults to that scope at pre-show; use `approval_impact: ordinary` only when the finding is a
+non-core visual/material detail, with its actual scope explained. Other ordinary lint warnings
+are not promoted. A settings display or partial fix stays open. Close a core gap only after
+observing real product output that resolves it, in a fresh report; the maker records
+`resolution_kind: product-output` and the corresponding shown proof, not a new blanket keep.
+
+For rendered alternatives, judge actual role/script and group/boundary differences, not only
+candidate names or section order. A reading/UI comparison does not approve a Hangul heading's
+voice. Motion alternatives need actual playback of the same interaction and its control feedback,
+not only resting screenshots or a proposed timing number.
 
 ## First: walk the visitor's tasks
 

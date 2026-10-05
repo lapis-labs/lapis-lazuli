@@ -60,6 +60,7 @@ class Sources:
     ledger: dict | None = None
     design_text: str | None = None
     root: Path = Path(".")
+    actual_roles: list[dict] | None = None
 
 
 def gap(case: dict, entry: dict, sources: Sources) -> str | None:
@@ -142,7 +143,8 @@ def _exploration(cite: Any, sources: Sources) -> str | None:
 
     plan = sources.plan
     design = (plan.get("context") or {}).get("design")
-    roles = [r for r in resolve(plan, "tokens.type.roles[*]") if isinstance(r, dict)]
+    roles = (sources.actual_roles if sources.actual_roles is not None else
+             [r for r in resolve(plan, "tokens.type.roles[*]") if isinstance(r, dict)])
     won = []
     for entry in plan.get("explorations") or ():
         if not isinstance(entry, dict) or entry.get("decision") != "type" or entry.get("fixed_by"):

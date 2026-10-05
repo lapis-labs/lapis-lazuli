@@ -64,3 +64,14 @@ def test_korean_locale_variants_require_the_role_and_register_section(tmp_path, 
             "--read", str(source / "references/interface-copy.md") + "#One owner for every string"]
     assert cli_main(args) == 2
     assert cli_main(args + ["--read", str(source / "references/interface-copy.md") + "#Korean"]) == 0
+
+
+def test_a_later_phase_cannot_silently_skip_the_plans_copy_and_system_loads(tmp_path, monkeypatch):
+    monkeypatch.setenv("LAZULI_DB", "")
+    make_project(tmp_path)
+    for skill in ("lps-copy", "lps-system"):
+        (tmp_path / ".lapis/skills" / TASK / f"{skill}.json").unlink()
+    result = next_step.evaluate(tmp_path, TASK)
+    assert result["step"]["id"] == "skill-load"
+    assert result["step"]["skill"] == "lps-copy"
+    assert result["then"]["id"] == "release"
