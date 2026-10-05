@@ -77,3 +77,10 @@ After two fixes leave the finding open, send both attempts and the suspected cau
 | Separate remaining defects, missing checks and user decisions | `claims.unresolved`; lint `scope.layers`, finding `skip_cause`, session `coverage`; user report | Lint creates `skipped` findings with `not-verified` evidence; release checks inspect report coverage, not the completeness of the handoff prose |
 
 Finish with three lists: defects still present; checks that did not run and each reason; decisions the user must make. A missing input or unavailable browser is not a defect to repair. For each handoff item, name its location, evidence kind, attempted corrections, required decision and the check that could distinguish the remaining causes. State which candidate remains applied and what was actually observed. Never report an unrun check as passed.
+
+Alongside those lists, give each user-facing lint/critic finding a disposition: **fixed**, with the changed
+capture and observing rerun; **justified keep**, with the rule's named `keep_when`, its surface-specific premise
+and capture; or **unresolved**, with the current capture and what still needs a decision or check. Include
+non-blocking warnings. They remain visible to the user; absence from the release blocker list never means a
+warning was fixed or waived. If capture was unavailable, carry that limit instead of implying visual closure.
+`next: done`, release pass, and finding disposition answer different questions.

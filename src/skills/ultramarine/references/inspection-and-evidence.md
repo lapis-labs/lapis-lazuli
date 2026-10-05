@@ -122,6 +122,16 @@ positive craft ratings with oppositely directed problem scales or average them i
 Expert inspection predicts plausible problems, not prevalence, audience preference, or success
 rates. Re-exercise the affected task after a remedy; cleaner default appearance is not resolution.
 
+Check a sentence that explains an already named control or heading for role duplication, not only exact words.
+If route selection already asks for a route, “Select a route to see arrival information” goes. Keep one required
+fictional-data or privacy/non-delivery notice, and recovery explanations that tell the visitor what failed,
+what was preserved, and how to continue. Source/byline records, chart scope and units are not this meta text.
+
+When the card gate fires, compare the same records as rows, a table, or a plot with a bare section before a
+justified keep. Remove outer shells and duplicate titles before functional arrival/chart panels. Preserve their
+independent states, routing scope, period/unit labels, delayed rows and equivalent data table. Judge hierarchy
+and task order in the captures, not only a smaller enclosed-area number.
+
 ## Write down each finding
 
 Put the smallest record someone else could repeat beside the finding, in the report. A bare
@@ -133,6 +143,8 @@ Action: <what you did or inspected>
 Observed: <what happened or what was there>
 Evidence: <a type from the table, or reported by the user, each with its reference>
 Limit: <the state, device, tool, or claim you did not exercise>
+Disposition: <fixed with the observing rerun; justified keep with the named keep_when; or unresolved>
+Capture: <the finding's state and width, or the reason no visual evidence was available>
 ```
 
 Locate the finding at a region or state and name the property and its effect ("the three piece

@@ -12,6 +12,11 @@ All notable changes are recorded here. The format follows
 Local contract changes, made here and not from a kit diff; the handoff records each one with its before and
 after text.
 
+- Lapis and Ultramarine review guides remove instructional copy that repeats a control or heading while
+  preserving consequential notices and recovery explanations. Card-gate reviews compare the same records as
+  rows/table/plot plus bare section, removing outer shells before functional panels. Final handoffs classify
+  every user-facing finding as fixed, justified keep with `keep_when`, or unresolved, with captures; warnings
+  remain visible even when they do not block release.
 - Booking/operate flows can name required selections and the next-step control in optional `flows[].reach`.
   Behavior records initial and selection-complete geometry at each width before locator auto-scroll.
   `layout.primary-action-reach` warns/P2 above a half-viewport selection-to-action gap, with visible

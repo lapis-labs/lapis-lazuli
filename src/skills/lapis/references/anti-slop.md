@@ -18,6 +18,7 @@ Read the section whose default the plan or draft meets, by heading; the rest are
 - Data and fixtures: invented files, a row of totals, which numbers a dashboard shows, a chart with no question
 - Motion: idle loops, a reveal on every section, hover zoom
 - Per-genre packages: the defaults that arrive together for a kind of page, and the counter-package that worked
+- Findings at handoff: fixed, justified keep with a named exception, or unresolved, including non-blocking warnings
 
 What generated pages share before the subject has been read, why each shared choice weakens a page, and what to
 do instead. Read it with the default cards (`../shared/slop/cards.yaml`) and the rules they name
@@ -150,6 +151,11 @@ that see it. Rules marked * are statistical or lexical leads; the critic judges 
   the deciding capability the room it needs and let the supporting ones become a list, a diagram, or prose. Set an
   icon at the text's scale beside its heading or drop it. Keep a surface only where it has its own role: a selectable
   record, a chart plot, an independent state.
+  When `layout.card-everything` gates, compare the **same content and records** as rows, a table, or a plot plus a
+  bare section before keeping the cards. Remove outer shells and duplicate titles first, not the functional
+  arrival panel's independent state or the chart's plot surface. Keep route/direction/period/unit labels,
+  delayed rows, and the equivalent data table. A keep needs the rule's `keep_when` and captures showing why
+  independent objects still need the enclosure; changing hue or lowering enclosure share alone does not decide.
 - **Exceptions.** Comparable peer items read well as equal modules. A collection of independent objects is a
   collection of cards. Sections that hold parallel sets, such as the same facts for each of several places.
 - **Rules.** `layout.card-everything`, `layout.nested-cards`, `layout.equal-siblings`, `layout.bento-filler`,
@@ -246,6 +252,10 @@ that see it. Rules marked * are statistical or lexical leads; the critic judges 
   the brief requires a notice, write it once, short, in a quiet place: the footer or a small persistent label.
   Never put it in the hero, a heading, or beside each section. A notice and its translation beside it are one
   notice. The rest of a demo's limits belong in the handoff, not on the page.
+  Check each instructional sentence against the visible heading, field label, and control: if those already
+  name its task, delete the sentence (`노선을 선택하면 도착 정보를 볼 수 있습니다.` under route selection adds nothing).
+  Keep one required fictional-data or privacy/non-delivery notice and recovery explanations that name the
+  problem, what was preserved, and how to continue. Do not remove source/byline lines or decision-relevant units.
   For a dot-separated strip, ask what changes in the visitor's decision if it goes. `조각 · 설치 · 공간` and
   `FORM · SPACE · STILLNESS` repeat the page topic; remove them or justify a real filter with `decision-metadata`.
   Route/date/direction, chart scope and units, artwork artist/year/material/dimensions, and source/byline records
@@ -330,3 +340,19 @@ forbidden genres.
   the period is not a default; check that the venue's menu, view, and booking terms set the order.
 - **Acid and chrome releases.** Black and acid, a floating chrome object, a ticker. Keep playback, reading, and
   narrow-layout access ahead of the material.
+
+## Findings at handoff
+
+List each user-facing lint and critic finding, not only release blockers, with its location and capture:
+
+| Disposition | Evidence to hand off |
+|---|---|
+| Fixed | The changed surface's capture and the observing rerun, at the finding's state and width |
+| Justified keep | The rule's named `keep_when`, why this surface satisfies it, and the capture showing that premise |
+| Unresolved | The current capture, what remains, attempted corrections, and the missing evidence or decision |
+
+Warnings remain visible to the user even though they do not block release. A warning absent from the release
+blocker list is not fixed or waived. Keep missing checks separate, with their reasons; if no capture was possible,
+say that the visual result is unverified. `next: done` describes a finished procedure, not a passing release or
+proof that the visitor's task is easy.
+
