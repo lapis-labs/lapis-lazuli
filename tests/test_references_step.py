@@ -13,17 +13,18 @@ import pytest
 
 from lapis_design import attempts, gate, hints, next_step, order, references
 from lapis_design.cli import main as cli_main
-from procedure_support import (BRIEF_RECORD, FACTS, TASK, finish, make_project, record, reference_entries,
+from procedure_support import (BRIEF_RECORD, FACTS, TASK, finish, load_skills, make_project, record, reference_entries,
                                references_text, save, update, write_references)
 
 
 @pytest.fixture
 def bare(tmp_path, monkeypatch) -> Path:
-    """A project folder with a brief record and nothing else: the run is at the references."""
+    """Brief and loaded later-phase skills; only the reference evidence is varied in these cases."""
     for name in ("LAPIS_UNATTENDED", "LAPIS_TASK", "CLAUDE_PROJECT_DIR"):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("LAZULI_DB", "")
     record(tmp_path, "answers", BRIEF_RECORD, 50)
+    load_skills(tmp_path)
     return tmp_path
 
 

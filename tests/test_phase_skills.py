@@ -75,3 +75,13 @@ def test_a_later_phase_cannot_silently_skip_the_plans_copy_and_system_loads(tmp_
     assert result["step"]["id"] == "skill-load"
     assert result["step"]["skill"] == "lps-copy"
     assert result["then"]["id"] == "release"
+
+
+def test_cold_brief_and_references_are_not_blocked_by_later_sub_skill_loads(tmp_path, monkeypatch):
+    from procedure_support import BRIEF_RECORD, record
+
+    monkeypatch.setenv("LAZULI_DB", "")
+    assert next_step.evaluate(tmp_path, TASK)["step"]["id"] == "brief"
+    record(tmp_path, "answers", BRIEF_RECORD, 50)
+    assert next_step.evaluate(tmp_path, TASK)["step"]["id"] == "references"
+    assert not (tmp_path / ".lapis/skills").exists()

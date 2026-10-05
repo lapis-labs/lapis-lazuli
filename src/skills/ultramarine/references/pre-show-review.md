@@ -10,7 +10,7 @@
 ## Presentation
 
 Before asking the owner to look at or approve a rendered page, write `.lapis/drafts/<task>.yaml`
-against `shared/release/draft.schema.yaml`. `pages` lists every page linked in the questions file,
+against `../shared/release/draft.schema.yaml`. `pages` lists every page linked in the questions file,
 including comparison pages if the owner is asked to judge them. A page under `.lapis/specimens/`
 can be the actual draft: location does not exempt it. Each entry names its exact `url`, the
 `render_task` used for its extracts, its `sources` (the HTML and the styles/scripts it depends on),
