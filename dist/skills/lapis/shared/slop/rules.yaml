@@ -461,6 +461,24 @@ rules:
     evidence:
     - material
     - brief
+- id: color.pale-template-family
+  why: A high-key pale field and one dominant muted action family can keep the category's landing structure
+    unchanged while the accent hue rotates; silence from a cream detector does not show a subject-specific
+    choice
+  better: Trace fixed and open roles to product, photo, brand, material or data inputs; compare different
+    input relations on the same real screen and record candidate artifacts/values and matched captures
+    before keeping the family
+  keep_when:
+  - id: palette-provenance
+    when: the palette won a matched real-screen comparison from different traced inputs, and the critic
+      can inspect the artifacts, roles and captures
+    evidence:
+    - palette
+  - id: fixed-palette
+    when: the brief or approved design contract fixes the palette, including a house style
+    evidence:
+    - design
+    - brief
 - id: color.competing-accents
   why: Several unrelated accent hues compete, so action, focus, status, data, and ornament become ambiguous
   better: Allocate each accent to a role and check its area and repetition; there is no universal accent

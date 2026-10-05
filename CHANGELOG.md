@@ -12,6 +12,11 @@ All notable changes are recorded here. The format follows
 Local contract changes, made here and not from a kit diff; the handoff records each one with its before and
 after text.
 
+- `color.pale-template-family` adds a hue-independent warn/P3 review cue for high-key pale fields,
+  a dominant muted action family, and category landing sections. Action fills attribute palette
+  clusters rather than treating photo/data/status colors as identity. Existing hue diagnostics stay
+  unchanged. A keep cites a traced rendered palette comparison through optional `evidence.palette`,
+  or an approved/brief-fixed palette; incomplete capture evidence cannot waive the review.
 - Color guidance now runs a fixed/open-input and role-hypothesis procedure through matched real-screen
   palette specimens, failure removal, choice, and a stop rule. The critic checks source authority,
   same-context runner-up captures, dominant causes, role collisions, photo extremes, and claim limits.

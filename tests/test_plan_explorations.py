@@ -119,6 +119,19 @@ def test_a_palette_may_be_compared_on_a_sketch(tmp_path):
     entry_of(plan, "palette")["compared_on"] = ["sketch"]
     assert found(check(tmp_path, plan)) == []
 
+def test_an_older_v0_palette_render_claim_parses_but_is_uncompared_without_evidence(tmp_path):
+    plan = base_plan()
+    entry = entry_of(plan, "palette")
+    entry.pop("comparisons")
+    for candidate in entry["candidates"]:
+        for key in ("artifact", "roles", "token_file"):
+            candidate.pop(key, None)
+    report = check(tmp_path, plan)
+    assert "schema.invalid" not in {f["rule_id"] for f in report["findings"]}
+    [finding] = found(report)
+    assert finding["blocking"] and finding["status"] == "open"
+
+
 
 
 def rendered_palette(plan):

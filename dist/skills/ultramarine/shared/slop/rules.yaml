@@ -1991,6 +1991,53 @@ rules:
   waiver:
     scope: value
   verify: static
+- id: color.pale-template-family
+  class: default
+  domain: color
+  layers:
+  - render
+  - review
+  severity:
+    create: warn
+    review: P3
+  detect:
+    render:
+      detector: pale-template-family
+      params:
+        field_l_min: 0.9
+        field_c_max: 0.045
+        field_min_share: 0.5
+        accent_c_min: 0.025
+        accent_min_share: 0.002
+        muted_c_max: 0.12
+        dominant_min_share: 0.8
+        section_groups:
+        - - pricing
+        - - testimonial
+        - - hero
+          - cta
+    review:
+      detector: counterfactual-test
+  why: A high-key pale field and one dominant muted action family can keep the category's landing structure
+    unchanged while the accent hue rotates; silence from a cream detector does not show a subject-specific
+    choice
+  better: Trace fixed and open roles to product, photo, brand, material or data inputs; compare different
+    input relations on the same real screen and record candidate artifacts/values and matched captures
+    before keeping the family
+  keep_when:
+  - id: palette-provenance
+    when: the palette won a matched real-screen comparison from different traced inputs, and the critic
+      can inspect the artifacts, roles and captures
+    evidence:
+    - palette
+  - id: fixed-palette
+    when: the brief or approved design contract fixes the palette, including a house style
+    evidence:
+    - design
+    - brief
+  waiver:
+    scope: rule
+  verify: review
 - id: color.competing-accents
   class: quality
   domain: color

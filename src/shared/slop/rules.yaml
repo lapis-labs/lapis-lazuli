@@ -28,10 +28,11 @@
 #                (cli/lapis_design/keep_evidence.py). `none` means no plan field, design contract, or asset
 #                ledger can show the premise; the keep then waives on its reason, as before, and the critic
 #                reads that reason. Otherwise a list of alternatives, any one of which backs the keep:
-#                  design, brief, material, source, exploration, composition   the keep cites it in its
+#                  design, brief, material, source, exploration, composition, palette   the keep cites it in its
 #                      `evidence`: a token of the declared DESIGN.md, a quoted line of brief, an entry of
 #                      world_materials or sources, the chosen face of a type comparison in explorations,
-#                      the chosen candidate of a rendered layout comparison in explorations
+#                      the chosen candidate of a rendered layout comparison, or a palette comparison with
+#                      traced inputs, candidate artifacts/values and matched captures
 #                  { asset: { kind, origin, role } }   the keep cites a ledger asset that this task uses and
 #                      whose listed fields have one of the listed values
 #                  { plan: PATH, has | lacks | present | min }   the plan itself says it; no citation
@@ -997,6 +998,34 @@ rules:
     verify: static
     provenance:
       - { kind: measurement, source: "slop catalog 2026-10-04 green-soft-field", note: "green, sage, or teal action color on a soft field; teal measured separately on the corpus in the 2026-10-04 validation" }
+
+  - id: color.pale-template-family
+    class: default
+    domain: color
+    layers: [render, review]
+    severity: { create: warn, review: P3 }
+    detect:
+      render:
+        detector: pale-template-family
+        params:
+          field_l_min: 0.9
+          field_c_max: 0.045
+          field_min_share: 0.5
+          accent_c_min: 0.025
+          accent_min_share: 0.002
+          muted_c_max: 0.12
+          dominant_min_share: 0.8
+          section_groups: [[pricing], [testimonial], [hero, cta]]
+      review: { detector: counterfactual-test }
+    why: A high-key pale field and one dominant muted action family can keep the category's landing structure unchanged while the accent hue rotates; silence from a cream detector does not show a subject-specific choice
+    better: Trace fixed and open roles to product, photo, brand, material or data inputs; compare different input relations on the same real screen and record candidate artifacts/values and matched captures before keeping the family
+    keep_when:
+      - { id: palette-provenance, when: "the palette won a matched real-screen comparison from different traced inputs, and the critic can inspect the artifacts, roles and captures", evidence: [palette] }
+      - { id: fixed-palette, when: "the brief or approved design contract fixes the palette, including a house style", evidence: [design, brief] }
+    waiver: { scope: rule }
+    verify: review
+    provenance:
+      - { kind: measurement, source: "round-2 complaint/color audits 2026-10-05", note: "SaaS soft fields with green/teal actions share the landing structure while strict cream is silent; conservative action-fill and section-set review cue, not a validated genre classifier or hue ban" }
 
   - id: color.competing-accents
     class: quality

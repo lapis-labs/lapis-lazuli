@@ -19,6 +19,9 @@ Alternatives a case may list:
   composition  `evidence.composition` is the chosen candidate of a complete layout comparison in
                `explorations` that was rendered (`compared_on` has `render`) and weighed at least one other
                candidate; the check cannot tell what shape the other candidates have, the critic reads them
+  palette      `evidence.palette` is the chosen candidate of a complete rendered palette comparison,
+               with per-candidate artifacts/values and matched captures; each candidate's source is
+               listed in materials/sources/references and its note records the observed/proposed relation
   {asset: {kind, origin, role}}   `evidence.asset` is the id of a ledger asset recorded as used by this
                plan's task, whose kind, origin, and role are among the listed values
   {plan: PATH, has | lacks | present | min}   no citation: the plan itself says it. `has` holds when any
@@ -44,6 +47,7 @@ CITED = {
     "source": "the ref of an entry of sources",
     "exploration": "the chosen face of a type comparison in explorations",
     "composition": "the chosen candidate of a rendered layout comparison in explorations",
+    "palette": "the chosen candidate of a traced, rendered palette comparison in explorations",
     "asset": "the id of an asset in the asset ledger",
 }
 
@@ -172,6 +176,35 @@ def _composition(cite: Any, sources: Sources) -> str | None:
     return f"composition: {str(cite)!r} won no rendered layout comparison; won: {', '.join(dict.fromkeys(won))}"
 
 
+def _palette(cite: Any, sources: Sources) -> str | None:
+    from lapis_design.lint.detectors.plan_candidates import entry_problems
+
+    plan = sources.plan
+    listed = {_norm(value) for value in plan.get("world_materials") or ()}
+    listed.update(_norm(s.get("ref")) for s in plan.get("sources") or () if isinstance(s, dict))
+    listed.update(_norm(r.get("source")) for r in plan.get("references") or () if isinstance(r, dict))
+    listed.discard("")
+    design = (plan.get("context") or {}).get("design")
+    won = []
+    for entry in plan.get("explorations") or ():
+        if not isinstance(entry, dict) or entry.get("decision") != "palette" or entry.get("fixed_by"):
+            continue
+        if "render" not in (entry.get("compared_on") or ()) or entry_problems(entry, {}, design):
+            continue
+        candidates = entry.get("candidates") or ()
+        if len({_norm(c.get("source")) for c in candidates}) < 2:
+            continue
+        if all(_norm(c.get("source")) in listed and _norm(c.get("note")) for c in candidates):
+            won.append(entry["chosen"])
+    if not won:
+        return "palette: no complete rendered palette comparison has two traced inputs and matched captures"
+    if not _norm(cite):
+        return f"palette: {_missing('palette')}; won: {', '.join(dict.fromkeys(won))}"
+    if _norm(cite) in {_norm(name) for name in won}:
+        return None
+    return f"palette: {str(cite)!r} won no traced render comparison; won: {', '.join(dict.fromkeys(won))}"
+
+
 def _asset(spec: dict, cite: Any, sources: Sources) -> str | None:
     needs = "; ".join(f"{field} {' or '.join(spec[field])}" for field in ("kind", "origin", "role") if spec.get(field))
     if sources.ledger is None:
@@ -215,4 +248,4 @@ def _plan_value(condition: dict, plan: dict) -> str | None:
 
 
 _CHECKS = {"design": _design, "brief": _brief, "material": _material, "source": _source,
-           "exploration": _exploration, "composition": _composition}
+           "exploration": _exploration, "composition": _composition, "palette": _palette}

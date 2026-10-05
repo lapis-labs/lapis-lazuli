@@ -110,6 +110,16 @@ cards:
     decide: [tokens.color.roles, tokens.color.relations]
     rules: [color.sage-soft-field, color.violet-indigo-accent, color.acid-on-black, color.teal-accent]
 
+  - id: pale-template-family
+    name: Pale field with a rotated accent
+    cue: A high-key pale field, one muted accent and category-default structure remain even when cream, green, teal or coral changes; hue alone is not the cause.
+    routes:
+      - Separate fixed roles from open ones and trace product, photo, brand, material or data inputs with their authority.
+      - Compare two input-derived palettes on the same real screen, with one consequential variable and candidate artifacts, role values and matched captures in explorations.
+      - Keep an approved brand or brief-fixed house style; otherwise remove role failures, judge the tradeoff and stop without a novelty search.
+    decide: [tokens.color.roles, explorations, layout.procedure]
+    rules: [color.pale-template-family]
+
   - id: starter-surface
     name: Starter surface
     cue: The component library's starter look or a starter template stays, and the only change is a new palette or primary color.

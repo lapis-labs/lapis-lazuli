@@ -179,6 +179,119 @@ def test_palette_family_reports_once_across_captures():
     assert "2 of 2 captures show it" in hit
 
 
+PALE_FAMILY = "color.pale-template-family"
+
+
+def pale_landing(hue=210, chroma=0.08, *, sequence=None, accent_role="interaction"):
+    accent = [0.4, chroma, hue]
+    return extract(viewport(390, boxes=[box(1, "button", style={"background": accent})],
+        palette=palette(([0.98, 0.004, 220], 0.8, "field"), (accent, 0.04, accent_role)),
+        derived={"section_sequence": sequence if sequence is not None else ["hero", "testimonial", "pricing", "cta"]}))
+
+
+def family_findings(doc, plan=None, mode="create"):
+    from lapis_design.lint.engine import lint
+
+    return lint(Context(rules=RULES, extract=doc, plan=plan, mode=mode), ["render"], [PALE_FAMILY])
+
+
+@pytest.mark.parametrize("hue", [10, 85, 150, 210, 270])
+@pytest.mark.parametrize("mode", ["create", "review"])
+def test_a_pale_muted_template_is_reviewed_regardless_of_hue_without_gating(hue, mode):
+    [finding] = family_findings(pale_landing(hue), mode=mode)
+    assert finding["status"] == "open" and not finding["blocking"]
+    assert finding["severity"] == {"create": "warn", "review": "P3"}
+
+
+def test_action_backgrounds_attribute_the_muted_accent_even_when_palette_guesses_field():
+    [finding] = family_findings(pale_landing(accent_role="field"))
+    assert finding["status"] == "open"
+
+
+@pytest.mark.parametrize("doc", [
+    pale_landing(chroma=0.23),
+    pale_landing(sequence=["hero", "cta", "feature-grid", "pricing", "cta"]),
+    pale_landing(sequence=["hero", "testimonial"]),
+])
+def test_a_strong_museum_signal_or_non_template_content_does_not_fire(doc):
+    assert family_findings(doc) == []
+
+
+@pytest.mark.parametrize("role", ["status", "data", "content"])
+def test_status_data_and_photo_clusters_are_not_the_identity_accent(role):
+    assert family_findings(pale_landing(accent_role=role)) == []
+    doc = pale_landing()
+    plan = {"tokens": {"color": {"roles": [{"name": "signal", "role": role, "oklch": [0.4, 0.08, 210]}]}}}
+    assert family_findings(doc, plan) == []
+
+
+def test_unrelated_action_hues_do_not_form_one_muted_accent_family():
+    doc = pale_landing()
+    vp = doc["viewports"][0]
+    vp["palette"].append({"oklch": [0.4, 0.08, 30], "share": 0.04, "role_guess": "interaction"})
+    vp["boxes"].append(box(2, "button", style={"background": [0.4, 0.08, 30]}))
+    assert family_findings(doc) == []
+
+
+def test_the_family_needs_a_dominant_pale_field_and_measured_structure():
+    doc = pale_landing()
+    doc["viewports"][0]["palette"][0]["share"] = 0.4
+    assert family_findings(doc) == []
+    doc = pale_landing()
+    doc["viewports"][0].pop("derived")
+    [missing] = family_findings(doc)
+    assert missing["status"] == "skipped" and not missing["blocking"]
+
+
+def palette_provenance():
+    return {
+        "world_materials": ["product panel", "packaging"],
+        "explorations": [{
+            "decision": "palette",
+            "candidates": [
+                {"name": name, "source": source, "note": "Observed input relation; proposed neutral framing",
+                 "artifact": f".lapis/specimens/{name}.html",
+                 "roles": [{"name": "action", "role": "interaction", "oklch": [0.4, 0.08, 210]}]}
+                for name, source in (("panel", "product panel"), ("package", "packaging"))],
+            "compared_on": ["render"], "chosen": "panel",
+            "runner_up_lost": "The package frame lost the darkest product boundary in the same list",
+            "comparisons": [{"variable": "neutral temperature", "viewport": {"width": 390, "theme": "light"},
+                             "state": "dense product list", "captures": {"panel": "panel.png", "package": "package.png"}}],
+        }],
+        "defaults": [{"id": PALE_FAMILY, "decision": "keep", "basis": "brief", "keep_when": "palette-provenance",
+                      "evidence": {"palette": "panel"}, "reason": "Matched frames preserve the product range"}],
+    }
+
+
+def test_palette_provenance_waives_only_a_complete_same_context_render_comparison():
+    plan = palette_provenance()
+    [kept] = family_findings(pale_landing(), plan)
+    assert kept["status"] == "waived" and not kept["blocking"]
+    plan["explorations"][0]["comparisons"][0]["captures"].pop("package")
+    [uncompared] = family_findings(pale_landing(), plan)
+    assert uncompared["status"] == "open" and not uncompared["blocking"]
+
+
+def test_a_material_story_without_a_trace_or_a_type_comparison_cannot_waive_palette_review():
+    plan = palette_provenance()
+    plan["explorations"][0]["candidates"][1]["source"] = "generic"
+    [untraced] = family_findings(pale_landing(), plan)
+    assert untraced["status"] == "open"
+    plan = palette_provenance()
+    plan["explorations"][0]["decision"] = "type"
+    [wrong_kind] = family_findings(pale_landing(), plan)
+    assert wrong_kind["status"] == "open"
+
+
+def test_a_brief_fixed_house_palette_is_kept_without_a_novelty_comparison():
+    plan = {"brief": {"constraints": ["House style uses cream and red"]},
+            "defaults": [{"id": PALE_FAMILY, "decision": "keep", "basis": "brief",
+                          "keep_when": "fixed-palette", "evidence": {"brief": "House style uses cream and red"},
+                          "reason": "The house style is fixed by the supplied brief"}]}
+    [kept] = family_findings(pale_landing(hue=25), plan)
+    assert kept["status"] == "waived" and not kept["blocking"]
+
+
 
 # ---------------------------------------------------------------- palette-structure
 

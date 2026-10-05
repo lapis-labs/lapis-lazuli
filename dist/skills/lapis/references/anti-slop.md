@@ -184,14 +184,16 @@ that see it. Rules marked * are statistical or lexical leads; the critic judges 
   preset. Green has become a default of its own: it arrives on software, transit, shops, and wellness alike because
   it feels safe and fresh, not because the subject is green. A brand green is also a status color, so a green
   "protected" chip stops meaning anything.
-- **Instead.** Take the field and the accent from `world_materials`: the subject's objects, paper, packaging,
-  places. Give the accent the one role the page needs it for. Build two palettes from different materials and
-  compare them on the page's own content. Keep status colors apart from the brand accent.
+  A high-key pale field plus one muted accent can keep the category structure intact at any hue,
+  even when strict cream detection is silent. Treat that family as a review question, not a ban.
+- **Instead.** Run `color.md` → **Run the color comparison** with the subject's product, photo, brand,
+  material or data inputs. Record candidate artifacts/values and matched captures, not just material
+  names. Keep status meanings separate from identity and action; diagnose area/repetition before hue.
 - **Exceptions.** A brand that owns its color. A subject that is green, teal, or paper. A genre that owns its
-  pairing (a club night, a music release, a game). Light as the subject.
+  pairing (a club night, a music release, a game). Light as the subject. A brief-fixed editorial house style.
 - **Rules.** `color.sage-soft-field`, `color.violet-indigo-accent`, `color.acid-on-black`, `color.teal-accent`,
   `color.cream-base`, `color.terracotta-accent`, `color.warm-editorial`, `color.violet-blue-gradient`,
-  `color.hero-halo`, `color.neon-glow`, `color.dark-luminous`.
+  `color.hero-halo`, `color.neon-glow`, `color.dark-luminous`, `color.pale-template-family`.
 
 ## Type and headline treatment
 

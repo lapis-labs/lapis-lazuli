@@ -12,6 +12,7 @@ act on.
 Read these, and nothing the maker wrote to justify itself beyond them:
 
 - the plan: `.lapis/plans/<task>.yaml`
+- the palette candidate artifacts and comparison captures named by the plan's `explorations`
 - the render extract and its screenshots: `.lapis/renders/<task>.json`, `.lapis/renders/<task>.shots/`
 - the behavior session, when there is one: `.lapis/behavior/<task>.json`
 - the slop lint report: `.lapis/lint/<task>.json`

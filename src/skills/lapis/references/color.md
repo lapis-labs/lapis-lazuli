@@ -83,6 +83,12 @@ tokens:
 
 The artifact/capture fields make the claim inspectable, not automatically true: the critic must
 read the source trace and same-context images. The sections below supply the decision criteria.
+A retained `color.pale-template-family` review cue can cite the winning comparison in
+`defaults`: `keep_when: palette-provenance`, `evidence: {palette: "<chosen candidate>"}`.
+Each candidate's source must name an input in `world_materials`, `sources`, or `references`, with
+its observed/proposed relation in `note`; a material name or `source_class: authored` alone is not
+comparison evidence. A brief or approved design contract fixing the palette uses `fixed-palette`
+with the corresponding brief/design evidence instead.
 
 
 ## Answer the six axes

@@ -297,6 +297,63 @@ def palette_family(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
             location=_where(vp))))
     return Result(hits=_worst(found, len(viewports)))
 
+@detector("pale-template-family", layers=("render",))
+def pale_template_family(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
+    """Hue-independent review lead: pale canvas, dominant muted action family, marketing section set.
+
+    Attribute accents through rendered action fills, not screenshot role guesses: image/data/status
+    clusters are not identity evidence, and a large action family can itself be guessed as field.
+    This is a bounded structural cue, not a judgement that the category or palette is unearned.
+    """
+    viewports, why = _viewports(ctx)
+    if why:
+        return Result(skipped=why)
+    params = _params(det)
+    found = []
+    unjudged = []
+    for vp in _plain(viewports).values():
+        palette = vp.get("palette")
+        sequence = (vp.get("derived") or {}).get("section_sequence")
+        if not palette or sequence is None:
+            unjudged.append("palette or derived.section_sequence is missing")
+            continue
+        if not all(set(group) & set(sequence) for group in params["section_groups"]):
+            continue
+        field_share = _total(e["share"] for e in palette
+                             if e.get("role_guess") == "field"
+                             and e["oklch"][0] >= params["field_l_min"]
+                             and e["oklch"][1] <= params["field_c_max"])
+        if field_share < params["field_min_share"]:
+            continue
+        semantic = [r["oklch"] for r in ((ctx.plan or {}).get("tokens") or {}).get("color", {}).get("roles", [])
+                    if r.get("role") in ("status", "data", "content") and r.get("oklch")]
+        fills = [b["style"]["background"] for b in vp.get("boxes") or ()
+                 if b.get("role") in ("button", "link") and (b.get("style") or {}).get("background")
+                 and not (b.get("a11y") or {}).get("disabled")
+                 and not (b.get("a11y") or {}).get("hidden")]
+        accents = [e for e in palette if e["oklch"][1] >= params["accent_c_min"]
+                   and e["share"] >= params["accent_min_share"]
+                   and e.get("role_guess") not in ("status", "data", "content")
+                   and any(delta_e_ok(e["oklch"], fill) <= SAME_COLOR_DE for fill in fills)
+                   and not any(delta_e_ok(e["oklch"], color) <= SAME_COLOR_DE for color in semantic)]
+        if not accents:
+            continue
+        families = _families(accents, lambda e: e["oklch"][2])
+        family = max(families, key=lambda items: _total(e["share"] for e in items))
+        family_share = _total(e["share"] for e in family)
+        total = _total(e["share"] for e in accents)
+        dominant = max(family, key=lambda e: e["share"])
+        if family_share / total < params["dominant_min_share"] or dominant["oklch"][1] > params["muted_c_max"]:
+            continue
+        found.append((field_share, Hit(
+            observed=f"high-key pale fields cover {field_share:.0%}; the dominant action family "
+                     f"({_fmt(dominant['oklch'])}, {family_share:.1%} area) is muted, alongside "
+                     f"category landing sections {' > '.join(sequence)} in the {_label(vp)} capture; "
+                     "review the input trace and matched palette alternatives, not the hue alone",
+            location=_where(vp))))
+    return _finish(_worst(found, len(_plain(viewports))), unjudged)
+
+
 
 @detector("palette-structure", layers=("render",))
 def palette_structure(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
