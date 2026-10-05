@@ -296,11 +296,18 @@ section gaps), never the scale, target size, or focus. The source layer of `syst
 judges literal padding, margin, gap, and font sizes against `tokens.space.scale` (or multiples of
 `base_px`) and the type scale; a value read through `var()` is not judged.
 
-**Radius.** One token per role in `tokens.shape.radius.by_role`: `radius.control` 4 px,
-`radius.card` 8 px, `radius.image` 0, with the reason from `tokens.shape.rule` in `DESIGN.md`. Define
-each as a custom property with `radius` in its name: the source check builds its radius scale from
-those definitions, and no check reads `tokens.shape` yet. One large radius on every container is the
-`global-habit-values` card.
+**Radius.** One token per repeated component role in `tokens.shape.radius.by_role`:
+`radius.control` 4 px, `radius.card` 8 px, with the reason from `tokens.shape.rule` in `DESIGN.md`.
+The source check reads the plan's component `scale`/`by_role`, or project radius definitions when
+the plan has none. One large radius on every container is the `global-habit-values` card.
+
+Authored media contours are separate `tokens.shape.media_contours` entries with `token`, `value`,
+`where` and `reason`, for example `--media-contour-story: 3px 120px 3px 3px` on one story photo.
+Apply the contour with `border-radius: var(--media-contour-story)`; include the narrow variant and
+caption/focal-point relationship in its reason. `--media-contour-*` definitions never expand the
+component radius scale, even if their names contain `radius`. Do not keep the whole off-scale
+rule or enlarge control radii to absorb an authored contour. Preserve numerical rows, field order,
+control meaning and focus outlines; a media mask must not clip the operational hit area.
 
 Describe the painted contour: silhouette, open or enclosed edge, stroke or fill, symmetry, void,
 and join. A 50% radius on a wide rectangle makes an ellipse; oversized circular radii make

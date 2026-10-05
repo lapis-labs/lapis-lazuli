@@ -1,5 +1,12 @@
 # Visual assets
 
+## Sections
+
+- Image job: decide product, evidence, explanation or mood before choosing an image.
+- Crop and set: protect task details at each width and keep traceable evidence unchanged.
+- Icons: choose for meaning, states and actual control size.
+- Supplied asset sets: treat kits as optional inventory, never as identity or structure.
+
 Use this file when an image, icon family, or supplied asset set leaves a direction or layout choice
 open. Put source facts in `sources` and `claims.known`, inferred uses in `claims.proposed`, and
 blockers in `claims.unresolved`. Use the existing asset ledger for shipped assets, not a new record
@@ -61,6 +68,14 @@ not the icon's fill; decorative glyphs beside sufficient visible text need no du
 ## Supplied asset sets
 
 Separate an observed asset fact, an inferred relation with its sample limit, and a proposed use.
+A materials kit is inventory, not a world-material answer, identity approval or layout brief.
+Set the task priority first. For each image under consideration, decide whether its role is
+product, evidence, explanation or mood before choosing it, and record that role in the existing
+layout/direction candidate's `images`. Compare a real `images: []` no-photo candidate when imagery
+is optional. A convenient leaf photograph does not make a booking green, serif or image-led;
+an actual product, exhibit material or documentary scene can still earn a central role. Supplied
+fonts and photos are not banned, and file availability alone settles neither identity nor structure.
+
 Extract only choice-changing grammar: silhouette, occupied area, edge/stroke, light, material,
 crop, sequence, and contrast. Classify disagreements as authority, role, variant, grammar,
 permission, or accessibility; current owner guidance outranks a convenient file. Prove one slice

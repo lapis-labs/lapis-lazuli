@@ -179,6 +179,15 @@ properties:
           grid: { type: string }
           responsive: { type: string }
           density_and_checks: { type: string }
+      phone_task:                                    # acceptance for an operating screen, not a universal CTA
+        type: object
+        additionalProperties: false
+        required: [decision, first_result, before_result, acceptance]
+        properties:
+          decision: { type: string, minLength: 3 }
+          first_result: { type: string, minLength: 1 } # CSS selector for the first useful result, not its heading
+          before_result: { $ref: "#/$defs/strings" }   # necessary choices/context the visitor passes
+          acceptance: { type: string, minLength: 8 }  # task performed on the phone capture; transitions use the session
       sections:
         type: array
         items:
@@ -296,6 +305,17 @@ properties:
               name: { type: string, minLength: 1 }       # a family for type, a one-sentence relation for direction
               source: { type: string, minLength: 1 }
               note: { type: string }
+              form_mode: { enum: [staged, continuous] } # booking alternatives use the same fields and states
+              images:                                # supplied files are inventory; [] is the no-photo candidate
+                type: array
+                items:
+                  type: object
+                  additionalProperties: false
+                  required: [source, role, reason]
+                  properties:
+                    source: { type: string, minLength: 1 }
+                    role: { enum: [product, evidence, explanation, mood] }
+                    reason: { type: string, minLength: 8 }
               artifact: { type: string, minLength: 1 }  # palette specimen or actual screen implementation
               roles: { $ref: "#/$defs/color_tokens/properties/roles" }
               token_file: { type: string, minLength: 1 } # alternative to inline roles; this candidate's mapping
@@ -323,6 +343,7 @@ properties:
                   width: { type: integer, minimum: 1 }
                   theme: { enum: [light, dark, high-contrast] }
               state: { type: string, minLength: 1 }     # content slice and actual state shown
+              fields: { $ref: "#/$defs/strings" }      # real visible labels shared by booking candidates
               captures:
                 type: object
                 additionalProperties: { type: string, minLength: 1 } # candidate name -> capture path/ref
@@ -501,6 +522,17 @@ $defs:
             type: object
             additionalProperties: { type: number, minimum: 0 }
       rule: { type: string }                         # why these corners, tied to a material or the platform
+      media_contours:                                # authored media masks, separate from repeated component radii
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [token, value, where, reason]
+          properties:
+            token: { type: string, pattern: "^--media-contour-[a-z0-9-]+$" }
+            value: { type: string, minLength: 1 }      # CSS contour value; apply through var(), not the radius scale
+            where: { type: string, minLength: 1 }      # media slot/selector, never a shared control primitive
+            reason: { type: string, minLength: 8 }
 
   surface_tokens:
     type: object

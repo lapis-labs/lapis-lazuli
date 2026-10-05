@@ -72,11 +72,17 @@ in one input-shaped surface. A count belongs only where the product has a real l
   code fields included (`ux.inaccessible-auth`).
 - Changing a select, radio, checkbox, or switch does not navigate, submit, open a dialog, or move focus
   before the person submits (`ux.unexpected-context-change`).
-- Compare a single path with stages only when tasks, dependency, branching, external verification,
-  or resuming change the work; never one field per step (`ux.excess-steps`, with `max_steps`).
-  Name stages for tasks. If branching changes what remains, show the known stage and uncertainty,
-  not an invented completion percentage. Keep entries on Back and warn before an earlier answer
-  clears later ones. Preserve a short coherent form when splitting adds only navigation.
+- Compare a single path with stages when tasks, dependency, branching, external verification, or
+  resuming change the work; never one field per step (`ux.excess-steps`, with `max_steps`). For a
+  booking, use the matched-phone comparison in `lapis`'s explorations guide before calling it short.
+  A desktop-adjacent summary that becomes end-of-form review on a phone is not adjacent context.
+  Keep the selected doctor/service, date and time beside the current decision and continuation.
+  Explain only a dependency, constraint or failure the visible controls do not already state.
+- When one decision per view wins, implement real SPA states: only the current decision's fields
+  are active, Continue advances, Back restores the earlier view with selections intact, and changing
+  an earlier choice explains any invalidated later one. Headings over a continuous long form are
+  not stages. Name stages for tasks, not a field count; a single coherent short form can still win.
+  If branching changes what remains, show the known stage and uncertainty, not an invented percentage.
 
 When an answer reveals, removes, or reorders required fields, describe that transition in the
 flow: what appears, what remains, and how the next required field is found without an unexpected

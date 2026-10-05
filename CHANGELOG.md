@@ -9,6 +9,15 @@ between minor versions; render extraction is v1 and the other contract formats a
 
 ### Fixed
 
+- Work screens now record explicit phone-task acceptance and plan-linked first-result geometry.
+  Review surfaces a result below the first phone view independently of card ratio or CTA presence.
+  Booking comparisons use staged/continuous phone implementations with the same field labels and states.
+- Genre questions judge the whole reading structure. Earned standard SaaS, split and card structures
+  retain their existing keep cases; stock copy and icon rows are removed before useful structure.
+  Composition comparisons include bounded irregularity, while repeated component radius scales stay
+  separate from authored media contours. Supplied assets remain optional role-tagged inventory,
+  including a genuine no-photo candidate, rather than identity or layout instructions.
+
 
 - Draft approval waits now require a current narrow review of every shown page, including pages
   under `.lapis/specimens/`: capture/task/source links, visitor walks at the shown widths, finding

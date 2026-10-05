@@ -448,6 +448,30 @@ Narrow is a different setting for the task, not less width. Decide it region by 
 - **Order.** The phone's order follows the visitor's decisions, which can differ from the wide reading order; reading
   order and focus order still match the visual order.
 
+For an operating screen (dashboard, booking, or another work surface), write `layout.phone_task`:
+the `decision`, a `first_result` CSS selector for the smallest useful result rather than a title,
+the necessary labels/choices in `before_result`, and a task-specific `acceptance`. For example:
+
+```yaml
+phone_task:
+  decision: Choose a route and read the first arrival time
+  first_result: "#arrivals tbody tr:first-child"
+  before_result: [route selection, direction and stop label]
+  acceptance: After choosing the route, its first arrival is visible in the first phone view
+```
+
+Duplicate route diagrams, citywide summaries, and promotional copy do not precede that result.
+Keep consequential route/direction/period/unit context, not every summary expanded. A booking's
+first result can be the current selection beside the next decision; it need not be the final
+reservation or a CTA. Perform the task on the 390 capture and its behavior session: record what
+the visitor passes, result depth, current selection and next action together. A hidden result that
+requires a transition needs that walk; the initial render cannot prove it. The P1 review cue
+`layout.primary-task-first-view` measures only a declared, present result's initial depth.
+Neither fewer cards nor a CTA inserted into every first view establishes acceptance.
+This acceptance belongs to the primary work surface, not an article, exhibition poster or
+product evaluation page merely because it also offers a booking or purchase. Those pages keep
+their genre reading order; the reached work screen still owes its own decision/result acceptance.
+
 ### Where a width change goes
 
 Render the minimum and maximum real content, then narrow and widen the container until hierarchy,
@@ -601,7 +625,7 @@ is what you planned. Comparing widths needs a capture at each width.
 | `sections` and `section_sequence` | the rendered sections follow `layout.sections` in order. The render names only its own kinds, so a section with your own id (`signature`, `list`) shows as `other` or as the nearest kind: a gallery of priced cards with buttons can read as `pricing`. Treat a kind you did not plan as a question about that section's structure, never as a label to work around |
 | structure between widths | regions reorder, collapse, and change density as `responsive` says, not only scale |
 | the 320 capture | no page-level horizontal scroll, no clipped or covered text, every region and action still present |
-| the narrow captures (320, 390) | the first view holds the task, or the heading with its action, not an object pushed below the heading; the navigation is the phone's own; bands with nothing to read or press are a small part of the page length |
+| the narrow captures (320, 390) | the phone's own navigation and decision order; for work screens, perform `layout.phone_task` and inspect `derived.primary_task`, selection context and continuation, not only overflow or enclosure share |
 
 When a measurement disagrees with the plan, change the implementation, or change the plan and say why;
 never adjust the plan to fit an accident. Independent review belongs to `ultramarine`.

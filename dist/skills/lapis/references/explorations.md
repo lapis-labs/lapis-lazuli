@@ -4,6 +4,7 @@
 
 - Role and script — type comparisons approve only the roles and scripts actually compared.
 - Rendered relations — layout and direction alternatives change organization, not only order.
+- Booking on a phone — staged/continuous alternatives share real labels, dependencies and availability states.
 - Motion playback — both alternatives are implemented on the same interaction before either counts.
 - Fixed decisions — brief and contract exemptions remain available without a pretend comparison.
 
@@ -37,6 +38,22 @@ all possible layouts or whether a recorded comparison is fair.
 
 Open the matched captures yourself. Candidate names and relation descriptions do not prove the
 implementation, and an available capture is not proof that its visitor task works.
+
+## Booking on a phone
+
+Before declaring an intake short, implement staged and continuous candidates with `form_mode`
+and the same actual fields, longest labels, default/selected state, and pending/empty/available
+slots. In the layout exploration, use `compared_on: [render]`; a matched phone
+`comparisons` entry records `viewport`, `state`, `fields` (visible labels), and each candidate's
+`captures`. Open the captures and perform the first decision, Continue, correction and Back.
+Compare how far the visitor travels to the selection summary and next action, not how few
+sections the plan names. `plan check` rejects a booking comparison with only desktop evidence
+or candidate names; it checks records, not whether a claimed state or a transition really worked.
+The forms-and-recovery guide owns SPA transitions, preserved selections and native-keyboard proof.
+
+When media remains open, each layout/direction candidate records `images`: source, role
+(`product`, `evidence`, `explanation`, `mood`) and reason. `images: []` is an actual no-photo
+candidate, not an unresolved slot. The visual-assets guide owns inventory and role selection.
 
 ## Motion playback
 

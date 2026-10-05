@@ -70,6 +70,15 @@ Requirement coverage, notices, and a quiet lint report are a floor, not the verd
 only after a long scroll or a guess, is a finding (`review.task-walkthrough`: the walk in `observed`, the task and
 width in `basis` and `location`), whatever the checks found. Write every walk in the report's `walkthroughs` field.
 
+For an operate/dashboard/booking screen, explicitly walk `layout.phone_task` on the first phone
+view: after the necessary choice, where is the first useful result (route chosen → first ETA)?
+Record every intervening summary, duplicate context or promotional line, result depth, and whether
+the current selection and next action share the decision context. A lower card ratio, visible
+route selector, or newly inserted CTA does not prove success. Keep consequential context; a
+transition not visible in the capture is not-walked unless the session shows it. For booking,
+compare actual staged/continuous phone fields and availability states, selection-adjacent summary,
+real Continue/Back state changes with selections preserved, and the native-keyboard evidence limit.
+
 ## Then: compare with the references
 
 After the task walk, set our rendered page beside two or three references the agent actually captured and
@@ -97,6 +106,9 @@ Work through these in order. Lint findings already report what they observed; do
 4. **World materials trace.** For each item in `world_materials`, find where it shows in the
    render. Name materials that never appear, and rejected defaults whose route did not arrive.
    Check that the signature is present and carries the page.
+   Supplied assets are inventory, not identity or structure. Check each selected image's product,
+   evidence, explanation or mood role and whether the no-photo candidate was genuinely compared.
+   A useful product/exhibit/documentary image stays; mood must not displace a work screen's task.
 5. **Vision check.** Look at the screenshots at every captured width. Confirm or refute the
    findings that depend on appearance, and check what measurement cannot: whether body faces read
    well at their size, whether a fallback face shows in any script, whether imagery shows the
@@ -104,6 +116,12 @@ Work through these in order. Lint findings already report what they observed; do
    Hold each `explorations` entry to the render: the chosen candidate is what the page uses, and the
    runner-up lost for a reason the screenshots or the plan can show. A recorded comparison that the
    render contradicts is `unearned`.
+   Genre judges the whole reading structure. Keep an earned standard SaaS sequence, split or card
+   group when reader questions and the captures support its existing keep case; familiarity alone
+   is not a defect. Cut stock eyebrows, repeated icon rows and copy idioms before dismantling it.
+   Authored contour, caption overlap or unequal blocks can be earned options, not an asymmetry quota;
+   numerical rows, field order and control meaning stay fixed. Component radius consistency must
+   not flatten a deliberate media contour.
    For palette entries, read the candidate artifacts and `comparisons` captures, not just their names:
    - Does the exact product/photo/brand/data/material input explain each role hypothesis, with its
      authority distinct from an authored value? Were approved masters preserved?

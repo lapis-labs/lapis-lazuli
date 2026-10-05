@@ -182,6 +182,14 @@ status, qualifier, and action attached to what they govern, and at a narrow widt
 instead of forcing the same collision or crop. Record the comparison in the layout exploration (`compared_on`
 `sketch`, `render` when rendered).
 
+Other options to compare on the same content are one long demonstration beside two short
+records, a partial media contour, or a caption overlapping a text-safe part of its own image.
+Render an ordinary section as well as the opening and the narrow view. Fix numerical comparison
+rows, field order and control meaning across alternatives; change authored composition, not
+operational semantics. Equal importance does not require equal area when the reading methods
+differ. These are candidates, not a new asymmetry default. Keep repeated component radii separate
+from authored media contours as the system token guide describes.
+
 ## Material and texture
 
 | Decision | Plan field | What checks it |

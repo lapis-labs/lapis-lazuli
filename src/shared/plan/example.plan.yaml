@@ -66,6 +66,9 @@ tokens:
   shape:
     radius: { scale: [0, 4, 8], by_role: { control: 4, card: 8, image: 0 } }
     rule: Square image edges like the firing-log sheets; softer corners only on things you press
+    # A compared authored contour is not a control radius step; square photos can still win.
+    media_contours:
+      - { token: --media-contour-detail, value: "0 32px 0 0", where: "detail figure", reason: "A single open corner anchors the kiln-position caption; narrow view returns to square edges" }
   surface:
     elevation:
       - { level: 0, means: the page and the firing log }
@@ -80,6 +83,11 @@ layout:
     content_inventory: [pieces from this firing, firing log, how to reserve]
     priority: [pieces, reservation, log]
     archetype: list-detail
+  phone_task:
+    decision: Inspect a piece from this firing and its availability
+    first_result: "#works .piece:first-child"
+    before_result: [firing identity, piece selection]
+    acceptance: The phone's first useful piece record shows glaze, price and availability before optional log detail
   sections:
     - { id: firing-log, archetype: signature, answers: How were these pieces made }
     - { id: works, archetype: list, answers: What can I buy }
@@ -160,8 +168,13 @@ explorations:
     runner_up_lost: The cool shelf echo kept reserve distinct, but the blue-glazed bowl's edge read less clearly against it in the same dense list; the warm log frame kept that boundary without editing the photo
   - decision: layout
     candidates:
-      - { name: one ruled row per piece, source: firing log sheet }
-      - { name: a photo grid of piece cards, source: generic }
+      - name: one ruled row per piece
+        source: firing log sheet
+        images: []
+      - name: a photo grid of piece cards
+        source: generic
+        images:
+          - { source: studio piece photos, role: product, reason: The actual glaze and silhouette let the buyer compare these pieces }
     compared_on: [sketch]
     chosen: one ruled row per piece
     runner_up_lost: the grid hides the glaze number and the kiln position that tell pieces apart

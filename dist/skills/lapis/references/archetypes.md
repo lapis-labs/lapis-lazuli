@@ -368,8 +368,9 @@ current choice, an article on its headline and deck, an exhibition on the visit 
 
 ### Genre structures
 
-A genre has a structure of its own. Take the order of the page from it, and let it decide the first view before a
-category hero does.
+A genre judges the whole reading structure, not only the first view: each section, its useful
+unit, hierarchy, and turn must answer the reader's questions. Use that sequence before a category
+hero, and judge it again through the full phone and wide captures.
 
 - **An article or a news page.** Follow the publication's structure: masthead, headline and deck, byline and date,
   the lead, then the body as running text, with figures, quotations, and related reading placed as a publication
@@ -385,6 +386,12 @@ category hero does.
   may show the steps together. The public design-system writing of the large Korean consumer apps, which the source
   registry lists, is the place to study how a flow is staged and how its steps move; study the principles, and copy
   none of their components, marks, or look.
+- **A SaaS evaluation page.** A familiar proposition/product preview, capability, recovery case,
+  pricing, questions and start can be the right structure. Keep it with `reader-question-order`
+  when `layout.sections[].answers` and the captures show that evaluation path. The keep's reason
+  names those questions and capture references; it requires no novel sequence. A working split
+  or card group likewise stays on its existing keep case when the content relationship is real.
+  Cut stock eyebrows, icon rows, reassurance and copy idioms before dismantling an earned structure.
 
 ### Proof after the claim
 

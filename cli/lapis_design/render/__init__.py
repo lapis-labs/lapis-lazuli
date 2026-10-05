@@ -84,6 +84,7 @@ def _capture(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
         policy = hosts.HostPolicy(public=args.public, plan=plan, pins=[pin] if pin else [])
         policy.check(url)                     # before the browser opens
         signature = ((plan or {}).get("layout") or {}).get("signature")
+        phone_task = ((plan or {}).get("layout") or {}).get("phone_task")
         key = load_key()
         with sync_playwright() as playwright:
             browser = chromium.launch(playwright, launch_args([pin] if pin else []))
@@ -99,7 +100,7 @@ def _capture(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
                     if config["browser_chrome"]:
                         filename += "-chrome"
                     shot = screenshots / f"{filename}.png"
-                    vp = capture(guard, url, config, shot, key, plan_signature=signature)
+                    vp = capture(guard, url, config, shot, key, plan_signature=signature, phone_task=phone_task)
                     guard.check()
                     vp["screenshot"] = shot.relative_to(out.parent).as_posix()
                     viewports.append(vp)

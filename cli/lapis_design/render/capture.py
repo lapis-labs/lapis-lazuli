@@ -377,7 +377,8 @@ class _Network:
 
 
 def capture(browser: Browser, url: str, config: dict, screenshot_path: Path, key: bytes, *,
-            plan_signature: str | None = None, check_document: Callable[[Page], None] | None = None) -> dict:
+            plan_signature: str | None = None, phone_task: dict | None = None,
+            check_document: Callable[[Page], None] | None = None) -> dict:
     """Navigate once, settle and scroll, then capture a viewport while page/CDP remain live.
 
     `plan_signature` is the plan's `layout.signature`, used only as the unverified text fallback
@@ -498,6 +499,24 @@ def capture(browser: Browser, url: str, config: dict, screenshot_path: Path, key
         vp["derived"] = derive(vp, elements, config["height"], plan_signature,
                                page_height=data["pageHeight"],
                                line_extents=view.extra.get("line_extents"))
+        if phone_task:
+            vp["derived"]["primary_task"] = page.evaluate(r"""selector => {
+                const record = {selector};
+                let el;
+                try { el = document.querySelector(selector); }
+                catch { return {...record, unmeasured:'invalid first-result selector'}; }
+                if (!el || !el.checkVisibility({checkOpacity:true,checkVisibilityCSS:true}))
+                    return {...record, unmeasured:'first result absent or hidden in this state; walk the transition'};
+                const r = el.getBoundingClientRect();
+                if (!r.width || !r.height)
+                    return {...record, unmeasured:'first result has no painted geometry'};
+                const y = r.y + scrollY, flat = s => (s || '').replace(/\s+/g,' ').trim();
+                const before = [...document.querySelectorAll('h1,h2,h3,label,button,select,dt,[role=heading]')]
+                    .filter(n => !el.contains(n) && n.checkVisibility({checkOpacity:true,checkVisibilityCSS:true})
+                        && n.getBoundingClientRect().y + scrollY < y)
+                    .map(n => flat(n.getAttribute('aria-label') || n.textContent)).filter(Boolean);
+                return {...record, y, h:r.height, before:[...new Set(before)].slice(0,40)};
+            }""", phone_task["first_result"])
         return vp
     finally:
         context.close()

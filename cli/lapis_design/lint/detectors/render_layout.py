@@ -591,6 +591,49 @@ def section_inventory(ctx: Context, det: dict, rule: dict, layer: str) -> Result
     return Result(hits=hits)
 
 
+@detector("primary-task-first-view", layers=("plan", "render"))
+def primary_task_first_view(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
+    from lapis_design.lint.detectors.behavior import _operating_plan
+
+    if ctx.plan is None:
+        return Result(skipped="no plan identifies the operating task or its first result")
+    modes = set(_dig(ctx.plan, "direction", "read", "surface_mode") or [])
+    frame = _dig(ctx.plan, "brief", "product_frame")
+    work_frame = frame in ("forms-onboarding-checkout", "saas-dashboard-admin", "internal-tools")
+    # A museum/article/landing may offer a secondary booking; its reading opening is not a work screen.
+    work_mode = "operate" in modes and not modes & {"persuade", "experience"}
+    if not _operating_plan(ctx.plan) or (modes and not work_frame and not work_mode):
+        return Result()
+    task = _dig(ctx.plan, "layout", "phone_task")
+    if layer == "plan":
+        if task:
+            return Result()
+        return Result(hits=[Hit(observed="operating screen has no phone-task acceptance: name the decision, "
+                               "first useful result, what precedes it, and the captured task that proves it",
+                               location={"path": "layout.phone_task"}, evidence="plan")])
+    if not task:
+        return Result(skipped="layout.phone_task is missing; the first useful result cannot be guessed from a CTA")
+    pages = _pages(ctx)
+    if isinstance(pages, str):
+        return Result(skipped=pages)
+    phone = [p for p in pages if p.width <= 430]
+    notes = []
+
+    def observe(page: _Page) -> Iterable[_Obs]:
+        fact = page.derived.get("primary_task") or {}
+        if fact.get("selector") != task["first_result"] or "y" not in fact or fact.get("unmeasured"):
+            notes.append(f"{page.width}px: {fact.get('unmeasured') or 'plan-linked first-result geometry not recorded'}")
+            return
+        if fact["y"] >= page.height:
+            before = "; ".join(fact.get("before") or []) or "no preceding labels recorded"
+            yield _Obs(("primary-task", task["first_result"]),
+                       f"first task result {task['first_result']!r} starts below the first phone view",
+                       detail=f"y={_fmt(fact['y'])}px, view={_fmt(page.height)}px; visitor passes {before}")
+
+    hits = _merge(phone, observe)
+    return Result(hits=hits, skipped="; ".join(notes) or (None if phone else "no phone capture"))
+
+
 # ---------------------------------------------------------------- sibling-identity
 
 def _priorities(plan: dict | None) -> list[str]:

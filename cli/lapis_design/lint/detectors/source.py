@@ -976,10 +976,14 @@ def _scales(ctx: Context, tree: _Tree) -> dict[str, _Scale]:
         base, ratio = float(type_scale["base_px"]), float(type_scale["ratio"])
         steps = sorted({round(base * ratio ** n, 3) for n in range(-4, 13)} if ratio > 1 else {base})
         scales["font-size"] = _Scale("font-size", steps, relative=True, source="plan tokens.type.scale")
+    radius = ((plan.get("tokens") or {}).get("shape") or {}).get("radius") or {}
+    values = set(radius.get("scale") or []) | set((radius.get("by_role") or {}).values())
+    if values:
+        scales["radius"] = _Scale("radius", sorted(float(v) for v in values), source="plan tokens.shape.radius")
     defined: dict[str, set[float]] = {}
     base_spacing: float | None = None
     for d in _declarations(tree):
-        if not d.token:
+        if not d.token or d.prop.startswith("--media-contour-"):
             continue
         value = _px(d.value)
         if value is None or value <= 0:

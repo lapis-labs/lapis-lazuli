@@ -27,6 +27,7 @@ It does not decide fairness or visual quality; the critic reads the actual speci
 from __future__ import annotations
 
 from dataclasses import dataclass
+import re
 
 from lapis_design import system_fonts
 from lapis_design.lint.types import Context, Hit, Result, detector
@@ -120,6 +121,29 @@ def palette_render_problems(entry: dict) -> list[str]:
     return problems
 
 
+def booking_phone_problems(entry: dict, plan: dict) -> list[str]:
+    brief = plan.get("brief") or {}
+    archetype = ((plan.get("layout") or {}).get("procedure") or {}).get("archetype")
+    booking = (brief.get("product_frame") == "forms-onboarding-checkout" or archetype == "form") and re.search(
+        r"\b(?:book|booking|appointment|reservation)\b|예약|진료|予約|预订", brief.get("one_job", ""), re.I)
+    if not booking or entry.get("decision") != "layout" or entry.get("fixed_by"):
+        return []
+    problems = []
+    modes = {c.get("form_mode") for c in entry.get("candidates") or []}
+    if not {"staged", "continuous"} <= modes:
+        problems.append("booking layout needs staged and continuous candidates with the same real fields")
+    phone = [c for c in entry.get("comparisons") or []
+             if isinstance((c.get("viewport") or {}).get("width"), int)
+             and 0 < c["viewport"]["width"] <= 430]
+    if "render" not in (entry.get("compared_on") or []) or not phone:
+        problems.append("booking shortness is unobserved without a matched phone render")
+    elif not any(c.get("state") and c.get("fields")
+                 and all(_text(c["captures"].get(candidate.get("name"))) for candidate in entry.get("candidates") or [])
+                 for c in phone if isinstance(c.get("captures"), dict)):
+        problems.append("booking phone comparison needs real field labels, availability state and every candidate's capture")
+    return problems
+
+
 def entry_problems(entry: dict, params: dict, design: object, root: Path | None = None) -> list[str]:
     """Why an entry does not hold up; empty when it is a complete comparison or a valid exemption."""
     fixed = entry.get("fixed_by")
@@ -189,7 +213,8 @@ def plan_candidates(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
     entries = [(i, e) for i, e in enumerate(plan.get("explorations") or ()) if isinstance(e, dict)]
     here = {"file": ctx.plan_path} if ctx.plan_path else {}
     path = det.get("path") or "explorations"
-    problems = {i: entry_problems(e, params, design, ctx.project_root) for i, e in entries}
+    problems = {i: entry_problems(e, params, design, ctx.project_root) + booking_phone_problems(e, plan)
+                for i, e in entries}
     missing: list[Need] = []
     unsound: dict[int, None] = {}
     for need in _needs(plan, params, design):

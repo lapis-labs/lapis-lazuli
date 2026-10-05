@@ -449,3 +449,20 @@ this attribute. Otherwise, when the plan's `layout.signature` text appears in th
 matching is only a fallback. When neither holds, `signature_found` is false and
 `signature_evidence` is omitted. `render check` takes `layout.signature` from the plan it reads for
 the target-host check, so without a plan only the attribute counts.
+
+### primary_task
+
+Present only when the own-render plan has `layout.phone_task`. `selector` is its `first_result`
+CSS selector; `y` and `h` measure that element's document-space geometry after the normal settle/
+scroll capture sequence, without activating a control. `before` lists distinct visible headings,
+labels, buttons, selects and definition terms above it in document order (at most 40). It is a
+bounded inventory, not a complete task walk or a judgement that the preceding context is needed.
+A missing, hidden, invalid or zero-area result records `unmeasured` instead of geometry.
+
+`layout.primary-task-first-view` reads the plan-linked geometry only at phone widths. It fires
+when the first result starts at or below the viewport bottom, regardless of card enclosure or
+whether a route control is already visible. A result not present in the initial state needs
+the critic's capture/session transition walk; absence is unmeasured, never proof of success.
+This is not a universal CTA/final-confirmation fold requirement, native-keyboard test, or task-success score.
+The gate applies to work frames or operating modes without a persuade/experience opening, not
+to a museum, article or landing merely offering a secondary booking or purchase.

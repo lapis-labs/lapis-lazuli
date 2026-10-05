@@ -318,6 +318,7 @@ def test_on_scale_values_pass(tmp_path):
         """, "src/A.tsx": "const s = { paddingTop: 16, fontSize: '25px' }\n",
         "src/B.tsx": "export const B = () => <div className=\"p-[12px] text-[#fff] gap-4\" />\n"})
     plan = plan_with(**SCALES)
+    plan["tokens"].pop("shape")
     result = lint("system.off-scale-value", root, plan=plan)
     assert result.hits == []
     assert result.skipped == ("border-radius: no contract radius scale (plan tokens or project token definitions)")
@@ -349,11 +350,34 @@ def test_radius_scale_from_project_tokens(tmp_path):
         "src/app.css": ":root { --radius-sm: 4px; --radius-lg: 0.75rem; }\n",
         "src/card.css": ".a { border-radius: 4px 12px; }\n.b { border-radius: 6px; }\n.pill { border-radius: 9999px; }\n",
     })
-    result = lint("system.off-scale-value", root, plan=plan_with(**SCALES))
+    plan = plan_with(**SCALES)
+    plan["tokens"].pop("shape")
+    result = lint("system.off-scale-value", root, plan=plan)
     assert result.skipped is None
     [hit] = result.hits
     assert hit.observed.startswith("border-radius 6px") and "project token definitions" in hit.observed
 
+
+def test_authored_media_contour_does_not_expand_the_repeated_control_radius_scale(tmp_path):
+    root = project(tmp_path, {"app.css": """
+        :root { --media-contour-radius-story: 3px 120px 3px 3px; }
+        .story img { border-radius: var(--media-contour-radius-story); }
+        button { border-radius: 6px; }
+        .card { border-radius: 8px; }
+        """})
+    shape = {"radius": {"scale": [0, 4, 8], "by_role": {"control": 4, "card": 8}},
+             "media_contours": [{"token": "--media-contour-radius-story", "value": "3px 120px 3px 3px",
+                                "where": ".story img", "reason": "One open corner anchors the caption beside the product."}]}
+    result = lint("system.off-scale-value", root, plan=plan_with(**SCALES, shape=shape))
+    assert [hit.observed.split(" is off")[0] for hit in result.hits] == ["border-radius 6px"]
+    assert result.skipped is None
+
+    root = project(tmp_path / "drift", {"app.css": """
+        :root { --media-contour-radius-story: 120px; }
+        .story img { border-radius: var(--media-contour-radius-story); }
+        button { border-radius: 120px; }
+        """})
+    assert "border-radius 120px" in observed(lint("system.off-scale-value", root, plan=plan_with(shape=shape)))
 
 def test_space_multiples_of_the_base(tmp_path):
     root = project(tmp_path, {"a.css": ".a { padding: 12px 20px; margin: 14px }\n"})

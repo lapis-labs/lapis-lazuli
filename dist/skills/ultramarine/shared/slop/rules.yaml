@@ -612,9 +612,9 @@ rules:
         - font-size
         - spacing
   why: One-off radius, size, or spacing values make equivalent components drift without a role or optical
-    reason
-  better: Use the scale step for the same role and condition; document an optical correction when one
-    is needed
+    reason; authored media contours are not repeated control radii
+  better: Use the component scale for the same role and condition; keep deliberate media contours in separate
+    --media-contour-* tokens with their slot and reason, never enlarge the control scale to absorb them
   keep_when:
   - id: optical-correction
     when: a documented optical correction, such as balancing an icon inside a round button
@@ -2493,9 +2493,9 @@ rules:
   why: The first screen is divided in two, a column with the large heading, a short paragraph, and the
     buttons beside a column with an image, drawing, or product mock - the composition generated pages
     open with whatever the subject, so changing the subject changes a noun and nothing else
-  better: Derive the opening from the content's own relation (the object and its state, a question and
-    its answer, before and after), from the subject's own objects at their real arrangement, or from the
-    sequence the visitor follows; the split stays only when it is what that derivation gives
+  better: Derive the opening from the content's own relation and the visitor's genre/task questions; keep
+    a working split when that relationship is visible in the capture, and cut stock copy, eyebrows and
+    icon rows before dismantling it
   keep_when:
   - id: won-comparison
     when: the split won a rendered comparison against an opening built from the same content without it
@@ -2548,7 +2548,9 @@ rules:
         similarity_max: 0.9
   why: Feature or pricing cards get equal size and emphasis despite unequal content, flattening priority
     and recommendation
-  better: Let comparison needs and content importance set count, span, order, and emphasis
+  better: Let comparison needs, reading method and content importance set count, span, order and emphasis;
+    peers can need one long demonstration plus two short records while numerical comparison rows stay
+    aligned
   keep_when:
   - id: peer-comparison
     when: a genuine peer comparison of equal items
@@ -2677,11 +2679,13 @@ rules:
   - reassurance-landing
   why: Section order follows a category landing template, or unrelated sections repeat identical spans,
     instead of following the questions the reader brings
-  better: Order sections by the reader's evaluation or task sequence, and vary structure when the content
-    relation changes
+  better: Keep a standard genre or SaaS sequence when sections answer the reader's actual evaluation questions;
+    record reader-question-order with those questions and phone/wide capture references in the reason,
+    then remove stock phrasing and icons before changing the earned structure
   keep_when:
   - id: reader-question-order
-    when: the reader's questions genuinely follow that order
+    when: the reader's questions genuinely follow that order, and the capture preserves their hierarchy
+      through the whole page; familiarity alone is not a defect
     evidence: none
   waiver:
     scope: rule
@@ -2885,6 +2889,29 @@ rules:
   better: Keep the continuation on the selection's screen, by ordering the step or using an appropriate
     sticky action; record selections and the forward control in the flow's reach link, not a CTA on every
     first view
+  waiver:
+    scope: none
+  verify: runtime
+- id: layout.primary-task-first-view
+  class: quality
+  domain: layout
+  layers:
+  - plan
+  - render
+  - review
+  severity:
+    create: gate
+    review: P1
+  detect:
+    plan:
+      detector: primary-task-first-view
+    render:
+      detector: primary-task-first-view
+  why: A work screen can expose its controls yet put the first useful task result below the first phone
+    view behind duplicate context, citywide summaries or promotion
+  better: Record layout.phone_task and perform that decision on the phone capture; bring its first useful
+    result forward, preserving necessary context and selection-adjacent continuation, not a CTA on every
+    first view or a lower card ratio
   waiver:
     scope: none
   verify: runtime

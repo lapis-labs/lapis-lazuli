@@ -337,6 +337,29 @@ $defs:
               minimum: 0
       rule:
         type: string
+      media_contours:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required:
+          - token
+          - value
+          - where
+          - reason
+          properties:
+            token:
+              type: string
+              pattern: ^--media-contour-[a-z0-9-]+$
+            value:
+              type: string
+              minLength: 1
+            where:
+              type: string
+              minLength: 1
+            reason:
+              type: string
+              minLength: 8
   surface_tokens:
     type: object
     additionalProperties: false

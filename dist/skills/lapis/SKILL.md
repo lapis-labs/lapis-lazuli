@@ -143,6 +143,8 @@ Concrete things from the subject: objects, records, processes, numbers, marks, p
 Never adjectives or moods. Find them in `PRODUCT.md`, the user's content, real photographs, and the
 subject's own documents. Four to six is a good start; create mode needs at least one. These are
 what replace every default you reject, so collect them before choosing type, color, or layout.
+Supplied materials are optional inventory; decide each image's role and compare no photo before
+letting it set identity or structure (`references/visual-assets.md`).
 
 
 ### 3. Design Read and dials - `direction.read`, `direction.dials`

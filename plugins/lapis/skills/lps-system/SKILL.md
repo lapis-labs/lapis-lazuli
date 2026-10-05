@@ -89,8 +89,8 @@ Start from `tokens.type`: the families per role and script, `scale.base_px`, and
 
 - **Space** from `tokens.space`: a base and a scale; name steps by use (inset, stack, inline,
   section). Layout gaps come from the scale.
-- **Radius** from `tokens.shape`: a small scale and a step per component role. Different roles may
-  have different corners; the reason lives in `tokens.shape.rule`.
+- **Radius** from `tokens.shape`: a small scale and a step per repeated component role; authored
+  media contours use separate `media_contours` tokens and reasons, not the control radius scale.
 - **Surfaces** from `tokens.surface`: elevation levels and what each means, border treatment, and
   every decorative treatment (translucency, texture, heavy outlines, offset shadows) with the job it
   does. A treatment without a job is not tokenized. A treatment that a card names is also decided in

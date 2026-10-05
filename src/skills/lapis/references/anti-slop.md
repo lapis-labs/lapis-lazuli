@@ -119,6 +119,10 @@ that see it. Rules marked * are statistical or lexical leads; the critic judges 
   open. Group the footer by real destinations; a small useful footer beats invented departments.
 - **Exceptions.** A buyer may truly weigh features, cost, and questions in this order. A long evaluation page can
   earn a final action. A multi-product site needs real link groups.
+  Record that keep as `reader-question-order`, naming the real questions and phone/wide captures in
+  its reason. Genre and task success judge the full structure. Remove stock eyebrows, redundant
+  icon rows and copy idioms first; unfamiliar order is not inherently better than working SaaS,
+  article, exhibition or shop structure. Split/card keeps use their existing content-relation cases.
 - **Rules.** `layout.template-section-sequence`, `layout.reassurance-landing`.
 
 ## Page rhythm
