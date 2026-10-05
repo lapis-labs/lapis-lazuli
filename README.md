@@ -11,14 +11,15 @@ code exists, on a machine without a lazuli font database:
 
 ```console
 $ lapis-design plan check docs/examples/site-booking-en.yaml
-plan_check 0.2.0: 3 blocking, 10 total, 3 skipped: not judged
+plan_check 0.2.0: 3 blocking, 11 total, 3 skipped: not judged
   [BLOCK] plan.uncompared-decision explorations — 7 open decisions with no comparison recorded in explorations: type roles body; palette; layout; motion; direction; copy slots headline, cta
-      fix: Record each open decision in explorations - two or more candidates with their sources, what they were compared on, the chosen one, and why the runner-up lost; a decision the contract or the brief fixes says so with fixed_by
+      fix: Record each open decision in explorations - two or more candidates with their sources, what they were compared on, the chosen one, and why the runner-up lost; a palette render also records each candidate's artifact and roles or token_file,…
   [BLOCK] copy.vague-cta content.key_copy[?slot=cta].text — "continue" (vague_cta) in the cta key copy: "Continue"
       fix: Add a defaults entry for copy.vague-cta: reject it with a reason, or keep it naming one keep_when id (step-title-states-outcome). Name the outcome of the action in the label
   [BLOCK] font.no-lock tokens.type.lock — type roles are set but no fonts lock was given
       fix: Run `lazuli lock` for each named face: Pretendard.
   [WARN] color.sage-soft-field tokens.color.roles[?role=identity|interaction].oklch — 1 of 1 colors fall in the region: [[0.5, 0.12, 150]]
+  [WARN] layout.primary-action-reach flow 'hold-site' has no reach link; name its required selections and forward control
   [WARN] copy.buzzwords content.key_copy[*].text — "elevate" (buzzwords) in the headline key copy: "Elevate your camping experience"
   [WARN] copy.name-swap content.key_copy[*].text — the headline key copy "Elevate your camping experience" names no world material, subject term, number, date, or proper name, so nothing in it depends on this product
   [WARN] taste.unrecorded direction.taste — User taste is unrecorded for this task.
@@ -87,9 +88,10 @@ need the CLI on your PATH (see [CLI and optional components](INSTALLATION.md#cli
 4. At any step, `lazuli` supplies facts on request: fonts on your computer, catalog labels and
    licenses, color system codes, single pages, and reference profiles.
 
-To keep an unattended run on that path, `lapis-design next --task <task>` prints the one step still to do,
-with its exact command, until it says done; done means every step ran on real inputs, not that the release
-gate passes. When an agent is about to stop, a stop hook (Claude Code, Codex) or extension (Oh-My-Pi, pi)
+To keep an unattended run on that path, `lapis-design next --task <task>` prints the remaining procedure
+step with its exact command, or `done`. A newer recorded environmental inability can stand in for a step,
+and a blocking report can end the procedure; `done` is not release approval. Keep the gate verdict and
+not-run evidence separate. When an agent is about to stop, a stop hook (Claude Code, Codex) or extension (Oh-My-Pi, pi)
 asks it, and continues the agent with that step only if `LAPIS_UNATTENDED=1` is set; otherwise it prints one
 line and never blocks. The same switch holds the order, brief, references, plan, then code: a write of a page
 source file is refused with the step named until the brief, references, and plan exist. Set the agent's
@@ -126,8 +128,8 @@ hand.
 
 - `lapis-design`: `plan check`, `rights check`, `render check`, `behavior check`, `stub serve`,
   `slop lint`, `release check`, `next`, and the `hook` and `mcp` entry points that harnesses call.
-- `lazuli`: `local fonts`, `catalog`, `search`, `lock`, `class`, `sources`, `color`, `read`, `ref`,
-  `doctor`, and `setup`. State lives in your user cache; `lazuli doctor` checks the install.
+- `lazuli`: `local fonts`, `catalog`, `search`, `lock`, `class`, `sources`, `hints`, `color`, `read`, `ref`,
+  `fetch`, `license`, `doctor`, and `setup`. State lives in your user cache; `lazuli doctor` checks the install.
 
 Run either with `--help` for the commands and options.
 
@@ -176,9 +178,10 @@ Run either with `--help` for the commands and options.
   screenshots, only keyed signatures and perceptual hashes. The run's own study copies (screenshots, a
   page's HTML and stylesheets, a picture) sit in `.lapis/references/<task>/`, are git-ignored, and never
   ship or enter the page.
-- **Take your fonts, or act for you on font sites.** Font files are read, never copied or converted
-  into a project; only files you supply for shipping enter one. lazuli never signs in, downloads,
-  activates, buys, or accepts terms for you. The database of your fonts stays in your user cache.
+- **Take your installed fonts, or act for you on font sites.** Installed font files are read, never copied
+  or converted into a project; Adobe Fonts files are never fetched, opened, or copied. The open-licensed
+  Google Fonts fetch described above is a separate delivery path. lazuli never signs in, activates, buys,
+  or accepts terms for you. The database of your fonts stays in your user cache.
 - **Give legal advice.** Rights checks compare the records you keep and never state a legal
   conclusion. Ledgers and locks never hold credentials, license keys, payment data, or private
   receipts.
@@ -189,8 +192,10 @@ Run either with `--help` for the commands and options.
 
 ## Status
 
-Early releases: the contracts are `version: 0` drafts and may change between releases; see
-[CHANGELOG.md](CHANGELOG.md) for the current version.
+Early releases: contracts may change between releases. Render extraction is `version: 1`; the other
+contract formats are `version: 0`. See [CHANGELOG.md](CHANGELOG.md) for released and Unreleased changes.
+This README describes the current source snapshot, including Unreleased work; the install commands
+follow `release`, not `main`. Use that release's documentation for its available features.
 `lazuli setup` installs an optional font-style embedding model, and no model is published yet, so it
 exits 1 for now. CI runs the contract tests, the Chromium tests, and the optional CJK tests on
 Linux.

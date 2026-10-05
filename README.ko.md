@@ -8,14 +8,15 @@ Claude Code, Codex, Oh-My-Pi 같은 하네스로 웹 화면을 만드는 개발�
 
 ```console
 $ lapis-design plan check docs/examples/site-booking-ko.yaml
-plan_check 0.2.0: 3 blocking, 10 total, 3 skipped: not judged
+plan_check 0.2.0: 3 blocking, 11 total, 3 skipped: not judged
   [BLOCK] plan.uncompared-decision explorations — 7 open decisions with no comparison recorded in explorations: type roles body; palette; layout; motion; direction; copy slots headline, cta
-      fix: Record each open decision in explorations - two or more candidates with their sources, what they were compared on, the chosen one, and why the runner-up lost; a decision the contract or the brief fixes says so with fixed_by
+      fix: Record each open decision in explorations - two or more candidates with their sources, what they were compared on, the chosen one, and why the runner-up lost; a palette render also records each candidate's artifact and roles or token_file,…
   [BLOCK] copy.vague-cta content.key_copy[?slot=cta].text — "계속하기" (vague_cta) in the cta key copy: "계속하기"
       fix: Add a defaults entry for copy.vague-cta: reject it with a reason, or keep it naming one keep_when id (step-title-states-outcome). Name the outcome of the action in the label
   [BLOCK] font.no-lock tokens.type.lock — type roles are set but no fonts lock was given
       fix: Run `lazuli lock` for each named face: Pretendard.
   [WARN] color.sage-soft-field tokens.color.roles[?role=identity|interaction].oklch — 1 of 1 colors fall in the region: [[0.5, 0.12, 150]]
+  [WARN] layout.primary-action-reach flow 'hold-site' has no reach link; name its required selections and forward control
   [WARN] copy.buzzwords content.key_copy[*].text — "최적의" (buzzwords) in the headline key copy: "최적의 캠핑 경험을 선사합니다"; "경험을 선사" (buzzwords) in the headline key copy: "최적의 캠핑 경험을 선사합니다"
   [WARN] copy.name-swap content.key_copy[*].text — the headline key copy "최적의 캠핑 경험을 선사합니다" names no world material, subject term, number, date, or proper name, so nothing in it depends on this product
   [WARN] taste.unrecorded direction.taste — User taste is unrecorded for this task.
@@ -62,7 +63,7 @@ LapisLazuli는 검사가 찾은 것을 알려 줄 뿐이고, 접근성이나 법
 3. 구현이 끝나면 `ultramarine`이 내 렌더에 `lapis-design`을 돌려요. 최대 아홉 가지 조건(너비 320~1440px, 라이트·다크, 모션 줄이기, 모바일 브라우저 UI)으로 캡처하고, 스텁 백엔드에서 작업 흐름을 끝까지 돌려 보고, 뻔해 보이거나 기만적인 패턴과 빠진 권리 기록을 린트하고, 측정으로 판단할 수 없는 것은 별도의 평가자에게 넘겨요. 마지막 관문은 `ulm-release`예요.
 4. 어느 단계에서든 `lazuli`가 요청할 때 사실을 가져다줘요. 이 컴퓨터의 폰트, 카탈로그의 분류와 라이선스, 색 체계 코드, 페이지 하나, 레퍼런스 프로필이에요.
 
-사람 없이 돌릴 때 그 길을 벗어나지 않게 하려면 `lapis-design next --task <task>`를 써요. 이 명령은 아직 남은 단계 하나와 그 정확한 명령을 알려 주고, 끝났다고 할 때까지 반복해요. 끝났다는 말은 모든 단계를 실제 입력으로 돌렸다는 뜻이고, 릴리스 관문 통과를 뜻하지 않아요. 에이전트가 멈추려 할 때 정지 훅(Claude Code, Codex)이나 확장(Oh-My-Pi, pi)이 이 명령에 물어보고, `LAPIS_UNATTENDED=1`이 설정된 경우에만 남은 단계로 에이전트를 이어서 돌려요. 설정하지 않으면 한 줄만 알리고 막지 않아요. 에이전트의 추론(thinking) 수준은 high 이상으로 두세요. 우리가 돌려 본 결과 추론 수준이 low일 때 절차를 건너뛰었어요. Codex는 플러그인 훅을 신뢰한 뒤에만 실행해요([INSTALLATION.md](INSTALLATION.md#unattended-runs)).
+사람 없이 돌릴 때 그 길을 벗어나지 않게 하려면 `lapis-design next --task <task>`를 써요. 이 명령은 아직 남은 절차 단계 하나와 그 정확한 명령을 알려 주거나 `done`을 출력해요. 입력보다 새로운 환경상 실행 불가 기록이 있으면 해당 단계를 대신할 수 있고, 차단 발견이 있는 보고서로도 절차가 끝날 수 있어요. `done`은 릴리스 승인이 아니므로 관문 판정과 실행하지 못한 근거는 따로 확인해야 해요. 에이전트가 멈추려 할 때 정지 훅(Claude Code, Codex)이나 확장(Oh-My-Pi, pi)이 이 명령에 물어보고, `LAPIS_UNATTENDED=1`이 설정된 경우에만 남은 단계로 에이전트를 이어서 돌려요. 설정하지 않으면 한 줄만 알리고 막지 않아요. 에이전트의 추론(thinking) 수준은 high 이상으로 두세요. 우리가 돌려 본 결과 추론 수준이 low일 때 절차를 건너뛰었어요. Codex는 플러그인 훅을 신뢰한 뒤에만 실행해요([INSTALLATION.md](INSTALLATION.md#unattended-runs)).
 
 ## 플러그인과 스킬
 
@@ -88,7 +89,7 @@ LapisLazuli는 검사가 찾은 것을 알려 줄 뿐이고, 접근성이나 법
 ## 명령줄 도구
 
 - `lapis-design`: `plan check`, `rights check`, `render check`, `behavior check`, `stub serve`, `slop lint`, `release check`, `next`, 그리고 하네스가 부르는 `hook`·`mcp` 진입점이에요.
-- `lazuli`: `local fonts`, `catalog`, `search`, `lock`, `class`, `sources`, `color`, `read`, `ref`, `doctor`, `setup`이에요. 상태는 사용자 캐시에 두고, `lazuli doctor`가 설치를 점검해요.
+- `lazuli`: `local fonts`, `catalog`, `search`, `lock`, `class`, `sources`, `hints`, `color`, `read`, `ref`, `fetch`, `license`, `doctor`, `setup`이에요. 상태는 사용자 캐시에 두고, `lazuli doctor`가 설치를 점검해요.
 
 명령과 옵션은 `--help`로 볼 수 있어요.
 
@@ -104,18 +105,19 @@ LapisLazuli는 검사가 찾은 것을 알려 줄 뿐이고, 접근성이나 법
 ## 하지 않는 일
 
 - **살아 있는 사이트 긁어 가기.** `lazuli read`는 요청한 페이지 하나만 출처 등록부 정책과 사이트의 `robots.txt` 안에서 읽어요. 카탈로그 조회는 사람 수준 속도와 명시된 크롤 지연을 지키고, 요청 헤더에 lazuli를 밝히고, 차단이나 로그인을 우회하지 않아요. lazuli가 약관을 읽고 자동 수집을 금지한다고 해석한 곳(Adobe Fonts 사이트, 눈누. 2026-09-26에 읽었고, 법률 조언은 아니에요)은 출처 등록부가 호스트를 거절해서, 아무 요청도 보내지 않고 링크만 줘요. 이 수집 제한은 라이선스가 있는 Adobe Fonts를 포함해 폰트를 추천하고 고르고 잠그는 일과는 상관없어요.
+  `lazuli fetch`는 같은 규칙 안에서 `google/fonts` 저장소의 오픈 라이선스 패밀리 하나와 라이선스 문서를 받아요. 모든 파일이 검사를 통과해야 프로젝트에 써요.
 - **Adobe Fonts 파일 열기.** Adobe Fonts 구독이 켜 둔 폰트는 macOS에서 운영체제 폰트 API(Core Text)로 목록을 읽고, 시스템이 그린 글리프로 재서 파생 수치만 남겨요. 파일은 열지 않아요. Windows에는 그런 목록이 없어서 Adobe Fonts가 인벤토리에 없어요. `lazuli catalog lookup`은 카탈로그 스냅샷에 맞는 곳이 없는 Adobe Fonts 페이스의 패밀리 이름과, 시스템이 한국어 이름을 주면 그 이름을 검색어로 산돌 클라우드에 보내요. 다른 설치 폰트 패밀리와 같고, 그 페이스에 대한 다른 것은 보내지 않아요.
 - **남의 페이지 구동하기.** 렌더·동작 검사는 내 페이지만 캡처해요. `localhost`, 루프백·사설 주소, 사설 주소로만 풀리는 `.test` 이름이에요. 내 것인 공개 주소는 `render check`만 `--public`으로 받고, 출처 등록부의 호스트나 계획이 레퍼런스로 적은 호스트는 절대 안 돼요. 나머지 호스트는 모두 막아요. HTML 파일 경로나 `file://` URL도 받아요. 검사가 그 폴더를 읽기 전용으로 루프백에서 서빙하고, 그 HTTP URL만 기록해요.
 - **실제 계정 건드리기.** 동작 검사는 스텁이나 격리된 로컬 백엔드와 합성 데이터만 쓰고, 실제 계정·자격 증명·결제 수단은 쓰지 않아요. 입력값, 질의 문자열, 헤더, 요청 본문도 저장하지 않아요.
 - **레퍼런스를 권리 이상으로 보관하기.** 레퍼런스 캡처는 사용자가 준 URL이나, 에이전트가 레퍼런스 단계에서 스스로 찾은 페이지와 그림만 열어요. 스스로 찾을 때도 사람 수준 속도로, 같은 출처 등록부와 robots.txt 안에서만 움직이고 `refused` 출처는 그대로 거절해요. 로그인하거나 양식을 제출하지 않고, 출처의 권리가 허락하는 것만 남겨요. 레퍼런스 전용 프로필은 문구, 대체 텍스트, 접근 이름, 스크린숏 없이 키 서명과 지각 해시만 남겨요. 에이전트가 공부하려고 남기는 사본(스크린숏, 페이지의 HTML과 스타일시트, 그림)은 `.lapis/references/<task>/`에 있고, git이 무시하며, 배포하거나 페이지에 넣지 않아요.
-- **폰트를 가져가거나 폰트 사이트에서 대신 행동하기.** 폰트 파일은 읽기만 하고 프로젝트로 복사하거나 변환하지 않아요. 배포용으로 사용자가 직접 준 파일만 들어가요. lazuli는 사용자를 대신해 로그인, 내려받기, 활성화, 구매, 약관 동의를 하지 않아요. 폰트 데이터베이스는 사용자 캐시에만 있어요.
+- **설치된 폰트를 가져가거나 폰트 사이트에서 대신 행동하기.** 설치된 폰트 파일은 읽기만 하고 프로젝트로 복사하거나 변환하지 않아요. Adobe Fonts 파일은 내려받거나 열거나 복사하지 않아요. 위에서 설명한 오픈 라이선스 Google Fonts 내려받기는 별도의 배포 경로예요. lazuli는 사용자를 대신해 로그인, 활성화, 구매, 약관 동의를 하지 않아요. 폰트 데이터베이스는 사용자 캐시에만 있어요.
 - **법률 자문.** 권리 검사는 사용자가 적어 둔 기록을 서로 대조할 뿐, 법적 결론을 말하지 않아요. 원장과 잠금에는 자격 증명, 라이선스 키, 결제 정보, 개인 영수증이 들어가지 않아요.
 - **적합성 보증.** LapisLazuli는 검사가 찾은 것을 알려 줄 뿐이에요. 접근성이나 법적 준수를 보증하지 않아요.
 - **대신 승인하기.** 계획 모드 훅은 막아야 하는 발견이 있는 계획을 거부할 뿐이고, 승인은 사용자에게 남아 있어요.
 
 ## 상태
 
-초기 릴리스예요. 계약은 `version: 0` 초안이라 릴리스 사이에 바뀔 수 있고, 지금 버전은 [CHANGELOG.md](CHANGELOG.md)에 있어요. `lazuli setup`은 선택 사항인 폰트 스타일 임베딩 모델을 설치하는 명령인데 공개된 모델이 아직 없어서 지금은 종료 코드 1로 끝나요. CI는 Linux에서 계약 테스트, Chromium 테스트, 선택 사항인 CJK 테스트를 돌려요.
+초기 릴리스라 계약은 릴리스 사이에 바뀔 수 있어요. 렌더 추출은 `version: 1`, 나머지 계약 형식은 `version: 0`이에요. 릴리스된 변경과 Unreleased 변경은 [CHANGELOG.md](CHANGELOG.md)에서 구분해요. 이 README는 Unreleased 작업을 포함한 현재 소스 스냅샷을 설명하고, 설치 명령은 `main`이 아니라 `release`를 따라요. 설치할 릴리스에 어떤 기능이 있는지는 해당 릴리스의 문서에서 확인해요. `lazuli setup`은 선택 사항인 폰트 스타일 임베딩 모델을 설치하는 명령인데 공개된 모델이 아직 없어서 지금은 종료 코드 1로 끝나요. CI는 Linux에서 계약 테스트, Chromium 테스트, 선택 사항인 CJK 테스트를 돌려요.
 
 스킬을 쓸 때 에이전트가 어떻게 일하는지 살펴보는 평가 도구(`tools/eval/`)가 있어요. 결과는 사례 기록이고 품질을 잰 수치가 아니에요. 방법은 [`docs/eval/`](docs/eval/README.md)에 있어요.
 
@@ -153,9 +155,9 @@ Markdown 파일을 다시 쓸 때는 출처를 밝히고, 라이선스 링크를
 | `behavior/session.schema.yaml`, `behavior/DERIVED.md`, `behavior/example.session.json` | 동작 세션 기록 형식 v0, 관찰·파생 값 정의, 예시 세션. 루프백·사설 주소의 내 렌더만 구동하고(다른 호스트 요청은 차단, 스텁 백엔드 또는 격리된 로컬 백엔드, 합성 데이터), 입력값·질의 문자열·요청 본문은 남기지 않아요. 경로의 ID 같은 조각은 `:id`로 바꿔요. 예시에는 탐지기가 잡을 문제 두 가지(타이머 팝업의 거절 링크, 거절 뒤 재등장)를 일부러 넣었어요 |
 | `behavior/stub.schema.yaml`, `behavior/example.stub.yaml` | 스텁 백엔드 픽스처 형식 v0(2026-09-26 추가). 경로, 상태 있는 컬렉션과 효과 수, 상태 탐침용 변형(`empty`·`partial`), 합성 입력값, 합성 계정, 긴급성 근거(마감·재고·수요·활동), 외부 서비스 대체 응답을 적어요. 예시는 도자기 공방 계획에 맞췄어요 |
 | `render/extract.schema.yaml`, `render/DERIVED.md`, `render/example.extract.json` | 렌더 추출·레퍼런스 프로필 공통 형식 v1, 측정·파생 값 정의, 예시 추출. 레퍼런스 전용 캡처는 문구·대체 텍스트·접근 이름·스크린숏 없이 키 서명만 저장 |
-| `slop/rules.yaml` | 규칙 185개, 묶음 6개, 목록 16개. 이전 저장소의 체크리스트 73개와 anti-slop 카탈로그 107행에서 옮긴 규칙 125개에 동작 층 규칙 44개(기만·강요 패턴 12, 동작 접근성 17, 상태·복구·마찰 12, 동작 묶음 3), 렌더 층 대상 크기 규칙 1개, 계획 층 레버 규칙 1개(`layout.unanchored-lever`), 권리 규칙 14개(`rights.*`: 출처 기록, 라이선스 범위·만료, 크레딧·고지, 예약 폰트 이름, 타사 표장, 생성 매체, 초상·재산 동의)를 더했어요. 경계값과 목록 값은 v0 씨앗 |
+| `slop/rules.yaml` | 이름 붙은 규칙, 묶음과 목록. 계획·소스·렌더·동작·리뷰·권리 층에서 검사할 조건, 심각도, 유지할 수 있는 근거를 정의해요. 경계값과 목록 값은 v0 씨앗 |
 | `slop/rules.schema.yaml`, `slop/rules.example.yaml` | 규칙 파일 스키마(출처 종류에 `regulation` 추가), 그리고 `plan_check` 단위 테스트용 부분집합 7개 |
-| `slop/detectors.yaml` | 탐지기 90개 등록부(모두 구현, 코드와 등록부가 어긋나면 테스트가 실패해요), 규칙이 쓰는 모든 `params`·`threshold` 키 선언, 렌더 탐지기가 읽는 추출 필드(`reads`), 동작 탐지기가 읽는 세션 필드(`reads_session`), 자산 원장·폰트 잠금 필드(`reads_ledger`, `reads_lock`), 계획 경로식 문법 |
+| `slop/detectors.yaml` | 탐지기 등록부(코드와 등록부가 어긋나면 테스트가 실패해요), 규칙이 쓰는 모든 `params`·`threshold` 키 선언, 렌더 탐지기가 읽는 추출 필드(`reads`), 동작 탐지기가 읽는 세션 필드(`reads_session`), 자산 원장·폰트 잠금 필드(`reads_ledger`, `reads_lock`), 계획 경로식 문법 |
 | `slop/finding.schema.yaml` | 발견 보고 형식 (behavior_check·rights_check, 세션·원장 경로, 문맥·흐름·단계·자산 위치 포함) |
 | `fonts/lock.schema.yaml`, `fonts/example.fonts.lock.json` | 폰트 잠금 파일 (프로젝트 단위, 폰트마다 사용 작업 목록, 용도별 허가(`uses`), 배포 파일·변형·예약 이름·고지) |
 | `assets/ledger.schema.yaml`, `assets/CHECKS.md`, `assets/example.assets.ledger.json` | 자산 원장 v0 (`.lapis/assets.ledger.json`, 폰트 밖 매체의 출처·라이선스·용도·크레딧·고지·표장·생성 기록), 권리 검사 정의, 예시 원장. 법적 판단이 아니라 기록 대조만 해요 |

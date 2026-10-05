@@ -2,10 +2,16 @@
 
 All notable changes are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
-[Semantic Versioning](https://semver.org/) once 1.0 is released. Before then, contracts are
-`version: 0` drafts and may change between minor versions.
+[Semantic Versioning](https://semver.org/) once 1.0 is released. Before then, contracts may change
+between minor versions; render extraction is v1 and the other contract formats are v0.
 
 ## Unreleased
+
+### Documentation
+
+- Refresh both README plan-check transcripts from the documented no-font-database examples.
+  Remove stale rule/detector inventory totals, complete the lazuli command summary, and clarify
+  open-font fetching, procedure completion, contract versions, and source-snapshot versus release scope.
 
 ### Contracts
 
