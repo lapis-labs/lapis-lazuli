@@ -45,6 +45,7 @@ cjk = [
 
 [project.scripts]
 lapis-design = "lapis_design.cli:main"
+lapis-design-hook = "lapis_design.hooks:main"
 lazuli = "lazuli.cli:main"
 
 [build-system]

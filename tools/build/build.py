@@ -423,7 +423,7 @@ class Build:
         src = self.root / out["from"][0]
         if not src.is_file():
             raise BuildError(f"{out['from'][0]} is missing")
-        return {out["path"]: _read(src)}
+        return {out["path"]: _text(src.read_text(encoding="utf-8")).replace("@LAPIS_VERSION@", self.version)}
 
     def hermes_plugin(self, out: dict) -> dict[str, str | bytes]:
         src = self.root / HERMES_DIR
@@ -442,7 +442,7 @@ class Build:
                 continue
             if not f.is_file():
                 raise BuildError(f"{HERMES_DIR}/{f.name}: the plugin is one flat directory")
-            files[out["path"] + f.name] = _read(f)
+            files[out["path"] + f.name] = _text(f.read_text(encoding="utf-8")).replace("@LAPIS_VERSION@", self.version)
         files.update({out["path"] + name: data for name, data in self.license_texts.items()})
         return files
 

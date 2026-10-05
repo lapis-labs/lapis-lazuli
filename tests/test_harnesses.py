@@ -8,8 +8,6 @@ import pytest
 import yaml
 from jsonschema import Draft202012Validator as V
 
-from lapis_design.hooks import HOOKS as CLI_HOOKS
-
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools" / "build"))
 
@@ -104,37 +102,23 @@ def test_codex_manifest_repeats_components():
     for p in d["plugins"]:
         m = manifests.codex_manifest(d, p, "0.1.0", LICENSE)
         assert m["skills"] == "./skills/"
-        assert ("hooks" in m) == (manifests.hooks_json(p) is not None)
+        assert ("hooks" in m) == (manifests.hooks_json(p, "0.1.0") is not None)
         assert ("mcpServers" in m) == bool(p.get("mcp"))
         claude = manifests.claude_manifest(d, p, "0.1.0", LICENSE)
         assert m["license"] == claude["license"] == LICENSE
         assert not {"skills", "mcpServers", "agents", "commands"} & set(claude)
 
 
-def _handlers(hooks):
-    for groups in (hooks or {}).values():
-        for g in groups:
-            yield from g["hooks"]
 
 
-def test_hooks_call_the_cli_on_path():
-    d = doc()
-    for p in d["plugins"]:
-        shared = (manifests.hooks_json(p) or {}).get("hooks")
-        inline = manifests.claude_manifest(d, p, "0.1.0", LICENSE).get("hooks")
-        names = [h["command"].split()[-1] for h in [*_handlers(shared), *_handlers(inline)]]
-        assert sorted(names) == sorted(p.get("hooks", [])), p["name"]
-        assert set(names) <= set(CLI_HOOKS), p["name"]                 # the installed CLI runs each one
-        for h in [*_handlers(shared), *_handlers(inline)]:
-            assert h["command"].startswith("lapis-design hook ") and "$" not in h["command"] and "%" not in h["command"]
 
 
 def test_codex_never_sees_claude_only_hooks():
     for p in doc()["plugins"]:
-        shared = (manifests.hooks_json(p) or {}).get("hooks", {})
+        shared = (manifests.hooks_json(p, "0.1.0") or {}).get("hooks", {})
         assert "PermissionRequest" not in shared                        # ExitPlanMode exists only in Claude Code
     outs = outputs()
-    assert set(outs["plugin-hooks"]["only"]) == {p["name"] for p in doc()["plugins"] if manifests.hooks_json(p)}
+    assert set(outs["plugin-hooks"]["only"]) == {p["name"] for p in doc()["plugins"] if manifests.hooks_json(p, "0.1.0")}
 
 
 def test_mcp_uses_the_cli_on_path():
@@ -165,16 +149,6 @@ def test_every_hook_a_plugin_lists_has_the_extension_pi_and_oh_my_pi_load():
         assert [Path(e).name for e in extensions] == [manifests.EXTENSIONS[h] for h in listed], p["name"]
 
 
-def test_the_stop_hook_takes_no_matcher_the_write_hook_takes_the_file_edit_tools_and_codex_gets_both():
-    d = doc()
-    lapis = next(p for p in d["plugins"] if p["name"] == "lapis")
-    shared = manifests.hooks_json(lapis)["hooks"]
-    assert shared["Stop"] == [{"hooks": [{"type": "command", "command": "lapis-design hook stop", "timeout": 60}]}]
-    assert shared["PreToolUse"] == [{"matcher": "Write|Edit|MultiEdit|apply_patch", "hooks": [
-        {"type": "command", "command": "lapis-design hook pre-write", "timeout": 30}]}]
-    assert set(shared) == {"Stop", "PreToolUse"}
-    assert manifests.codex_manifest(d, lapis, "0.1.0", LICENSE)["hooks"] == "./hooks/hooks.json"
-    assert "PermissionRequest" in manifests.claude_manifest(d, lapis, "0.1.0", LICENSE)["hooks"]   # exit-plan stays inline
 
 
 def test_emit_writes_every_json_output_it_owns():

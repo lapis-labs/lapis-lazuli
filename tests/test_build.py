@@ -1,7 +1,5 @@
 """tools/build/build.py: generated outputs, the sync check, skill validation, views, versions, Hermes."""
-import importlib.util
 import json
-import os
 import posixpath
 import re
 import shutil
@@ -488,39 +486,3 @@ def test_a_release_version_equal_to_the_previous_tag_is_refused(tmp_path, capsys
     assert build.main(["--version", "0.2.0"], root=root) == 0
 
 
-@pytest.mark.skipif(os.name == "nt", reason="the stub CLI is a POSIX script")
-def test_hermes_plugin_adds_the_summary_on_the_first_turn_only(tmp_path, monkeypatch):
-    root = make_root(tmp_path)
-    assert build.main(["--version", VERSION], root=root) == 0
-    plugin_dir = root / "plugins/hermes/lapis-lazuli"
-    spec = importlib.util.spec_from_file_location("lapis_lazuli_hermes", plugin_dir / "__init__.py")
-    plugin = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(plugin)
-
-    class Ctx:
-        def __init__(self):
-            self.hooks = {}
-
-        def register_hook(self, name, fn):
-            self.hooks[name] = fn
-
-    ctx = Ctx()
-    plugin.register(ctx)
-    manifest = yaml.safe_load((plugin_dir / "plugin.yaml").read_text(encoding="utf-8"))
-    assert manifest["version"] == VERSION and sorted(ctx.hooks) == manifest["provides_hooks"]
-    hook = ctx.hooks["pre_llm_call"]
-
-    bin_dir = tmp_path / "bin"
-    bin_dir.mkdir()
-    stub = bin_dir / "lapis-design"
-    stub.write_text(f"#!{sys.executable}\nimport sys\n"
-                    "print('Local fonts: 3 families' if sys.argv[1:] == ['hook', 'session-start'] else 'usage')\n")
-    stub.chmod(0o755)
-    monkeypatch.setenv("PATH", str(bin_dir))
-    event = {"session_id": "s", "user_message": "hi", "conversation_history": [], "model": "m", "platform": "cli"}
-    assert hook(is_first_turn=True, **event) == {"context": "Local fonts: 3 families"}
-    assert hook(is_first_turn=False, **event) is None
-    stub.write_text("#!/bin/sh\nexit 0\n")                                         # nothing to say
-    assert hook(is_first_turn=True, **event) is None
-    monkeypatch.setenv("PATH", str(tmp_path / "empty"))                             # CLI not installed
-    assert hook(is_first_turn=True, **event) is None

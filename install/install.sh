@@ -13,7 +13,7 @@ LL_DOCS='https://github.com/lapis-labs/lapis-lazuli/blob/release/INSTALLATION.md
 LL_ALL_PLUGINS='lapis ultramarine lazuli'
 LL_ALL_HARNESSES='claude-code codex oh-my-pi pi hermes other'
 LL_EXPERIMENTAL='pi hermes'
-LL_CLI_NAME='CLI (lapis-design, lazuli)'
+LL_CLI_NAME='CLI (lapis-design, lapis-design-hook, lazuli)'
 LL_CLI_NEEDS='uv or pipx'
 LL_NL='
 '
@@ -48,7 +48,7 @@ usage() {
   cat <<'EOF'
 Usage: install.sh [options]
 
-Installs the LapisLazuli CLI (lapis-design, lazuli) with uv or pipx and adds the plugins to every
+Installs the LapisLazuli CLI (lapis-design, lapis-design-hook, lazuli) with uv or pipx and adds the plugins to every
 harness it finds. Guide: https://github.com/lapis-labs/lapis-lazuli/blob/release/INSTALLATION.md
 
 Options:

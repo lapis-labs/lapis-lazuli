@@ -210,7 +210,7 @@ files beside it; the database file itself does not change.
 ## Packaging
 
 - `pyproject.toml` at the repository root: distribution `lapis-design` (`lapis-lazuli` is taken on
-  PyPI), entry points `lapis-design` and `lazuli`, version in `cli/lapis_design/__init__.py`.
+  PyPI), entry points `lapis-design`, `lapis-design-hook`, and `lazuli`, version in `cli/lapis_design/__init__.py`.
   `cli.uninstall` in `install/harnesses.yaml` uses the same name. Ask before publishing.
 - `uv run` syncs the environment to `pyproject.toml` and `uv.lock`, so add runtime dependencies
   with `uv add` and test tools with `uv add --dev`, never `uv pip install`. New dependencies need
@@ -220,11 +220,12 @@ files beside it; the database file itself does not change.
   `shared_dir()`, never through paths relative to the repository.
 - `dist/` holds committed skill outputs, so build Python wheels elsewhere
   (`uv build --out-dir build/wheels`).
-- Hooks call the plain command `lapis-design hook <name>` (`session-start`, `exit-plan`, `stop`, `pre-write`), with
-  bodies in `cli/lapis_design/hooks.py`; MCP is `lapis-design mcp` (`cli/lapis_design/mcp_server.py`,
-  official MCP Python SDK). Hooks run at every session start (`stop`, at every turn's end; `pre-write`, before every
-  file edit), so keep heavy imports out of them; pi and Oh-My-Pi have no hooks.json, so the `exit-gate.ts` extension
-  asks `hook stop` and, from its `tool_call` handler, `hook pre-write` (install/OUTPUTS.md).
+- Hooks call the plain command `lapis-design-hook --plugin-version VERSION <name>` (`session-start`, `exit-plan`,
+  `stop`, `pre-write`), with bodies in `cli/lapis_design/hooks.py`; unknown hook arguments and version skew fail open
+  with one visible notice, never argparse exit 2 (install/OUTPUTS.md, Hooks). MCP is `lapis-design mcp`
+  (`cli/lapis_design/mcp_server.py`, official MCP Python SDK). Hooks run at every session start (`stop`, at every
+  turn's end; `pre-write`, before every file edit), so keep heavy imports out of them. pi and Oh-My-Pi have no
+  hooks.json: extensions call the same versioned hook runner; the build stamps their version placeholders.
 - `render check` lives in `cli/lapis_design/render/`: `capture.py` (capture matrix, boxes, base
   text runs), field passes in `render/fields/` (`text`, `visual`, `interaction`, run in that
   order on the live page, each restoring what it changed), `derived.py`, and `extract.py`

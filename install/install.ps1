@@ -12,7 +12,7 @@ $script:Docs = 'https://github.com/lapis-labs/lapis-lazuli/blob/release/INSTALLA
 $script:AllPlugins = @('lapis', 'ultramarine', 'lazuli')
 $script:AllHarnesses = @('claude-code', 'codex', 'oh-my-pi', 'pi', 'hermes', 'other')
 $script:Experimental = @('pi', 'hermes')
-$script:CliName = 'CLI (lapis-design, lazuli)'
+$script:CliName = 'CLI (lapis-design, lapis-design-hook, lazuli)'
 $script:CliNeeds = 'uv or pipx'
 $script:SkillsOf = @{
   'lapis' = @('lapis', 'lps-brief', 'lps-ux', 'lps-copy', 'lps-system')
@@ -22,7 +22,7 @@ $script:SkillsOf = @{
 $script:Usage = @'
 Usage: install.ps1 [options]
 
-Installs the LapisLazuli CLI (lapis-design, lazuli) with uv or pipx and adds the plugins to every
+Installs the LapisLazuli CLI (lapis-design, lapis-design-hook, lazuli) with uv or pipx and adds the plugins to every
 harness it finds. Guide: https://github.com/lapis-labs/lapis-lazuli/blob/release/INSTALLATION.md
 
 Options:

@@ -1,7 +1,7 @@
 /**
  * LapisLazuli exit gate and write guard for pi and Oh-My-Pi (install/OUTPUTS.md, Session extension and packages).
  *
- * When the agent is about to stop, this runs `lapis-design hook stop`, the command the lapis plugin's
+ * When the agent is about to stop, this runs `lapis-design-hook --plugin-version VERSION stop`, the command the lapis plugin's
  * Stop hook runs in Claude Code and Codex, and passes on what it decides: the next step of the procedure
  * that `lapis-design next` still asks for (it continues the agent only when LAPIS_UNATTENDED=1 and never
  * more than three times in a row for one step or fifteen in a session), or a one-line notice for a
@@ -13,7 +13,7 @@
  * with node's child_process, which both hosts provide. A missing CLI, a failure, a timeout, or output
  * that is not the expected JSON lets the agent stop.
  *
- * Before a write or edit tool runs, both hosts fire `tool_call`, and this runs `lapis-design hook pre-write`,
+ * Before a write or edit tool runs, both hosts fire `tool_call`, and this runs `lapis-design-hook --plugin-version VERSION pre-write`,
  * the command the lapis plugin's PreToolUse hook runs in Claude Code and Codex. Its refusal (only when
  * LAPIS_UNATTENDED=1, while the brief, references, or plan of a create run is still owed) becomes
  * `{ block: true, reason }`. Both hosts block the tool when a `tool_call` handler fails or runs past its
@@ -22,9 +22,10 @@
 import { spawn } from "node:child_process";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
-const COMMAND = "lapis-design";
-const STOP_ARGS = ["hook", "stop"];
-const WRITE_ARGS = ["hook", "pre-write"];
+const COMMAND = "lapis-design-hook";
+const VERSION_ARGS = ["--plugin-version", "@LAPIS_VERSION@"];
+const STOP_ARGS = [...VERSION_ARGS, "stop"];
+const WRITE_ARGS = [...VERSION_ARGS, "pre-write"];
 const TIMEOUT_MS = 60_000; // the Stop hook's timeout in plugins/lapis/hooks/hooks.json
 const WRITE_TIMEOUT_MS = 20_000; // inside the hosts' 30 second budget for a tool_call handler
 const WRITE_TOOLS: Record<string, true> = { write: true, edit: true, multiedit: true, multi_edit: true, ast_edit: true, apply_patch: true };
@@ -51,7 +52,7 @@ function ask(args: string[], timeoutMs: number, event: object): Promise<Answer> 
 	const timer = setTimeout(() => child.kill(), timeoutMs);
 	child.stdout.on("data", (chunk) => (out += chunk));
 	child.stdin.on("error", () => {});
-	child.on("error", () => resolve({})); // the CLI is not installed or could not start
+	child.on("error", () => resolve({ systemMessage: "LapisLazuli hooks skipped: lapis-design-hook is unavailable; update the CLI and plugins together." }));
 	child.on("close", (code) => {
 		clearTimeout(timer);
 		try {
@@ -66,6 +67,29 @@ function ask(args: string[], timeoutMs: number, event: object): Promise<Answer> 
 
 export default function lapisLazuliExitGate(pi: ExtensionAPI): void {
 	const fallback = crypto.randomUUID(); // one id per session when the host does not give one
+	const notices = new Set<string>();
+	const notify = (answer: Answer, ctx: Context): void => {
+		const message = answer.systemMessage;
+		if (!message) return;
+		let session = fallback;
+		try {
+			session = ctx.sessionManager?.getSessionId?.() || fallback;
+		} catch {
+			// Session-manager failures do not change whether the agent may stop.
+		}
+		const key = `${session}:${message}`;
+		if (message.startsWith("LapisLazuli hook") && notices.has(key)) return;
+		notices.add(key);
+		try {
+			if (ctx.hasUI && ctx.ui?.notify) {
+				ctx.ui.notify(message, "info");
+				return;
+			}
+		} catch {
+			// Headless hosts and unavailable UI methods still get one visible line.
+		}
+		process.stderr.write(`${message}\n`);
+	};
 	const stop = async (ctx: Context): Promise<Answer> => {
 		let session = fallback;
 		try {
@@ -74,13 +98,7 @@ export default function lapisLazuliExitGate(pi: ExtensionAPI): void {
 			// the fallback id keeps the count of this process together
 		}
 		const answer = await ask(STOP_ARGS, TIMEOUT_MS, { hook_event_name: "Stop", cwd: ctx.cwd, session_id: session });
-		if (answer.systemMessage && ctx.hasUI) {
-			try {
-				ctx.ui?.notify?.(answer.systemMessage, "info");
-			} catch {
-				// a host without notifications shows nothing
-			}
-		}
+		notify(answer, ctx);
 		return answer;
 	};
 	// each host's typed overloads name only its own events, so the registration is cast once
@@ -112,8 +130,9 @@ export default function lapisLazuliExitGate(pi: ExtensionAPI): void {
 				cwd: ctx.cwd,
 				tool_name: event.toolName,
 				tool_input: event.input,
+				session_id: ctx.sessionManager?.getSessionId?.() || fallback,
 			});
-			if (answer.systemMessage && ctx.hasUI) ctx.ui?.notify?.(answer.systemMessage, "info");
+			notify(answer, ctx);
 			const refusal = answer.hookSpecificOutput;
 			if (refusal?.permissionDecision === "deny" && refusal.permissionDecisionReason) {
 				return { block: true, reason: refusal.permissionDecisionReason };

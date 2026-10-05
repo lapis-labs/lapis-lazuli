@@ -1,4 +1,4 @@
-"""Harness hooks, run as `lapis-design hook <name>` (install/OUTPUTS.md, Hooks).
+"""Harness hooks, run as `lapis-design-hook --plugin-version VERSION <name>` (install/OUTPUTS.md, Hooks).
 
 exit-plan    Claude Code PermissionRequest on ExitPlanMode, inline in the lapis plugin's Claude Code
              manifest. Validates the plan's lapis-plan block before the plan leaves plan mode:
@@ -34,10 +34,14 @@ pre-write    PreToolUse on the file-edit tools in the lapis plugin's hooks/hooks
 from __future__ import annotations
 
 import json
+import argparse
+import hashlib
 import os
 import sys
 from pathlib import Path
 from typing import Callable, TextIO
+
+from lapis_design import __version__
 
 
 def _deny(message: str) -> dict:
@@ -163,3 +167,58 @@ HOOKS: dict[str, Callable[[TextIO, TextIO], int]] = {
     "stop": stop,
     "pre-write": pre_write,
 }
+
+
+class _HookParser(argparse.ArgumentParser):
+    def error(self, message: str) -> None:
+        # Exit 2 means block/continue to the harness, not "unsupported command".
+        raise ValueError(message)
+
+
+def _notice(message: str, plugin_version: str | None = None) -> int:
+    try:
+        event = json.load(sys.stdin) if not sys.stdin.isatty() else {}
+    except (ValueError, OSError):
+        event = {}
+    if not isinstance(event, dict):
+        event = {}
+    # All hooks in a session share this atomic claim, including the two plugins.
+    # Without a session id, report once per project and version pair instead.
+    key = json.dumps([event.get("session_id"), plugin_version, __version__, message])
+    digest = hashlib.sha256(key.encode("utf-8")).hexdigest()
+    try:
+        folder = Path(event.get("cwd") or os.environ.get("CLAUDE_PROJECT_DIR") or ".") / ".lapis" / "hooks"
+        folder.mkdir(parents=True, exist_ok=True)
+        with (folder / f"{digest}.notice").open("x", encoding="utf-8"):
+            pass
+    except FileExistsError:
+        return 0
+    except (OSError, TypeError, ValueError):
+        # A read-only project can lose deduplication, never fail-open behavior.
+        pass
+    print(json.dumps({"systemMessage": message}, ensure_ascii=False))
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    """The hook-only entry point: unsupported interfaces never exit with 2."""
+    ap = _HookParser(prog="lapis-design-hook", description="Run a harness hook; version skew fails open.")
+    ap.add_argument("--plugin-version", help="the version embedded in the calling plugin")
+    ap.add_argument("name", help="one of " + ", ".join(HOOKS))
+    try:
+        args = ap.parse_args(argv)
+    except ValueError as exc:
+        return _notice(f"LapisLazuli hook skipped: {exc}; update the CLI and plugins together.")
+    if args.plugin_version and args.plugin_version != __version__:
+        return _notice(
+            f"LapisLazuli hooks skipped: plugin {args.plugin_version}, CLI {__version__}; "
+            "update the CLI and plugins together.", args.plugin_version)
+    if args.name not in HOOKS:
+        return _notice(
+            f"LapisLazuli hook skipped: CLI {__version__} does not support {args.name!r}; "
+            "update the CLI and plugins together.", args.plugin_version)
+    return HOOKS[args.name](sys.stdin, sys.stdout)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

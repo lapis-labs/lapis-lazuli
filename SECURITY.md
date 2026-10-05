@@ -41,8 +41,8 @@ Code that runs on your machine and reads input you may not trust:
 
 - The install scripts (`install/install.sh`, `install/install.ps1`), which INSTALLATION.md fetches from
   the `release` branch and runs straight in a shell.
-- The hooks: `lapis-design hook session-start`, which a harness runs at every session start, and
-  `lapis-design hook exit-plan`, which parses the event a harness sends on standard input.
+- The hook runner: `lapis-design-hook --plugin-version VERSION <name>` runs session summaries,
+  plan checks, exit gates, and pre-write guards, reading the harness event on standard input.
 - The MCP server (`lapis-design mcp`).
 - `lapis-design slop lint` and `plan check` reading a project tree, plan, or report you did not
   write: running code from it, taking unbounded time or memory, or reading or writing outside the

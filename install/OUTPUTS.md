@@ -48,7 +48,7 @@ never merges, and Oh-My-Pi never reads the Codex one.
   "author": { "name": "lapis-labs" }, "homepage": "https://github.com/lapis-labs/lapis-lazuli",
   "repository": "https://github.com/lapis-labs/lapis-lazuli", "license": "MIT AND CC-BY-4.0",
   "hooks": { "PermissionRequest": [ { "matcher": "ExitPlanMode", "hooks": [
-    { "type": "command", "command": "lapis-design hook exit-plan", "timeout": 30 } ] } ] } }
+    { "type": "command", "command": "lapis-design-hook --plugin-version 0.2.0 exit-plan", "timeout": 30 } ] } ] } }
 ```
 
 No component paths: the default layout (`skills/`, `agents/`, `hooks/hooks.json`, `.mcp.json`)
@@ -91,14 +91,24 @@ the license is stated in every manifest, every skill, and every installable fold
 
 ## Hooks — `plugin-hooks` and inline Claude Code hooks
 
-Every hook is a plain command on PATH, `lapis-design hook <name>`: no path placeholders and no
-quoting, so it parses the same in sh, PowerShell (Claude Code on Windows without Git Bash), and cmd,
-and plugins ship no scripts. The CLI reads the event on stdin and prints what the harness expects.
-When the CLI is missing, Claude Code shows a non-blocking hook error at each session start; the
-skills still work, and INSTALLATION.md and `lazuli doctor` say to install the CLI. The CLI never
-reads the plugin's skill views: it carries the full `src/shared` as package data
-(`lapis_design/shared`) and finds it with `lapis_design.shared_dir()`, so the plan check has the
-complete rules and schemas wherever the plugin is cached.
+Every hook is a plain command on PATH, `lapis-design-hook --plugin-version VERSION <name>`: no
+path placeholders, shell operators, or quoting, so it parses the same in sh, PowerShell (Claude
+Code on Windows without Git Bash), and cmd. The CLI package installs the dedicated executable
+on every OS. Old CLI installs lack it, so a plugin update gets a non-blocking command-not-found
+diagnostic instead of argparse exit 2 (which blocks PreToolUse and continues Stop). The runner
+never uses exit 2 for unknown hooks/options: it exits 0 with only a one-line `systemMessage`.
+The build embeds the plugin version in every command, extension, and Hermes module. A version
+different from the runner's CLI package version skips the hook with the same fail-open output,
+once per session and version pair, claimed atomically under `.lapis/hooks/` (per project without
+a session id; an unwritable project may repeat the notice). Update the CLI and plugins together.
+The public `lapis-design hook <name>` command uses the same fail-open parser for manual calls.
+The CLI carries the full `src/shared` as package data (`lapis_design/shared`), not plugin views,
+so the plan check has complete rules wherever the plugin is cached.
+
+Exit status sources: [Claude Code](https://code.claude.com/docs/en/hooks#exit-code-output) and
+[Codex](https://learn.chatgpt.com/docs/hooks#stop); Codex's
+[Stop parser](https://github.com/openai/codex/blob/main/codex-rs/hooks/src/events/stop.rs)
+turns exit 2 stderr into a continuation and other execution failures into failed, non-blocking runs.
 
 | Plugin | Where | Event | Matcher | Name | CLI behavior |
 |---|---|---|---|---|---|
@@ -138,19 +148,22 @@ per-request versions from 2026-07-28, so older and newer harness clients connect
 ## Session and gate extensions and packages — `session-extension`, `gate-extension`, `omp-package`, `pi-package`
 
 - `plugins/lazuli/extensions/session-start.ts` exports a default factory that listens for
-  `session_start` and runs `lapis-design hook session-start`. It imports the host API with
-  `import type` only, so the same module loads under pi and Oh-My-Pi, whose package names differ.
+  `session_start` and runs `lapis-design-hook --plugin-version VERSION session-start`. It imports
+  the host API with `import type` only, so the same module loads under pi and Oh-My-Pi, whose
+  package names differ. The event on stdin includes the session id and project for notice deduplication.
 - `plugins/lapis/extensions/exit-gate.ts` (from `src/extensions/exit-gate.ts`) is the `stop` hook for the two
-  harnesses that have no hooks.json. It starts `lapis-design hook stop` with the event JSON (`cwd`,
+  harnesses that have no hooks.json. It starts `lapis-design-hook --plugin-version VERSION stop` with the event JSON (`cwd`,
   `session_id`) on stdin and translates the answer: Oh-My-Pi's `session_stop` takes `{ decision: "block",
   reason }`, pi's `agent_before_settle` takes a `custom_message` entry with `continue: true`, and a
   `systemMessage` goes to `ctx.ui.notify` when the host has a UI. Each host never fires the other's event,
   so both are registered, and a registration the host does not know is ignored. The CLI holds the rules
   (unattended switch, limits, state); a missing CLI, a failure, or output that is not JSON lets the agent stop.
   The same file registers a `tool_call` handler, the write guard: for the write and edit tools it starts
-  `lapis-design hook pre-write` with the event JSON (`cwd`, `tool_name`, `tool_input`) and answers `{ block: true,
+  `lapis-design-hook --plugin-version VERSION pre-write` with the event JSON (`cwd`, `session_id`, `tool_name`, `tool_input`) and answers `{ block: true,
   reason }` for a refusal. Both hosts block the tool when a `tool_call` handler fails or times out (30 seconds in
   Oh-My-Pi), so the handler answers within 20 seconds and treats every failure as no answer.
+  A `systemMessage` is shown through `ctx.ui.notify`, or stderr in a headless session; missing
+  runners fail open with a visible notice, never a thrown handler error.
 - `plugins/lapis/package.json` and `plugins/lazuli/package.json`: `{"name": "@lapis-labs/<plugin>-omp",
   "license": "MIT AND CC-BY-4.0", "private": true, "omp": {"extensions": ["./extensions/<file>.ts"]}}` with the
   extension each plugin's hooks name (`exit-gate.ts` for lapis, `session-start.ts` for lazuli).
@@ -164,9 +177,11 @@ per-request versions from 2026-07-28, so older and newer harness clients connect
 
 `plugins/hermes/lapis-lazuli/` holds `plugin.yaml` (`name`, `version`, `description`, `author`,
 `provides_hooks: [pre_llm_call]`) and `__init__.py` with `register(ctx)`. The hook adds the session
-summary on the first turn (`is_first_turn`); `on_session_start` cannot add context. Skills are not
-bundled in the plugin: plugin skills get a `plugin:` namespace and stay out of the skill index, so
-they install flat from `dist/skills`.
+summary on the first turn (`is_first_turn`); `on_session_start` cannot add context. It runs the
+versioned hook-only entry point, passes the session id, and prints version/missing-runner notices
+to stderr without adding model context or a blocking decision. Skills are not bundled in the
+plugin: plugin skills get a `plugin:` namespace and stay out of the skill index, so they install
+flat from `dist/skills`.
 
 ## Licenses
 

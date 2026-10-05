@@ -2,7 +2,7 @@
 
 # Installing LapisLazuli
 
-LapisLazuli is design skills for AI agents in 3 plugins, plus the CLI their hooks and MCP server call (commands `lapis-design`, `lazuli`). This guide is generated for version 0.2.0.
+LapisLazuli is design skills for AI agents in 3 plugins, plus the CLI their hooks and MCP server call (commands `lapis-design`, `lapis-design-hook`, `lazuli`). This guide is generated for version 0.2.0.
 
 | Plugin | What it does | Skills |
 |---|---|---|
@@ -73,7 +73,7 @@ The scripts treat a harness as installed when its command is on PATH or its fold
 
 Each section lists the exact commands the scripts run, with the release filled in. Where a command names a plugin or a skill, the scripts run it once for each selected one.
 
-These commands install the plugins (or skills) only, not the CLI. The hooks, extensions, and MCP server they set up run `lapis-design` by name, so it must be on the PATH the harness sees: install the CLI as described under [CLI and optional components](#cli-and-optional-components). Without it, a harness that loaded the plugins reports an error such as `Executable not found in $PATH: "lapis-design"`; the skills still work and say what to run by hand.
+These commands install the plugins (or skills) only, not the CLI. Hooks and extensions run `lapis-design-hook`; MCP runs `lapis-design`. Both are plain programs on the PATH the harness sees: install the CLI as described under [CLI and optional components](#cli-and-optional-components). A missing hook runner is a non-blocking command-not-found diagnostic, not a denied write or Stop continuation; the skills still work and say what to run by hand.
 
 ### Claude Code
 
@@ -89,15 +89,15 @@ What gets installed:
 - Critic agent (Claude format): `plugins/ultramarine/agents/`
 - Session summary: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `SessionStart startup|resume|clear|compact|fork`.
 - Separate critic: plugin agent, from `plugins/ultramarine/agents/`. Invoked as ultramarine:critic; the plan check runs from a hook inline in the lapis manifest.
-- Exit gate: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `Stop`. `lapis-design hook stop` continues the agent with the next step only when LAPIS_UNATTENDED=1 and says so in one line otherwise; at most 3 continues in a row for one step and 15 in a session.
-- Write guard: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `PreToolUse Write|Edit|MultiEdit`. `lapis-design hook pre-write` refuses a page source file's write with `permissionDecision: deny` only when LAPIS_UNATTENDED=1 and the brief, references, or plan of a create run is still owed; writes under .lapis/ and to other files pass, a person's session gets one `systemMessage`; a refusal repeats at most 3 times for one step.
+- Exit gate: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `Stop`. `lapis-design-hook --plugin-version \<version> stop` continues the agent with the next step only when LAPIS_UNATTENDED=1 and says so in one line otherwise; at most 3 continues in a row for one step and 15 in a session; version skew skips the gate.
+- Write guard: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `PreToolUse Write|Edit|MultiEdit`. `lapis-design-hook --plugin-version \<version> pre-write` refuses a page source file's write with `permissionDecision: deny` only when LAPIS_UNATTENDED=1 and the brief, references, or plan of a create run is still owed; writes under .lapis/ and to other files pass, a person's session gets one `systemMessage`; a refusal repeats at most 3 times for one step; version skew skips the guard.
 - MCP: plugin MCP configuration, from `plugins/lazuli/.mcp.json`. Server plugin:lazuli:lapis-lazuli; the command is the CLI on PATH.
 
 The harness also reads skills from: `~/.claude/skills`, `.claude/skills`, `plugin skills/`.
 
 **Install**
 
-These commands do not install the CLI. The plugin hooks and MCP server run `lapis-design` by name, so the CLI must be on the PATH the harness sees (see [CLI and optional components](#cli-and-optional-components)).
+These commands do not install the CLI. The plugin hooks and MCP server run programs from the CLI package by name (`lapis-design-hook` for hooks, `lapis-design` for MCP), so the CLI must be on the PATH the harness sees (see [CLI and optional components](#cli-and-optional-components)).
 
 ```sh
 claude plugin marketplace add lapis-labs/lapis-lazuli@release
@@ -162,7 +162,7 @@ What gets installed:
 - Critic agent (Codex format): `dist/codex/agents/`
 - Session summary: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `SessionStart startup|resume|clear|compact`. Matchers are regular expressions; the fork alternative never matches here.
 - Separate critic: agent file that the install script copies, from `dist/codex/agents/`. Plugins cannot ship subagents; the installer copies the TOML file.
-- Exit gate: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `Stop`. `lapis-design hook stop` continues the agent with the next step only when LAPIS_UNATTENDED=1 and says so in one line otherwise; the lapis plugin's hook needs trust like the lazuli one; Stop takes no matcher.
+- Exit gate: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `Stop`. `lapis-design-hook --plugin-version \<version> stop` continues the agent with the next step only when LAPIS_UNATTENDED=1 and says so in one line otherwise; the lapis plugin's hook needs trust like the lazuli one; Stop takes no matcher; version skew skips the gate.
 - Write guard: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `PreToolUse apply_patch`. The same hook as in Claude Code: Codex reports every file edit as `apply_patch` (its matchers also take Edit and Write) with the patch text in `tool_input.command`, and takes the same `permissionDecision: deny`; the lapis plugin's hook needs trust like the others.
 - MCP: plugin MCP configuration, from `plugins/lazuli/.mcp.json`.
 
@@ -170,7 +170,7 @@ The harness also reads skills from: `.agents/skills (cwd up to the repo root)`, 
 
 **Install**
 
-These commands do not install the CLI. The plugin hooks and MCP server run `lapis-design` by name, so the CLI must be on the PATH the harness sees (see [CLI and optional components](#cli-and-optional-components)).
+These commands do not install the CLI. The plugin hooks and MCP server run programs from the CLI package by name (`lapis-design-hook` for hooks, `lapis-design` for MCP), so the CLI must be on the PATH the harness sees (see [CLI and optional components](#cli-and-optional-components)).
 
 ```sh
 codex plugin marketplace add lapis-labs/lapis-lazuli --ref release
@@ -265,15 +265,15 @@ What gets installed:
 - Exit-gate extension: `plugins/lapis/extensions/exit-gate.ts`
 - Session summary: extension, from `plugins/lazuli/extensions/session-start.ts`, event `session_start`. omp does not run hooks/hooks.json; a marketplace install links the plugin's package.json into ~/.omp/plugins/node_modules, and its omp.extensions load after a restart.
 - Separate critic: plugin agent, from `plugins/ultramarine/agents/`. Loaded as a task agent.
-- Exit gate: extension, from `plugins/lapis/extensions/exit-gate.ts`, event `session_stop`. Asks `lapis-design hook stop` and answers `{ decision: block }`, only when LAPIS_UNATTENDED=1; the lapis plugin's package.json links the extension.
-- Write guard: extension, from `plugins/lapis/extensions/exit-gate.ts`, event `tool_call`. The exit-gate extension also registers a `tool_call` handler for the write and edit tools; it asks `lapis-design hook pre-write` and answers `{ block: true, reason }`, only when LAPIS_UNATTENDED=1; a handler error or timeout blocks the tool in omp, so the extension answers within 20 seconds and treats any failure as no answer.
+- Exit gate: extension, from `plugins/lapis/extensions/exit-gate.ts`, event `session_stop`. Asks `lapis-design-hook --plugin-version \<version> stop` and answers `{ decision: block }`, only when LAPIS_UNATTENDED=1; the lapis plugin's package.json links the extension; version skew skips the gate.
+- Write guard: extension, from `plugins/lapis/extensions/exit-gate.ts`, event `tool_call`. The exit-gate extension also registers a `tool_call` handler for the write and edit tools; it asks `lapis-design-hook --plugin-version \<version> pre-write` and answers `{ block: true, reason }`, only when LAPIS_UNATTENDED=1; a handler error or timeout blocks the tool in omp, so the extension answers within 20 seconds and treats any failure as no answer; version skew skips the guard.
 - MCP: plugin MCP configuration, from `plugins/lazuli/.mcp.json`.
 
 The harness also reads skills from: `.omp/skills`, `~/.omp/agent/skills`, `.agents/skills`, `.claude/skills`.
 
 **Install**
 
-These commands do not install the CLI. The session-start and exit-gate extensions and MCP server run `lapis-design` by name, so the CLI must be on the PATH the harness sees (see [CLI and optional components](#cli-and-optional-components)).
+These commands do not install the CLI. The session-start and exit-gate extensions and MCP server run programs from the CLI package by name (`lapis-design-hook` for hooks, `lapis-design` for MCP), so the CLI must be on the PATH the harness sees (see [CLI and optional components](#cli-and-optional-components)).
 
 ```sh
 omp plugin marketplace add lapis-labs/lapis-lazuli
@@ -340,7 +340,7 @@ What gets installed:
 - Exit-gate extension: `plugins/lapis/extensions/exit-gate.ts`
 - Session summary: extension, from `plugins/lazuli/extensions/session-start.ts`, event `session_start`.
 - Separate critic: instructions only: the skills say what to run by hand. pi has no subagents; the skill asks for a fresh session as the critic.
-- Exit gate: extension, from `plugins/lapis/extensions/exit-gate.ts`, event `agent_before_settle`. Asks `lapis-design hook stop` and continues the agent with a custom message and `continue: true`, only when LAPIS_UNATTENDED=1.
+- Exit gate: extension, from `plugins/lapis/extensions/exit-gate.ts`, event `agent_before_settle`. Asks `lapis-design-hook --plugin-version \<version> stop` and continues the agent with a custom message and `continue: true`, only when LAPIS_UNATTENDED=1; version skew skips the gate.
 - Write guard: extension, from `plugins/lapis/extensions/exit-gate.ts`, event `tool_call`. The same `tool_call` handler as in Oh-My-Pi, answering `{ block: true, reason }`, only when LAPIS_UNATTENDED=1.
 - MCP: not available. pi 1.0.0 has a built-in MCP client (servers in ~/.pi/agent/mcp.json or .pi/settings.json; a Python stdio server connected in a container on 2026-10-03), but the installer does not register lapis-lazuli there yet.
 
@@ -350,7 +350,7 @@ The harness also reads skills from: `~/.pi/agent/skills`, `.pi/skills`, `~/.agen
 
 These steps cover every plugin at once; `--plugin` does not narrow them.
 
-These commands do not install the CLI. The session-start and exit-gate extensions run `lapis-design` by name, so the CLI must be on the PATH the harness sees (see [CLI and optional components](#cli-and-optional-components)).
+These commands do not install the CLI. The session-start and exit-gate extensions run programs from the CLI package by name (`lapis-design-hook` for hooks, `lapis-design` for MCP), so the CLI must be on the PATH the harness sees (see [CLI and optional components](#cli-and-optional-components)).
 
 ```sh
 pi install git:github.com/lapis-labs/lapis-lazuli@release
@@ -414,7 +414,7 @@ The harness also reads skills from: `~/.hermes/skills`, `skills.external_dirs in
 
 **Install**
 
-These commands do not install the CLI. The Hermes plugin hook and MCP server run `lapis-design` by name, so the CLI must be on the PATH the harness sees (see [CLI and optional components](#cli-and-optional-components)).
+These commands do not install the CLI. The Hermes plugin hook and MCP server run programs from the CLI package by name (`lapis-design-hook` for hooks, `lapis-design` for MCP), so the CLI must be on the PATH the harness sees (see [CLI and optional components](#cli-and-optional-components)).
 
 ```sh
 hermes skills install lapis-labs/lapis-lazuli/dist/skills/lapis --yes
@@ -571,7 +571,7 @@ Sources (checked 2026-09-25): <https://github.com/vercel-labs/skills>, <https://
 
 ## CLI and optional components
 
-Hooks and the MCP server call the CLI by name, so `lapis-design`, `lazuli` must be on the PATH the harness sees. The skills work without it and say what to run by hand. The scripts install it with the first tool on PATH:
+Hooks and the MCP server call the CLI by name, so `lapis-design`, `lapis-design-hook`, `lazuli` must be on the PATH the harness sees. The skills work without it and say what to run by hand. The scripts install it with the first tool on PATH:
 
 With uv:
 
@@ -589,6 +589,12 @@ If none of them is installed, install uv (<https://docs.astral.sh/uv/>) or pipx 
 
 - `lapis-design --version`: prints the version of release
 - `lazuli doctor`: exit code 0
+
+**Plugin/CLI version skew.** Every plugin hook runs `lapis-design-hook --plugin-version <plugin-version> <hook-name>`. This separate entry point is absent from old CLI installs: a failed executable lookup is non-blocking, unlike argparse's exit 2 from an unknown `lapis-design hook` subcommand. The runner uses no shell wrapper and works as a plain program on macOS, Linux, and Windows.
+
+An installed runner skips unknown hooks/options and mismatched plugin/CLI versions with exit 0 and a one-line `systemMessage`, never a blocking decision. Version notices are claimed atomically under `.lapis/hooks/`, once per session and version pair (once per project without a session id). A read-only project may repeat the notice, but still never blocks. pi and Oh-My-Pi display it through notifications or stderr in headless mode; Hermes prints it on the first turn. Missing-runner diagnostics come from the harness and may repeat. Update the CLI and plugins together with the install script's `--update`, then restart the harness; a changed Codex hook must be trusted again in `/hooks`.
+
+The exit-status contracts are documented in [Claude Code hooks](https://code.claude.com/docs/en/hooks#exit-code-output) and [Codex hooks](https://learn.chatgpt.com/docs/hooks#stop): exit 2 can block a write or continue a Stop; a failed command lookup cannot. Extensions instead require an explicit successful JSON denial/continuation and treat launch failures as no decision.
 
 When the commands are not found, the tool's bin folder is not on PATH: run `uv tool update-shell` (uv) or `pipx ensurepath` (pipx), then open a new terminal and restart the harness.
 

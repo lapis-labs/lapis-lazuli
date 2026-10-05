@@ -55,6 +55,7 @@ LapisLazuli는 검사가 찾은 것을 알려 줄 뿐이고, 접근성이나 법
 | [Hermes Agent](INSTALLATION.md#hermes-agent) | 실험적 | 스킬, Hermes 플러그인, MCP예요. 실제 설치에서는 아직 확인하지 않았어요. |
 
 상태는 `install/harnesses.yaml`에서 가져왔고, 하네스별 정확한 명령은 [INSTALLATION.md](INSTALLATION.md)에 있어요. 설치 스크립트는 `uv`나 `pipx`로 CLI를 설치하고, 찾은 하네스마다 플러그인을 등록해요(pi와 Hermes Agent는 `--harness`로 이름을 줄 때만이에요). 플러그인 명령만 직접 실행하면 플러그인만 설치돼요. 훅과 MCP 서버는 `PATH`에 CLI가 있어야 동작해요([CLI와 선택 구성 요소](INSTALLATION.md#cli-and-optional-components) 참고).
+훅은 별도 실행 파일인 `lapis-design-hook --plugin-version <version> <name>`을 불러요. 플러그인이 CLI보다 먼저 갱신되면, 실행 파일이 없거나 버전이 다른 훅은 알림을 남기고 건너뛰어요. 파일 쓰기를 전부 거부하거나 Stop 훅을 무한 반복하지 않아요. 설치 스크립트의 `--update`로 둘을 함께 갱신한 뒤 하네스를 다시 시작하세요. Codex에서 바뀐 훅은 다시 신뢰해야 해요.
 
 ## 작동 방식
 
@@ -88,8 +89,9 @@ LapisLazuli는 검사가 찾은 것을 알려 줄 뿐이고, 접근성이나 법
 
 ## 명령줄 도구
 
-- `lapis-design`: `plan check`, `rights check`, `render check`, `behavior check`, `stub serve`, `slop lint`, `release check`, `next`, 그리고 하네스가 부르는 `hook`·`mcp` 진입점이에요.
+- `lapis-design`: `plan check`, `rights check`, `render check`, `behavior check`, `stub serve`, `slop lint`, `release check`, `next`, 수동으로 부르는 `hook` 명령, 그리고 `mcp` 서버예요.
 - `lazuli`: `local fonts`, `catalog`, `search`, `lock`, `class`, `sources`, `hints`, `color`, `read`, `ref`, `fetch`, `license`, `doctor`, `setup`이에요. 상태는 사용자 캐시에 두고, `lazuli doctor`가 설치를 점검해요.
+- `lapis-design-hook`: 모든 플러그인 훅이 부르는 진입점이에요. 버전이 다르거나 모르는 훅 명령이면 알리고 건너뛰어요.
 
 명령과 옵션은 `--help`로 볼 수 있어요.
 
@@ -180,7 +182,7 @@ Markdown 파일을 다시 쓸 때는 출처를 밝히고, 라이선스 링크를
 | `install/harnesses.schema.yaml`, `install/harnesses.yaml` | 하네스 정의 단일 원천 v0: 빌드 산출물 15종, 하네스 6종(Claude Code, Codex, Oh-My-Pi, pi, Hermes, 그 밖)의 감지·설치·갱신·제거·확인 명령(argv 배열), 세션 시작·평가자·MCP 방식, 신뢰 단계, 충돌, 미확인 사항(`unverified`), 로컬에서 확인한 사실(`verified`, 날짜·버전과 함께) |
 | `tools/build/installers.py`, `install/install.sh`, `install/install.ps1`, `INSTALLATION.md` | 설치 도구. `install/harnesses.yaml`에서 설치 스크립트(macOS·Linux용 sh, Windows용 PowerShell)와 설치 안내서를 생성해요. 감지된 하네스마다 CLI 설치와 플러그인 등록을 하고, `--dry-run`, `--harness`, `--plugin`, `--update`, `--uninstall`, `--yes`를 받아요. 설치 방법은 [INSTALLATION.md](INSTALLATION.md)에 있어요 |
 | `install/OUTPUTS.md`, `tools/build/build.py`, `tools/build/manifests.py` | 빌드 산출물 명세와 빌드. `build.py`가 `src/`와 `install/harnesses.yaml`에서 스킬·공유 보기·매니페스트·카탈로그·훅·MCP·에이전트·확장·Hermes 플러그인·패키지를 만들고, `--check`로 커밋된 산출물과 비교해요. 매니페스트·카탈로그·훅·MCP·패키지 형태는 `manifests.py`가 정해요 |
-| `pyproject.toml`, `uv.lock`, `.python-version` | CLI 배포 패키지 `lapis-design`(PyPI의 `lapis-lazuli`는 다른 프로젝트가 써요). 진입점 `lapis-design`·`lazuli`, `src/shared` 전체를 `lapis_design/shared` 패키지 데이터로 넣어요 |
+| `pyproject.toml`, `uv.lock`, `.python-version` | CLI 배포 패키지 `lapis-design`(PyPI의 `lapis-lazuli`는 다른 프로젝트가 써요). 진입점 `lapis-design`·`lapis-design-hook`·`lazuli`, `src/shared` 전체를 `lapis_design/shared` 패키지 데이터로 넣어요 |
 | `cli/lapis_design/cli.py`, `cli/lapis_design/hooks.py`, `cli/lapis_design/mcp_server.py`, `cli/lazuli/cli.py` | `lapis-design --version`, `plan check`·`rights check`(위 두 검사의 명령), `hook exit-plan`(Claude Code 계획 모드 종료 시 lapis-plan 블록 검사, 막을 때만 거부하고 대신 승인하지 않음), `hook session-start`(폰트 인벤토리 요약을 맥락으로 출력, 스캔은 하지 않음), `mcp`(공식 MCP Python SDK, `slop_lint` 도구). `lazuli --version` |
 | `cli/lapis_design/render/` | `lapis-design render check URL [--task ID] [--plan PATH] [--public]`: `render/DERIVED.md`대로 내 렌더를 최대 9개 조건(320·390·768·1440, 라이트·다크, 모션 줄이기, 모바일 브라우저 UI)으로 캡처해 `render/extract.schema.yaml`에 맞는 추출물을 `.lapis/renders/<task>.json`에 써요. 내 것인 호스트만 기본으로 캡처해요: `localhost`, 루프백·사설 주소, 그리고 시작할 때 사설 주소로만 풀리는 `.test` 이름(그 주소에 고정하고 `source.addresses`에 기록해요). 판단은 `ours.py` 하나가 렌더·동작 검사 모두에 맡아요. 공개 주소는 `--public`일 때만 캡처하고, 그때도 출처 등록부의 호스트와 계획 `references`의 호스트는 리디렉션까지 막아요(`hosts.py`). 캡처한 페이지가 연 새 창도 같은 규칙으로 막고 바로 닫아요. 남의 페이지는 `lazuli ref capture`로 캡처해요. 상자·텍스트 기본값은 `capture.py`, 측정 필드는 `fields/`(text·visual·interaction), 파생 값은 `derived.py`가 맡아요. 문구 서명 키는 사용자 캐시에만 둬요 |
 | `cli/lapis_design/behavior_check/`, `cli/lapis_design/stub/` | `lapis-design behavior check URL --task ID --plan PLAN --stub FIXTURE [--timezone ZONE]`: `behavior/DERIVED.md`대로 루프백·사설 주소의 내 렌더를 구동해 `behavior/session.schema.yaml`에 맞는 세션을 `.lapis/behavior/<task>.json`에 써요. 시간대는 기본 UTC예요. 드라이버 코어와 탐침(`probes/`)으로 나뉘고, 파생 값은 `behavior.py`가 채워요. `data-lapis-*` 힌트는 요소를 찾고 묶는 데만 쓰고, 힌트와 판단이 다르면 `hint_mismatch`로 적어 탐지기가 차단하지 않고 미확인으로 보고해요. 스텁은 엔진 하나를 브라우저 요청 가로채기(기본)나 `lapis-design stub serve`(서버 렌더링 앱용 HTTP)로 연결해요. `--backend local-dev`에서는 `--values`의 합성 값만 쓰고 실패 주입과 파괴적 탐침은 하지 않아요 |

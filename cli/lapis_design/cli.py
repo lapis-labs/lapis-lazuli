@@ -6,7 +6,7 @@ import importlib
 import sys
 
 from lapis_design import __version__
-from lapis_design.hooks import HOOKS
+from lapis_design import hooks
 
 # `lapis-design <noun> <verb> ARGS...` hands ARGS to the check's own parser unchanged
 CHECKS = {
@@ -27,6 +27,8 @@ def main(argv: list[str] | None = None) -> int:
         return importlib.import_module(module).main(argv[2:], prog=f"lapis-design {argv[0]} {argv[1]}")
     if argv[:1] == ["next"]:
         return importlib.import_module("lapis_design.next_step").main(argv[1:], prog="lapis-design next")
+    if argv[:1] == ["hook"]:
+        return hooks.main(argv[1:])
 
     ap = argparse.ArgumentParser(prog="lapis-design", description=__doc__.split(":", 1)[1].strip())
     ap.add_argument("--version", action="version", version=f"lapis-design {__version__}")
@@ -37,12 +39,9 @@ def main(argv: list[str] | None = None) -> int:
             if n == noun:
                 verbs.add_parser(verb, help=f"run {noun} {verb} (see `lapis-design {noun} {verb} -h`)")
     sub.add_parser("next", help="the next step of the procedure still to do (see `lapis-design next -h`)")
-    hook = sub.add_parser("hook", help="run a harness hook (reads the event JSON on stdin)")
-    hook.add_argument("name", choices=list(HOOKS))
+    sub.add_parser("hook", help="run a harness hook (reads the event JSON on stdin; version skew fails open)")
     sub.add_parser("mcp", help="serve the lapis-lazuli MCP server over stdio")
     args = ap.parse_args(argv)
-    if args.command == "hook":
-        return HOOKS[args.name](sys.stdin, sys.stdout)
     from lapis_design.mcp_server import serve   # the SDK loads only for the server, not for every hook
     serve()
     return 0

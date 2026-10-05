@@ -7,6 +7,15 @@ between minor versions; render extraction is v1 and the other contract formats a
 
 ## Unreleased
 
+### Fixed
+
+- Plugin/CLI version skew no longer turns argparse exit 2 into an endless Stop loop or denied writes.
+  Every harness hook uses the separate `lapis-design-hook --plugin-version VERSION <name>` entry point:
+  old installs lack it and fail open, while installed runners skip unknown arguments and mismatched
+  versions with exit 0 and a one-line notice, once per session/version pair when the project is writable.
+  Claude Code/Codex receive `systemMessage`; pi/Oh-My-Pi and Hermes surface notices without requesting
+  another turn. Update the CLI and plugins together; changed Codex hooks need trust again.
+
 ### Documentation
 
 - Refresh both README plan-check transcripts from the documented no-font-database examples.

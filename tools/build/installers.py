@@ -723,7 +723,8 @@ class _Gen:
             return ""
         verb = "run" if len(parts) > 1 or parts[0][1] else "runs"
         return (f"These commands do not install the CLI. The {' and '.join(p for p, _ in parts)} {verb} "
-                "`lapis-design` by name, so the CLI must be on the PATH the harness sees "
+                "programs from the CLI package by name (`lapis-design-hook` for hooks, `lapis-design` for MCP), "
+                "so the CLI must be on the PATH the harness sees "
                 "(see [CLI and optional components](#cli-and-optional-components)).")
 
     def doc_harness(self, h: dict) -> list[str]:
@@ -853,11 +854,11 @@ class _Gen:
         L += ["", "## Per-harness setup", "",
               "Each section lists the exact commands the scripts run, with the release filled in. Where a command "
               "names a plugin or a skill, the scripts run it once for each selected one.", "",
-              "These commands install the plugins (or skills) only, not the CLI. The hooks, extensions, and MCP "
-              "server they set up run `lapis-design` by name, so it must be on the PATH the harness sees: install "
-              "the CLI as described under [CLI and optional components](#cli-and-optional-components). Without "
-              "it, a harness that loaded the plugins reports an error such as `Executable not found in $PATH: "
-              '"lapis-design"`; the skills still work and say what to run by hand.', ""]
+              "These commands install the plugins (or skills) only, not the CLI. Hooks and extensions run "
+              "`lapis-design-hook`; MCP runs `lapis-design`. Both are plain programs on the PATH the harness "
+              "sees: install the CLI as described under [CLI and optional components](#cli-and-optional-components). "
+              "A missing hook runner is a non-blocking command-not-found diagnostic, not a denied write or "
+              "Stop continuation; the skills still work and say what to run by hand.", ""]
         for h in self.harnesses:
             L += self.doc_harness(h)
         L += ["## CLI and optional components", "",
@@ -870,6 +871,24 @@ class _Gen:
                     for s in alt["steps"] if "run" in s], "```", ""]
         L += ["If none of them is installed, install uv (<https://docs.astral.sh/uv/>) or pipx first. "
               "Check the CLI:", "", *self.doc_checks([self.step(s, {"id": "cli"}) for s in self.cli["verify"]]), ""]
+        L += ["**Plugin/CLI version skew.** Every plugin hook runs "
+              "`lapis-design-hook --plugin-version <plugin-version> <hook-name>`. This separate entry point is "
+              "absent from old CLI installs: a failed executable lookup is non-blocking, unlike argparse's exit "
+              "2 from an unknown `lapis-design hook` subcommand. The runner uses no shell wrapper and works as "
+              "a plain program on macOS, Linux, and Windows.", "",
+              "An installed runner skips unknown hooks/options and mismatched plugin/CLI versions with exit 0 "
+              "and a one-line `systemMessage`, never a blocking decision. Version notices are claimed atomically "
+              "under `.lapis/hooks/`, once per session and version pair (once per project without a session id). "
+              "A read-only project may repeat the notice, but still never blocks. pi and Oh-My-Pi display it "
+              "through notifications or stderr in headless mode; Hermes prints it on the first turn. "
+              "Missing-runner diagnostics come from the harness and may repeat. Update the CLI and plugins "
+              "together with the install script's `--update`, then restart the harness; a changed Codex hook "
+              "must be trusted again in `/hooks`.", "",
+              "The exit-status contracts are documented in "
+              "[Claude Code hooks](https://code.claude.com/docs/en/hooks#exit-code-output) and "
+              "[Codex hooks](https://learn.chatgpt.com/docs/hooks#stop): exit 2 can block a write or continue a "
+              "Stop; a failed command lookup cannot. Extensions instead require an explicit successful JSON "
+              "denial/continuation and treat launch failures as no decision.", ""]
         hints = [f"`{' '.join(PATH_HINTS[n])}` ({n})" for n in needs if n in PATH_HINTS]
         if hints:
             L += ["When the commands are not found, the tool's bin folder is not on PATH: run "

@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "lapis-design hook stop",
+            "command": "lapis-design-hook --plugin-version 0.2.0 stop",
             "timeout": 60
           }
         ]
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "lapis-design hook pre-write",
+            "command": "lapis-design-hook --plugin-version 0.2.0 pre-write",
             "timeout": 30
           }
         ]

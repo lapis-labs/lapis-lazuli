@@ -41,14 +41,15 @@ def _title(name: str) -> str:
     return name[:1].upper() + name[1:]
 
 
-def _hooks(plugin: dict, file: str) -> dict | None:
+def _hooks(plugin: dict, file: str, version: str) -> dict | None:
     events: dict[str, list] = {}
     for name in plugin.get("hooks", []):
         h = HOOKS[name]
         if h["file"] != file:
             continue
         # a plain command on PATH parses the same in sh, PowerShell, and cmd
-        handler = {"type": "command", "command": f"lapis-design hook {name}", "timeout": h["timeout"]}
+        handler = {"type": "command", "command": f"lapis-design-hook --plugin-version {version} {name}",
+                   "timeout": h["timeout"]}
         group = {"matcher": h["matcher"]} if h["matcher"] else {}
         events.setdefault(h["event"], []).append({**group, "hooks": [handler]})
     return {"hooks": events} if events else None
@@ -58,7 +59,7 @@ def claude_manifest(doc: dict, plugin: dict, version: str, license_id: str) -> d
     url = _repo_url(doc)
     out = {"name": plugin["name"], "version": version, "description": plugin["description"],
            "author": {"name": doc["repo"]["owner"]}, "homepage": url, "repository": url, "license": license_id}
-    inline = _hooks(plugin, "claude")
+    inline = _hooks(plugin, "claude", version)
     if inline:
         out["hooks"] = inline["hooks"]
     return out
@@ -67,7 +68,7 @@ def claude_manifest(doc: dict, plugin: dict, version: str, license_id: str) -> d
 def codex_manifest(doc: dict, plugin: dict, version: str, license_id: str) -> dict:
     out = {"name": plugin["name"], "version": version, "description": plugin["description"], "license": license_id,
            "skills": "./skills/"}
-    if _hooks(plugin, "shared"):
+    if _hooks(plugin, "shared", version):
         out["hooks"] = "./hooks/hooks.json"
     if plugin.get("mcp"):
         out["mcpServers"] = "./.mcp.json"
@@ -93,9 +94,9 @@ def codex_catalog(doc: dict, version: str) -> dict:
             "description": ABOUT, "interface": {"displayName": "LapisLazuli"}, "plugins": plugins}
 
 
-def hooks_json(plugin: dict) -> dict | None:
+def hooks_json(plugin: dict, version: str) -> dict | None:
     """hooks/hooks.json: hooks both Claude Code and Codex run."""
-    return _hooks(plugin, "shared")
+    return _hooks(plugin, "shared", version)
 
 
 def mcp_json(plugin: dict) -> dict | None:
@@ -150,7 +151,7 @@ REPO_FORMATS = {
 PLUGIN_FORMATS = {
     "claude-plugin-manifest": claude_manifest,
     "codex-plugin-manifest": codex_manifest,
-    "hooks-json": lambda doc, plugin, version, license_id: hooks_json(plugin),
+    "hooks-json": lambda doc, plugin, version, license_id: hooks_json(plugin, version),
     "mcp-json": lambda doc, plugin, version, license_id: mcp_json(plugin),
     "omp-package": lambda doc, plugin, version, license_id: omp_package(plugin, version, license_id),
 }

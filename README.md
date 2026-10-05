@@ -66,6 +66,10 @@ The status comes from `install/harnesses.yaml`; the exact commands for each harn
 registers the plugins in each harness it finds (pi and Hermes Agent only when you name them with
 `--harness`). Plugin commands run by hand install the plugins only; the hooks and the MCP server
 need the CLI on your PATH (see [CLI and optional components](INSTALLATION.md#cli-and-optional-components)).
+Hooks use the separate `lapis-design-hook --plugin-version <version> <name>` executable. If plugins
+update before the CLI, a missing runner or version mismatch skips the hook with a visible notice,
+never a denied write or an endless Stop loop. Update both together with the install script's
+`--update`, then restart the harness; changed Codex hooks need trust again.
 
 ## How it works
 
@@ -127,11 +131,12 @@ hand.
 ## Command-line tools
 
 - `lapis-design`: `plan check`, `rights check`, `render check`, `behavior check`, `stub serve`,
-  `slop lint`, `release check`, `next`, and the `hook` and `mcp` entry points that harnesses call.
+  `slop lint`, `release check`, `next`, manual `hook` commands, and the `mcp` server.
 - `lazuli`: `local fonts`, `catalog`, `search`, `lock`, `class`, `sources`, `hints`, `color`, `read`, `ref`,
   `fetch`, `license`, `doctor`, and `setup`. State lives in your user cache; `lazuli doctor` checks the install.
+- `lapis-design-hook`: the version-aware, fail-open entry point used by all plugin hooks.
 
-Run either with `--help` for the commands and options.
+Run the commands with `--help` for their arguments and options.
 
 ## Requirements
 

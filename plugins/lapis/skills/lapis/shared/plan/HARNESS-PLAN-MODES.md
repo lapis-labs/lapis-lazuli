@@ -68,7 +68,7 @@ writes are blocked, and the LapisLazuli plan file becomes the single source once
 
 | Harness | Plan mode | How it fits |
 | --- | --- | --- |
-| Claude Code | Read-only plan mode (`/plan`, Shift+Tab); the plan is markdown saved under `~/.claude/plans/` or a project `plansDirectory`; `ExitPlanMode` asks for approval | Embed the block. The `lapis` plugin registers a `PermissionRequest` hook on `ExitPlanMode` (`lapis-design hook exit-plan`) that denies when the block has blocking findings or cannot be read or checked, and never approves on the user's behalf |
+| Claude Code | Read-only plan mode (`/plan`, Shift+Tab); the plan is markdown saved under `~/.claude/plans/` or a project `plansDirectory`; `ExitPlanMode` asks for approval | Embed the block. The `lapis` plugin registers a versioned `PermissionRequest` hook on `ExitPlanMode` (`lapis-design-hook --plugin-version VERSION exit-plan`) that denies when the block has blocking findings or cannot be read or checked, and never approves on the user's behalf; plugin/CLI skew skips the check with a notice |
 | Codex | `/plan` mode proposes a plan without writing; `update_plan` is an opt-in step list | Embed the block in the proposed plan; mirror only execution steps in `update_plan` |
 | Oh-My-Pi | Plan mode (toggle) with read-only tools; the plan lives in session storage and is submitted for approval, then executed from the approved plan | Embed the block in the plan; write the file as the first step after approval |
 | pi | No built-in plan mode; community extensions add a read-only `/plan` | With an extension, embed; without one, write the YAML directly and ask the user to approve the summary before implementing |
