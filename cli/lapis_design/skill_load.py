@@ -88,13 +88,16 @@ def needed(root: Path, task: str, result: dict) -> tuple[str, ...]:
 
     try:
         plan = read_plan(root / ".lapis/plans" / f"{task}.yaml")
+        if step == "plan-fix" and not isinstance(plan, dict):
+            return ()
         if isinstance(plan, dict):
             if plan.get("content"):
                 primary.append("lps-copy")
             if plan.get("tokens"):
                 primary.append("lps-system")
     except (OSError, ValueError, yaml.YAMLError):
-        pass
+        if step == "plan-fix":
+            return ()  # an unreadable plan is repaired before any load or record request
     return tuple(dict.fromkeys(primary))
 
 

@@ -18,6 +18,7 @@ between minor versions; render extraction is v1 and the other contract formats a
 - `next` now names and verifies phase sub-skill loads. Missing copy/system/review loads become an
   explicit `skill-load` procedure step, backed by cross-harness records of actual files, sections,
   content hashes, and context identifiers rather than a claimed review pass.
+  An unreadable plan is repaired first; phase loading never hides its YAML/structural error.
 - Comparison evidence now stays within the chosen font's actual role/script group. Rendered layout
   and direction candidates need implementations and matched captures; order-only HTML/CSS variants
   are flagged as unchanged relations. Motion candidates need implemented artifacts and observed
