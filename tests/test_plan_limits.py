@@ -286,16 +286,24 @@ def test_padding_with_a_tab_inside_a_quoted_string_is_still_read():
 
 
 def test_many_key_copy_items_still_reach_copy_rules(tmp_path):
+    def values(node) -> int:
+        if isinstance(node, dict):
+            return 1 + sum(values(key) + values(value) for key, value in node.items())
+        return 1 + sum(map(values, node)) if isinstance(node, list) else 1
+
     plan = example()
     plan["brief"]["locales"] = ["en"]
-    plan["content"]["key_copy"] = [{"slot": "cta", "text": "A handmade piece"} for _ in range(1849)]
-    plan["content"]["key_copy"].append({"slot": "cta", "text": "Click here"})
+    plan["content"]["key_copy"] = []
+    item = {"slot": "cta", "text": "A handmade piece"}
+    # As many items as fit under the 10,000-value limit, the last one vague.
+    count = (10_000 - values(plan)) // values(item)
+    plan["content"]["key_copy"] = [dict(item) for _ in range(count - 1)] + [{"slot": "cta", "text": "Click here"}]
     path = write_plan(tmp_path, yaml.safe_dump(plan, allow_unicode=True))
     result = timed_call(tmp_path, "slop", "lint", "--plan", str(path), "--json", limit=5)
     assert result.returncode == 1, result.stderr
     findings = json.loads(result.stdout)["findings"]
     assert any(f["rule_id"] == "copy.vague-cta" and f["location"]["path"] ==
-               "content.key_copy[1849].text" for f in findings)
+               f"content.key_copy[{count - 1}].text" for f in findings)
 
 
 def hostile_plan(kind: str) -> str:
