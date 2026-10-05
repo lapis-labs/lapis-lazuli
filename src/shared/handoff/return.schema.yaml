@@ -1,0 +1,14 @@
+# Return preflight checks transport identity, never returned code semantics, approval or verification.
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/return.v0.json
+title: LapisLazuli return envelope
+type: object
+additionalProperties: false
+required: [version, task, scope, role, handoff_id, plan_sha256]
+properties:
+  version: {const: 0}
+  task: {type: string, pattern: '^[a-z0-9][a-z0-9-]{1,63}$'}
+  scope: {type: string, pattern: '^[a-z0-9][a-z0-9-]*$'}
+  role: {enum: [design-head, implementer, reviewer]}
+  handoff_id: {type: string, pattern: '^[0-9a-f]{64}$'}
+  plan_sha256: {type: string, pattern: '^[0-9a-f]{64}$'}

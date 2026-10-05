@@ -34,6 +34,8 @@ three sections. Reuse the record in this context while the loaded sections remai
 
 For source-family adoption, system scope, or component APIs, read `references/system-contracts.md`;
 for a supplied design document, tool export, or generated specification, `references/interop.md`.
+For portable role assignments, read `shared/handoff/HANDOFF.md` → **Projection annotations** and
+**Roles and local integration**. A design head proposes; only reconciled canonical decisions bind workers.
 
 ## Token layers
 

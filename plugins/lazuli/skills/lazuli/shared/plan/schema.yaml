@@ -121,6 +121,8 @@ properties:
           type: string
         note:
           type: string
+        intake:
+          $ref: '#/$defs/intake'
 required:
 - version
 - task
@@ -130,6 +132,95 @@ $defs:
     type: array
     items:
       type: string
+  local_path:
+    type: string
+    pattern: ^(?!/)(?!.*\\)(?!.*(^|/)\.\.(/|$))[^\0]+$
+  digest:
+    type: string
+    pattern: ^[0-9a-f]{64}$
+  intake:
+    type: object
+    additionalProperties: false
+    required:
+    - id
+    - kind
+    - scope
+    - read_state
+    - via
+    - revision
+    - authority
+    properties:
+      id:
+        type: string
+        pattern: ^[a-z0-9][a-z0-9-]*$
+      kind:
+        enum:
+        - design-contract
+        - system-spec
+        - lapis-record
+        - figma
+        - adobe-export
+        - screenshot
+      scope:
+        type: string
+        minLength: 1
+      read_state:
+        enum:
+        - read
+        - partial
+        - unread
+        - unavailable
+      via:
+        enum:
+        - local-file
+        - tool-read
+        - api-read
+        - export
+        - visual
+      revision:
+        type: string
+        minLength: 1
+      snapshot:
+        type: object
+        additionalProperties: false
+        required:
+        - path
+        - sha256
+        properties:
+          path:
+            $ref: '#/$defs/local_path'
+          sha256:
+            $ref: '#/$defs/digest'
+      authority:
+        type: object
+        additionalProperties: false
+        required:
+        - level
+        - basis
+        properties:
+          level:
+            enum:
+            - requirement
+            - contract
+            - convention
+            - reference
+          basis:
+            type: string
+            minLength: 1
+      disclosure:
+        type: object
+        additionalProperties: false
+        required:
+        - state
+        - basis
+        properties:
+          state:
+            enum:
+            - local-only
+            - approved-for-handoff
+          basis:
+            type: string
+            minLength: 1
   oklch:
     type: array
     minItems: 3

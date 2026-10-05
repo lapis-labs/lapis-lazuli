@@ -30,6 +30,9 @@ First read `references/pre-show-review.md` → **Evidence**, then record the loa
 `lapis-design skill loaded --task <task> --skill ultramarine --context <current-context>
 --read <skill-path/SKILL.md> --read '<skill-path/references/pre-show-review.md>#Evidence'`.
 Reuse that record for release in the same context; it is not evidence that a critic ran.
+For a portable review return, read `shared/handoff/HANDOFF.md` → **Return and freshness** and
+**Roles and local integration**. Fresh transport grants no repair authority; remote observations remain
+claims until the actual integrated local surface is exercised and ordinary evidence records are written.
 
 ## Order of authority
 

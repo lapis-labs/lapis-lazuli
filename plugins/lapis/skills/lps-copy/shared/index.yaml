@@ -4,6 +4,18 @@
 version: 0
 skill: lps-copy
 items:
+- id: handoff-protocol
+  view: summary
+  path: handoff/HANDOFF.md
+  summary: Design-source intake and portable role handoff
+- id: handoff-envelope
+  view: summary
+  path: handoff/schema.yaml
+  summary: Portable handoff identity only; binding design values remain in the canonical plan/contracts.
+- id: handoff-return
+  view: summary
+  path: handoff/return.schema.yaml
+  summary: Return preflight checks transport identity, never returned code semantics, approval or verification.
 - id: plan-schema
   view: full
   path: plan/schema.yaml

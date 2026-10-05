@@ -63,6 +63,7 @@ tokens:
       - { role: heading, family: Gowun Batang, weights: [400, 700], scripts: [hang, latn], source: catalog }
       - { role: body, family: Pretendard, weights: [400, 600], scripts: [hang, latn], source: inventory }
     scale: { base_px: 16, ratio: 1.25 }
+    lock: src/shared/fonts/example.fonts.lock.json   # synthetic facts for this portable example, not a local capture
   shape:
     radius: { scale: [0, 4, 8], by_role: { control: 4, card: 8, image: 0 } }
     rule: Square image edges like the firing-log sheets; softer corners only on things you press
@@ -230,3 +231,45 @@ defaults:
 sources:
   - { ref: PRODUCT.md }
   - { ref: https://example.com/archive, note: log-sheet grid reference }
+  - ref: src/shared/handoff/example-system.md
+    note: Synthetic reservation instructions; no app or capture was run
+    intake:
+      id: reservation-spec
+      kind: system-spec
+      scope: Reservation contract and Reservation acceptance
+      read_state: read
+      via: local-file
+      revision: synthetic-example
+      snapshot: {path: src/shared/handoff/example-system.md, sha256: 6f1e95062a62d3612f0db6b58c255771a37ac4b1f9d30aa2a05ad611091b336d}
+      authority: {level: reference, basis: "Synthetic demonstration, not an adopted owner contract"}
+      disclosure: {state: approved-for-handoff, basis: Public synthetic example for manual text recipients}
+  - ref: src/shared/fonts/example.fonts.lock.json
+    intake:
+      id: reservation-fonts
+      kind: lapis-record
+      scope: Synthetic heading and body OFL delivery records
+      read_state: read
+      via: local-file
+      revision: synthetic-example
+      snapshot: {path: src/shared/fonts/example.fonts.lock.json, sha256: 3c6460cfbafc23a4ce519ced8585c0b30668817396e0fe5f69f04352da683ecb}
+      authority: {level: reference, basis: "Existing illustrative lock, not proof of a local rights review"}
+      disclosure: {state: approved-for-handoff, basis: Public OFL example records for manual text recipients}
+handoff:
+  scopes:
+    - id: reservation
+      plan_paths: [/brief, /tokens/color, /tokens/type, /tokens/shape, /tokens/surface, /tokens/motion, /layout, /content, /flows/0, /explorations, /direction, /defaults]
+      excerpts:
+        - {source: reservation-spec, heading: Reservation contract}
+        - {source: reservation-fonts, pointer: /fonts/0}
+        - {source: reservation-fonts, pointer: /fonts/1}
+      open_decisions: []
+      implementation_paths: [src/reservation.ts]
+      acceptance_refs:
+        - {source: reservation-spec, heading: Reservation acceptance}
+      check_owners:
+        plan: coordinator
+        render: local-verifier
+        behavior: local-verifier
+        lint: local-verifier
+        critic: local-verifier
+        release: coordinator

@@ -12,6 +12,9 @@ fixes the design; blocking findings go back to the maker.
 
 The gate's rules are in `shared/release/GATE.md`. `lapis-design release check` applies them and
 writes `.lapis/release/<task>.json`.
+A matching handoff return is not a release input or local pass. Review proposals/rights and reconcile
+canonical decisions first, then run the local checks below; remote claims never become canonical reports
+(`shared/index.yaml`, handoff-protocol).
 
 ## Before the gate
 

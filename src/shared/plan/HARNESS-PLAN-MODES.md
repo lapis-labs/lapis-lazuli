@@ -15,6 +15,11 @@ with them. Skills read this file as a reference; the rules below are what the ag
 Never replace one with the other. The harness plan carries the LapisLazuli plan inside it while
 writes are blocked, and the LapisLazuli plan file becomes the single source once execution starts.
 
+Portable role handoffs are generated projections, not a third authoritative plan. For intake,
+scope selection and read-only return preflight, read `handoff/HANDOFF.md` → **Projection annotations**
+and **Return and freshness** in the shared contracts. A session that cannot materialize canonical
+inputs can present a proposal, but cannot fabricate export digests.
+
 ## Rules
 
 1. **Embed while in plan mode.** Plan modes block or discourage file writes, so write the

@@ -79,6 +79,10 @@ A small edit inside an established system needs no plan. Say so and make the edi
    captures, and read a page's HTML and CSS, as the `lzl-research` skill's exploration guide describes. If the
    user's words forbid the lookups, decline the step with their line instead (see Done).
 
+For supplied design sources or a role transfer, read `shared/handoff/HANDOFF.md` → **Intake and authority**
+and **Projection annotations** before reconciling them; read **Export** and **Return and freshness** when
+sending/receiving a packet. Keep the canonical plan; source access and export success grant no approval.
+
 ## Direction principles
 
 Five principles steer the direction steps below. Each names the plan field that holds it and what,

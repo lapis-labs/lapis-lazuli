@@ -9,6 +9,18 @@ items:
   path: release/draft.schema.yaml
   summary: Pre-show review record, independent of the release gate. Written by the reviewer, never by
     a check.
+- id: handoff-protocol
+  view: full
+  path: handoff/HANDOFF.md
+  summary: Design-source intake and portable role handoff
+- id: handoff-envelope
+  view: full
+  path: handoff/schema.yaml
+  summary: Portable handoff identity only; binding design values remain in the canonical plan/contracts.
+- id: handoff-return
+  view: full
+  path: handoff/return.schema.yaml
+  summary: Return preflight checks transport identity, never returned code semantics, approval or verification.
 - id: plan-schema
   view: full
   path: plan/schema.yaml

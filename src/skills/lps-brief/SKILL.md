@@ -12,6 +12,9 @@ claimed, what the owner believes, which words and looks they refuse, what is fix
 falls back on what any page of that kind gets. lps-brief collects it before `lapis` plans: it reads what is
 already there, looks up what can be found, asks only what stays open, and writes one record the plan cites.
 It decides nothing visual; type, color, layout, and motion stay with `lapis` and its explorations.
+For supplied sources or role transfers, resolve only missing authority, inspected scope and disclosure
+questions; record owner replies in the existing brief record. The shared handoff protocol owns their
+meanings (`shared/index.yaml`, handoff-protocol); source access is not permission to share.
 
 ## Done
 

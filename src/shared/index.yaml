@@ -21,6 +21,51 @@ items:
       lapis: full
       ultramarine: full
 
+  - id: handoff-protocol
+    kind: contract
+    path: handoff/HANDOFF.md
+    note: authorized design intake, bounded offline role assignments, read-only returns and local verification
+    consumers:
+      lapis: full
+      lps-system: full
+      ultramarine: full
+      lps-brief: summary
+      lps-ux: summary
+      lps-copy: summary
+      lzl-research: summary
+      lzl-fonts: summary
+      ulm-release: summary
+
+  - id: handoff-envelope
+    kind: contract
+    path: handoff/schema.yaml
+    note: v0 content-bound identity; not a second design-value store or signature
+    consumers:
+      lapis: full
+      lps-system: full
+      ultramarine: full
+      lps-brief: summary
+      lps-ux: summary
+      lps-copy: summary
+      lzl-research: summary
+      lzl-fonts: summary
+      ulm-release: summary
+
+  - id: handoff-return
+    kind: contract
+    path: handoff/return.schema.yaml
+    note: v0 return identity; artifacts and remote claims remain unreviewed/unverified
+    consumers:
+      lapis: full
+      lps-system: full
+      ultramarine: full
+      lps-brief: summary
+      lps-ux: summary
+      lps-copy: summary
+      lzl-research: summary
+      lzl-fonts: summary
+      ulm-release: summary
+
   - id: plan-schema
     kind: contract
     path: plan/schema.yaml
