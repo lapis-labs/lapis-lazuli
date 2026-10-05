@@ -54,9 +54,23 @@ def report(tool: str, **target) -> dict:
             "findings": [], **({"scope": {"layers": ["plan", "source", "render"]}} if tool == "slop_lint" else {})}
 
 
+def load_skills(root: Path, task: str = TASK) -> None:
+    from lapis_design import skill_load
+
+    for skill, sections in skill_load.REQUIRED.items():
+        argv = ["--root", str(root), "--task", task, "--skill", skill,
+                "--context", os.environ.get("LAPIS_CONTEXT", "procedure-test")]
+        if skill == "lps-copy":
+            sections = (*sections, "references/interface-copy.md#Korean")
+        for section in sections:
+            argv += ["--read", str(SHARED.parent / "skills" / skill / section)]
+        assert skill_load.main(argv) == 0
+
+
 def make_project(root: Path) -> Path:
     """A static page with every input and report the gate reads, none of them stale, and no release report."""
     plan = yaml.safe_load((SHARED / "plan/example.plan.yaml").read_text())
+    load_skills(root)
     plan["flows"], plan["references"], plan["tokens"]["type"]["roles"] = [], [], []
     plan["tokens"]["color"]["themes"] = ["light"]
     plan["tokens"]["color"]["roles"] = [r for r in plan["tokens"]["color"]["roles"] if r.get("theme") != "dark"]
@@ -158,6 +172,7 @@ def references_text(entries: list[dict], captures: str | None = "study-only") ->
 
 def write_references(root: Path, at: int = 50, task: str = TASK) -> list[dict]:
     """A references record that passes, with its captures, modified at second `at`."""
+    load_skills(root, task)
     entries = reference_entries(root, task)
     hints.draw(root, task, "none", "2026-10-05")                  # these tests exercise evidence, not genre selection
     record(root, "references", references_text(entries), at, task)

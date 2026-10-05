@@ -273,6 +273,18 @@ attended stop preserves the user's control and records `unreviewed_draft` with i
 does not count that stop as a reviewed approval. Full release checks remain separate.
 
 
+### Phase skill loads
+
+`next` names the required sub-skill in `skills`: `lps-copy` for copy in the plan,
+`lps-system` for tokens/system, and `ultramarine` for pre-show review and release checks.
+A missing load changes the step to `skill-load` with the original phase in `then`.
+Each sub-skill's first step records its loaded files/sections via `skill loaded` in
+`.lapis/skills/<task>/<skill>.json` (task, skill, context, paths, headings, and section hashes).
+The sections must exist and remain unchanged. With `LAPIS_CONTEXT` set, the context must match;
+without it, the explicit context identifier is a reusable attestation. This proves what was
+recorded as loaded, not comprehension or a critic's independence. Korean copy additionally
+requires the Korean section once the plan names that locale.
+
 ## What the gate does not do
 
 It does not rerun captures, probes, or lint, judge design quality, or state a legal conclusion.

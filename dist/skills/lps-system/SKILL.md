@@ -24,6 +24,11 @@ work has a contract to follow.
 
 ## At the start
 
+Read `references/tokens.md` → **Type tokens**, **Space, radius, surfaces, and icons**, and **Motion tokens**.
+Record this load with `lapis-design skill loaded --task <task> --skill lps-system --context <current-context>
+--read <skill-path/SKILL.md>` and one `--read '<skill-path/references/tokens.md>#<heading>'` for each of those
+three sections. Reuse the record in this context while the loaded sections remain unchanged.
+
 1. Read the plan's `tokens`, `direction`, and `defaults`, and `DESIGN.md` if it exists. Identify its
    dialect and record it in the plan's `context.design.dialect`, using the values the plan schema
    lists; `unknown` when none fits.

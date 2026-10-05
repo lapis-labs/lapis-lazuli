@@ -18,6 +18,7 @@ CHECKS = {
     ("slop", "lint"): "lapis_design.lint.cli",
     ("release", "check"): "lapis_design.release_check",
     ("draft", "check"): "lapis_design.draft",
+    ("skill", "loaded"): "lapis_design.skill_load",
 }
 
 

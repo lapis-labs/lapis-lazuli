@@ -15,6 +15,9 @@ between minor versions; render extraction is v1 and the other contract formats a
   dispositions, changed-behavior evidence, and an independent critic for a new direction.
   Pure questions remain allowed. The attended exit gate records unreviewed stops without blocking
   the user's control; owner reports carry the review and unresolved findings, not a release claim.
+- `next` now names and verifies phase sub-skill loads. Missing copy/system/review loads become an
+  explicit `skill-load` procedure step, backed by cross-harness records of actual files, sections,
+  content hashes, and context identifiers rather than a claimed review pass.
 - Plugin/CLI version skew no longer turns argparse exit 2 into an endless Stop loop or denied writes.
   Every harness hook uses the separate `lapis-design-hook --plugin-version VERSION <name>` entry point:
   old installs lack it and fail open, while installed runners skip unknown arguments and mismatched

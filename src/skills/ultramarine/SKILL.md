@@ -23,6 +23,10 @@ cannot, and hands each fix back to the maker. It reports what its checks found; 
 accessibility or legal conformance. The full pre-ship gate is `ulm-release`.
 Before a rendered draft is shown for feedback or approval, read `references/pre-show-review.md`.
 Review only the shown pages; a small iteration reviews its changed area and affected widths.
+First read `references/pre-show-review.md` → **Evidence**, then record the load with
+`lapis-design skill loaded --task <task> --skill ultramarine --context <current-context>
+--read <skill-path/SKILL.md> --read '<skill-path/references/pre-show-review.md>#Evidence'`.
+Reuse that record for release in the same context; it is not evidence that a critic ran.
 
 ## Order of authority
 

@@ -120,6 +120,10 @@ Work in this order; each step fills the named plan fields. The schema is
 
 Each reference opens with a `## Sections` index, one line per section with the decision it serves. Read the index, then only the
 sections the step needs, found by their headings; do not read a whole reference file.
+`next` names the phase's required sub-skill and checks its load record: copy needs `lps-copy`,
+tokens/system needs `lps-system`, and pre-show review/release needs `ultramarine`. Load the named sections
+and follow that skill's first step; a missing load is `skill-load`, never a silent pass. Use the current
+session/context identifier consistently (set `LAPIS_CONTEXT` to enforce context reuse across commands).
 
 ### 1. Brief and claims - `brief`, `claims`
 

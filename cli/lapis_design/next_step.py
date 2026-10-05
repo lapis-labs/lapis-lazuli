@@ -222,6 +222,12 @@ def _lock_commands(plan: dict, task: str) -> list[str]:
 
 
 def evaluate(root: Path, task: str, page: str | None = None) -> dict:
+    from lapis_design import skill_load
+
+    return skill_load.apply(root.resolve(), task, _evaluate(root, task, page))
+
+
+def _evaluate(root: Path, task: str, page: str | None = None) -> dict:
     """The state of `task` under `root`: `{"task", "state", "step", "interactive", "reason"}`.
 
     `state` is `needs-step` with the one `step` to take (`id`, `why`, `command` or None, and `schema`

@@ -23,6 +23,11 @@ the interface text, in the language the reader reads, from facts the product can
 
 ## At the start
 
+Read `references/interface-copy.md` → **One owner for every string** first, and **Korean** for Korean copy.
+Then record this load with `lapis-design skill loaded --task <task> --skill lps-copy --context <current-context>
+--read <skill-path/SKILL.md> --read '<skill-path/references/interface-copy.md>#One owner for every string'`;
+add the Korean section as another `--read` when used. This attests the sections loaded, not copy quality.
+
 1. Read the plan's `brief`, `world_materials`, `flows`, and `content`, then `PRODUCT.md` for the
    facts and claims the product can support.
 2. Collect the real content: product names, prices, terms, record names, error cases, the words
