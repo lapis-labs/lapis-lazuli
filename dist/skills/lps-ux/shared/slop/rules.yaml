@@ -775,6 +775,12 @@ rules:
     when: the break intentionally falls inside one word and hiding it restores that same word, verified
       in a phone capture
     evidence: none
+- id: layout.primary-action-reach
+  why: A next-step action separated from the last required selection by more than half a screen makes
+    the visitor search or scroll after finishing the choice
+  better: Keep the continuation on the selection's screen, by ordering the step or using an appropriate
+    sticky action; record selections and the forward control in the flow's reach link, not a CTA on every
+    first view
 - id: layout.compact-overflow
   why: Fixed columns overflow at compact width, so text or controls clip, overlap, or force page scrolling
   better: Let columns collapse or reflow at compact widths; scroll only regions whose content needs two

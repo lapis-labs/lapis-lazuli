@@ -13,6 +13,7 @@ engine reports as a non-blocking finding with evidence `not-verified`, and judge
 """
 from __future__ import annotations
 
+import re
 from typing import Any, Iterable
 
 from lapis_design.behavior import EXIT_KINDS, RECURRING_CADENCE, derive_session, matches_promise, required_terms
@@ -1379,3 +1380,56 @@ def media_autoplay(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
                 location=_loc(s, m["context"], box=m["box"]), evidence=RUNTIME, refs=[_ref(ctx, "probes", "media", i)],
                 consequence="the sound drowns out screen readers"))
     return _result(hits, notes)
+
+
+def _operating_plan(plan: dict | None) -> bool:
+    brief = (plan or {}).get("brief") or {}
+    return (brief.get("product_frame") in ("forms-onboarding-checkout", "saas-dashboard-admin", "internal-tools")
+            or "operate" in ((plan or {}).get("direction") or {}).get("read", {}).get("surface_mode", [])
+            or bool(re.search(r"book|reserv|appointment|operate|예약|진료|접수|操作|予約|预订", brief.get("one_job", ""), re.I)))
+
+
+@detector("primary-action-reach", layers=("plan", "behavior"))
+def primary_action_reach(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
+    if layer == "plan":
+        if ctx.plan is None:
+            return Result(skipped="no plan given")
+        if not _operating_plan(ctx.plan):
+            return Result()
+        return Result(hits=[Hit(observed=f"flow {flow['id']!r} has no reach link; name its required selections and forward control",
+                                location={"flow": flow["id"], "path": f"flows[{i}].reach"}, evidence="plan")
+                            for i, flow in enumerate(ctx.plan.get("flows") or [])
+                            if flow.get("kind") in ("primary", "purchase", "signup", "subscribe") and not flow.get("reach")])
+    session = _session(ctx)
+    if session is None:
+        return _no_session()
+    if ctx.plan is not None and not _operating_plan(ctx.plan):
+        return Result()
+    threshold = _bound(det, "gap_viewports_max")
+    if threshold is None:
+        return _no_bound("gap_viewports_max")
+    contexts = {c["id"]: c for c in session.get("contexts") or []}
+    hits, gaps = [], []
+    for run_index, run in enumerate(session.get("flows") or []):
+        if run["kind"] not in ("primary", "purchase", "signup", "subscribe"):
+            continue
+        context = contexts.get(run["context"]) or {}
+        height = context.get("height")
+        for step in run.get("steps") or []:
+            reach = step.get("action_reach") or {}
+            after = reach.get("after_selections")
+            if not after or not height:
+                gaps.append(f"{run['id']}/{run['context']}/step {step['index']}: selection-complete reach not recorded")
+                continue
+            if after["visible"] and after["pinned"]:
+                continue
+            ratio = after["gap_px"] / height
+            if ratio > threshold:
+                initial = reach["initial"]
+                hits.append(Hit(observed=f"next-step action y={after['action_y']:.1f}px is {after['gap_px']:.1f}px "
+                                f"({ratio:.2f} viewports) after the last required selection bottom "
+                                f"y={after['selection_bottom_y']:.1f}px, above {threshold:g}; initial action "
+                                f"y={initial['action_y']:.1f}px was {initial['below_first_view_px']:.1f}px below the first view",
+                                location=_loc(session, run["context"], flow=run["id"], step=step["index"], box=reach["box"]),
+                                evidence=RUNTIME, refs=[_ref(ctx, "flows", run_index, "steps", step["index"], "action_reach")]))
+    return _result(hits, gaps)

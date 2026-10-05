@@ -675,6 +675,35 @@ with a `pair` starts where its pair starts, so finding the way out counts as eff
 is used only when it has no pair. The driver stops as `blocked` when no action advances, `dead-end`
 when a screen offers no way forward or back, and `abandoned` after 40 actions.
 
+**Next-step reach.** A booking/operate flow can locate its first forward step with
+`reach: {forward: "Continue", selections: ["Date", "Time"]}`. These are exact accessible names,
+not typed values; the selection list names required controls in task order. The driver makes those
+selections, measures, then activates the forward control. Missing or disabled named controls leave
+the journey blocked with a reason, not guessed. A field uses synthetic fixture values as other flows do.
+Without `reach`, existing forward wording and observed required fields/radio choices can supply
+measurements, but the plan check warns that the selection-to-action link was not explicitly named.
+
+Each measured step's optional `action_reach` records its `box`, the initial action's page-coordinate
+`action_y` and `below_first_view_px`, and `after_selections` immediately before forward activation:
+`action_y`, the last required control's `selection_bottom_y`, their signed `gap_px`, whether the
+action is wholly `visible` in the current viewport, and whether it or an ancestor is `pinned`
+(fixed/sticky). Geometry is read before the forward locator can auto-scroll. The 390 and 1440
+contexts are recorded independently. A missing selection-complete measurement is unjudged.
+
+`layout.primary-action-reach` warns/P2 when the gap exceeds **0.5 viewport height**: if the last
+selection finishes mid-screen, a larger gap puts the action beyond the same screen. This is a
+same-screen task principle, not a threshold fitted to one page. A wholly visible fixed/sticky action
+passes. Initial distance is context, not a firing condition; a form's required selections may
+legitimately precede its action. For example:
+
+```yaml
+action_reach:
+  box: b000000000001
+  initial: {action_y: 1500, below_first_view_px: 656}
+  after_selections: {action_y: 1500, selection_bottom_y: 900, gap_px: 600, visible: false, pinned: false}
+```
+
+
 **Action choice** is deterministic. With a dialog open the driver considers only the dialog's
 controls, otherwise only controls outside dialogs. It first fills one empty field that is required,
 or, once no untried forward control is left, an empty name, email, phone, address, postal code,

@@ -12,6 +12,10 @@ All notable changes are recorded here. The format follows
 Local contract changes, made here and not from a kit diff; the handoff records each one with its before and
 after text.
 
+- Booking/operate flows can name required selections and the next-step control in optional `flows[].reach`.
+  Behavior records initial and selection-complete geometry at each width before locator auto-scroll.
+  `layout.primary-action-reach` warns/P2 above a half-viewport selection-to-action gap, with visible
+  fixed/sticky actions reachable; initial distance alone does not fire. Missing plan links warn.
 - `type.hidden-heading-break` warns/P2 when a media query hides a heading's `br` and removes its only
   word separation. Source findings name the heading and CSS locations; guidance preserves whitespace
   or uses a span, and checks the phone capture.

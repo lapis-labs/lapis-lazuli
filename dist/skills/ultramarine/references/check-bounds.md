@@ -7,6 +7,7 @@ Read the section for the finding being interpreted, by heading; the rest are oth
 - Motion at rest and under the reduced preference: what the motion checks see at rest and under reduced motion
 - Motion inventory and scrolling: what the motion inventory, animation-package, and scroll probes can and cannot reach
 - Data-region extraction and contrast: the contrast minimums, compact access and controls, long rendered lists
+- Next-step reach: the selection-to-action geometry on booking/operate flows, before locator auto-scroll
 - Status results and form recovery: announced results, timed work, duplicate commits, and urgency or scarcity claims
 - Related wording boundaries: how urgency and quoted-proof wording is recognized, and where recognition stops
 
@@ -140,6 +141,21 @@ There is no automated comparison of chart and table values, axis honesty, uncert
 usefulness of a summary. For a river-level view, inspect the plotted reference against its table;
 for a seed inventory, check that filtered totals and the export name the same selection. Those
 checks are manual and do not acquire a rule verdict from the examples.
+
+## Next-step reach
+
+For booking/operate plans, `layout.primary-action-reach` asks each primary forward flow to name
+`reach.forward` and `reach.selections` as exact accessible control names. An absent link warns,
+never gates. The behavior flow records `step.action_reach` independently at **390** and **1440 px**,
+initially and immediately after the required selections, before activating the continuation.
+
+The same-screen principle permits a gap of **0.5 viewport height** from the last required selection's
+bottom to the action's top. Above that, an action is offscreen if the visitor finishes their choice
+near mid-screen; warn/P2. This is not fitted to one page's coordinates. A wholly visible fixed/sticky
+action is reachable. Initial distance below the first view is a recorded fact, not a firing condition:
+selections may naturally come before the button. A successful locator click can auto-scroll and proves
+activation only. Missing selection-complete geometry remains unjudged; confirm with a task capture,
+not a CTA added to every opening.
 
 ## Status results and form recovery
 

@@ -95,12 +95,17 @@ that see it. Rules marked * are statistical or lexical leads; the critic judges 
   costs in scroll before the first action. Give navigation its phone form: a few destinations in one place the thumb
   reaches, the current place named at the top. Run a booking or another task in steps as one step per view with a
   visible current step (`archetypes.md`, Genre structures).
+  Link a booking/operate flow's required controls and next-step control in `flows[].reach`. At 390 and 1440,
+  measure the initial distance below the first view and the action's gap from the last required selection
+  immediately after choosing, before clicking the continuation. Keep the action on that selection's screen:
+  a gap over half a viewport is a warning/P2, not a release gate. A visible sticky action can serve the task;
+  do not force a CTA into every first view or count locator auto-scroll as evidence of reach.
   Read the actual heading at 390, not only its overflow result. Hiding `여백의<br>형태` must not produce
   `여백의형태`: preserve the word space before the `br`, or use a span with explicit spacing.
 - **Exceptions.** A tool whose phone use is a persistent rail, such as a map or an editor, when the brief or contract
   says so. An image that is the subject itself. A long page whose length is its content.
 - **Rules.** `layout.compact-desktop-navigation`, `layout.compact-object-opening`, `layout.compact-empty-length`,
-  `layout.shrunk-desktop`, `layout.compact-overflow`, `layout.edge-flush`.
+  `layout.shrunk-desktop`, `layout.compact-overflow`, `layout.edge-flush`, `layout.primary-action-reach`.
 
 ## Section order and the close
 

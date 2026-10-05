@@ -97,6 +97,8 @@ flows:
     done: { route: /reservations/* }
     requires: [address]
     max_steps: 4
+    # Selection-first flows can add reach: {forward: Continue, selections: [Date, Time]}.
+    # Names must come from that flow's rendered controls; this route-first flow uses observed fields.
   - id: firing-notices
     kind: grant-consent
     goal: Get an email when the next firing's pieces go up

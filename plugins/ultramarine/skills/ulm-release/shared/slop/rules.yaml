@@ -2813,6 +2813,31 @@ rules:
   waiver:
     scope: value
   verify: review
+- id: layout.primary-action-reach
+  class: quality
+  domain: layout
+  layers:
+  - plan
+  - behavior
+  - review
+  severity:
+    create: warn
+    review: P2
+  detect:
+    plan:
+      detector: primary-action-reach
+    behavior:
+      detector: primary-action-reach
+      threshold:
+        gap_viewports_max: 0.5
+  why: A next-step action separated from the last required selection by more than half a screen makes
+    the visitor search or scroll after finishing the choice
+  better: Keep the continuation on the selection's screen, by ordering the step or using an appropriate
+    sticky action; record selections and the forward control in the flow's reach link, not a CTA on every
+    first view
+  waiver:
+    scope: none
+  verify: runtime
 - id: layout.compact-overflow
   class: requirement
   domain: layout

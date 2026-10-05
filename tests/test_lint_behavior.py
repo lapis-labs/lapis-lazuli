@@ -23,7 +23,7 @@ BEHAVIOR = ["control-has-effect", "console-errors", "focus-visible", "state-cove
             "dialog-usage", "keyboard-traversal", "keyboard-bypass", "context-change", "choice-analysis",
             "flow-analysis", "form-behavior", "commit-safety", "status-announcement", "urgency-integrity",
             "time-limit", "history-behavior", "pointer-alternatives", "scroll-behavior", "permission-requests",
-            "media-autoplay"]
+            "media-autoplay", "primary-action-reach"]
 
 
 def box(n: int) -> str:
@@ -91,6 +91,17 @@ def primary_run(status, target, kind="primary"):
     return {"id": "reserve", "context": "m", "kind": kind, "status": status,
             "steps": [{"index": 0, "path": "/", "actions": [{"kind": "tap", "target": target}]}],
             "effort": {"steps": 1, "interactions": 1}}
+
+
+@pytest.mark.parametrize("gap,fires", [(421.9, False), (422, False), (422.1, True)])
+def test_primary_action_reach_uses_the_same_screen_boundary_not_initial_depth(gap, fires):
+    flow = primary_run("completed", A)
+    flow["steps"][0]["action_reach"] = {
+        "box": A, "initial": {"action_y": 3000, "below_first_view_px": 2156},
+        "after_selections": {"action_y": 1000 + gap, "selection_bottom_y": 1000, "gap_px": gap,
+                             "visible": False, "pinned": False}}
+    result = run("layout.primary-action-reach", session(flows=[flow]))
+    assert hit_boxes(result) == ([A] if fires else [])
 
 
 def test_dead_control_hits_no_effect_mismatch_and_console_errors():

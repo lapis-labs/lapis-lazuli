@@ -914,6 +914,7 @@ $defs:
       main: { $ref: "#/$defs/box_id" }
       dialog: { $ref: "#/$defs/box_id" }              # the step is a dialog that must be answered
       actions: { type: array, items: { $ref: "#/$defs/action" } }
+      action_reach: { $ref: "#/$defs/action_reach" }  # read before forward activation, never from its auto-scroll
       offers:
         type: array
         items:
@@ -927,6 +928,30 @@ $defs:
             hint_mismatch: { $ref: "#/$defs/hint_mismatch" }
       dead_end: { type: boolean }
       back_available: { type: boolean }
+
+  action_reach:
+    type: object
+    additionalProperties: false
+    required: [box, initial]
+    properties:
+      box: { $ref: "#/$defs/box_id" }
+      initial:
+        type: object
+        additionalProperties: false
+        required: [action_y, below_first_view_px]
+        properties:
+          action_y: { type: number }
+          below_first_view_px: { type: number, minimum: 0 }
+      after_selections:
+        type: object
+        additionalProperties: false
+        required: [action_y, selection_bottom_y, gap_px, visible, pinned]
+        properties:
+          action_y: { type: number }
+          selection_bottom_y: { type: number }
+          gap_px: { type: number }                   # action top minus the last required selection bottom, page coordinates
+          visible: { type: boolean }                # wholly in the actual viewport before forward activation
+          pinned: { type: boolean }                 # fixed/sticky action or ancestor
 
   effort:
     type: object

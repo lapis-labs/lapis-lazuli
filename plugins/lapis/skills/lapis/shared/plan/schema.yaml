@@ -242,6 +242,17 @@ properties:
           items: { enum: [account, sign-in, identity, payment, address, age, reauth] }
         requires_reason: { type: string, minLength: 8 }   # why an account, identity check, or reauthentication is needed
         max_steps: { type: integer, minimum: 1 }
+        reach:                                       # locate the first forward step, without guessing which buttons are selections
+          type: object
+          additionalProperties: false
+          required: [forward, selections]
+          properties:
+            forward: { type: string, minLength: 1 }   # exact accessible name of the next-step control
+            selections:
+              type: array
+              minItems: 1
+              uniqueItems: true
+              items: { type: string, minLength: 1 }   # required controls, in the order the visitor chooses them
       # An account, identity check, or reauthentication excuses behavior findings, so it needs a reason
       if:
         required: [requires]

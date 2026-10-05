@@ -210,6 +210,15 @@ detectors:
   - { name: meta-text, layers: [plan, render], input: "copy that tells how the page was made or explains the page instead of its subject, in English, Korean, Japanese, and Chinese", params: { kinds: "producer-facing | repeated-heading-body | demo-badges | fiction-notice | build-labels | chat-leftovers | change-log | developer-notes | placeholder-apology | self-description | decorative-metadata-strip | ambient-status" }, output: "fiction-notice and demo-badges share one allowance: a notice that the page, its data, or its subject is not real, or a demo badge, is allowed once, as a short line (30 words or 120 characters in unspaced scripts) in the footer or at the foot of the last section, or as a badge of three words or fewer in the header band outside the hero; one in a heading, in the opening (the first viewport or a hero section), in the middle of the page, or after the quiet one is a hit, and a notice with its translation beside it (same section, other locale, within two runs) counts once; with a plan whose brief does not say that the page uses fictional or sample data, the quiet one is a hit too; in a plan the headline, subhead, cta, and nav slots are the opening and empty-state and error the middle; button and link labels are actions, not notices; one hit per run, by the first kind that matches; build-labels read runs of eight words or fewer", reads: [viewport.width, viewport.height, derived.sections, text_run.text, text_run.lang, text_run.type_role, text_run.box, box.role, box.parent, box.rect, box.a11y], status: implemented }
 
   # ---------------- behavior layer (input: behavior session log) ----------------
+  - name: primary-action-reach
+    layers: [plan, behavior]
+    input: "booking/operate plan flows and pre-activation geometry of their next-step action"
+    threshold: { gap_viewports_max: "allowed action-top minus last required selection-bottom distance, in viewport heights" }
+    output: "plan warns when a primary forward flow lacks its reach link; behavior warns per width only when the selection-complete gap exceeds the bound, unless a fixed/sticky action is wholly visible; initial distance alone does not fire"
+    reads_plan: ["brief.product_frame", "brief.one_job", "direction.read.surface_mode", "flows[*].reach"]
+    reads_session: [flow_run.steps, step.action_reach, context.height, context.width]
+    probes: [flows]
+    status: implemented
   - name: control-has-effect
     layers: [behavior]
     input: "every interactive box exercised once"

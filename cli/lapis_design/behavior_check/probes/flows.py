@@ -195,6 +195,9 @@ SCREEN = r"""(args) => {
    const r=el.getBoundingClientRect();return !!(r.width&&r.height)};
  const id=el=>el?.closest('[data-lapis-box]')?.getAttribute('data-lapis-box')||null;
  const rect=el=>{const r=el.getBoundingClientRect();return {y:r.y+scrollY,h:r.height}};
+ const reach=el=>{const r=el.getBoundingClientRect();let pinned=false;
+   for(let p=el;p;p=p.parentElement)if(['fixed','sticky'].includes(getComputedStyle(p).position)){pinned=true;break}
+   return {visible:r.top>=0&&r.bottom<=innerHeight&&r.left>=0&&r.right<=innerWidth,pinned}};
  const flat=t=>(t||'').replace(/\s+/g,' ').trim();
  const labelledBy=el=>(el.getAttribute('aria-labelledby')||'').split(/\s+/).map(i=>document.getElementById(i)?.textContent||'').join(' ');
  const named=args.names||{};
@@ -219,7 +222,7 @@ SCREEN = r"""(args) => {
    checked:!!el.checked||el.getAttribute('aria-checked')==='true',
    disabled:!!el.disabled||el.getAttribute('aria-disabled')==='true',
    in_main:!!el.closest('main,[role=main]'),in_dialog:!!dialog?.contains(el),href:el.getAttribute('href')||'',
-   name_attr:el.getAttribute('name')||'',autocomplete:el.getAttribute('autocomplete')||'',rect:rect(el)}));
+   name_attr:el.getAttribute('name')||'',autocomplete:el.getAttribute('autocomplete')||'',rect:rect(el),reach:reach(el)}));
  const place=el=>{if(el.closest('[role=tooltip]'))return 'tooltip';
    const d=el.closest('details:not([open])'); if(d&&!el.closest('summary'))return vis(d)?'collapsed':null;
    if(!vis(el))return null;
@@ -826,6 +829,35 @@ def _choose(screen, flow, tried, session, state=None):
             return set()
         return _shared(set(WORDS.findall(name)), vocab)
 
+    reach = flow.get("reach") if not state.get("reach_finished") else None
+    if reach:
+        for required in reach["selections"]:
+            if required in state.setdefault("reach_done", set()):
+                continue
+            option = next((c for c in controls if c["name"] == required), None)
+            if option is None:
+                return None, f"required reach selection {required!r} is not available"
+            if option["type"] in ("checkbox", "radio"):
+                return {"kind": "check", "target": option["id"], "choice": "required-radio" if option["type"] == "radio"
+                        else "required-checkbox"}, option["name"]
+            if option["type"] in FIELD_TYPES:
+                values = session.values_engine
+                field_kind = _field_kind(option)
+                if values is None:
+                    return None, "no synthetic values (--values)"
+                try:
+                    value_id = values.values_for("text" if field_kind in ("identity", "address-line2") else field_kind, "valid")
+                except (KeyError, ValueError):
+                    return None, f"no synthetic {field_kind} fixture value"
+                return {"kind": "select" if option["type"] == "select" else "type", "target": option["id"],
+                        "value": "valid", "value_id": value_id}, option["name"]
+            return {"kind": "tap" if session.contexts[screen["_context"]]["pointer"] == "coarse" else "click",
+                    "target": option["id"]}, option["name"]
+        forward_control = next((c for c in actionable if c["name"] == reach["forward"]), None)
+        if forward_control:
+            return {"kind": "tap" if session.contexts[screen["_context"]]["pointer"] == "coarse" else "click",
+                    "target": forward_control["id"]}, forward_control["name"]
+        return None, f"reach forward control {reach['forward']!r} is not available"
     for c in controls:
         kind = c["type"].lower()
         if c["id"] in tried or kind not in FIELD_TYPES or c["filled"]:
@@ -894,6 +926,26 @@ def _read(driver, flow):
     return driver.page.evaluate(SCREEN, {"forward": forward, "names": names(driver), "money": MONEY.pattern})
 
 
+def _record_reach(step, screen, flow, state, control=None):
+    declared = flow.get("reach")
+    target = next((c for c in screen["controls"] if declared and c["name"] == declared["forward"]), None)
+    if target is None and not declared and control and _forward(control["name"], flow["kind"] in EXIT_KINDS):
+        target = control
+    if target is None:
+        return
+    initial = (state.get("initial_controls") or {}).get(target["id"], target["rect"])
+    record = step.setdefault("action_reach", {"box": target["id"], "initial": {
+        "action_y": initial["y"], "below_first_view_px": max(0, initial["y"] - screen["vh"])}})
+    last = state.get("last_required")
+    complete = not declared or set(declared["selections"]) <= state.get("reach_done", set())
+    if last and complete:
+        selection = next((c for c in screen["controls"] if c["id"] == last), None)
+        if selection:
+            bottom = selection["rect"]["y"] + selection["rect"]["h"]
+            record["after_selections"] = {"action_y": target["rect"]["y"], "selection_bottom_y": bottom,
+                                         "gap_px": target["rect"]["y"] - bottom, **target["reach"]}
+
+
 def _run_one(session, open_driver, flow, ctx_id, start):
     driver = open_driver(ctx_id)
     try:
@@ -925,12 +977,15 @@ def _run_one(session, open_driver, flow, ctx_id, start):
                 run["steps"].append(step)
                 tried.clear()
                 state["made"] = False
+                state.pop("last_required", None)
+                state["initial_controls"] = {c["id"]: c["rect"] for c in screen["controls"]}
                 _observe(run, screen, driver, step, state)
             else:
                 step = run["steps"][-1]
                 if any(screen[k] != prev[k] for k in ("rows", "terms", "gates")):
                     _observe(run, screen, driver, step, state, include_offers=False)
             prev = screen
+            _record_reach(step, screen, flow, state)
             if _done(flow, screen, session):
                 run["status"] = "completed"
                 break
@@ -951,6 +1006,7 @@ def _run_one(session, open_driver, flow, ctx_id, start):
                 break
             old_signature = (path, screen["main_text"], screen["dialog"])
             control = next((c for c in screen["controls"] if c["id"] == action["target"]), None)
+            _record_reach(step, screen, flow, state, control)
             try:
                 effect = driver.act(action)
             except PlaywrightError as exc:
@@ -966,6 +1022,15 @@ def _run_one(session, open_driver, flow, ctx_id, start):
             if action.get("choice"):
                 entry.update(choice=action["choice"], amount=_money(entry["name"])[0])
                 state["made"] = True
+            declared = flow.get("reach")
+            if declared and not state.get("reach_finished"):
+                if name in declared["selections"]:
+                    state.setdefault("reach_done", set()).add(name)
+                    state["last_required"] = action["target"]
+                elif name == declared["forward"]:
+                    state["reach_finished"] = True
+            elif action.get("choice") or (control and control["required"] and action["kind"] in ("type", "select", "paste")):
+                state["last_required"] = action["target"]
             state["log"].append(entry)
             state["touched"].add(action["target"])
             if field == "password":
