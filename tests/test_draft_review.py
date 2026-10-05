@@ -33,7 +33,8 @@ def reviewed(root):
     save(root, "renders/shown-page.narrow.json", extract)
     lint = {"version": 0, "tool": {"name": "slop_lint", "version": "0.1.0"},
             "target": {"task": "shown-page", "extract": ".lapis/renders/shown-page.narrow.json"},
-            "scope": {"layers": ["source", "render"]}, "findings": []}
+            "scope": {"layers": ["source", "render"], "draft": {"task": TASK, "url": URL,
+                      "sources": [".lapis/specimens/system.html"], "excluded_sources": [], "aliases": []}}, "findings": []}
     save(root, "lint/shown-page.narrow.json", lint)
     critic = {"version": 0, "tool": {"name": "critic", "version": "0.1.0"},
               "target": {"extract": ".lapis/renders/shown-page.narrow.json"}, "findings": []}

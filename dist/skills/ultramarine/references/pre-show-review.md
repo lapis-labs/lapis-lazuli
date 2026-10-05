@@ -27,8 +27,13 @@ rendered draft and needs none of this. Add pages before collecting evidence; add
    are allowed. Extracts must name that page and render task, and their screenshots must exist.
    Extract URLs omit query strings for privacy: retain the presentation URL/locale in this review
    record and verify the rendered locale yourself; do not infer it from the stripped URL.
-2. Lint the shown page's sources and extract, not all discarded candidates. Save to a narrow report
-   and put its path in `review.lint`. Review findings against the actual page. For each non-skipped
+2. Run `lapis-design slop lint --draft .lapis/drafts/<task>.yaml --page '<shown-url>' --source .
+   --plan .lapis/plans/<task>.yaml --extract <extract> -o .lapis/lint/<render-task>.narrow.json`
+   from the project root (`--page` is optional with one page). Put its path in `review.lint`.
+   Main findings/summary concern the shown page. `specimen_findings` holds other candidate sources,
+   `deferred_findings` retains non-requirement token/rights enforcement for release, and
+   `scope.draft.aliases` shows requested/rendered font names without treating an alias as a new face.
+   Review the page's findings against its actual captures. For each non-skipped
    finding write a `handled` entry with its report path, zero-based `finding` index, `disposition`
    (`fixed`, `justified-keep`, or `unresolved`), reason, and capture/box/source `refs`.
    Fixes need observed evidence; a keep explains the actual page, not a new blanket waiver. Skipped

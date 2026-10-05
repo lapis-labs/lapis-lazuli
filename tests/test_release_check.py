@@ -636,7 +636,10 @@ def test_session_without_local_stub_still_checks_plan_freshness(project):
 
 @pytest.mark.parametrize("scope", [None, {"layers": ["plan", "source"]},
                                    {"layers": ["plan", "source", "render"], "rules": ["ux.*"]},
-                                   {"layers": ["plan", "source", "render"], "rules_file": "custom.yaml"}])
+                                   {"layers": ["plan", "source", "render"], "rules_file": "custom.yaml"},
+                                   {"layers": ["plan", "source", "render"], "draft": {"task": "kiln-shop-landing",
+                                    "url": "http://localhost/", "sources": ["index.html"],
+                                    "excluded_sources": [], "aliases": []}}])
 def test_lint_scope_is_a_release_requirement(project, scope):
     if scope is None:
         update(project, "lint/kiln-shop-landing.json", lambda d: d.pop("scope"))

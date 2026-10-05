@@ -497,7 +497,9 @@ def _tree(ctx: Context) -> _Tree | str:
     locks: dict[str, set[str] | None] = {}
     skipped: list[str] = ctx.cache.setdefault("source.skipped_links", [])
     real_root = root.resolve()
-    for dirpath, dirnames, filenames in os.walk(root):      # a link to a folder is listed in dirnames, not entered
+    walk = (os.walk(root) if ctx.source_files is None else
+            [(str((root / name).parent), [], [(root / name).name]) for name in ctx.source_files])
+    for dirpath, dirnames, filenames in walk:      # selected draft files never widen to their containing folder
         dirnames[:] = sorted(d for d in dirnames if not d.startswith(".") and d not in _SKIP_DIRS)
         skipped += [(Path(dirpath) / d).relative_to(root).as_posix() + "/"
                     for d in dirnames if (Path(dirpath) / d).is_symlink()]

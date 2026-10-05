@@ -69,12 +69,30 @@ properties:
         properties:
           source: { type: array, minItems: 1, items: { type: string } }   # relative to --source: file links that resolve outside it, and folder links (never followed; listed with a trailing /)
           corpus: { type: array, minItems: 1, items: { type: string } }   # relative to --corpus
+      draft:
+        type: object
+        required: [task, url, sources, excluded_sources, aliases]
+        properties:
+          task: {type: string}
+          url: {type: string}
+          sources: {type: array, items: {type: string}}
+          excluded_sources: {type: array, items: {type: string}}
+          aliases:
+            type: array
+            items:
+              type: object
+              required: [requested, rendered]
+              properties:
+                requested: {type: string}
+                rendered: {type: string}
   analyzers:                                       # morphological analyzers that ran, by locale (slop_lint)
     type: object
     additionalProperties: { type: string }         # e.g. ko: "kiwipiepy 0.24.0"
   findings:
     type: array
     items: { $ref: "#/$defs/finding" }
+  specimen_findings: {type: array, items: {$ref: '#/$defs/finding'}}
+  deferred_findings: {type: array, items: {$ref: '#/$defs/finding'}}
   walkthroughs:                                    # critic: the visitor's tasks walked on the captures before judging; optional, and no check or gate reads it
     type: array
     items:

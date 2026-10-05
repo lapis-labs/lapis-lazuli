@@ -114,6 +114,12 @@ def check(root: Path, task: str, *, asked: list[str] | None = None) -> tuple[lis
                     raise ValueError(f"{name} did not review this page's capture")
                 if tool == "slop_lint" and not {"source", "render"}.issubset(report.get("scope", {}).get("layers", [])):
                     raise ValueError("draft lint needs the shown source and render layers")
+                if tool == "slop_lint":
+                    scope = report.get("scope", {}).get("draft") or {}
+                    if scope.get("url") != page["url"] or scope.get("task") != task or set(scope.get("sources", [])) != set(page["sources"]):
+                        raise ValueError("lint must use draft scope for exactly the shown URL/task/source set")
+                    dispositions.extend({"rule_id": f["rule_id"], "disposition": "release-deferred",
+                                         "reason": f["observed"]} for f in report.get("deferred_findings", []))
                 if not _fresh(file, extracts + sources):
                     raise ValueError(f"{name} is stale")
                 inputs.append(file)

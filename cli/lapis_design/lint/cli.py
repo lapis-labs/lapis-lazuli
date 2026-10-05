@@ -36,6 +36,7 @@ import sqlite3
 import sys
 from pathlib import Path
 from typing import Any, Iterable
+from dataclasses import replace
 
 import yaml
 from jsonschema import Draft202012Validator, FormatChecker
@@ -150,7 +151,7 @@ def run(*, rules: Path | None = None, plan: Path | None = None, extract: Path | 
         session: Path | None = None, source: Path | None = None, ledger: Path | None = None,
         lock: Path | None = None, refs: Iterable[Path] = (), corpus: Path | None = None,
         lazuli_db: Path | None = None, mode: str = "create", layers: Iterable[str] | None = None,
-        rule_ids: Iterable[str] = ()) -> dict:
+        rule_ids: Iterable[str] = (), draft: Path | None = None, page: str | None = None) -> dict:
     """Load the inputs, lint, and return a schema-valid findings report; LintError otherwise."""
     if mode not in ("create", "review"):
         raise LintError(f"mode must be create or review, not {mode!r}")
@@ -167,6 +168,14 @@ def run(*, rules: Path | None = None, plan: Path | None = None, extract: Path | 
         session_doc = derive_session(session_doc, plan_doc.get("flows"))
     if source and not source.is_dir():
         raise LintError(f"source tree not found: {source}")
+    draft_scope = None
+    if draft:
+        from lapis_design.draft_scope import select
+
+        try:
+            _, draft_scope = select(draft, source, extract_doc, page)
+        except (OSError, ValueError, yaml.YAMLError) as exc:
+            raise LintError(str(exc)) from exc
     layers = list(layers or default_layers(plan=bool(plan), source=bool(source), extract=bool(extract),
                                            session=bool(session), mode=mode))
     if not layers:
@@ -198,6 +207,7 @@ def run(*, rules: Path | None = None, plan: Path | None = None, extract: Path | 
         session=session_doc, session_path=str(session) if session else None,
         source_root=source,
         project_root=source.resolve() if source else Path.cwd(),
+        source_files=draft_scope["sources"] if draft_scope else None,
         ledger=_load(ledger, "ledger", "asset ledger") if ledger else None,
         lock=_load(lock, "lock", "fonts lock") if lock else None,
         design_text=read_design_text(plan_doc, Path(".")) if plan_doc else None,
@@ -219,6 +229,14 @@ def run(*, rules: Path | None = None, plan: Path | None = None, extract: Path | 
                       f"font measurements unavailable: {exc}", file=sys.stderr)
     try:
         findings = engine.lint(ctx, layers, rule_ids)
+        specimen_findings = []
+        deferred_findings = []
+        if draft_scope:
+            from lapis_design.draft_scope import partition
+
+            findings, deferred_findings = partition(findings)
+            specimens = replace(ctx, source_files=draft_scope["excluded_sources"], cache={})
+            specimen_findings = engine.lint(specimens, ["source"], rule_ids) if specimens.source_files else []
     finally:
         if ctx.lazuli is not None:
             ctx.lazuli.close()
@@ -229,6 +247,11 @@ def run(*, rules: Path | None = None, plan: Path | None = None, extract: Path | 
     report = engine.report(ctx, findings, ledger_path=str(ledger) if ledger else None,
                            lock_path=str(lock) if lock else None)
     report["scope"] = {"layers": layers}
+    if draft_scope:
+        report["target"]["task"] = draft_scope["task"]
+        report["scope"]["draft"] = draft_scope
+        report["specimen_findings"] = specimen_findings
+        report["deferred_findings"] = deferred_findings
     if rule_ids and any(not any(fnmatch.fnmatchcase(i, pattern) for pattern in rule_ids) for i in ids):
         report["scope"]["rules"] = rule_ids
     if rules is not None and rules.resolve() != (shared_dir() / "slop" / "rules.yaml").resolve():
@@ -248,6 +271,9 @@ def _scope_line(scope: dict) -> str:
         parts.append("narrowed by --rule " + ", ".join(scope["rules"]))
     if "rules_file" in scope:
         parts.append(f"rules from {scope['rules_file']}")
+    if draft := scope.get("draft"):
+        parts.append(f"draft {draft['url']}; {len(draft['sources'])} shown sources; "
+                     f"{len(draft['excluded_sources'])} specimen sources separate")
     for kind, links in (scope.get("unread_links") or {}).items():
         shown = ", ".join(links[:3]) + (f" (+{len(links) - 3} more)" if len(links) > 3 else "")
         parts.append(f"{len(links)} {kind} link(s) not read: {shown}")
@@ -263,6 +289,9 @@ def _summary_lines(report: dict, out: Path | None) -> list[str]:
         lines.append(_scope_line(report["scope"]))
     lines += finding_lines((f for f in findings if f["blocking"]), here=report["target"].get("plan"))
     lines += rest_lines(findings)
+    if report.get("scope", {}).get("draft"):
+        lines.append(f"  separately: {len(report['specimen_findings'])} specimen findings; "
+                     f"{len(report['deferred_findings'])} contract/token findings deferred to release")
     if findings and not out:
         lines.append("  every finding in full: --json, or -o PATH to write the report")
     return lines + floor_lines(s)
@@ -275,6 +304,8 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design slop lint") ->
     ap.add_argument("--extract", type=Path, help="render extract (render check)")
     ap.add_argument("--session", type=Path, help="behavior session (behavior check)")
     ap.add_argument("--source", type=Path, help="project source tree")
+    ap.add_argument("--draft", type=Path, help="pre-show record .lapis/drafts/<task>.yaml; scope the shown page, not its candidates")
+    ap.add_argument("--page", help="exact shown URL when --draft lists several pages")
     ap.add_argument("--ledger", type=Path, help="asset ledger")
     ap.add_argument("--lock", type=Path, help="default: ./.lapis/fonts.lock.json when present")
     ap.add_argument("--ref", type=Path, action="append", default=[], help="reference profile (repeatable)")
@@ -297,7 +328,8 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design slop lint") ->
     try:
         report = run(rules=args.rules, plan=args.plan, extract=args.extract, session=args.session,
                      source=args.source, ledger=args.ledger, lock=args.lock, refs=args.ref, corpus=args.corpus,
-                     lazuli_db=args.lazuli_db, mode=args.mode, layers=args.layer, rule_ids=args.rule)
+                     lazuli_db=args.lazuli_db, mode=args.mode, layers=args.layer, rule_ids=args.rule,
+                     draft=args.draft, page=args.page)
         text = json.dumps(report, ensure_ascii=False, indent=2)
         if args.out:
             args.out.parent.mkdir(parents=True, exist_ok=True)

@@ -56,6 +56,7 @@ class Context:
     corpus: list[dict] = field(default_factory=list)   # typicality corpus entries (extract format)
     lazuli: sqlite3.Connection | None = None           # the user's lazuli DB, for font features
     project_root: Path = field(default_factory=Path.cwd) # base for implementation/capture evidence in explorations
+    source_files: list[str] | None = None             # draft's exact source set; None means the ordinary whole tree
     cache: dict[str, Any] = field(default_factory=dict)  # per-run memo shared by detectors
 
     def list_values(self, key: str, locale: str | None = None) -> list[str]:

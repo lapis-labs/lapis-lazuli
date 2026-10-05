@@ -346,7 +346,7 @@ def run(root: Path, task: str, *, static: bool = False, offline: bool = False,
             for layer in sorted(required_layers - set(scope["layers"])):
                 findings.append(_finding("layer-missing", lint_lacks_layer(layer),
                                          refs=(str(paths["lint"]),)))
-            for narrow in ("rules", "rules_file"):
+            for narrow in ("rules", "rules_file", "draft"):
                 if narrow in scope:
                     findings.append(_finding("layer-missing", f"lint scope was narrowed by {narrow}",
                                              refs=(str(paths["lint"]),)))

@@ -285,6 +285,14 @@ without it, the explicit context identifier is a reusable attestation. This prov
 recorded as loaded, not comprehension or a critic's independence. Korean copy additionally
 requires the Korean section once the plan names that locale.
 
+Draft lint (`slop lint --draft .lapis/drafts/<task>.yaml --source . --extract <shown-extract>`)
+records `scope.draft` with the shown URL/task/source set, excluded specimen sources, and font
+requested/rendered aliases. Its main findings are the shown page's; `specimen_findings` and
+`deferred_findings` are separate, never hidden passes. The draft checkpoint verifies that scope.
+A draft lint report is narrowed even if copied to a full-report path; the release gate refuses
+it as `release.layer-missing` and requires the ordinary full lint.
+
+
 ## What the gate does not do
 
 It does not rerun captures, probes, or lint, judge design quality, or state a legal conclusion.

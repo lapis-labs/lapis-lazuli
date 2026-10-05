@@ -86,9 +86,18 @@ class _Controls(HTMLParser):
             self.found = True
 
 
-def _page(root: Path, given: str | None) -> tuple[str | None, Path | None]:
+def _page(root: Path, given: str | None, task: str | None = None) -> tuple[str | None, Path | None]:
     """The page as the commands name it, and its file when it is one: the given page, else the first
     of the usual entry files (`PAGES`) that exists."""
+    if task and draft.path(root, task).is_file():
+        try:
+            pages = draft.read(root, task)["pages"]
+            shown = next((p for p in pages if given is None or p["url"] == given), None)
+            if shown:
+                file = next((root / p for p in shown["sources"] if Path(p).suffix == ".html"), None)
+                return shown["url"], file
+        except (OSError, ValueError, yaml.YAMLError):
+            pass
     if given:
         return given, (root / given if "://" not in given else None)
     found = next((name for name in PAGES if (root / name).is_file()), None)
@@ -271,7 +280,7 @@ def _steps(root: Path, task: str, page: str | None) -> dict:
     shared = shared_dir()
     plan_rel = f".lapis/plans/{task}.yaml"
     check = f"lapis-design plan check {plan_rel}"
-    shown, page_file = _page(root, page)
+    shown, page_file = _page(root, page, task)
     target = shlex.quote(shown) if shown else "<page>"
 
     def state(step: dict | None, interactive: bool, reason: str | None = None) -> dict:
