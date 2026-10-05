@@ -223,7 +223,7 @@ class _Run:
         self.by_id = {r["id"]: r for r in rules}
         defaults = (ctx.plan or {}).get("defaults") or []
         self.decisions = {d["id"]: d for d in defaults if isinstance(d, dict) and "id" in d}
-        self.evidence = Sources(ctx.plan or {}, ctx.ledger, ctx.design_text)
+        self.evidence = Sources(ctx.plan or {}, ctx.ledger, ctx.design_text, ctx.project_root)
         self.memo: dict[tuple[str, str], Result | None] = {}
         self._content: set[str] | None = None
 

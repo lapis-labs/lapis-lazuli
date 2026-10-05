@@ -285,6 +285,7 @@ properties:
           type: array
           minItems: 1
           items: { enum: [display, heading, body, ui, data, code, caption, headline, subhead, cta, nav, empty-state, error, other] }
+        scripts: {type: array, uniqueItems: true, items: {type: string}} # script group actually compared for type
         candidates:
           type: array
           items:
@@ -298,6 +299,13 @@ properties:
               artifact: { type: string, minLength: 1 }  # palette specimen or actual screen implementation
               roles: { $ref: "#/$defs/color_tokens/properties/roles" }
               token_file: { type: string, minLength: 1 } # alternative to inline roles; this candidate's mapping
+              relation:
+                type: object
+                properties:
+                  opening: {type: string}
+                  grouping: {type: string}
+                  boundary: {type: string}
+                  phone: {type: string}
         compared_on: { type: array, items: { enum: [specimen, render, sketch] } }   # specimen: the page's real copy set in each candidate
         chosen: { type: string, minLength: 1 }           # the name of one candidate
         runner_up_lost: { type: string, minLength: 8 }   # why the closest alternative lost
@@ -318,6 +326,9 @@ properties:
               captures:
                 type: object
                 additionalProperties: { type: string, minLength: 1 } # candidate name -> capture path/ref
+              playback:
+                type: object
+                additionalProperties: {type: string, minLength: 1} # motion candidate name -> observed trace/video
         fixed_by: { enum: [contract, brief] }
         reason: { type: string, minLength: 8 }           # what fixes the decision; required with fixed_by
       allOf:

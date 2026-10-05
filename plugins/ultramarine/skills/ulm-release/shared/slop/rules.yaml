@@ -668,10 +668,11 @@ rules:
         min_candidates: 2
   why: A decision made without a second candidate is the first answer that came to mind, and for most
     pages that is the default for that kind of page
-  better: Record each open decision in explorations - two or more candidates with their sources, what
-    they were compared on, the chosen one, and why the runner-up lost; a palette render also records each
-    candidate's artifact and roles or token_file, and comparisons with one variable, viewport/theme, state
-    and per-candidate captures; a decision the contract or the brief fixes says so with fixed_by
+  better: Record each open decision with candidates, sources, matched observations, the chosen one and
+    why the runner-up lost; type covers the actual role and script; rendered layout and direction record
+    implemented artifacts and captures that change grouping or boundaries rather than only order; motion
+    records both implementations and playback of the same interaction; palette records artifacts and roles
+    or token_file with matched captures; fixed_by preserves decisions the brief or contract truly fixes
   waiver:
     scope: none
   verify: static
@@ -1119,7 +1120,8 @@ rules:
     when: a one-family system with deliberate role variation
     evidence: none
   - id: won-comparison
-    when: the face won a side-by-side comparison on this surface's own copy, recorded in explorations
+    when: the face won a side-by-side comparison on this surface's own copy for each role and script where
+      it is kept, recorded in explorations
     evidence:
     - exploration
   waiver:

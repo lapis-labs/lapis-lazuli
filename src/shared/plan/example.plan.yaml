@@ -15,7 +15,7 @@ brief:
   platform: [web]
   locales: [ko-KR]
   product_frame: e-commerce
-  constraints: [Most visits are on mobile, Photos show pieces straight out of the kiln]
+  constraints: [Most visits are on mobile, Photos show pieces straight out of the kiln, Feedback only without entrance animation]
 claims:
   known: [The studio fires once a month]
   declared: [No brand color yet]
@@ -166,12 +166,8 @@ explorations:
     chosen: one ruled row per piece
     runner_up_lost: the grid hides the glaze number and the kiln position that tell pieces apart
   - decision: motion
-    candidates:
-      - { name: feedback only, source: generic }
-      - { name: log rows draw in as they scroll into view, source: kiln temperature curve }
-    compared_on: [sketch]
-    chosen: feedback only
-    runner_up_lost: drawing the rows in delays the one thing visitors came for, the list of pieces
+    fixed_by: brief
+    reason: The brief requires feedback only without entrance animation; no open motion alternative is claimed
   - decision: direction
     candidates:
       - { name: the record of one firing, source: firing log sheet }

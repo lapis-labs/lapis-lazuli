@@ -18,6 +18,10 @@ between minor versions; render extraction is v1 and the other contract formats a
 - `next` now names and verifies phase sub-skill loads. Missing copy/system/review loads become an
   explicit `skill-load` procedure step, backed by cross-harness records of actual files, sections,
   content hashes, and context identifiers rather than a claimed review pass.
+- Comparison evidence now stays within the chosen font's actual role/script group. Rendered layout
+  and direction candidates need implementations and matched captures; order-only HTML/CSS variants
+  are flagged as unchanged relations. Motion candidates need implemented artifacts and observed
+  playback; genuine brief/contract-fixed decisions remain exempt.
 - Plugin/CLI version skew no longer turns argparse exit 2 into an endless Stop loop or denied writes.
   Every harness hook uses the separate `lapis-design-hook --plugin-version VERSION <name>` entry point:
   old installs lack it and fail open, while installed runners skip unknown arguments and mismatched

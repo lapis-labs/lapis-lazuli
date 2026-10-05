@@ -21,8 +21,8 @@ that no entry covers, and an entry that covers one without holding up:
   value needs its `reason`. A type role whose `source` is `contract` is fixed the same way, and
   only when `context.design` is set.
 
-It judges what the plan records, never whether the candidates were fairly compared; the critic reads
-the specimens. Runs only in the plan modes the rule lists.
+It checks recorded evidence and a bounded source-identity signal for rendered HTML alternatives.
+It does not decide fairness or visual quality; the critic reads the actual specimens and playback.
 """
 from __future__ import annotations
 
@@ -31,6 +31,7 @@ from dataclasses import dataclass
 from lapis_design import system_fonts
 from lapis_design.lint.types import Context, Hit, Result, detector
 from lapis_design.plan_check import resolve
+from pathlib import Path
 
 SEEN = {"specimen", "render"}          # a face is judged on the page's own copy, not on facts or a sketch
 
@@ -40,6 +41,8 @@ class Need:
     kind: str
     item: str | None = None             # a type role or a copy slot
     note: str = ""
+    family: str = ""
+    scripts: tuple[str, ...] = ()
 
 
 def _text(value: object) -> str:
@@ -48,20 +51,21 @@ def _text(value: object) -> str:
 
 def _needs(plan: dict, params: dict, design: object) -> list[Need]:
     needs: list[Need] = []
-    seen_roles: set[str] = set()
+    seen_roles: set[tuple] = set()
     for role in resolve(plan, "tokens.type.roles[*]"):
         if not isinstance(role, dict):
             continue
         name = _text(role.get("role"))
-        if not name or name in seen_roles:
+        key = (name, role.get("family"), tuple(role.get("scripts") or ()))
+        if not name or key in seen_roles:
             continue
         if role.get("source") == "contract":
             if design:
                 continue                                # the contract names this face
-            needs.append(Need("type", name, "contract"))
+            needs.append(Need("type", name, "contract", _text(role.get("family")), tuple(role.get("scripts") or ())))
         else:
-            needs.append(Need("type", name))
-        seen_roles.add(name)
+            needs.append(Need("type", name, family=_text(role.get("family")), scripts=tuple(role.get("scripts") or ())))
+        seen_roles.add(key)
     if resolve(plan, "tokens.color.roles[*]"):
         needs.append(Need("palette"))
     if resolve(plan, "layout.sections[*]") or _text(next(iter(resolve(plan, "layout.procedure.archetype")), "")):
@@ -116,7 +120,7 @@ def palette_render_problems(entry: dict) -> list[str]:
     return problems
 
 
-def entry_problems(entry: dict, params: dict, design: object) -> list[str]:
+def entry_problems(entry: dict, params: dict, design: object, root: Path | None = None) -> list[str]:
     """Why an entry does not hold up; empty when it is a complete comparison or a valid exemption."""
     fixed = entry.get("fixed_by")
     if fixed:
@@ -152,6 +156,9 @@ def entry_problems(entry: dict, params: dict, design: object) -> list[str]:
                             "installed, catalog, Adobe, or commercial face")
     if entry.get("decision") == "palette" and "render" in on:
         problems.extend(palette_render_problems(entry))
+    from lapis_design.alternatives import files_problem
+
+    problems.extend(files_problem(entry, root))
     return problems
 
 
@@ -163,7 +170,11 @@ def _label(entry: dict) -> str:
 def _covered(need: Need, entry: dict) -> bool:
     if entry.get("decision") != need.kind:
         return False
-    return need.item in (entry.get("covers") or ()) if need.item is not None else True
+    if need.item is None:
+        return True
+    if need.item not in (entry.get("covers") or ()):
+        return False
+    return need.kind != "type" or not entry.get("scripts") or set(need.scripts) <= set(entry["scripts"])
 
 
 @detector("plan-candidates", layers=("plan",))
@@ -178,13 +189,18 @@ def plan_candidates(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
     entries = [(i, e) for i, e in enumerate(plan.get("explorations") or ()) if isinstance(e, dict)]
     here = {"file": ctx.plan_path} if ctx.plan_path else {}
     path = det.get("path") or "explorations"
-    problems = {i: entry_problems(e, params, design) for i, e in entries}
+    problems = {i: entry_problems(e, params, design, ctx.project_root) for i, e in entries}
     missing: list[Need] = []
     unsound: dict[int, None] = {}
     for need in _needs(plan, params, design):
         covering = [(i, e) for i, e in entries if _covered(need, e)]
         if not covering:
             missing.append(need)
+        elif need.kind == "type" and not any(e.get("fixed_by") or _text(e.get("chosen")).casefold() == need.family.casefold()
+                                             for _, e in covering):
+            i = covering[0][0]
+            problems[i].append(f"chosen face does not decide {need.item} / {list(need.scripts)} using {need.family}")
+            unsound[i] = None
         elif all(problems[i] for i, _ in covering):
             unsound[covering[0][0]] = None
     hits = []

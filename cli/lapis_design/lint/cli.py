@@ -197,6 +197,7 @@ def run(*, rules: Path | None = None, plan: Path | None = None, extract: Path | 
         extract=extract_doc, extract_path=str(extract) if extract else None,
         session=session_doc, session_path=str(session) if session else None,
         source_root=source,
+        project_root=source.resolve() if source else Path.cwd(),
         ledger=_load(ledger, "ledger", "asset ledger") if ledger else None,
         lock=_load(lock, "lock", "fonts lock") if lock else None,
         design_text=read_design_text(plan_doc, Path(".")) if plan_doc else None,

@@ -112,6 +112,9 @@ choice for this kind of page.
 A decision the contract or the brief fixes is marked `fixed_by: contract` or `brief` with a `reason`
 and needs no candidates. `contract` holds only when `context.design` is set. A create plan whose open
 decision has no comparison, or whose type candidates are all generic families, is blocked.
+For role/script boundaries, matched rendered relations, and implemented motion alternatives,
+read `references/explorations.md` before recording a comparison. Names and reordered sections alone
+are not alternative structures; a motion sketch is a proposal, not an observed comparison.
 
 ## Write the plan
 

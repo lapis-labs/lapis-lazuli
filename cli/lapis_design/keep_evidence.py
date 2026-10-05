@@ -37,6 +37,7 @@ import posixpath
 import unicodedata
 from dataclasses import dataclass
 from typing import Any
+from pathlib import Path
 
 from lapis_design.plan_check import resolve
 
@@ -58,6 +59,7 @@ class Sources:
     plan: dict
     ledger: dict | None = None
     design_text: str | None = None
+    root: Path = Path(".")
 
 
 def gap(case: dict, entry: dict, sources: Sources) -> str | None:
@@ -145,11 +147,23 @@ def _exploration(cite: Any, sources: Sources) -> str | None:
     for entry in plan.get("explorations") or ():
         if not isinstance(entry, dict) or entry.get("decision") != "type" or entry.get("fixed_by"):
             continue
-        if entry_problems(entry, {}, design):
+        if entry_problems(entry, {}, design, sources.root):
             continue
         covers = set(entry.get("covers") or ())
-        if any(r.get("role") in covers and _norm(r.get("family")) == _norm(entry.get("chosen")) for r in roles):
+        if any(r.get("role") in covers and _norm(r.get("family")) == _norm(entry.get("chosen"))
+               and (not entry.get("scripts") or set(r.get("scripts") or ()) <= set(entry["scripts"])) for r in roles):
             won.append(entry["chosen"])
+    if _norm(cite) and _norm(cite) in {_norm(name) for name in won}:
+        for role in roles:
+            if _norm(role.get("family")) != _norm(cite):
+                continue
+            matching = [e for e in plan.get("explorations") or () if e.get("decision") == "type"
+                        and not e.get("fixed_by") and role.get("role") in (e.get("covers") or ())
+                        and _norm(e.get("chosen")) == _norm(cite)
+                        and (not e.get("scripts") or set(role.get("scripts") or ()) <= set(e["scripts"]))
+                        and not entry_problems(e, {}, design, sources.root)]
+            if not matching:
+                return f"exploration: {cite!r} has no complete comparison for role {role.get('role')} / {role.get('scripts')}"
     if not won:
         return "exploration: no complete type comparison in explorations was won by a face that a type role uses"
     if not _norm(cite):
@@ -166,7 +180,7 @@ def _composition(cite: Any, sources: Sources) -> str | None:
     design = (plan.get("context") or {}).get("design")
     won = [entry["chosen"] for entry in plan.get("explorations") or ()
            if isinstance(entry, dict) and entry.get("decision") == "layout" and not entry.get("fixed_by")
-           and not entry_problems(entry, {}, design) and "render" in (entry.get("compared_on") or ())]
+           and not entry_problems(entry, {}, design, sources.root) and "render" in (entry.get("compared_on") or ())]
     if not won:
         return "composition: no complete layout comparison in explorations was rendered"
     if not _norm(cite):

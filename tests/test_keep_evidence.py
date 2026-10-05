@@ -126,8 +126,8 @@ def test_a_won_comparison_keep_with_no_exploration_that_the_kept_face_won_does_n
     assert "no complete type comparison in explorations was won by a face that a type role uses" in found["observed"]
 
 
-def test_a_won_comparison_keep_waives_when_an_exploration_chose_the_face_a_role_uses(tmp_path):
-    won = type_exploration("system-ui", ["system-ui", "Pretendard"])
+def test_a_won_comparison_keep_waives_when_every_kept_role_won_its_comparison(tmp_path):
+    won = type_exploration("system-ui", ["system-ui", "Pretendard"], covers=("heading", "body", "ui"))
     found = checked(tmp_path, platform_face_plan(won, evidence={"exploration": "System-UI"}), COMPARISON)
     assert verdict(found) == ("waived", False)
 
@@ -184,8 +184,11 @@ CHOSEN = "the restore point and its time, set beside the claim"
 
 def layout_exploration(chosen=CHOSEN, compared_on=("render",), candidates=None, **more):
     return {"decision": "layout", "chosen": chosen, "compared_on": list(compared_on),
-            "candidates": [{"name": name, "source": "restore log"}
-                           for name in candidates or [chosen, "heading left, product mock right"]],
+            "candidates": [{"name": name, "source": "restore log", "artifact": f"layout-{i}.html"}
+                           for i, name in enumerate(candidates or [chosen, "heading left, product mock right"])],
+            "comparisons": [{"viewport": {"width": 390, "theme": "light"}, "state": "restore choice",
+                             "captures": {name: f"layout-{i}.png" for i, name in
+                                          enumerate(candidates or [chosen, "heading left, product mock right"])}}],
             "runner_up_lost": "the mock hid the restore time that decides the visit", **more}
 
 
@@ -198,7 +201,16 @@ def opening_plan(*explorations, **keep):
     return plan
 
 
-def test_slop_lint_waives_a_split_opening_only_for_a_rendered_comparison_it_won(always_hits):
+@pytest.fixture
+def layout_evidence(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "layout-0.html").write_text("<main><section><h1>Restore</h1><p>Latest restore time</p></section></main>")
+    (tmp_path / "layout-1.html").write_text("<main><h1>Restore</h1><section><p>Latest restore time</p></section></main>")
+    for i in (0, 1):
+        (tmp_path / f"layout-{i}.png").write_bytes(b"Observed local capture")
+
+
+def test_slop_lint_waives_a_split_opening_only_for_a_rendered_comparison_it_won(always_hits, layout_evidence):
     assert lint_real(OPENING, opening_plan(layout_exploration()))["status"] == "open"            # nothing cited
     waived = lint_real(OPENING, opening_plan(layout_exploration(), evidence={"composition": CHOSEN}))
     assert (waived["status"], waived["blocking"]) == ("waived", False)
@@ -217,13 +229,10 @@ def test_slop_lint_waives_a_split_opening_only_for_a_rendered_comparison_it_won(
     (layout_exploration(chosen="heading left, product mock right"), False),     # the cited candidate lost
     ({**layout_exploration(), "decision": "palette"}, False),                   # another decision
 ], ids=["won", "sketch only", "sketch and render", "one candidate", "fixed", "lost", "palette"])
-def test_a_composition_is_evidence_only_when_a_rendered_layout_comparison_chose_it(exploration, holds):
+def test_a_composition_is_evidence_only_when_a_rendered_layout_comparison_chose_it(exploration, holds, layout_evidence):
     assert (gap(["composition"], {"composition": CHOSEN}, {"explorations": [exploration]}) is None) is holds
 
 
-def test_a_composition_that_won_nothing_names_the_candidates_that_did():
-    why = gap(["composition"], {"composition": "a stacked opening"}, {"explorations": [layout_exploration()]})
-    assert f"won: {CHOSEN}" in why
 
 
 

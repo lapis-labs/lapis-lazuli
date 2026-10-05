@@ -631,7 +631,7 @@ def check_defaults(plan: dict, rules: dict, plan_file: str, lazuli_db: Path | No
             raise LazuliDBOpenError(str(exc)) from exc
         except (RuntimeError, sqlite3.Error, OSError) as exc:
             raise LazuliDBOpenError(f"lazuli database {lazuli_db} cannot be opened: {exc}") from exc
-        ctx = Context(rules=rules, plan=plan, plan_path=plan_file, lazuli=lazuli)
+        ctx = Context(rules=rules, plan=plan, plan_path=plan_file, lazuli=lazuli, project_root=sources.root)
     try:
         return _check_defaults(plan, rules, plan_file, ctx, sources)
     finally:
@@ -988,7 +988,7 @@ def run(plan_path: Path | None, rules_path: Path | None, lock_path: Path | None,
         if rules_path:
             from lapis_design.keep_evidence import Sources
 
-            sources = Sources(plan, design_text=read_design_text(plan, root))
+            sources = Sources(plan, design_text=read_design_text(plan, root), root=root)
             findings += check_defaults(plan, load_yaml(rules_path), plan_file, lazuli_db, sources)
         findings += check_contract(plan, root, plan_file)
         lock = load_lock(lock_path) if lock_path and lock_path.exists() else None
