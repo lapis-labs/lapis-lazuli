@@ -239,6 +239,10 @@ that see it. Rules marked * are statistical or lexical leads; the critic judges 
   the brief requires a notice, write it once, short, in a quiet place: the footer or a small persistent label.
   Never put it in the hero, a heading, or beside each section. A notice and its translation beside it are one
   notice. The rest of a demo's limits belong in the handoff, not on the page.
+  For a dot-separated strip, ask what changes in the visitor's decision if it goes. `조각 · 설치 · 공간` and
+  `FORM · SPACE · STILLNESS` repeat the page topic; remove them or justify a real filter with `decision-metadata`.
+  Route/date/direction, chart scope and units, artwork artist/year/material/dimensions, and source/byline records
+  qualify facts rather than decorate a topic. Keep those facts beside the object they describe.
 - **Exceptions.** A consequential disclosure the visitor needs where they decide (a simulated payment, a form that
   sends nothing while the visitor may type private details), said once there and not again. A version or build
   label where compatibility depends on it. A brief that gives the notice's wording.

@@ -5833,6 +5833,10 @@ rules:
   severity:
     create: warn
     review: P3
+    adjust:
+    - when: metadata items echo the page topic without a decision record
+      create: gate
+      review: P2
   detect:
     render:
       detector: meta-text
@@ -5840,10 +5844,10 @@ rules:
         kinds:
         - decorative-metadata-strip
         - ambient-status
-  why: A middle-dot metadata strip or an ambient locale, weather, demo, or status strip gains prominence
-    without changing any task
-  better: Keep real filters and consequential state beside the object they affect; remove or consolidate
-    ornamental strips
+  why: A middle-dot strip gains prominence without changing a task; when short items echo the page's heading
+    vocabulary rather than a decision record, it repeats the topic as ornament
+  better: Remove topic echoes; keep route, date, direction, units, artist, year, material, dimensions,
+    chart scope, source, and byline records beside the object they qualify
   keep_when:
   - id: decision-metadata
     when: real metadata the user filters or decides by

@@ -12,6 +12,9 @@ All notable changes are recorded here. The format follows
 Local contract changes, made here and not from a kit diff; the handoff records each one with its before and
 after text.
 
+- Topic-echo metadata strips now gate in create mode and review at P2 through an optional create-severity
+  adjustment. Format-only metadata, numeric decision records, chart scope, and source/byline lines retain
+  their existing warn/P3 treatment.
 - Singleton plain hero labels now trigger `type.eyebrow-kicker` alongside repeated section cadence. Hero labels and
   heading chips gate in create mode and review at P2; named keeps require category, scope, dates, or current state
   absent from the heading.

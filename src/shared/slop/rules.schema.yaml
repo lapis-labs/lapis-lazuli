@@ -164,7 +164,7 @@ $defs:
         properties:
           create: { enum: [gate, warn, off] }
           review: { enum: [P0, P1, P2, P3] }
-          adjust:                                      # conditions that move the review severity; first match wins
+          adjust:                                      # conditions that move severity; first match wins
             type: array
             items:
               type: object
@@ -172,6 +172,7 @@ $defs:
               required: [when, review]
               properties:
                 when: { type: string, minLength: 8 }
+                create: { enum: [gate, warn, off] }       # optional; absent keeps the rule's create severity
                 review: { enum: [P0, P1, P2, P3] }
       detect:
         type: object

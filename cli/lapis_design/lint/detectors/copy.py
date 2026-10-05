@@ -2005,6 +2005,28 @@ def _metadata_strips(segs: list[_Seg]) -> list[tuple[str, list[_Seg]]]:
             out.append((" ".join(g.text.strip() for g in group), items))
     return out
 
+
+_TOPIC_ECHO = "metadata items echo the page topic without a decision record"
+_RECORD_METADATA = re.compile(
+    r"\d|[×=%°]|(?:\b(?:by|source|route|direction|unit|artist|year|material|dimensions?|"
+    r"cm|mm|kg|km|minutes?|hours?|seconds?)\b)|"
+    r"출처|기자|작가|재료|크기|방향|노선|단위|기간|관람료|명|분|시간|"
+    r"出典|作者|素材|寸法|方向|単位|期間|来源|记者|材料|尺寸", re.I)
+
+
+def _topic_echo(page: _Page, text: str, runs: list[_Seg], headings: list[_Seg]) -> bool:
+    """A lexical topic-echo candidate, not a semantic ban on all dot-separated facts."""
+    if _RECORD_METADATA.search(text):
+        return False
+    if any((b.get("role") in ("data", "table", "chart", "media")
+            or (b.get("a11y") or {}).get("role") in ("table", "grid", "row", "cell", "gridcell", "figure"))
+           for run in runs for b in _chain(page.boxes, run.box)):
+        return False
+    items = [p.strip() for p in _STRIP_SPLIT.split(text) if p.strip()]
+    topic = " ".join(h.text for h in headings)
+    stems, bigrams = _stems(topic), _bigrams(topic)
+    return any(_stems(item) & stems or _bigrams(item) & bigrams for item in items)
+
 def _ambient_outside_records(page: _Page, segs: list[_Seg]) -> list[_Seg]:
     """A data row is semantic or is one of three same-shaped sibling rows."""
     if not segs:
@@ -2081,9 +2103,12 @@ def meta_text(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
                 hits.append(Hit(observed=f'the {s.where} repeats the heading "{_clip(twin.text, 60)}"',
                                 location=dict(s.loc), evidence=evidence, refs=[twin.loc["path"]]))
     if page is not None and "decorative-metadata-strip" in usable:
+        headings = [s for s in page.segs if s.role in ("heading", "display")]
         for text, runs in _metadata_strips(segs):
-            hits.append(Hit(observed=f'metadata strip in the {runs[0].where}: "{_clip(text)}"',
-                            location=dict(runs[0].loc), evidence=evidence, refs=[r.loc["path"] for r in runs]))
+            echo = _topic_echo(page, text, runs, headings)
+            hits.append(Hit(observed=f'{"topic-echo " if echo else ""}metadata strip in the {runs[0].where}: "{_clip(text)}"',
+                            location=dict(runs[0].loc), evidence=evidence, refs=[r.loc["path"] for r in runs],
+                            conditions=frozenset({_TOPIC_ECHO}) if echo else frozenset()))
     if page is not None and "ambient-status" in usable:
         ambient = [s for s in segs if s.role not in ("body", "heading", "display") and _tokens(s.text) <= 12]
         ambient = _ambient_outside_records(page, ambient)

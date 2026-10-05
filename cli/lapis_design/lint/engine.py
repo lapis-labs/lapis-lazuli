@@ -356,9 +356,11 @@ class _Run:
         create, review = sev.get("create"), sev.get("review")
         for adjust in sev.get("adjust") or []:
             if adjust.get("when") in hit.conditions:
-                review = adjust.get("review")
+                create = adjust.get("create", create)
+                review = adjust.get("review", review)
                 break
         f = self._base(rule, layer, review, hit.observed, hit.location)
+        f["severity"]["create"] = create
         consequence = hit.consequence or rule.get("why")
         if consequence:
             f["consequence"] = consequence

@@ -995,6 +995,30 @@ def test_decorative_metadata_strip_and_ambient_status():
     plain = lint("copy.decorative-metadata", extract=doc(("hero", [r("Bowls from the September firing", "display")])))
     assert plain.hits == [] and plain.skipped is None
 
+
+def test_topic_echo_metadata_gates_but_decision_records_stay_warnings():
+    from lapis_design.lint.engine import lint as findings
+
+    extract = doc(("hero", [r("Form in space, stillness in sculpture", "display"),
+                            r("FORM · SPACE · STILLNESS", "caption"),
+                            r("Sculpture · Installation · Space", "caption"),
+                            r("201번 · 2026.06.17 · 전체 방향", "caption", lang="ko"),
+                            r("Yoon Seoha · 2026 · Limestone, 72 cm", "caption"),
+                            r("By Mira Lee · Climate desk · Source: city records", "caption")]))
+    result = findings(Context(rules=RULES, extract=extract), ["render"], ["copy.decorative-metadata"])
+    assert [(f["severity"]["create"], f["severity"]["review"], f["blocking"]) for f in result] == [
+        ("gate", "P2", True), ("gate", "P2", True),
+        ("warn", "P3", False), ("warn", "P3", False), ("warn", "P3", False)]
+
+
+def test_topic_echo_metadata_matches_hangul_words_with_particles():
+    from lapis_design.lint.engine import lint as findings
+
+    extract = doc(("hero", [r("형태를 바라보다, 그 사이의 공간을 만납니다.", "display"),
+                            r("조각 · 설치 · 공간 /", "caption")]), lang="ko")
+    result = findings(Context(rules=RULES, extract=extract), ["render"], ["copy.decorative-metadata"])
+    assert [(f["severity"]["create"], f["blocking"]) for f in result] == [("gate", True)]
+
 def test_kiln_shop_firing_log_is_data_not_decorative_metadata():
     example = json.loads((shared_dir() / "render" / "example.extract.json").read_text(encoding="utf-8"))
     result = lint("copy.decorative-metadata", extract=example)
