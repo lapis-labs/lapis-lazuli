@@ -4,6 +4,7 @@
 
 Read the section a color decision needs, by heading; the rest are other decisions.
 
+- Run the color comparison: fixed/open inputs, role hypotheses, matched palette specimens, decision and stop
 - Answer the six axes: what counts as an answer for medium, task structure, content colors, identity, environment, tone
 - Content colors first: the interface's stance toward the colors the content brings
 - Roles and how many colors each needs: the role set and how many members each takes
@@ -31,6 +32,58 @@ tokens:
     themes: [light, dark]
     data_scales: [sequential]
 ```
+
+## Run the color comparison
+
+1. **Separate fixed from open.** Protect approved brand masters, platform/focus contracts, and
+   learned status, wayfinding, and data assignments. Name the open decision in one sentence.
+   If the brief or contract fixes it all, record `fixed_by` with its reason; do not invent alternatives.
+2. **Observe inputs with authority.** From supplied products, photographs, packaging, marks,
+   materials, or data, name the exact asset/source and the relation you saw: lightness order,
+   chroma concentration, temperature, area, or edges. Separate an approved value from a screen
+   sample and an authored hypothesis (`sources`, `claims`, role `source_class`). Unseen input stays
+   proposed/unresolved, not a retrospective material story. Include the content's extremes.
+3. **Write role hypotheses.** Choose frame/echo/oppose/avoid for the content, the dominant field
+   and neutral temperature, and separate identity, action, focus, selection, status, and data.
+   Name which boundary or small signal should lead. A photo can supply a relationship without
+   its largest color becoming the canvas; never grade product, skin, artwork, or documentary
+   content to fit the palette.
+4. **Make two candidates from different inputs.** Hold copy, chosen type, layout, content, and
+   states fixed; vary one consequential color decision, such as neutral temperature, field stance,
+   or chroma concentration. Record each candidate's `source` and observed/proposed relation in
+   `note`, its `artifact`, and inline `roles` or `token_file`. No prescribed hue or color count.
+5. **Apply them on the real screen.** Copy this task's consequential slice into
+   `.lapis/specimens/<task>-palette-a.html` and `-b.html`, with identical content/type/layout/states.
+   Include real title, paragraph and controls, the densest list, and relevant focus/selected/error,
+   photo extremes or small data marks. Render independent screens at the same widths:
+
+   ```sh
+   lapis-design render check .lapis/specimens/<task>-palette-a.html --task <task>-palette-a --width 390
+   lapis-design render check .lapis/specimens/<task>-palette-b.html --task <task>-palette-b --width 390
+   lapis-design render check .lapis/specimens/<task>-palette-a.html --task <task>-palette-a --width 1440
+   lapis-design render check .lapis/specimens/<task>-palette-b.html --task <task>-palette-b --width 1440
+   ```
+
+   Inspect and retain the screenshots beside each extract before another narrowed run replaces it.
+   Prepare/exercise the same actual state in both specimens; the command does not prove all states,
+   forced colors, or color vision. Include each shipped theme that affects the decision. Use the
+   task's screen, not a standard marketing hero. Return the winner to the actual page and check it
+   there; adjacent comparison panes do not replace independent-screen judgement.
+6. **Remove role failures, then judge.** Repair or reject failed required pairs, role collisions,
+   reversed scales, or disappearing content first. Judge harmony, preference, figure-ground, and
+   discrimination separately. In `explorations` (`decision: palette`, `compared_on: [render]`),
+   record `comparisons` with `variable`, `viewport: {width, theme}`, the shared slice/state in
+   `state`, and `captures` mapping each candidate name to the capture actually inspected.
+   Set `chosen` and a located failure/tradeoff in `runner_up_lost`, not “the other hue felt generic”.
+7. **Choose and stop.** Stop when consequential alternatives have been seen, required pairs and
+   meanings hold, and the subject-fit tradeoff explains the choice. On a tie, prefer the approved
+   contract or fewer exceptions and record the tie. Add a third candidate only if the first two
+   leave the open question unanswered, never to search for novelty. Name a missing consequential
+   source/identity/output dependency as unresolved; do not claim an audience test from your preference.
+
+The artifact/capture fields make the claim inspectable, not automatically true: the critic must
+read the source trace and same-context images. The sections below supply the decision criteria.
+
 
 ## Answer the six axes
 
@@ -123,7 +176,7 @@ Build from `world_materials`, not mood words:
 
 A ready-made package is a default, not a derivation: cream field, clay or brass accent, and serif display for "premium"; dark field, violet-to-blue gradients, and glow for "technical". Trading one for the other is still a default; the cards `warm-editorial` and `dark-luminous` give the routes out.
 
-Make only as many candidates as the open decision needs, each changing one variable: polarity, chroma concentration, temperature relation, or number of families. Show them with the same content, type, and states, and judge four things separately, because they disagree: harmony (do the colors belong together), preference (will this audience like it), figure-ground (does the figure separate), and discrimination (can people tell roles, states, and values apart). Reject for a concrete reason: roles collide, hierarchy is lost, content disappears, a pair fails, a scale reverses, or it works in only one theme or with one image. The palette decision needs two candidates, one built from a different world material than the other; record them, what they were compared on, the winner, and why the runner-up lost in `explorations` (decision `palette`).
+Use the comparison procedure above to test relations on matched real content. Judge harmony (do the colors belong together), preference (will this audience like it), figure-ground (does the figure separate), and discrimination (can people tell roles, states, and values apart) separately: they can disagree. Visual weight and dominance need their own controlled comparison, not just a new hue.
 
 Visual weight comes from area, repetition, lightness edges, chroma, type mass, and isolation together: a mark color can dominate as a panel, and an accent repeated in every row becomes a stripe. Judge the densest real view.
 

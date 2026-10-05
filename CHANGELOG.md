@@ -12,6 +12,11 @@ All notable changes are recorded here. The format follows
 Local contract changes, made here and not from a kit diff; the handoff records each one with its before and
 after text.
 
+- Color guidance now runs a fixed/open-input and role-hypothesis procedure through matched real-screen
+  palette specimens, failure removal, choice, and a stop rule. The critic checks source authority,
+  same-context runner-up captures, dominant causes, role collisions, photo extremes, and claim limits.
+  The pottery example compares log stock with cool kiln-shelf photographs at controlled L/C and
+  unchanged action roles; token/theme examples identify those values as case-specific, not presets.
 - Palette explorations can record candidate artifacts, role values or token files, and matched render
   comparisons with the controlled variable, viewport/theme, state, and per-candidate captures. Older v0
   plans still parse; a claimed palette render without this evidence is `plan.uncompared-decision`.

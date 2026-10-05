@@ -46,7 +46,10 @@ tokens:
 ```
 
 The examples continue the example plan's pottery shop, `kiln-shop-landing`: twenty-four pieces
-from one firing, reserved mostly on phones, Korean copy.
+from one firing, reserved mostly on phones, Korean copy. Its warm log-sheet frame was compared
+with a cool kiln-shelf frame at matched L/C and unchanged reserve roles; these values are that
+case's, not a starter palette. Keep the candidate mappings and inspected captures in its palette
+`explorations` when writing token files; ramp/pair rules remain prose, not comparison evidence.
 
 ## From authorized assets to roles
 

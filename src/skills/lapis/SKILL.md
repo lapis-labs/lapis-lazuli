@@ -228,8 +228,9 @@ code can seed a value you author, labeled as yours. Never invent a standard's va
 as an answer on each axis, how many colors each role needs, building from world materials, OKLCH
 ramps, themes, data scales, and physical standards, read `references/color.md`.
 
-Build two palettes from different world materials and compare them on the page's real content before
-choosing (`explorations`, decision `palette`).
+For an open decision, run `references/color.md` → **Run the color comparison**: fixed/open inputs,
+role hypotheses, two palettes on matched real-screen specimens, then remove role failures, choose,
+and stop. Record candidate artifacts/values and same-context captures in `explorations`.
 
 ### 7. Type - `tokens.type`
 

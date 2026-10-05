@@ -18,7 +18,9 @@ skill decides each theme's role values and the order in which a dark or high-con
 re-decided; `tokens.md` holds the graph, the names, the renditions, and the write-back of every
 rendered value to the plan. This file covers how themes are structured, selected, delivered,
 exported, and checked. The examples continue the pottery shop, whose plan lists `light` and `dark`:
-`paper` from the firing-log sheet by day, `kiln-night` after dark.
+`paper` from the firing-log sheet by day, `kiln-night` after dark. The light frame's competing
+candidate echoes cool kiln-shelf photographs with the same L/C and reserve role. These values
+belong to that case, not a default theme; compare the task's actual content and states per theme.
 
 ## A theme reassigns roles
 

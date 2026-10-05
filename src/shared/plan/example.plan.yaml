@@ -1,5 +1,6 @@
 # Example: sales page for a small pottery studio (create mode)
 # Free text is in English; key_copy.text stays in the target locale (ko-KR) because it is real UI copy.
+# Color values and comparison paths illustrate this case's decisions, not a starter palette or a completed capture run.
 version: 0
 mode: create
 task: { id: kiln-shop-landing, title: Pottery studio sales landing }
@@ -20,7 +21,7 @@ claims:
   declared: [No brand color yet]
   proposed: [Use the firing log as the page signature]
   unresolved: [Delivery regions]
-world_materials: [firing log sheet, glaze numbers, kiln temperature curve, foot-ring marks]
+world_materials: [firing log sheet, glaze numbers, kiln temperature curve, foot-ring marks, kiln shelf in product photographs]
 direction:
   taste: { source: own-reading }
   read:
@@ -49,7 +50,7 @@ tokens:
       content_colors: { answer: Glaze colors are the protagonists, status: known }
       identity: { answer: None yet, status: known }
       environment: { answer: Bright indoor viewing, status: proposed }
-      tone: { answer: Quiet, status: proposed }
+      tone: { answer: "High-key field L .97/C .01 across the non-photo canvas; ink L .25/C .01; reserve L .45/C .09 on small controls, not panels; warm neutral frame leaves glaze chroma to the photos", status: proposed }
     roles:
       - { name: paper, role: field, oklch: [0.97, 0.01, 85] }
       - { name: ink, role: foreground, oklch: [0.25, 0.01, 60] }
@@ -132,27 +133,31 @@ explorations:
     candidates:
       - name: log-sheet paper and kiln ink
         source: firing log sheet
+        note: "Observed warm log stock and dark ruled ink; proposed neutral frame, with reserve/focus separately assigned"
         artifact: .lapis/specimens/kiln-shop-landing-palette-a.html
         roles:
           - { name: paper, role: field, oklch: [0.97, 0.01, 85] }
           - { name: ink, role: foreground, oklch: [0.25, 0.01, 60] }
           - { name: reserve, role: interaction, oklch: [0.45, 0.09, 250] }
-      - name: cream with a terracotta accent
-        source: generic
-        note: the stock craft palette
+      - name: cool kiln-shelf frame
+        source: kiln shelf in product photographs
+        note: "Observed cool shelf shadows beside warm and blue glazes; proposed echo of that neutral temperature, without grading the photos"
         artifact: .lapis/specimens/kiln-shop-landing-palette-b.html
-        token_file: .lapis/tokens/kiln-shop-landing-palette-b.css
+        roles:
+          - { name: paper, role: field, oklch: [0.97, 0.01, 250] }
+          - { name: ink, role: foreground, oklch: [0.25, 0.01, 250] }
+          - { name: reserve, role: interaction, oklch: [0.45, 0.09, 250] }
     compared_on: [render]
     # Illustrative evidence paths, not captures shipped or executed by this example.
     comparisons:
-      - variable: accent family
+      - variable: neutral temperature of field and ink; L/C and reserve role held fixed
         viewport: { width: 390, theme: light }
         state: product list and focused reserve control
         captures:
           log-sheet paper and kiln ink: .lapis/renders/kiln-palette-a-390.png
-          cream with a terracotta accent: .lapis/renders/kiln-palette-b-390.png
+          cool kiln-shelf frame: .lapis/renders/kiln-palette-b-390.png
     chosen: log-sheet paper and kiln ink
-    runner_up_lost: cream with terracotta would compete with the glaze colors the photographs show
+    runner_up_lost: The cool shelf echo kept reserve distinct, but the blue-glazed bowl's edge read less clearly against it in the same dense list; the warm log frame kept that boundary without editing the photo
   - decision: layout
     candidates:
       - { name: one ruled row per piece, source: firing log sheet }
@@ -206,7 +211,7 @@ defaults:
   - id: color.warm-editorial
     decision: reject
     basis: brief
-    reason: A cream base with terracotta would compete with the glaze colors
+    reason: The competing candidate came from actual shelf photographs; neither a stock clay accent nor a category palette was needed to distinguish reserve from the pieces
   - id: color.cream-base
     decision: keep
     keep_when: paper-material

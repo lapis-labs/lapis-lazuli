@@ -77,6 +77,19 @@ Work through these in order. Lint findings already report what they observed; do
    Hold each `explorations` entry to the render: the chosen candidate is what the page uses, and the
    runner-up lost for a reason the screenshots or the plan can show. A recorded comparison that the
    render contradicts is `unearned`.
+   For palette entries, read the candidate artifacts and `comparisons` captures, not just their names:
+   - Does the exact product/photo/brand/data/material input explain each role hypothesis, with its
+     authority distinct from an authored value? Were approved masters preserved?
+   - Was the runner-up seen with the same copy, type, layout, content extremes, viewport/theme and
+     consequential state? Missing artifacts or captures mean unknown, not a proven comparison.
+   - Did hue alone change while the dominant cause (panel area, repeated badges, type mass, edges)
+     stay? Does a high-key pale field plus one muted accent and category-default structure remain
+     when strict cream detection is silent? Preserve earned brand green or brief-fixed cream.
+   - Can brand green and success, action and map/category colors, focus and selection be read when
+     they meet, with non-color cues? Does the darkest/lightest/most saturated/muted content survive?
+     Were photos, skin, products or artwork graded merely to match the UI palette?
+   - Which claims were actually observed: contrast, grayscale, color-vision discrimination, harmony,
+     or audience preference? A capture or automatic check proves only its scope, not all five.
 6. **Package drift.** When rejected defaults were replaced by another named package - dark and
    luminous traded for warm and editorial, or either for hard edges - report the new package.
    The lapis skill's anti-slop guide lists the recurring defaults and per-genre packages to compare
