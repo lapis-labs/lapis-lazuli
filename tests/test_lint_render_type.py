@@ -332,6 +332,27 @@ def sectioned_page(labels: list[dict | None], *, heading_role: str = "heading") 
     return page
 
 
+def test_singleton_hero_eyebrow_is_a_gate_even_without_section_cadence():
+    from lapis_design.lint.engine import lint as findings
+
+    page = sectioned_page([{"text": "CLOUD BACKUP. LESS WHAT IF."}], heading_role="display")
+    result = findings(Context(rules=RULES, extract=extract(page)), ["render"], ["type.eyebrow-kicker"])
+    assert [(f["status"], f["severity"], f["blocking"]) for f in result] == [
+        ("open", {"create": "gate", "review": "P2"}, True)]
+    page.vp["text"] = page.vp["text"][1:]
+    no_hits(lint("type.eyebrow-kicker", extract(page)))
+
+
+def test_real_hero_scope_can_be_kept_with_the_named_exception():
+    from lapis_design.lint.engine import lint as findings
+
+    page = sectioned_page([{"text": "Special exhibition · 16 Oct–14 Feb"}], heading_role="display")
+    plan = {"defaults": [{"id": "type.eyebrow-kicker", "decision": "keep", "basis": "brief",
+                          "keep_when": "real-category", "reason": "Exhibition type and dates are absent from the title."}]}
+    result = findings(Context(rules=RULES, extract=extract(page), plan=plan), ["render"], ["type.eyebrow-kicker"])
+    assert [(f["status"], f["blocking"]) for f in result] == [("waived", False)]
+
+
 def test_eyebrow_labels_fire_when_more_sections_than_allowed_open_with_one():
     labels = [{"text": "FEATURES", "transform": "uppercase", "letter_spacing_em": 0.12},
               {"text": "PRICING", "transform": "uppercase"}, {"text": "FAQ", "letter_spacing_em": 0.1}]

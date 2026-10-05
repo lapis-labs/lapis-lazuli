@@ -189,10 +189,11 @@ that see it. Rules marked * are statistical or lexical leads; the critic judges 
   for a title that does not say what is different. A neutral sans is often right; what reads as default is that no
   role was compared. A rendered page can also show a container's fallback face rather than a choice, so check
   what rendered before judging.
-- **Instead.** Let the title carry the proposition in one voice. Keep a label that names a real category, scope,
-  state, or step that differs between sections. Give an accent color a role the reader can name, and change type
-  inside a title only for a phrase that is a title, a quotation, or a term. Compare display and reading faces by
-  role on the page's copy, and judge a serif by whether the subject or the genre asks for it.
+- **Instead.** Let the title carry the proposition in one voice. Check a plain label or chip directly above the
+  first-view title even when it appears once. Keep it only with the rule's `keep_when`: real category, scope, dates,
+  authoritative state, or a process step absent from the heading, not a topic echo or a slogan. Exhibition type and
+  dates or a live status can earn that place. Give an accent color a role the reader can name, and change type
+  inside a title only for a title, quotation, or term. Compare display and reading faces on the page's copy.
 - **Exceptions.** A real ordered process, an exhibition type, a service name. A word colored for a state it
   encodes. A neutral body face chosen for readability on the platform.
 - **Rules.** `type.eyebrow-kicker`, `type.heading-badge`, `type.headline-emphasis-formula`, `color.gradient-headline`,

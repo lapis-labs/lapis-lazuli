@@ -764,23 +764,29 @@ rules:
   - review
   severity:
     create: gate
-    review: P3
+    review: P2
   detect:
     render:
       detector: eyebrow-relation
       params:
         kind: label
+        singleton_hero: true
       threshold:
         repeats_max: 2
-  why: A small tracked uppercase label or index marker repeats before most headings without adding category,
-    scope, state, or sequence
-  better: Remove it; when context is needed, write a specific label and let the title carry the proposition
+  why: A plain label above the first-view headline delays its proposition even once; repeated tracked
+    labels or index markers also impose a section cadence without adding information
+  better: Remove the label unless it adds category, scope, dates, or authoritative state absent from the
+    heading; let the title carry the proposition
   keep_when:
   - id: real-category
-    when: the label names a real category or scope that differs between sections
+    when: the label adds a real category or scope absent from the heading, such as an exhibition type
+      and dates, rather than a topic echo or slogan
     evidence: none
   - id: ordered-process
     when: the marker numbers a real ordered process
+    evidence: none
+  - id: current-state
+    when: the label adds authoritative live or current state absent from the heading
     evidence: none
   waiver:
     scope: rule
@@ -793,7 +799,7 @@ rules:
   - review
   severity:
     create: gate
-    review: P3
+    review: P2
   detect:
     render:
       detector: eyebrow-relation
@@ -808,6 +814,9 @@ rules:
     evidence: none
   - id: filter-or-state-chip
     when: the chip filters content or identifies authoritative current state
+    evidence: none
+  - id: real-category
+    when: the chip adds a real category, scope, or dates absent from the heading
     evidence: none
   waiver:
     scope: value

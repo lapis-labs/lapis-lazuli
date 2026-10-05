@@ -12,6 +12,9 @@ All notable changes are recorded here. The format follows
 Local contract changes, made here and not from a kit diff; the handoff records each one with its before and
 after text.
 
+- Singleton plain hero labels now trigger `type.eyebrow-kicker` alongside repeated section cadence. Hero labels and
+  heading chips gate in create mode and review at P2; named keeps require category, scope, dates, or current state
+  absent from the heading.
 - `lazuli hints` lists 25 reference fields and records three task/date/field-dependent starting points in
   `.lapis/references/<task>.hints.json`; a repeated field keeps its original draw. The separate `sources/hints.yaml`
   has 129 URLs with factual credits/recognition and our own study prompts, no captures or copied page text.

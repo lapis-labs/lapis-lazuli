@@ -773,6 +773,10 @@ def eyebrow_relation(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
             unjudged.append("text runs have no type role")
             continue
         found = []                                    # (label run, heading box, chip box, heading run)
+        hero = next(((index, anchor) for index, anchor in heading_starts(view)
+                     if (rect := view.rect(anchor)) and 0 <= rect["y"] < view.vp.get("height", 0)
+                     and (view.runs[index].get("type_role") == "display"
+                          or (view.sections or {}).get(view.section_of(anchor)) == "hero")), None)
         opened = set()
         for index, anchor in heading_starts(view):
             section = view.band_of(anchor)
@@ -792,6 +796,17 @@ def eyebrow_relation(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
                     prev.get("type_role") == "label" or prev.get("transform") == "uppercase" or all_caps(text)
                     or (prev.get("letter_spacing_em") or 0) >= TRACKED_EM or INDEX_MARKER.fullmatch(text.strip())):
                 found.append((prev, anchor, None, view.runs[index]))
+        if kind == "label" and (det.get("params") or {}).get("singleton_hero") and hero:
+            index, anchor = hero
+            prev = lead_in(view, index, anchor, view.band_of)
+            if (prev and prev.get("chars", 0) <= LABEL_CHARS
+                    and prev["size_px"] < view.runs[index]["size_px"]
+                    and prev.get("type_role") not in (*HEADINGS, "nav", "ui", "code")
+                    and not chip(view, prev, anchor)):
+                hits.add(("hero", anchor), view, Hit(
+                    observed=f"singleton hero label {quote(prev.get('text'))} sits right above the first-view "
+                             f"heading {quote(view.runs[index].get('text'))}; verify it adds category, scope, date, or state",
+                    location=view.location(prev["box"]), refs=[prev["box"], anchor]))
         if repeats_max is None:
             for prev, anchor, bounded, heading in found:
                 hits.add((kind, anchor), view, Hit(
