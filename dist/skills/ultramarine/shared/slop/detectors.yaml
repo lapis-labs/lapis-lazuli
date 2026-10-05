@@ -106,7 +106,7 @@ detectors:
   - { name: css-literal-color, layers: [source], input: "hex/rgb/hsl/oklch literals outside token files", status: implemented }
   - { name: css-off-scale-value, layers: [source], input: "literal values for the given properties vs the contract scale", params: { properties: "CSS properties" }, status: implemented }
   - { name: source-pattern, layers: [source], input: "source text", params: { patterns: "regular expressions in ECMAScript (u flag) or Python regex syntax: lookbehind, \\p{...} classes, \\uXXXX escapes", scope: "optional slot filter" }, output: "leads only", status: implemented }
-  - { name: source-ast, layers: [source], input: "JSX/TSX/HTML/CSS syntax trees", params: { query: "named query" }, output: "elements the named query matches; evidence of their own (rules.yaml, Detection)", status: implemented }
+  - { name: source-ast, layers: [source], input: "JSX/TSX/HTML/CSS syntax trees", params: { query: "named query; hidden-heading-break matches media-query display:none against heading br elements without whitespace on either side (type/class/id selectors, descendant/child combinators)" }, output: "elements the named query matches; evidence of their own (rules.yaml, Detection); hidden-heading-break is a source candidate to confirm in the phone capture", status: implemented }
   - { name: dependency-check, layers: [source], input: "package manifest and lockfile vs imports", params: { check: "icon-packages | animation-imports-vs-installed", unobserved: "status when imports cannot be read: not-verified" }, status: implemented }
 
   # ---------------- render layer (input: render extract) ----------------

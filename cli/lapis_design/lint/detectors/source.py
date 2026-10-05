@@ -29,6 +29,7 @@ them, so an unread element never reads as a pass.
 from __future__ import annotations
 
 import bisect
+import html
 import json
 import os
 import re
@@ -1704,6 +1705,80 @@ def _q_state_setter(ctx: Context, tree: _Tree) -> tuple[list[Hit], str | None]:
     return hits, None
 
 
+def _break_selector(selector: str, tag: _Tag, tags: list[_Tag]) -> bool | None:
+    """Match type/class/id selectors with descendant and child combinators; other syntax is unjudged."""
+    if not re.fullmatch(r"[\w.*#\s>-]+", selector):
+        return None
+    parts = re.findall(r"[^\s>]+|>", selector)
+    if not parts or parts[0] == ">" or parts[-1] == ">":
+        return None
+
+    def compound(part: str, node: _Tag) -> bool:
+        kind = re.match(r"^[\w*-]+", part)
+        if kind and kind.group() not in ("*", node.name):
+            return False
+        for prefix, value in re.findall(r"([.#])([\w-]+)", part):
+            attr = node.attr("class", "className") if prefix == "." else node.attr("id")
+            if not attr or attr.expr or value not in (attr.value or "").split():
+                return False
+        return True
+
+    def match(index: int, node: _Tag) -> bool:
+        if not compound(parts[index], node):
+            return False
+        if index == 0:
+            return True
+        direct = parts[index - 1] == ">"
+        previous = index - 2 if direct else index - 1
+        parents = node.parents[-1:] if direct else tuple(reversed(node.parents))
+        return previous >= 0 and any(match(previous, tags[p]) for p in parents)
+
+    return match(len(parts) - 1, tag)
+
+
+def _q_hidden_heading_break(ctx: Context, tree: _Tree) -> tuple[list[Hit], str | None]:
+    hiding = []
+    for css in tree.files:
+        for start, end in css.css_regions():
+            media = _block_spans(css.code, start, end, re.compile(r"@media\b[^{]*\{", re.I))
+            for block in re.finditer(r"([^{}]+)\{([^{}]*)\}", css.code[start:end]):
+                at = start + block.start()
+                if not any(a <= at < b for a, b in media):
+                    continue
+                if re.search(r"(?:^|;)\s*display\s*:\s*none\s*(?:!\s*important\s*)?(?:;|$)", block.group(2), re.I):
+                    hiding.extend((selector.strip(), css.where(at)) for selector in block.group(1).split(","))
+    hits, unjudged = [], []
+    for f in _markup_files(tree):
+        tags = f.tags()
+        for tag in tags:
+            if tag.name != "br" or tag.closing:
+                continue
+            heading = next((tags[p] for p in reversed(tag.parents) if re.fullmatch(r"h[1-6]", tags[p].name)), None)
+            if heading is None or heading.close is None:
+                continue
+            def text_between(start: int, end: int) -> str:
+                raw = _HTML_COMMENT.sub("", f.text[start:end])
+                return html.unescape(re.sub(r"<[^>]*>", "", raw))
+            before = text_between(heading.end, tag.start)
+            after = text_between(tag.end, tags[heading.close].start)
+            if not before or not after or before[-1].isspace() or after[0].isspace():
+                continue
+            if not before[-1].isalnum() or not after[0].isalnum():
+                continue
+            refs = []
+            for selector, where in hiding:
+                matches = _break_selector(selector, tag, tags)
+                if matches:
+                    refs.append(where)
+                elif matches is None and "br" in selector:
+                    unjudged.append(f"{where}: unsupported selector {selector!r}")
+            if refs:
+                hits.append(_hit(f, tag.start, f"media-query display:none on <br> joins heading text "
+                                 f"{before[-24:]!r} and {after[:24]!r} without whitespace",
+                                 [f.where(tag.start), *dict.fromkeys(refs)]))
+    return hits, "; ".join(dict.fromkeys(unjudged)) or None
+
+
 _QUERIES: dict[str, Callable[[Context, _Tree], tuple[list[Hit], str | None]]] = {
     "img-without-alt": _q_img_without_alt,
     "img-without-intrinsic-size": _q_img_without_intrinsic_size,
@@ -1713,10 +1788,11 @@ _QUERIES: dict[str, Callable[[Context, _Tree], tuple[list[Hit], str | None]]] = 
     "inline-svg-path-for-standard-action": _q_inline_svg,
     "hard-coded-date-number-or-locale-string": _q_locale_time,
     "state-setter-in-pointer-or-scroll-handler": _q_state_setter,
+    "hidden-heading-break": _q_hidden_heading_break,
 }
 _MARKUP_QUERIES = {"img-without-alt", "img-without-intrinsic-size", "input-without-associated-label",
                    "click-handler-on-non-interactive-element", "raw-element-where-adopted-primitive-exists",
-                   "inline-svg-path-for-standard-action"}
+                   "inline-svg-path-for-standard-action", "hidden-heading-break"}
 
 
 @detector("source-ast", layers=("source",))

@@ -2788,6 +2788,31 @@ rules:
   waiver:
     scope: value
   verify: static
+- id: type.hidden-heading-break
+  class: quality
+  domain: type
+  layers:
+  - source
+  - review
+  severity:
+    create: warn
+    review: P2
+  detect:
+    source:
+      detector: source-ast
+      params:
+        query: hidden-heading-break
+  why: Hiding a heading's line break at a breakpoint removes the only separation between two words
+  better: Put a space before the br or use a span with an explicit space; compare the visible heading
+    at phone and desktop widths
+  keep_when:
+  - id: word-internal-break
+    when: the break intentionally falls inside one word and hiding it restores that same word, verified
+      in a phone capture
+    evidence: none
+  waiver:
+    scope: value
+  verify: review
 - id: layout.compact-overflow
   class: requirement
   domain: layout

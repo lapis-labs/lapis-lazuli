@@ -766,6 +766,15 @@ rules:
     when: a surface with one level of grouping, such as a log, a feed, or a plain table, so there are
       no groups or sections to tell apart
     evidence: none
+- id: type.hidden-heading-break
+  why: Hiding a heading's line break at a breakpoint removes the only separation between two words
+  better: Put a space before the br or use a span with an explicit space; compare the visible heading
+    at phone and desktop widths
+  keep_when:
+  - id: word-internal-break
+    when: the break intentionally falls inside one word and hiding it restores that same word, verified
+      in a phone capture
+    evidence: none
 - id: layout.compact-overflow
   why: Fixed columns overflow at compact width, so text or controls clip, overlap, or force page scrolling
   better: Let columns collapse or reflow at compact widths; scroll only regions whose content needs two

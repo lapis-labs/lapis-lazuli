@@ -95,6 +95,8 @@ that see it. Rules marked * are statistical or lexical leads; the critic judges 
   costs in scroll before the first action. Give navigation its phone form: a few destinations in one place the thumb
   reaches, the current place named at the top. Run a booking or another task in steps as one step per view with a
   visible current step (`archetypes.md`, Genre structures).
+  Read the actual heading at 390, not only its overflow result. Hiding `여백의<br>형태` must not produce
+  `여백의형태`: preserve the word space before the `br`, or use a span with explicit spacing.
 - **Exceptions.** A tool whose phone use is a persistent rail, such as a map or an editor, when the brief or contract
   says so. An image that is the subject itself. A long page whose length is its content.
 - **Rules.** `layout.compact-desktop-navigation`, `layout.compact-object-opening`, `layout.compact-empty-length`,

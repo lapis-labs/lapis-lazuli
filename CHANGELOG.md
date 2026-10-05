@@ -12,6 +12,9 @@ All notable changes are recorded here. The format follows
 Local contract changes, made here and not from a kit diff; the handoff records each one with its before and
 after text.
 
+- `type.hidden-heading-break` warns/P2 when a media query hides a heading's `br` and removes its only
+  word separation. Source findings name the heading and CSS locations; guidance preserves whitespace
+  or uses a span, and checks the phone capture.
 - Topic-echo metadata strips now gate in create mode and review at P2 through an optional create-severity
   adjustment. Format-only metadata, numeric decision records, chart scope, and source/byline lines retain
   their existing warn/P3 treatment.

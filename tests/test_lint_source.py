@@ -59,6 +59,11 @@ def plan_with(**tokens) -> dict:
 SCALES = {"space": {"scale": [0, 4, 8, 12, 16, 24, 32]}}
 
 # rule id -> (files, plan, lock, text the hit's observation contains)
+FIRING_HEADING_BREAK = {
+    "index.html": "<h1>여백의<br>형태</h1>",
+    "styles.css": "@media (max-width: 560px) { h1 br { display: none; } }",
+}
+
 FIRING: dict[str, tuple[dict, dict | None, dict | None, str]] = {
     "system.font-outside-contract": ({"src/app.css": "body {\n  font-family: \"Inter\", sans-serif;\n}\n"},
                                      PLAN, LOCK, "'Inter' is not a contract family"),
@@ -113,6 +118,7 @@ FIRING: dict[str, tuple[dict, dict | None, dict | None, str]] = {
         "package.json": {"dependencies": {"framer-motion": "^11.0.0"}},
         "src/Fade.tsx": "import { motion } from \"motion/react\"\nexport const Fade = () => <motion.div />\n",
     }, None, None, "imports motion (1 file), which is not installed"),
+    "type.hidden-heading-break": (FIRING_HEADING_BREAK, None, None, "joins heading text"),
 }
 
 
@@ -131,6 +137,25 @@ def test_no_source_tree_is_skipped(detector_name):
     result = lint(rule_id, None, plan=PLAN, lock=LOCK)
     assert result.skipped == "no source tree given" and not result.hits
 
+
+
+@pytest.mark.parametrize("heading, css, fires", [
+    ("<h1>여백의<br>형태</h1>", "@media (max-width:560px){h1 br{display:none}}", True),
+    ("<h1>여백의 <br>형태</h1>", "@media (max-width:560px){h1 br{display:none}}", False),
+    ("<h1>여백의<br> 형태</h1>", "@media (max-width:560px){h1 br{display:none}}", False),
+    ("<h1>여백의&nbsp;<br>형태</h1>", "@media (max-width:560px){h1 br{display:none}}", False),
+    ("<h1>여백의<br>형태</h1>", "h1 br{display:none}", False),
+    ("<h1>여백의<br>형태</h1>", "@media (max-width:560px){h2 br{display:none}}", False),
+    ("<h1><em>Quiet</em><br class='phone'><span>forms</span></h1>",
+     "@media (width < 600px){h1 > br.phone{display:none!important}}", True),
+])
+def test_hidden_heading_break_preserves_word_separation(tmp_path, heading, css, fires):
+    from lapis_design.lint.engine import lint as findings
+
+    root = project(tmp_path, {"index.html": heading, "style.css": css})
+    result = findings(Context(rules=RULES, source_root=root), ["source"], ["type.hidden-heading-break"])
+    assert [(f["severity"], f["blocking"]) for f in result] == (
+        [({"create": "warn", "review": "P2"}, False)] if fires else [])
 
 # ---------------------------------------------------------------- reading the tree
 
