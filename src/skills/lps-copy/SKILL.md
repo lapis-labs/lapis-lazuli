@@ -43,6 +43,9 @@ add the Korean section as another `--read` when used. This attests the sections 
   across screens, and use the project's glossary when there is one.
 - Say who speaks and to whom, in `content.voice.notes`: the product addressing the user, or the
   user labeling their own action.
+- Decide definition, factual capability, visitor instruction, action label, and status separately.
+  Choose speaker and register by role; labels are not sentences. Copy explains the product for
+  its visitor, not this website's making; design rationale stays in the plan unless requested.
 
 ## Write in the target language
 

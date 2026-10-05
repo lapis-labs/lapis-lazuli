@@ -5,6 +5,7 @@
 Read the section a motion decision needs, by heading; the rest are other decisions.
 
 - What motion is for: the job each moving element has, and what to remove when it has none
+- Motion as a system: state change and control feedback together, continuity, timing scale, cancellation, and playback
 - Timing and easing: durations, easing, and distance by purpose
 - Interruption and choreography: stable states, legal transitions, interruption, sequencing
 - Scroll, navigation, and transitions: scroll and route enhancement that still works with animation off
@@ -55,6 +56,31 @@ Take the character of motion from how the subject's own things move: a drawer, a
 opened, a curve drawn by a recorder. A ready-made package (elastic on every control, a fade-up on every
 section, a pulsing dot for "live") is the `ambient-motion` and `global-habit-values` cards: reject it with
 a route, or keep it in `defaults` with a reason.
+
+## Motion as a system
+
+Start from the stable states and the input that changes them, not from one entrance effect reused
+across the page. Observe the changed content and the accepting control as one unit: the semantic
+state commits at input, the control acknowledges that input, and motion explains continuity or
+expression without delaying reading, focus, or the outcome. A content fade with no control response
+is not a complete interaction system; a responsive control without meaningful content is not proof
+of the product's claim.
+
+Keep a compact table in the plan's motion principles or linked design notes:
+
+| Purpose/state transition | Content and control response | Duration/curve/distance role | Interruption and reduced branch | Playback evidence |
+|---|---|---|---|---|
+| Feedback: idle → pressed/selected | accepting control changes immediately; visible selected state remains | short feedback token; state-change curve; movement only when useful | repeated input keeps latest selection; reduced retains the cue | press, keyboard select, and repeat |
+| Continuity: record A → record B | marker and related content explain the same object's change | transition token; enter/exit/standard curve by phase; distance tied to relation | cancel/retarget from current presentation; reduced changes state directly | reverse midway, then show the stable result |
+| Expression: requested authored sequence | subject-specific moment; its controls, pause/skip and useful resting frame remain available | authored duration/curve; no universal fade-up preset | cancel/skip without stale state; reduced uses a complete static composition | normal playback, interruption, and reduced playback |
+
+The rows are examples, not required effects. Choose the purposes the actual surface needs. Use a
+small related easing/duration scale rather than independently inventing timings on each element;
+keep input acknowledgement shorter than a region transition unless this interaction supplies a
+reason. Judge the scale and choreography by actual playback on phone and desktop, not a timing
+number, a still screenshot, or a `prefers-reduced-motion` declaration. For each implemented candidate
+record what happened under quick repeated/reversed input, cancellation, hidden-tab stop where
+relevant, and reduced motion. Only that observed alternative counts in the comparison.
 
 ## Timing and easing
 

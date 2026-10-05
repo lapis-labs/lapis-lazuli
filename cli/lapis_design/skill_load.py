@@ -25,7 +25,8 @@ def required(root: Path, task: str, skill: str) -> tuple[str, ...]:
 
         try:
             plan = read_plan(root / ".lapis/plans" / f"{task}.yaml")
-            if isinstance(plan, dict) and "ko" in (plan.get("brief") or {}).get("locales", []):
+            if isinstance(plan, dict) and any(str(locale).casefold().split("-")[0] == "ko"
+                                             for locale in (plan.get("brief") or {}).get("locales", [])):
                 return (*REQUIRED[skill], "references/interface-copy.md#Korean")
         except (OSError, ValueError, yaml.YAMLError):
             pass

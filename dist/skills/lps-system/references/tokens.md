@@ -343,6 +343,11 @@ branch sets movement to zero and keeps a short fade:
 Motion without that branch is the rule `motion.reduced-motion-missing`; an overshooting easing on
 every transition is the `global-habit-values` card. On the pottery page, with its low motion dial,
 feedback on the reserve control and the sheet's entry are enough.
+Tokenize the interaction system, not only a content entrance. Pair each stable state change with
+its control's input feedback and any continuity cue; use a small duration/easing scale by purpose.
+Record cancellation/retargeting and reduced branches beside those roles. Adopt the motion-system
+table from `lapis`'s motion reference, and verify it by actual playback with repeated and reversed
+inputs before freezing tokens; screenshots and nominal millisecond values cannot judge the system.
 
 ## The interchange file
 

@@ -187,10 +187,10 @@ or regional reference that is still an open direction, read `references/style-br
 
 The motion dial has three bands: 1-3 feedback only, 4-6 transitions that explain a change, 7-10 authored
 moments. Write the band into `tokens.motion.principles` with a reduced-motion branch for each effect
-(`respect` is the only accepted value for `reduced_motion`). For timing and easing, interruption, scroll and route
-enhancement, choosing between native and library animation, and delivering authored animation, read
-`references/motion.md`. Compare the band you pick with the one next to it on one real interaction and
-record the pick (`explorations`, decision `motion`).
+(`respect` is the only accepted value for `reduced_motion`). Read `references/motion.md` → **Motion as a
+system** first, then the timing, interruption, scroll/route, or delivery section the interaction needs.
+Implement the picked band and its neighbor on the same real interaction, observe playback, and record
+the comparison in `explorations` (decision `motion`).
 
 ### 4. Concept and signature - `direction.concept`, `direction.levers`, `layout.signature`
 

@@ -26,6 +26,11 @@ between minor versions; render extraction is v1 and the other contract formats a
   Card/copy/task findings stay in the page report, discarded specimen findings and deferred
   non-requirement token enforcement stay separate, and requested/rendered font aliases remain
   visible. A draft-scope report cannot satisfy full release lint, even at its canonical path.
+- Copy guidance now separates product definition, factual capability, visitor instruction, action
+  label, and status before choosing Korean register/endings. Website design rationale stays in
+  the plan unless the brief requests it. Korean locale variants also require the Korean section.
+  Motion guidance treats content state and control feedback as one system, with a timing/easing
+  scale, continuity, cancellation and reduced branches judged by actual playback, not screenshots.
 - Plugin/CLI version skew no longer turns argparse exit 2 into an endless Stop loop or denied writes.
   Every harness hook uses the separate `lapis-design-hook --plugin-version VERSION <name>` entry point:
   old installs lack it and fail open, while installed runners skip unknown arguments and mismatched

@@ -102,6 +102,9 @@ From `tokens.motion`: write durations and easings by purpose (feedback, transiti
 `tokens.motion.principles`, with the reduced-motion branch for each, and generate the motion tokens
 from them. `reduced_motion: respect` is required; motion that is not essential stops or becomes a
 fade.
+Start from stable state changes and the accepting controls together; use the motion-system table
+in `lapis`'s motion reference. Freeze the timing/easing scale only after playback, cancellation,
+and reduced-motion observations, not from a still capture of an entrance.
 
 ## DESIGN.md
 

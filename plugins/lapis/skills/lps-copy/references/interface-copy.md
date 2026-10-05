@@ -35,6 +35,26 @@ facts in the examples are synthetic; a real project supplies its own.
 
 A string earns its place by answering a question the reader has on this surface, in this state. Name
 its role before writing it; each role has one place and one test.
+Separate the product's definition, factual capabilities, and the visitor's actions before choosing
+endings. Record the speaker and grammatical role in `content.voice.notes`: the product states what
+it is or can do; the visitor labels an action; an instruction asks that visitor to do something.
+Choose register for the sentences of each role/surface, with a deliberate split documented when
+needed. A compact label has no sentence ending and does not conflict with a polite product voice.
+
+| Role | Visitor question | Korean example (synthetic facts) |
+|---|---|---|
+| Product definition | What is this product? | 코딩 에이전트를 위한 디자인 스킬 |
+| Factual capability | What does it actually do? | 비교한 선택과 탈락 이유를 계획에 남겨요. |
+| Visitor instruction | What must I do here? | 설치 명령을 터미널에서 실행해 주세요. |
+| Visitor action label | Which action/result do I choose? | 설치 명령 복사 |
+| Status | What changed after my action? | 설치 명령을 복사했어요. |
+
+The examples distinguish roles, not a mandatory suffix or product slogan. Keep the real subject,
+facts, and claim strength. Page copy explains the subject/product for the visitor; this website's
+own font, palette, layout, and workflow rationale belongs in the plan unless the brief asks to show
+it. A design product may explain typography as a capability, but the site's font pairing alone is
+not an example of that product's actual output. Review the rendered text for that substitution.
+
 
 | Role | The reader asks | It goes | Test |
 |---|---|---|---|
@@ -371,6 +391,11 @@ and tone, and the report says so when none has.
   a sentence is a mistake: the label 배송지 stays a label, and the instruction 주문을 받을 주소를 입력해
   주세요 is a separate string. A label promises the destination or the action; the register applies to
   sentences.
+- **Role before ending.** A title can name content, a definition says what the product is, a
+  capability states a verifiable fact, an instruction names what the visitor should do, and an
+  action label names their chosen outcome. Do not turn all of them into “~해요” sentences because
+  the prose register is `haeyo`. Keep the speaker and the statement/request distinction visible;
+  “화면을 계획해요” cannot stand indiscriminately for a product definition, a feature, and a button.
 - **Choose by surface, then keep it.** Consumer interfaces are commonly `haeyo`; public, financial, and
   enterprise surfaces `hapnida` or a restrained `haeyo`. Formality is no safety mechanism: an alert or a
   destructive decision keeps the surface's register and adds the object, the consequence, and the
