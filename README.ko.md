@@ -89,11 +89,28 @@ LapisLazuli는 검사가 찾은 것을 알려 줄 뿐이고, 접근성이나 법
 
 ## 명령줄 도구
 
-- `lapis-design`: `plan check`, `rights check`, `render check`, `behavior check`, `stub serve`, `slop lint`, `release check`, `next`, 수동으로 부르는 `hook` 명령, 그리고 `mcp` 서버예요.
+- `lapis-design`: `plan check`, `handoff export`, `handoff check`, `rights check`, `render check`, `behavior check`, `stub serve`, `slop lint`, `release check`, `next`, 수동으로 부르는 `hook` 명령, 그리고 `mcp` 서버예요.
 - `lazuli`: `local fonts`, `catalog`, `search`, `lock`, `class`, `sources`, `hints`, `color`, `read`, `ref`, `fetch`, `license`, `doctor`, `setup`이에요. 상태는 사용자 캐시에 두고, `lazuli doctor`가 설치를 점검해요.
 - `lapis-design-hook`: 모든 플러그인 훅이 부르는 진입점이에요. 버전이 다르거나 모르는 훅 명령이면 알리고 건너뛰어요.
 
 명령과 옵션은 `--help`로 볼 수 있어요.
+
+다른 작업자나 도구가 설치되지 않은 텍스트·웹 수신자에게 넘길 때는 제공된 디자인 자료를 기존
+계획에 반영한 뒤, 한 범위의 독립적인 역할 지시서를 내보내요.
+
+```sh
+lapis-design handoff export --plan .lapis/plans/task.yaml --scope reservation \
+  --role implementer --root . --out .lapis/handoffs/reservation.md
+lapis-design handoff check RETURN.md --against .lapis/handoffs/reservation.md \
+  --plan .lapis/plans/task.yaml --root .
+```
+
+역할은 `design-head`, `implementer`, `reviewer`예요. UTF-8 기준 32 KiB를 넘으면 내용을 자르지
+않고 더 작은 완결된 범위를 요청해요. 반환물은 원래 입력의 해시에 묶인 제안이고, 사전 검사는
+입력이 바뀐 반환물을 거부할 뿐 수정 사항을 적용하지 않아요. 원격의 승인·테스트 주장도 로컬
+기록이 되지 않아요. 조정자가 검토하고 계획에 반영한 뒤 실제 로컬 검사를 돌려야 해요.
+수신자에게 스킬 설치는 필요 없지만 Antigravity나 웹 계정의 자동 연동을 보장하지는 않아요.
+[핸드오프 규약](src/shared/handoff/HANDOFF.md)과 [예시 계획](src/shared/plan/example.plan.yaml)을 참고하세요.
 
 ## 요구 사항
 
@@ -213,6 +230,8 @@ uv run lapis-design plan check src/shared/plan/example.plan.yaml \
   --rules src/shared/slop/rules.yaml --lock src/shared/fonts/example.fonts.lock.json
 uv run lapis-design plan check src/shared/plan/example.plan.yaml --summary
 uv run lapis-design plan check --from-markdown harness-plan.md
+uv run lapis-design handoff export --plan src/shared/plan/example.plan.yaml --scope reservation --role implementer
+uv run lapis-design handoff check RETURN.md --against PACKET.md --plan src/shared/plan/example.plan.yaml
 # 예시 원장의 파일·고지 경로가 이 저장소에 없어서 rights.notice-missing이 나오는 게 정상이에요
 uv run lapis-design rights check --ledger src/shared/assets/example.assets.ledger.json \
   --lock src/shared/fonts/example.fonts.lock.json --extract src/shared/render/example.extract.json

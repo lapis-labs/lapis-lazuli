@@ -130,13 +130,30 @@ hand.
 
 ## Command-line tools
 
-- `lapis-design`: `plan check`, `rights check`, `render check`, `behavior check`, `stub serve`,
-  `slop lint`, `release check`, `next`, manual `hook` commands, and the `mcp` server.
+- `lapis-design`: `plan check`, `handoff export`, `handoff check`, `rights check`, `render check`,
+  `behavior check`, `stub serve`, `slop lint`, `release check`, `next`, manual `hook` commands, and the `mcp` server.
 - `lazuli`: `local fonts`, `catalog`, `search`, `lock`, `class`, `sources`, `hints`, `color`, `read`, `ref`,
   `fetch`, `license`, `doctor`, and `setup`. State lives in your user cache; `lazuli doctor` checks the install.
 - `lapis-design-hook`: the version-aware, fail-open entry point used by all plugin hooks.
 
 Run the commands with `--help` for their arguments and options.
+
+For a native worker or a plain text/web recipient, reconcile supplied design sources into the existing
+plan, then export one self-contained role assignment:
+
+```sh
+lapis-design handoff export --plan .lapis/plans/task.yaml --scope reservation \
+  --role implementer --root . --out .lapis/handoffs/reservation.md
+lapis-design handoff check RETURN.md --against .lapis/handoffs/reservation.md \
+  --plan .lapis/plans/task.yaml --root .
+```
+
+Roles are `design-head`, `implementer` and `reviewer`. The 32 KiB UTF-8 cap requires a smaller coherent
+scope instead of truncation. Returns are content-bound proposals: preflight rejects stale inputs,
+never applies changes or transfers remote approval/test claims into local evidence. The coordinator
+reviews, reconciles and runs ordinary local checks. Receivers need no installed skills; no native
+Antigravity/web account integration is claimed. See [the handoff protocol](src/shared/handoff/HANDOFF.md)
+and the synthetic scope in [the example plan](src/shared/plan/example.plan.yaml).
 
 ## Requirements
 

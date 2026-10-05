@@ -7,6 +7,17 @@ between minor versions; render extraction is v1 and the other contract formats a
 
 ## Unreleased
 
+### Added
+
+- Offline `lapis-design handoff export` produces self-contained design-head, implementer and reviewer
+  Markdown assignments from explicitly selected canonical inputs. Disclosure/authority, dependency
+  closure, exact-byte identity and the 32 KiB UTF-8 cap block unsafe or incomplete projections rather
+  than truncating them; failed exports preserve the prior packet.
+- Read-only `handoff check` validates return envelopes and current plan/dependency bytes without
+  importing artifacts, approval or remote verification claims. Source intake and optional v0
+  `sources[].intake` / `handoff.scopes[]` annotations preserve the existing plan/contract authority.
+  Skills and installation/command guides describe native/manual role transfer and local verification.
+
 ### Fixed
 
 - Work screens now record explicit phone-task acceptance and plan-linked first-result geometry.

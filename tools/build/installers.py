@@ -931,6 +931,19 @@ class _Gen:
               "```", "",
               "An HTML file path or `file://` URL also works: the checks serve its folder read-only on "
               "127.0.0.1 for the run and record only the loopback HTTP URL. Other URL schemes are refused.", "",
+              "### Portable role handoffs", "",
+              "The CLI also provides offline `handoff export` and read-only `handoff check`. Reconcile the "
+              "source intake and canonical plan first, then select a complete disclosure-approved scope:", "",
+              "```sh",
+              "lapis-design handoff export --plan .lapis/plans/task.yaml --scope reservation --role implementer --root . --out .lapis/handoffs/reservation.md",
+              "lapis-design handoff check RETURN.md --against .lapis/handoffs/reservation.md --plan .lapis/plans/task.yaml --root .",
+              "```", "",
+              "Roles are design-head, implementer and reviewer. Receivers can read the Markdown without "
+              "installed skills. The 32 KiB UTF-8 budget requires a smaller coherent scope, never truncation. "
+              "Returns are proposals tied to exact input bytes: stale inputs are rejected, nothing is applied, "
+              "and remote approval/test claims never become local records. The coordinator reviews and "
+              "runs actual local checks. See [the protocol](src/shared/handoff/HANDOFF.md); manual web/Antigravity "
+              "receipt does not claim native account or plugin integration.", "",
               "### Unattended runs", "",
               "`lapis-design next --task <task>` prints the one step of the procedure still to do, from the files "
               "under `.lapis/`, until it says done; done means every step ran on real inputs, not that the "
