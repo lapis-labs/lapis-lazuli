@@ -14,6 +14,8 @@ that no entry covers, and an entry that covers one without holding up:
 - type: every candidate is a generic family (fonts/system-fonts.yaml, or source `generic`), so no named
   face was considered; or the comparison was never seen (`compared_on` has neither `specimen` nor
   `render`)
+- palette claiming `render`: each candidate has an artifact and roles or a token file, and matched
+  comparisons name the variable, viewport/theme, state, and a capture for every candidate
 - `fixed_by`: the entry says the contract or the brief fixes the decision, which exempts it from the
   comparison. `contract` holds only when the plan reads a DESIGN.md (`context.design`), and either
   value needs its `reason`. A type role whose `source` is `contract` is fixed the same way, and
@@ -83,6 +85,37 @@ def _names(entry: dict) -> list[str]:
                               if isinstance(c, dict) and _text(c.get("name"))))
 
 
+def palette_render_problems(entry: dict) -> list[str]:
+    """Missing reproducibility or matched-view evidence, not proof that files were seen or are fair."""
+    problems = []
+    candidates = [c for c in entry.get("candidates") or () if isinstance(c, dict)]
+    for candidate in candidates:
+        name = candidate.get("name")
+        if not _text(candidate.get("artifact")):
+            problems.append(f"palette candidate {name!r} has no artifact")
+        if not candidate.get("roles") and not _text(candidate.get("token_file")):
+            problems.append(f"palette candidate {name!r} has no roles or token_file")
+    comparisons = entry.get("comparisons") or ()
+    if not comparisons:
+        problems.append("palette render has no comparisons with matched captures")
+    for index, comparison in enumerate(comparisons):
+        if not isinstance(comparison, dict):
+            problems.append(f"palette comparisons[{index}] is not a matched view")
+            continue
+        viewport = comparison.get("viewport") or {}
+        width = viewport.get("width")
+        if not isinstance(width, int) or isinstance(width, bool) or width <= 0 or not _text(viewport.get("theme")):
+            problems.append(f"palette comparisons[{index}] has no viewport width/theme")
+        for key in ("variable", "state"):
+            if not _text(comparison.get(key)):
+                problems.append(f"palette comparisons[{index}] has no {key}")
+        captures = comparison.get("captures") or {}
+        for candidate in candidates:
+            if not _text(captures.get(candidate.get("name"))):
+                problems.append(f"palette comparisons[{index}] has no capture for {candidate.get('name')!r}")
+    return problems
+
+
 def entry_problems(entry: dict, params: dict, design: object) -> list[str]:
     """Why an entry does not hold up; empty when it is a complete comparison or a valid exemption."""
     fixed = entry.get("fixed_by")
@@ -117,6 +150,8 @@ def entry_problems(entry: dict, params: dict, design: object) -> list[str]:
         if not named:
             problems.append("every candidate is a generic family, so no named face was considered; compare an "
                             "installed, catalog, Adobe, or commercial face")
+    if entry.get("decision") == "palette" and "render" in on:
+        problems.extend(palette_render_problems(entry))
     return problems
 
 

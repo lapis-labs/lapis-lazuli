@@ -120,6 +120,49 @@ def test_a_palette_may_be_compared_on_a_sketch(tmp_path):
     assert found(check(tmp_path, plan)) == []
 
 
+
+def rendered_palette(plan):
+    entry = entry_of(plan, "palette")
+    for index, candidate in enumerate(entry["candidates"]):
+        candidate.pop("token_file", None)
+        candidate["artifact"] = f".lapis/specimens/palette-{index}.html"
+        candidate["roles"] = [{"name": "canvas", "role": "field", "oklch": [0.97, 0.01, 85]}]
+    entry["comparisons"] = [{
+        "variable": "neutral temperature", "viewport": {"width": 390, "theme": "light"},
+        "state": "dense product list with focus",
+        "captures": {c["name"]: f".lapis/renders/palette-{i}/390-light.png"
+                     for i, c in enumerate(entry["candidates"])},
+    }]
+    return entry
+
+
+@pytest.mark.parametrize("missing", ["artifact", "roles", "comparisons", "captures", "viewport", "state", "variable"])
+def test_a_claimed_palette_render_without_reproducible_evidence_blocks(tmp_path, missing):
+    plan = base_plan()
+    entry = rendered_palette(plan)
+    if missing in ("artifact", "roles"):
+        entry["candidates"][1].pop(missing)
+    elif missing == "comparisons":
+        entry.pop(missing)
+    else:
+        entry["comparisons"][0].pop(missing)
+    [finding] = found(check(tmp_path, plan))
+    assert finding["blocking"] and finding["status"] == "open"
+
+
+def test_a_palette_render_records_both_candidates_in_the_same_context(tmp_path):
+    plan = base_plan()
+    entry = rendered_palette(plan)
+    entry["candidates"][1].pop("roles")
+    entry["candidates"][1]["token_file"] = ".lapis/tokens/palette-b.css"
+    report = check(tmp_path, plan)
+    assert found(report) == []
+    assert "schema.invalid" not in {f["rule_id"] for f in report["findings"]}
+    entry["comparisons"][0]["captures"].pop(entry["candidates"][1]["name"])
+    [finding] = found(check(tmp_path, plan))
+    assert finding["blocking"]
+
+
 def test_slots_that_are_not_open_decisions_need_no_entry(tmp_path):
     plan = base_plan()
     plan["content"]["key_copy"].append({"slot": "empty-state", "text": "아직 올라온 작품이 없어요", "locale": "ko-KR"})

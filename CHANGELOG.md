@@ -12,6 +12,10 @@ All notable changes are recorded here. The format follows
 Local contract changes, made here and not from a kit diff; the handoff records each one with its before and
 after text.
 
+- Palette explorations can record candidate artifacts, role values or token files, and matched render
+  comparisons with the controlled variable, viewport/theme, state, and per-candidate captures. Older v0
+  plans still parse; a claimed palette render without this evidence is `plan.uncompared-decision`.
+  Brief/contract `fixed_by` decisions remain exempt.
 - Lapis and Ultramarine review guides remove instructional copy that repeats a control or heading while
   preserving consequential notices and recovery explanations. Card-gate reviews compare the same records as
   rows/table/plot plus bare section, removing outer shells before functional panels. Final handoffs classify

@@ -130,9 +130,27 @@ explorations:
     runner_up_lost: Noto Sans KR set the same measure, but its Latin sat high beside Hangul in the reservation lines
   - decision: palette
     candidates:
-      - { name: log-sheet paper and kiln ink, source: firing log sheet }
-      - { name: cream with a terracotta accent, source: generic, note: the stock craft palette }
+      - name: log-sheet paper and kiln ink
+        source: firing log sheet
+        artifact: .lapis/specimens/kiln-shop-landing-palette-a.html
+        roles:
+          - { name: paper, role: field, oklch: [0.97, 0.01, 85] }
+          - { name: ink, role: foreground, oklch: [0.25, 0.01, 60] }
+          - { name: reserve, role: interaction, oklch: [0.45, 0.09, 250] }
+      - name: cream with a terracotta accent
+        source: generic
+        note: the stock craft palette
+        artifact: .lapis/specimens/kiln-shop-landing-palette-b.html
+        token_file: .lapis/tokens/kiln-shop-landing-palette-b.css
     compared_on: [render]
+    # Illustrative evidence paths, not captures shipped or executed by this example.
+    comparisons:
+      - variable: accent family
+        viewport: { width: 390, theme: light }
+        state: product list and focused reserve control
+        captures:
+          log-sheet paper and kiln ink: .lapis/renders/kiln-palette-a-390.png
+          cream with a terracotta accent: .lapis/renders/kiln-palette-b-390.png
     chosen: log-sheet paper and kiln ink
     runner_up_lost: cream with terracotta would compete with the glaze colors the photographs show
   - decision: layout

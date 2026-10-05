@@ -271,6 +271,8 @@ properties:
   #                                 this kind of page), or, when page code was written before the plan,
   #                                 `existing-code` (a `direction` entry lists it so the plan can keep the code
   #                                 only if it wins; release/GATE.md, `release.procedure-order`)
+  # Palette render evidence is optional in the schema so older v0 plans still parse; plan-candidates
+  # names a claimed render without candidate artifacts/values and matched captures as uncompared.
   explorations:
     type: array
     items:
@@ -293,9 +295,29 @@ properties:
               name: { type: string, minLength: 1 }       # a family for type, a one-sentence relation for direction
               source: { type: string, minLength: 1 }
               note: { type: string }
+              artifact: { type: string, minLength: 1 }  # palette specimen or actual screen implementation
+              roles: { $ref: "#/$defs/color_tokens/properties/roles" }
+              token_file: { type: string, minLength: 1 } # alternative to inline roles; this candidate's mapping
         compared_on: { type: array, items: { enum: [specimen, render, sketch] } }   # specimen: the page's real copy set in each candidate
         chosen: { type: string, minLength: 1 }           # the name of one candidate
         runner_up_lost: { type: string, minLength: 8 }   # why the closest alternative lost
+        comparisons:                                   # palette candidates viewed in one controlled context
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              variable: { type: string, minLength: 1 } # one consequential color variable; other decisions fixed
+              viewport:
+                type: object
+                additionalProperties: false
+                properties:
+                  width: { type: integer, minimum: 1 }
+                  theme: { enum: [light, dark, high-contrast] }
+              state: { type: string, minLength: 1 }     # content slice and actual state shown
+              captures:
+                type: object
+                additionalProperties: { type: string, minLength: 1 } # candidate name -> capture path/ref
         fixed_by: { enum: [contract, brief] }
         reason: { type: string, minLength: 8 }           # what fixes the decision; required with fixed_by
       allOf:
