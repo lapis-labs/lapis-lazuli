@@ -41,9 +41,10 @@ claims until the actual integrated local surface is exercised and ordinary evide
 2. The project's contract: `DESIGN.md` and its tokens. A finding against it is fixed in the code,
    or the plan records a `proposed_design_changes` entry that the user approves.
 3. Platform and framework conventions.
-4. Named defaults (the cards). A default the plan keeps with a basis, one of the rule's `keep_when`
-   ids, the evidence that case lists, and a reason is waived unless the render contradicts the reason.
-   A case listed as `evidence: none` waives on the reason alone; read that reason against the render.
+4. Named defaults (the cards). A default the plan keeps with a basis, one of the rule's `keep_when` ids, the evidence
+   that case lists, and a reason is waived by the checks. The critic judges it by the case's own `when` text, which the
+   critic packet carries as `case_when`, against the captures, and is not given the maker's reason. A case listed as
+   `evidence: none` waives on the reason alone, so the captures decide it.
 
 ## What the checks may touch
 
@@ -56,6 +57,8 @@ claims until the actual integrated local surface is exercised and ordinary evide
   synthetic values (`--backend local-dev --outbound none --values <file>`). Never real accounts,
   credentials, or payment methods.
 - When something can only be checked by crossing these limits, report it as not checked.
+- Never stop a process by pattern (`pkill`, `killall`, or a `pgrep` piped to `kill`): other work shares the machine.
+  Stop only a process id a command recorded, such as the one in `.lapis/logs/<task>.<step>.pid`.
 
 ## Modes
 
@@ -76,8 +79,14 @@ claims until the actual integrated local surface is exercised and ordinary evide
 | behavior session | `.lapis/behavior/<task>.json` |
 | lint report | `.lapis/lint/<task>.json` |
 | critic report | `.lapis/critic/<task>.json` |
+| critic packet | `.lapis/critic/<task>.packet.json` |
+| disputes | `.lapis/disputes/<task>.yaml` |
+| requirement record, change log, owner block | `.lapis/requirements/<task>.json`, `.lapis/changes/<task>.jsonl`, `.lapis/owner/<task>.md` |
 | fonts lock, asset ledger | `.lapis/fonts.lock.json`, `.lapis/assets.ledger.json` |
 | reference profiles | `.lapis/refs/<slug>.json` |
+
+The CLI writes the packet, the requirement record, the change log, and the owner block, and nobody edits them by
+hand: a hand edit is detected and shown to the owner.
 
 Every report follows `shared/slop/finding.schema.yaml`.
 
@@ -123,8 +132,11 @@ version control and tell the user.
 - `skipped` means the check could not judge, never that it passed. A skip for a missing input
   names the check to run; a skip that asks for a reviewer goes to the critic. Report the rest as
   not checked.
-- `waived` means the plan keeps that default. It stays waived unless the critic finds the render
-  contradicts the keep's reason.
+- `waived` means the plan keeps that default. It stays waived unless the critic finds the captures contradict the
+  case's `case_when`.
+- Do not open the `lapis_design` source to argue with a finding, and do not edit markup only so that a check stops
+  matching. A finding you believe is wrong goes into `.lapis/disputes/<task>.yaml` (`shared/review/disputes.schema.yaml`):
+  the critic re-judges it on the captures without your reason, and the owner sees both. A dispute does not clear it.
 - A finding's `rule_id` leads to its `why`, `better`, and `keep_when` in
   `shared/slop/rules.yaml`, and a default rule belongs to one card in `shared/slop/cards.yaml`,
   whose routes are the ways out.
@@ -135,15 +147,23 @@ version control and tell the user.
 
 ## Run the critic
 
-The critic judges in a context that did not make the design, reading only the inputs listed in
-`references/critic.md`.
+The critic judges in a context that did not make the design, reading only the critic packet. `lapis-design critic
+packet --task <task>` writes `.lapis/critic/<task>.packet.json` from the requirement rows, the captures with their
+hashes, the lint findings, the plan's design fields without the maker's reasons, and the protected changes; for a
+shown draft add its narrow inputs (`--extract`, `--lint`, `--session`). The critic reads the packet and the files it
+lists, nothing else (`references/critic.md`).
 
 - When the harness can start the `critic` agent (installed as `ulm-critic` where agents are
-  global), start it with the task id and those paths.
+  global), start it with the task id and the packet path.
 - Otherwise run `references/critic.md` in a fresh context: a new subtask or session that has not
-  seen the design conversation, given only those files.
+  seen the design conversation, given only the packet and the files it lists.
 - Never judge in the context that made the design. If no fresh context is possible, say that no
   independent review ran.
+- The report names its packet in `target.packet` and counts only for that one. Change a capture, the lint report,
+  a requirement row, a design field, or a protected change and it is stale: build the packet again and rerun the
+  critic. `next` sends the run back to `critic` until the report matches the current packet.
+- The report judges every requirement row (`requirements`), lists the facts the page asserts with their sources
+  (`facts`), re-judges each disputed finding (`disputes`), and gives a verdict on each listed change (`changes`).
 - A critic that cannot write files returns its report as JSON; save it to
   `.lapis/critic/<task>.json`.
 - Hand it the visitor-task walk (`references/critic.md`, First: walk the visitor's tasks): one to three tasks from the
@@ -185,3 +205,5 @@ Tell the user, in this order: blocking findings with their fixes; the most conse
 choices from the critic; what was not checked (widths, themes, probes, layers, skipped rules) and
 why; and the next step, another loop or the release gate (`ulm-release`). Leave rule text and
 raw output in the report files.
+
+When `next` returned an owner block, paste it unchanged ahead of the report; it is the CLI's account, not yours.

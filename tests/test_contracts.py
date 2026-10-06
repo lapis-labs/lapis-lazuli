@@ -23,9 +23,15 @@ def validator(rel):
     return V(schema)
 
 
+NEW_CONTRACTS = {   # the spec lock-in and review contracts: index id -> path under src/shared
+    "requirements-record": "requirements/schema.yaml",
+    "integrity-log": "integrity/schema.yaml",
+    "critic-packet": "review/critic-packet.schema.yaml",
+    "review-disputes": "review/disputes.schema.yaml",
+}
 SCHEMAS = ["plan/schema.yaml", "render/extract.schema.yaml", "slop/rules.schema.yaml",
            "slop/finding.schema.yaml", "fonts/lock.schema.yaml", "behavior/session.schema.yaml",
-           "assets/ledger.schema.yaml"]
+           "assets/ledger.schema.yaml", *NEW_CONTRACTS.values()]
 
 
 @pytest.mark.parametrize("rel", SCHEMAS)
@@ -406,6 +412,16 @@ def test_index_paths_exist_unless_planned():
         if item.get("status") == "planned":
             continue
         assert (SHARED / item["path"]).exists(), item["id"]
+
+
+@pytest.mark.parametrize(("item_id", "path"), NEW_CONTRACTS.items())
+def test_the_index_gives_each_new_contract_to_the_skills_that_use_it(item_id, path):
+    """The maker and the critic read these in full; the brief and copy skills only learn that they exist."""
+    item = next((i for i in load("index.yaml")["items"] if i["id"] == item_id), None)
+    assert item, f"index.yaml has no item {item_id}"
+    assert (item["path"], item["kind"], item.get("status")) == (path, "contract", None)
+    assert item["consumers"] == {"lapis": "full", "ultramarine": "full", "lps-brief": "summary", "lps-copy": "summary"}
+    assert (SHARED / path).read_text(encoding="utf-8").startswith("# ")   # the build takes line 1 as the summary
 
 
 def test_vocab_files_parse():

@@ -73,10 +73,15 @@ before code, one entry per slot and locale.
 3. **Say what happens.** A call to action names its outcome ("Book the 7:30 lane"), not the act of
    clicking. Two actions with different outcomes never share a label.
 4. **Keep the strength.** Do not raise a claim's strength while editing; keep the facts, numbers,
-   and certainty as the source has them.
+   and certainty as the source has them. Keeping a source's certainty is not verifying it: what a
+   document says about history, origin, naming, or third parties is a claim for the owner to confirm,
+   not a fact. Put it in the questions you send as unconfirmed, with the document it came from.
 5. **Two candidates.** For the headline, subhead, and cta, write a second line that comes from a
    different material or fact and set both in the real layout. Record the pair and why the loser lost
    in `explorations` (decision `copy`, `covers` the slot); `plan.uncompared-decision` reads that it is there.
+6. **Provisional.** Key copy is provisional until the owner has seen it rendered. Never call it final in
+   a spec, an assignment to another agent, or a handoff before then; hand it over as a proposal. After the
+   owner approves a rendered slice, an edit to key copy is listed to the owner as a change.
 
 ## Interface text
 
@@ -115,6 +120,7 @@ still the default.
 - Replace figures with plain statements; keep a single figure when it is the point.
 - Never add a figure, claim, or intensity the original did not have.
 - Report terms that conflict across screens instead of silently choosing one.
+- A source's statement about history, origin, naming, or third parties stays a claim for the owner to confirm.
 
 ## Check
 
@@ -125,4 +131,5 @@ copy. Rendered copy is checked by `lapis-design slop lint` with a render extract
 ## Reporting
 
 Tell the user the register per surface, the key copy in each locale, each copy default kept or
-rejected with its route, and any claim that needs a source the product has not given.
+rejected with its route, any claim that needs a source the product has not given, and every statement
+about history, origin, naming, or third parties with the document it came from, for the owner to confirm.

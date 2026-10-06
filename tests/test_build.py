@@ -326,6 +326,32 @@ def test_skill_body_shared_paths_are_in_the_generated_skill():
     assert _missing_shared_paths(build.collect(ROOT, VERSION)) == []
 
 
+NEW_CONTRACTS = {    # index id -> path under src/shared: the spec lock-in and review contracts
+    "requirements-record": "requirements/schema.yaml",
+    "integrity-log": "integrity/schema.yaml",
+    "critic-packet": "review/critic-packet.schema.yaml",
+    "review-disputes": "review/disputes.schema.yaml",
+}
+
+
+def test_the_build_packages_the_lock_in_and_review_contracts_for_the_skills_that_use_them():
+    files = build.collect(ROOT, VERSION)
+    plugin_of = {s: p["name"] for p in harnesses(ROOT)["plugins"] for s in p["skills"]}
+    for skill, view in (("lapis", "full"), ("ultramarine", "full"), ("lps-brief", "summary"), ("lps-copy", "summary")):
+        for folder in (f"dist/skills/{skill}", f"plugins/{plugin_of[skill]}/skills/{skill}"):
+            listed = {i["id"]: i for i in yaml.safe_load(files[f"{folder}/shared/index.yaml"])["items"]}
+            for item_id, path in NEW_CONTRACTS.items():
+                assert item_id in listed, (folder, item_id)
+                assert (listed[item_id]["view"], listed[item_id]["path"]) == (view, path), (folder, item_id)
+                assert listed[item_id]["summary"], (folder, item_id)       # line 1 of the schema
+                packaged = f"{folder}/shared/{path}"
+                if view == "summary":
+                    assert packaged not in files                          # listed only; the CLI carries it in full
+                else:
+                    source = yaml.safe_load((ROOT / "src/shared" / path).read_text(encoding="utf-8"))
+                    assert yaml.safe_load(files[packaged]) == source, packaged
+
+
 @pytest.mark.parametrize(("source", "target", "exists"), [
     ("SKILL.md", "shared/vocab/type.yaml", True),
     ("SKILL.md", "./shared/vocab/type.yaml", True),
