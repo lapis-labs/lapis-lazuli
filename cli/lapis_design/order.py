@@ -16,8 +16,8 @@ brief, the references, or the plan. Two kinds of evidence, the first exact:
 The finding is lifted by a plan that cites the brief record in `context.other` and compares the existing code as
 a candidate (`source: existing-code`) in a `direction` exploration, the code being kept only if it wins.
 
-Prevention (`decide`, run by the versioned `lapis-design-hook` entry point for `PreToolUse` in Claude Code, Codex, and Antigravity,
-and the tool_call event of Oh-My-Pi and pi): with `LAPIS_UNATTENDED=1`, a write of a page source file is refused
+Prevention (`decide`, run by the versioned `lapis-design-hook` entry point for `PreToolUse` in Claude Code and Codex, by
+`lapis-design antigravity-hook` for Antigravity's, and by the tool_call event of Oh-My-Pi and pi): with `LAPIS_UNATTENDED=1`, a write of a page source file is refused
 while `next` still names `brief`, `references`, `plan`, `plan-fix`, or `plan-explorations` for a create run.
 Writes under `.lapis/` (except the folders below), to files that are not page code, and outside the project are never
 refused. A person's session gets one line, once. A refusal repeats at most `CAP` times for one step: a plan blocker the

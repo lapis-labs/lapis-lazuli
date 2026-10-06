@@ -31,8 +31,11 @@ EXTENSIONS = {"session-start": "session-start.ts", "stop": "exit-gate.ts"}
 # Antigravity has its own hooks.json (a hook name maps to events; install/OUTPUTS.md, Antigravity) and no ExitPlanMode
 # tool, so `exit-plan` has no entry. A hook that fails, prints a field Antigravity does not know, or prints `{}` stops
 # the tool or the model call it ran for, so each command ends in `|| exit 0` (sh and cmd.exe both read it): a missing or
-# crashed runner then prints nothing and the agent goes on. `pre-write` gets the file-edit tools. Antigravity has
-# no session-start event, and PreInvocation's ephemeral message fades after a few steps, so `session-start` has no entry.
+# crashed runner then prints nothing and the agent goes on. The command is a `lapis-design` subcommand, not
+# `lapis-design-hook`, because an older CLI has no such subcommand and its argparse rejects it on stderr with status 2,
+# where its `lapis-design-hook` would print a `systemMessage` on stdout, which Antigravity fails the tool call for.
+# `pre-write` gets the file-edit tools. Antigravity has no session-start event, and PreInvocation's ephemeral message
+# fades after a few steps, so `session-start` has no entry.
 ANTIGRAVITY_SCHEMA = "https://antigravity.google/schemas/v1/plugin.json"
 ANTIGRAVITY_WRITE_TOOLS = "write_to_file|replace_file_content|multi_replace_file_content|notebook_edit"
 ANTIGRAVITY_HOOKS = {
@@ -124,7 +127,7 @@ def antigravity_hooks_json(plugin: dict, version: str) -> dict | None:
         if h is None:
             continue
         handler = {"type": "command", "timeout": h["timeout"],
-                   "command": f"lapis-design-hook --plugin-version {version} --host antigravity {name} || exit 0"}
+                   "command": f"lapis-design antigravity-hook --plugin-version {version} {name} || exit 0"}
         out[f"{plugin['name']}-{name}"] = {h["event"]: [{"matcher": h["matcher"], "hooks": [handler]}]
                                            if h["matcher"] else [handler]}
     return out or None

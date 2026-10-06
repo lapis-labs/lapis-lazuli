@@ -898,13 +898,13 @@ class _Gen:
               "together with the install script's `--update`, then restart the harness; a changed Codex hook "
               "must be trusted again in `/hooks`.", "",
               "Antigravity is stricter: it stops the tool call for a hook that exits non-zero or prints any JSON it "
-              "does not read (a `systemMessage`, or `{}`). Its hooks call `lapis-design-hook --plugin-version "
-              "<plugin-version> --host antigravity <hook-name>` followed by `|| exit 0`, so a missing or crashed "
+              "does not read (a `systemMessage`, or `{}`). Its hooks call `lapis-design antigravity-hook "
+              "--plugin-version <plugin-version> <hook-name>` followed by `|| exit 0`, so a missing or crashed "
               "runner prints nothing and the agent goes on, and a skipped hook's one line goes to stderr, which "
               "Antigravity writes to its CLI log (`~/.gemini/antigravity-cli/cli.log`). A CLI older than the plugin "
-              "does not know `--host`: it prints its `systemMessage` once for each hook, and Antigravity fails that "
-              "one tool call with the notice in its error (checked 2026-10-06); update the CLI to the plugin's "
-              "version.", "",
+              "has no such subcommand: its argparse rejects it on stderr with status 2, which `|| exit 0` turns into "
+              "no answer (checked 2026-10-06), so the hooks do nothing, without a notice, until the CLI is updated "
+              "to the plugin's version.", "",
               "The exit-status contracts are documented in "
               "[Claude Code hooks](https://code.claude.com/docs/en/hooks#exit-code-output) and "
               "[Codex hooks](https://learn.chatgpt.com/docs/hooks#stop): exit 2 can block a write or continue a "

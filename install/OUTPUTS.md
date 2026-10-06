@@ -202,7 +202,7 @@ our own: Antigravity installs only from a local folder, so `install.sh` clones t
   `lapis-pre-write` is `PreToolUse` with the matcher `write_to_file|replace_file_content|multi_replace_file_content|notebook_edit`
   (the file is `TargetFile`, or `NotebookPath` for `notebook_edit`; `sed_file` is in agy's tool list but a custom agent that names
   it fails with `not found in registry`, so it is not guarded); each runs
-  `lapis-design-hook --plugin-version VERSION --host antigravity <name> || exit 0`. There is no `exit-plan` (no ExitPlanMode tool)
+  `lapis-design antigravity-hook --plugin-version VERSION <name> || exit 0`. There is no `exit-plan` (no ExitPlanMode tool)
   and no `session-start`: Antigravity has no such event, and a PreInvocation hook's `ephemeralMessage` reaches the model for a few
   steps only (checked 2026-10-06: answered after one tool call, gone after three), so the lazuli skill's by-hand command stands in.
 - `mcp_config.json`, lazuli only: the same server as `.mcp.json`. Antigravity lists its tool as `slop_lint` on the server
@@ -230,8 +230,11 @@ same shape; its transcript (`transcriptPath`) opens with a system message from i
 with their own message (`source` `USER_EXPLICIT`), and the gate answers nothing for any other conversation, so it never
 continues the critic with the procedure's next step. A successful hook's stderr is written to the CLI log
 (`~/.gemini/antigravity-cli/cli.log`) and is not shown to the person, which is where a skipped hook's one-line notice goes. The
-`|| exit 0` is why a missing or crashed `lapis-design-hook` costs nothing (a CLI older than the plugin does not know `--host`
-and prints its `systemMessage` once per hook, which fails that one tool call).
+`|| exit 0` is why a missing or crashed `lapis-design` costs nothing. The command is the `antigravity-hook` subcommand of
+`lapis-design`, not `lapis-design-hook`: a CLI older than the plugin has no such subcommand, and its argparse rejects it on stderr
+with status 2, which `|| exit 0` turns into no answer (checked 2026-10-06 with the installed 0.2.0); the older `lapis-design-hook`
+would have printed a `systemMessage` on stdout, which fails the tool call. The older CLI's hooks are then silent until the CLI is
+updated, and the skipped hook's stderr (`invalid choice: 'antigravity-hook'`) is in the CLI log.
 
 ## Licenses
 

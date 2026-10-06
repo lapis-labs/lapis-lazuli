@@ -12,10 +12,12 @@ between minor versions; render extraction is v1 and the other contract formats a
 - Antigravity CLI (`agy`) is a harness, marked experimental. `dist/antigravity/<plugin>/` holds the three plugins as
   `agy plugin install` reads them: a `plugin.json`, the skills, the lapis plugin's `hooks.json` (the write guard as
   `PreToolUse` on the file-edit tools and the exit gate as `Stop`), the lazuli plugin's `mcp_config.json`, and the
-  critic as an agent file limited to file reading and writing. `lapis-design-hook --host antigravity` (`antigravity.py`)
+  critic as an agent file limited to file reading and writing. `lapis-design antigravity-hook` (`antigravity.py`)
   reads Antigravity's event and prints only what it reads: `{"decision": "deny"}` for the guard, `{"decision": "continue"}`
   for the gate (only in the person's own conversation, never a subagent's), and nothing otherwise; a skipped hook's notice goes to stderr, and every command ends in `|| exit 0`,
-  because Antigravity fails a tool call for a failing hook or any JSON it does not know (checked 2026-10-06, agy 1.2.17).
+  because Antigravity fails a tool call for a failing hook or any JSON it does not know (checked 2026-10-06, agy 1.2.17). It
+  is a `lapis-design` subcommand, not `lapis-design-hook`, so a CLI older than the plugin rejects it on stderr and the
+  hook answers nothing instead of printing a `systemMessage` that would fail the tool call.
   There is no session summary: Antigravity has no session-start event, and its `ephemeralMessage` fades after a few steps.
   `install.sh` and `install.ps1` install it from a temporary clone of the release branch (the new `{checkout}`
   placeholder, deleted at the end), and a harness may carry its own `checked` date.

@@ -194,7 +194,8 @@ def test_antigravity_hooks_carry_only_the_hooks_it_can_run_and_never_fail():
                                                 "notebook_edit"}
     for handler in [stop[0], *group["hooks"]]:
         # a hook that exits non-zero stops the tool call, so a missing runner must not
-        assert handler["command"].startswith("lapis-design-hook --plugin-version 0.1.0 --host antigravity ")
+        # a `lapis-design` subcommand that an older CLI rejects on stderr, not the `lapis-design-hook` that prints JSON
+        assert handler["command"].startswith("lapis-design antigravity-hook --plugin-version 0.1.0 ")
         assert handler["command"].endswith(" || exit 0")
         assert isinstance(handler["timeout"], int)
 

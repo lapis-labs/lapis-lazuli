@@ -1,4 +1,4 @@
-"""Antigravity's hook JSON, run as `lapis-design-hook --plugin-version VERSION --host antigravity <name>`.
+"""Antigravity's hook JSON, run as `lapis-design antigravity-hook --plugin-version VERSION <name>`.
 
 Antigravity (`agy`) hands a hook its own event shape and reads a strict answer: the plugin's `hooks.json` command gets
 `conversationId`, `workspacePaths`, and (PreToolUse) `toolCall.{name,args}` on stdin, and an answer with a field
@@ -29,12 +29,16 @@ session, version skew, an unsupported hook) goes to stderr, which Antigravity wr
 """
 from __future__ import annotations
 
+import argparse
+import hashlib
 import io
 import json
 import os
 import sys
 from pathlib import Path
 from typing import Any, Callable, Mapping, TextIO
+
+from lapis_design import __version__
 
 # the file-edit tools of agy 1.2.17 and the argument that names the file; `sed_file` is in its tool list but a custom agent
 # that names it fails with "not found in registry" (2026-10-06), so it has no entry
@@ -141,3 +145,66 @@ def run(name: str, stdin: TextIO, stdout: TextIO, bodies: Mapping[str, Body]) ->
     except Exception as exc:        # a bug of ours never keeps an agent from working
         print(f"lapis-design hook {name} (antigravity): {type(exc).__name__}: {exc}", file=sys.stderr)
     return 0
+
+
+class _Parser(argparse.ArgumentParser):
+    def error(self, message: str) -> None:
+        raise ValueError(message)
+
+
+def _claimed(base: str | None, digest: str) -> bool:
+    """Whether this notice was already claimed for the conversation; claims it when not."""
+    if base is None:
+        return False
+    try:
+        folder = Path(base) / ".lapis" / "hooks"
+        folder.mkdir(parents=True, exist_ok=True)
+        with (folder / f"{digest}.notice").open("x", encoding="utf-8"):
+            pass
+    except FileExistsError:
+        return True
+    except (OSError, TypeError, ValueError):
+        pass            # a read-only project can lose deduplication, never fail-open behavior
+    return False
+
+
+def _notice(message: str, plugin_version: str | None = None) -> int:
+    """The one line for a hook that is skipped, once per conversation and version pair, on stderr: stdout stays empty."""
+    try:
+        event = json.load(sys.stdin) if not sys.stdin.isatty() else {}
+    except (ValueError, OSError):
+        event = {}
+    event = event if isinstance(event, dict) else {}
+    paths = event.get("workspacePaths")
+    # a hook's own working directory is the plugin's folder, so only a named workspace can hold the claim
+    base = paths[0] if isinstance(paths, list) and paths and isinstance(paths[0], str) else None
+    key = json.dumps([event.get("conversationId"), plugin_version, __version__, message])
+    if not _claimed(base, hashlib.sha256(key.encode("utf-8")).hexdigest()):
+        print(message, file=sys.stderr)
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    """`lapis-design antigravity-hook [--plugin-version V] NAME`: unsupported interfaces and version skew print one line to
+    stderr and nothing to stdout, and the exit status is 0. An older CLI has no such subcommand, and its argparse rejects
+    the command on stderr with a non-zero status, which the hook command's `|| exit 0` turns into no answer."""
+    from lapis_design import hooks
+
+    ap = _Parser(prog="lapis-design antigravity-hook", add_help=False)
+    ap.add_argument("--plugin-version")
+    ap.add_argument("name")
+    try:
+        args = ap.parse_args(sys.argv[1:] if argv is None else argv)
+    except ValueError as exc:
+        return _notice(f"LapisLazuli hook skipped: {exc}; update the CLI and plugins together.")
+    if args.plugin_version and args.plugin_version != __version__:
+        return _notice(f"LapisLazuli hooks skipped: plugin {args.plugin_version}, CLI {__version__}; "
+                       "update the CLI and plugins together.", args.plugin_version)
+    if args.name not in HOOKS:
+        return _notice(f"LapisLazuli hook skipped: CLI {__version__} does not support {args.name!r} for Antigravity; "
+                       "update the CLI and plugins together.", args.plugin_version)
+    return run(args.name, sys.stdin, sys.stdout, hooks.HOOKS)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

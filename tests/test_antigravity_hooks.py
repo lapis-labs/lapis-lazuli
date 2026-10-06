@@ -1,4 +1,4 @@
-"""Antigravity's side of the hooks: `lapis-design-hook --host antigravity` (cli/lapis_design/antigravity.py) on events
+"""Antigravity's side of the hooks: `lapis-design antigravity-hook` (cli/lapis_design/antigravity.py) on events
 shaped as agy 1.2.17 sends them, and the commands the lapis plugin's hooks.json runs.
 
 Antigravity stops a PreToolUse tool call for a hook that exits non-zero, prints JSON it does not know (`{}` and
@@ -70,13 +70,13 @@ def run(tmp_path: Path, *args: str, event=None, raw: str | None = None, env: dic
     plugin = tmp_path / "installed-plugin"
     plugin.mkdir(exist_ok=True)
     base = {k: v for k, v in os.environ.items() if k not in ("LAPIS_UNATTENDED", "LAPIS_TASK", "CLAUDE_PROJECT_DIR")}
-    return subprocess.run([sys.executable, "-m", "lapis_design.hooks", *args],
+    return subprocess.run([sys.executable, "-m", "lapis_design.cli", "antigravity-hook", *args],
                           input=raw if raw is not None else json.dumps(event), capture_output=True, text=True,
                           timeout=30, cwd=plugin, env={**base, **(env or {})})
 
 
 def hook(tmp_path, name, event=None, *, version=__version__, env=None, raw=None):
-    return run(tmp_path, "--plugin-version", version, "--host", "antigravity", name, event=event, raw=raw, env=env)
+    return run(tmp_path, "--plugin-version", version, name, event=event, raw=raw, env=env)
 
 
 def answer(done, fields: set[str]) -> dict:
@@ -239,30 +239,18 @@ def test_a_notice_with_no_workspace_to_hold_the_claim_still_goes_to_stderr_and_w
 
 
 @pytest.mark.parametrize("args, said", [
-    (("--plugin-version", __version__, "--host", "antigravity", "exit-plan"), "does not support 'exit-plan'"),
-    (("--plugin-version", __version__, "--host", "antigravity", "session-start"), "does not support 'session-start'"),
-    (("--plugin-version", __version__, "--host", "antigravity", "future-hook"), "does not support 'future-hook'"),
-    (("--host=antigravity", "--future-option", "stop"), "hook skipped"),
-    (("--host", "antigravity"), "hook skipped"),
+    (("--plugin-version", __version__, "exit-plan"), "does not support 'exit-plan'"),
+    (("--plugin-version", __version__, "session-start"), "does not support 'session-start'"),
+    (("--plugin-version", __version__, "future-hook"), "does not support 'future-hook'"),
+    (("--future-option", "stop"), "hook skipped"),
+    (("-h",), "hook skipped"),
+    ((), "hook skipped"),
 ])
 def test_an_unsupported_hook_or_option_fails_open_to_stderr_under_antigravity(tmp_path, args, said):
     site = project(tmp_path)
     done = run(tmp_path, *args, event=pre_event(site, site / ".lapis/owner/x.md"))
     silent(done)
     assert said in done.stderr and len(done.stderr.splitlines()) == 1
-
-
-def test_the_equals_form_of_the_host_option_works(tmp_path):
-    site = project(tmp_path)
-    done = run(tmp_path, "--plugin-version", __version__, "--host=antigravity", "pre-write",
-               event=pre_event(site, site / ".lapis/owner/x.md"))
-    assert answer(done, PRE_FIELDS)["decision"] == "deny"
-
-
-def test_without_the_host_option_the_notice_is_still_claude_codes_json_line(tmp_path):
-    done = run(tmp_path, "--plugin-version", "9.9.9", "pre-write", event={"session_id": "s", "cwd": str(tmp_path)})
-    assert json.loads(done.stdout)["systemMessage"].startswith("LapisLazuli hooks skipped: plugin 9.9.9")
-    assert done.stderr == ""
 
 
 def test_answers_are_only_what_antigravity_reads():
@@ -308,13 +296,44 @@ def bin_dir(tmp_path: Path, runner: str | None) -> Path:
     folder = tmp_path / "bin"
     folder.mkdir()
     if runner is not None:
-        stub = folder / "lapis-design-hook"
+        stub = folder / "lapis-design"
         stub.write_text(f"#!{sys.executable}\n{runner}", encoding="utf-8")
         stub.chmod(0o755)
     return folder
 
 
 posix_only = pytest.mark.skipif(os.name == "nt", reason="the commands are read by sh here; cmd.exe is not exercised")
+
+
+# what `lapis-design` of a release before the Antigravity plugins does with the subcommand: argparse rejects it on stderr
+# with status 2 (the stub is that parser, and the first test below checks the premise), where the older `lapis-design-hook`
+# would have printed {"systemMessage": ...} on stdout, which Antigravity fails a PreToolUse tool call for
+OLD_CLI = """
+import argparse
+ap = argparse.ArgumentParser(prog="lapis-design")
+ap.add_argument("--version", action="version", version="lapis-design 0.2.0")
+sub = ap.add_subparsers(dest="command", required=True)
+for name in ("plan", "rights", "render", "behavior", "stub", "slop", "release", "draft", "critic", "handoff", "skill",
+             "requirements", "next", "hook", "mcp"):
+    sub.add_parser(name)
+ap.parse_args()
+"""
+
+
+@posix_only
+def test_a_cli_older_than_the_plugin_prints_nothing_to_stdout_and_the_command_exits_zero(tmp_path, commands):
+    env = {"PATH": str(bin_dir(tmp_path, OLD_CLI)), "HOME": str(tmp_path)}
+    site = project(tmp_path)
+    event = json.dumps(pre_event(site, site / ".lapis/requirements/demo.json"))
+    bare = subprocess.run(["lapis-design", "antigravity-hook", "pre-write"], input=event, capture_output=True, text=True,
+                          env=env, timeout=30)
+    assert bare.returncode == 2 and bare.stdout == "" and "invalid choice: 'antigravity-hook'" in bare.stderr
+    for name, command in commands.items():
+        done = subprocess.run(command, shell=True, input=event, capture_output=True, text=True, env=env, timeout=30)
+        assert done.returncode == 0, (name, done.stderr)
+        assert done.stdout == "", (name, done.stdout)                 # nothing for Antigravity to reject: the write goes on
+        assert "invalid choice" in done.stderr                        # and the reason is in the hook's stderr (the CLI log)
+        assert not (site / ".lapis/hooks").exists() and not (site / ".lapis/gate").exists()
 
 
 @posix_only
@@ -330,7 +349,7 @@ def test_a_runner_that_is_missing_or_fails_never_stops_the_agent(tmp_path, comma
 @posix_only
 def test_the_command_runs_the_guard_end_to_end(tmp_path, commands):
     site = project(tmp_path)
-    runner = ("from lapis_design.hooks import main\nimport sys\nsys.exit(main())\n")
+    runner = ("from lapis_design.cli import main\nimport sys\nsys.exit(main())\n")
     env = {**os.environ, "PATH": f"{bin_dir(tmp_path, runner)}{os.pathsep}{os.environ['PATH']}"}
     env.pop("LAPIS_UNATTENDED", None)
     owned = subprocess.run(commands["pre-write"], shell=True, capture_output=True, text=True, env=env, timeout=30,

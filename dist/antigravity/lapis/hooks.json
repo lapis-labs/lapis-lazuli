@@ -4,7 +4,7 @@
       {
         "type": "command",
         "timeout": 60,
-        "command": "lapis-design-hook --plugin-version 0.2.0 --host antigravity stop || exit 0"
+        "command": "lapis-design antigravity-hook --plugin-version 0.2.0 stop || exit 0"
       }
     ]
   },
@@ -16,7 +16,7 @@
           {
             "type": "command",
             "timeout": 30,
-            "command": "lapis-design-hook --plugin-version 0.2.0 --host antigravity pre-write || exit 0"
+            "command": "lapis-design antigravity-hook --plugin-version 0.2.0 pre-write || exit 0"
           }
         ]
       }

@@ -100,8 +100,8 @@ def test_stop_in_an_attended_folder_without_a_plan_prints_nothing_and_loads_neit
 
 ANTIGRAVITY_CHILD = f"""
 import json, sys
-from lapis_design import hooks
-code = hooks.main(["--plugin-version", hooks.__version__, "--host", "antigravity", sys.argv[1]])
+from lapis_design import cli, __version__
+code = cli.main(["antigravity-hook", "--plugin-version", __version__, sys.argv[1]])
 sys.stdout.flush()
 print(json.dumps({{"code": code, "heavy": sorted(m for m in {HEAVY + ("yaml", "jsonschema")!r} if m in sys.modules)}}), file=sys.stderr)
 """
