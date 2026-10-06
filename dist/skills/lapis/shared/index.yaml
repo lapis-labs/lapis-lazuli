@@ -53,6 +53,10 @@ items:
   view: summary
   path: slop/finding.schema.yaml
   summary: LapisLazuli finding schema — v0 draft
+- id: integrity-log
+  view: full
+  path: integrity/schema.yaml
+  summary: LapisLazuli integrity state and change rows — v0 draft
 - id: fonts-lock-schema
   view: summary
   path: fonts/lock.schema.yaml

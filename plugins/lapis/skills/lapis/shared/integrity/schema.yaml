@@ -1,0 +1,103 @@
+# LapisLazuli integrity state and change rows — v0 draft
+# Written only by `lapis-design` (cli/lapis_design/integrity.py); a maker never writes either file. Every command
+# that reads the plan first snapshots the protected plan pointers and appends one row per difference to the change
+# log. A change is surfaced, never forbidden: the rows go to the owner block and to the critic packet, and no release
+# rule counts them as defects.
+#
+#   state   .lapis/state/<task>.json     the protected values as last observed, the findings open at the time, and
+#                                        the hash that anchors the change log
+#   change  .lapis/changes/<task>.jsonl  one JSON line per change; `seq` and `prev` form a hash chain
+#
+# Protected pointers (integrity.PROTECTED). Concrete pointers carry the key of the list item they address:
+#   /brief/*  /claims/*  /approval/*  /sources[ref=R]                           one row per changed leaf (a list is one leaf)
+#   /references[source=S]/take  /references[source=S]/leave
+#   /defaults[id=X]                                                              the whole entry, reason and evidence included
+#   /explorations[decision=D,covers=C1|C2]/chosen  .../fixed_by  .../candidates/*/name   (the last is a list of names)
+#   /flows[id=F]/goal  /flows[id=F]/kind  /flows[id=F]/done/*  /flows[id=F]/reach/*
+#   /tokens/space/base_px  /tokens/space/scale  /tokens/type/scale/*  /tokens/shape/radius/scale
+#   /tokens/shape/radius/by_role/*  /tokens/color/roles[name=N,theme=T]         the whole role entry
+#   /layout/phone_task/*  /content/key_copy[slot=S,locale=L,n=K]                 K counts entries with the same slot and locale
+#   answers:headings                                                             the `##` headings of .lapis/answers/<task>.md with their item counts
+# A key that two list items share gets `,n=K` (1-based, in file order).
+#
+# Rows by kind:
+#   protected         pointer is a concrete protected pointer; before/after are its values (null when absent)
+#   requirements      pointer /requirements/<ID> or /requirements/owner_decisions/<ID>; before/after hold the row's text
+#                     or the owner's line (cli/lapis_design/requirements.py supplies them)
+#   answers-headings  pointer answers:headings; before/after are the heading lists
+#   integrity         pointer `changes` (the log does not match its state or a link of its chain is broken), `state`
+#                     (the state file is missing or unreadable), or `history` (the first observation found work that
+#                     was not observed); `after` says what was found, `before` is {line: N} for a broken chain link
+#
+# `related_open` lists the ids of rules whose findings were open when the change was observed and whose plan inputs
+# cover the pointer: a rule's `detect.plan.path`, its detector's `reads_plan` (slop/detectors.yaml), the rule whose id
+# is the `defaults` id, and a finding whose location.flow is the flow id. `reactive` is true when a `defaults[id=X]`
+# entry was added or changed while finding X was open. `after_slice` is true once a slice is sealed in the state.
+# `prev` is the sha256 of the previous line's bytes (without the newline), null for the first line.
+
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/integrity.v0.json
+title: LapisLazuli integrity state and change row
+
+$defs:
+  digest: { type: string, pattern: "^[0-9a-f]{64}$" }
+  digest_or_null: { oneOf: [ { type: "null" }, { $ref: "#/$defs/digest" } ] }
+  time: { type: string, pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$" }
+
+  state:
+    type: object
+    additionalProperties: false
+    required: [version, task, values, open, requirements_sha256, last_change]
+    properties:
+      version: { const: 0 }
+      task: { type: string, pattern: "^[a-z0-9][a-z0-9-]{1,63}$" }
+      values:                                         # concrete pointer -> its JSON value as last observed
+        type: object
+      open:                                           # findings that were open, by the report they came from
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [rule_id, layer, from]
+          properties:
+            rule_id: { type: string, minLength: 1 }
+            layer: { type: string }
+            from: { enum: [plan_check, slop_lint, critic] }
+            path: { type: string }                    # plan-layer findings: the plan path the finding names
+            flow: { type: string }                    # the flow id the finding names
+      requirements_sha256: { $ref: "#/$defs/digest_or_null" }   # sha256 of .lapis/requirements/<task>.json, null without one
+      last_change: { $ref: "#/$defs/digest_or_null" } # sha256 of the last line of the change log, null before the first row
+      slice:                                          # sealed by `next` when the owner approved a rendered slice
+        type: object
+        additionalProperties: false
+        required: [url, draft_sha256, packet_sha256, questions_sha256, answers_sha256, requirements_sha256,
+                   protected_sha256, at]
+        properties:
+          url: { type: string, minLength: 1 }
+          candidates: { type: array, items: { type: string, minLength: 1 } }   # the urls of the candidates shown when more than one was
+          draft_sha256: { $ref: "#/$defs/digest_or_null" }
+          packet_sha256: { $ref: "#/$defs/digest_or_null" }
+          questions_sha256: { $ref: "#/$defs/digest_or_null" }
+          answers_sha256: { $ref: "#/$defs/digest_or_null" }
+          requirements_sha256: { $ref: "#/$defs/digest_or_null" }
+          protected_sha256: { $ref: "#/$defs/digest" }   # sha256 of the canonical JSON of `values` at the seal
+          at: { $ref: "#/$defs/time" }
+
+  change:
+    type: object
+    additionalProperties: false
+    required: [seq, at, by, kind, pointer, before, after, related_open, reactive, after_slice, prev]
+    properties:
+      seq: { type: integer, minimum: 1 }
+      at: { $ref: "#/$defs/time" }
+      by: { type: string, minLength: 1 }              # the command that observed it: plan check, next, release check, ...
+      kind: { enum: [protected, requirements, answers-headings, integrity] }
+      pointer: { type: string, minLength: 1 }
+      before: {}                                      # any JSON value; null when absent
+      after: {}
+      related_open:
+        type: array
+        items: { type: string }
+      reactive: { type: boolean }
+      after_slice: { type: boolean }
+      prev: { $ref: "#/$defs/digest_or_null" }

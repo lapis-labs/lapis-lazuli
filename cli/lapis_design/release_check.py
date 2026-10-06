@@ -327,6 +327,9 @@ def run(root: Path, task: str, *, static: bool = False, offline: bool = False,
     plan_report = check_plan(paths["plan"], shared / "slop/rules.yaml", lock if docs.get("lock") else None,
                              shared / "plan/schema.yaml", root, plan=plan, lazuli_db=lazuli_db)
     findings.extend(_copy_blocking(plan_report, paths["plan"]))
+    from lapis_design import integrity
+
+    integrity.record_findings(root, task, plan_report["findings"], "plan_check")
     lint = docs.get("lint")
     if lint:
         needed = ("plan", "extract", "ledger", "lock", "source") + (("session",) if interactive else ())
@@ -476,6 +479,9 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design release check"
         print("release check: --task must be a plan task id and a filename component", file=sys.stderr)
         return 2
     try:
+        from lapis_design import integrity
+
+        integrity.observe_task(args.root, args.task, "release check")     # before anything is computed from the plan
         result = run(args.root, args.task, static=args.static, offline=args.offline)
         output.parent.mkdir(parents=True, exist_ok=True)
         temp = tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=output.parent,

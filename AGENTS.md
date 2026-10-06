@@ -257,6 +257,15 @@ files beside it; the database file itself does not change.
   `rules_file` when the run was narrowed), and every skipped finding records `skip_cause`; the
   release gate reads both.
 - `release check` lives in `cli/lapis_design/release_check.py`: it runs the plan checks itself, reads the lint, session, extract, and critic reports, rechecks catalog font licenses through `lazuli.catalog`, and writes the gate report; it never captures or drives a page.
+- The change log lives in `cli/lapis_design/integrity.py` (shapes: `src/shared/integrity/schema.yaml`): every command that reads the
+  plan (`plan check`, `slop lint --plan`, `next`, `draft check`, `release check`, `handoff export`) calls `integrity.observe`
+  first, which snapshots the protected plan pointers (`PROTECTED`) and appends one hash-chained row per change to
+  `.lapis/changes/<task>.jsonl`, with the rule ids open on that input (a rule's `detect.plan.path` and its detector's
+  `reads_plan` in `slop/detectors.yaml`, a `defaults` id, a flow id). A change is surfaced, never forbidden. `observe` never
+  raises: a failure prints one stderr line and the command goes on. Only `lapis-design` writes `.lapis/requirements/`,
+  `.lapis/state/`, `.lapis/changes/`, and `.lapis/owner/`: `hook pre-write` refuses an edit tool's write to them in every
+  session (`order.CLI_OWNED`), and a shell write shows up as an `integrity` row. A detector that reads a plan field
+  declares it in `reads_plan`, or a change to that field never names the rule.
 - `next` lives in `cli/lapis_design/next_step.py`: `lapis-design next --task demo [--json]` runs `release_check.run(...,
   offline=True)` on the files and returns the one step still to take (`brief`, `references`, `plan`, `plan-fix`,
   `plan-flows`,

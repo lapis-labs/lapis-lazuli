@@ -96,7 +96,7 @@ harnesses:
     session_start: { via: plugin-hook, output: plugin-hooks, event: "SessionStart startup|resume|clear|compact|fork" }
     critic: { via: plugin-agent, output: claude-agents, note: "invoked as ultramarine:critic; the plan check runs from a hook inline in the lapis manifest" }
     exit_gate: { via: plugin-hook, output: plugin-hooks, event: Stop, note: "`lapis-design-hook --plugin-version <version> stop` continues the agent with the next step only when LAPIS_UNATTENDED=1 and says so in one line otherwise; at most 3 continues in a row for one step and 15 in a session; version skew skips the gate" }
-    pre_write: { via: plugin-hook, output: plugin-hooks, event: "PreToolUse Write|Edit|MultiEdit", note: "`lapis-design-hook --plugin-version <version> pre-write` refuses a page source file's write with `permissionDecision: deny` only when LAPIS_UNATTENDED=1 and the brief, references, or plan of a create run is still owed; writes under .lapis/ and to other files pass, a person's session gets one `systemMessage`; a refusal repeats at most 3 times for one step; version skew skips the guard" }
+    pre_write: { via: plugin-hook, output: plugin-hooks, event: "PreToolUse Write|Edit|MultiEdit", note: "`lapis-design-hook --plugin-version <version> pre-write` refuses a page source file's write with `permissionDecision: deny` only when LAPIS_UNATTENDED=1 and the brief, references, or plan of a create run is still owed, and in every session refuses a write to .lapis/requirements/, .lapis/state/, .lapis/changes/, or .lapis/owner/ (records only lapis-design writes); other writes under .lapis/ and to other files pass, a person's session gets one `systemMessage`; a refusal of page code repeats at most 3 times for one step; version skew skips the guard" }
     mcp: { via: plugin-mcp, output: plugin-mcp, note: "server plugin:lazuli:lapis-lazuli; the command is the CLI on PATH" }
     conflicts:
       - "Oh-My-Pi can load plugins from Claude Code's install registry; with both installed, skills load twice and dedupe by name"
@@ -220,7 +220,7 @@ harnesses:
     session_start: { via: extension, output: session-extension, event: session_start, note: "omp does not run hooks/hooks.json; a marketplace install links the plugin's package.json into ~/.omp/plugins/node_modules, and its omp.extensions load after a restart" }
     critic: { via: plugin-agent, output: claude-agents, note: "loaded as a task agent" }
     exit_gate: { via: extension, output: gate-extension, event: session_stop, note: "asks `lapis-design-hook --plugin-version <version> stop` and answers `{ decision: block }`, only when LAPIS_UNATTENDED=1; the lapis plugin's package.json links the extension; version skew skips the gate" }
-    pre_write: { via: extension, output: gate-extension, event: tool_call, note: "the exit-gate extension also registers a `tool_call` handler for the write and edit tools; it asks `lapis-design-hook --plugin-version <version> pre-write` and answers `{ block: true, reason }`, only when LAPIS_UNATTENDED=1; a handler error or timeout blocks the tool in omp, so the extension answers within 20 seconds and treats any failure as no answer; version skew skips the guard" }
+    pre_write: { via: extension, output: gate-extension, event: tool_call, note: "the exit-gate extension also registers a `tool_call` handler for the write and edit tools; it asks `lapis-design-hook --plugin-version <version> pre-write` and answers `{ block: true, reason }` for page code only when LAPIS_UNATTENDED=1, and in every session for a write to .lapis/requirements/, .lapis/state/, .lapis/changes/, or .lapis/owner/; a handler error or timeout blocks the tool in omp, so the extension answers within 20 seconds and treats any failure as no answer; version skew skips the guard" }
     mcp: { via: plugin-mcp, output: plugin-mcp }
     conflicts:
       - "reads .omp-plugin, then .claude-plugin manifests; never .codex-plugin"
@@ -268,7 +268,7 @@ harnesses:
     session_start: { via: extension, output: session-extension, event: session_start }
     critic: { via: instructions, note: "pi has no subagents; the skill asks for a fresh session as the critic" }
     exit_gate: { via: extension, output: gate-extension, event: agent_before_settle, note: "asks `lapis-design-hook --plugin-version <version> stop` and continues the agent with a custom message and `continue: true`, only when LAPIS_UNATTENDED=1; version skew skips the gate" }
-    pre_write: { via: extension, output: gate-extension, event: tool_call, note: "the same `tool_call` handler as in Oh-My-Pi, answering `{ block: true, reason }`, only when LAPIS_UNATTENDED=1" }
+    pre_write: { via: extension, output: gate-extension, event: tool_call, note: "the same `tool_call` handler as in Oh-My-Pi, answering `{ block: true, reason }` for page code only when LAPIS_UNATTENDED=1, and in every session for a write to .lapis/requirements/, .lapis/state/, .lapis/changes/, or .lapis/owner/" }
     mcp: { via: none, note: "pi 1.0.0 has a built-in MCP client (servers in ~/.pi/agent/mcp.json or .pi/settings.json; a Python stdio server connected in a container on 2026-10-03), but the installer does not register lapis-lazuli there yet" }
     trust:
       - "project packages load only after project trust"

@@ -44,6 +44,11 @@ def slop_lint(plan: str | None = None, extract: str | None = None, session: str 
     def path(value: str | None) -> Path | None:
         return Path(value) if value else None
 
+    if plan:                            # the plan is observed before anything is computed from it, as `slop lint` does
+        from lapis_design import integrity
+
+        integrity.observe_plan(Path(plan), "slop lint")
+
     try:
         return cli.run(rules=path(rules), plan=path(plan), extract=path(extract), session=path(session),
                        source=path(source), ledger=path(ledger), lock=path(lock),

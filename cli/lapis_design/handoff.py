@@ -737,6 +737,10 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design handoff export
         ap.add_argument("return_file", type=Path)
         ap.add_argument("--against", type=Path, required=True)
     args = ap.parse_args(argv)
+    if verb == "export":            # the plan is observed before anything is computed from it
+        from lapis_design import integrity
+
+        integrity.observe_plan(args.plan, "handoff export", args.root.resolve())
     try:
         if verb == "export":
             packet = export(args.plan, args.root, args.scope, args.role)

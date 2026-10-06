@@ -1111,6 +1111,11 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design plan check") -
     except (OSError, ValueError, yaml.YAMLError) as exc:
         print(f"plan check: {label} cannot be read: {yaml_reason(exc)}", file=sys.stderr)
         return 2
+    from lapis_design import integrity
+
+    task_file = None if args.from_markdown else integrity.locate(args.plan)
+    if task_file:                               # the plan is observed before anything is computed from it
+        integrity.observe(*task_file, plan, "plan check")
     shared = shared_dir()
     schema = args.schema or shared / "plan" / "schema.yaml"
     try:
@@ -1144,6 +1149,8 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design plan check") -
     except LockError as exc:
         print(f"plan check: {exc}", file=sys.stderr)
         return 2
+    if task_file:
+        integrity.record_findings(*task_file, report["findings"], "plan_check")
     if args.out:
         try:
             args.out.parent.mkdir(parents=True, exist_ok=True)

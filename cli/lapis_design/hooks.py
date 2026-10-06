@@ -28,8 +28,11 @@ pre-write    PreToolUse on the file-edit tools in the lapis plugin's hooks/hooks
              pi). The event JSON (`cwd`, `tool_input`) names the files a write touches. With `LAPIS_UNATTENDED=1`,
              a create run whose brief, references, or plan is still owed has its writes of page source files
              refused (order.py), as `hookSpecificOutput.permissionDecision: deny` with the next step named;
-             writes under `.lapis/`, to other files, and outside the project pass. A person's session gets one
-             `systemMessage` the first time and is never blocked. On any failure of ours it prints nothing.
+             writes under `.lapis/` (except the next sentence), to other files, and outside the project pass. A
+             person's session gets one `systemMessage` the first time and is never blocked. In every session, a
+             write to `.lapis/requirements/`, `.lapis/state/`, `.lapis/changes/`, or `.lapis/owner/` (records only
+             `lapis-design` writes) is refused the same way, with no cap: it stops the agent's tool, not a person.
+             On any failure of ours it prints nothing.
 """
 from __future__ import annotations
 

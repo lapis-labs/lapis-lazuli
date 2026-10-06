@@ -325,6 +325,10 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design slop lint") ->
     ap.add_argument("--json", action="store_true",
                     help="print the full report as JSON instead of the summary")
     args = ap.parse_args(argv)
+    if args.plan:                   # the plan is observed before anything is computed from it
+        from lapis_design import integrity
+
+        integrity.observe_plan(args.plan, "slop lint")
     try:
         report = run(rules=args.rules, plan=args.plan, extract=args.extract, session=args.session,
                      source=args.source, ledger=args.ledger, lock=args.lock, refs=args.ref, corpus=args.corpus,

@@ -19,10 +19,15 @@ a candidate (`source: existing-code`) in a `direction` exploration, the code bei
 Prevention (`decide`, run by the versioned `lapis-design-hook` entry point for Claude Code and Codex `PreToolUse` and the
 tool_call event of Oh-My-Pi and pi): with `LAPIS_UNATTENDED=1`, a write of a page source file is refused
 while `next` still names `brief`, `references`, `plan`, `plan-fix`, or `plan-explorations` for a create run.
-Writes under `.lapis/`, to files that are not page code, and outside the project are never refused. A person's
-session gets one line, once. A refusal repeats at most `CAP` times for one step: a plan blocker the agent
-cannot lift must not keep it from writing anything, and a write let through after the cap is recorded as above.
+Writes under `.lapis/` (except the folders below), to files that are not page code, and outside the project are never
+refused. A person's session gets one line, once. A refusal repeats at most `CAP` times for one step: a plan blocker the
+agent cannot lift must not keep it from writing anything, and a write let through after the cap is recorded as above.
 The hook sees the harness's file-edit tools only; a page written through the shell is found afterwards.
+
+Before that, in every session and whatever step `next` names, a write to a record only `lapis-design` writes
+(`CLI_OWNED`: `.lapis/requirements/`, `.lapis/state/`, `.lapis/changes/`, `.lapis/owner/`) is refused, once per tool
+call and with no cap. That stops the agent's tool, not a person. A write through the shell is not prevented; the change
+log notices it (`integrity.py`: the log or the state no longer matches) and the owner sees the row.
 
 Stdlib only until a page write must be judged: the hook starts for every file edit.
 """
@@ -43,6 +48,9 @@ EXISTING = "existing-code"           # the `source` of the candidate that stands
 ORDER_STEPS = ("brief", "references", "plan")        # the records a page write can come before
 BEFORE_CODE = (*ORDER_STEPS, "plan-fix", "plan-explorations")    # steps after which page code may start
 CAP = 3                              # refusals of one step; then the write goes through and is recorded
+# the folders of `.lapis/` that only `lapis-design` writes (integrity.py, requirements.py, owner.py); a write to one
+# is refused in every session, since the CLI computes what is in them and a hand edit would not be trusted
+CLI_OWNED = (".lapis/requirements", ".lapis/state", ".lapis/changes", ".lapis/owner")
 
 # the suffixes the source layer of the lint reads (lint/detectors/source.py), in the folders it walks
 PAGE_SUFFIXES = {".css", ".scss", ".sass", ".less", ".styl", ".pcss", ".postcss", ".html", ".htm", ".vue",
@@ -113,8 +121,8 @@ def pages(root: Path) -> list[tuple[str, int]]:
     return found
 
 
-def targets(event: Mapping[str, Any], project: Path) -> list[str]:
-    """The page source files inside `project` that a file-edit event writes, relative to it. The event is any
+def named_paths(event: Mapping[str, Any], project: Path) -> list[str]:
+    """Every file inside `project` that a file-edit event writes, relative to it, whatever the file is. The event is any
     harness's: `tool_input.file_path` (Claude Code), `path` (Oh-My-Pi and pi), and the text of a patch (Codex's
     `apply_patch` in `command`, Oh-My-Pi's hashline edit in `input`)."""
     tool_input = event.get("tool_input")
@@ -132,9 +140,21 @@ def targets(event: Mapping[str, Any], project: Path) -> list[str]:
             rel = path.relative_to(os.path.realpath(project)).as_posix()
         except ValueError:
             continue
-        if rel not in found and not rel.startswith(".lapis/") and page_source(rel):
+        if rel not in found:
             found.append(rel)
     return found
+
+
+def targets(event: Mapping[str, Any], project: Path) -> list[str]:
+    """The page source files inside `project` that a file-edit event writes, relative to it."""
+    return [rel for rel in named_paths(event, project) if not rel.startswith(".lapis/") and page_source(rel)]
+
+
+def cli_owned(rel: str) -> bool:
+    """Whether `rel`, a path relative to the project, is in a folder only `lapis-design` writes. Compared without case,
+    since the folder may be on a case-insensitive file system."""
+    folded = rel.casefold()
+    return any(folded == folder or folded.startswith(folder + "/") for folder in CLI_OWNED)
 
 
 def redone(plan: Mapping[str, Any], task: str) -> bool:
@@ -224,12 +244,33 @@ def _refusal(page: str, task: str, step: str) -> dict[str, Any]:
                                    "permissionDecisionReason": reason}}
 
 
+def _lapis_folder(start: Path, env: Mapping[str, str]) -> Path | None:
+    """The nearest folder (`$CLAUDE_PROJECT_DIR`, else `start` or one above it) that has a `.lapis` folder, with or
+    without a plan: the records `lapis-design` keeps exist before the plan does."""
+    candidates = [Path(env["CLAUDE_PROJECT_DIR"])] if env.get("CLAUDE_PROJECT_DIR") else []
+    start = start.resolve()
+    return next((folder for folder in (*candidates, start, *start.parents) if (folder / ".lapis").is_dir()), None)
+
+
+def _owned_refusal(rel: str) -> dict[str, Any]:
+    reason = (f"LapisLazuli refuses this write: {rel} is a record only `lapis-design` writes (`.lapis/requirements/`, "
+              "`.lapis/state/`, `.lapis/changes/`, `.lapis/owner/`). A write to it by any other route is found "
+              "afterwards and shown to the owner as an integrity change. Run the command that makes the record "
+              "(`lapis-design requirements seal`, `lapis-design next`), and tell the owner when it holds something wrong.")
+    return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
+                                   "permissionDecisionReason": reason}}
+
+
 def decide(event: Mapping[str, Any], env: Mapping[str, str] = os.environ) -> dict[str, Any] | None:
     """The JSON a pre-write hook prints for a file-edit event: Claude Code's and Codex's `PreToolUse` refusal
     (the extensions translate it), `{"systemMessage": ...}` as the one line for a person, or None to let the
-    write go on."""
+    write go on. A write to a folder only `lapis-design` writes (`CLI_OWNED`) is refused in every session."""
     unattended = gate.is_unattended(env)
-    project = gate.find_project(Path(event.get("cwd") or "."), env)
+    base = Path(event.get("cwd") or ".")
+    project = gate.find_project(base, env)
+    guarded = project or _lapis_folder(base, env)
+    if guarded is not None and (owned := [rel for rel in named_paths(event, guarded) if cli_owned(rel)]):
+        return _owned_refusal(owned[0])
     if project is None:
         return None
     written = targets(event, project)
