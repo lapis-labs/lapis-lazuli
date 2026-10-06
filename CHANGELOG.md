@@ -9,6 +9,16 @@ between minor versions; render extraction is v1 and the other contract formats a
 
 ### Added
 
+- Antigravity CLI (`agy`) is a harness, marked experimental. `dist/antigravity/<plugin>/` holds the three plugins as
+  `agy plugin install` reads them: a `plugin.json`, the skills, the lapis plugin's `hooks.json` (the write guard as
+  `PreToolUse` on the file-edit tools and the exit gate as `Stop`), the lazuli plugin's `mcp_config.json`, and the
+  critic as an agent file limited to file reading and writing. `lapis-design-hook --host antigravity` (`antigravity.py`)
+  reads Antigravity's event and prints only what it reads: `{"decision": "deny"}` for the guard, `{"decision": "continue"}`
+  for the gate (only in the person's own conversation, never a subagent's), and nothing otherwise; a skipped hook's notice goes to stderr, and every command ends in `|| exit 0`,
+  because Antigravity fails a tool call for a failing hook or any JSON it does not know (checked 2026-10-06, agy 1.2.17).
+  There is no session summary: Antigravity has no session-start event, and its `ephemeralMessage` fades after a few steps.
+  `install.sh` and `install.ps1` install it from a temporary clone of the release branch (the new `{checkout}`
+  placeholder, deleted at the end), and a harness may carry its own `checked` date.
 - Offline `lapis-design handoff export` produces self-contained design-head, implementer and reviewer
   Markdown assignments from explicitly selected canonical inputs. Disclosure/authority, dependency
   closure, exact-byte identity and the 32 KiB UTF-8 cap block unsafe or incomplete projections rather
