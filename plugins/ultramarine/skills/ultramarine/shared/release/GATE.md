@@ -272,7 +272,8 @@ and the gate counts no change as a defect.
 
 `slice` comes after the plan's own blockers and `plan-order` and before the fonts lock, only in an attended run (no
 `LAPIS_UNATTENDED`) with a plan in `mode: create` and no slice sealed in `.lapis/state/<task>.json`. The run builds the
-first view and the one section the brief puts first, captures both at 390 and 1440, has them reviewed, and asks the owner
+first view and the one section the brief puts first, serves them (`lapis-design preview start`, below), captures both
+at 390 and 1440, has them reviewed, and asks the owner
 to approve them in `.lapis/questions/<task>.md`, linking the page; approval questions that link no draft page while
 no slice is sealed return `slice` instead of `waiting-for-user`. A harness with a question tool may show two or three
 candidates, each its own `direction: new` page linked in the questions; the owner picks one or gives feedback, and the
@@ -300,13 +301,28 @@ record.
 
 `done` and every wait on approval questions carry the owner block (`owner.py`), which `next` writes to
 `.lapis/owner/<task>.md` and returns as `owner_block`. It lists the requirement outcome, the owner's decisions, the
-facts shown with their sources, what changed behind the page, the disputes, what was shown, and what did not run or is
+facts shown with their sources, what changed behind the page, the disputes, what was shown (each page's address, widths,
+document height at 1440, the capture files of those widths, and, for a plain static page, the HTML file that opens
+without a server), and what did not run or is
 stale (the checks recorded as not run, and each place a critic report does not hold against its packet, as `critic
 packet`'s check finds it), and
 ends with the line `lapis-owner-block <sha8>`, the digest of its body. The questions file has to contain that line: a
 wait whose questions lack the current line is `draft-review` ("paste the owner block"), and `done` tells the agent to
 paste the block unchanged ahead of its own summary. `draft check` writes the block too when the review holds. A pasted
 block is not counted as words or links of the questions.
+
+A link in approval questions has to be alive when they are shown. Before `next` returns the wait on approval questions
+that link an `http(s)` address on this computer (`localhost`, `127.0.0.1`, `::1`), it asks each such address with one
+GET, without a proxy; an address that does not end in HTTP 200 turns the wait into `draft-review` ("the questions link
+<address>, which does not answer"), whose command is `lapis-design preview start --task <task>` (with `--port` when the
+address names one). `preview start [--dir DIR] [--port N]` serves the project folder (or DIR) read-only on 127.0.0.1 in a
+process of its own: a session of its own on POSIX, a detached process on Windows, no terminal input, its output in
+`.lapis/preview/<task>.log`. It records `pid`, `port`, and `dir` in `.lapis/preview/<task>.json`, keeps a server that
+already answers for the same folder and port, and serves the recorded port again after the server has died, so the
+addresses of the draft record stay true. `preview status` says whether it answers (exit 0 or 1), and `preview stop`
+ends the recorded process, only when the recorded port answers as this server and the process is a preview server. A
+server cannot know that it survives the turn; the capture files in the owner block are what the owner can open when it
+does not. A link that is a file path, or an address that is not this computer, is not asked.
 
 ### Pre-show draft checkpoint
 

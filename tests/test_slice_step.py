@@ -73,6 +73,7 @@ def test_an_attended_create_run_stops_at_the_slice_once_the_plan_steps_pass_and_
     why = result["step"]["why"]
     assert "first view and the one section the brief puts first, not the whole page" in why
     assert "390 and 1440" in why and "direction: new" in why and "Copy is provisional" in why
+    assert f"`lapis-design preview start --task {TASK}`" in why and "outlives this turn" in why
     assert "question tool" in why and "2-3 candidates" in why and "Without a question tool, show one slice" in why
     monkeypatch.setenv("LAPIS_UNATTENDED", "1")
     assert step_of(project) == "fonts-lock"                  # the run goes on to what comes after the slice

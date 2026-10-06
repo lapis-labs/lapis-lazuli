@@ -24,6 +24,9 @@ CHECKS = {
     ("skill", "loaded"): "lapis_design.skill_load",
     ("requirements", "seal"): "lapis_design.requirements",
     ("requirements", "show"): "lapis_design.requirements",
+    ("preview", "start"): "lapis_design.preview",
+    ("preview", "stop"): "lapis_design.preview",
+    ("preview", "status"): "lapis_design.preview",
 }
 
 

@@ -390,11 +390,15 @@ In a create run that a person answers (`LAPIS_UNATTENDED` unset), `next` names `
 before `fonts-lock`. The owner approves on a rendered page, because composition and copy are judged by seeing them.
 
 1. Build the first view and the one section the brief puts first, not the whole page, and capture both at 390 and
-   1440. The owner block states the page's height at 1440, so a thin slice is visible as one.
+   1440. Serve the folder with `lapis-design preview start --task <task>` and capture that address: the server runs in
+   a session of its own, so ending the command that started it does not end it (`preview stop` does). The owner
+   block states the page's height at 1440, so a thin slice is visible as one.
 2. Record the page in `.lapis/drafts/<task>.yaml` with `direction: new`, run the critic on `lapis-design critic packet`,
    and run `lapis-design draft check` (`ultramarine`'s `pre-show-review.md`).
 3. Write `.lapis/questions/<task>.md`: link the page, paste the owner block, and say that copy is provisional until the
-   owner has seen it rendered. When this harness has a question tool, you may show two or three candidates that
+   owner has seen it rendered. The block lists the capture files (and, for a plain static page, the file) that open
+   without a server; `next` does not wait on a link that does not answer HTTP 200, so start the server again before
+   you ask. When this harness has a question tool, you may show two or three candidates that
    differ in composition or concept (a reordering or the same layout in another palette is not one), each a `pages[]`
    entry of the draft record and all linked in the questions file; write that file first, then ask the owner to pick
    one or say what to change. Without a question tool, show one slice.

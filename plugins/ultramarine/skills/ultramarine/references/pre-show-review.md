@@ -14,7 +14,10 @@ against `../shared/release/draft.schema.yaml`. `pages` lists every page linked i
 including comparison pages if the owner is asked to judge them. A page under `.lapis/specimens/`
 can be the actual draft: location does not exempt it. Each entry names its exact `url`, the
 `render_task` used for its extracts, its `sources` (the HTML and the styles/scripts it depends on),
-`direction: new|iteration`, changed `area`, `widths`, and whether `behavior_changed`.
+`direction: new|iteration`, changed `area`, `widths`, and whether `behavior_changed`. A linked address on this
+computer has to answer HTTP 200 when you ask: serve the folder with `lapis-design preview start --task <task>`, a
+server that keeps running after the command that started it, and capture that address; `next` does not wait on a link
+that answers nothing.
 
 A new direction uses 390 and 1440. A small iteration keeps that direction and reviews only the changed
 area and affected widths; keep previous evidence for unchanged areas. A new structure, locale, or
@@ -91,6 +94,7 @@ taking away the person's ability to stop. Neither case calls the draft a release
 
 The owner reads the block `draft check` writes to `.lapis/owner/<task>.md`, not a summary you wrote: paste it
 into the questions file unchanged, including its `lapis-owner-block` line. It names the exact pages and widths, the
+capture files of those widths (and, for a plain static page, the HTML file) that open without a server, the
 requirement outcomes, the facts with their sources, the protected changes, your disputes beside the critic's verdicts,
 and what did not run. List unresolved findings before requesting approval, and distinguish actual playback from captures
 and source inspection. Check totals and zero blockers are not design quality or approval. Full widths/probes, rights

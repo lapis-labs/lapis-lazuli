@@ -68,6 +68,14 @@ between minor versions; render extraction is v1 and the other contract formats a
 - `slop/finding.schema.yaml` gains the optional critic fields `target.packet`, `requirements`, `facts`, `disputes`, and
   `changes`; `review/disputes.schema.yaml` defines `.lapis/disputes/<task>.yaml`, the maker's outlet for a finding it
   believes is wrong. `plan check` and `slop lint` end with a line that says so.
+- `lapis-design preview start|status|stop --task T` serves the project folder (or `--dir`) read-only on 127.0.0.1 in a
+  process of its own (a session of its own on POSIX, a detached process on Windows), records it in
+  `.lapis/preview/<task>.json`, and serves the recorded port again after the server died, so the addresses of a draft
+  record stay true. `next` no longer returns `waiting-for-user` on approval questions that link a loopback address which
+  does not answer HTTP 200: it returns `draft-review` with the `preview start` command, so the owner is not sent to a
+  dead link (the dry run's slice link was refused when the owner opened it). The owner block's "What was shown" also
+  lists the capture files of the shown widths and, for a plain static page, the HTML file that opens without a server.
+  The `lapis` skill's Slice section and `ultramarine`'s `pre-show-review.md` say so.
 
 ### Changed
 

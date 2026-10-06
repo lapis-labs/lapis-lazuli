@@ -40,8 +40,8 @@ from typing import Any
 
 import yaml
 
-from lapis_design import (attempts, brief, critic_packet, draft, gate, owner, references, release_check, requirements,
-                          shared_dir, slice_step, taste, waiting)
+from lapis_design import (attempts, brief, critic_packet, draft, gate, owner, preview, references, release_check,
+                          requirements, shared_dir, slice_step, taste, waiting)
 from lapis_design.lint.cli import problems
 from lapis_design.plan_check import PlanOverLimit, read_plan, yaml_reason
 from lapis_design.summary import NOT_JUDGED
@@ -292,6 +292,9 @@ def _evaluate(root: Path, task: str, page: str | None = None, integrity_error: s
                           f"since, does not count; run `lapis-design draft check --task {task}` after changing one.",
                           f"lapis-design draft check --task {task}")
             return {**result, "state": "needs-step", "step": paste, "reason": paste["why"]}
+        if dead := preview.unreachable(shown):
+            serve = _step(draft.STEP, preview.why(task, dead), preview.command(task, dead))
+            return {**result, "state": "needs-step", "step": serve, "reason": serve["why"]}
     wait = _step(waiting.STEP, waiting.why(task, found, step["id"]) +
                  (" Include the recorded draft review summary and every unresolved finding in that message."
                   if result.get("draft_review") else ""))

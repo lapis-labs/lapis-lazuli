@@ -8,10 +8,11 @@ that line (`carries`), and `done` tells the agent to paste the block unchanged a
 Sections, in order: requirement outcome (counts, and up to 15 `partly`, `missing`, or left-out rows), the owner's own
 decisions, the facts shown with their sources, integrity (protected changes, reactive keeps, requirement-record
 changes, anomalies, the critic's `narrows` verdicts, and what changed since the owner approved the slice), disputes
-with the maker's reason and the critic's verdict, what was shown (URL, widths, document height at 1440), what did not
-run or is stale, and the release verdict line. The body holds no times and no absolute paths, so the same files give
-the same digest. Outcome and integrity are never merged into one number. The block judges nothing: it copies what a
-record says and says where it came from.
+with the maker's reason and the critic's verdict, what was shown (URL, widths, document height at 1440, the capture
+files of the shown widths, and, for a plain static page, the HTML file that opens without a server: a link can be
+dead by the time the owner looks), what did not run or is stale, and the release verdict line. The body holds no
+times and no absolute paths, so the same files give the same digest. Outcome and integrity are never merged into one
+number. The block judges nothing: it copies what a record says and says where it came from.
 
 `result` is what the caller has: `verdict` (the release line `next` writes when the procedure is done) and
 `integrity_error` (what `integrity.observe` returned as `error`); both are optional.
@@ -24,6 +25,7 @@ import re
 import sys
 from pathlib import Path
 from typing import Any, Mapping
+from urllib.parse import unquote, urlsplit
 
 import yaml
 
@@ -214,6 +216,61 @@ def _height(root: Path, page: Mapping[str, Any]) -> int | None:
     return round(max(bottoms)) if bottoms else None
 
 
+def _captures(root: Path, page: Mapping[str, Any]) -> list[str]:
+    """The screenshots of the widths shown that the page's extracts name, project-relative and ordered by width: one
+    per extract and width, the light, full-motion, unframed capture when an extract holds several."""
+    base = Path(root).resolve()
+    review = page.get("review") if isinstance(page.get("review"), dict) else {}
+    shown = set(page.get("widths") or ())
+    out: list[str] = []
+    for name in review.get("extracts") or ():
+        extract = base / name
+        best: dict[int, tuple[tuple[bool, bool, bool], Path]] = {}
+        for view in (_json(extract) or {}).get("viewports") or ():
+            if not isinstance(view, dict) or view.get("width") not in shown or not isinstance(view.get("screenshot"), str):
+                continue
+            shot = (extract.parent / view["screenshot"]).resolve()
+            score = (view.get("theme") == "light", not view.get("reduced_motion"), not view.get("browser_chrome"))
+            if shot.is_file() and shot.is_relative_to(base) and (view["width"] not in best or score > best[view["width"]][0]):
+                best[view["width"]] = (score, shot)
+        out += [best[width][1].relative_to(base).as_posix() for width in sorted(best)]
+    return list(dict.fromkeys(out))
+
+
+# What a page needs a server for: an address from the site root, a module script or import, a request of its own, a worker.
+_ABSOLUTE = re.compile(r"""\b(?:src|href|poster|action|data)\s*=\s*["']\s*/(?!/)|\burl\(\s*["']?\s*/(?!/)""", re.I)
+_REQUESTS = re.compile(r"""<script[^>]*\btype\s*=\s*["']?module|\bfetch\s*\(|\bXMLHttpRequest\b|"""
+                       r"""\bnew\s+(?:Worker|SharedWorker|EventSource|WebSocket)\b|\bserviceWorker\b|"""
+                       r"""\bimport\s*\(|^\s*import\b\s*[\w{*"']""", re.M)
+
+
+def _static(root: Path, page: Mapping[str, Any]) -> str | None:
+    """The page's own HTML file, project-relative, when a person can open it from disk without a server: the address
+    names an HTML file of the project, and neither it nor the HTML, styles, and scripts it lists reach for the site
+    root, a module, or a request of their own. Anything less sure gives None; the captures show the page as checked."""
+    base = Path(root).resolve()
+    parts = urlsplit(page["url"])
+    if parts.scheme not in ("http", "https") or parts.hostname not in ("localhost", "127.0.0.1", "::1"):
+        return None
+    name = unquote(parts.path).lstrip("/")
+    entry = (base / (name if name and not name.endswith("/") else name + "index.html")).resolve()
+    if entry.suffix.lower() not in (".html", ".htm") or not entry.is_file() or not entry.is_relative_to(base):
+        return None
+    files = {entry}
+    for listed in page.get("sources") or ():
+        file = (base / str(listed)).resolve()
+        if file.is_file() and file.is_relative_to(base) and file.suffix.lower() in (".html", ".htm", ".css", ".js", ".mjs"):
+            files.add(file)
+    for file in sorted(files):
+        try:
+            text = file.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            return None
+        if _ABSOLUTE.search(text) or (file.suffix.lower() != ".css" and _REQUESTS.search(text)):
+            return None
+    return entry.relative_to(base).as_posix()
+
+
 def _shown(root: Path, task: str) -> list[str]:
     out = ["## What was shown"]
     pages = _pages(root, task)
@@ -222,6 +279,10 @@ def _shown(root: Path, task: str) -> list[str]:
         height = _height(root, page)
         tall = f"{height:,} px" if height is not None else "not measured"
         out.append(f"- {page['url']} at {widths}; document height at 1440: {tall}")
+        if captures := _captures(root, page):
+            out.append(f"  - captures, which open without a server: {', '.join(captures)}")
+        if static := _static(root, page):
+            out.append(f"  - the page as a file, which opens without a server: {static}")
     if not pages:
         out.append("- no rendered page is recorded for this task.")
     if sealed := slice_step.sealed(root, task):

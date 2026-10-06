@@ -62,6 +62,21 @@ def no_installed_fonts(tmp_path_factory, monkeypatch):
 
 
 @pytest.fixture
+def real_previews():
+    """Asked for by a test that serves a page itself and wants `preview.answers` to mean what it says."""
+
+
+@pytest.fixture(autouse=True)
+def previews_answer(request, monkeypatch):
+    """The procedure tests link pages on 127.0.0.1:4173 that nothing serves, and ask `next` about waiting, not about
+    whether the link is alive: `preview.answers` says yes to every address unless the test asks for `real_previews`."""
+    if "real_previews" not in request.fixturenames:
+        from lapis_design import preview
+
+        monkeypatch.setattr(preview, "answers", lambda url, timeout=preview.TIMEOUT_S: True)
+
+
+@pytest.fixture
 def house_generics(tmp_path, monkeypatch):
     """The shared contracts with one more generic family (`house-stack`) and one more name the platform
     answers with its own sans (`house-sans`) in fonts/system-fonts.yaml, set as $LAPIS_SHARED. A check

@@ -29,6 +29,7 @@ from urllib.parse import quote, unquote, urlsplit, urlunsplit
 from urllib.request import url2pathname
 
 INDEX_FILES = ("index.html", "index.htm")
+SERVER_NAME = "lapis-local-site"        # the first word of the `Server` header (`preview.py` knows its server by it)
 
 
 class NotServable(ValueError):
@@ -46,8 +47,8 @@ def _segments(url_path: str) -> list[str]:
 
 
 class _Server(ThreadingHTTPServer):
-    def __init__(self, root: Path):
-        super().__init__(("127.0.0.1", 0), _Handler)
+    def __init__(self, root: Path, port: int = 0):
+        super().__init__(("127.0.0.1", port), _Handler)
         self.root = root
 
     def locate(self, url_path: str) -> Path | None:
@@ -68,7 +69,7 @@ class _Server(ThreadingHTTPServer):
 
 class _Handler(BaseHTTPRequestHandler):
     server: _Server
-    server_version = "lapis-local-site"
+    server_version = SERVER_NAME
 
     def log_message(self, *_) -> None:
         pass

@@ -55,6 +55,7 @@ uv run lapis-design release check --task demo   # the release gate (src/shared/r
 uv run lapis-design next --task demo           # the one step still to take (--json for tools); see GATE.md, Failure records
 uv run lapis-design requirements seal --task demo --from brief.md   # the owner's brief files and [declared] answers -> .lapis/requirements/demo.json
 uv run lapis-design requirements show --task demo                  # its rows, ids first
+uv run lapis-design preview start --task demo   # serve the project folder on 127.0.0.1 in a process that outlives the command -> .lapis/preview/demo.json; `preview status|stop --task demo`
 uv run lazuli local fonts --summary       # read-only font scan and measurement into the user cache
 uv run lazuli doctor
 uv run lazuli catalog sync                 # snapshot catalogs at human pace into the user cache (asks nothing)
@@ -310,7 +311,9 @@ files beside it; the database file itself does not change.
   the plan's blockers in an attended create run: the owner approves a rendered first view and one core section, or
   picks one of 2-3 candidates, before anything else is built, and `next` seals it in `.lapis/state/<task>.json` (`slice`).
   `done` and every approval wait carry the owner block (`owner.py`, `.lapis/owner/<task>.md`, last line
-  `lapis-owner-block <sha8>`); a wait whose questions lack the current line is the step `draft-review`.
+  `lapis-owner-block <sha8>`); a wait whose questions lack the current line is the step `draft-review`, and so is one
+  whose linked loopback address does not answer HTTP 200 (`preview.py`: `preview start|status|stop` keeps a detached
+  server, and the block lists the capture files and a plain static page's file, which need no server).
   The `references` step (`references.py`) follows the requirements on the same terms: `.lapis/references/<task>.md`, a fenced `yaml`
   block of at least six references, each with a `capture` file under `.lapis/references/<task>/` (three kinds and two
   outside `web-ui` among the images, `source_facts` for `web-ui`, at most two text-only); a run with no network records
