@@ -260,6 +260,15 @@ files beside it; the database file itself does not change.
   `rules_file` when the run was narrowed), and every skipped finding records `skip_cause`; the
   release gate reads both.
 - `release check` lives in `cli/lapis_design/release_check.py`: it runs the plan checks itself, reads the lint, session, extract, and critic reports, rechecks catalog font licenses through `lazuli.catalog`, and writes the gate report; it never captures or drives a page.
+- The critic packet lives in `cli/lapis_design/critic_packet.py` (shapes: `src/shared/review/critic-packet.schema.yaml`):
+  `lapis-design critic packet` writes deterministic JSON (the requirement rows, the plan's design fields without the
+  maker's reasons, a digest of every file the critic may read, the lint findings, the reactive or open-finding change
+  rows, and the disputes without their reasons), and a critic report counts only for the packet its `target.packet` names.
+  `release check` (`release.input-stale`, `release.critic-missing`), `draft check`, and the owner block's "Not run, or
+  stale" section all read `critic_packet.check`, which rebuilds the packet from the arguments the file records and compares
+  bytes, never modification times; a project without a requirement record reads no packet. Draft review is version 1
+  (`release/draft.schema.yaml`): no maker prose, a critic report with a walkthrough per shown width for a new direction,
+  and `draft check` writes the owner block when the review holds.
 - The change log lives in `cli/lapis_design/integrity.py` (shapes: `src/shared/integrity/schema.yaml`): every command that reads the
   plan (`plan check`, `slop lint --plan`, `next`, `draft check`, `release check`, `handoff export`) calls `integrity.observe`
   first, which snapshots the protected plan pointers (`PROTECTED`) and appends one hash-chained row per change to

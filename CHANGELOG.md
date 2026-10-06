@@ -17,6 +17,67 @@ between minor versions; render extraction is v1 and the other contract formats a
   importing artifacts, approval or remote verification claims. Source intake and optional v0
   `sources[].intake` / `handoff.scopes[]` annotations preserve the existing plan/contract authority.
   Skills and installation/command guides describe native/manual role transfer and local verification.
+- `lapis-design requirements seal --task T [--from FILE ...]` copies the owner's own words into
+  `.lapis/requirements/<task>.json` (`shared/requirements/schema.yaml`): each list item, table row, code block, and
+  paragraph of up to five owner files, and every `[declared]` answer, becomes a row with a content-hash id (`R3f2a1c`).
+  An agent cannot drop or reword a row; an owner reply that quotes an id (`[declared] R3f2a1c: drop — <words>`) records a
+  decision. `requirements show` lists the rows. `next` asks for the step `requirements` after the brief, page code waits
+  for it in unattended runs, and keep evidence reads `evidence.brief` against the rows when a record exists.
+- The step `slice`: in an attended create run the owner approves a rendered first view and one core section (or picks one
+  of two or three candidates, or gives feedback) before the rest is built. `next` seals the approval in
+  `.lapis/state/<task>.json` once the questions were answered, `draft check` passes, one linked new-direction page is
+  chosen, and the plan says approved; protected changes after the seal are flagged `after_slice`. Approval questions
+  that link no page return `slice` instead of waiting. A plain approval of the slice is recorded as an untagged item,
+  because every `[declared]` item becomes a requirement row the critic must judge; only a reply that changes what the
+  owner wants is `[declared]`.
+- `done` and every approval wait carry an owner block written by the CLI (`.lapis/owner/<task>.md`, last line
+  `lapis-owner-block <sha8>`): requirement outcome, the owner's decisions, facts with their sources, changes behind the
+  page, disputes, what was shown, and what did not run or is stale (including where a critic report does not hold against
+  its packet). A wait whose questions lack the current line is `draft-review`; `done` needs a critic report that judges
+  every requirement row, or a recorded unavailable critic. `draft check` writes the block when the review holds.
+- Every command that reads the plan (`plan check`, `slop lint --plan` including the MCP tool, `next`, `draft check`,
+  `release check`, `handoff export`) first records changes to the plan's protected inputs (brief, claims, sources,
+  approval, reference take/leave, `defaults` entries, exploration choices, flow goals and endings, token scales and color
+  roles, the phone task, key copy, and the answers file's headings) in `.lapis/changes/<task>.jsonl`, a hash-chained log
+  whose rows name the findings that were open on that input and flag a keep added while its finding was open. A change
+  is surfaced, never forbidden; a log or state edited outside `lapis-design` shows up as an `integrity` row.
+  `lapis-design hook pre-write` now refuses an edit tool's write to `.lapis/requirements/`, `.lapis/state/`,
+  `.lapis/changes/`, and `.lapis/owner/` in every session. `css-off-scale-value` and `contract-diff` declare the plan
+  fields they read (`reads_plan`). New contract `integrity/schema.yaml` (v0).
+- `lapis-design critic packet` writes `.lapis/critic/<task>.packet.json`, the fixed inputs one critic report is judged
+  against: the owner's requirement rows, the plan's design fields without the maker's reasons (`defaults[].reason` and
+  `evidence`, `explorations[].runner_up_lost`, `direction.*`), a digest of every file the critic may read, the lint
+  findings, the plan changes that were reactive or touched an open finding, and the maker's disputes without their
+  reasons. The bytes are deterministic. A critic report counts only for the packet it names in `target.packet`: `draft
+  check` and `release check` rebuild it, so a changed capture, lint report, requirement row, or protected plan value makes
+  the report stale (`release.input-stale`, `next` returns `critic`), and a report must judge every row, change, and
+  dispute once and cite only files and quotes that exist (`release.critic-missing`). Projects without a requirement
+  record keep the earlier release behavior.
+- `slop/finding.schema.yaml` gains the optional critic fields `target.packet`, `requirements`, `facts`, `disputes`, and
+  `changes`; `review/disputes.schema.yaml` defines `.lapis/disputes/<task>.yaml`, the maker's outlet for a finding it
+  believes is wrong. `plan check` and `slop lint` end with a line that says so.
+
+### Changed
+
+- Draft review is version 1: `summary`, `making_of`, maker `walkthroughs`, `claim_evidence`, `critic.context`,
+  `critic.independent`, and `handled[].resolution_kind` are removed, since the CLI cannot verify them. A version 0 record
+  gets an explanation. A new direction needs a critic report built on a packet with a walkthrough at every shown width;
+  an open core product-explanation finding in the current critic report blocks the approval wait whatever the
+  disposition says. The critic reads the packet and only the files it lists, never the plan, answers, drafts, or
+  questions.
+- The `lapis`, `lps-brief`, `lps-copy`, and `ultramarine` skills now teach the spec lock-in and the checks against
+  gaming. The order is brief, requirements, references, plan, then code; `lps-brief` seals the owner's own brief files
+  with `requirements seal --from`, and an owner's drop or narrowing of a requirement row is recorded as
+  `[declared] R…: drop — …`. In an attended create run, approval is asked on a rendered slice (the first view and one
+  section at 390 and 1440) instead of the plan summary; where the harness has a question tool the maker may show two or
+  three slice candidates that differ in composition or concept, and the owner's pick is recorded as
+  `[declared] Slice: <url> — …`. The maker pastes the owner block unchanged at `done` and at approval waits, runs the
+  critic on `critic packet` (a report counts only for its packet), files a finding it believes is wrong in
+  `.lapis/disputes/<task>.yaml` instead of reading the checker's source, and never stops a process by pattern (`pkill`,
+  `killall`). Copy stays provisional until the owner has seen it rendered, and a document's statement about history,
+  origin, naming, or third parties goes to the owner to confirm instead of passing through as fact.
+- The build packages the requirement record, integrity log, critic packet, and dispute schemas for the skills that use
+  them, each listed in `index.yaml`.
 
 ### Fixed
 
@@ -31,8 +92,8 @@ between minor versions; render extraction is v1 and the other contract formats a
 
 
 - Draft approval waits now require a current narrow review of every shown page, including pages
-  under `.lapis/specimens/`: capture/task/source links, visitor walks at the shown widths, finding
-  dispositions, changed-behavior evidence, and an independent critic for a new direction.
+  under `.lapis/specimens/`: capture/task/source links, finding dispositions, changed-behavior
+  evidence, and a critic report for a new direction (built on the critic packet; see above).
   Pure questions remain allowed. The attended exit gate records unreviewed stops without blocking
   the user's control; owner reports carry the review and unresolved findings, not a release claim.
 - `next` now names and verifies phase sub-skill loads. Missing copy/system/review loads become an
@@ -52,10 +113,9 @@ between minor versions; render extraction is v1 and the other contract formats a
   the plan unless the brief requests it. Korean locale variants also require the Korean section.
   Motion guidance treats content state and control feedback as one system, with a timing/easing
   scale, continuity, cancellation and reduced branches judged by actual playback, not screenshots.
-- Pre-show review also maps required product claims/proof to the actual visible output and what
-  is missing. The site's own design study cannot be marked as product proof. Core product-explanation
-  gaps block approval even if the critic's release severity is only a warning; settings-only or
-  partial repairs remain open, while unrelated ordinary warnings are not promoted.
+- Core product-explanation gaps block pre-show approval even if the critic's release severity is only a
+  warning; settings-only or partial repairs remain open, while unrelated ordinary warnings are not
+  promoted.
 - Plugin/CLI version skew no longer turns argparse exit 2 into an endless Stop loop or denied writes.
   Every harness hook uses the separate `lapis-design-hook --plugin-version VERSION <name>` entry point:
   old installs lack it and fail open, while installed runners skip unknown arguments and mismatched
