@@ -107,9 +107,9 @@ properties:
       additionalProperties: false
       required: [task, viewport, completed, first_look]
       properties:
-        task: { type: string, minLength: 3 }           # one of one to three tasks derived from the brief: "find today's hours and book"
+        task: { type: string, minLength: 1 }           # one of one to three tasks derived from the brief: "find today's hours and book" (a length counts characters; a task in Korean can be two)
         viewport: { enum: [320, 390, 768, 1440] }      # the capture walked; walk 1440 and 390
-        first_look: { type: string, minLength: 3 }     # where the eye went first
+        first_look: { type: string, minLength: 1 }     # where the eye went first (a short name such as "드릴" is whole)
         read_or_scrolled_past: { type: string }        # what had to be read or scrolled past to reach the next step
         stuck: { type: string }                        # where the walk stopped or turned back; absent when it did not
         completed: { enum: ["yes", "partly", "no", "not-walked"] }   # not-walked: the capture or the session could not show the step
@@ -145,7 +145,7 @@ properties:
       additionalProperties: false
       required: [text, refs, source, quote]
       properties:
-        text: { type: string, minLength: 3 }           # the sentence as shown
+        text: { type: string, minLength: 1 }           # the sentence as shown; a short real name is whole ("드릴", 2 characters), so the floor is one
         refs: { type: array, items: { type: string } } # capture files or box ids where it shows
         source: { type: string, minLength: 1 }         # `path#Lx-Ly` of a file the packet lists, or `none`
         quote: { type: string }                        # verbatim from those lines; the CLI checks it is there. Empty with `none`
@@ -199,7 +199,7 @@ $defs:
           flow: { type: string }                     # plan flow id
           step: { type: integer, minimum: 0 }        # step index in that flow's run
           asset: { type: string }                    # asset ledger id, or a fonts lock family
-      observed: { type: string, minLength: 3 }       # the visible or measured property
+      observed: { type: string, minLength: 1 }       # the visible or measured property (a quoted label can be one or two characters in Korean, Japanese, or Chinese)
       context:                                       # was the choice earned here?
         type: object
         properties:

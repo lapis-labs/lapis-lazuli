@@ -33,7 +33,7 @@ properties:
             flow: { type: string }
             step: { type: integer, minimum: 0 }
             asset: { type: string }
-        observed: { type: string, minLength: 3 }     # the finding's `observed` text, as reported
+        observed: { type: string, minLength: 1 }     # the finding's `observed` text, as reported (as short as the finding's own)
         reason: { type: string, minLength: 8 }       # why the maker thinks it is wrong; for the owner only, never for the critic
         refs:                                        # captures, boxes, or source lines the maker's reading rests on
           type: array

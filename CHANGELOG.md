@@ -101,6 +101,10 @@ between minor versions; render extraction is v1 and the other contract formats a
 
 ### Fixed
 
+- A critic report no longer refuses a short real name. `facts[].text`, `walkthroughs[].task`, `walkthroughs[].first_look`,
+  and a finding's `observed` (and the `observed` a dispute copies from it) need one character, not three: JSON Schema
+  counts characters, and a two-character Korean tool name such as "드릴" made the whole report invalid in the dry run. The
+  floors of the reasons (`why`, `reason`, eight characters) are unchanged.
 - Work screens now record explicit phone-task acceptance and plan-linked first-result geometry.
   Review surfaces a result below the first phone view independently of card ratio or CTA presence.
   Booking comparisons use staged/continuous phone implementations with the same field labels and states.
