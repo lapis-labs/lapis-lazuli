@@ -67,8 +67,25 @@ properties:
         type: object
         additionalProperties: false
         properties:
-          type: { type: object, additionalProperties: false, properties: { roles: { type: array } } }
+          type:
+            type: object
+            additionalProperties: false
+            properties:
+              roles: { type: array }
+              scale: { type: object }                  # base_px and ratio, the steps a font-size dispute is judged against
           color: { type: object, additionalProperties: false, properties: { roles: { type: array } } }
+          space:                                       # the steps a spacing dispute is judged against
+            type: object
+            additionalProperties: false
+            properties:
+              base_px: { type: number }
+              scale: { type: array, items: { type: number } }
+          shape:                                       # the radius steps a radius dispute is judged against; the maker's `rule` and each contour's `reason` stay out
+            type: object
+            additionalProperties: false
+            properties:
+              radius: { type: object }
+              media_contours: { type: array, items: { type: object } }
       content:
         type: object
         additionalProperties: false

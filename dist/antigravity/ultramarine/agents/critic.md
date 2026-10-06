@@ -25,7 +25,9 @@ The packet holds:
 - `requirements`: the owner's rows, each `{id, section?, text}`, copied by the CLI from the owner's own brief files and
   answers; and `owner_decisions`, a row the owner dropped or narrowed, in the owner's words
 - `plan`: the design fields the maker chose, as the plan states them: `brief`, `world_materials`, the layout's
-  `phone_task`, `sections`, `signature` and `procedure.priority`, the type and color `roles`, the voice and `key_copy`,
+  `phone_task`, `sections`, `signature` and `procedure.priority`, the type `roles` and `scale`, the color `roles`, the
+  `space` steps (`base_px`, `scale`) and the `shape` radius steps and media contours (the values a dispute about
+  spacing, size, or radius is judged against), the voice and `key_copy`,
   `flows`, `references` with what each `take`s and `leave`s, `explorations` with their candidates and the chosen one,
   and `defaults` as `{id, decision, keep_when, case_when}`
 - `inputs`: every file you may read, as `{kind, path, sha256}`: the render extracts and their screenshots, the behavior

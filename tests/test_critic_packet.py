@@ -121,6 +121,32 @@ def test_the_packet_carries_the_rows_the_inputs_and_the_changes_that_matter(proj
                    for path in kinds)
 
 
+def test_the_packet_carries_the_space_shape_and_type_scale_values_a_dispute_is_judged_against(project):
+    update(project, PLAN, lambda p: p["tokens"].update(space={"base_px": 8, "scale": [8, 12, 16, 24, 32, 48]}))
+    doc = packet(project)
+    tokens = doc["plan"]["tokens"]
+    assert tokens["space"] == {"base_px": 8, "scale": [8, 12, 16, 24, 32, 48]}
+    assert tokens["type"]["scale"] == {"base_px": 16, "ratio": 1.25}
+    assert tokens["shape"]["radius"] == {"scale": [0, 4, 8], "by_role": {"control": 4, "card": 8, "image": 0}}
+    assert tokens["shape"]["media_contours"] == [{"token": "--media-contour-detail", "value": "0 32px 0 0",
+                                                  "where": "detail figure"}]
+    raw = critic_packet.build(project, TASK, INPUTS).decode()
+    assert "Square image edges" not in raw and "single open corner" not in raw     # the maker's `rule` and contour `reason`
+
+
+def test_a_plan_without_space_or_shape_tokens_adds_nothing_to_the_packet(project):
+    update(project, PLAN, lambda p: (p["tokens"].pop("shape"), p["tokens"].pop("space", None)))
+    tokens = packet(project)["plan"]["tokens"]
+    assert "space" not in tokens and "shape" not in tokens
+
+
+def test_a_changed_spacing_or_radius_step_makes_a_critic_report_stale(project):
+    judged(project)
+    assert problems(project) == []
+    update(project, PLAN, lambda p: p["tokens"]["shape"]["radius"].update(scale=[0, 4, 6, 8]))
+    assert any("changed since" in line or "another packet" in line for line in problems(project))
+
+
 def test_the_same_inputs_give_the_same_bytes(project):
     first = critic_packet.build(project, TASK, INPUTS)
     for path in project.rglob("*"):

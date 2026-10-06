@@ -110,6 +110,10 @@ between minor versions; render extraction is v1 and the other contract formats a
   (scale and `by_role`) still left the rule unjudged and the gate without evidence. It now reads both, hits a box whose
   largest corner radius is none of the steps, and treats a square corner, a full radius (a pill or circle), and a media
   box (an image's own contour) as on the scale; the "no radius tokens" reason remains only for a plan with none.
+- The critic packet carries the plan's `tokens.space` (`base_px`, `scale`), `tokens.shape` (`radius`, and the
+  `media_contours` without their `reason`; the maker's `rule` stays out) and `tokens.type.scale`, which it used to drop.
+  A dispute about a spacing, size, or radius finding was judged against no declared steps, so the critic could only
+  answer `unknown`; now it has them, and a changed step makes a critic report stale like any other packet input.
 - Work screens now record explicit phone-task acceptance and plan-linked first-result geometry.
   Review surfaces a result below the first phone view independently of card ratio or CTA presence.
   Booking comparisons use staged/continuous phone implementations with the same field labels and states.
