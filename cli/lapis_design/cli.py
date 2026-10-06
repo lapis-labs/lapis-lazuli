@@ -21,6 +21,8 @@ CHECKS = {
     ("handoff", "export"): "lapis_design.handoff",
     ("handoff", "check"): "lapis_design.handoff",
     ("skill", "loaded"): "lapis_design.skill_load",
+    ("requirements", "seal"): "lapis_design.requirements",
+    ("requirements", "show"): "lapis_design.requirements",
 }
 
 

@@ -41,7 +41,7 @@ from lapis_design import attempts, gate
 
 EXISTING = "existing-code"           # the `source` of the candidate that stands for code written before the plan
 ORDER_STEPS = ("brief", "references", "plan")        # the records a page write can come before
-BEFORE_CODE = (*ORDER_STEPS, "plan-fix", "plan-explorations")    # steps after which page code may start
+BEFORE_CODE = (*ORDER_STEPS, "requirements", "plan-fix", "plan-explorations")    # steps after which page code may start
 CAP = 3                              # refusals of one step; then the write goes through and is recorded
 
 # the suffixes the source layer of the lint reads (lint/detectors/source.py), in the folders it walks
@@ -58,6 +58,7 @@ _TEXT_KEYS = ("command", "input", "patch")
 
 LABEL = {"brief": "brief record", "references": "references record", "plan": "plan"}
 OWES = {"brief": "the brief record `.lapis/answers/{task}.md` (the lps-brief skill)",
+        "requirements": "the requirement record `.lapis/requirements/{task}.json` (`lapis-design requirements seal`)",
         "references": "the references record `.lapis/references/{task}.md` (the lzl-research skill)",
         "plan": "the plan `.lapis/plans/{task}.yaml`, citing the records it rests on (a declined step has none)",
         "plan-fix": "a plan that `lapis-design plan check` reads and passes",
@@ -214,7 +215,7 @@ def _create(project: Path, task: str) -> bool:
 
 def _refusal(page: str, task: str, step: str) -> dict[str, Any]:
     reason = (f"LapisLazuli refuses this write: {page} is page code, and task {task} is in create mode with "
-              f"{OWES[step].format(task=task)} still owed. The order is brief, references, plan, then code. "
+              f"{OWES[step].format(task=task)} still owed. The order is brief, requirements, references, plan, then code. "
               f"Write that first (files under .lapis/ are never refused), run `lapis-design next --task {task}` "
               "for the step and its command, and write page files once it names a later step.")
     if step == "references":

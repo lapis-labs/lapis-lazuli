@@ -52,6 +52,8 @@ uv run lapis-design slop lint --plan .lapis/plans/demo.yaml --extract .lapis/ren
 # a lint run narrowed by --layer or --rule goes to -o .lapis/lint/demo.narrow.json
 uv run lapis-design release check --task demo   # the release gate (src/shared/release/GATE.md) -> .lapis/release/demo.json
 uv run lapis-design next --task demo           # the one step still to take (--json for tools); see GATE.md, Failure records
+uv run lapis-design requirements seal --task demo --from brief.md   # the owner's brief files and [declared] answers -> .lapis/requirements/demo.json
+uv run lapis-design requirements show --task demo                  # its rows, ids first
 uv run lazuli local fonts --summary       # read-only font scan and measurement into the user cache
 uv run lazuli doctor
 uv run lazuli catalog sync                 # snapshot catalogs at human pace into the user cache (asks nothing)
@@ -258,9 +260,10 @@ files beside it; the database file itself does not change.
   release gate reads both.
 - `release check` lives in `cli/lapis_design/release_check.py`: it runs the plan checks itself, reads the lint, session, extract, and critic reports, rechecks catalog font licenses through `lazuli.catalog`, and writes the gate report; it never captures or drives a page.
 - `next` lives in `cli/lapis_design/next_step.py`: `lapis-design next --task demo [--json]` runs `release_check.run(...,
-  offline=True)` on the files and returns the one step still to take (`brief`, `references`, `plan`, `plan-fix`,
-  `plan-flows`,
-  `plan-explorations`, `fonts-lock`, `stub`, `ledger`, `render`, `behavior`, `lint`, `critic`, `release`) with its exact
+  offline=True)` on the files and returns the one step still to take (`brief`, `requirements`, `references`, `plan`,
+  `plan-fix`, `plan-flows`,
+  `plan-explorations`, `plan-order`, `slice`, `fonts-lock`, `stub`, `ledger`, `render`, `behavior`, `lint`, `critic`,
+  `release`) with its exact
   command or schema, or `done`; it judges nothing the gate already judges, and `done` is a complete procedure, not a
   passing gate. `render check`, `behavior check`, and `release check` write `.lapis/attempts/<task>/<step>.json`
   (`attempts.py`) when a full run cannot start because of the environment (a browser that is missing or will not start,
@@ -275,7 +278,18 @@ files beside it; the database file itself does not change.
   most six items under each answers heading (`## Answers` is round 1, `## Answers (round 2)` round 2) and no third
   round; a pending set in `.lapis/questions/<task>.md` of more than six numbered questions is cut the same way
   (`brief.owed`, `brief.questions_problem`), so the step is `brief` and the run does not wait.
-  The `references` step (`references.py`) follows it on the same terms: `.lapis/references/<task>.md`, a fenced `yaml`
+  The `requirements` step (`requirements.py`) follows the brief on the same terms: `.lapis/requirements/<task>.json`
+  (`shared/requirements/schema.yaml`) is the owner's own words, one row with a content-hash id for each list item, table
+  row, code block, and paragraph of up to five owner files (`lapis-design requirements seal --task T --from FILE`, never
+  written by an agent) and each `[declared]` item of the brief record; `integrity.observe` re-reads the sources on every
+  call (`requirements.refresh`), and an owner reply `[declared] R3f2a1c: drop — <words>` lands in `owner_decisions`.
+  With a record, `keep_evidence` reads `evidence.brief` against its rows and `done` needs a critic report that judges
+  every row (`requirements.uncovered`), or a recorded unavailable critic. The `slice` step (`slice_step.py`) follows
+  the plan's blockers in an attended create run: the owner approves a rendered first view and one core section, or
+  picks one of 2-3 candidates, before anything else is built, and `next` seals it in `.lapis/state/<task>.json` (`slice`).
+  `done` and every approval wait carry the owner block (`owner.py`, `.lapis/owner/<task>.md`, last line
+  `lapis-owner-block <sha8>`); a wait whose questions lack the current line is the step `draft-review`.
+  The `references` step (`references.py`) follows the requirements on the same terms: `.lapis/references/<task>.md`, a fenced `yaml`
   block of at least six references, each with a `capture` file under `.lapis/references/<task>/` (three kinds and two
   outside `web-ui` among the images, `source_facts` for `web-ui`, at most two text-only); a run with no network records
   `next --unavailable references --reason`, and a run whose user's words forbid lookups during the work, with nobody
@@ -285,8 +299,9 @@ files beside it; the database file itself does not change.
   A run that stopped to ask its user (`waiting.py`: `.lapis/questions/<task>.md` newer than `.lapis/answers/<task>.md`)
   makes `next` say `waiting-for-user` and the gate let the stop pass without a continue: two sets before a plan, one
   after (`waits` in the gate state).
-  The order brief, references, plan, then code is `order.py`: `hook pre-write` refuses an unattended create run's write
-  of a page source file while `next` names `brief`, `references`, `plan`, `plan-fix`, or `plan-explorations` (three
+  The order brief, requirements, references, plan, then code is `order.py`: `hook pre-write` refuses an unattended
+  create run's write of a page source file while `next` names `brief`, `requirements`, `references`, `plan`, `plan-fix`,
+  or `plan-explorations` (three
   refusals for one step, then the write passes and is recorded in `.lapis/order/<task>.json`), and `release check`
   reports page code that came first as `release.procedure-order`, which `next` turns into the step `plan-order`.
 - `lazuli` lives in `cli/lazuli/`: `scan.py` (read-only inventory; `LAZULI_FONT_ROOTS` replaces the

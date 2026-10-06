@@ -111,6 +111,11 @@ def continuation(result: dict[str, Any], first: bool, relayed: bool = False) -> 
     elif step["id"] == "draft-review":
         parts.append("Write the review record from actual observations; never invent a capture, finding disposition, "
                      "walkthrough, or independent critic. A draft review is not a release pass.")
+    elif step["id"] in ("requirements", "slice"):
+        parts.append("The requirement record is the owner's own words, copied by `lapis-design requirements seal`; never "
+                     "write it by hand or seal a file the owner did not write. The slice is what the owner sees "
+                     "rendered before the page is built; never record their answer for them. Run "
+                     f"`lapis-design next --task {task}` again after the step.")
     else:
         parts.append(f"A missing or invalid input and a plan blocker are not done: create or fix it, then run "
                      f"`lapis-design next --task {task}` again until it says done. Only a failure of the environment, "
@@ -120,7 +125,7 @@ def continuation(result: dict[str, Any], first: bool, relayed: bool = False) -> 
         if step["id"].startswith("plan"):
             parts.append("A person's answers are recorded: write `approval: {state: approved}` only if they approve "
                          "this plan, otherwise `assumed` with a reason.")
-    elif step["id"] not in ("brief", "references") and (first or step["id"].startswith("plan")):   # no plan to approve yet
+    elif step["id"] not in ("brief", "requirements", "references") and (first or step["id"].startswith("plan")):   # no plan to approve yet
         parts.append("No person is present to approve the plan: record `approval: {state: assumed, reason: ...}` in "
                      "it and continue; never write `approved`, which only the user's own approval earns.")
     return "\n".join(parts)

@@ -56,6 +56,7 @@ def reviewed(root):
                                            "refs": [f"shown-{w}.png"]} for w in (390, 1440)],
                          "summary": "The reservation path remains unresolved; reviewed both widths."}}]}
     save(root, f"drafts/{TASK}.yaml", record)
+    ask(root, f"Approve this draft? {URL}", 200)               # the owner block now says what was shown: paste it again
     return record
 
 
@@ -121,6 +122,7 @@ def test_small_iteration_reviews_only_its_changed_area_and_affected_width(projec
     page["review"].pop("critic")
     page["review"]["walkthroughs"] = page["review"]["walkthroughs"][:1]
     save(project, f"drafts/{TASK}.yaml", record)
+    ask(project, f"Approve this draft? {URL}", 200)
     assert next_step.evaluate(project, TASK)["state"] == "waiting-for-user"
 
 

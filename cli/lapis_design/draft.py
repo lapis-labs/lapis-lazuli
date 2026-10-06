@@ -23,7 +23,7 @@ def path(root: Path, task: str) -> Path:
 def links(root: Path, task: str) -> list[str]:
     """Local presentation links in questions also cover older runs without a draft record."""
     try:
-        text = waiting.questions_path(root, task).read_text(encoding="utf-8")
+        text = waiting.question_text(waiting.questions_path(root, task).read_text(encoding="utf-8"))
     except OSError:
         return []
     return list(dict.fromkeys(m.group().rstrip(".,);]") for m in _LINK.finditer(text)

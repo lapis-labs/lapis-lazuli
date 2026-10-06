@@ -194,8 +194,9 @@ record (the later one stands), and `next` counts it only while the line is still
 of the run's own is newer.
 
 `lapis-design next --task <task>` runs this gate offline on the files and returns the one step still to
-take, with its exact command or schema: `brief`, `references`, `plan`, `plan-fix`, `plan-flows`, `plan-explorations`,
-`plan-order`, `fonts-lock`, `stub`, `ledger`, `render`, `behavior`, `lint`, `critic`, `release`, or `done`. The gate's
+take, with its exact command or schema: `brief`, `requirements`, `references`, `plan`, `plan-fix`, `plan-flows`,
+`plan-explorations`, `plan-order`, `slice`, `fonts-lock`, `stub`, `ledger`, `render`, `behavior`, `lint`, `critic`,
+`release`, or `done`. The gate's
 own findings that report a check that did not run or an input that is missing (the ten under
 `summary.not_run`, except `probe-incomplete`, `backend-insufficient`, `requirement-unverified`, and
 `license-unchecked`, which are results of a check that ran) say which step comes back; the plan checks'
@@ -208,6 +209,15 @@ a brief record gets it, and a redesign or repair plan never does. The file is a 
 `## Found` and an `## Answers` section with text and every answer that starts with `[assumed]` gives a `Basis:`
 (`[declared]`, `[known]`, and `[open]` are the other tags); nothing else about it is judged. The record is not a
 report of this gate, and the plan cites it from `context.other`.
+
+`requirements` follows the brief on the same terms (no plan file, or `mode: create`; a redesign or repair plan never gets
+it): `.lapis/requirements/<task>.json` is a requirement record (`requirements/schema.yaml`) that `lapis-design
+requirements seal --task <task> [--from <the owner's brief file>]` wrote, never an agent. The CLI copies each list item,
+table row, fenced code block, and run of prose lines of up to five owner files, and every `[declared]` item of the brief
+record, as one row with an id; `integrity.observe` reads the sources again on every call, so a row cannot be dropped or
+reworded unseen. An owner reply that quotes an id (`[declared] R3f2a1c: drop — <words>`) is copied to
+`owner_decisions`. Once a record exists, a critic report has to judge every row (`requirements[]`) before `done`, or the
+critic has to be recorded as unavailable, and the owner block says the requirements were not judged.
 
 `references` comes next, the same way: a run with no plan file, or a plan in `mode: create`, whose
 `.lapis/references/<task>.md` is not a references record gets it after the brief, and a redesign or repair plan never
@@ -232,13 +242,26 @@ unattended run whose page code came before the brief, references, or plan) sends
 from the brief, citing the brief record and comparing the existing code as one candidate of a `direction`
 exploration; the code stays only if it wins. A person's session is only told. Where a harness can ask before a
 file is written (Claude Code and Codex `PreToolUse`, the `tool_call` event of Oh-My-Pi and pi), `lapis-design hook
-pre-write` refuses an unattended create run's write of a page source file while `next` names `brief`, `references`,
-`plan`, `plan-fix`, or `plan-explorations`: `permissionDecision: deny` with the step named, at most three times in a
+pre-write` refuses an unattended create run's write of a page source file while `next` names `brief`, `requirements`,
+`references`, `plan`, `plan-fix`, or `plan-explorations`: `permissionDecision: deny` with the step named, at most three times in a
 row for one step, after which the write goes through and a write that came before the brief, references, or plan is
 recorded in `.lapis/order/<task>.json`. Writes under `.lapis/`, to files that are not page source, and outside the
 project are never refused. With no plan file the run counts as create only while the folder holds no page source. A
 session without `LAPIS_UNATTENDED=1` gets one `systemMessage` the first time and is never refused. The hook sees the
 harness's file-edit tools, so a page written through the shell is found afterwards, by file times.
+
+`slice` comes after the plan's own blockers and `plan-order` and before the fonts lock, only in an attended run (no
+`LAPIS_UNATTENDED`) with a plan in `mode: create` and no slice sealed in `.lapis/state/<task>.json`. The run builds the
+first view and the one section the brief puts first, captures both at 390 and 1440, has them reviewed, and asks the owner
+to approve them in `.lapis/questions/<task>.md`, linking the page; approval questions that link no draft page while
+no slice is sealed return `slice` instead of `waiting-for-user`. A harness with a question tool may show two or three
+candidates, each its own `direction: new` page linked in the questions; the owner picks one or gives feedback, and the
+pick is recorded in `.lapis/answers/<task>.md` as `[declared] Slice: <address> — <their words>`. `next` seals when the
+questions were asked and answered (the answers are newer), `draft check` passes for the linked pages, one linked
+`direction: new` page is the chosen one, and the plan says `approval: {state: approved}`. `state.slice` then holds the
+chosen address, every candidate when there were several, and the digests of the draft record, the critic packet, the
+questions, the answers, and the requirement record. Protected changes after the seal are flagged `after_slice` in the
+change log and listed in the owner block. Unattended runs skip the step.
 
 While questions the run wrote for its user are unanswered, `next` returns the state `waiting-for-user` instead
 of a step: `step.id` is `waiting-for-user` (stop, and wait for the answers), `then` is the step that comes
@@ -254,6 +277,13 @@ while there is no plan file and one after it. A set is one text written once, so
 new set. Past the cap `next` and the gate name the step the files call for, as without questions. Without
 `--task`, `next` takes the task of the newest plan, counted questions file, counted answers file, or counted references
 record.
+
+`done` and every wait on approval questions carry the owner block (`owner.py`), which `next` writes to
+`.lapis/owner/<task>.md` and returns as `owner_block`. It lists the requirement outcome, the owner's decisions, the
+facts shown with their sources, what changed behind the page, the disputes, what was shown, and what did not run, and
+ends with the line `lapis-owner-block <sha8>`, the digest of its body. The questions file has to contain that line: a
+wait whose questions lack the current line is `draft-review` ("paste the owner block"), and `done` tells the agent to
+paste the block unchanged ahead of its own summary. A pasted block is not counted as words or links of the questions.
 
 ### Pre-show draft checkpoint
 
