@@ -202,6 +202,9 @@ def main(argv=None, prog="lapis-design draft check") -> int:
     parser.add_argument("--root", type=Path, default=Path("."))
     parser.add_argument("--task", required=True)
     args = parser.parse_args(argv)
+    from lapis_design import integrity
+
+    integrity.observe_task(args.root.resolve(), args.task, "draft check")    # before anything is computed from the plan
     errors, summaries = check(args.root.resolve(), args.task)
     print(json.dumps({"task": args.task, "reviewed": not errors, "problems": errors, "pages": summaries}, ensure_ascii=False, indent=2))
     return 1 if errors else 0

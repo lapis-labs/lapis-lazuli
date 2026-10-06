@@ -28,6 +28,10 @@ items:
   view: full
   path: slop/cards.yaml
   summary: LapisLazuli default cards — v0
+- id: integrity-log
+  view: summary
+  path: integrity/schema.yaml
+  summary: LapisLazuli integrity state and change rows — v0 draft
 - id: assets-ledger-schema
   view: summary
   path: assets/ledger.schema.yaml

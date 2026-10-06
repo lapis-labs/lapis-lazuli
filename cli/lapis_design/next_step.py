@@ -231,8 +231,9 @@ def _lock_commands(plan: dict, task: str) -> list[str]:
 
 
 def evaluate(root: Path, task: str, page: str | None = None) -> dict:
-    from lapis_design import skill_load
+    from lapis_design import integrity, skill_load
 
+    integrity.observe_task(root.resolve(), task, "next")        # the plan is observed before anything is computed from it
     return skill_load.apply(root.resolve(), task, _evaluate(root, task, page))
 
 

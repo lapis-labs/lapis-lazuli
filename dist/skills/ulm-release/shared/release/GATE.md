@@ -235,10 +235,20 @@ file is written (Claude Code and Codex `PreToolUse`, the `tool_call` event of Oh
 pre-write` refuses an unattended create run's write of a page source file while `next` names `brief`, `references`,
 `plan`, `plan-fix`, or `plan-explorations`: `permissionDecision: deny` with the step named, at most three times in a
 row for one step, after which the write goes through and a write that came before the brief, references, or plan is
-recorded in `.lapis/order/<task>.json`. Writes under `.lapis/`, to files that are not page source, and outside the
-project are never refused. With no plan file the run counts as create only while the folder holds no page source. A
-session without `LAPIS_UNATTENDED=1` gets one `systemMessage` the first time and is never refused. The hook sees the
-harness's file-edit tools, so a page written through the shell is found afterwards, by file times.
+recorded in `.lapis/order/<task>.json`. Writes under `.lapis/` (except the next paragraph's folders), to files that are
+not page source, and outside the project are never refused. With no plan file the run counts as create only while the
+folder holds no page source. A session without `LAPIS_UNATTENDED=1` gets one `systemMessage` the first time and is never
+refused. The hook sees the harness's file-edit tools, so a page written through the shell is found afterwards, by file
+times.
+
+`.lapis/requirements/`, `.lapis/state/`, `.lapis/changes/`, and `.lapis/owner/` hold records only `lapis-design`
+writes, and the hook refuses an edit tool's write to them in every session, with no cap and whatever step `next` names.
+A shell write is not prevented; it is found afterwards. Every command that reads the plan (`plan check`, `slop lint
+--plan`, `next`, `draft check`, `release check`, `handoff export`) first compares the plan's protected inputs with the
+values it last saw (`integrity.PROTECTED`, `integrity/schema.yaml`) and appends one hash-chained row per difference to
+`.lapis/changes/<task>.jsonl`, naming the findings that were open on that input; a row of kind `integrity` says the log
+or the state no longer matches what the CLI wrote. A change is surfaced to the owner and the critic, never forbidden,
+and the gate counts no change as a defect.
 
 While questions the run wrote for its user are unanswered, `next` returns the state `waiting-for-user` instead
 of a step: `step.id` is `waiting-for-user` (stop, and wait for the answers), `then` is the step that comes

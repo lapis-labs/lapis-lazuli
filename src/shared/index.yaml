@@ -195,6 +195,16 @@ items:
       ulm-release: full
       ulm-maintain: full
 
+  - id: integrity-log
+    kind: contract
+    path: integrity/schema.yaml
+    note: v0; the change log over the plan's protected inputs and the state it is computed from, written only by `lapis-design`; a change is surfaced to the owner and the critic, never forbidden
+    consumers:
+      lapis: full
+      ultramarine: full
+      lps-brief: summary
+      lps-copy: summary
+
   - id: render-derived
     kind: contract
     path: render/DERIVED.md
