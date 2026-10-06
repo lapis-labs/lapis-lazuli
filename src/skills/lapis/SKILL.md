@@ -398,12 +398,16 @@ before `fonts-lock`. The owner approves on a rendered page, because composition 
    differ in composition or concept (a reordering or the same layout in another palette is not one), each a `pages[]`
    entry of the draft record and all linked in the questions file; write that file first, then ask the owner to pick
    one or say what to change. Without a question tool, show one slice.
-4. Record the owner's reply in `.lapis/answers/<task>.md` under its own heading, in their words as `[declared]`
-   items. A pick is `- [declared] Slice: <the chosen page's URL as linked> — <their words>`. Feedback without a pick
-   seals nothing: revise the candidates, or the one area as `direction: iteration`, and ask again.
+4. Record the owner's reply in `.lapis/answers/<task>.md` under its own heading, in their words. A plain approval
+   ("looks right, go on") is an untagged item (`- Approved the slice: <their words>`), because every `[declared]` item
+   becomes a requirement row the critic must judge; feedback that changes what the owner wants ("make the header
+   calmer") is `[declared]`. A pick among candidates is also `- [declared] Slice: <the chosen page's URL as linked> —
+   <their words>`. Feedback without a pick seals nothing: revise the candidates, or the one area as
+   `direction: iteration`, and ask again.
 5. Record `approval: {state: approved}` only when the owner approved, then run `next`, which seals the slice. The seal
    keeps the chosen page and digests of what was shown, so the owner block lists later protected changes, key copy
-   included, as changed since the owner approved.
+   included, as changed since the owner approved. Once the owner block is pasted in the questions file, a new critic
+   report or draft record makes its marker stale: run `lapis-design draft check` again and paste the block again.
 
 ## Implement
 

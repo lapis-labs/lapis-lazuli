@@ -126,6 +126,12 @@ OWED = [
     ("without a question tool one slice is shown", "lapis", "SKILL.md", r"Without a question tool, show one slice"),
     ("the pick is recorded for the seal", "lapis", "SKILL.md", r"\[declared\] Slice: <the chosen page's URL as linked>"),
     ("the pick format is in the record guide", "lps-brief", "references/record.md", r"\[declared\] Slice: <the chosen page's URL"),
+    ("a plain approval is untagged, not a requirement row", "lapis", "SKILL.md",
+     r"A plain approval \(\"looks right, go on\"\) is an untagged item \(`- Approved the slice: <their words>`\), because every `\[declared\]` item becomes a requirement row"),
+    ("the record guide keeps approval out of the rows", "lps-brief", "references/record.md",
+     r"Record an owner's plain approval \(\"looks right, go on\"\) as an untagged item"),
+    ("a stale owner block is pasted again", "lapis", "SKILL.md",
+     r"a new critic report or draft record makes its marker stale: run `lapis-design draft check` again and paste the block again"),
     # the owner block
     ("lapis pastes the owner block unchanged", "lapis", "SKILL.md",
      r"`lapis-owner-block <sha8>` line\. Paste it unchanged ahead of your own summary at `done`, and into the questions file"),

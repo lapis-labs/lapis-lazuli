@@ -111,6 +111,9 @@ format is the `requirements-record` item in `../shared/index.yaml`. Only `lapis-
 - **A slice pick.** When the owner picked one of several slice candidates, record it under the same reply heading as
   `- [declared] Slice: <the chosen page's URL exactly as the questions file links it> — <the owner's words>`. Feedback
   without a pick is an ordinary `[declared]` item with no `Slice:` line.
+- **Approval is not a requirement.** Every other top-level `[declared]` item, under any heading, becomes a row that the
+  critic must judge before `done`. Record an owner's plain approval ("looks right, go on") as an untagged item
+  (`- Approved the slice: <the owner's words>`), and tag `[declared]` only a reply that says what the owner wants.
 
 ## Project taste
 
