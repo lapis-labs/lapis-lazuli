@@ -1,0 +1,25 @@
+{
+  "lapis-stop": {
+    "Stop": [
+      {
+        "type": "command",
+        "timeout": 60,
+        "command": "lapis-design antigravity-hook --plugin-version 0.2.0 stop || exit 0"
+      }
+    ]
+  },
+  "lapis-pre-write": {
+    "PreToolUse": [
+      {
+        "matcher": "write_to_file|replace_file_content|multi_replace_file_content|notebook_edit",
+        "hooks": [
+          {
+            "type": "command",
+            "timeout": 30,
+            "command": "lapis-design antigravity-hook --plugin-version 0.2.0 pre-write || exit 0"
+          }
+        ]
+      }
+    ]
+  }
+}

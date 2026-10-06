@@ -22,7 +22,7 @@ import installers  # noqa: E402
 
 SHA = "0123456789abcdef0123456789abcdef01234567"
 SYSTEM_TOOLS = ("uname", "id", "mkdir", "rmdir", "rm", "mktemp", "cmp", "cat")
-PLACEHOLDERS = re.compile(r"\{(repo|ref|catalog|plugin|skill|agent|sha)\}")
+PLACEHOLDERS = re.compile(r"\{(repo|ref|catalog|plugin|skill|agent|sha|checkout)\}")
 COMMAND = re.compile(r"^\s*(?:would (?:ask, then )?run|run|would check|check): (.*)$")
 SHELLS = [s for s in ("sh", "dash", "bash") if shutil.which(s)]
 PWSH = shutil.which("pwsh")
@@ -413,6 +413,97 @@ def test_hermes_installs_each_skill_and_pins_the_commit(doc, machine, runner):
         ["hermes", "plugins", "install", "lapis-labs/lapis-lazuli/plugins/hermes/lapis-lazuli", "--ref", SHA, "--enable"],
         ["hermes", "mcp", "add", "lapis-lazuli", "--command", "lapis-design", "--args", "mcp"],
         ["lapis-design", "--version"], ["lazuli", "doctor"]]
+
+
+CLONE = ["git", "clone", "--depth", "1", "--branch", "release", "https://github.com/lapis-labs/lapis-lazuli"]
+PLUGINS = ["lapis", "ultramarine", "lazuli"]
+
+
+@pytest.mark.parametrize("runner", RUNNERS)
+def test_antigravity_dry_run_names_one_clone_and_installs_each_plugin_from_it(machine, runner):
+    m = machine(("uv", "agy", "git", "lapis-design", "lazuli"))
+    before = m.pwsh_home() if runner == "pwsh" else []
+    r = getattr(m, runner)("--harness", "antigravity", "--dry-run")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert m.calls(skip=()) == [] and m.home_files() == before and list(m.tmp.iterdir()) == []
+    run = [c for c in printed(r.stdout) if c[0] in ("git", "agy")]
+    assert run == [["git", "clone", "--depth", "1", "--branch", "release", "https://github.com/lapis-labs/lapis-lazuli",
+                    "<checkout>"],
+                   *[["agy", "plugin", "install", f"<checkout>/dist/antigravity/{p}"] for p in PLUGINS]]
+    assert "dry run: nothing was changed" in r.stdout
+
+
+@pytest.mark.parametrize("runner", RUNNERS)
+def test_antigravity_installs_from_a_temporary_clone_and_deletes_it(machine, runner):
+    m = machine(("uv", "agy", "git", "lapis-design", "lazuli"))
+    r = getattr(m, runner)("--harness", "antigravity", "--yes")
+    assert r.returncode == 0, r.stdout + r.stderr
+    clones = [c for c in m.calls() if c[:2] == ["git", "clone"]]
+    assert len(clones) == 1 and clones[0][:-1] == CLONE
+    folder = Path(clones[0][-1])
+    assert folder.parent == m.tmp and folder.name.startswith("lapis-lazuli-checkout")
+    assert [c for c in m.calls() if c[0] == "agy"] == [
+        ["agy", "plugin", "install", f"{folder}/dist/antigravity/{p}"] for p in PLUGINS]
+    assert not folder.exists() and list(m.tmp.iterdir()) == []             # the clone is deleted when the script ends
+
+
+@pytest.mark.parametrize("runner", RUNNERS)
+def test_antigravity_update_installs_again_and_a_partial_run_keeps_to_its_plugin(machine, runner):
+    m = machine(("uv", "agy", "git", "lapis-design", "lazuli"))
+    r = getattr(m, runner)("--harness", "antigravity", "--update", "--plugin", "lazuli", "--yes")
+    assert r.returncode == 0, r.stdout + r.stderr
+    folder = Path(next(c for c in m.calls() if c[:2] == ["git", "clone"])[-1])
+    assert [c for c in m.calls() if c[0] == "agy"] == [["agy", "plugin", "install", f"{folder}/dist/antigravity/lazuli"]]
+
+
+@pytest.mark.parametrize("runner", RUNNERS)
+def test_antigravity_uninstall_removes_each_plugin_and_clones_nothing(machine, runner):
+    m = machine(("uv", "agy", "git", "lapis-design", "lazuli"))
+    r = getattr(m, runner)("--harness", "antigravity", "--uninstall", "--yes")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert [c for c in m.calls() if c[0] in ("agy", "git")] == [["agy", "plugin", "uninstall", p] for p in PLUGINS]
+
+
+@pytest.mark.parametrize("runner", RUNNERS)
+def test_antigravity_without_git_installs_nothing_and_says_why(machine, runner):
+    m = machine(("uv", "agy", "lapis-design", "lazuli"))
+    r = getattr(m, runner)("--harness", "antigravity", "--yes")
+    assert r.returncode == 1, r.stdout + r.stderr
+    assert "could not clone release" in r.stdout and "needs a clone of release" in r.stdout
+    assert [c for c in m.calls() if c[0] == "agy"] == [] and list(m.tmp.iterdir()) == []
+
+
+@pytest.mark.parametrize("runner", RUNNERS)
+def test_antigravity_with_a_failing_clone_installs_nothing_and_leaves_no_folder(machine, runner):
+    m = machine(("uv", "agy", "git", "lapis-design", "lazuli"))
+    if os.name == "nt":
+        pytest.skip("the failing git stub is a sh script")
+    (m.bin / "git").write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+    r = getattr(m, runner)("--harness", "antigravity", "--yes")
+    assert r.returncode == 1, r.stdout + r.stderr
+    assert "could not clone release" in r.stdout
+    assert [c for c in m.calls() if c[0] == "agy"] == [] and list(m.tmp.iterdir()) == []
+
+
+@pytest.mark.parametrize("runner", RUNNERS)
+def test_antigravity_found_by_its_folder_alone_gets_the_to_do_list_without_a_clone(machine, runner):
+    m = machine(("uv", "git", "lapis-design", "lazuli"), dirs=(".gemini/antigravity-cli",))
+    r = getattr(m, runner)("--harness", "antigravity", "--plugin", "lazuli")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "found: Antigravity CLI (folder ~/.gemini/antigravity-cli)" in r.stdout and "not on PATH: agy" in r.stdout
+    assert "- Antigravity CLI: agy plugin install <checkout>/dist/antigravity/lazuli" in r.stdout.replace("'", "")
+    assert [c[0] for c in m.calls()] == ["uv", "lapis-design", "lazuli"] and list(m.tmp.iterdir()) == []
+
+
+def test_the_guide_explains_the_clone_the_antigravity_commands_install_from(generated):
+    md = (generated / "INSTALLATION.md").read_text(encoding="utf-8")
+    section = md.split("\n### Antigravity CLI\n", 1)[1].split("\n### ", 1)[0]
+    assert "agy plugin install '<checkout>/dist/antigravity/lapis'" in section or \
+        "agy plugin install <checkout>/dist/antigravity/lapis" in section
+    assert "`<checkout>` is a clone of the `release` branch: " \
+           "`git clone --depth 1 --branch release https://github.com/lapis-labs/lapis-lazuli.git <checkout>`" in section
+    assert "Sources (checked 2026-10-06)" in section
+    assert "agy plugin uninstall lapis" in section
 
 
 def test_a_named_harness_that_is_missing_stops_before_any_change(doc, machine):

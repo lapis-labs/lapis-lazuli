@@ -1,0 +1,121 @@
+# LapisLazuli model release manifest schema — v0
+# One manifest per embedding space release. It lists every model trained into that space (teacher and
+# distilled students), the files to download, and what `lazuli setup` must check before installing.
+# A model has exactly one weights file; a quantized variant produces different vectors, so it is its
+# own model entry with its own id, gate, and evaluation. Every model in one manifest has the same
+# `dims`, since the students are distilled into the teacher's space.
+# Published as a release asset of lapis-labs/lazuli-models; setup reads it as described in
+# models/SETUP.md. Example: models/example.manifest.json.
+
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/model-manifest.v0.json
+title: LapisLazuli model release manifest
+type: object
+additionalProperties: false
+required: [version, released, space, specimen, models]
+
+properties:
+  version: { const: 0 }                               # manifest format version
+  released: { type: string, format: date }
+
+  space:                                              # the embedding space every model here maps into
+    type: object
+    additionalProperties: false
+    required: [id, version]
+    properties:
+      id: { type: string, pattern: "^[a-z0-9][a-z0-9-]{1,63}$" }   # e.g. lazuli-style
+      version: { $ref: "#/$defs/semver" }             # embedding.space_version stores "<id>@<version>"; compare only within one
+      replaces: { $ref: "#/$defs/semver" }            # the space version this one supersedes; its embeddings go stale
+
+  specimen:                                           # the specimen generator the models were trained on
+    type: object
+    additionalProperties: false
+    required: [version, min_cli]
+    properties:
+      version: { $ref: "#/$defs/semver" }             # must equal the installed generator's version
+      min_cli: { $ref: "#/$defs/semver" }             # first lapis-design release that ships this generator version
+
+  models:
+    type: array
+    minItems: 1
+    items: { $ref: "#/$defs/model" }
+
+$defs:
+  semver: { type: string, pattern: "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$" }
+  sha256: { type: string, pattern: "^[0-9a-f]{64}$" }
+  revision: { type: string, pattern: "^[0-9a-f]{40}$" }   # a commit, never a branch name
+
+  model:
+    type: object
+    additionalProperties: false
+    required: [id, version, role, dims, dtype, runtime, scripts, source, files, license, gate]
+    properties:
+      id: { type: string, pattern: "^[A-Za-z0-9][A-Za-z0-9._-]{1,63}$" }   # stored as embedding.model
+      version: { $ref: "#/$defs/semver" }             # stored as embedding.model_version
+      role: { enum: [teacher, student] }
+      teacher: { type: string }                       # a student's teacher id in this manifest
+      params_m: { type: number, exclusiveMinimum: 0 } # parameters, in millions (approximate)
+      dims:
+        type: object
+        additionalProperties: false
+        required: [full, prefixes]
+        properties:
+          full: { type: integer, minimum: 8 }
+          prefixes:                                   # Matryoshka prefixes that were trained and evaluated
+            type: array
+            minItems: 1
+            items: { type: integer, minimum: 8 }      # descending, the first equal to `full`
+      dtype: { enum: [float16] }                      # storage precision of embeddings in the lazuli database
+      runtime: { enum: [onnx] }                       # what setup and the embedder load
+      scripts:                                        # script codes the model was trained and evaluated on
+        type: array
+        minItems: 1
+        items: { enum: [latn, cyrl, grek, hang, hani, kana, arab, hebr, thai] }
+      requires:
+        type: object
+        additionalProperties: false
+        properties:
+          min_cli: { $ref: "#/$defs/semver" }         # lapis-design version with the embedder this model needs
+          ram_mb: { type: integer, minimum: 1 }       # peak resident memory while embedding, measured
+      recommend:                                      # device classes setup may suggest this model for
+        type: array
+        items: { enum: [cpu, apple-silicon, gpu] }
+      source:                                         # where the files live; every url below is under it
+        type: object
+        additionalProperties: false
+        required: [host, repo, revision]
+        properties:
+          host: { enum: [huggingface.co] }
+          repo: { type: string, pattern: "^lapis-labs/[A-Za-z0-9._-]+$" }
+          revision: { $ref: "#/$defs/revision" }
+      files:
+        type: array
+        minItems: 1
+        items:
+          type: object
+          additionalProperties: false
+          required: [path, kind, bytes, sha256]
+          properties:
+            path: { type: string, pattern: "^[A-Za-z0-9_-][A-Za-z0-9._-]*(/[A-Za-z0-9_-][A-Za-z0-9._-]*)*$" }   # relative; no segment starts with a dot
+            kind: { enum: [weights, preprocess, license, notice, training-data, card, eval] }
+            precision: { enum: [fp32, fp16, int8] }   # weights only
+            bytes: { type: integer, minimum: 1 }
+            sha256: { $ref: "#/$defs/sha256" }
+      license:
+        type: object
+        additionalProperties: false
+        required: [spdx, file]
+        properties:
+          spdx: { type: string }                      # e.g. Apache-2.0
+          file: { type: string }                      # a `files` path of kind license
+          notice: { type: string }                    # a `files` path of kind notice, when the license needs one
+          training_data: { type: string }             # a `files` path listing the training fonts and their licenses
+      gate:                                           # the product gate from the model plan
+        type: object
+        additionalProperties: false
+        required: [beats_baseline, report]
+        properties:
+          beats_baseline: { type: boolean }           # won on unseen families against measurement + catalogs
+          report: { type: string }                    # a `files` path of kind eval
+          teacher_gap: { type: number }               # a student's drop against its teacher on the main metric
+          cross_retrieval: { type: number, minimum: 0, maximum: 1 }   # a student's queries against the teacher's index; students only

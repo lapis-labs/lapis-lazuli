@@ -51,6 +51,6 @@ Code that runs on your machine and reads input you may not trust:
 ## What is out of scope
 
 - A slop rule or detector that judges a design wrongly: open a regular issue.
-- How a harness (Claude Code, Codex, Oh-My-Pi, pi, Hermes Agent, or another) loads plugins or runs
+- How a harness (Claude Code, Codex, Oh-My-Pi, pi, Hermes Agent, Antigravity, or another) loads plugins or runs
   hooks: report it to that harness.
 - Findings that need control of your own machine, your shell, or your browser profile first.

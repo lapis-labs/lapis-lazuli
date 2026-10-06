@@ -225,7 +225,10 @@ files beside it; the database file itself does not change.
   (`uv build --out-dir build/wheels`).
 - Hooks call the plain command `lapis-design-hook --plugin-version VERSION <name>` (`session-start`, `exit-plan`,
   `stop`, `pre-write`), with bodies in `cli/lapis_design/hooks.py`; unknown hook arguments and version skew fail open
-  with one visible notice, never argparse exit 2 (install/OUTPUTS.md, Hooks). MCP is `lapis-design mcp`
+  with one visible notice, never argparse exit 2 (install/OUTPUTS.md, Hooks). Antigravity's `hooks.json` runs `lapis-design antigravity-hook --plugin-version VERSION <name> || exit 0`
+  instead (`cli/lapis_design/antigravity.py`, install/OUTPUTS.md, Antigravity): it stops a tool call for a failing hook or any
+  JSON it does not read, so there the notice goes to stderr and stdout stays empty, and a subcommand rather than
+  `lapis-design-hook` because an older CLI rejects an unknown subcommand on stderr, where its `lapis-design-hook` would print JSON. MCP is `lapis-design mcp`
   (`cli/lapis_design/mcp_server.py`, official MCP Python SDK). Hooks run at every session start (`stop`, at every
   turn's end; `pre-write`, before every file edit), so keep heavy imports out of them. pi and Oh-My-Pi have no
   hooks.json: extensions call the same versioned hook runner; the build stamps their version placeholders.

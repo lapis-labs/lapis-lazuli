@@ -42,7 +42,7 @@ They never use sudo or administrator rights, never store secrets, never edit an 
 | Option | Effect |
 |---|---|
 | `--dry-run` | Print every command it would run and change nothing. |
-| `--harness ID` | Only this harness; repeat for more. IDs: `claude-code`, `codex`, `oh-my-pi`, `pi`, `hermes`, `other`. A named harness that is not installed stops the script before any change. Experimental harnesses (`pi`, `hermes`) install only when named here. |
+| `--harness ID` | Only this harness; repeat for more. IDs: `claude-code`, `codex`, `oh-my-pi`, `pi`, `hermes`, `antigravity`, `other`. A named harness that is not installed stops the script before any change. Experimental harnesses (`pi`, `hermes`, `antigravity`) install only when named here. |
 | `--plugin NAME` | Only this plugin; repeat for more. Default: all (`lapis`, `ultramarine`, `lazuli`). |
 | `--update` | Run the update steps and reinstall the CLI from `release`. |
 | `--uninstall` | Run the removal steps (see [Update and uninstall](#update-and-uninstall)). |
@@ -53,7 +53,7 @@ Exit codes: 0 when every step succeeded, 1 when a step or check failed or a name
 
 ## Identify your harness
 
-The scripts treat a harness as installed when its command is on PATH or its folder exists. An experimental harness (`pi`, `hermes`) that is only found is skipped when installing, with a note; name it with `--harness` to install it. Updating and removing treat it like any other harness.
+The scripts treat a harness as installed when its command is on PATH or its folder exists. An experimental harness (`pi`, `hermes`, `antigravity`) that is only found is skipped when installing, with a note; name it with `--harness` to install it. Updating and removing treat it like any other harness.
 
 | Harness | Status | Command | Folder | Section |
 |---|---|---|---|---|
@@ -62,6 +62,7 @@ The scripts treat a harness as installed when its command is on PATH or its fold
 | Oh-My-Pi (`oh-my-pi`) | - | `omp` | `~/.omp` | [Oh-My-Pi](#oh-my-pi) |
 | pi (`pi`) | Experimental | `pi` | `~/.pi/agent` | [pi](#pi) |
 | Hermes Agent (`hermes`) | Experimental | `hermes` | `~/.hermes` | [Hermes Agent](#hermes-agent) |
+| Antigravity CLI (`antigravity`) | Experimental | `agy` | `~/.gemini/antigravity-cli` | [Antigravity CLI](#antigravity-cli) |
 | cursor | - | - | `~/.cursor` | [Other Agent Skills harnesses](#other-agent-skills-harnesses) |
 | gemini-cli | - | - | `~/.gemini` | [Other Agent Skills harnesses](#other-agent-skills-harnesses) |
 | github-copilot | - | - | `~/.copilot` | [Other Agent Skills harnesses](#other-agent-skills-harnesses) |
@@ -506,6 +507,87 @@ Only when you remove every plugin.
 
 Sources (checked 2026-09-25): <https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/skills.md>, <https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/plugins.md>, <https://github.com/NousResearch/hermes-agent/blob/main/website/docs/reference/cli-commands.md>.
 
+### Antigravity CLI
+
+Experimental: these commands come from Antigravity CLI's documentation and have not been confirmed on a real install. The install scripts install it only when you name it with `--harness antigravity`; finding its command or folder is not enough.
+
+Installed as: plugin. Skills are invoked as `/<skill>` (for example `/lapis`).
+
+What gets installed:
+
+- Plugin manifest (Antigravity format): `dist/antigravity/<plugin>/plugin.json`
+- Skills: `dist/antigravity/<plugin>/skills/<skill>/`
+- Hooks (Antigravity format): `dist/antigravity/lapis/hooks.json`
+- MCP server: `dist/antigravity/lazuli/mcp_config.json`
+- Critic agent (Antigravity format): `dist/antigravity/ultramarine/agents/`
+- Session summary: instructions only: the skills say what to run by hand. Antigravity has no session-start event, and what a PreInvocation hook injects (`ephemeralMessage`) reaches the model for a few steps only (agy 1.2.17, 2026-10-06: still there after one tool call, gone after three), so a summary injected at the first model call would be forgotten; the lazuli skill says to run `lazuli local fonts --summary` by hand.
+- Separate critic: plugin agent, from `dist/antigravity/ultramarine/agents/`. The main agent starts it with `invoke_subagent` (type name critic), or it is picked as the session's agent (`agy --agent critic`); its `tools` list gives it file reading and writing and no shell, web, or browser.
+- Exit gate: plugin hook, from `dist/antigravity/lapis/hooks.json`, event `Stop`. `lapis-design antigravity-hook --plugin-version \<version> stop` answers `{"decision": "continue", "reason": ...}` only when LAPIS_UNATTENDED=1 and the agent chose to stop (terminationReason NO_TOOL_CALL) with no background task running, in the person's own conversation (Antigravity runs Stop when a subagent ends too; its transcript opens with a message from its parent, and the gate leaves it alone); at most 3 continues in a row for one step and 15 in a session; otherwise it prints nothing, and its one-line notice for a person goes to stderr (the CLI log); version skew skips the gate.
+- Write guard: plugin hook, from `dist/antigravity/lapis/hooks.json`, event `PreToolUse write_to_file|replace_file_content|multi_replace_file_content|notebook_edit`. The same guard as in Claude Code, answering `{"decision": "deny", "reason": ...}`; the file is `toolCall.args.TargetFile` (`NotebookPath` for notebook_edit). Antigravity stops a tool call for a hook that exits non-zero or prints JSON it does not know (even `{}`), so the command ends in `|| exit 0`, and the hook prints nothing for every other outcome; it never prints `allow`, which would also skip the permission prompt; a shell write is found afterwards, not prevented; version skew skips the guard; the command is a `lapis-design` subcommand, so a CLI older than the plugin rejects it on stderr and the guard is absent until the CLI is updated, where the older `lapis-design-hook` would have printed a notice that fails the tool call.
+- MCP: plugin MCP configuration, from `dist/antigravity/lazuli/mcp_config.json`. Antigravity names the server `lazuli_lapis-lazuli` (plugin, then server) and lists its tool `slop_lint`; the command is the CLI on PATH.
+
+The harness also reads skills from: `.agents/skills`, `~/.gemini/antigravity-cli/skills`, `~/.gemini/config/skills`, `plugin skills/`.
+
+**Install**
+
+These commands do not install the CLI. The MCP server runs programs from the CLI package by name (`lapis-design-hook` for hooks, `lapis-design` for MCP), so the CLI must be on the PATH the harness sees (see [CLI and optional components](#cli-and-optional-components)).
+
+```sh
+agy plugin install <checkout>/dist/antigravity/lapis
+agy plugin install <checkout>/dist/antigravity/ultramarine
+agy plugin install <checkout>/dist/antigravity/lazuli
+```
+
+Antigravity installs only from a local folder, not from a repository. `<checkout>` is a clone of the `release` branch: `git clone --depth 1 --branch release https://github.com/lapis-labs/lapis-lazuli.git <checkout>`; the install script makes it in a temporary folder and deletes it afterwards.
+
+**Update**
+
+```sh
+agy plugin install <checkout>/dist/antigravity/lapis
+agy plugin install <checkout>/dist/antigravity/ultramarine
+agy plugin install <checkout>/dist/antigravity/lazuli
+```
+
+Installing a plugin again replaces its whole folder (agy 1.2.17, 2026-10-06: files the new version no longer has are gone). `<checkout>` is a clone of the `release` branch: `git clone --depth 1 --branch release https://github.com/lapis-labs/lapis-lazuli.git <checkout>`; the install script makes it in a temporary folder and deletes it afterwards.
+
+**Uninstall**
+
+```sh
+agy plugin uninstall lapis
+agy plugin uninstall ultramarine
+agy plugin uninstall lazuli
+```
+
+**Check**
+
+- `agy plugin list`, expect:
+  - lapis listed with its components
+  - ultramarine listed with its components
+  - lazuli listed with its components
+- In a new session, ask which skills are available, or run /lapis.
+
+**Needs your approval**
+
+- a headless `agy -p` run soft-denies a tool that needs a permission it cannot ask for (agy 1.2.17, 2026-10-06: a file write in a temporary workspace was denied without `--dangerously-skip-permissions`, though the documentation says workspace writes are allowed); an unattended design run needs that flag or an allow rule in ~/.gemini/antigravity-cli/settings.json, and the write guard still refuses under the flag
+
+**Conflicts**
+
+- the hooks run with the plugin's folder as their working directory, so they find the project from `workspacePaths` in the event, never from the current directory
+- ~/.gemini is also Gemini CLI's folder, so the row for other harnesses detects Gemini CLI wherever Antigravity is installed
+- this repository's .agents/plugins/ holds the Codex catalog, not a plugin folder; Antigravity reads that folder in a workspace
+
+**Not yet confirmed**
+
+- the `sed_file` tool, which is in agy's tool list but fails with `not found in registry` when a custom agent names it, so its arguments are unknown and the write guard does not cover it; and `multi_replace_file_content`, which the documentation lists with `TargetFile` but which a custom agent could not call either (the guard's handling of it rests on the documentation; `write_to_file`, `replace_file_content`, and `notebook_edit` were seen with `TargetFile`, `TargetFile`, and `NotebookPath`)
+- a global install into the real ~/.gemini (the owner's installation was not changed; `agy plugin install` and `agy plugin list` ran under an isolated HOME, and the model runs used workspace-level plugins in a temporary project)
+- that an installed plugin's hooks and MCP server load the same way as a workspace-level plugin's (documented, not run); the hooks' working directory was observed only for the workspace-level plugin
+- the interactive TUI (`/plugin`, `/hooks`, skills as slash commands, how a Stop continuation or a skipped-hook line is shown); every run was headless
+- Antigravity 2.0 and the IDE, which read the same plugin folder by their documentation
+- `|| exit 0` under cmd.exe on Windows (the documentation says hook commands run with `cmd /c` there)
+- install.ps1 and `agy plugin install` on Windows: the script joins the clone's path with `/`, which Windows paths usually accept
+
+Sources (checked 2026-10-06): <https://antigravity.google/docs/plugins>, <https://antigravity.google/docs/hooks>, <https://antigravity.google/docs/skills>, <https://antigravity.google/docs/subagents>, <https://antigravity.google/docs/mcp>, <https://antigravity.google/docs/cli/headless>.
+
 ### Other Agent Skills harnesses
 
 Installed as: flat. Skills are invoked as `per harness; usually /<skill> or automatic`.
@@ -594,6 +676,8 @@ If none of them is installed, install uv (<https://docs.astral.sh/uv/>) or pipx 
 
 An installed runner skips unknown hooks/options and mismatched plugin/CLI versions with exit 0 and a one-line `systemMessage`, never a blocking decision. Version notices are claimed atomically under `.lapis/hooks/`, once per session and version pair (once per project without a session id). A read-only project may repeat the notice, but still never blocks. pi and Oh-My-Pi display it through notifications or stderr in headless mode; Hermes prints it on the first turn. Missing-runner diagnostics come from the harness and may repeat. Update the CLI and plugins together with the install script's `--update`, then restart the harness; a changed Codex hook must be trusted again in `/hooks`.
 
+Antigravity is stricter: it stops the tool call for a hook that exits non-zero or prints any JSON it does not read (a `systemMessage`, or `{}`). Its hooks call `lapis-design antigravity-hook --plugin-version <plugin-version> <hook-name>` followed by `|| exit 0`, so a missing or crashed runner prints nothing and the agent goes on, and a skipped hook's one line goes to stderr, which Antigravity writes to its CLI log (`~/.gemini/antigravity-cli/cli.log`). A CLI older than the plugin has no such subcommand: its argparse rejects it on stderr with status 2, which `|| exit 0` turns into no answer (checked 2026-10-06), so the hooks do nothing, without a notice, until the CLI is updated to the plugin's version.
+
 The exit-status contracts are documented in [Claude Code hooks](https://code.claude.com/docs/en/hooks#exit-code-output) and [Codex hooks](https://learn.chatgpt.com/docs/hooks#stop): exit 2 can block a write or continue a Stop; a failed command lookup cannot. Extensions instead require an explicit successful JSON denial/continuation and treat launch failures as no decision.
 
 When the commands are not found, the tool's bin folder is not on PATH: run `uv tool update-shell` (uv) or `pipx ensurepath` (pipx), then open a new terminal and restart the harness.
@@ -646,7 +730,7 @@ Roles are design-head, implementer and reviewer. Receivers can read the Markdown
 
 ### Unattended runs
 
-`lapis-design next --task <task>` prints the one step of the procedure still to do, from the files under `.lapis/`, until it says done; done means every step ran on real inputs, not that the release gate passes. A harness's stop event can ask it: the exit gate continues an agent that is about to stop with that step only when `LAPIS_UNATTENDED=1` is set in the environment the harness runs in, and otherwise prints one line and never blocks. `LAPIS_UNATTENDED=1` is for an operator's design run: the gate is then active even when the agent wrote no plan, and its step is `brief` and then `plan`, named for the project folder unless `LAPIS_TASK` says otherwise; do not set it for other work. It continues at most three times in a row for one step and fifteen times in a session, then lets the agent stop and records the step that was left in `.lapis/gate/<task>.json`. Before the plan, a create run owes a brief record, `.lapis/answers/<task>.md`: what it read and looked up, and its answers to the questions the design needs. With nobody to ask it answers them itself and marks every answer `[assumed]` with its basis. A run that should ask its user instead, the brief's questions or the plan's approval, while you relay the answers, must be told so in its instructions; it then writes the questions to `.lapis/questions/<task>.md` and stops: `lapis-design next` says `waiting-for-user`, and the gate lets that stop pass without counting a continue, for two sets of questions before a plan exists and one after. A file of fewer than two words, or a set past those limits, is continued like any other stop; the agent records your answers in `.lapis/answers/<task>.md` and carries on. Claude Code and Codex run it as the lapis plugin's `Stop` hook, Oh-My-Pi as `session_stop` and pi as `agent_before_settle` in the lapis exit-gate extension. Codex runs a plugin hook only after you trust it in `/hooks`, or for one run with `--dangerously-bypass-hook-trust` (use it only in an isolated `CODEX_HOME` whose hook sources you vetted); an untrusted hook is skipped without any message, so the gate is silently absent and the agent stops as it would without it. Without the gate the skills say to run `lapis-design next` by hand. The same switch turns on a write guard: the order is brief, references, plan, then code, and while a create run still owes one of them, an unattended agent's write of a page source file (HTML, CSS, script, or component) is refused with the next step named, as the lapis plugin's `PreToolUse` hook in Claude Code and Codex, and as a `tool_call` handler of the same extension in Oh-My-Pi and pi. Files under `.lapis/`, other files, and anything outside the project pass, a refusal repeats at most three times for one step, and a page written through the shell is found afterwards (`release.procedure-order`). A person's session sees one line, once, and is never refused. Use reasoning or thinking at high or above for the agent that makes the work: in our runs, a low setting skipped the procedure.
+`lapis-design next --task <task>` prints the one step of the procedure still to do, from the files under `.lapis/`, until it says done; done means every step ran on real inputs, not that the release gate passes. A harness's stop event can ask it: the exit gate continues an agent that is about to stop with that step only when `LAPIS_UNATTENDED=1` is set in the environment the harness runs in, and otherwise prints one line and never blocks. `LAPIS_UNATTENDED=1` is for an operator's design run: the gate is then active even when the agent wrote no plan, and its step is `brief` and then `plan`, named for the project folder unless `LAPIS_TASK` says otherwise; do not set it for other work. It continues at most three times in a row for one step and fifteen times in a session, then lets the agent stop and records the step that was left in `.lapis/gate/<task>.json`. Before the plan, a create run owes a brief record, `.lapis/answers/<task>.md`: what it read and looked up, and its answers to the questions the design needs. With nobody to ask it answers them itself and marks every answer `[assumed]` with its basis. A run that should ask its user instead, the brief's questions or the plan's approval, while you relay the answers, must be told so in its instructions; it then writes the questions to `.lapis/questions/<task>.md` and stops: `lapis-design next` says `waiting-for-user`, and the gate lets that stop pass without counting a continue, for two sets of questions before a plan exists and one after. A file of fewer than two words, or a set past those limits, is continued like any other stop; the agent records your answers in `.lapis/answers/<task>.md` and carries on. Claude Code, Codex, and Antigravity run it as the lapis plugin's `Stop` hook (Antigravity continues with `decision: continue`), Oh-My-Pi as `session_stop` and pi as `agent_before_settle` in the lapis exit-gate extension. Codex runs a plugin hook only after you trust it in `/hooks`, or for one run with `--dangerously-bypass-hook-trust` (use it only in an isolated `CODEX_HOME` whose hook sources you vetted); an untrusted hook is skipped without any message, so the gate is silently absent and the agent stops as it would without it. Without the gate the skills say to run `lapis-design next` by hand. The same switch turns on a write guard: the order is brief, references, plan, then code, and while a create run still owes one of them, an unattended agent's write of a page source file (HTML, CSS, script, or component) is refused with the next step named, as the lapis plugin's `PreToolUse` hook in Claude Code, Codex, and Antigravity, and as a `tool_call` handler of the same extension in Oh-My-Pi and pi. Files under `.lapis/`, other files, and anything outside the project pass, a refusal repeats at most three times for one step, and a page written through the shell is found afterwards (`release.procedure-order`). A person's session sees one line, once, and is never refused. Use reasoning or thinking at high or above for the agent that makes the work: in our runs, a low setting skipped the procedure.
 
 ## Update and uninstall
 
@@ -673,7 +757,7 @@ Each harness section above has the exact update and removal commands.
 
 - Hook errors at session start, or the MCP server does not start: the harness cannot find the CLI on its PATH. Run `lazuli doctor` in a terminal; if it is not found, see [CLI and optional components](#cli-and-optional-components).
 - A harness was not found: the scripts look for its command on PATH or its folder (see [Identify your harness](#identify-your-harness)). Start the harness once, or install it, then run the script again.
-- A harness was found but skipped because it is experimental (`pi`, `hermes`): run the script with `--harness ID` to install it.
+- A harness was found but skipped because it is experimental (`pi`, `hermes`, `antigravity`): run the script with `--harness ID` to install it.
 - A step failed because it was already done: run the script with `--update` instead.
 
 **Claude Code**
@@ -704,6 +788,13 @@ Each harness section above has the exact update and removal commands.
 - Needs your approval: project skills load only after hermes skills trust
 - Hermes does not read Claude or Codex plugin manifests
 - skills bundled in a Hermes plugin get a plugin: namespace and stay out of the skill index, so skills install flat
+
+**Antigravity CLI**
+
+- Needs your approval: a headless `agy -p` run soft-denies a tool that needs a permission it cannot ask for (agy 1.2.17, 2026-10-06: a file write in a temporary workspace was denied without `--dangerously-skip-permissions`, though the documentation says workspace writes are allowed); an unattended design run needs that flag or an allow rule in ~/.gemini/antigravity-cli/settings.json, and the write guard still refuses under the flag
+- the hooks run with the plugin's folder as their working directory, so they find the project from `workspacePaths` in the event, never from the current directory
+- ~/.gemini is also Gemini CLI's folder, so the row for other harnesses detects Gemini CLI wherever Antigravity is installed
+- this repository's .agents/plugins/ holds the Codex catalog, not a plugin folder; Antigravity reads that folder in a workspace
 
 **Other Agent Skills harnesses**
 

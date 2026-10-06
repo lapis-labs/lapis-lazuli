@@ -1,0 +1,5 @@
+{
+  "$schema": "https://antigravity.google/schemas/v1/plugin.json",
+  "name": "lapis",
+  "description": "Design direction, plans, and named defaults for new UI and redesigns"
+}

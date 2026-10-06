@@ -10,8 +10,8 @@ $script:Ref = 'release'
 $script:Raw = 'https://raw.githubusercontent.com/lapis-labs/lapis-lazuli/release'
 $script:Docs = 'https://github.com/lapis-labs/lapis-lazuli/blob/release/INSTALLATION.md'
 $script:AllPlugins = @('lapis', 'ultramarine', 'lazuli')
-$script:AllHarnesses = @('claude-code', 'codex', 'oh-my-pi', 'pi', 'hermes', 'other')
-$script:Experimental = @('pi', 'hermes')
+$script:AllHarnesses = @('claude-code', 'codex', 'oh-my-pi', 'pi', 'hermes', 'antigravity', 'other')
+$script:Experimental = @('pi', 'hermes', 'antigravity')
 $script:CliName = 'CLI (lapis-design, lapis-design-hook, lazuli)'
 $script:CliNeeds = 'uv or pipx'
 $script:SkillsOf = @{
@@ -27,8 +27,8 @@ harness it finds. Guide: https://github.com/lapis-labs/lapis-lazuli/blob/release
 
 Options:
   --dry-run        print every command it would run; change nothing
-  --harness ID     only this harness (repeatable): claude-code, codex, oh-my-pi, pi, hermes, other
-                   experimental, so installed only when named here: pi, hermes
+  --harness ID     only this harness (repeatable): claude-code, codex, oh-my-pi, pi, hermes, antigravity, other
+                   experimental, so installed only when named here: pi, hermes, antigravity
   --plugin NAME    only this plugin (repeatable; default: all): lapis, ultramarine, lazuli
   --update         run the update steps and reinstall the CLI from release
   --uninstall      run the removal steps; a catalog goes only with every plugin, and
@@ -48,6 +48,9 @@ $script:H = ''
 $script:Manual = $false
 $script:Sha = ''
 $script:ShaState = ''
+$script:Checkout = ''
+$script:CheckoutState = ''
+$script:CheckoutDir = ''
 $script:Tool = ''
 $script:Why = @()
 $script:Look = ''
@@ -340,6 +343,50 @@ function Get-Sha {
     return $true
   }
   Add-Failure ($script:H + ': skipped a step that needs the commit of ' + $script:Ref)
+  return $false
+}
+
+# Remove-Checkout: delete the temporary clone Get-Checkout made.
+function Remove-Checkout {
+  if ($script:CheckoutDir) {
+    Remove-Item -LiteralPath $script:CheckoutDir -Recurse -Force -ErrorAction SilentlyContinue
+    $script:CheckoutDir = ''
+  }
+}
+
+# Get-Checkout: set $script:Checkout to a shallow clone of the release ref in a temporary folder (deleted when the
+# script ends), for a harness that installs from a local folder.
+function Get-Checkout {
+  $url = 'https://github.com/' + $script:Repo
+  if ($script:Dry) {
+    if (-not $script:Checkout) { Say ('  would run: git clone --depth 1 --branch ' + $script:Ref + ' ' + $url + ' <checkout>') }
+    $script:Checkout = '<checkout>'
+    return $true
+  }
+  if ($script:Manual) {
+    $script:Checkout = '<checkout>'
+    return $true
+  }
+  if ($script:CheckoutState -eq 'ok') { return $true }
+  if (-not $script:CheckoutState) {
+    $script:CheckoutState = 'failed'
+    if (Test-Cmd 'git') {
+      $dir = Join-Path ([IO.Path]::GetTempPath()) ('lapis-lazuli-checkout-' + [guid]::NewGuid().ToString('N'))
+      $script:CheckoutDir = $dir
+      Say ('  run: git clone --depth 1 --branch ' + $script:Ref + ' ' + $url + ' ' + $dir)
+      $saved = $env:GIT_TERMINAL_PROMPT
+      $env:GIT_TERMINAL_PROMPT = '0'
+      $code = Invoke-Argv @('git', 'clone', '--depth', '1', '--branch', $script:Ref, $url, $dir)
+      $env:GIT_TERMINAL_PROMPT = $saved
+      if ($code -eq 0) {
+        $script:Checkout = $dir
+        $script:CheckoutState = 'ok'
+        return $true
+      }
+    }
+    Say ('  could not clone ' + $script:Ref + ' (git clone --depth 1 --branch ' + $script:Ref + ' ' + $url + ')')
+  }
+  Add-Failure ($script:H + ': skipped a step that needs a clone of ' + $script:Ref)
   return $false
 }
 
@@ -664,6 +711,48 @@ function h_hermes([string]$Phase) {
   }
 }
 
+# Antigravity CLI
+function h_antigravity([string]$Phase) {
+  switch ($Phase) {
+    'name' { $script:H = 'Antigravity CLI' }
+    'detect' {
+      $script:Why = @()
+      if (Test-Cmd 'agy') { $script:Why += 'command agy' }
+      if (Test-Dir (Get-HomePath '.gemini/antigravity-cli')) { $script:Why += 'folder ~/.gemini/antigravity-cli' }
+    }
+    'lookfor' { $script:Look = 'command agy or folder ~/.gemini/antigravity-cli'; $script:Anchor = '#antigravity-cli' }
+    'install' {
+      Start-Phase 'Antigravity CLI' @('agy')
+      foreach ($Plugin in @($script:Plugins)) {
+        if (Get-Checkout) {
+          Invoke-Run $false 'Antigravity installs only from a local folder, not from a repository' @('agy', 'plugin', 'install', ('' + $script:Checkout + '/dist/antigravity/' + $Plugin))
+        }
+      }
+    }
+    'update' {
+      Start-Phase 'Antigravity CLI' @('agy')
+      foreach ($Plugin in @($script:Plugins)) {
+        if (Get-Checkout) {
+          Invoke-Run $false 'installing a plugin again replaces its whole folder (agy 1.2.17, 2026-10-06: files the new version no longer has are gone)' @('agy', 'plugin', 'install', ('' + $script:Checkout + '/dist/antigravity/' + $Plugin))
+        }
+      }
+    }
+    'uninstall' {
+      Start-Phase 'Antigravity CLI' @('agy')
+      foreach ($Plugin in @($script:Plugins)) {
+        Invoke-Run $false '' @('agy', 'plugin', 'uninstall', ('' + $Plugin))
+      }
+    }
+    'verify' {
+      Add-CheckCmd @('agy', 'plugin', 'list')
+      foreach ($Plugin in @($script:Plugins)) {
+        Add-CheckExpect ('' + $Plugin + ' listed with its components')
+      }
+      Add-CheckManual 'In a new session, ask which skills are available, or run /lapis'
+    }
+  }
+}
+
 # Other Agent Skills harnesses
 function h_other([string]$Phase) {
   switch ($Phase) {
@@ -718,6 +807,7 @@ function Invoke-Harness([string]$Id, [string]$Phase) {
     'oh-my-pi' { h_oh_my_pi $Phase }
     'pi' { h_pi $Phase }
     'hermes' { h_hermes $Phase }
+    'antigravity' { h_antigravity $Phase }
     'other' { h_other $Phase }
   }
 }
@@ -887,7 +977,7 @@ function Invoke-Main([object[]]$Arguments) {
   return 0
 }
 
-$code = @(Invoke-Main $args)[-1]
+try { $code = @(Invoke-Main $args)[-1] } finally { Remove-Checkout }
 if (Get-Variable -Name PSCommandPath -ValueOnly -ErrorAction SilentlyContinue) { exit $code }
 if ($code -ne 0) { Say ('install.ps1 finished with exit code ' + $code) }
 $global:LASTEXITCODE = $code

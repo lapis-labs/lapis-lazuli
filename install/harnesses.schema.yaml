@@ -12,6 +12,8 @@
 #   {agent}    one skills-CLI agent id (step runs once per detected agent)
 #   {ref}      release channel: the `release` branch, moved by hand to each release tag; a tag pins
 #   {sha}      the full 40-hex commit {ref} points to
+#   {checkout} a shallow clone of {ref} that the script makes once in a temporary folder and deletes when it
+#              ends; for a harness that installs from a local folder (Antigravity)
 # A step that uses {plugin}, {skill}, or {agent} runs once per value; the others run once.
 # `when: all-plugins` runs a step only when every plugin of the catalog is being removed.
 # A `remove` home path ending in `/` removes the folder only if empty; other paths remove a file.
@@ -87,9 +89,10 @@ $defs:
       per: { enum: [repo, plugin, skill] }
       only: { type: array, items: { $ref: "#/$defs/slug" } }   # per plugin: only these plugins get it
       format:
-        enum: [agent-skill, claude-plugin-manifest, codex-plugin-manifest, claude-catalog, codex-catalog,
-               hooks-json, mcp-json, claude-agent, codex-agent, omp-package, pi-package,
-               ts-extension, gate-extension, hermes-plugin, agents-md-snippet]
+        enum: [agent-skill, claude-plugin-manifest, codex-plugin-manifest, antigravity-plugin-manifest,
+               claude-catalog, codex-catalog, hooks-json, antigravity-hooks-json, mcp-json, claude-agent,
+               codex-agent, antigravity-agent, omp-package, pi-package, ts-extension, gate-extension,
+               hermes-plugin, agents-md-snippet]
       from: { type: array, minItems: 1, items: { type: string } }   # src paths or other output ids
       committed: { type: boolean }                  # default true: marketplace installs read the repo as is
 
@@ -146,6 +149,7 @@ $defs:
       # heading, and the install scripts install an experimental harness only when --harness names
       # it, never because it was detected.
       status: { enum: [experimental] }
+      checked: { type: string, format: date }   # when this harness's facts were checked, if not on the top-level date
       detect:
         type: object
         additionalProperties: false

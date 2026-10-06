@@ -11,7 +11,7 @@ is the guard.
 ## Versions and channels
 
 One version per release, taken from the release tag, goes into every manifest, both catalogs, the
-pi package, and the Hermes plugin. A plugin `version` pins Claude Code users until it changes, so
+pi package, the Hermes plugin, and the Antigravity hook commands (its `plugin.json` has no version key). A plugin `version` pins Claude Code users until it changes, so
 the build refuses to emit a release whose version equals the previous tag's. Codex caches plugins by
 version as well.
 
@@ -117,6 +117,9 @@ turns exit 2 stderr into a continuation and other execution failures into failed
 | lapis | `hooks/hooks.json` (Claude Code and Codex) | `Stop` | none | `stop` | the exit gate (cli/lapis_design/gate.py): with a plan under the project and `LAPIS_UNATTENDED=1`, continues the agent with the step `lapis-design next` still asks for (`{"decision": "block", "reason": …}`), at most three times in a row for one step and fifteen in a session; an unattended run with no plan is continued to write one (step `plan`, task named for the project folder unless `LAPIS_TASK` is set); a run waiting for its user's answers (`.lapis/questions/<task>.md` newer than `.lapis/answers/<task>.md`) is let stop, two sets of questions before a plan and one after; otherwise prints a one-line `systemMessage` and never blocks; prints nothing with no plan and no unattended run, or when it fails |
 | lapis | `hooks/hooks.json` (Claude Code and Codex) | `PreToolUse` | `Write\|Edit\|MultiEdit\|apply_patch` | `pre-write` | the write guard (cli/lapis_design/order.py): in every session, refuses with the same JSON a write to `.lapis/requirements/`, `.lapis/state/`, `.lapis/changes/`, or `.lapis/owner/`, the records only `lapis-design` writes (no cap; it stops the agent's tool, not a person, and a shell write is detected afterwards, never prevented); with `LAPIS_UNATTENDED=1` and a create run whose brief, references, or plan `lapis-design next` still asks for (or whose plan has blockers), refuses a write of a page source file with `{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": …}}` naming the step, at most three times in a row for one step; other writes under `.lapis/`, to other files, and outside the project pass; a person's session gets one `systemMessage` the first time; prints nothing on any failure of ours |
 
+| lapis | `dist/antigravity/lapis/hooks.json` (Antigravity only) | `Stop` | none | `stop` | the same gate; answers `{"decision": "continue", "reason": …}` instead of `block`, and only when the agent chose to stop, in the person's own conversation (see Antigravity) |
+| lapis | `dist/antigravity/lapis/hooks.json` (Antigravity only) | `PreToolUse` | `write_to_file\|replace_file_content\|multi_replace_file_content\|notebook_edit` | `pre-write` | the same guard; answers `{"decision": "deny", "reason": …}`, and nothing otherwise |
+
 Codex reads `hooks/hooks.json` by default, and its matchers are regular expressions, so the
 `fork` alternative never matches there. The plan check stays out of that file: Codex has no
 ExitPlanMode tool, and a hook in the file would still ask Codex users to trust it. The lapis plugin's
@@ -182,6 +185,56 @@ versioned hook-only entry point, passes the session id, and prints version/missi
 to stderr without adding model context or a blocking decision. Skills are not bundled in the
 plugin: plugin skills get a `plugin:` namespace and stay out of the skill index, so they install
 flat from `dist/skills`.
+
+## Antigravity — `antigravity-plugin-manifest`, `antigravity-skills`, `antigravity-hooks`, `antigravity-mcp`, `antigravity-agents`
+
+`dist/antigravity/<plugin>/` is the folder `agy plugin install <folder>` copies: one per plugin, in a tree of its own so that
+`plugins/<plugin>/` (read by Claude Code, Codex, and Oh-My-Pi) never holds a root `plugin.json`. agy 1.2.17 puts the copy under
+`~/.gemini/config/plugins/<name>/`, though its documentation says `~/.gemini/antigravity-cli/plugins/<name>/`, and a second
+install of the same plugin replaces the whole folder (checked 2026-10-06 under an isolated HOME). There is no marketplace of
+our own: Antigravity installs only from a local folder, so `install.sh` clones the release branch into a temporary folder for the
+`{checkout}` placeholder and deletes it afterwards.
+
+- `plugin.json`: `{"$schema": "https://antigravity.google/schemas/v1/plugin.json", "name", "description"}` and nothing else, since
+  the schema allows no other key. The version lives in the hook commands and the skills' `metadata`, not here.
+- `skills/<skill>/`: byte-identical copies of the flat skills the plugin lists, with the same license texts.
+- `hooks.json`, lapis only: a hook name maps to its event. `lapis-stop` is `Stop` (handlers listed directly, no matcher) and
+  `lapis-pre-write` is `PreToolUse` with the matcher `write_to_file|replace_file_content|multi_replace_file_content|notebook_edit`
+  (the file is `TargetFile`, or `NotebookPath` for `notebook_edit`; `sed_file` is in agy's tool list but a custom agent that names
+  it fails with `not found in registry`, so it is not guarded); each runs
+  `lapis-design antigravity-hook --plugin-version VERSION <name> || exit 0`. There is no `exit-plan` (no ExitPlanMode tool)
+  and no `session-start`: Antigravity has no such event, and a PreInvocation hook's `ephemeralMessage` reaches the model for a few
+  steps only (checked 2026-10-06: answered after one tool call, gone after three), so the lazuli skill's by-hand command stands in.
+- `mcp_config.json`, lazuli only: the same server as `.mcp.json`. Antigravity lists its tool as `slop_lint` on the server
+  `lazuli_lapis-lazuli`.
+- `agents/critic.md`: the critic's body, with `name`, `description`, and `tools` (`view_file`, `list_dir`, `grep_search`,
+  `find_by_name`, `write_to_file`: it reads the packet's files and writes its report, with no shell, web, or browser). The main
+  agent starts it with `invoke_subagent` (type name `critic`), or `agy --agent critic` runs it as the session's agent.
+- `LICENSE`, `LICENSE-docs`, `NOTICE`, copied byte for byte like every other installable folder.
+
+What Antigravity does with a hook's answer, as observed with agy 1.2.17 in headless runs (2026-10-06); `cli/lapis_design/antigravity.py`
+keeps to it:
+
+| Hook | Answer | Result |
+|---|---|---|
+| `PreToolUse` | no output, exit 0 | the tool runs |
+| `PreToolUse` | `{"decision": "deny", "reason": …}` | the call is refused and the model reads the reason, also under `--dangerously-skip-permissions` |
+| `PreToolUse` | `{}`, JSON with a field it does not know (`systemMessage`), text that is not JSON, or exit 1 or 2 | the call fails with that error: fail closed |
+| `Stop` | `{"decision": "continue", "reason": …}` | the loop continues and the reason is shown to the model as a system message |
+| `Stop`, `PreInvocation` | `{}`, an unknown field, or exit 1 | ignored |
+
+A hook's working directory is the plugin's folder, so the event's `workspacePaths` names the project. `Stop`'s `terminationReason`
+is `NO_TOOL_CALL` when the agent chose to stop (the documentation says `model_stop`); a cancel, an error, and the limits have
+their own values, and the gate continues none of them. `Stop` also fires when a subagent (the critic) ends, with an event of the
+same shape; its transcript (`transcriptPath`) opens with a system message from its parent where the person's conversation opens
+with their own message (`source` `USER_EXPLICIT`), and the gate answers nothing for any other conversation, so it never
+continues the critic with the procedure's next step. A successful hook's stderr is written to the CLI log
+(`~/.gemini/antigravity-cli/cli.log`) and is not shown to the person, which is where a skipped hook's one-line notice goes. The
+`|| exit 0` is why a missing or crashed `lapis-design` costs nothing. The command is the `antigravity-hook` subcommand of
+`lapis-design`, not `lapis-design-hook`: a CLI older than the plugin has no such subcommand, and its argparse rejects it on stderr
+with status 2, which `|| exit 0` turns into no answer (checked 2026-10-06 with the installed 0.2.0); the older `lapis-design-hook`
+would have printed a `systemMessage` on stdout, which fails the tool call. The older CLI's hooks are then silent until the CLI is
+updated, and the skipped hook's stderr (`invalid choice: 'antigravity-hook'`) is in the CLI log.
 
 ## Licenses
 

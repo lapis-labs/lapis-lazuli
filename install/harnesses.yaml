@@ -67,6 +67,11 @@ outputs:
   - { id: omp-package, path: "plugins/{plugin}/package.json", per: plugin, only: [lapis, lazuli], format: omp-package, from: [session-extension, gate-extension] }
   - { id: pi-package, path: "package.json", per: repo, format: pi-package, from: [flat-skills, session-extension, gate-extension] }
   - { id: hermes-plugin, path: "plugins/hermes/lapis-lazuli/", per: repo, format: hermes-plugin, from: [src/hermes] }
+  - { id: antigravity-plugin-manifest, path: "dist/antigravity/{plugin}/plugin.json", per: plugin, format: antigravity-plugin-manifest, from: [install/harnesses.yaml] }
+  - { id: antigravity-skills, path: "dist/antigravity/{plugin}/skills/{skill}/", per: skill, format: agent-skill, from: [flat-skills] }
+  - { id: antigravity-hooks, path: "dist/antigravity/{plugin}/hooks.json", per: plugin, only: [lapis], format: antigravity-hooks-json, from: [install/harnesses.yaml] }
+  - { id: antigravity-mcp, path: "dist/antigravity/{plugin}/mcp_config.json", per: plugin, only: [lazuli], format: mcp-json, from: [install/harnesses.yaml] }
+  - { id: antigravity-agents, path: "dist/antigravity/{plugin}/agents/", per: plugin, only: [ultramarine], format: antigravity-agent, from: [src/agents] }
   - { id: agents-md-snippet, path: "dist/AGENTS.snippet.md", per: repo, format: agents-md-snippet, from: [install/harnesses.yaml] }
 
 harnesses:
@@ -333,6 +338,66 @@ harnesses:
       - https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/skills.md
       - https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/plugins.md
       - https://github.com/NousResearch/hermes-agent/blob/main/website/docs/reference/cli-commands.md
+
+  - id: antigravity
+    name: Antigravity CLI
+    status: experimental
+    checked: "2026-10-06"
+    detect: { commands: [agy], dirs: ["~/.gemini/antigravity-cli"] }
+    form: plugin
+    consumes: [antigravity-plugin-manifest, antigravity-skills, antigravity-hooks, antigravity-mcp, antigravity-agents]
+    skill_paths: [".agents/skills", "~/.gemini/antigravity-cli/skills", "~/.gemini/config/skills", "plugin skills/"]
+    invoke: "/{skill}"
+    install:
+      - run: [agy, plugin, install, "{checkout}/dist/antigravity/{plugin}"]
+        note: "Antigravity installs only from a local folder, not from a repository"
+    update:
+      - run: [agy, plugin, install, "{checkout}/dist/antigravity/{plugin}"]
+        note: "installing a plugin again replaces its whole folder (agy 1.2.17, 2026-10-06: files the new version no longer has are gone)"
+    uninstall:
+      - run: [agy, plugin, uninstall, "{plugin}"]
+    verify:
+      - run: [agy, plugin, list]
+        expect: "{plugin} listed with its components"
+      - manual: "In a new session, ask which skills are available, or run /lapis"
+    session_start: { via: instructions, note: "Antigravity has no session-start event, and what a PreInvocation hook injects (`ephemeralMessage`) reaches the model for a few steps only (agy 1.2.17, 2026-10-06: still there after one tool call, gone after three), so a summary injected at the first model call would be forgotten; the lazuli skill says to run `lazuli local fonts --summary` by hand" }
+    critic: { via: plugin-agent, output: antigravity-agents, note: "the main agent starts it with `invoke_subagent` (type name critic), or it is picked as the session's agent (`agy --agent critic`); its `tools` list gives it file reading and writing and no shell, web, or browser" }
+    exit_gate: { via: plugin-hook, output: antigravity-hooks, event: Stop, note: "`lapis-design antigravity-hook --plugin-version <version> stop` answers `{\"decision\": \"continue\", \"reason\": ...}` only when LAPIS_UNATTENDED=1 and the agent chose to stop (terminationReason NO_TOOL_CALL) with no background task running, in the person's own conversation (Antigravity runs Stop when a subagent ends too; its transcript opens with a message from its parent, and the gate leaves it alone); at most 3 continues in a row for one step and 15 in a session; otherwise it prints nothing, and its one-line notice for a person goes to stderr (the CLI log); version skew skips the gate" }
+    pre_write: { via: plugin-hook, output: antigravity-hooks, event: "PreToolUse write_to_file|replace_file_content|multi_replace_file_content|notebook_edit", note: "the same guard as in Claude Code, answering `{\"decision\": \"deny\", \"reason\": ...}`; the file is `toolCall.args.TargetFile` (`NotebookPath` for notebook_edit). Antigravity stops a tool call for a hook that exits non-zero or prints JSON it does not know (even `{}`), so the command ends in `|| exit 0`, and the hook prints nothing for every other outcome; it never prints `allow`, which would also skip the permission prompt; a shell write is found afterwards, not prevented; version skew skips the guard; the command is a `lapis-design` subcommand, so a CLI older than the plugin rejects it on stderr and the guard is absent until the CLI is updated, where the older `lapis-design-hook` would have printed a notice that fails the tool call" }
+    mcp: { via: plugin-mcp, output: antigravity-mcp, note: "Antigravity names the server `lazuli_lapis-lazuli` (plugin, then server) and lists its tool `slop_lint`; the command is the CLI on PATH" }
+    trust:
+      - "a headless `agy -p` run soft-denies a tool that needs a permission it cannot ask for (agy 1.2.17, 2026-10-06: a file write in a temporary workspace was denied without `--dangerously-skip-permissions`, though the documentation says workspace writes are allowed); an unattended design run needs that flag or an allow rule in ~/.gemini/antigravity-cli/settings.json, and the write guard still refuses under the flag"
+    conflicts:
+      - "the hooks run with the plugin's folder as their working directory, so they find the project from `workspacePaths` in the event, never from the current directory"
+      - "~/.gemini is also Gemini CLI's folder, so the row for other harnesses detects Gemini CLI wherever Antigravity is installed"
+      - "this repository's .agents/plugins/ holds the Codex catalog, not a plugin folder; Antigravity reads that folder in a workspace"
+    unverified:
+      - "the `sed_file` tool, which is in agy's tool list but fails with `not found in registry` when a custom agent names it, so its arguments are unknown and the write guard does not cover it; and `multi_replace_file_content`, which the documentation lists with `TargetFile` but which a custom agent could not call either (the guard's handling of it rests on the documentation; `write_to_file`, `replace_file_content`, and `notebook_edit` were seen with `TargetFile`, `TargetFile`, and `NotebookPath`)"
+      - "a global install into the real ~/.gemini (the owner's installation was not changed; `agy plugin install` and `agy plugin list` ran under an isolated HOME, and the model runs used workspace-level plugins in a temporary project)"
+      - "that an installed plugin's hooks and MCP server load the same way as a workspace-level plugin's (documented, not run); the hooks' working directory was observed only for the workspace-level plugin"
+      - "the interactive TUI (`/plugin`, `/hooks`, skills as slash commands, how a Stop continuation or a skipped-hook line is shown); every run was headless"
+      - "Antigravity 2.0 and the IDE, which read the same plugin folder by their documentation"
+      - "`|| exit 0` under cmd.exe on Windows (the documentation says hook commands run with `cmd /c` there)"
+      - "install.ps1 and `agy plugin install` on Windows: the script joins the clone's path with `/`, which Windows paths usually accept"
+    verified:
+      - "2026-10-06, 1.2.17: `agy plugin validate` accepts the three built folders (5, 3, and 4 skills, 2 hooks, 1 agent, 1 MCP server); under an isolated HOME, `agy plugin install <folder>` copies each to ~/.gemini/config/plugins/<name>/ (the documentation says ~/.gemini/antigravity-cli/plugins/), `agy plugin list` prints the imports with their components, installing again replaces the folder (a file the new version lacks is gone) and exits 0, and `agy plugin uninstall` exits 0, also for a name that is not installed"
+      - "2026-10-06, 1.2.17: with the three plugins as workspace-level plugins (.agents/plugins/) in a temporary project, `agy -p --model gemini-3.8-flash-medium` lists all twelve skills beside agy's two built-in ones, and `/lps-ux` makes the model read the plugin's skill file"
+      - "2026-10-06, 1.2.17: the `PreToolUse` hook refuses a `write_to_file` to .lapis/requirements/demo.json under `--dangerously-skip-permissions` (the model is told `tool call denied by pre-tool hook: LapisLazuli refuses this write: ...` and the file is not created), and lets a write of notes.md in the same project through"
+      - "2026-10-06, 1.2.17: with LAPIS_UNATTENDED=1, the same hook refuses a `write_to_file` of index.html while the brief record is owed and names the step, and .lapis/order/<task>.json records `denied: {step: brief, count: 1}`, so the environment reaches the hook"
+      - "2026-10-06, 1.2.17: with `--plugin-version 9.9.9` in hooks.json against CLI 0.2.0, the write to .lapis/requirements/demo.json goes through, the hook prints nothing to stdout, and the line `LapisLazuli hooks skipped: plugin 9.9.9, CLI 0.2.0; ...` is in ~/.gemini/antigravity-cli/log/cli-<time>.log as `JSON hook command stderr`; with no `lapis-design` on PATH the write goes through too (`|| exit 0`)"
+      - "2026-10-06, 1.2.17: with the installed CLI 0.2.0, which has no `antigravity-hook` subcommand, as the only `lapis-design` on PATH, the built hooks.json let the first `write_to_file` (to .lapis/requirements/demo.json) and a second one (notes.md) through, with nothing on the hook's stdout and argparse's `invalid choice: 'antigravity-hook'` in the CLI log; the earlier form of the command, `lapis-design-hook --host antigravity`, made that CLI print a `systemMessage` that failed the first tool call of each hook"
+      - "2026-10-06, 1.2.17: a `PreToolUse` hook that prints `{}`, `{\"systemMessage\": ...}`, text that is not JSON, or exits 1 or 2 makes the tool call fail; one that prints nothing, or only to stderr, lets it run; `Stop` and `PreInvocation` hooks that print `{}` or an unknown field, or exit 1, are ignored; the hook's working directory is the plugin's folder, and its event has `conversationId` and `workspacePaths`"
+      - "2026-10-06, 1.2.17: with LAPIS_UNATTENDED=1 the `Stop` hook's `{\"decision\": \"continue\", \"reason\": ...}` re-entered the loop (a `system_message` step, and the model went on with the brief step), and .lapis/gate/<task>.json recorded the conversation id as the session, step brief, 1 continue; the event's `terminationReason` was `NO_TOOL_CALL`, not the documented `model_stop`"
+      - "2026-10-06, 1.2.17: `Stop` also fires when a subagent ends, with the same fields as the person's conversation; the critic subagent's transcript opens with a system message from its parent and the person's with their own message, and with LAPIS_UNATTENDED=1 the gate continued the person's conversation once (.lapis/gate/<task>.json: session is the person's conversation id, total 1) and left the critic's transcript with no continuation"
+      - "2026-10-06, 1.2.17: the lazuli plugin's mcp_config.json starts `lapis-design mcp`; Antigravity lists the server as `lazuli_lapis-lazuli`, and `slop_lint` with no arguments answers `nothing to lint`"
+      - "2026-10-06, 1.2.17: `invoke_subagent` with type name critic starts the plugin's agent, which names view_file, list_dir, grep_search, find_by_name, and write_to_file as its tools (beside agy's own send_message, manage_task, and MCP access) and none for the shell"
+    sources:
+      - https://antigravity.google/docs/plugins
+      - https://antigravity.google/docs/hooks
+      - https://antigravity.google/docs/skills
+      - https://antigravity.google/docs/subagents
+      - https://antigravity.google/docs/mcp
+      - https://antigravity.google/docs/cli/headless
 
   - id: other
     name: Other Agent Skills harnesses

@@ -33,6 +33,9 @@ pre-write    PreToolUse on the file-edit tools in the lapis plugin's hooks/hooks
              write to `.lapis/requirements/`, `.lapis/state/`, `.lapis/changes/`, or `.lapis/owner/` (records only
              `lapis-design` writes) is refused the same way, with no cap: it stops the agent's tool, not a person.
              On any failure of ours it prints nothing.
+
+Antigravity does not run these commands: its hooks.json calls `lapis-design antigravity-hook` (antigravity.py), which wraps
+the same bodies and prints only the answers Antigravity reads.
 """
 from __future__ import annotations
 

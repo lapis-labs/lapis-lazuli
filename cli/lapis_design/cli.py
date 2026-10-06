@@ -36,6 +36,10 @@ def main(argv: list[str] | None = None) -> int:
         return importlib.import_module("lapis_design.next_step").main(argv[1:], prog="lapis-design next")
     if argv[:1] == ["hook"]:
         return hooks.main(argv[1:])
+    if argv[:1] == ["antigravity-hook"]:
+        from lapis_design import antigravity
+
+        return antigravity.main(argv[1:])
 
     ap = argparse.ArgumentParser(prog="lapis-design", description=__doc__.split(":", 1)[1].strip())
     ap.add_argument("--version", action="version", version=f"lapis-design {__version__}")
@@ -47,6 +51,7 @@ def main(argv: list[str] | None = None) -> int:
                 verbs.add_parser(verb, help=f"run {noun} {verb} (see `lapis-design {noun} {verb} -h`)")
     sub.add_parser("next", help="the next step of the procedure still to do (see `lapis-design next -h`)")
     sub.add_parser("hook", help="run a harness hook (reads the event JSON on stdin; version skew fails open)")
+    sub.add_parser("antigravity-hook", help="run a hook for Antigravity (its own event and answer JSON; see antigravity.py)")
     sub.add_parser("mcp", help="serve the lapis-lazuli MCP server over stdio")
     args = ap.parse_args(argv)
     from lapis_design.mcp_server import serve   # the SDK loads only for the server, not for every hook

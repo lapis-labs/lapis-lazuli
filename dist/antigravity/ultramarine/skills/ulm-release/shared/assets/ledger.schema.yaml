@@ -1,0 +1,207 @@
+# LapisLazuli asset ledger schema — v0 draft
+# Location: .lapis/assets.ledger.json in the project
+# The project's provenance record for media that ships: photos, video, audio, illustrations, icon
+# sets, the product's own logo, other parties' marks, screenshots, 3D assets, and generated media.
+# Fonts are recorded in the fonts lock (fonts/lock.schema.yaml), not here: one record per asset.
+# lapis adds an entry when it selects or generates an asset; people add entries for assets they
+# supply. The rights check (assets/CHECKS.md) and ulm-release read this file.
+# Never store credentials, license keys, payment data, or private receipts here; `evidence` says where
+# the governing document is kept.
+
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/assets-ledger.v0.json
+title: LapisLazuli asset ledger
+type: object
+additionalProperties: false
+required: [version, updated_at, assets]
+properties:
+  version: { const: 0 }
+  updated_at: { type: string, format: date-time }
+  scan:                                             # where shipped asset files live; defaults in CHECKS.md
+    type: object
+    additionalProperties: false
+    properties:
+      roots: { type: array, minItems: 1, items: { $ref: "#/$defs/rel_path" } }
+      exclude: { type: array, items: { type: string } }   # globs, repo-relative
+  assets:
+    type: array
+    items: { $ref: "#/$defs/asset" }
+
+$defs:
+  rel_path: { type: string, pattern: "^(?!/)(?!.*\\.\\.)[^\\0]+$" }   # repo-relative, no parent segments
+  date: { type: string, format: date }
+  platform: { enum: [web, ios, android, desktop, email, embedded] }   # the plan's brief.platform values
+
+  evidence:                                         # where the license or permission document is kept
+    type: object
+    additionalProperties: false
+    required: [kind, ref]
+    properties:
+      kind: { enum: [file, url, kept-elsewhere] }   # kept-elsewhere: a secure system outside the repository
+      ref: { type: string, minLength: 2 }           # repo path, canonical URL (no signed or expiring URL), or where it is kept
+    if: { properties: { kind: { const: url } } }
+    then: { properties: { ref: { pattern: "^https?://[^?#]*$" } } }
+    else:
+      if: { properties: { kind: { const: file } } }
+      then: { properties: { ref: { $ref: "#/$defs/rel_path" } } }
+
+  asset:
+    type: object
+    additionalProperties: false
+    required: [id, kind, role, origin, rights, use, used_by, checked_at]
+    anyOf:                                          # an entry covers shipped files, remote items, or a library
+      - { required: [files] }
+      - { required: [phashes] }
+      - { required: [hosts] }
+      - { required: [library] }
+    properties:
+      id: { type: string, pattern: "^[a-z0-9][a-z0-9-]*$" }
+      kind:
+        # logo: the product's own identity; mark: another party's logo, wordmark, or brand glyph
+        enum: [photo, video, audio, illustration, icon-set, logo, mark, screenshot, model-3d, texture, other]
+      role:
+        # evidentiary: shown as proof that something real exists or happened (a product photo,
+        # a team portrait, a customer, a result); brand: identifies the product or another party
+        enum: [decorative, informative, functional, evidentiary, brand]
+      # user-content: media the product's users upload at run time, under the product's own terms
+      origin: { enum: [own, commissioned, stock, open-license, generated, third-party, user-content, unknown] }
+      files:                                        # files that ship; globs allowed
+        type: array
+        minItems: 1
+        items:
+          type: object
+          additionalProperties: false
+          required: [path]
+          properties:
+            path: { $ref: "#/$defs/rel_path" }
+            sha256: { type: string, pattern: "^[0-9a-f]{64}$" }
+      hosts:                                        # user-content: every item from these hosts; otherwise a fallback for remote media without a perceptual hash
+        type: array
+        minItems: 1
+        items: { type: string, pattern: "^[a-z0-9.-]+$" }
+      phashes:                                      # 64-bit perceptual hashes of the delivered images, for remote or transformed copies
+        type: array
+        minItems: 1
+        items: { type: string, pattern: "^[0-9a-f]{16}$" }
+      library: { type: string, minLength: 1 }       # icon library name as the render extract reports it
+      source:                                       # the canonical item page
+        type: object
+        additionalProperties: false
+        properties:
+          url: { type: string, pattern: "^https?://[^?#]*$" }
+          provider: { type: string }
+          retrieved: { $ref: "#/$defs/date" }
+      rights:
+        type: object
+        additionalProperties: false
+        required: [license, source_class]
+        properties:
+          license:
+            enum: [own, commissioned, cc0, public-domain, cc-by, cc-by-sa, cc-by-nc, cc-by-nd, cc-by-nc-sa,
+                   cc-by-nc-nd, provider-terms, stock-standard, stock-extended, editorial, permission, mit, isc,
+                   bsd, apache, ofl, proprietary, user-terms, unknown]
+          version: { type: string }
+          holder: { type: string }                  # creator or rights holder
+          evidence: { $ref: "#/$defs/evidence" }
+          # catalog summaries and file metadata are leads, not grants
+          source_class: { enum: [rights-holder, provider, catalog-summary, file-metadata, user-declared] }
+          restrictions:                             # beyond what the license id implies (CHECKS.md)
+            type: array
+            uniqueItems: true
+            items: { enum: [editorial-only, non-commercial, no-derivatives, share-alike, no-standalone-redistribution,
+                            no-endorsement, platform-bound, no-generator-input] }
+          platforms: { type: array, minItems: 1, items: { $ref: "#/$defs/platform" } }   # where a platform-bound license applies
+          expires: { $ref: "#/$defs/date" }         # the right, approval, or relationship ends
+      attribution:                                  # visible credit, separate from notices
+        type: object
+        additionalProperties: false
+        required: [required]
+        properties:
+          required: { type: boolean }
+          text: { type: string, minLength: 1 }
+          placement: { enum: [adjacent, credits-page, about-screen, docs] }
+          license_url: { type: string, pattern: "^https?://[^?#]*$" }   # the license the credit links to
+          indicates_changes: { type: boolean }      # the credit says the work was modified
+      notices:                                      # license and copyright texts that ship with the files
+        type: array
+        items: { $ref: "#/$defs/rel_path" }
+      notices_embedded: { type: boolean }           # the notices sit inside the shipped files and survive the build
+      modified: { enum: [none, resized, cropped, converted, edited, composited] }
+      releases:
+        type: object
+        additionalProperties: false
+        properties:
+          people: { $ref: "#/$defs/release" }
+          property: { $ref: "#/$defs/release" }
+      mark:
+        type: object
+        additionalProperties: false
+        required: [owner, relationship, authorization]
+        properties:
+          owner: { type: string }
+          name: { type: string, minLength: 1 }      # the word mark as it appears in text
+          relationship: { enum: [own, customer, partner, integration, press, compatibility] }
+          authorization: { enum: [confirmed, not-needed, unknown] }
+          evidence: { $ref: "#/$defs/evidence" }
+          symbols:                                  # symbols the owner's approved guidance sets for this mark
+            type: array
+            uniqueItems: true
+            items: { enum: [registered, trademark] }
+      generated:
+        type: object
+        additionalProperties: false
+        required: [tool, date, inputs, reviewed]
+        properties:
+          tool: { type: string }
+          date: { $ref: "#/$defs/date" }
+          inputs:                                   # what was given to the generator besides the prompt
+            type: array
+            minItems: 1
+            uniqueItems: true
+            items: { enum: [none, own, licensed, reference-only] }
+          input_assets: { type: array, minItems: 1, items: { type: string } }   # ledger ids of licensed inputs
+          # checked for stray marks, watermarks, recognizable people, copied-looking characters, broken text
+          reviewed: { type: boolean }
+      use:
+        type: object
+        additionalProperties: false
+        required: [channels, commercial, promotional]
+        properties:
+          channels:
+            type: array
+            minItems: 1
+            uniqueItems: true
+            items: { enum: [web, ios, android, desktop, email, embedded, print, social, ads, document, video] }
+          commercial: { type: boolean }             # part of a commercial product or service
+          promotional: { type: boolean }            # advertises or promotes a product, service, or brand
+          editorial: { type: boolean }              # illustrates news, commentary, criticism, or reporting
+      used_by: { type: array, minItems: 1, items: { type: string } }   # plan task ids
+      checked_at: { $ref: "#/$defs/date" }
+      approved_by: { type: string }
+      open_questions: { type: array, items: { type: string } }
+    allOf:
+      - if: { properties: { kind: { enum: [logo, mark] } } }
+        then: { required: [mark] }
+      - if: { properties: { origin: { const: generated } } }
+        then: { required: [generated] }
+      - if: { properties: { attribution: { properties: { required: { const: true } }, required: [required] } }, required: [attribution] }
+        then: { properties: { attribution: { required: [text, placement] } } }
+      - if: { properties: { rights: { properties: { restrictions: { contains: { const: platform-bound } } }, required: [restrictions] } } }
+        then: { properties: { rights: { required: [platforms] } } }
+      - if: { properties: { rights: { properties: { license: { $ref: "#/$defs/documented_license" } } } } }
+        then: { properties: { rights: { required: [evidence] } } }
+      - if: { properties: { generated: { properties: { inputs: { contains: { const: licensed } } }, required: [inputs] } }, required: [generated] }
+        then: { properties: { generated: { required: [input_assets] } } }
+      - if: { properties: { origin: { const: user-content } } }       # covers whole hosts, so keep it narrow
+        then:
+          required: [hosts]
+          not: { anyOf: [ { required: [files] }, { required: [library] } ] }
+          properties: { rights: { properties: { license: { const: user-terms } } } }
+
+  # licenses whose grant lives in a document of its own: the evidence must say where
+  documented_license:
+    enum: [commissioned, permission, stock-standard, stock-extended, editorial, proprietary, provider-terms, user-terms]
+
+  release:
+    # synthetic: generated people or places that resemble no real one (generated media only)
+    enum: [none-depicted, obtained, synthetic, needed, unknown]

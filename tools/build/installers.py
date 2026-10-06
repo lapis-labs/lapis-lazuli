@@ -6,7 +6,7 @@ command, and note comes from the harness definitions; the templates here hold on
 engine (options, detection, questions, dry runs, logging) that runs them.
 
 Placeholders (install/harnesses.schema.yaml): {repo}, {ref}, and {catalog} are filled here;
-{plugin}, {skill}, {agent}, and {sha} are filled by the scripts at run time. Commands stay argv
+{plugin}, {skill}, {agent}, {sha}, and {checkout} are filled by the scripts at run time. Commands stay argv
 lists in both scripts: each item becomes one quoted word, and nothing is passed to eval.
 """
 from __future__ import annotations
@@ -15,7 +15,7 @@ import re
 from pathlib import PurePosixPath
 
 PLACEHOLDER = re.compile(r"\{([a-z]+)\}")
-RUNTIME = ("agent", "plugin", "skill", "sha")
+RUNTIME = ("agent", "plugin", "skill", "sha", "checkout")
 LOOPS = ("agent", "plugin", "skill")          # nesting order when a step uses more than one
 SH_SAFE = re.compile(r"[A-Za-z0-9_./:@+,-]+")   # sh words that need no quotes
 PS_SAFE = re.compile(r"[A-Za-z0-9_./:+-][A-Za-z0-9_./:@+-]*")
@@ -29,12 +29,15 @@ FORMAT_LABELS = {
     "agent-skill": "Skills",
     "claude-plugin-manifest": "Plugin manifest (Claude format)",
     "codex-plugin-manifest": "Plugin manifest (Codex format)",
+    "antigravity-plugin-manifest": "Plugin manifest (Antigravity format)",
     "claude-catalog": "Catalog",
     "codex-catalog": "Catalog (Codex)",
     "hooks-json": "Hooks",
+    "antigravity-hooks-json": "Hooks (Antigravity format)",
     "mcp-json": "MCP server",
     "claude-agent": "Critic agent (Claude format)",
     "codex-agent": "Critic agent (Codex format)",
+    "antigravity-agent": "Critic agent (Antigravity format)",
     "omp-package": "Extension package",
     "pi-package": "Package manifest",
     "ts-extension": "Session-start extension",
@@ -56,9 +59,9 @@ VIA_LABELS = {
 VIA_BY_HAND = "instructions only: the skills say what to run by hand"
 MECHANISMS = (("session_start", "Session summary"), ("critic", "Separate critic"), ("exit_gate", "Exit gate"),
               ("pre_write", "Write guard"), ("mcp", "MCP"))
-SH_VARS = {"plugin": "LL_plugin", "skill": "LL_skill", "agent": "LL_agent", "sha": "LL_sha"}
-PS_VARS = {"plugin": "$Plugin", "skill": "$Skill", "agent": "$Agent", "sha": "$script:Sha"}
-DOC_VARS = {"agent": "<agent>", "sha": "<commit>"}
+SH_VARS = {"plugin": "LL_plugin", "skill": "LL_skill", "agent": "LL_agent", "sha": "LL_sha", "checkout": "LL_checkout"}
+PS_VARS = {"plugin": "$Plugin", "skill": "$Skill", "agent": "$Agent", "sha": "$script:Sha", "checkout": "$script:Checkout"}
+DOC_VARS = {"agent": "<agent>", "sha": "<commit>", "checkout": "<checkout>"}
 
 
 def generate(doc: dict, version: str) -> dict[str, str]:
@@ -199,13 +202,15 @@ class _Gen:
         used = {n for t in templates for n in PLACEHOLDER.findall(t)}
         st["loops"] = [n for n in LOOPS if n in used]
         st["expect_loops"] = [n for n in LOOPS if n in PLACEHOLDER.findall(raw.get("expect", "")) and n not in used]
-        if "sha" in PLACEHOLDER.findall(raw.get("expect", "")):
-            raise ValueError(f"{h['id']}: {{sha}} in an expectation")
+        for name in ("sha", "checkout"):
+            if name in PLACEHOLDER.findall(raw.get("expect", "")):
+                raise ValueError(f"{h['id']}: {{{name}}} in an expectation")
         if {"plugin", "skill"} <= used:
             raise ValueError(f"{h['id']}: a step cannot loop over both plugins and skills: {raw}")
         if "agent" in used and not h.get("agents"):
             raise ValueError(f"{h['id']}: {{agent}} without agents")
         st["sha"] = "sha" in used
+        st["checkout"] = "checkout" in used
         return st
 
     @staticmethod
@@ -301,6 +306,8 @@ class _Gen:
             pairs.append((f"for {SH_VARS[n]} in {source}; do", "done"))
         if guards and st["sha"]:
             pairs.append(("if need_sha; then", "fi"))
+        if guards and st["checkout"]:
+            pairs.append(("if need_checkout; then", "fi"))
         return pairs
 
     @staticmethod
@@ -493,6 +500,8 @@ class _Gen:
             pairs.append((f"foreach ({PS_VARS[n]} in {source}) {{", "}"))
         if guards and st["sha"]:
             pairs.append(("if (Get-Sha) {", "}"))
+        if guards and st["checkout"]:
+            pairs.append(("if (Get-Checkout) {", "}"))
         return pairs
 
     def ps_step(self, st: dict, h: dict, indent: str) -> list[str]:
@@ -617,7 +626,7 @@ class _Gen:
             elif n == "skill":
                 values = self.skills
             else:
-                continue                           # {agent} and {sha} stay <agent> and <commit>
+                continue                           # {agent}, {sha}, and {checkout} stay <agent>, <commit>, <checkout>
             combos = [{**c, n: v} for c in combos for v in values]
         return combos
 
@@ -636,6 +645,10 @@ class _Gen:
         if st["sha"]:
             notes.append(f"`<commit>` is the full commit `{self.ref}` points to: "
                          f"`git ls-remote {self.web} refs/heads/{self.ref}`.")
+        if st["checkout"]:
+            notes.append(f"`<checkout>` is a clone of the `{self.ref}` branch: "
+                         f"`git clone --depth 1 --branch {self.ref} {self.web}.git <checkout>`; the install script makes it "
+                         "in a temporary folder and deletes it afterwards.")
         if "agent" in st["loops"]:
             notes.append("`<agent>` is the skills CLI id of each agent you use: "
                          + ", ".join(f"`{a['id']}`" for a in h["agents"]) + ".")
@@ -774,7 +787,7 @@ class _Gen:
                            ("unverified", "Not yet confirmed")):
             if h.get(key):
                 L += [f"**{title}**", "", *[f"- {_prose(t)}" for t in h[key]], ""]
-        L += [f"Sources (checked {self.doc['checked']}): " + ", ".join(f"<{u}>" for u in h["sources"]) + ".", ""]
+        L += [f"Sources (checked {h.get('checked', self.doc['checked'])}): " + ", ".join(f"<{u}>" for u in h["sources"]) + ".", ""]
         return L
 
     def installation_md(self) -> str:
@@ -884,6 +897,14 @@ class _Gen:
               "Missing-runner diagnostics come from the harness and may repeat. Update the CLI and plugins "
               "together with the install script's `--update`, then restart the harness; a changed Codex hook "
               "must be trusted again in `/hooks`.", "",
+              "Antigravity is stricter: it stops the tool call for a hook that exits non-zero or prints any JSON it "
+              "does not read (a `systemMessage`, or `{}`). Its hooks call `lapis-design antigravity-hook "
+              "--plugin-version <plugin-version> <hook-name>` followed by `|| exit 0`, so a missing or crashed "
+              "runner prints nothing and the agent goes on, and a skipped hook's one line goes to stderr, which "
+              "Antigravity writes to its CLI log (`~/.gemini/antigravity-cli/cli.log`). A CLI older than the plugin "
+              "has no such subcommand: its argparse rejects it on stderr with status 2, which `|| exit 0` turns into "
+              "no answer (checked 2026-10-06), so the hooks do nothing, without a notice, until the CLI is updated "
+              "to the plugin's version.", "",
               "The exit-status contracts are documented in "
               "[Claude Code hooks](https://code.claude.com/docs/en/hooks#exit-code-output) and "
               "[Codex hooks](https://learn.chatgpt.com/docs/hooks#stop): exit 2 can block a write or continue a "
@@ -962,16 +983,16 @@ class _Gen:
               "`waiting-for-user`, and the gate lets that stop pass without counting a continue, for two sets of "
               "questions before a plan exists and one after. A file of fewer than two words, or a set past those "
               "limits, is continued like any other stop; the agent records your answers in "
-              "`.lapis/answers/<task>.md` and carries on. Claude Code and Codex "
-              "run it as the lapis plugin's `Stop` hook, Oh-My-Pi as `session_stop` and pi as `agent_before_settle` "
-              "in the lapis exit-gate extension. Codex runs a plugin hook only after you trust it in `/hooks`, or "
+              "`.lapis/answers/<task>.md` and carries on. Claude Code, Codex, and Antigravity "
+              "run it as the lapis plugin's `Stop` hook (Antigravity continues with `decision: continue`), Oh-My-Pi "
+              "as `session_stop` and pi as `agent_before_settle` in the lapis exit-gate extension. Codex runs a plugin hook only after you trust it in `/hooks`, or "
               "for one run with `--dangerously-bypass-hook-trust` (use it only in an isolated `CODEX_HOME` whose "
               "hook sources you vetted); an untrusted hook is skipped without any message, so the gate is silently "
               "absent and the agent stops as it would without it. Without the gate the skills say to run "
               "`lapis-design next` by hand. The same switch turns on a write guard: the order is brief, references, "
               "plan, then code, and while a create run still owes one of them, an unattended agent's write of a page "
               "source file (HTML, CSS, script, or component) is refused with the next step named, as the lapis "
-              "plugin's `PreToolUse` hook in Claude Code and Codex, and as a `tool_call` handler of the same "
+              "plugin's `PreToolUse` hook in Claude Code, Codex, and Antigravity, and as a `tool_call` handler of the same "
               "extension in Oh-My-Pi and pi. Files under `.lapis/`, other files, and anything outside the project "
               "pass, a refusal repeats at most three times for one step, and a page written through the shell is "
               "found afterwards (`release.procedure-order`). A person's session sees one line, once, and is never "
@@ -1072,6 +1093,9 @@ LL_H=
 LL_MANUAL=0
 LL_sha=
 LL_SHA_STATE=
+LL_checkout=
+LL_CHECKOUT_STATE=
+LL_CHECKOUT_DIR=
 LL_TOOL=
 LL_TODO=
 LL_CHECKS=
@@ -1424,6 +1448,41 @@ need_sha() {
   return 1
 }
 
+# cleanup: delete the temporary clone need_checkout made.
+cleanup() {
+  [ -z "$LL_CHECKOUT_DIR" ] || rm -rf "$LL_CHECKOUT_DIR"
+}
+
+# need_checkout: set LL_checkout to a shallow clone of the release ref in a temporary folder (deleted when the
+# script ends), for a harness that installs from a local folder.
+need_checkout() {
+  if [ "$LL_DRY" = 1 ]; then
+    [ -n "$LL_checkout" ] || say "  would run: git clone --depth 1 --branch $LL_REF https://github.com/$LL_REPO <checkout>"
+    LL_checkout='<checkout>'
+    return 0
+  fi
+  if [ "$LL_MANUAL" = 1 ]; then
+    LL_checkout='<checkout>'
+    return 0
+  fi
+  [ "$LL_CHECKOUT_STATE" != ok ] || return 0
+  if [ -z "$LL_CHECKOUT_STATE" ]; then
+    LL_CHECKOUT_STATE=failed
+    if has_cmd git && LL_dir=$(mktemp -d "${TMPDIR:-/tmp}/lapis-lazuli-checkout.XXXXXX"); then
+      LL_CHECKOUT_DIR=$LL_dir
+      say "  run: git clone --depth 1 --branch $LL_REF https://github.com/$LL_REPO $LL_dir"
+      if GIT_TERMINAL_PROMPT=0 command git clone --depth 1 --branch "$LL_REF" "https://github.com/$LL_REPO" "$LL_dir"; then
+        LL_checkout=$LL_dir
+        LL_CHECKOUT_STATE=ok
+        return 0
+      fi
+    fi
+    say "  could not clone $LL_REF (git clone --depth 1 --branch $LL_REF https://github.com/$LL_REPO)"
+  fi
+  failed "$LL_H: skipped a step that needs a clone of $LL_REF"
+  return 1
+}
+
 # verify_cmd EXPECT ARGV...: one CLI check.
 verify_cmd() {
   LL_exp=$1
@@ -1523,6 +1582,9 @@ parse_args() {
 }
 
 main() {
+  trap cleanup EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM HUP
   parse_args "$@"
   if [ -z "${HOME:-}" ]; then
     err "install.sh: HOME is not set"
@@ -1688,6 +1750,9 @@ $script:H = ''
 $script:Manual = $false
 $script:Sha = ''
 $script:ShaState = ''
+$script:Checkout = ''
+$script:CheckoutState = ''
+$script:CheckoutDir = ''
 $script:Tool = ''
 $script:Why = @()
 $script:Look = ''
@@ -1983,6 +2048,50 @@ function Get-Sha {
   return $false
 }
 
+# Remove-Checkout: delete the temporary clone Get-Checkout made.
+function Remove-Checkout {
+  if ($script:CheckoutDir) {
+    Remove-Item -LiteralPath $script:CheckoutDir -Recurse -Force -ErrorAction SilentlyContinue
+    $script:CheckoutDir = ''
+  }
+}
+
+# Get-Checkout: set $script:Checkout to a shallow clone of the release ref in a temporary folder (deleted when the
+# script ends), for a harness that installs from a local folder.
+function Get-Checkout {
+  $url = 'https://github.com/' + $script:Repo
+  if ($script:Dry) {
+    if (-not $script:Checkout) { Say ('  would run: git clone --depth 1 --branch ' + $script:Ref + ' ' + $url + ' <checkout>') }
+    $script:Checkout = '<checkout>'
+    return $true
+  }
+  if ($script:Manual) {
+    $script:Checkout = '<checkout>'
+    return $true
+  }
+  if ($script:CheckoutState -eq 'ok') { return $true }
+  if (-not $script:CheckoutState) {
+    $script:CheckoutState = 'failed'
+    if (Test-Cmd 'git') {
+      $dir = Join-Path ([IO.Path]::GetTempPath()) ('lapis-lazuli-checkout-' + [guid]::NewGuid().ToString('N'))
+      $script:CheckoutDir = $dir
+      Say ('  run: git clone --depth 1 --branch ' + $script:Ref + ' ' + $url + ' ' + $dir)
+      $saved = $env:GIT_TERMINAL_PROMPT
+      $env:GIT_TERMINAL_PROMPT = '0'
+      $code = Invoke-Argv @('git', 'clone', '--depth', '1', '--branch', $script:Ref, $url, $dir)
+      $env:GIT_TERMINAL_PROMPT = $saved
+      if ($code -eq 0) {
+        $script:Checkout = $dir
+        $script:CheckoutState = 'ok'
+        return $true
+      }
+    }
+    Say ('  could not clone ' + $script:Ref + ' (git clone --depth 1 --branch ' + $script:Ref + ' ' + $url + ')')
+  }
+  Add-Failure ($script:H + ': skipped a step that needs a clone of ' + $script:Ref)
+  return $false
+}
+
 function Invoke-Verify([string]$Expect, [string[]]$Argv) {
   $line = Format-Argv $Argv
   if ($script:Dry) {
@@ -2197,7 +2306,7 @@ function Invoke-Main([object[]]$Arguments) {
   return 0
 }
 
-$code = @(Invoke-Main $args)[-1]
+try { $code = @(Invoke-Main $args)[-1] } finally { Remove-Checkout }
 if (Get-Variable -Name PSCommandPath -ValueOnly -ErrorAction SilentlyContinue) { exit $code }
 if ($code -ne 0) { Say ('install.ps1 finished with exit code ' + $code) }
 $global:LASTEXITCODE = $code

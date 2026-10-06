@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "lapis-lazuli": {
+      "command": "lapis-design",
+      "args": [
+        "mcp"
+      ]
+    }
+  }
+}

@@ -96,3 +96,31 @@ def test_stop_in_an_attended_folder_without_a_plan_prints_nothing_and_loads_neit
                        timeout=120)
     assert r.returncode == 0 and r.stdout == ""
     assert json.loads(r.stderr.strip().splitlines()[-1]) == {"code": 0, "heavy": []}
+
+
+ANTIGRAVITY_CHILD = f"""
+import json, sys
+from lapis_design import cli, __version__
+code = cli.main(["antigravity-hook", "--plugin-version", __version__, sys.argv[1]])
+sys.stdout.flush()
+print(json.dumps({{"code": code, "heavy": sorted(m for m in {HEAVY + ("yaml", "jsonschema")!r} if m in sys.modules)}}), file=sys.stderr)
+"""
+
+
+@pytest.mark.parametrize("name, event, answered", [
+    ("pre-write", lambda p: {"workspacePaths": [str(p)], "conversationId": "c", "toolCall": {
+        "name": "write_to_file", "args": {"TargetFile": str(p / ".lapis/state/demo.json")}}}, True),
+    ("pre-write", lambda p: {"workspacePaths": [str(p)], "conversationId": "c", "toolCall": {
+        "name": "write_to_file", "args": {"TargetFile": str(p / "notes.md")}}}, False),
+    ("stop", lambda p: {"workspacePaths": [str(p)], "conversationId": "c", "terminationReason": "NO_TOOL_CALL",
+                        "fullyIdle": True, "transcriptPath": str(p / "t.jsonl")}, False),
+])
+def test_the_antigravity_hooks_run_before_every_file_edit_without_the_checks_or_yaml(tmp_path, name, event, answered):
+    (tmp_path / ".lapis").mkdir()
+    (tmp_path / "t.jsonl").write_text('{"step_index": 0, "source": "USER_EXPLICIT", "type": "USER_INPUT"}\n', encoding="utf-8")
+    r = subprocess.run([sys.executable, "-c", ANTIGRAVITY_CHILD, name], input=json.dumps(event(tmp_path)),
+                       capture_output=True, text=True, timeout=120,
+                       env={k: v for k, v in os.environ.items() if k != "LAPIS_UNATTENDED"})
+    assert r.returncode == 0, r.stderr
+    assert bool(r.stdout) == answered
+    assert json.loads(r.stderr.strip().splitlines()[-1]) == {"code": 0, "heavy": []}
