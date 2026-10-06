@@ -26,15 +26,28 @@ license: MIT AND CC-BY-4.0
   file of fewer than two words or a brief set of more than six numbered questions. Record the replies in
   `.lapis/answers/<task>.md`, the brief record: keep what it holds, add approval replies under their own heading,
   cite it in the plan (`context.other`), and run `next` again.
+- At `done` and at every approval wait, `next` returns an owner block (`--json`: `owner_block`) and writes it to
+  `.lapis/owner/<task>.md`: the requirement states, the owner's decisions, the facts shown with their sources, protected
+  changes, disputes, and what did not run. It ends in a `lapis-owner-block <sha8>` line. Paste it unchanged ahead of your
+  own summary at `done`, and into the questions file of an approval ask (an ask without the current line comes back as
+  `draft-review`). Never edit, shorten, or write it yourself.
 - Report whether taste was given and cited, not given (the direction is your own reading), or unrecorded;
   `.lapis/taste.md` and `direction.taste` are described in `lps-brief`'s record guide.
 - Follow the user's words. When they forbid network use, lookups, or downloads during the work and nobody can be
   asked, do not look things up and do not stop: decline the references step with their line, as the brief record
   holds it (`lapis-design next --task <task> --declined references --brief-line "<the line>"`), and plan from local
   material. Render and behavior checks serve the page on 127.0.0.1 and run locally.
-- The order is brief, references, plan, then code: write no markup, style, script, or component file while `next` names
-  `brief`, `references`, or a plan step. Page code written first comes back as `plan-order`, and an unattended run's
-  page writes may be refused until then.
+- The order is brief, requirements, references, plan, then code: write no markup, style, script, or component file while
+  `next` names `brief`, `requirements`, `references`, or a plan step. Page code written first comes back as `plan-order`,
+  and an unattended run's page writes may be refused until then. With a person to answer, the first code is a thin slice
+  (see Slice).
+- The owner's words are kept by the CLI, not by you. `requirements seal` (see `lps-brief`) copies their brief files and
+  `[declared]` answers into `.lapis/requirements/<task>.json` as rows with stable ids, and the critic judges every row
+  against what is shown. Paraphrase in the plan as you need to; a row you narrow or leave out still shows as `partly`
+  or `missing`, and only an owner's reply that quotes its id drops it. `lapis-design` alone writes
+  `.lapis/requirements/`, `state/`, `changes/`, and `owner/`; a hand edit is detected and shown to the owner. It also logs
+  each change to the plan's protected fields in `.lapis/changes/<task>.jsonl`: a change is never forbidden, and the owner
+  sees the ones made while a related finding was open or after the slice was approved.
 
 lapis turns a request into a design contract - the plan file `.lapis/plans/<task>.yaml` - and then
 into an implementation that follows it. The plan is written before code, checked by
@@ -71,7 +84,8 @@ A small edit inside an established system needs no plan. Say so and make the edi
 3. If this session has no font inventory summary, run `lazuli local fonts --summary`.
 4. Before the plan of a new surface or a redesign, run `lps-brief`: it reads, looks up, asks only what stays open
    (a relayed run: see Done), and writes `.lapis/answers/<task>.md`, which `next` asks for until it exists on a
-   create plan. Assumed answers go to `claims.proposed`, never `known` or `declared`. A repair asks only what its
+   create plan. For a create plan it then seals the owner's own words with `requirements seal` (`next` asks for that
+   as `requirements`). Assumed answers go to `claims.proposed`, never `known` or `declared`. A repair asks only what its
    findings leave open.
    Read project taste once and reuse it; without given taste, record `Taste: not given`, never an assumed preference.
 5. Before the plan of a create run, look at references yourself: `next` names `references` until
@@ -363,10 +377,37 @@ List every document, page, and file the plan relied on.
    subject? If so, add a candidate from a different source to `explorations`, or write what makes the
    default win here.
 2. Run `lapis-design plan check .lapis/plans/<task>.yaml` and fix every blocking finding.
-3. Run `lapis-design plan check .lapis/plans/<task>.yaml --summary`, show the user the summary and
-   the defaults decisions, and wait for approval before code (a relayed run asks it as Done says). Once the user
-   approves, record `approval: {state: approved}` in the plan; with nobody to ask, record `assumed` (see Done). In a
-   harness plan mode, embed the plan as described in `shared/plan/HARNESS-PLAN-MODES.md`.
+3. Run `lapis-design plan check .lapis/plans/<task>.yaml --summary` and read the summary with the defaults decisions
+   yourself. In a create run that a person answers, do not ask them to approve the plan on that text: build the slice
+   and ask on the rendered page (see Slice). In any other run show the user the summary and the defaults decisions
+   and wait for approval before code (a relayed run asks it as Done says). Once the user approves, record
+   `approval: {state: approved}` in the plan; with nobody to ask, record `assumed` (see Done). In a harness plan
+   mode, embed the plan as described in `shared/plan/HARNESS-PLAN-MODES.md`.
+
+## Slice
+
+In a create run that a person answers (`LAPIS_UNATTENDED` unset), `next` names `slice` once the plan steps pass,
+before `fonts-lock`. The owner approves on a rendered page, because composition and copy are judged by seeing them.
+
+1. Build the first view and the one section the brief puts first, not the whole page, and capture both at 390 and
+   1440. The owner block states the page's height at 1440, so a thin slice is visible as one.
+2. Record the page in `.lapis/drafts/<task>.yaml` with `direction: new`, run the critic on `lapis-design critic packet`,
+   and run `lapis-design draft check` (`ultramarine`'s `pre-show-review.md`).
+3. Write `.lapis/questions/<task>.md`: link the page, paste the owner block, and say that copy is provisional until the
+   owner has seen it rendered. When this harness has a question tool, you may show two or three candidates that
+   differ in composition or concept (a reordering or the same layout in another palette is not one), each a `pages[]`
+   entry of the draft record and all linked in the questions file; write that file first, then ask the owner to pick
+   one or say what to change. Without a question tool, show one slice.
+4. Record the owner's reply in `.lapis/answers/<task>.md` under its own heading, in their words. A plain approval
+   ("looks right, go on") is an untagged item (`- Approved the slice: <their words>`), because every `[declared]` item
+   becomes a requirement row the critic must judge; feedback that changes what the owner wants ("make the header
+   calmer") is `[declared]`. A pick among candidates is also `- [declared] Slice: <the chosen page's URL as linked> —
+   <their words>`. Feedback without a pick seals nothing: revise the candidates, or the one area as
+   `direction: iteration`, and ask again.
+5. Record `approval: {state: approved}` only when the owner approved, then run `next`, which seals the slice. The seal
+   keeps the chosen page and digests of what was shown, so the owner block lists later protected changes, key copy
+   included, as changed since the owner approved. Once the owner block is pasted in the questions file, a new critic
+   report or draft record makes its marker stale: run `lapis-design draft check` again and paste the block again.
 
 ## Implement
 
@@ -382,6 +423,11 @@ crosses platforms, `references/platforms.md`; for email or a host-controlled sur
 - Record each image, icon set, or generated asset in `.lapis/assets.ledger.json`
   (`shared/assets/ledger.schema.yaml`) when you choose it.
 - Never present invented metrics, customers, quotes, or logos as real.
+- Copy is provisional until the owner has seen it rendered. Never call it final in a spec, an assignment to another
+  agent, or a handoff before then.
+- Give a delegated build one section, or one handoff scope, per worker, as a handoff packet or as text that cites the
+  requirement ids (`lapis-design requirements show --task <task>`) and the sealed slice. A free-form site spec is not
+  the transfer.
 
 
 ## Check while working
@@ -399,6 +445,7 @@ full set once, after the last change.
 Before you report, walk the page yourself as its visitor: take one to three tasks from the brief (find today's hours
 and book; see which line is delayed now) and do them on the 1440 and 390 captures, noting where you looked first,
 what you had to read or scroll past, and where you got stuck. A page that passes every check can still fail the walk.
+Nothing records this walk; the critic's walkthroughs are the ones the owner sees.
 Read `.lapis/taste.md` against the plan and captures too; report a conflict or an `against` stance as a non-blocking
 `review.taste-conflict` finding for the user to confirm, not as permission to override their words.
 After the walk, compare ours beside two or three of your own reference captures at 390 and 1440; say why a visitor
@@ -421,9 +468,19 @@ would not choose ours, following the critic's reference-comparison step, without
    `--box <id>`, with the id from the session's `nodes`. It writes `.lapis/behavior/<task>.narrow.json`.
    Then rerun the lint with `--session .lapis/behavior/<task>.narrow.json` added to the same command,
    so the report keeps every layer that has run.
-4. Hand the plan, extract, and lint report to the separate critic (the `ultramarine` skill runs it).
-   You wrote the design, so you do not judge it. When `ultramarine` is not installed, tell the user
-   that no independent review ran and list it among the checks that did not run.
+4. Build the critic's input with `lapis-design critic packet --task <task>` (for a draft, add its narrow `--extract`,
+   `--lint`, and `--session`) and hand the separate critic that packet; the `ultramarine` skill runs it. You wrote the
+   design, so you do not judge it. The packet leaves out your reasons on purpose, and a critic report counts only
+   for the packet it names. When `ultramarine` is not installed, tell the user that no independent review ran and
+   list it among the checks that did not run.
+
+Do not open the `lapis_design` source to argue with a finding. Put a finding you believe is wrong in
+`.lapis/disputes/<task>.yaml` (`{report, rule_id, location?, observed, reason, refs}`, schema
+`shared/review/disputes.schema.yaml`): the critic re-judges it on the captures without your reason, and the owner sees
+both. A dispute does not clear the finding.
+
+Never stop a process by pattern (`pkill`, `killall`, or a `pgrep` piped to `kill`): other work shares the machine. Stop
+only a process id a command recorded, such as the one in `.lapis/logs/<task>.behavior.pid`.
 
 All widths, all probes, the rights check, and fresh license lookups belong to the release gate
 (`ulm-release`), not to each iteration.
@@ -462,6 +519,6 @@ without an API still gets a minimal stub: `version`, `clock`, empty `routes`, `c
 
 ## Reporting
 
-Tell the user the Design Read, the signature, each rejected default with the route taken, the
-checks that ran with their results, and the checks that did not run. Keep planning notes, rule
-ids, and check output out of the interface itself.
+Start with the owner block `next` returned at done, unchanged. Then tell the user the Design Read, the signature, each
+rejected default with the route taken, the checks that ran with their results, and the checks that did not run. Keep
+planning notes, rule ids, and check output out of the interface itself.

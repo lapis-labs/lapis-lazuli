@@ -24,6 +24,14 @@ plan, `lapis-design next --task <task>` returns the step `brief` until that hold
 The task id is `$LAPIS_TASK`, else the id the plan or the questions already use, else the project folder's
 name in lowercase letters and hyphens, which the exit gate uses too.
 
+After the record exists, seal the owner's own words: `lapis-design requirements seal --task <task> --from <the owner's
+brief file>` (up to five project files outside `.lapis/`, the brief the owner wrote, never product documentation; leave
+out `--from` when the request came only in chat). The CLI copies each list item, table row, paragraph, and code block
+of those files, and every top-level `[declared]` item of the record, into `.lapis/requirements/<task>.json` with a
+stable id such as `R3f2a1c`. `next` returns the step `requirements` for a create plan until it is sealed, after
+`brief` and before `references`. You never choose, shorten, or reword rows, and a row leaves only when the owner's
+reply says so (`references/record.md`, Requirements and owner decisions).
+
 ## Which runs need it
 
 - **create**: always. A request that already says everything still gets a record: `Found` lists what it
@@ -63,7 +71,7 @@ name in lowercase letters and hyphens, which the exit gate uses too.
    at most six items under each; `next` counts them. With no `DESIGN.md` and a lasting product surface, propose a
    seed for it there instead of inventing visual decisions.
    The record reference opens with a `## Sections` index; read the part being written, found by its heading.
-7. Run `lapis-design next --task <task>` and do the step it names.
+7. Run `lapis-design next --task <task>` and do the step it names; for a create plan that is the seal under Done.
 
 ## What a question may not be
 
