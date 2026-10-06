@@ -28,6 +28,7 @@ CAP = {"plan": 2, "approval": 1}      # sets of questions the gate lets pass, by
 MIN_WORDS = 2
 _LIST_MARK = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+")
 _WORD = re.compile(r"[^\W_]+")        # a run of letters or digits of any script
+_BLOCK = re.compile(r"^# Owner block: .*?^lapis-owner-block [0-9a-f]{8}[ \t]*$", re.MULTILINE | re.DOTALL)
 
 
 def questions_path(root: Path, task: str) -> Path:
@@ -38,9 +39,16 @@ def answers_path(root: Path, task: str) -> Path:
     return root / ".lapis" / "answers" / f"{task}.md"
 
 
+def question_text(text: str) -> str:
+    """`text` without a pasted owner block (`owner.py`): the block is the CLI's, not the run's question, so its words
+    and the addresses it names are neither words nor links of the questions."""
+    return _BLOCK.sub("", text)
+
+
 def words(text: str) -> int:
-    """Words in `text`, not counting a markdown heading line or a list marker."""
-    return sum(len(_WORD.findall(_LIST_MARK.sub("", line))) for line in text.splitlines()
+    """Words in `text`, not counting a markdown heading line, a list marker, or a pasted owner block: a questions
+    file that holds only the block asks nothing."""
+    return sum(len(_WORD.findall(_LIST_MARK.sub("", line))) for line in question_text(text).splitlines()
                if not line.lstrip().startswith("#"))
 
 

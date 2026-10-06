@@ -40,7 +40,8 @@ from typing import Any
 
 import yaml
 
-from lapis_design import attempts, brief, draft, gate, references, release_check, shared_dir, taste, waiting
+from lapis_design import (attempts, brief, draft, gate, owner, references, release_check, requirements, shared_dir,
+                          slice_step, taste, waiting)
 from lapis_design.lint.cli import problems
 from lapis_design.plan_check import PlanOverLimit, read_plan, yaml_reason
 from lapis_design.summary import NOT_JUDGED
@@ -210,6 +211,10 @@ def _step(step_id: str, why: str, command: str | None = None, schema: Path | Non
     return {"id": step_id, "why": why, "command": command, **({"schema": str(schema)} if schema else {})}
 
 
+def _requirements_step(task: str, reason: str) -> dict:
+    return _step(requirements.STEP, requirements.why(task, reason), f"lapis-design requirements seal --task {task}")
+
+
 def _brief(items: list[str], limit: int = 3) -> str:
     shown = "; ".join(items[:limit])
     return shown + (f"; and {len(items) - limit} more" if len(items) > limit else "")
@@ -233,27 +238,36 @@ def _lock_commands(plan: dict, task: str) -> list[str]:
 def evaluate(root: Path, task: str, page: str | None = None) -> dict:
     from lapis_design import integrity, skill_load
 
-    integrity.observe_task(root.resolve(), task, "next")        # the plan is observed before anything is computed from it
-    return skill_load.apply(root.resolve(), task, _evaluate(root, task, page))
+    root = root.resolve()
+    observed = integrity.observe_task(root, task, "next")
+    return skill_load.apply(root, task, _evaluate(root, task, page, observed["error"]))
 
 
-def _evaluate(root: Path, task: str, page: str | None = None) -> dict:
+def _evaluate(root: Path, task: str, page: str | None = None, integrity_error: str | None = None) -> dict:
     """The state of `task` under `root`: `{"task", "state", "step", "interactive", "reason"}`.
 
     `state` is `needs-step` with the one `step` to take (`id`, `why`, `command` or None, and `schema`
     when a file has to be written), or `done`. While the run's questions for its user wait for an
     answer, `state` is `waiting-for-user`, `step` says to stop, `then` is the step that comes after, and
     `waiting` names the questions and answers files. `page` is the page the render and behavior commands
-    name; without it the usual entry file is used, and a page that cannot be found stays `<page>`.
+    name; without it the usual entry file is used, and a page that cannot be found stays `<page>`. `done` and
+    every wait on approval questions carry the owner block (`owner_block`, `owner.py`); `integrity_error` is what
+    `integrity.observe` could not record, if anything.
     Raises NextError when the files cannot be read as a state."""
     root = root.resolve()
-    result = _steps(root, task, page)
+    result = _steps(root, task, page, integrity_error)
     step = result["step"]
     plan_exists = (root / ".lapis" / "plans" / f"{task}.yaml").exists()
     found = waiting.pending(root, task, "approval" if plan_exists else "plan", gate.load(root, task).get("waits"))
     if found is None:
         return result
+    approval = found["phase"] == "approval"
     shown = draft.links(root, task)
+    if approval and not shown and step is not None and slice_step.owed(root, task, _plan_or_none(root, task)):
+        if step["id"] == slice_step.STEP:                    # approval questions with no rendered page ask for the slice
+            return result
+        asked = slice_step.step(task)
+        return {**result, "state": "needs-step", "step": asked, "reason": asked["why"]}
     if shown or draft.path(root, task).is_file():
         errors, summaries = draft.check(root, task, asked=shown)
         if errors:
@@ -267,13 +281,31 @@ def _evaluate(root: Path, task: str, page: str | None = None) -> dict:
     if (found["phase"] == "plan" or step["id"] == brief.STEP) and (over := brief.questions_problem(root, task)):
         cut = _step(brief.STEP, brief.over_why(task, over))
         return {**result, "step": cut, "reason": cut["why"]}
+    if approval:
+        block, sha8 = owner.write(root, task, {"integrity_error": integrity_error})
+        result["owner_block"] = block
+        if not owner.carries(_read_text(root / found["questions"]), sha8):
+            paste = _step(draft.STEP, f"The questions for the owner must carry the owner block that lapis-design wrote "
+                          f"from the files: paste .lapis/owner/{task}.md into {found['questions']} unchanged, so that "
+                          f"its last line `{owner.MARKER} {sha8}` is in the file, and stop with the questions as your "
+                          "last message. A block that is missing, or out of date because a record it reports changed "
+                          f"since, does not count; run `lapis-design draft check --task {task}` after changing one.",
+                          f"lapis-design draft check --task {task}")
+            return {**result, "state": "needs-step", "step": paste, "reason": paste["why"]}
     wait = _step(waiting.STEP, waiting.why(task, found, step["id"]) +
                  (" Include the recorded draft review summary and every unresolved finding in that message."
                   if result.get("draft_review") else ""))
     return {**result, "state": waiting.STEP, "step": wait, "then": step, "waiting": found, "reason": wait["why"]}
 
 
-def _steps(root: Path, task: str, page: str | None) -> dict:
+def _read_text(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return ""
+
+
+def _steps(root: Path, task: str, page: str | None, integrity_error: str | None = None) -> dict:
     """`evaluate` without the waiting state: the step the files call for."""
     paths = release_check.input_paths(root, task)
     paths["release"] = root / ".lapis" / "release" / f"{task}.json"
@@ -293,6 +325,8 @@ def _steps(root: Path, task: str, page: str | None) -> dict:
     except FileNotFoundError:
         if owed := brief.owed(root, task, planned=False):
             return state(_step(brief.STEP, owed), False)
+        if reason := requirements.owed(root, task):
+            return state(_requirements_step(task, reason), False)
         if found := _references_owed(root, task):
             return state(_step(references.STEP, references.why(task, found, planned=False)), False)
         answers = waiting.answers_path(Path('.'), task).as_posix()
@@ -322,6 +356,8 @@ def _steps(root: Path, task: str, page: str | None) -> dict:
     if plan.get("mode") == "create":
         if owed := brief.owed(root, task, planned=True):
             return state(_step(brief.STEP, owed), False)
+        if reason := requirements.owed(root, task):
+            return state(_requirements_step(task, reason), False)
         if found := _references_owed(root, task, plan):
             return state(_step(references.STEP, references.why(task, found, planned=True)), False)
 
@@ -384,6 +420,8 @@ def _steps(root: Path, task: str, page: str | None) -> dict:
         elif rule == "release.procedure-order":
             need.add("plan-order")
             out_of_order = observed
+    if requirements.uncovered(root, task, _json(paths["critic"])):           # a critic that judged no row, or not every one
+        need.add("critic")
     need -= {step for step, done in recorded.items() if done} | {""}
     from_plan_steps = {PLAN_STEPS.get(f["rule_id"], "plan-fix") for f in from_plan}
 
@@ -407,6 +445,8 @@ def _steps(root: Path, task: str, page: str | None) -> dict:
                            "rebuild the parts that lose. This step lifts when the plan cites the brief record and holds "
                            "that candidate; it does not judge whether the comparison was fair.", check,
                            shared / "plan" / "schema.yaml"), interactive)
+    if why := slice_step.check(root, task, plan):
+        return state(slice_step.step(task, why), interactive)
     if "fonts-lock" in from_plan_steps or "fonts-lock" in need:
         commands = _lock_commands(plan, task)
         why = GENERIC_LOCK.format(task=task) + " " + (
@@ -458,12 +498,16 @@ def _steps(root: Path, task: str, page: str | None) -> dict:
                            f"--ledger .lapis/assets.ledger.json --lock .lapis/fonts.lock.json{refs}{mode} "
                            f"-o .lapis/lint/{task}.json"), interactive)
     if "critic" in need:
+        rows = requirements.rows(root, task)
+        judged = (f" Its `requirements` list judges every row of .lapis/requirements/{task}.json ({len(rows)} rows, "
+                  f"{len(requirements.uncovered(root, task, _json(paths['critic'])))} not judged yet)." if rows else "")
         return state(_step("critic", "Run the critic in a context that did not make the design, as the ultramarine "
                            "skill describes (the `critic` agent, or references/critic.md in a fresh session), and save "
-                           f"its report to .lapis/critic/{task}.json. Only when this harness cannot start a separate "
-                           f"context, record that with `lapis-design next --task {task} --unavailable critic --reason "
-                           "\"<why>\"`; the release gate still reports the critic as missing and no independent "
-                           "review ran.", None, shared / "slop" / "finding.schema.yaml"), interactive)
+                           f"its report to .lapis/critic/{task}.json.{judged} Only when this harness cannot start a "
+                           f"separate context, record that with `lapis-design next --task {task} --unavailable critic "
+                           "--reason \"<why>\"`; the release gate still reports the critic as missing and no independent "
+                           "review ran, and the owner block says the requirements were not judged.", None,
+                           shared / "slop" / "finding.schema.yaml"), interactive)
 
     release_inputs = [paths[n] for n in ("plan", "lock", "ledger", "extract", "session", "lint", "critic")]
     release_inputs += [attempts.path(root, task, s) for s in ("render", "behavior", "critic")]
@@ -494,22 +538,28 @@ def _steps(root: Path, task: str, page: str | None) -> dict:
     floor = ""
     if current and not document["summary"]["blocking"]:
         floor = f" No defects found; not judged by any check: {NOT_JUDGED}."
-    return state(None, interactive, f"The procedure is complete; {verdict}.{looked}{floor}{taste.done(root, task, plan)} Report that verdict, the "
-                 "checks that did not run and why, and what remains for the user. Passing the gate is not required "
-                 "to stop, and a pass says nothing about whether the page is good.")
+    reason = (f"The procedure is complete; {verdict}.{looked}{floor}{taste.done(root, task, plan)} Report that verdict, "
+              "the checks that did not run and why, and what remains for the user. Passing the gate is not required "
+              "to stop, and a pass says nothing about whether the page is good.")
+    block, sha8 = owner.write(root, task, {"verdict": verdict, "integrity_error": integrity_error})
+    return {**state(None, interactive, f"{reason} Paste the owner block unchanged ahead of your own summary: it is in "
+                    f"`owner_block` and in .lapis/owner/{task}.md, and its last line is `{owner.MARKER} {sha8}`."),
+            "owner_block": block}
 
 
 def _text(result: dict) -> str:
     step = result["step"]
+    shown = f"\n\n{result['owner_block'].rstrip()}" if result.get("owner_block") and (
+        not step or step["id"] == draft.STEP) else ""
     if not step:
-        return f"next: done ({result['task']})\n  {result['reason']}"
+        return f"next: done ({result['task']})\n  {result['reason']}{shown}"
     lines = [f"next: {step['id']} ({result['task']})"]
     if step["command"]:
         lines.append(f"  run: {step['command']}")
     if step.get("schema"):
         lines.append(f"  schema: {step['schema']}")
     lines.append(f"  why: {step['why']}")
-    return "\n".join(lines)
+    return "\n".join(lines) + shown
 
 
 def main(argv: list[str] | None = None, prog: str = "lapis-design next") -> int:

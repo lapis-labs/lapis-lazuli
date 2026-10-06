@@ -267,6 +267,16 @@ items:
       ulm-release: full
       lapis: summary
 
+  - id: requirements-record
+    kind: contract
+    path: requirements/schema.yaml
+    note: v0; the owner's own words as rows with content-hash ids, copied by `lapis-design requirements seal`; the critic judges every row
+    consumers:
+      lapis: full
+      ultramarine: full
+      lps-brief: summary
+      lps-copy: summary
+
   - id: system-fonts
     kind: data
     path: fonts/system-fonts.yaml

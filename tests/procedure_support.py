@@ -67,6 +67,30 @@ def load_skills(root: Path, task: str = TASK) -> None:
         assert skill_load.main(argv) == 0
 
 
+def seal_requirements(root: Path, task: str = TASK, *owner_files: str) -> None:
+    """The requirement record of the brief record already written, sealed the way `requirements seal` does."""
+    from lapis_design import requirements
+
+    requirements.seal(root, task, owner_files)
+
+
+def seal_slice(root: Path, task: str = TASK) -> None:
+    """A slice the owner approved, sealed in the state file the way `next` seals it: an attended create run no longer
+    stops at the `slice` step."""
+    from lapis_design import integrity
+
+    integrity.seal_slice(root, task, {"url": "http://localhost/", "draft_sha256": None, "packet_sha256": None,
+                                      "questions_sha256": None, "answers_sha256": None, "requirements_sha256": None})
+
+
+def unseal_slice(root: Path, task: str = TASK) -> None:
+    """The state of a run whose owner has not yet approved a slice."""
+    state = root / ".lapis" / "state" / f"{task}.json"
+    document = json.loads(state.read_text(encoding="utf-8"))
+    document.pop("slice")
+    state.write_text(json.dumps(document), encoding="utf-8")
+
+
 def make_project(root: Path) -> Path:
     """A static page with every input and report the gate reads, none of them stale, and no release report."""
     plan = yaml.safe_load((SHARED / "plan/example.plan.yaml").read_text())
@@ -90,6 +114,8 @@ def make_project(root: Path) -> Path:
                                   "assets.ledger.json", f"lint/{TASK}.json", f"critic/{TASK}.json")):
         touch(root, name, 100 + index)
     record(root, "answers", BRIEF_RECORD, 50)                    # the brief record, older than the plan and any questions
+    seal_requirements(root)                                      # the owner's words from it, copied by the CLI
+    seal_slice(root)                                             # the owner has approved a rendered slice
     write_references(root)                                       # the references record, as old
     return root
 
@@ -131,8 +157,16 @@ def record(root: Path, folder: str, text: str, at: int, task: str = TASK) -> Pat
 
 
 def ask(root: Path, text: str, at: int, task: str = TASK) -> Path:
-    """The questions the run wrote for its user."""
-    return record(root, "questions", text, at, task)
+    """The questions the run wrote for its user. Once a plan exists they are approval questions, so they carry the
+    owner block, as the run pastes it."""
+    path = record(root, "questions", text, at, task)
+    if (root / ".lapis" / "plans" / f"{task}.yaml").is_file():
+        from lapis_design import integrity, owner
+
+        integrity.observe_task(root, task, "test")
+        block, _ = owner.write(root, task)
+        record(root, "questions", f"{text}\n\n{block}", at, task)
+    return path
 
 
 def reply(root: Path, text: str, at: int, task: str = TASK) -> Path:

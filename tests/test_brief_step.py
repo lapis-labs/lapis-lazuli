@@ -8,7 +8,8 @@ import pytest
 
 from lapis_design import brief, gate, next_step
 from lapis_design.cli import main as cli_main
-from procedure_support import BRIEF_RECORD, TASK, ask, make_project, record, reply, save, update
+from procedure_support import (BRIEF_RECORD, TASK, ask, make_project, record, reply, save, seal_requirements,
+                               update)
 
 QUESTIONS = "1. Who visits the kiln shop page?\n2. Is the monthly firing date fixed?\n"
 ANSWERS = "1. Buyers.\n2. Yes, the first Saturday.\n"
@@ -38,8 +39,10 @@ def test_a_run_with_no_plan_and_no_record_is_sent_to_the_brief_before_the_plan(b
     assert result["step"]["command"] is None and f".lapis/answers/{TASK}.md" in result["step"]["why"]
 
 
-def test_a_brief_record_hands_the_run_on_to_the_references(bare):
+def test_a_brief_record_hands_the_run_on_to_the_requirements_and_then_the_references(bare):
     record(bare, "answers", BRIEF_RECORD, 100)
+    assert step_of(bare) == "requirements"
+    seal_requirements(bare)
     assert step_of(bare) == "references"
 
 
@@ -109,7 +112,7 @@ ACCEPTED = [
 @pytest.mark.parametrize("case, text", ACCEPTED, ids=[case for case, _ in ACCEPTED])
 def test_the_shapes_a_record_may_take_are_accepted(bare, case, text):
     record(bare, "answers", text, 100)
-    assert step_of(bare) == "references", case
+    assert step_of(bare) == "requirements", case
 
 
 def test_questions_before_the_brief_wait_in_the_plan_phase_and_only_a_record_ends_the_wait(bare):
@@ -120,10 +123,10 @@ def test_questions_before_the_brief_wait_in_the_plan_phase_and_only_a_record_end
     result = evaluated(bare)
     assert (result["state"], result["step"]["id"]) == ("needs-step", "brief")
     reply(bare, ANSWERS, 400)
-    assert step_of(bare) == "references"
+    assert step_of(bare) == "requirements"
     ask(bare, "3. Which glaze goes first?\n", 500)                     # a second round, newer than the record
     result = evaluated(bare)
-    assert (result["state"], result["then"]["id"]) == ("waiting-for-user", "references")
+    assert (result["state"], result["then"]["id"]) == ("waiting-for-user", "requirements")
 
 
 def test_the_task_of_a_run_that_only_recorded_its_brief_is_found_by_the_record(bare):
@@ -166,9 +169,9 @@ WITHIN_THE_CAP = [
 
 
 @pytest.mark.parametrize("case, text", WITHIN_THE_CAP, ids=[case for case, _ in WITHIN_THE_CAP])
-def test_a_record_within_six_answers_a_round_and_two_rounds_goes_on_to_the_references(bare, case, text):
+def test_a_record_within_six_answers_a_round_and_two_rounds_goes_on_to_the_requirements(bare, case, text):
     record(bare, "answers", text, 100)
-    assert step_of(bare) == "references", case
+    assert step_of(bare) == "requirements", case
 
 
 OVER_THE_CAP = [

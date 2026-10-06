@@ -1,0 +1,46 @@
+{
+  "version": 0,
+  "task": "kiln-shop-landing",
+  "sources": [
+    {"path": "brief.md", "sha256": "0b3f4d0f4e7d3a6c0e1c2d9f6a1b8a5c7e2d4f6a8b0c1d3e5f7a9b1c3d5e7f90", "kind": "owner-file"},
+    {"path": ".lapis/answers/kiln-shop-landing.md", "sha256": "9f1e3c5a7b9d1f3e5a7c9b1d3f5e7a9c1b3d5f7e9a1c3b5d7f9e1a3c5b7d9f1e", "kind": "answers"}
+  ],
+  "rows": [
+    {
+      "id": "R3f2a1c",
+      "text": "Main preview: a fader, switch, or animation that the visitor can touch.",
+      "section": "Home",
+      "kind": "item",
+      "at": [{"path": "brief.md", "lines": [9, 9]}]
+    },
+    {
+      "id": "R81c04e",
+      "text": "Docs | Link out to the manual",
+      "section": "Pages",
+      "kind": "table-row",
+      "at": [{"path": "brief.md", "lines": [21, 21]}]
+    },
+    {
+      "id": "Re29b70",
+      "text": "Q5 Is the date fixed? Yes: the first Saturday.",
+      "section": "Answers",
+      "kind": "declared",
+      "at": [{"path": ".lapis/answers/kiln-shop-landing.md", "lines": [12, 12]}]
+    }
+  ],
+  "owner_decisions": [
+    {
+      "row": "R81c04e",
+      "decision": "narrow",
+      "quote": "[declared] R81c04e: narrow — a link is enough, no page of its own",
+      "at": {"path": ".lapis/answers/kiln-shop-landing.md", "line": 18}
+    }
+  ],
+  "removed": [
+    {
+      "id": "R5a7d02",
+      "text": "A three-step \"how it starts\" row",
+      "at": [{"path": "brief.md", "lines": [11, 11]}]
+    }
+  ]
+}

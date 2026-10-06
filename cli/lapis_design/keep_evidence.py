@@ -11,7 +11,8 @@ Alternatives a case may list:
   design       the keep's `evidence.design` names a token of the design contract (`DESIGN.md#colors.accent`);
                holds when `context.design` is declared, the named file is the declared one, and the last
                segment of the token appears in its text (the test `plan check` applies to a color `ref`)
-  brief        `evidence.brief` quotes a line of `brief` (subject, one_job, audience, or a constraint)
+  brief        `evidence.brief` quotes a line of `brief` (subject, one_job, audience, or a constraint); when the task has a
+               requirement record (`requirements.py`), it quotes a row of that record, the owner's own words, instead
   material     `evidence.material` is an entry of `world_materials`
   source       `evidence.source` is the `ref` of an entry of `sources`
   exploration  `evidence.exploration` is the chosen face of a complete type comparison in `explorations`
@@ -39,6 +40,7 @@ from dataclasses import dataclass
 from typing import Any
 from pathlib import Path
 
+from lapis_design import requirements
 from lapis_design.plan_check import resolve
 
 CITED = {
@@ -114,6 +116,12 @@ def _design(cite: Any, sources: Sources) -> str | None:
 def _brief(cite: Any, sources: Sources) -> str | None:
     if not _norm(cite):
         return "brief: " + _missing("brief")
+    task = sources.plan.get("task")
+    task = task.get("id") if isinstance(task, dict) else None
+    if isinstance(task, str) and (rows := requirements.rows(sources.root, task)) is not None:
+        if any(_norm(cite) in _norm(row["text"]) for row in rows):
+            return None
+        return "brief: evidence.brief is not a row of the requirement record"
     brief = sources.plan.get("brief") or {}
     lines = [brief.get("subject"), brief.get("one_job"), brief.get("audience"), *(brief.get("constraints") or ())]
     if any(_norm(cite) in _norm(line) for line in lines):

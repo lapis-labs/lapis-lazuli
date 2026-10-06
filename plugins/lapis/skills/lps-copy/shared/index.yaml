@@ -36,6 +36,10 @@ items:
   view: summary
   path: assets/ledger.schema.yaml
   summary: LapisLazuli asset ledger schema — v0 draft
+- id: requirements-record
+  view: summary
+  path: requirements/schema.yaml
+  summary: LapisLazuli requirement record schema — v0
 - id: glossary
   view: full
   path: vocab/glossary.yaml

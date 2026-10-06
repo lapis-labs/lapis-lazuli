@@ -69,6 +69,10 @@ items:
   view: summary
   path: assets/CHECKS.md
   summary: Asset rights checks — v0
+- id: requirements-record
+  view: full
+  path: requirements/schema.yaml
+  summary: LapisLazuli requirement record schema — v0
 - id: system-fonts
   view: summary
   path: fonts/system-fonts.yaml

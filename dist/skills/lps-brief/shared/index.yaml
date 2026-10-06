@@ -24,6 +24,10 @@ items:
   view: summary
   path: integrity/schema.yaml
   summary: LapisLazuli integrity state and change rows — v0 draft
+- id: requirements-record
+  view: summary
+  path: requirements/schema.yaml
+  summary: LapisLazuli requirement record schema — v0
 - id: sources-registry
   view: summary
   path: sources/registry.yaml
