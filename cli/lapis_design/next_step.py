@@ -40,8 +40,8 @@ from typing import Any
 
 import yaml
 
-from lapis_design import (attempts, brief, draft, gate, owner, references, release_check, requirements, shared_dir,
-                          slice_step, taste, waiting)
+from lapis_design import (attempts, brief, critic_packet, draft, gate, owner, references, release_check, requirements,
+                          shared_dir, slice_step, taste, waiting)
 from lapis_design.lint.cli import problems
 from lapis_design.plan_check import PlanOverLimit, read_plan, yaml_reason
 from lapis_design.summary import NOT_JUDGED
@@ -498,15 +498,28 @@ def _steps(root: Path, task: str, page: str | None, integrity_error: str | None 
                            f"--ledger .lapis/assets.ledger.json --lock .lapis/fonts.lock.json{refs}{mode} "
                            f"-o .lapis/lint/{task}.json"), interactive)
     if "critic" in need:
+        packet = critic_packet.has_record(root, task)
         rows = requirements.rows(root, task)
-        judged = (f" Its `requirements` list judges every row of .lapis/requirements/{task}.json ({len(rows)} rows, "
-                  f"{len(requirements.uncovered(root, task, _json(paths['critic'])))} not judged yet)." if rows else "")
-        return state(_step("critic", "Run the critic in a context that did not make the design, as the ultramarine "
-                           "skill describes (the `critic` agent, or references/critic.md in a fresh session), and save "
-                           f"its report to .lapis/critic/{task}.json.{judged} Only when this harness cannot start a "
-                           f"separate context, record that with `lapis-design next --task {task} --unavailable critic "
-                           "--reason \"<why>\"`; the release gate still reports the critic as missing and no independent "
-                           "review ran, and the owner block says the requirements were not judged.", None,
+        counted = (f"{len(rows)} rows, {len(requirements.uncovered(root, task, _json(paths['critic'])))} not judged yet"
+                   if rows else "")
+        owed = [f["observed"] for f in findings if f["rule_id"] in ("release.critic-missing", "release.input-stale")
+                and (f["evidence"].get("refs") or [None])[0] == str(paths["critic"])]
+        if packet:
+            how = (f"Build the packet with `lapis-design critic packet --task {task}`, and run the critic on it in a "
+                   "context that did not make the design, as the ultramarine skill describes (the `critic` agent, or "
+                   "references/critic.md in a fresh session): give it the packet and the files it lists, nothing else. "
+                   f"Its report, saved to .lapis/critic/{task}.json, names the packet in `target.packet` and judges "
+                   f"every requirement row, change, and dispute in it ({counted or 'no requirement rows'})."
+                   + (f" Now: {_brief(owed, 1)}." if owed else ""))
+        else:
+            how = ("Run the critic in a context that did not make the design, as the ultramarine skill describes (the "
+                   "`critic` agent, or references/critic.md in a fresh session), and save its report to "
+                   f".lapis/critic/{task}.json.")
+        return state(_step("critic", f"{how} Only when this harness cannot start a separate "
+                           f"context, record that with `lapis-design next --task {task} --unavailable critic --reason "
+                           "\"<why>\"`; the release gate still reports the critic as missing and no independent "
+                           "review ran, and the owner block says the requirements were not judged.",
+                           f"lapis-design critic packet --task {task}" if packet else None,
                            shared / "slop" / "finding.schema.yaml"), interactive)
 
     release_inputs = [paths[n] for n in ("plan", "lock", "ledger", "extract", "session", "lint", "critic")]

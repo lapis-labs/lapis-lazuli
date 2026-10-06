@@ -16,6 +16,7 @@ from lapis_design import release_check, shared_dir
 from lapis_design.cli import main as cli_main
 from lazuli import db
 from lazuli.catalog import net
+from procedure_support import BRIEF_RECORD, record, refresh_critic, write_requirements
 
 SHARED = shared_dir()
 
@@ -1276,3 +1277,101 @@ def test_printed_result_without_missing_evidence_names_only_what_to_confirm(proj
         f"release_gate: 0 blocking = 0 defects + 0 without evidence, 1 findings -> {output}",
         "  [CONFIRM] release.theme-unchecked high-contrast theme needs a manual check",
         "  no blocking findings; not judged: genre fit, information choice, the visitor's task at phone and desktop width"]
+
+
+ROWS = ("Show which pieces are in this firing", "Let a visitor reserve one without an account")
+
+
+@pytest.fixture
+def judged(project):
+    """A project with a requirement record and a critic report that judges the current packet of its inputs."""
+    record(project, "answers", BRIEF_RECORD, 50)                        # the brief record the requirement record is sealed from
+    write_requirements(project, ROWS)
+    refresh_critic(project)
+    settle(project)
+    return project
+
+
+def rules_of(document, rule):
+    return [f for f in document["findings"] if f["rule_id"] == rule]
+
+
+def test_with_a_requirement_record_a_critic_report_that_judges_the_current_packet_counts(judged):
+    code, result = gate(judged, "--static")
+    assert code == 0 and result["summary"]["blocking"] == 0
+    assert not rules_of(result, "release.input-stale") and not rules_of(result, "release.critic-missing")
+
+
+@pytest.mark.parametrize("change", [
+    lambda r: update(r, "lint/kiln-shop-landing.json", lambda d: d["findings"].append(
+        finding("ux.example", blocking=False, status="open"))),
+    lambda r: update(r, "plans/kiln-shop-landing.yaml", lambda d: d["brief"].update(one_job="Let visitors reserve")),
+    lambda r: write_requirements(r, (*ROWS, "A third thing the owner asked for")),
+    lambda r: (r / ".lapis/taste.md").write_text("# Taste\n", encoding="utf-8"),
+], ids=["lint-finding", "protected-plan-value", "requirement-row", "taste"])
+def test_a_critic_report_made_from_another_packet_is_stale_whatever_the_file_times_say(judged, change):
+    change(judged)
+    settle(judged)                                                         # every report is newer than what it read
+    code, result = gate(judged, "--static")
+    [stale] = rules_of(result, "release.input-stale")
+    assert code == 1 and stale["blocking"] and stale["layer"] == "review"
+    assert stale["observed"].startswith("critic report was made from another packet")
+    assert stale["evidence"]["refs"] == [str(judged / ".lapis/critic/kiln-shop-landing.json"),
+                                         str(judged / ".lapis/critic/kiln-shop-landing.packet.json")]
+    assert result["summary"]["not_run"] == {"stale": 1}                     # no evidence, not a defect: `next` returns critic
+    assert not rules_of(result, "release.critic-missing")
+
+
+def test_a_critic_report_that_names_no_packet_does_not_count_once_a_record_exists(judged):
+    update(judged, "critic/kiln-shop-landing.json", lambda d: d["target"].pop("packet"))
+    settle(judged)
+    code, result = gate(judged, "--static")
+    [stale] = rules_of(result, "release.input-stale")
+    assert code == 1 and "names none" in stale["observed"]
+
+
+def test_a_stale_critic_reports_findings_do_not_count_for_the_gate_and_a_current_ones_do(judged):
+    update(judged, "critic/kiln-shop-landing.json", lambda d: d["findings"].append(finding("review.example")))
+    settle(judged)
+    code, result = gate(judged, "--static")
+    assert code == 1 and [f["rule_id"] for f in result["findings"]] == ["review.example"]       # current: a defect
+    (judged / ".lapis/taste.md").write_text("# Taste\n", encoding="utf-8")
+    settle(judged)
+    code, result = gate(judged, "--static")
+    assert [f["rule_id"] for f in result["findings"]] == ["release.input-stale"]                  # stale: not judged
+
+
+@pytest.mark.parametrize("fault, expected", [
+    (lambda d: d["requirements"].pop(), "`requirements` has no entry for "),
+    (lambda d: d["requirements"].append({"id": "R000000", "state": "met", "refs": []}),
+     "`requirements` names R000000, which the packet does not list"),
+    (lambda d: d["requirements"][0].update(refs=["missing-capture.png"]), "the ref missing-capture.png is not a file"),
+    (lambda d: d.update(facts=[{"text": "The studio is old", "refs": [], "source": "none", "quote": ""},
+                               {"text": "x y z", "refs": [], "source": "PRODUCT.md#L1", "quote": "x"}]),
+     "fact 1: PRODUCT.md is not a file the packet lists"),
+], ids=["missing-row", "unknown-row", "missing-ref", "fact-source"])
+def test_a_critic_report_that_leaves_a_row_unjudged_or_cites_what_is_not_there_is_missing(judged, fault, expected):
+    update(judged, "critic/kiln-shop-landing.json", fault)
+    settle(judged)
+    code, result = gate(judged, "--static")
+    [missing] = rules_of(result, "release.critic-missing")
+    assert code == 1 and missing["blocking"] and expected in missing["observed"]
+    assert missing["observed"].startswith("critic report does not judge every requirement row, change, and dispute")
+    assert result["summary"]["not_run"] == {"critic": 1} and not rules_of(result, "release.input-stale")
+
+
+def test_a_packet_built_from_another_lint_report_than_the_releases_is_not_the_releases(judged):
+    save(judged, "lint/other.json", json.loads((judged / ".lapis/lint/kiln-shop-landing.json").read_text()))
+    refresh_critic(judged, lint=".lapis/lint/other.json")
+    settle(judged)
+    code, result = gate(judged, "--static")
+    [missing] = rules_of(result, "release.critic-missing")
+    assert code == 1 and "another lint report than the release's" in missing["observed"]
+
+
+def test_without_a_requirement_record_a_critic_report_needs_no_packet(judged):
+    (judged / ".lapis/requirements/kiln-shop-landing.json").unlink()
+    update(judged, "critic/kiln-shop-landing.json", lambda d: d["target"].pop("packet"))
+    settle(judged)
+    code, result = gate(judged, "--static")
+    assert code == 0 and result["summary"]["total"] == 0

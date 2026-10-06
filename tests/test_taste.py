@@ -4,7 +4,7 @@ import pytest
 import yaml
 
 from lapis_design import next_step, plan_check, shared_dir
-from procedure_support import BRIEF_RECORD, TASK, finish, make_project, record, touch, update
+from procedure_support import BRIEF_RECORD, TASK, finish, make_project, record, refresh_critic, touch, update
 
 TASTE = """# Taste
 Given by: the user in the session, 2026-10-05
@@ -101,6 +101,7 @@ def test_done_exposes_taste_provenance_without_a_new_gate(tmp_path, state):
         touch(tmp_path, f"plans/{TASK}.yaml", 90)
     elif state == "not-given":
         record(tmp_path, "answers", BRIEF_RECORD.replace("## Found", "## Found\n\n- Taste: not given"), 50)
+    refresh_critic(tmp_path, 105)                                        # the critic got the taste record in its packet
     assert finish(tmp_path, "--static") == 0
     result = next_step.evaluate(tmp_path, TASK)
     assert result["state"] == "done"

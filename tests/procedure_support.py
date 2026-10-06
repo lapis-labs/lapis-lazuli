@@ -2,6 +2,7 @@
 reports are all in place, built the way test_release_check builds its own, plus the changes that make it interactive."""
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import random
@@ -11,7 +12,7 @@ from pathlib import Path
 import yaml
 from PIL import Image
 
-from lapis_design import hints, shared_dir
+from lapis_design import critic_packet, hints, shared_dir
 from lapis_design.cli import main as cli_main
 
 TASK = "kiln-shop-landing"
@@ -74,6 +75,22 @@ def seal_requirements(root: Path, task: str = TASK, *owner_files: str) -> None:
     requirements.seal(root, task, owner_files)
 
 
+def row_id(text: str) -> str:
+    """The id `requirements seal` gives a row of this text: R and the first six hex digits of its normalized text."""
+    from lapis_design import requirements
+
+    return "R" + hashlib.sha256(requirements.norm(text).encode("utf-8")).hexdigest()[:6]
+
+
+def write_requirements(root: Path, rows: tuple[str, ...] = (), task: str = TASK) -> None:
+    """Seal the requirement record of an owner brief that lists `rows`, one list item each (`owner-brief.md` in the
+    project, which the record then reads again on every call, as it does for a real owner's file); no rows seal the
+    brief record alone. The tests that use it are about what reads the record, not about extracting it."""
+    if rows:
+        (root / "owner-brief.md").write_text("".join(f"- {text}\n" for text in rows), encoding="utf-8")
+    seal_requirements(root, task, *(["owner-brief.md"] if rows else []))
+
+
 def seal_slice(root: Path, task: str = TASK) -> None:
     """A slice the owner approved, sealed in the state file the way `next` seals it: an attended create run no longer
     stops at the `slice` step."""
@@ -89,6 +106,38 @@ def unseal_slice(root: Path, task: str = TASK) -> None:
     document = json.loads(state.read_text(encoding="utf-8"))
     document.pop("slice")
     state.write_text(json.dumps(document), encoding="utf-8")
+
+
+def refresh_critic(root: Path, at: int | None = None, *, task: str = TASK, extracts: list[str] | None = None,
+                   lint: str | None = None, session: str | None = None, name: str | None = None,
+                   extra: dict | None = None) -> dict:
+    """Rebuild the critic packet from the inputs as they are now, and write the critic report that names it and judges
+    every row, change, and dispute in it, as a critic that did its job would. The defaults are the release inputs
+    (`.lapis/critic/<task>.json` and `.packet.json`); a draft passes its narrow extracts and lint report and `name`.
+    `extra` is merged into the report. `at` sets the report's modification time."""
+    stem = name or task
+    if session is None and extracts is None and (root / ".lapis/behavior" / f"{task}.json").is_file():
+        session = f".lapis/behavior/{task}.json"
+    extracts = extracts or [f".lapis/renders/{task}.json"]
+    data = critic_packet.build(root, task, {"extracts": extracts, "lint": lint or f".lapis/lint/{task}.json",
+                                            "session": session})
+    packet_path = root / ".lapis" / "critic" / f"{stem}.packet.json"
+    packet_path.parent.mkdir(parents=True, exist_ok=True)
+    packet_path.write_bytes(data)
+    packet = json.loads(data)
+    document = {
+        **report("critic", extract=extracts[0], packet={"path": f".lapis/critic/{stem}.packet.json",
+                                                       "sha256": hashlib.sha256(data).hexdigest()}),
+        "requirements": [{"id": row["id"], "state": "met", "refs": []} for row in packet["requirements"]["rows"]],
+        "changes": [{"seq": c["seq"], "verdict": "repair", "rows": [], "why": "the change repairs the finding"}
+                    for c in packet["changes"]],
+        "disputes": [{"index": d["index"], "verdict": "finding-holds", "why": "the capture shows the finding",
+                      "refs": []} for d in packet["disputes"]],
+        **(extra or {})}
+    save(root, f"critic/{stem}.json", document)
+    if at is not None:
+        touch(root, f"critic/{stem}.json", at)
+    return document
 
 
 def make_project(root: Path) -> Path:
@@ -109,14 +158,14 @@ def make_project(root: Path) -> Path:
     save(root, f"lint/{TASK}.json", report("slop_lint", plan=f".lapis/plans/{TASK}.yaml",
                                            extract=f".lapis/renders/{TASK}.json", ledger=".lapis/assets.ledger.json",
                                            lock=".lapis/fonts.lock.json", source="."))
-    save(root, f"critic/{TASK}.json", report("critic", extract=f".lapis/renders/{TASK}.json"))
     for index, name in enumerate((f"plans/{TASK}.yaml", f"renders/{TASK}.json", "fonts.lock.json",
-                                  "assets.ledger.json", f"lint/{TASK}.json", f"critic/{TASK}.json")):
+                                  "assets.ledger.json", f"lint/{TASK}.json")):
         touch(root, name, 100 + index)
     record(root, "answers", BRIEF_RECORD, 50)                    # the brief record, older than the plan and any questions
     seal_requirements(root)                                      # the owner's words from it, copied by the CLI
     seal_slice(root)                                             # the owner has approved a rendered slice
     write_references(root)                                       # the references record, as old
+    refresh_critic(root, 105)                                    # the packet of all of it, and a critic report that judges it
     return root
 
 
@@ -135,6 +184,7 @@ def make_interactive(root: Path) -> None:
         "nodes": {}, "probes": {}, "coverage": [{"probe": name, "status": "not-applicable"} for name in PROBES]})
     update(root, f"lint/{TASK}.json", lambda d: (d["target"].update(session=f".lapis/behavior/{TASK}.json"),
                                                   d["scope"]["layers"].append("behavior")))
+    refresh_critic(root)                                         # the critic judged the session and the flows too
     for index, name in enumerate(("plans/" + TASK + ".yaml", "stub.yaml", f"behavior/{TASK}.json")):
         touch(root, name, 90 + index)
     for index, name in enumerate(("renders/" + TASK + ".json", "fonts.lock.json", "assets.ledger.json",

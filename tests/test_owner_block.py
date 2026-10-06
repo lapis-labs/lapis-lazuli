@@ -10,8 +10,8 @@ import yaml
 
 from lapis_design import attempts, gate, integrity, next_step, owner, requirements, waiting
 from lapis_design.cli import main as cli_main
-from procedure_support import (TASK, ask, finish, make_project, record, reply, save, seal_requirements, touch,
-                               update)
+from procedure_support import (TASK, ask, finish, make_project, record, refresh_critic, reply, save, seal_requirements,
+                               touch, update)
 
 BRIEF = """# Brief
 
@@ -48,12 +48,10 @@ def ids(root: Path) -> list[str]:
 
 
 def judge(root: Path, states: list[str | None], **more) -> None:
-    """The critic report with a judgement of each row (`None` leaves the row out), as a critic that read the packet writes it."""
-    report = {"version": 0, "tool": {"name": "critic", "version": "0.1.0"},
-              "target": {"task": TASK, "extract": f".lapis/renders/{TASK}.json"}, "findings": [],
-              "requirements": [{"id": rid, "state": state, "refs": ["shown-390.png"]}
-                               for rid, state in zip(ids(root), states) if state], **more}
-    save(root, f"critic/{TASK}.json", report)
+    """The critic report with a judgement of each row (`None` leaves the row out), as a critic that read the packet
+    writes it: it names the packet built from the inputs as they are now."""
+    refresh_critic(root, extra={"requirements": [{"id": rid, "state": state, "refs": []}
+                                                 for rid, state in zip(ids(root), states) if state], **more})
 
 
 # ---- 4. the marker an approval wait has to carry
@@ -279,3 +277,18 @@ def test_a_dropped_row_leaves_the_counts_and_stays_in_the_decisions(project):
     judge(project, [None, "met", "met", "met"])
     text, _ = owner.block(project, TASK, {"verdict": "v"})
     assert "3 rows: met 3." in text and f"- drop {first}: [declared] {first}: drop — the firing log" in text
+
+
+def gaps(root: Path) -> list[str]:
+    """The lines of the block's "Not run, or stale" section."""
+    text = owner.block(root, TASK, {"verdict": "v"})[0]
+    return text.split("## Not run, or stale\n", 1)[1].split("\n\n", 1)[0].splitlines()
+
+
+def test_the_block_says_where_a_critic_report_does_not_hold_against_its_packet(project):
+    assert any(line.startswith(f"- the whole page, critic report {RELEASE}: critic report was made from another packet")
+               for line in gaps(project))                              # the rows were sealed after the report's packet
+    judge(project, ["met", "met", "met", None])
+    assert f"- the whole page, critic report {RELEASE}: `requirements` has no entry for {ids(project)[3]}" in gaps(project)
+    judge(project, ["met", "met", "met", "met"])
+    assert not [line for line in gaps(project) if "critic report" in line]       # a report that holds adds nothing

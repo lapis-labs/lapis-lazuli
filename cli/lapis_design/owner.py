@@ -27,7 +27,7 @@ from typing import Any, Mapping
 
 import yaml
 
-from lapis_design import attempts, integrity, requirements, slice_step
+from lapis_design import attempts, critic_packet, integrity, requirements, slice_step
 
 MARKER = "lapis-owner-block"
 LIST_MAX = 15
@@ -238,6 +238,12 @@ def _not_run(root: Path, task: str, record: dict | None, sources: list[tuple[str
             lines.append(f"- {step}: {skipped.get('reason') or skipped.get('brief_line') or skipped.get('kind', 'not run')}")
     if record is not None and record["rows"] and not sources:
         lines.append("- critic: no report, so no requirement was judged")
+    for label, report_path in sources if record is not None else ():
+        # a report counts only for its packet: say where it does not (critic_packet.check, as the gate reads it)
+        found = critic_packet.verify(root, root / report_path)
+        lines += [f"- {label}, critic report {report_path}: {_cut(problem, 300)}" for problem in found[:3]]
+        if len(found) > 3:
+            lines.append(f"- {label}, critic report {report_path}: and {len(found) - 3} more gaps")
     release = _json(root / ".lapis" / "release" / f"{task}.json")
     if done:
         if not isinstance(release, dict):

@@ -16,6 +16,7 @@ reports record the paths they read as given and the gate resolves them against `
 | behavior session | `.lapis/behavior/<task>.json` | `lapis-design behavior check <url> --task <task> --stub ...` |
 | lint report | `.lapis/lint/<task>.json` | `lapis-design slop lint ... -o .lapis/lint/<task>.json` |
 | critic report | `.lapis/critic/<task>.json` | the critic |
+| critic packet | `.lapis/critic/<task>.packet.json` | `lapis-design critic packet --task <task>`; read only when the task has a requirement record |
 | fonts lock | `.lapis/fonts.lock.json` | `lazuli lock` |
 | asset ledger | `.lapis/assets.ledger.json` | lapis and the user |
 
@@ -51,6 +52,11 @@ reports record the paths they read as given and the gate resolves them against `
 - `--static` is a flag that declares a surface without interaction. It is accepted only when the
   plan has no `flows`; then no session is needed and lint runs without `--session`. With flows,
   `--static` is refused with exit 2.
+- With a requirement record (`.lapis/requirements/<task>.json`), the critic report counts only for the packet it names
+  (`target.packet`: `path` and `sha256` of the packet file, `review/critic-packet.schema.yaml`). The gate rebuilds the packet
+  from the arguments the file records (`lapis-design critic packet` writes it from the render extract, lint report, and
+  behavior session above by default), by file contents, never by modification time, and reads the report against it.
+  Without a record, the critic report is read as it always was.
 
 ## Output
 
@@ -113,7 +119,7 @@ license facts). Its `layer` is where the evidence is missing: `render` for width
 | rule_id | Fires when |
 |---|---|
 | `release.input-missing` | an input the task needs, other than the plan, is absent, cannot be parsed, or names another task |
-| `release.input-stale` | a report is older than an input it depends on, by file modification time: the session older than the plan or the stub file; the lint report older than the plan, extract, session, lock, or ledger; the critic report older than the lint report or the extract |
+| `release.input-stale` | a report is older than an input it depends on, by file modification time: the session older than the plan or the stub file; the lint report older than the plan, extract, session, lock, or ledger; the critic report older than the lint report or the extract. With a requirement record, also a critic report that was made from another packet than its inputs build now: it names no packet, the packet file was rebuilt after the critic named it, or an input the packet digests changed since (a capture, the lint report, a requirement row, a plan field the packet carries, a change row, a dispute). Its `evidence.refs` are the critic report and the packet, and `next` returns `critic`; the critic's own findings are not read |
 | `release.width-missing` | the extract has no light capture at one of 320, 390, 768, 1440 |
 | `release.theme-missing` | the extract records a dark theme (`meta.dark_theme: true`) and has no dark capture at one of 390, 768, 1440, or the plan lists `dark` in `tokens.color.themes` or as a color role's `theme` and the extract records no dark theme (`meta.dark_theme` false or absent) |
 | `release.theme-unchecked` | the plan lists `high-contrast` in `tokens.color.themes` or as a color role's `theme`, which render check does not capture. Class `quality`, `{create: warn, review: P2}`, not blocking: the user checks it by hand |
@@ -121,7 +127,7 @@ license facts). Its `layer` is where the evidence is missing: `render` for width
 | `release.backend-insufficient` | the session ran against the local development backend instead of a stub, so failure modes and repeated commits were not exercised |
 | `release.layer-missing` | the lint report's target lacks the plan, extract, ledger, lock, or source tree, or lacks the session for an interactive surface; or its `scope` is absent, leaves out a layer those inputs call for (`plan`, `source`, `render`, `behavior` when interactive), lists `rules` because `--rule` narrowed the run, names a `rules_file` other than the packaged rules, or lists `unread_links.source` because the source walk passed links over |
 | `release.requirement-unverified` | a requirement or contract rule has a `skipped` finding in the lint report that the critic did not resolve (below) |
-| `release.critic-missing` | there is no critic report, or its target names another extract |
+| `release.critic-missing` | there is no critic report, or its target names another extract. With a requirement record, also a report that does not judge every requirement row, listed change, and dispute of its packet exactly once, cites a file that does not exist or that the critic does not read, quotes a fact that is not in the lines it cites, or names a packet that was not built from this release's render extract, lint report, and behavior session |
 | `release.study-reference` | the plan uses a reference in study mode |
 | `release.approval-assumed` | the plan's `approval.state` is `assumed`: no person approved the plan, and its `reason` says why. Class `quality`, `{create: warn, review: P2}`, not blocking, layer `plan`: the user confirms the plan, which the gate never counts as approved |
 | `release.references-declined` | a plan in `mode: create` with no references record of its own whose run declined the references step with a line of the user's brief (`lapis-design next --declined references`, above) that is still in the brief record or the plan's `brief.constraints`. It says which line, when, and that nothing outside was looked at, so the plan's `explorations` rest on local material. Class `quality`, `{create: warn, review: P2}`, not blocking, layer `plan`, evidence `source`: the user sees what was not researched and why |
@@ -141,6 +147,10 @@ wins over `earned`, whatever their order, and every matching `unearned` finding 
 of `unknown`, or no critic finding, leaves it unverified. A skipped finding whose `skip_cause` is
 `input`, `layer`, or `probe`, or that has no `skip_cause`, is never resolved by the critic; that
 check has to run. The gate reads the cause from this field, never from the wording of `observed`.
+
+With a requirement record, a critic report that is stale or does not hold against its packet (`release.input-stale`,
+`release.critic-missing` above) resolves no skipped finding, and its findings are not copied into the report: it counts only
+for the packet it names.
 
 ## Font license facts
 
@@ -290,23 +300,44 @@ record.
 
 `done` and every wait on approval questions carry the owner block (`owner.py`), which `next` writes to
 `.lapis/owner/<task>.md` and returns as `owner_block`. It lists the requirement outcome, the owner's decisions, the
-facts shown with their sources, what changed behind the page, the disputes, what was shown, and what did not run, and
+facts shown with their sources, what changed behind the page, the disputes, what was shown, and what did not run or is
+stale (the checks recorded as not run, and each place a critic report does not hold against its packet, as `critic
+packet`'s check finds it), and
 ends with the line `lapis-owner-block <sha8>`, the digest of its body. The questions file has to contain that line: a
 wait whose questions lack the current line is `draft-review` ("paste the owner block"), and `done` tells the agent to
-paste the block unchanged ahead of its own summary. A pasted block is not counted as words or links of the questions.
+paste the block unchanged ahead of its own summary. `draft check` writes the block too when the review holds. A pasted
+block is not counted as words or links of the questions.
 
 ### Pre-show draft checkpoint
 
 An unanswered question that links a rendered local page, or has `.lapis/drafts/<task>.yaml`,
 does not become `waiting-for-user` until `draft check` accepts that record. Missing evidence is
-`draft-review`, even if the ordinary next step is ledger or release. Every shown page names its
-URL, render task, source files, changed area, and widths. A new direction needs 390/1440 captures,
-one visitor-task walk per width, source/render lint with every finding fixed, justified keep, or
-unresolved, and one independent critic. Behavior changes need scoped smoke/playback evidence.
-The review asks whether visible text is the product's message or this website's own making.
-A small iteration reviews only its changed area and affected widths; no new critic is required.
-The owner's message summarizes the review and unresolved findings. Open findings can remain
-honestly listed; the record is not a release pass. A pure question showing no draft stays allowed.
+`draft-review`, even if the ordinary next step is ledger or release. The record is version 1
+(`release/draft.schema.yaml`); a version 0 record is explained and not read, because its maker prose (`summary`,
+`making_of`, `walkthroughs`, `claim_evidence`, `critic.context`, `critic.independent`, `resolution_kind`) is
+something the CLI cannot verify. Every shown page names its URL, render task, source files, changed area, and widths.
+A new direction needs 390/1440 captures, source/render lint with every finding fixed, justified keep, or
+unresolved (the maker's `reason` reaches the owner and never the critic), and a critic report that counts for
+its packet. Behavior changes need scoped smoke/playback evidence.
+The review asks whether visible text is the product's message or this website's own making; that is the critic's
+finding `review.making-of`. A small iteration reviews only its changed area and affected widths; no new critic is
+required, and a critic attached to it is checked the same way. Open findings can remain honestly listed; the record
+is not a release pass. A pure question showing no draft stays allowed.
+
+The critic's report names a critic packet (`lapis-design critic packet`; `target.packet` holds its `path` and `sha256`) built
+from exactly the page's `review.extracts` and `review.lint`. `draft check` rebuilds the packet from the arguments the file
+records and accepts the report only when the bytes match; when the report judges every requirement row, listed change, and
+dispute once; when every file-like ref exists and every `facts[].quote` is in the lines it cites; and, for a new
+direction, when it has a `walkthroughs` entry at every shown width. That shows which inputs the critic was given, not
+what it read or whether it was independent. The critic's walkthroughs, requirement states, and facts replace the
+maker's own walks and claim map. The owner's message carries the owner block `draft check` writes to
+`.lapis/owner/<task>.md`, not a summary the maker wrote.
+
+Core product-explanation findings (`approval_impact: core-product-explanation`, including
+`review.world-materials` unless the critic explicitly marks it ordinary) block pre-show approval while the critic report
+for the current packet still has them `open`, whatever the maker's disposition says. A settings-only display or a
+partial fix stays open; a fresh critic that no longer reports one open closes it, and the maker records no resolution
+kind. Other ordinary warnings are unchanged.
 
 The unattended exit gate requests `draft-review` under the existing continuation limits. An
 attended stop preserves the user's control and records `unreviewed_draft` with its warning; it
@@ -334,18 +365,6 @@ requested/rendered aliases. Its main findings are the shown page's; `specimen_fi
 A draft lint report is narrowed even if copied to a full-report path; the release gate refuses
 it as `release.layer-missing` and requires the ordinary full lint.
 
-Before approval, the review also maps each brief-required claim/proof to the actual output shown
-and the evidence still missing (`review.claim_evidence`). A website design study is not product
-output and cannot be recorded as a satisfied product-proof requirement; missing secondary examples
-may remain explicitly listed. The independent critic checks completeness against the brief.
-
-Core product-explanation findings (`approval_impact: core-product-explanation`, including
-`review.world-materials` unless the critic explicitly marks it ordinary) block pre-show approval
-regardless of their release warning severity. They stay open in the owner report after a partial
-fix or a settings-only display. Closing one requires a fresh fixed critic and real shown product
-output (`resolution_kind: product-output`), not a blanket keep. Other ordinary warnings are unchanged.
-
-
 ## What the gate does not do
 
 It does not rerun captures, probes, or lint, judge design quality, or state a legal conclusion.
@@ -359,3 +378,6 @@ Rights findings compare records; the user decides what a license allows.
   detection.
 - `behavior/session.schema.yaml` `meta.stub`, written by `behavior check --stub`.
 - `rule_id` comment: `release.*` ids come from this file.
+- `slop/finding.schema.yaml`, the critic report: `target.packet`, `requirements`, `facts`, `disputes`, and `changes`,
+  read against the packet by `lapis-design critic packet`'s check (`review/critic-packet.schema.yaml`), and
+  `walkthroughs` for a new direction at pre-show.

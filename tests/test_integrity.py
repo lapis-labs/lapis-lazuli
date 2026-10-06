@@ -7,6 +7,7 @@ import hashlib
 import io
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -41,8 +42,11 @@ def attended(monkeypatch):
 
 @pytest.fixture
 def project(tmp_path) -> Path:
-    """A project whose plan is approved and whose brief record exists: the state of a run past its plan."""
-    return make_project(tmp_path)
+    """A project whose plan is approved and whose brief record exists: the state of a run past its plan, before
+    anything observed it (`make_project` sealed a slice in the state file for the procedure tests; this is not that)."""
+    root = make_project(tmp_path)
+    shutil.rmtree(root / ".lapis" / "state")
+    return root
 
 
 @pytest.fixture

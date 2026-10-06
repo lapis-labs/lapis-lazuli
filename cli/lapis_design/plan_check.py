@@ -52,7 +52,7 @@ import yaml
 from jsonschema import Draft202012Validator
 
 from lapis_design import __version__, font_license, shared_dir, system_fonts, taste
-from lapis_design.summary import finding_lines, floor_lines, rest_lines, skipped_note
+from lapis_design.summary import DISPUTE_FOOTER, finding_lines, floor_lines, rest_lines, skipped_note
 
 _YAML_LOADER = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
 
@@ -1018,7 +1018,7 @@ def _format_text(report: dict, out: Path | None = None) -> list[str]:
     lines += rest_lines(findings, here, detail_open=True)
     if findings and not out:
         lines.append("  every finding in full: --json, or -o PATH to write the report")
-    return lines + floor_lines(s)
+    return lines + floor_lines(s) + [DISPUTE_FOOTER]
 
 
 def default_lock(root: Path, explicit: Path | None) -> Path | None:
