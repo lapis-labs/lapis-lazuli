@@ -105,6 +105,11 @@ between minor versions; render extraction is v1 and the other contract formats a
   and a finding's `observed` (and the `observed` a dispute copies from it) need one character, not three: JSON Schema
   counts characters, and a two-character Korean tool name such as "드릴" made the whole report invalid in the dry run. The
   floors of the reasons (`why`, `reason`, eight characters) are unchanged.
+- `system.off-scale-value` judges rendered corner radii at the render layer. The `contract-diff` radius kind used to
+  report "the plan declares no radius tokens" without reading the plan, so a plan that declared `tokens.shape.radius`
+  (scale and `by_role`) still left the rule unjudged and the gate without evidence. It now reads both, hits a box whose
+  largest corner radius is none of the steps, and treats a square corner, a full radius (a pill or circle), and a media
+  box (an image's own contour) as on the scale; the "no radius tokens" reason remains only for a plan with none.
 - Work screens now record explicit phone-task acceptance and plan-linked first-result geometry.
   Review surfaces a result below the first phone view independently of card ratio or CTA presence.
   Booking comparisons use staged/continuous phone implementations with the same field labels and states.

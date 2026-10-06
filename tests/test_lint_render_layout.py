@@ -907,23 +907,60 @@ def test_literal_color_hits_colors_farther_than_delta_e_ok_max_from_every_token(
     assert len(hits) == 1 and "oklch(0.62 0.19 25)" in hits[0].observed and hits[0].location["box"] == bid(2)
 
 
-def off_scale(size, inside_gap):
-    return extract(viewport(390, [box(1, "text", 0, 0, 300, 30)], [run(1, 1, "Body", size=size)],
+def off_scale(size, inside_gap, *boxes):
+    """A page whose type size and gap are as given, with `boxes` (their corners are what the radius tests read)."""
+    return extract(viewport(390, [box(1, "text", 0, 0, 300, 30), *boxes], [run(1, 1, "Body", size=size)],
                             derived={"gaps": {"inside_group": {"median": inside_gap}}}))
 
 
-def test_off_scale_value_hits_font_sizes_and_gaps_off_the_plan_scales_and_names_radius_unjudged():
+RADIUS_PLAN = {"tokens": {**TOKENS_PLAN["tokens"],
+                          "shape": {"radius": {"scale": [0, 4, 6], "by_role": {"control": 4, "tray": 6}}}}}
+
+
+def corner(n, radius, role="button", w=120, h=40, **extra):
+    return box(n, role, 20, 40 * n, w, h, style={"radius_px": radius}, **extra)
+
+
+def test_off_scale_value_hits_font_sizes_and_gaps_off_the_plan_scales():
     result = lint("system.off-scale-value", extract=off_scale(17, 20), plan=TOKENS_PLAN)
     hits = [h.observed for h in result.hits]
     assert len(hits) == 2
     assert any("17 px, between steps" in h for h in hits) and any("inside group gap" in h for h in hits)
-    assert result.skipped.startswith("radius:")
 
 
-def test_off_scale_value_reports_radius_as_not_judged_when_the_rest_matches():
-    result = lint("system.off-scale-value", extract=off_scale(20, 16), plan=TOKENS_PLAN)
-    assert result.hits == [] and "radius" in result.skipped
+def test_off_scale_value_says_the_plan_declares_no_radius_tokens_only_when_it_declares_none():
+    plain = lint("system.off-scale-value", extract=off_scale(20, 16, corner(2, 10)), plan=TOKENS_PLAN)
+    assert plain.hits == [] and plain.skipped == "radius: the plan declares no radius tokens (tokens.shape.radius.scale or by_role)"
     assert "plan" in lint("system.off-scale-value", extract=off_scale(20, 16)).skipped
+    declared = lint("system.off-scale-value", extract=off_scale(20, 16, corner(2, 4)), plan=RADIUS_PLAN)
+    assert declared.hits == [] and declared.skipped is None
+    unstyled = lint("system.off-scale-value", extract=off_scale(20, 16), plan=RADIUS_PLAN)
+    assert unstyled.skipped == "radius: the extract's boxes carry no corner radius"
+
+
+def test_off_scale_value_hits_a_rendered_corner_that_is_none_of_the_plans_radius_steps():
+    page = off_scale(20, 16, corner(2, 4), corner(3, 6), corner(4, 10), corner(5, 10, "card", w=300, h=200))
+    result = lint("system.off-scale-value", extract=page, plan=RADIUS_PLAN)
+    assert result.skipped is None and len(result.hits) == 1
+    hit = result.hits[0]
+    assert hit.observed == ("2 elements with a corner radius of 10 px, between steps of the plan's radius scale "
+                            "(0, 4, 6 px) (at 390 px)")
+    assert hit.location["box"] == bid(4)
+
+
+def test_off_scale_value_reads_the_values_of_by_role_as_steps_too():
+    plan = {"tokens": {**TOKENS_PLAN["tokens"], "shape": {"radius": {"by_role": {"control": 6}}}}}
+    page = off_scale(20, 16, corner(2, 6), corner(3, 4))
+    hits = lint("system.off-scale-value", extract=page, plan=plan).hits
+    assert [h.location["box"] for h in hits] == [bid(3)] and "(6 px)" in hits[0].observed
+
+
+def test_a_square_corner_a_pill_a_circle_and_a_media_contour_are_not_off_the_radius_scale():
+    page = off_scale(20, 16, corner(2, 0), corner(3, 999), corner(4, 20, w=40, h=40),      # square, pill, circle
+                     corner(5, 5, w=10, h=10),                                               # a small round dot
+                     corner(6, 12, "media", w=200, h=120))                                   # an image's own contour
+    result = lint("system.off-scale-value", extract=page, plan=RADIUS_PLAN)
+    assert result.hits == [] and result.skipped is None
 
 
 # ---------------------------------------------------------------- motion-inventory (render)

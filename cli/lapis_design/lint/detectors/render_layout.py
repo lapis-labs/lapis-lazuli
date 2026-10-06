@@ -1943,8 +1943,45 @@ def _diff_spacing(ctx: Context, pages: list[_Page], det: dict) -> list[Hit] | st
     return _merge(measured, observe)
 
 
+def _radius_steps(plan: Any) -> list[float]:
+    """The plan's radius steps: `tokens.shape.radius.scale` and the values of `tokens.shape.radius.by_role`."""
+    radius = _dig(plan, "tokens", "shape", "radius")
+    if not isinstance(radius, dict):
+        return []
+    by_role = radius.get("by_role")
+    found = [*(radius.get("scale") or ()), *(by_role.values() if isinstance(by_role, dict) else ())]
+    return sorted({float(v) for v in found if isinstance(v, (int, float)) and not isinstance(v, bool)})
+
+
+def _diff_radius(ctx: Context, pages: list[_Page], det: dict) -> list[Hit] | str:
+    """A rendered corner radius that is none of the plan's steps. A square corner (0) and a full radius, the pill or
+    circle that rounds a box to half its short side, are on every scale; an image or video is a media contour, which
+    `tokens.shape.media_contours` keeps apart from the radius scale."""
+    steps = _radius_steps(ctx.plan)
+    if not steps:
+        return "radius: the plan declares no radius tokens (tokens.shape.radius.scale or by_role)"
+    measured = [p for p in pages if any("radius_px" in (b.get("style") or {}) for b in p.boxes)]
+    if not measured:
+        return "radius: the extract's boxes carry no corner radius"
+
+    def observe(page: _Page) -> Iterable[_Obs]:
+        found: dict[float, list[dict]] = defaultdict(list)
+        for box in page.boxes:
+            radius = (box.get("style") or {}).get("radius_px") or 0
+            rect = box["rect"]
+            if (radius <= 0 or box["role"] == "media" or radius >= min(rect["w"], rect["h"]) / 2 - 1
+                    or _on_scale(radius, steps)):
+                continue
+            found[round(radius * 2) / 2].append(box)
+        for radius, boxes in sorted(found.items()):
+            yield _Obs(("radius", radius),
+                       f"{_count(len(boxes), 'element')} with a corner radius of {_fmt(radius)} px, between steps of the "
+                       f"plan's radius scale ({', '.join(_fmt(s) for s in steps)} px)", box=boxes[0]["id"])
+    return _merge(measured, observe)
+
+
 _DIFFS = {"font-family": _diff_family, "color": _diff_color, "font-size": _diff_font_size,
-          "spacing": _diff_spacing}
+          "spacing": _diff_spacing, "radius": _diff_radius}
 
 
 @detector("contract-diff", layers=("render",))
@@ -1959,9 +1996,6 @@ def contract_diff(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
         return Result(skipped="contract-diff needs the plan's tokens")
     hits, skipped = [], []
     for kind in kinds:
-        if kind == "radius":
-            skipped.append("radius: the plan declares no radius tokens")
-            continue
         diff = _DIFFS.get(kind)
         if diff is None:
             skipped.append(f"unknown kind {kind!r}")
