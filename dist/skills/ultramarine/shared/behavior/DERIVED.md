@@ -246,6 +246,12 @@ state-changed, or dialog; toggle, expand, play → state-changed; select → sta
 open → dialog, state-changed, or navigated; download → download or navigated; destructive → dialog,
 state-changed, data-requested, or navigated; other → any.
 
+**The chosen member of a set.** A control whose own `no-effect` is what choosing it again does is not a dead control:
+the dead-control check leaves out a `no-effect` control when another control's probe in the same context recorded an
+`aria_changes` entry for it (`aria-pressed`, `aria-selected`, `aria-checked`, or `aria-current`) that takes it from a
+chosen value to `false` or to none, as the other language button of an EN/KO switch does. A control nothing else
+switches off has no such evidence and is reported.
+
 **`keyboard.activation`**: the control is focused with Tab (or programmatically when it is
 unreachable) and activated with its platform keys: Enter and Space for buttons and switches, Space
 for checkboxes and radios, Enter for everything else. `same` when the outcome class and the changed

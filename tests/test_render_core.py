@@ -183,6 +183,17 @@ def test_no_dark_theme(browser, render_server: str, tmp_path: Path) -> None:
     assert all(v["theme"] == "light" for v in extract["viewports"])
 
 
+def test_a_row_with_only_a_rule_holding_a_bordered_tag_is_one_card_deep(browser, render_server: str, tmp_path: Path) -> None:
+    """The dry run's tool rows, captured: a `border-bottom` per row is a rule, and the loan tag in it is the one card."""
+    extract = run_capture(browser, render_server, "ruled-rows.html", tmp_path / "ruled.json")
+    narrow = next(v for v in extract["viewports"] if v["width"] == 390 and v["theme"] == "light")
+    assert narrow["derived"]["card_nesting_max"] == 1 and max(v["derived"]["card_nesting_max"] for v in extract["viewports"]) == 1
+    boxes = narrow["boxes"]
+    rules = [b for b in boxes if set((b.get("style") or {}).get("border_sides") or {}) == {"bottom"}]
+    tags = [b for b in boxes if set((b.get("style") or {}).get("border_sides") or {}) == {"top", "right", "bottom", "left"}]
+    assert len(rules) == 3 and len(tags) == 3
+
+
 def test_render_check_command_persists_detection(render_server, tmp_path, monkeypatch):
     # The module's shared browser fixture owns a Sync API loop; run the CLI in its own process.
     monkeypatch.setenv("LAPIS_SIG_KEY_FILE", str(tmp_path / "key"))

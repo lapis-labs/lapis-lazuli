@@ -410,7 +410,10 @@ A group with similarity above the rule's threshold while the plan ranks its memb
 The deepest chain of card-like boxes. A box is card-like when all three hold: its role is not
 button, link, or input; its area is at least 2% of the first viewport; and it has a visible
 boundary, meaning a background that differs from the nearest ancestor with a background
-(ΔE_OK > 0.02), a border, or a shadow.
+(ΔE_OK > 0.02), a border that encloses, or a shadow. A border encloses when it has a side on each axis (top or
+bottom, and left or right): one rule, or two parallel ones, divides what lies on either side and is not a
+container, so a row with only a bottom rule is not a card. An extract with `border_px` and no `border_sides` counts
+as bordered.
 
 ### gaps
 

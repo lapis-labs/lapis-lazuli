@@ -10,7 +10,7 @@ from lapis_design import shared_dir
 from lapis_design.render.derived import derive
 
 
-def box(number, role, rect, parent=None, *, background=None, border=0, shadow=False):
+def box(number, role, rect, parent=None, *, background=None, border=0, shadow=False, sides=()):
     result = {
         "id": f"b{number:012x}", "parent": parent, "role": role,
         "role_confidence": 1, "rect": dict(zip(("x", "y", "w", "h"), rect)),
@@ -20,6 +20,9 @@ def box(number, role, rect, parent=None, *, background=None, border=0, shadow=Fa
         style["background"] = background
     if border:
         style["border_px"] = border
+    if sides:                         # a border on these sides only, as the capture records it
+        style["border_sides"] = {side: {"px": 1} for side in sides}
+        style["border_px"] = 1
     if shadow:
         style["shadow"] = True
     if style:
@@ -186,6 +189,31 @@ def test_card_depth_requires_area_boundary_and_noninteractive_role():
     tiny = box(5, "card", (50, 80, 30, 30), button["id"], border=1)
     neutral = box(6, "card", (50, 180, 120, 100), second["id"])
     boxes = [page, first, second, button, tiny, neutral]
+    assert derive(viewport(boxes), elements_for(boxes), 844)["card_nesting_max"] == 2
+
+
+def test_a_ruled_row_is_not_a_card_but_a_border_on_both_axes_is():
+    """The dry run's tool rows: a row with only a bottom rule, holding a bordered, filled loan tag."""
+    page = box(1, "section", (0, 0, 390, 844))
+    row = box(2, "section", (16, 230, 358, 113), page["id"], sides=("bottom",))
+    tag = box(3, "card", (16, 230, 231, 96), row["id"], background=[0.87, 0.14, 90],
+              sides=("top", "right", "bottom", "left"))
+    boxes = [page, row, tag]
+    assert derive(viewport(boxes), elements_for(boxes), 844)["card_nesting_max"] == 1
+    for rules in (("top", "bottom"), ("left",), ("top",)):          # one rule or two parallel ones divide, not enclose
+        row["style"]["border_sides"] = {side: {"px": 1} for side in rules}
+        assert derive(viewport(boxes), elements_for(boxes), 844)["card_nesting_max"] == 1, rules
+    for corner in (("top", "left"), ("bottom", "right"), ("left", "right", "top")):   # a corner encloses
+        row["style"]["border_sides"] = {side: {"px": 1} for side in corner}
+        assert derive(viewport(boxes), elements_for(boxes), 844)["card_nesting_max"] == 2, corner
+
+
+def test_a_border_width_without_sides_still_counts_as_a_border():
+    """An extract from before `border_sides` says only how wide the widest side is."""
+    page = box(1, "section", (0, 0, 390, 844))
+    row = box(2, "card", (16, 230, 358, 113), page["id"], border=1)
+    tag = box(3, "card", (16, 230, 231, 96), row["id"], border=1)
+    boxes = [page, row, tag]
     assert derive(viewport(boxes), elements_for(boxes), 844)["card_nesting_max"] == 2
 
 

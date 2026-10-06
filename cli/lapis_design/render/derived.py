@@ -304,6 +304,18 @@ def _groups(boxes, by_id, children, runs):
     return result
 
 
+def encloses(style):
+    """Whether a box's border holds its content in: a side on each axis, top or bottom and left or right. One rule, or
+    two parallel ones, divides what lies on either side of it and is not a container, so a ruled row is not a card
+    (render/DERIVED.md, card_nesting_max). A style with `border_px` and no `border_sides` cannot say which sides
+    carry it and counts as bordered."""
+    sides = style.get("border_sides")
+    if sides:
+        return (any(sides.get(name, {}).get("px", 0) > 0 for name in ("top", "bottom"))
+                and any(sides.get(name, {}).get("px", 0) > 0 for name in ("left", "right")))
+    return style.get("border_px", 0) > 0
+
+
 def _card_depth(boxes, by_id, viewport_area):
     if viewport_area <= 0:
         return None
@@ -321,8 +333,7 @@ def _card_depth(boxes, by_id, viewport_area):
         ancestor_bg = by_id[ancestor].get("style", {}).get("background") if ancestor in by_id else None
         boundary = ((background is not None and ancestor_bg is not None and
                      delta_e_ok(background, ancestor_bg) > 0.02) or
-                    style.get("border_px", 0) > 0 or any(
-                        side.get("px", 0) > 0 for side in style.get("border_sides", {}).values()) or
+                    encloses(style) or
                     style.get("shadow", False) or bool(style.get("shadows")))
         card = (box["role"] not in _CONTROL and
                 box["rect"]["w"] * box["rect"]["h"] >= viewport_area * 0.02

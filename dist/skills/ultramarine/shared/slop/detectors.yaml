@@ -238,8 +238,8 @@ detectors:
     layers: [behavior]
     input: "every interactive box exercised once"
     params: { also: "console-errors" }
-    output: "controls whose outcome is no-effect or error, or does not match what they promise; a navigation stopped at another host counts as navigated"
-    reads_session: [control_probe.promise, control_probe.effect, control_probe.derived, effect.outcome, effect.console_errors, effect.external]
+    output: "controls whose outcome is no-effect or error, or does not match what they promise; a navigation stopped at another host counts as navigated; a no-effect control that another control's probe switched off (the chosen member of a set) is not reported"
+    reads_session: [control_probe.promise, control_probe.effect, control_probe.derived, effect.outcome, effect.aria_changes, effect.console_errors, effect.external]
     probes: [controls]
     status: implemented
   - { name: console-errors, layers: [behavior], input: "runtime exceptions and warnings during a session", params: { kinds: list }, reads_session: [console_entry.kind, console_entry.level, console_entry.message], probes: [console], status: implemented }

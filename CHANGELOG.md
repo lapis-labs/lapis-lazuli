@@ -114,6 +114,16 @@ between minor versions; render extraction is v1 and the other contract formats a
   `media_contours` without their `reason`; the maker's `rule` stays out) and `tokens.type.scale`, which it used to drop.
   A dispute about a spacing, size, or radius finding was judged against no declared steps, so the critic could only
   answer `unknown`; now it has them, and a changed step makes a critic report stale like any other packet input.
+- `ux.dead-control` no longer reports the chosen member of a set. A control that does nothing when clicked is left out
+  when another control's probe in the same context recorded an `aria-pressed`, `aria-selected`, `aria-checked`, or
+  `aria-current` change that took it out of a chosen state, as the KO button does to an EN button that is already
+  selected; a control nothing else switches off, a change in another context, and an `aria-expanded` change still
+  count as dead (dry run: the idempotent EN click was disputed in every candidate and in the final report).
+- A row with only a rule is not a card. `card_nesting_max`, `layout.nested-cards`, and `layout.card-everything` count a
+  border as a boundary only when it has a side on each axis (`render/derived.py` `encloses`); a bottom rule per tool row
+  made the row a card, the loan tag in it a nested card, and the cards hold 0.80 of the content in the dry run (0.165
+  on the same capture now; the tags and the tray remain cards). An extract with `border_px` and no `border_sides`
+  counts as bordered; the stored `derived.card_nesting_max` of an extract captured earlier is not recomputed.
 - Work screens now record explicit phone-task acceptance and plan-linked first-result geometry.
   Review surfaces a result below the first phone view independently of card ratio or CTA presence.
   Booking comparisons use staged/continuous phone implementations with the same field labels and states.

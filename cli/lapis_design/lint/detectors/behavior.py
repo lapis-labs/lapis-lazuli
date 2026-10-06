@@ -150,6 +150,23 @@ def _primary_boxes(session: dict, unfinished_only: bool) -> set[str]:
 
 # ---------------------------------------------------------------- controls and console
 
+_CHOSEN_STATES = ("aria-pressed", "aria-selected", "aria-checked", "aria-current")
+
+
+def _switched_off(controls: list[dict]) -> set[tuple[str, str]]:
+    """`(context, box)` of each control that another control's action took out of a chosen state (a chosen value of
+    `aria-pressed`, `aria-selected`, `aria-checked`, or `aria-current` to none): it was the chosen one of a set, and
+    choosing it again changes nothing. A control nothing else switches off has no such evidence, and a dead one stays
+    reported."""
+    found: set[tuple[str, str]] = set()
+    for c in controls:
+        for change in c["effect"].get("aria_changes") or ():
+            if (change["box"] != c["box"] and change["attr"] in _CHOSEN_STATES
+                    and change.get("from") not in (None, "false") and change.get("to") in (None, "false")):
+                found.add((c["context"], change["box"]))
+    return found
+
+
 @detector("control-has-effect", layers=("behavior",))
 def control_has_effect(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
     s = _session(ctx)
@@ -159,6 +176,7 @@ def control_has_effect(ctx: Context, det: dict, rule: dict, layer: str) -> Resul
     blocked = _primary_boxes(s, unfinished_only=True)
     nodes = s.get("nodes") or {}
     groups: dict[tuple[str, str, str], list[tuple[int, dict]]] = {}
+    chosen = _switched_off(_items(s, "controls"))
     for i, c in enumerate(_items(s, "controls")):
         effect, promise = c["effect"], c.get("promise") or "other"
         if effect.get("external"):                     # stopped at another host: it navigated
@@ -169,6 +187,8 @@ def control_has_effect(ctx: Context, det: dict, rule: dict, layer: str) -> Resul
         if (result == "no-effect" and (nodes.get(c["box"]) or {}).get("role") == "input"
                 and effect.get("focus_to") == c["box"]):
             continue                                   # an entry field took focus; the forms probe judges entry
+        if result == "no-effect" and (c["context"], c["box"]) in chosen:
+            continue                                   # the chosen one of a set: choosing it again changes nothing
         errors = effect.get("console_errors") or 0
         if result == "no-effect":
             what = "nothing visible or requested happened"

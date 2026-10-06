@@ -20,6 +20,7 @@ from typing import Any, Callable, Iterable
 from lapis_design import system_fonts
 from lapis_design.lint.types import Context, Hit, Result, detector
 from lapis_design.render.color import delta_e_ok
+from lapis_design.render.derived import encloses
 
 # Visible heights per width when a capture omits `height` (render/DERIVED.md, Capture).
 _HEIGHTS = {320: 568, 390: 844, 768: 1024, 1440: 900}
@@ -240,17 +241,15 @@ class _Page:
 
     def card_like(self, ident: str) -> bool:
         """render/DERIVED.md, card_nesting_max: not a control, at least 2% of the first viewport,
-        and a visible boundary (a background unlike the nearest ancestor background, a border, or
-        a shadow)."""
+        and a visible boundary (a background unlike the nearest ancestor background, a border that
+        encloses, or a shadow)."""
         if ident in self._card:
             return self._card[ident]
         box = self.by_id[ident]
         style = box.get("style") or {}
         result = False
         if box["role"] not in _CONTROLS and _area(box["rect"]) >= 0.02 * self.width * self.height:
-            result = bool(style.get("border_px", 0) > 0
-                          or any(side.get("px", 0) > 0 for side in (style.get("border_sides") or {}).values())
-                          or style.get("shadow") or style.get("shadows"))
+            result = bool(encloses(style) or style.get("shadow") or style.get("shadows"))
             background = style.get("background")
             if not result and background is not None:
                 ancestor = next((self.by_id[a]["style"]["background"] for a in self.ancestors(ident)

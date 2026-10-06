@@ -142,6 +142,49 @@ def test_dead_control_skips_focused_entry_fields_and_reports_each_control_once()
     assert "tap (m), tap (d)" in result.hits[1].observed and len(result.hits[1].refs) == 2
 
 
+def switch(chosen, other):
+    """What a language switch records for the click on `other`: `chosen` leaves its pressed state, `other` takes it."""
+    return {"outcome": "state-changed", "aria_changes": [
+        {"box": chosen, "attr": "aria-pressed", "from": "true", "to": "false"},
+        {"box": other, "attr": "aria-pressed", "from": "false", "to": "true"}]}
+
+
+def test_dead_control_does_not_report_the_chosen_member_of_a_set_another_control_switches_off():
+    """The dry run's EN/KO switch: EN is pressed at load, its own click changes nothing, and KO's click takes EN's state."""
+    doc = session({"controls": [
+        control(A, "toggle", {"outcome": "no-effect", "dom_mutations": 93}),
+        control(B, "toggle", switch(A, B)),
+        control(A, "toggle", {"outcome": "no-effect", "dom_mutations": 93}, context="d"),
+        control(B, "toggle", switch(A, B), context="d")]})
+    assert hit_boxes(run("ux.dead-control", doc)) == []
+
+
+@pytest.mark.parametrize("controls", [
+    # nothing else switches the control off: a dead toggle is still dead
+    [control(A, "toggle", {"outcome": "no-effect"}), control(B, "toggle", {"outcome": "state-changed", "aria_changes": [
+        {"box": B, "attr": "aria-pressed", "from": "false", "to": "true"}]})],
+    # the other control switches A on, not off
+    [control(A, "toggle", {"outcome": "no-effect"}), control(B, "toggle", {"outcome": "state-changed", "aria_changes": [
+        {"box": A, "attr": "aria-pressed", "from": "false", "to": "true"}]})],
+    # the other control opens or closes A, which is not a chosen state
+    [control(A, "toggle", {"outcome": "no-effect"}), control(B, "toggle", {"outcome": "state-changed", "aria_changes": [
+        {"box": A, "attr": "aria-expanded", "from": "true", "to": "false"}]})],
+    # the evidence is from another context
+    [control(A, "toggle", {"outcome": "no-effect"}), control(B, "toggle", switch(A, B), context="d")],
+], ids=["nothing-switches-it", "switched-on", "not-a-chosen-state", "another-context"])
+def test_a_control_nothing_switches_off_is_still_reported_when_it_does_nothing(controls):
+    assert hit_boxes(run("ux.dead-control", session({"controls": controls}))) == [A]
+
+
+def test_a_control_that_is_switched_off_but_does_something_else_wrong_is_still_reported():
+    doc = session({"controls": [
+        control(A, "toggle", {"outcome": "no-effect", "console_errors": 0}),
+        control(C, "toggle", {"outcome": "error", "console_errors": 2, "aria_changes": [
+            {"box": C, "attr": "aria-pressed", "from": "true", "to": "false"}]}),
+        control(B, "toggle", switch(C, B))]})
+    assert hit_boxes(run("ux.dead-control", doc)) == [A, C]
+
+
 def test_console_errors_group_listed_kinds_only():
     entries = [{"context": "m", "level": "error", "kind": "hydration-mismatch", "message": "text differs"},
                {"context": "d", "level": "error", "kind": "hydration-mismatch", "message": "text differs"},

@@ -362,6 +362,40 @@ def test_card_share_compares_content_inside_cards_with_all_content():
     assert observed(lint("layout.card-everything", extract=extract(viewport(390, inside + outside, text)))) == []
 
 
+RULE = {"border_sides": {"bottom": {"px": 1}}, "border_px": 1, "border_color": [0.8, 0.0, 0.0]}
+LOAN_TAG = {"background": [0.87, 0.14, 90], "border_px": 1, "border_color": [0.5, 0.1, 90],
+            "border_sides": {side: {"px": 1} for side in ("top", "right", "bottom", "left")}}
+
+
+def tool_rows(row_style):
+    """Three tool rows, each holding a filled and bordered loan tag beside the tool's own name and availability."""
+    boxes, text = [box(1, "section", 0, 0, 390, 700)], []
+    for i in range(3):
+        y = 100 + 130 * i
+        n = 10 * (i + 1)
+        boxes += [box(n, "section", 16, y, 358, 113, parent=1, style=row_style),
+                  box(n + 1, "card", 16, y, 231, 96, parent=n, style=LOAN_TAG),
+                  box(n + 2, "text", 24, y + 8, 200, 40, parent=n + 1),
+                  box(n + 3, "text", 256, y + 8, 110, 90, parent=n)]            # the name and availability, outside the tag
+        text += [run(n, n + 2, "Drill, borrowable"), run(n + 1, n + 3, "Available")]
+    return extract(viewport(390, boxes, text))
+
+
+def test_a_row_with_only_a_rule_is_not_a_card_so_the_loan_tag_inside_it_is_not_nested_or_everything():
+    """The dry run's tool rows: a bottom rule per row and a movable tag in it, flagged as nested cards and as cards
+    holding 0.80 of the content."""
+    page = tool_rows(RULE)
+    assert observed(lint("layout.nested-cards", extract=page)) == []
+    assert observed(lint("layout.card-everything", extract=page)) == []
+
+
+def test_a_row_that_is_boxed_in_is_still_a_card_holding_the_tag_and_the_page():
+    page = tool_rows(BORDER)
+    hits = lint("layout.nested-cards", extract=page).hits
+    assert len(hits) == 1 and "depth 2" in hits[0].observed
+    assert len(lint("layout.card-everything", extract=page).hits) == 1
+
+
 # ---------------------------------------------------------------- grid-filler
 
 def bento(empty_cells):
