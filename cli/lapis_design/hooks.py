@@ -33,6 +33,10 @@ pre-write    PreToolUse on the file-edit tools in the lapis plugin's hooks/hooks
              write to `.lapis/requirements/`, `.lapis/state/`, `.lapis/changes/`, or `.lapis/owner/` (records only
              `lapis-design` writes) is refused the same way, with no cap: it stops the agent's tool, not a person.
              On any failure of ours it prints nothing.
+
+`--host antigravity` (the lapis plugin's hooks.json for Antigravity: `pre-write` and `stop`) reads and prints Antigravity's
+own hook JSON through antigravity.py, which wraps the same bodies. Antigravity stops the tool call for any answer it does
+not know and for a failing command, so a notice there goes to stderr, never to stdout.
 """
 from __future__ import annotations
 
@@ -178,48 +182,90 @@ class _HookParser(argparse.ArgumentParser):
         raise ValueError(message)
 
 
-def _notice(message: str, plugin_version: str | None = None) -> int:
+def _host(argv: list[str]) -> str | None:
+    """`antigravity` when the command line names it, read without argparse so that even a command line the parser
+    refuses gets the answer its host can read."""
+    for i, arg in enumerate(argv):
+        if arg == "--host=antigravity" or (arg == "--host" and argv[i + 1:i + 2] == ["antigravity"]):
+            return "antigravity"
+    return None
+
+
+def _claimed(base: str | None, digest: str) -> bool:
+    """Whether this notice was already claimed for the session or project; claims it when not."""
+    if base is None:
+        return False
+    try:
+        folder = Path(base) / ".lapis" / "hooks"
+        folder.mkdir(parents=True, exist_ok=True)
+        with (folder / f"{digest}.notice").open("x", encoding="utf-8"):
+            pass
+    except FileExistsError:
+        return True
+    except (OSError, TypeError, ValueError):
+        # A read-only project can lose deduplication, never fail-open behavior.
+        pass
+    return False
+
+
+def _notice(message: str, plugin_version: str | None = None, host: str | None = None) -> int:
+    """The one visible line for a hook that is skipped. Claude Code and Codex read `{"systemMessage": ...}`; Antigravity
+    stops the tool call for any JSON it does not know, so its line goes to stderr (its CLI log) and stdout stays empty."""
     try:
         event = json.load(sys.stdin) if not sys.stdin.isatty() else {}
     except (ValueError, OSError):
         event = {}
     if not isinstance(event, dict):
         event = {}
+    if host == "antigravity":
+        paths = event.get("workspacePaths")
+        session = event.get("conversationId")
+        # a hook's own working directory is the plugin's folder, so only a named workspace can hold the claim
+        base = paths[0] if isinstance(paths, list) and paths and isinstance(paths[0], str) else None
+    else:
+        session = event.get("session_id")
+        base = event.get("cwd") or os.environ.get("CLAUDE_PROJECT_DIR") or "."
     # All hooks in a session share this atomic claim, including the two plugins.
     # Without a session id, report once per project and version pair instead.
-    key = json.dumps([event.get("session_id"), plugin_version, __version__, message])
-    digest = hashlib.sha256(key.encode("utf-8")).hexdigest()
-    try:
-        folder = Path(event.get("cwd") or os.environ.get("CLAUDE_PROJECT_DIR") or ".") / ".lapis" / "hooks"
-        folder.mkdir(parents=True, exist_ok=True)
-        with (folder / f"{digest}.notice").open("x", encoding="utf-8"):
-            pass
-    except FileExistsError:
+    key = json.dumps([session, plugin_version, __version__, message])
+    if _claimed(base, hashlib.sha256(key.encode("utf-8")).hexdigest()):
         return 0
-    except (OSError, TypeError, ValueError):
-        # A read-only project can lose deduplication, never fail-open behavior.
-        pass
-    print(json.dumps({"systemMessage": message}, ensure_ascii=False))
+    if host == "antigravity":
+        print(message, file=sys.stderr)
+    else:
+        print(json.dumps({"systemMessage": message}, ensure_ascii=False))
     return 0
 
 
 def main(argv: list[str] | None = None) -> int:
     """The hook-only entry point: unsupported interfaces never exit with 2."""
+    argv = sys.argv[1:] if argv is None else argv
+    host = _host(argv)
     ap = _HookParser(prog="lapis-design-hook", description="Run a harness hook; version skew fails open.")
     ap.add_argument("--plugin-version", help="the version embedded in the calling plugin")
+    ap.add_argument("--host", choices=("antigravity",),
+                    help="the harness whose hook JSON this is, when it is not Claude Code's or Codex's")
     ap.add_argument("name", help="one of " + ", ".join(HOOKS))
     try:
         args = ap.parse_args(argv)
     except ValueError as exc:
-        return _notice(f"LapisLazuli hook skipped: {exc}; update the CLI and plugins together.")
+        return _notice(f"LapisLazuli hook skipped: {exc}; update the CLI and plugins together.", host=host)
     if args.plugin_version and args.plugin_version != __version__:
         return _notice(
             f"LapisLazuli hooks skipped: plugin {args.plugin_version}, CLI {__version__}; "
-            "update the CLI and plugins together.", args.plugin_version)
-    if args.name not in HOOKS:
+            "update the CLI and plugins together.", args.plugin_version, host)
+    if args.host:
+        from lapis_design import antigravity
+
+        known = antigravity.HOOKS
+    else:
+        known = tuple(HOOKS)
+    if args.name not in known:
         return _notice(
             f"LapisLazuli hook skipped: CLI {__version__} does not support {args.name!r}; "
-            "update the CLI and plugins together.", args.plugin_version)
+            "update the CLI and plugins together.", args.plugin_version, host)
+    if args.host:
+        return antigravity.run(args.name, sys.stdin, sys.stdout, HOOKS)
     return HOOKS[args.name](sys.stdin, sys.stdout)
 
 
