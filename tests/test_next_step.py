@@ -11,7 +11,8 @@ import yaml
 
 from lapis_design import attempts, next_step
 from lapis_design.cli import main as cli_main
-from procedure_support import TASK, ask, finish, make_interactive, make_project, reply, save, touch, update
+from procedure_support import (TASK, ask, finish, make_interactive, make_project, refresh_critic, reply, save, touch,
+                               update, write_requirements)
 
 PLAN = f"plans/{TASK}.yaml"
 
@@ -34,7 +35,7 @@ def lint_without(root: Path, target: str, layer: str) -> None:
         lint["scope"]["layers"].remove(layer)
     update(root, f"lint/{TASK}.json", change)
     touch(root, f"lint/{TASK}.json", 110)
-    touch(root, f"critic/{TASK}.json", 111)                     # the critic read the new lint report
+    refresh_critic(root, 111)                                   # the critic read the new lint report, in its packet
 
 
 def vague_cta(plan):
@@ -197,7 +198,7 @@ def test_a_blocking_release_report_still_ends_the_procedure(project):
         "layer": "render", "observed": "a defect", "blocking": True, "status": "open",
         "evidence": {"type": "review", "refs": ["original"]}}))
     touch(project, f"lint/{TASK}.json", 110)
-    touch(project, f"critic/{TASK}.json", 111)
+    refresh_critic(project, 111)
     assert finish(project, "--static") == 1
     result = next_step.evaluate(project, TASK)
     assert result["state"] == "done" and result["step"] is None
@@ -310,3 +311,49 @@ def test_a_run_that_asked_before_it_wrote_a_plan_is_found_by_its_questions(tmp_p
     save(tmp_path, "plans/older-plan.yaml", {})
     touch(tmp_path, "plans/older-plan.yaml", 100)
     assert next_step.resolve_task(tmp_path) == "kiln-remake"            # the newest of plans and questions
+
+
+ROWS = ("Show which pieces are in this firing", "Let a visitor reserve one without an account")
+
+
+def with_record(root: Path) -> None:
+    """A requirement record, and a critic report that judges the packet of everything the project holds."""
+    write_requirements(root, ROWS)
+    refresh_critic(root, 105)
+
+
+def test_a_critic_report_made_from_another_packet_sends_the_run_back_to_the_critic_with_the_packet_command(project):
+    with_record(project)
+    assert step_of(project) == "release"
+    (project / ".lapis/taste.md").write_text("# Taste\n", encoding="utf-8")        # a packet input no report time covers
+    step = next_step.evaluate(project, TASK)["step"]
+    assert step["id"] == "critic" and step["command"] == f"lapis-design critic packet --task {TASK}"
+    assert "critic report was made from another packet" in step["why"] and "`target.packet`" in step["why"]
+    refresh_critic(project, 105)
+    assert step_of(project) == "release"
+
+
+def test_a_critic_report_that_leaves_a_requirement_row_unjudged_sends_the_run_back_to_the_critic(project):
+    with_record(project)
+    update(project, f"critic/{TASK}.json", lambda d: d["requirements"].pop())
+    touch(project, f"critic/{TASK}.json", 105)
+    step = next_step.evaluate(project, TASK)["step"]
+    assert step["id"] == "critic" and "`requirements` has no entry for" in step["why"]
+
+
+def test_without_a_requirement_record_the_critic_step_names_no_packet(project):
+    (project / f".lapis/requirements/{TASK}.json").unlink()
+    (project / f".lapis/critic/{TASK}.json").unlink()
+    step = next_step.evaluate(project, TASK)["step"]
+    assert step["id"] == "critic" and step["command"] is None and "critic packet" not in step["why"]
+
+
+def test_a_critic_that_cannot_start_still_lets_a_run_with_a_stale_packet_finish(project):
+    with_record(project)
+    (project / ".lapis/taste.md").write_text("# Taste\n", encoding="utf-8")
+    assert step_of(project) == "critic"
+    assert cli_main(["next", "--task", TASK, "--root", str(project), "--unavailable", "critic",
+                     "--reason", "this harness cannot start a separate context"]) == 0
+    assert step_of(project) == "release"
+    assert finish(project, "--static") == 1                       # the gate still reports the critic as not run
+    assert step_of(project) == "done"

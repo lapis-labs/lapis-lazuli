@@ -33,6 +33,11 @@ def links(root: Path, task: str) -> list[str]:
 
 def read(root: Path, task: str) -> dict:
     doc = yaml.safe_load(path(root, task).read_text(encoding="utf-8"))
+    if isinstance(doc, dict) and doc.get("version") == 0:
+        raise ValueError("a v0 draft review carries maker prose fields (summary, making_of, walkthroughs, claim_evidence, "
+                         "critic.context, critic.independent, handled[].resolution_kind) that are no longer read; "
+                         "rewrite it as version 1 without them (release/draft.schema.yaml): the critic's report, "
+                         "built on `lapis-design critic packet`, now holds the walkthroughs and the requirement states")
     schema = yaml.safe_load((shared_dir() / "release/draft.schema.yaml").read_text(encoding="utf-8"))
     errors = list(Draft202012Validator(schema).iter_errors(doc))
     if errors:
@@ -58,37 +63,29 @@ def _fresh(file: Path, inputs: list[Path]) -> bool:
     return all(file.stat().st_mtime_ns >= p.stat().st_mtime_ns for p in inputs)
 
 
-def _proof(root: Path, task: str, review: dict) -> list[dict]:
-    from lapis_design.plan_check import read_plan
+def _brief(problems: list[str], limit: int = 3) -> str:
+    return "; ".join(problems[:limit]) + (f"; and {len(problems) - limit} more" if len(problems) > limit else "")
 
-    rows = review.get("claim_evidence")
-    if not rows:
-        raise ValueError("record claim_evidence: required brief claims/proof -> actual shown output -> missing evidence")
-    plan = read_plan(root / ".lapis/plans" / f"{task}.yaml")
-    if not isinstance(plan, dict):
-        raise ValueError("the plan cannot supply the brief's required claims")
-    given = json.dumps({"brief": plan.get("brief"), "declared": (plan.get("claims") or {}).get("declared")}, ensure_ascii=False)
-    try:
-        given += " " + waiting.answers_path(root, task).read_text(encoding="utf-8")
-    except OSError:
-        pass
-    given = " ".join(given.casefold().split())
-    for row in rows:
-        cited = given
-        if source := row.get("source"):
-            context = plan.get("context") or {}
-            if source not in [context.get("product"), *(context.get("other") or [])]:
-                raise ValueError("claim_evidence source is not a brief document declared in context")
-            cited = " ".join(local(root, source).read_text(encoding="utf-8").casefold().split())
-        if " ".join(row["requirement"].casefold().split()) not in cited:
-            raise ValueError("claim_evidence requirement is not quoted from the brief or declared requirements")
-        if row["state"] == "shown" and (row["kind"] != "product-output" or not row["shown"] or row["missing"].strip()):
-            raise ValueError("a site study or missing output cannot satisfy a product-proof requirement")
-        if row["state"] != "shown" and len(row["missing"].strip()) < 8:
-            raise ValueError("partial/missing product proof must name the evidence still missing")
-        for ref in row["shown"]:
-            local(root, ref.partition("#")[0])
-    return rows
+
+def _judged(root: Path, name: str, file: Path, report: dict, page: dict, review: dict) -> str:
+    """The sha256 of the packet a critic report judged, when that report counts for this page: it names the current
+    packet, judges every row, change, and dispute in it, was built on this page's captures and lint report, and, for
+    a new direction, walks a visitor task at every shown width."""
+    from lapis_design import critic_packet
+
+    verdict = critic_packet.check(root, file)
+    if verdict.problems:
+        raise ValueError(f"{name}: {_brief(verdict.problems)}")
+    args = verdict.packet["args"]
+    if ({local(root, p) for p in args["extracts"]} != {local(root, p) for p in review["extracts"]}
+            or local(root, args["lint"]) != local(root, review["lint"])):
+        raise ValueError(f"{name}: its packet was built from other captures or another lint report than this page's review")
+    if page["direction"] == "new":
+        walked = {w.get("viewport") for w in report.get("walkthroughs") or [] if isinstance(w, dict)}
+        if missing := sorted(set(page["widths"]) - walked):
+            raise ValueError(f"{name}: the critic walks a visitor task at every shown width; it has no walkthrough at "
+                             f"{', '.join(map(str, missing))}")
+    return report["target"]["packet"]["sha256"]
 
 
 def check(root: Path, task: str, *, asked: list[str] | None = None) -> tuple[list[str], list[dict]]:
@@ -109,7 +106,6 @@ def check(root: Path, task: str, *, asked: list[str] | None = None) -> tuple[lis
             review = page.get("review")
             if not review:
                 raise ValueError("no review recorded")
-            proof = _proof(root, task, review)
             sources = [local(root, p) for p in page["sources"]]
             if page["direction"] == "new" and not {390, 1440}.issubset(page["widths"]):
                 raise ValueError("a new direction needs 390 and 1440")
@@ -129,18 +125,15 @@ def check(root: Path, task: str, *, asked: list[str] | None = None) -> tuple[lis
                 extracts.append(file)
             if not set(page["widths"]).issubset(widths):
                 raise ValueError("captures do not cover the shown widths")
-            walks = {w["viewport"] for w in review["walkthroughs"]}
-            if not set(page["widths"]).issubset(walks):
-                raise ValueError("walk one visitor task per shown width, including friction and completion")
             reports = [(review["lint"], "slop_lint")]
-            if page["direction"] == "new":
-                critic = review.get("critic") or {}
-                if not critic.get("independent") or not critic.get("context"):
-                    raise ValueError("a new direction needs an independent fresh-context critic")
-            if review.get("critic"):
-                reports.append((review["critic"]["report"], "critic"))
+            critic = review.get("critic")
+            if page["direction"] == "new" and not critic:
+                raise ValueError("a new direction needs a critic report built on `lapis-design critic packet` "
+                                 "(review.critic.report), with a walkthrough per shown width")
+            if critic:
+                reports.append((critic["report"], "critic"))
             inputs = sources + extracts
-            dispositions = []
+            dispositions, packet_sha = [], None
             for name, tool in reports:
                 file = local(root, name)
                 report = _load(file, "report")
@@ -157,6 +150,8 @@ def check(root: Path, task: str, *, asked: list[str] | None = None) -> tuple[lis
                 if not _fresh(file, extracts + sources):
                     raise ValueError(f"{name} is stale")
                 inputs.append(file)
+                if tool == "critic":
+                    packet_sha = _judged(root, name, file, report, page, review)
                 handled = {h["finding"]: h for h in review["handled"] if h["report"] == name}
                 for i, finding in enumerate(report["findings"]):
                     if finding["status"] == "skipped":
@@ -164,21 +159,17 @@ def check(root: Path, task: str, *, asked: list[str] | None = None) -> tuple[lis
                         continue
                     if i not in handled:
                         raise ValueError(f"{name} finding {i} ({finding['rule_id']}) has no fixed/justified-keep/unresolved disposition")
-                    core = (tool == "critic" and
+                    # the critic's own report decides: an open core finding blocks whatever the maker answered
+                    core = (tool == "critic" and finding["status"] == "open" and
                             (finding.get("approval_impact") == "core-product-explanation" or
                              (finding["rule_id"] == "review.world-materials" and finding.get("approval_impact") != "ordinary")))
-                    resolved = (finding["status"] == "fixed" and handled[i]["disposition"] == "fixed"
-                                and handled[i].get("resolution_kind") == "product-output"
-                                and any(row["kind"] == "product-output" and row["state"] == "shown" for row in proof))
-                    if core and not resolved:
-                        errors.append(f"{page['url']}: core product explanation {finding['rule_id']} is still open "
-                                      f"({finding['status']}, {handled[i]['disposition']}); current settings/site-study "
-                                      "or a partial fix are not real product results")
-                    state = {"rule_id": finding["rule_id"], "approval_blocking": core and not resolved,
-                             "status": finding["status"], **handled[i]}
-                    if core and not resolved:
-                        state.update(status="open", disposition="unresolved", reported_status=finding["status"],
-                                     reported_disposition=handled[i]["disposition"])
+                    if core:
+                        errors.append(f"{page['url']}: core product explanation {finding['rule_id']} is still open in the "
+                                      "current critic report; a fresh critic stops reporting it once real product output "
+                                      "resolves it, whatever the disposition says")
+                    state = {"rule_id": finding["rule_id"], "approval_blocking": core, "status": finding["status"], **handled[i]}
+                    if core:
+                        state.update(disposition="unresolved", reported_disposition=handled[i]["disposition"])
                     dispositions.append(state)
                 if set(handled) - set(range(len(report["findings"]))):
                     raise ValueError(f"{name} disposition names a nonexistent finding")
@@ -190,8 +181,8 @@ def check(root: Path, task: str, *, asked: list[str] | None = None) -> tuple[lis
             if not _fresh(path(root, task), inputs):
                 raise ValueError("review record is older than its evidence; review the changed area again")
             summaries.append({"url": page["url"], "area": page["area"], "widths": page["widths"],
-                              "summary": review["summary"], "making_of": review["making_of"],
-                              "walkthroughs": review["walkthroughs"], "claim_evidence": proof, "findings": dispositions})
+                              "findings": dispositions,
+                              "critic": {"report": critic["report"], "packet_sha256": packet_sha} if critic else None})
         except (OSError, ValueError, KeyError, LintError, yaml.YAMLError) as exc:
             errors.append(f"{page['url']}: {exc}")
     return errors, summaries

@@ -4,6 +4,16 @@
 version: 0
 skill: lps-copy
 items:
+- id: critic-packet
+  view: summary
+  path: review/critic-packet.schema.yaml
+  summary: 'Critic packet: the fixed inputs one critic report is judged against; written by `lapis-design
+    critic packet`, never by hand.'
+- id: review-disputes
+  view: summary
+  path: review/disputes.schema.yaml
+  summary: 'Disputes: findings the maker believes are wrong, filed for a fresh critic to re-judge; written
+    by the maker.'
 - id: handoff-protocol
   view: summary
   path: handoff/HANDOFF.md

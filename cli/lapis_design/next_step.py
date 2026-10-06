@@ -40,7 +40,8 @@ from typing import Any
 
 import yaml
 
-from lapis_design import attempts, brief, draft, gate, references, release_check, shared_dir, taste, waiting
+from lapis_design import (attempts, brief, critic_packet, draft, gate, references, release_check, shared_dir, taste,
+                          waiting)
 from lapis_design.lint.cli import problems
 from lapis_design.plan_check import PlanOverLimit, read_plan, yaml_reason
 from lapis_design.summary import NOT_JUDGED
@@ -457,12 +458,23 @@ def _steps(root: Path, task: str, page: str | None) -> dict:
                            f"--ledger .lapis/assets.ledger.json --lock .lapis/fonts.lock.json{refs}{mode} "
                            f"-o .lapis/lint/{task}.json"), interactive)
     if "critic" in need:
-        return state(_step("critic", "Run the critic in a context that did not make the design, as the ultramarine "
-                           "skill describes (the `critic` agent, or references/critic.md in a fresh session), and save "
-                           f"its report to .lapis/critic/{task}.json. Only when this harness cannot start a separate "
+        packet = critic_packet.has_record(root, task)
+        owed = [f["observed"] for f in findings if f["rule_id"] in ("release.critic-missing", "release.input-stale")
+                and (f["evidence"].get("refs") or [None])[0] == str(paths["critic"])]
+        how = (f"Build the packet with `lapis-design critic packet --task {task}`, and run the critic on it in a context "
+               "that did not make the design, as the ultramarine skill describes (the `critic` agent, or "
+               "references/critic.md in a fresh session): give it the packet and the files it lists, nothing else. Its "
+               f"report, saved to .lapis/critic/{task}.json, names the packet in `target.packet` and judges every "
+               "requirement row, change, and dispute in it" + (f" ({_brief(owed, 1)})" if packet and owed else "")
+               if packet else
+               "Run the critic in a context that did not make the design, as the ultramarine skill describes (the "
+               f"`critic` agent, or references/critic.md in a fresh session), and save its report to "
+               f".lapis/critic/{task}.json")
+        return state(_step("critic", f"{how}. Only when this harness cannot start a separate "
                            f"context, record that with `lapis-design next --task {task} --unavailable critic --reason "
                            "\"<why>\"`; the release gate still reports the critic as missing and no independent "
-                           "review ran.", None, shared / "slop" / "finding.schema.yaml"), interactive)
+                           "review ran.", f"lapis-design critic packet --task {task}" if packet else None,
+                           shared / "slop" / "finding.schema.yaml"), interactive)
 
     release_inputs = [paths[n] for n in ("plan", "lock", "ledger", "extract", "session", "lint", "critic")]
     release_inputs += [attempts.path(root, task, s) for s in ("render", "behavior", "critic")]

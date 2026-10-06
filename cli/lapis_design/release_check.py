@@ -14,7 +14,7 @@ from typing import Any
 
 import yaml
 
-from lapis_design import __version__, attempts, font_license, gate, order, references, shared_dir
+from lapis_design import __version__, attempts, critic_packet, font_license, gate, order, references, shared_dir
 from lapis_design.lint.cli import LintError, _load, problems
 from lapis_design.lint.engine import open_lazuli
 from lapis_design.plan_check import (LazuliDBUpgradeError, PlanOverLimit, check_expansion, check_non_string_keys,
@@ -240,12 +240,42 @@ def _report(paths: dict[str, Path], task: str, interactive: bool, findings: list
 
 
 def input_paths(root: Path, task: str) -> dict[str, Path]:
-    """Where the gate reads each input of `task` (the table in release/GATE.md); `next` reads the same files."""
+    """Where the gate reads each input of `task` (the table in release/GATE.md); `next` reads the same files.
+    `packet` is the critic packet the critic report names (`lapis-design critic packet`), by default."""
     return {name: root / ".lapis" / rel for name, rel in (
         ("plan", f"plans/{task}.yaml"), ("extract", f"renders/{task}.json"),
         ("session", f"behavior/{task}.json"), ("lint", f"lint/{task}.json"),
-        ("critic", f"critic/{task}.json"), ("lock", "fonts.lock.json"),
+        ("critic", f"critic/{task}.json"), ("packet", f"critic/{task}.packet.json"), ("lock", "fonts.lock.json"),
         ("ledger", "assets.ledger.json"))}
+
+
+def _packet_holds(root: Path, task: str, paths: dict[str, Path], interactive: bool, findings: list[dict]) -> bool:
+    """With a requirement record, the critic report counts only for the current packet of this release's inputs. When it
+    does not, one finding says why: `input-stale` when it was made from another packet (`next` sends the run back to
+    the critic step), `critic-missing` when it does not judge every row, change, and dispute of its packet or cites
+    what is not there."""
+    verdict = critic_packet.check(root, paths["critic"])
+    if verdict.stale:
+        findings.append(_finding("input-stale", verdict.stale[0], refs=(str(paths["critic"]), str(paths["packet"]))))
+        return False
+    problems = list(verdict.gaps)
+    args = (verdict.packet or {}).get("args") or {}
+
+    def is_input(name: str | None, expected: Path) -> bool:
+        return bool(name) and (root / name).resolve() == expected.resolve()
+
+    if paths["extract"].is_file() and not any(is_input(name, paths["extract"]) for name in args.get("extracts", ())):
+        problems.append("its packet was not built from the release render extract")
+    if not is_input(args.get("lint"), paths["lint"]):
+        problems.append("its packet was built from another lint report than the release's")
+    if interactive and paths["session"].is_file() and not is_input(args.get("session"), paths["session"]):
+        problems.append("its packet does not hold the behavior session")
+    if problems:
+        shown = "; ".join(problems[:3]) + (f"; and {len(problems) - 3} more" if len(problems) > 3 else "")
+        findings.append(_finding("critic-missing", "critic report does not judge every requirement row, change, and "
+                                 f"dispute of its packet, or cites what is not there: {shown}",
+                                 refs=(str(paths["critic"]),)))
+    return not problems
 
 
 def run(root: Path, task: str, *, static: bool = False, offline: bool = False,
@@ -293,6 +323,8 @@ def run(root: Path, task: str, *, static: bool = False, offline: bool = False,
     if critic is not None and not critic_valid:
         findings.append(_finding("critic-missing", f"{paths['critic']} targets another extract",
                                  refs=(str(paths["critic"]),)))
+    if critic_valid and critic_packet.has_record(root, task):
+        critic_valid = _packet_holds(root, task, paths, interactive, findings)
     # The order below is the contract's dependency order; report each stale edge separately.
     if interactive:
         _stale(paths["plan"], paths["session"], findings)

@@ -27,6 +27,13 @@ properties:
       source: { type: string }                       # the project source tree slop lint read (--source)
       lock: { type: string }                         # the fonts lock slop lint read (--lock)
       task: { type: string }
+      packet:                                        # critic: the packet this report judges (review/critic-packet.schema.yaml); the report counts only for it
+        type: object
+        additionalProperties: false
+        required: [path, sha256]
+        properties:
+          path: { type: string, minLength: 1 }         # `.lapis/critic/<task>.packet.json` or another packet under `.lapis/critic/`, relative to the project root
+          sha256: { type: string, pattern: "^[0-9a-f]{64}$" }   # of the packet file's bytes, as `lapis-design critic packet` printed it
   summary:
     type: object
     properties:
@@ -93,7 +100,7 @@ properties:
     items: { $ref: "#/$defs/finding" }
   specimen_findings: {type: array, items: {$ref: '#/$defs/finding'}}
   deferred_findings: {type: array, items: {$ref: '#/$defs/finding'}}
-  walkthroughs:                                    # critic: the visitor's tasks walked on the captures before judging; optional, and no check or gate reads it
+  walkthroughs:                                    # critic: the visitor's tasks walked on the captures before judging; optional, except that `draft check` wants one per shown width for a new direction
     type: array
     items:
       type: object
@@ -119,6 +126,51 @@ properties:
         would_choose_ours: { enum: ["yes", "no", "unknown"] }
         why: { type: string, minLength: 8 }           # a visitor consequence, not a score or a finish preference
         refs: { type: array, minItems: 1, items: { type: string } }
+  requirements:                                    # critic: one entry per requirement row of the packet (exactly one each); the outcome score
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [id, state, refs]
+      properties:
+        id: { type: string, pattern: "^R[0-9a-f]{6,8}$" }   # a row id of the packet
+        state: { enum: [met, partly, missing, not-in-slice, not-observable] }   # not-in-slice: the shown part is not where the row belongs; not-observable: no capture or session can show it
+        refs: { type: array, items: { type: string } }  # capture files, box ids, or session steps the state rests on
+        note: { type: string }
+        left_by: { type: array, items: { type: string } }   # pointers of the plan (a `references[].leave`) that remove what the row asks
+  facts:                                           # critic: every factual sentence in the shown copy (history, origin, naming, dates, numbers, third parties, compatibility, availability)
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [text, refs, source, quote]
+      properties:
+        text: { type: string, minLength: 3 }           # the sentence as shown
+        refs: { type: array, items: { type: string } } # capture files or box ids where it shows
+        source: { type: string, minLength: 1 }         # `path#Lx-Ly` of a file the packet lists, or `none`
+        quote: { type: string }                        # verbatim from those lines; the CLI checks it is there. Empty with `none`
+  disputes:                                        # critic: one entry per dispute of the packet; the finding is re-judged without the maker's reason
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [index, verdict, why, refs]
+      properties:
+        index: { type: integer, minimum: 0 }           # the dispute's index in the packet
+        verdict: { enum: [finding-holds, false-positive, unknown] }
+        why: { type: string, minLength: 8 }
+        refs: { type: array, items: { type: string } }
+  changes:                                         # critic: one entry per change row of the packet; with the CLI's counts, the integrity score
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [seq, verdict, rows, why]
+      properties:
+        seq: { type: integer, minimum: 0 }             # the change row's `seq` in the packet
+        verdict: { enum: [repair, narrows, unclear] }
+        rows: { type: array, items: { type: string, pattern: "^R[0-9a-f]{6,8}$" } }   # requirement rows the change touches
+        why: { type: string, minLength: 8 }
 
 $defs:
   finding:
@@ -128,7 +180,7 @@ $defs:
     properties:
       rule_id: { type: string }                      # a rules.yaml id, a built-in check id (schema.*, contract.*, font.*, reference.*, flow.*,
                                                     # release.* from release/GATE.md), or a critic judgement no rule covers
-                                                    # (review.counterfactual, review.world-materials, review.package-drift, review.task-walkthrough)
+                                                    # (review.counterfactual, review.world-materials, review.package-drift, review.task-walkthrough, review.making-of)
       class: { enum: [requirement, quality, default, contract] }
       severity:
         type: object

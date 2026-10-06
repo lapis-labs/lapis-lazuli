@@ -1,12 +1,16 @@
-# Pre-show review record, independent of the release gate. Written by the reviewer, never by a check.
+# Pre-show review record, independent of the release gate. Written by the maker; its evidence is the CLI's and the critic's.
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://github.com/lapis-labs/lapis-lazuli/schemas/draft.v0.json
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/draft.v1.json
 title: LapisLazuli draft presentation and review
+# v1 holds only what `draft check` can verify against files: the shown page, its captures and lint report, the
+# maker's disposition of each finding, scoped behavior evidence, and the critic's report. It carries no summary,
+# walkthrough, claim map, or critic attestation: the critic's walkthroughs, requirement states, and facts come from
+# its report (`slop/finding.schema.yaml`), built on `lapis-design critic packet`, and the owner block is the summary.
 type: object
 additionalProperties: false
 required: [version, task, pages]
 properties:
-  version: {const: 0}
+  version: {const: 1}
   task: {type: string, pattern: '^[a-z0-9][a-z0-9-]+$'}
   pages:
     type: array
@@ -26,54 +30,22 @@ properties:
         review:
           type: object
           additionalProperties: false
-          required: [extracts, lint, handled, walkthroughs, summary, making_of]
+          required: [extracts, lint, handled]
           properties:
             extracts: {type: array, minItems: 1, items: {type: string}}
             lint: {type: string, minLength: 1}
-            summary: {type: string, minLength: 8}
-            making_of: {type: string, minLength: 8}
-            claim_evidence:
-              type: array
-              minItems: 1
-              items:
-                type: object
-                additionalProperties: false
-                required: [requirement, kind, state, shown, missing]
-                properties:
-                  requirement: {type: string, minLength: 8} # quoted brief/declared requirement
-                  source: {type: string, minLength: 1} # brief document declared in context; absent uses plan/answers
-                  kind: {enum: [product-output, site-study, not-shown]}
-                  state: {enum: [shown, partial, missing]}
-                  shown: {type: array, items: {type: string}}
-                  missing: {type: string}
             behavior:
               type: object
               required: [refs, observed]
               properties:
                 refs: {type: array, minItems: 1, items: {type: string}}
                 observed: {type: string, minLength: 8}
-            critic:
+            critic:                                    # required for a new direction; its report names the packet it judged
               type: object
               additionalProperties: false
-              required: [report, context, independent]
+              required: [report]
               properties:
                 report: {type: string, minLength: 1}
-                context: {type: string, minLength: 3}
-                independent: {const: true}
-            walkthroughs:
-              type: array
-              minItems: 1
-              items:
-                type: object
-                required: [task, viewport, completed, first_look, read_or_scrolled_past, stuck, refs]
-                properties:
-                  task: {type: string, minLength: 3}
-                  viewport: {enum: [320, 390, 768, 1440]}
-                  completed: {enum: ['yes', partly, 'no']}
-                  first_look: {type: string, minLength: 3}
-                  read_or_scrolled_past: {type: string}
-                  stuck: {type: string}
-                  refs: {type: array, minItems: 1, items: {type: string}}
             handled:
               type: array
               items:
@@ -84,6 +56,5 @@ properties:
                   report: {type: string}
                   finding: {type: integer, minimum: 0}
                   disposition: {enum: [fixed, justified-keep, unresolved]}
-                  reason: {type: string, minLength: 8}
+                  reason: {type: string, minLength: 8}   # for the owner; the critic never sees it
                   refs: {type: array, minItems: 1, items: {type: string}}
-                  resolution_kind: {enum: [product-output, site-study, settings]} # core explanation needs real output, not settings

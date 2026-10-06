@@ -46,7 +46,7 @@ from lapis_design.lint import engine
 from lapis_design.lint.types import Context
 from lapis_design.plan_check import (default_lazuli_db, default_lock, expansion_problem, non_string_key_paths,
                                      read_design_text, read_plan)
-from lapis_design.summary import finding_lines, floor_lines, rest_lines, skipped_note
+from lapis_design.summary import DISPUTE_FOOTER, finding_lines, floor_lines, rest_lines, skipped_note
 
 SCHEMAS = {
     "rules": ("slop", "rules.schema.yaml"),
@@ -294,7 +294,7 @@ def _summary_lines(report: dict, out: Path | None) -> list[str]:
                      f"{len(report['deferred_findings'])} contract/token findings deferred to release")
     if findings and not out:
         lines.append("  every finding in full: --json, or -o PATH to write the report")
-    return lines + floor_lines(s)
+    return lines + floor_lines(s) + [DISPUTE_FOOTER]
 
 
 def main(argv: list[str] | None = None, prog: str = "lapis-design slop lint") -> int:

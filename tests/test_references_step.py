@@ -14,7 +14,7 @@ import pytest
 from lapis_design import attempts, gate, hints, next_step, order, references
 from lapis_design.cli import main as cli_main
 from procedure_support import (BRIEF_RECORD, FACTS, TASK, finish, load_skills, make_project, record, reference_entries,
-                               references_text, save, update, write_references)
+                               references_text, refresh_critic, save, update, write_references)
 
 
 @pytest.fixture
@@ -259,6 +259,7 @@ def test_a_run_with_no_network_records_that_and_goes_on_but_it_is_reported_as_no
     monkeypatch.setenv("LAZULI_DB", "")
     root = make_project(tmp_path)
     (root / f".lapis/references/{TASK}.md").unlink()
+    refresh_critic(root, 105)                                          # the critic judged the project without that record
     assert step_of(root) == "references"
     assert unavailable(root) == 0
     assert attempts.read(root, TASK, "references")["reason"].startswith("WebFetch is denied")
@@ -413,6 +414,7 @@ def test_a_declined_run_is_not_a_run_that_looked_and_both_the_release_and_the_en
     monkeypatch.setenv("LAZULI_DB", "")
     root = make_project(tmp_path)
     (root / f".lapis/references/{TASK}.md").unlink()
+    refresh_critic(root, 105)
     with_line(root)
     assert decline(root) == 0
     assert finish(root, "--static") == 0                                 # nothing blocks on it
@@ -461,6 +463,7 @@ def test_a_declined_run_that_has_done_everything_else_is_let_stop_and_write(tmp_
         monkeypatch.delenv(name, raising=False)
     root = make_project(tmp_path)
     (root / f".lapis/references/{TASK}.md").unlink()
+    refresh_critic(root, 105)
     with_line(root)
     event, env = page_write(root)
     assert order.decide(event, env) is not None and "Next step: references." in gate.stop_output(root, "s1")["reason"]

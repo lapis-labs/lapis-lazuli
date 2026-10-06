@@ -21,7 +21,7 @@ def prepare(root):
     folder.mkdir(parents=True)
     (folder / 'system.html').write_text('<main><h1>Welcome to excellence</h1><button>Reserve piece</button></main>')
     (folder / 'discarded.html').write_text('<style>h1{font-family:"Jost"}</style><h1>Candidate</h1>')
-    record = {'version': 0, 'task': TASK, 'pages': [{'url': URL, 'render_task': 'shown-draft',
+    record = {'version': 1, 'task': TASK, 'pages': [{'url': URL, 'render_task': 'shown-draft',
               'sources': ['.lapis/specimens/system.html'], 'direction': 'new', 'area': 'whole page',
               'widths': [390, 1440], 'behavior_changed': False}]}
     path = save(root, f'drafts/{TASK}.yaml', record)

@@ -30,6 +30,11 @@ def skipped_note(summary: dict) -> str:
 
 NOT_JUDGED = "genre fit, information choice, the visitor's task at phone and desktop width"
 
+# The last line of `plan check` and `slop lint`: the one outlet for a finding the maker believes is wrong.
+DISPUTE_FOOTER = ("  a finding you believe is wrong: file it in .lapis/disputes/<task>.yaml (do not read the checker's "
+                  "source to argue with it); the critic re-judges it on the captures without your reason, the owner "
+                  "sees both, and a dispute does not clear the finding")
+
 
 def floor_lines(summary: dict) -> list[str]:
     """One line on what the checks cannot see, printed when nothing blocks. A pass is a floor, not a verdict on the

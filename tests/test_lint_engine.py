@@ -13,6 +13,7 @@ import pytest
 import yaml
 from jsonschema import Draft202012Validator
 
+from lapis_design import summary
 from lapis_design.lint import cli as lint_cli
 from lapis_design.lint import engine
 from lapis_design.lint.types import DETECTORS, Context, Detector, Hit, Result, detector
@@ -504,7 +505,8 @@ def test_the_printed_result_says_what_was_skipped_and_why(tmp_path, capsys):
         "  [BLOCK] layout.a hero outranks the task",
         "      fix: Do the specific thing",
         "  not judged (input): no extract given — layout.b",
-        "  not judged (input): no lock given — layout.c"]
+        "  not judged (input): no lock given — layout.c",
+        summary.DISPUTE_FOOTER]
 
 
 def test_the_verdict_line_leaves_out_skipped_when_nothing_was_skipped(tmp_path, capsys):

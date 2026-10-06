@@ -50,6 +50,7 @@ uv run lapis-design stub serve .lapis/stub.yaml --port 8787   # same stub over H
 uv run lapis-design slop lint --plan .lapis/plans/demo.yaml --extract .lapis/renders/demo.json \
   --session .lapis/behavior/demo.json -o .lapis/lint/demo.json   # every layer whose input is given
 # a lint run narrowed by --layer or --rule goes to -o .lapis/lint/demo.narrow.json
+uv run lapis-design critic packet --task demo   # the fixed inputs a critic report is judged against -> .lapis/critic/demo.packet.json; the report names it in target.packet
 uv run lapis-design release check --task demo   # the release gate (src/shared/release/GATE.md) -> .lapis/release/demo.json
 uv run lapis-design next --task demo           # the one step still to take (--json for tools); see GATE.md, Failure records
 uv run lazuli local fonts --summary       # read-only font scan and measurement into the user cache

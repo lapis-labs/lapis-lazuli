@@ -1,0 +1,41 @@
+# Disputes: findings the maker believes are wrong, filed for a fresh critic to re-judge; written by the maker.
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/disputes.v0.json
+title: LapisLazuli finding disputes
+# `.lapis/disputes/<task>.yaml`. A dispute is the outlet for a finding the maker thinks is a false positive, in place of
+# reading the checker's source or editing markup to satisfy a predicate. It does not clear, waive, or change the finding:
+# the critic packet carries `report`, `rule_id`, `location`, and `observed` and never `reason` or `refs`, the critic
+# re-judges the finding on the captures, and the owner sees the maker's reason beside the critic's verdict.
+type: object
+additionalProperties: false
+required: [version, task, disputes]
+properties:
+  version: { const: 0 }
+  task: { type: string, pattern: "^[a-z0-9][a-z0-9-]{1,63}$" }
+  disputes:
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [report, rule_id, observed, reason, refs]
+      properties:
+        report: { type: string, minLength: 1 }       # the report that holds the finding, project-relative (a lint or plan check report)
+        rule_id: { type: string, minLength: 3 }
+        location:                                    # the finding's own `location`, when it has one
+          type: object
+          additionalProperties: false
+          properties:
+            file: { type: string }
+            path: { type: string }
+            viewport: { enum: [320, 390, 768, 1440] }
+            box: { type: string }
+            context: { type: string }
+            flow: { type: string }
+            step: { type: integer, minimum: 0 }
+            asset: { type: string }
+        observed: { type: string, minLength: 3 }     # the finding's `observed` text, as reported
+        reason: { type: string, minLength: 8 }       # why the maker thinks it is wrong; for the owner only, never for the critic
+        refs:                                        # captures, boxes, or source lines the maker's reading rests on
+          type: array
+          minItems: 1
+          items: { type: string, minLength: 1 }

@@ -2,6 +2,7 @@
 reports are all in place, built the way test_release_check builds its own, plus the changes that make it interactive."""
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import random
@@ -11,7 +12,7 @@ from pathlib import Path
 import yaml
 from PIL import Image
 
-from lapis_design import hints, shared_dir
+from lapis_design import critic_packet, hints, shared_dir
 from lapis_design.cli import main as cli_main
 
 TASK = "kiln-shop-landing"
@@ -67,6 +68,52 @@ def load_skills(root: Path, task: str = TASK) -> None:
         assert skill_load.main(argv) == 0
 
 
+def row_id(text: str) -> str:
+    """The id `requirements seal` gives a row of this text: R and six hex digits of its normalized text."""
+    return "R" + hashlib.sha256(" ".join(text.casefold().split()).encode("utf-8")).hexdigest()[:6]
+
+
+def write_requirements(root: Path, rows: tuple[str, ...] = (), task: str = TASK) -> Path:
+    """The requirement record `requirements seal` writes (requirements/schema.yaml), one row per text in `rows`.
+    Written directly: the tests that use it are about what reads the record, not about extracting it."""
+    return save(root, f"requirements/{task}.json", {
+        "version": 0, "task": task, "sources": [], "owner_decisions": [], "removed": [],
+        "rows": [{"id": row_id(text), "text": text, "kind": "item", "at": [{"path": "brief.md", "lines": [n, n]}]}
+                 for n, text in enumerate(rows, start=1)]})
+
+
+def refresh_critic(root: Path, at: int | None = None, *, task: str = TASK, extracts: list[str] | None = None,
+                   lint: str | None = None, session: str | None = None, name: str | None = None,
+                   extra: dict | None = None) -> dict:
+    """Rebuild the critic packet from the inputs as they are now, and write the critic report that names it and judges
+    every row, change, and dispute in it, as a critic that did its job would. The defaults are the release inputs
+    (`.lapis/critic/<task>.json` and `.packet.json`); a draft passes its narrow extracts and lint report and `name`.
+    `extra` is merged into the report. `at` sets the report's modification time."""
+    stem = name or task
+    if session is None and extracts is None and (root / ".lapis/behavior" / f"{task}.json").is_file():
+        session = f".lapis/behavior/{task}.json"
+    extracts = extracts or [f".lapis/renders/{task}.json"]
+    data = critic_packet.build(root, task, {"extracts": extracts, "lint": lint or f".lapis/lint/{task}.json",
+                                            "session": session})
+    packet_path = root / ".lapis" / "critic" / f"{stem}.packet.json"
+    packet_path.parent.mkdir(parents=True, exist_ok=True)
+    packet_path.write_bytes(data)
+    packet = json.loads(data)
+    document = {
+        **report("critic", extract=extracts[0], packet={"path": f".lapis/critic/{stem}.packet.json",
+                                                       "sha256": hashlib.sha256(data).hexdigest()}),
+        "requirements": [{"id": row["id"], "state": "met", "refs": []} for row in packet["requirements"]["rows"]],
+        "changes": [{"seq": c["seq"], "verdict": "repair", "rows": [], "why": "the change repairs the finding"}
+                    for c in packet["changes"]],
+        "disputes": [{"index": d["index"], "verdict": "finding-holds", "why": "the capture shows the finding",
+                      "refs": []} for d in packet["disputes"]],
+        **(extra or {})}
+    save(root, f"critic/{stem}.json", document)
+    if at is not None:
+        touch(root, f"critic/{stem}.json", at)
+    return document
+
+
 def make_project(root: Path) -> Path:
     """A static page with every input and report the gate reads, none of them stale, and no release report."""
     plan = yaml.safe_load((SHARED / "plan/example.plan.yaml").read_text())
@@ -85,12 +132,13 @@ def make_project(root: Path) -> Path:
     save(root, f"lint/{TASK}.json", report("slop_lint", plan=f".lapis/plans/{TASK}.yaml",
                                            extract=f".lapis/renders/{TASK}.json", ledger=".lapis/assets.ledger.json",
                                            lock=".lapis/fonts.lock.json", source="."))
-    save(root, f"critic/{TASK}.json", report("critic", extract=f".lapis/renders/{TASK}.json"))
+    write_requirements(root)                                     # an empty record: the brief names nothing the owner wrote
     for index, name in enumerate((f"plans/{TASK}.yaml", f"renders/{TASK}.json", "fonts.lock.json",
-                                  "assets.ledger.json", f"lint/{TASK}.json", f"critic/{TASK}.json")):
+                                  "assets.ledger.json", f"lint/{TASK}.json")):
         touch(root, name, 100 + index)
     record(root, "answers", BRIEF_RECORD, 50)                    # the brief record, older than the plan and any questions
     write_references(root)                                       # the references record, as old
+    refresh_critic(root, 105)                                    # the packet of all of it, and a critic report that judges it
     return root
 
 
@@ -109,6 +157,7 @@ def make_interactive(root: Path) -> None:
         "nodes": {}, "probes": {}, "coverage": [{"probe": name, "status": "not-applicable"} for name in PROBES]})
     update(root, f"lint/{TASK}.json", lambda d: (d["target"].update(session=f".lapis/behavior/{TASK}.json"),
                                                   d["scope"]["layers"].append("behavior")))
+    refresh_critic(root)                                         # the critic judged the session and the flows too
     for index, name in enumerate(("plans/" + TASK + ".yaml", "stub.yaml", f"behavior/{TASK}.json")):
         touch(root, name, 90 + index)
     for index, name in enumerate(("renders/" + TASK + ".json", "fonts.lock.json", "assets.ledger.json",

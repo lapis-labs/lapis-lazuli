@@ -7,8 +7,18 @@ items:
 - id: draft-review
   view: full
   path: release/draft.schema.yaml
-  summary: Pre-show review record, independent of the release gate. Written by the reviewer, never by
-    a check.
+  summary: Pre-show review record, independent of the release gate. Written by the maker; its evidence
+    is the CLI's and the critic's.
+- id: critic-packet
+  view: full
+  path: review/critic-packet.schema.yaml
+  summary: 'Critic packet: the fixed inputs one critic report is judged against; written by `lapis-design
+    critic packet`, never by hand.'
+- id: review-disputes
+  view: full
+  path: review/disputes.schema.yaml
+  summary: 'Disputes: findings the maker believes are wrong, filed for a fresh critic to re-judge; written
+    by the maker.'
 - id: handoff-protocol
   view: full
   path: handoff/HANDOFF.md
