@@ -75,7 +75,10 @@ between minor versions; render extraction is v1 and the other contract formats a
   does not answer HTTP 200: it returns `draft-review` with the `preview start` command, so the owner is not sent to a
   dead link (the dry run's slice link was refused when the owner opened it). The owner block's "What was shown" also
   lists the capture files of the shown widths and, for a plain static page, the HTML file that opens without a server.
-  The `lapis` skill's Slice section and `ultramarine`'s `pre-show-review.md` say so.
+  The `lapis` skill's Slice section and `ultramarine`'s `pre-show-review.md` say so. The server names its own process
+  id in its `Server` header, which is how `status` and `stop` know the recorded process (and never signal another
+  that took its id); an earlier draft read the command line from `ps`, which cuts it at the terminal width, so `stop`
+  left a server running on Linux CI.
 
 ### Changed
 
@@ -101,6 +104,8 @@ between minor versions; render extraction is v1 and the other contract formats a
 
 ### Fixed
 
+- `install.sh` passes `shellcheck` 0.9 and later: `cleanup`, which only the `EXIT` trap calls, carries
+  `# shellcheck disable=SC2317` in the generator (`tools/build/installers.py`).
 - A critic report no longer refuses a short real name. `facts[].text`, `walkthroughs[].task`, `walkthroughs[].first_look`,
   and a finding's `observed` (and the `observed` a dispute copies from it) need one character, not three: JSON Schema
   counts characters, and a two-character Korean tool name such as "드릴" made the whole report invalid in the dry run. The

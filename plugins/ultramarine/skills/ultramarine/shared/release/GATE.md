@@ -320,7 +320,8 @@ process of its own: a session of its own on POSIX, a detached process on Windows
 `.lapis/preview/<task>.log`. It records `pid`, `port`, and `dir` in `.lapis/preview/<task>.json`, keeps a server that
 already answers for the same folder and port, and serves the recorded port again after the server has died, so the
 addresses of the draft record stay true. `preview status` says whether it answers (exit 0 or 1), and `preview stop`
-ends the recorded process, only when the recorded port answers as this server and the process is a preview server. A
+ends the recorded process, only when the recorded port answers as this server under the recorded process id (the server
+names its own pid in its `Server` header, so no process table is read). A
 server cannot know that it survives the turn; the capture files in the owner block are what the owner can open when it
 does not. A link that is a file path, or an address that is not this computer, is not asked.
 

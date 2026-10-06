@@ -6,7 +6,9 @@ with the read-only server of `local_site`, in a process of its own: a new sessio
 Windows, no terminal input, its output in `.lapis/preview/T.log`. A harness that ends a turn by ending the shell
 command that started a server, or that command's process group, does not end this one. The process and the address
 are recorded in `.lapis/preview/T.json` (`pid`, `port`, `dir`); a later `start` serves the same port again, so the
-addresses of the draft record stay true, and `stop` ends the recorded process. `status` says whether it answers.
+addresses of the draft record stay true, and `stop` ends the recorded process. `status` says whether it answers. The
+server names its own process id in its `Server` header, which is how `stop` and `status` know the recorded process
+from another one that took its id; no process table is read (`ps` cuts a long command line at the terminal width).
 
 `answers(url)` is what `next` asks of every address the approval questions link: one GET, no proxy, that returns HTTP
 200. A question whose link does not answer is not a wait (`next_step`), so the owner is not sent to a dead address.
@@ -19,6 +21,7 @@ import argparse
 import http.client
 import json
 import os
+import re
 import signal
 import socket
 import ssl
@@ -130,24 +133,23 @@ def why(task: str, dead: list[str]) -> str:
 
 # ---------------------------------------------------------------- the server process
 
+def _reported_pid(header: str) -> int | None:
+    """The process id a preview server names in its `Server` header (`lapis-local-site/pid-<pid> Python/...`), else None."""
+    found = re.match(re.escape(SERVER_NAME) + r"/pid-(\d+)(?:\s|$)", header)
+    return int(found.group(1)) if found else None
+
+
+def _server_pid(port: int, timeout: float = TIMEOUT_S) -> int | None:
+    """The process id of the preview server that answers on `port` now, or None when nothing of ours does."""
+    found = _fetch(url_of(port), timeout)
+    return _reported_pid(found[1]) if found is not None else None
+
+
 def _alive(rec: Mapping) -> bool:
-    """Whether the recorded port is answered by a server of ours."""
-    found = _fetch(url_of(rec["port"]), TIMEOUT_S)
-    return found is not None and found[1].startswith(SERVER_NAME)
-
-
-def _is_ours(pid: int) -> bool:
-    """Whether `pid` is a preview server of this module, so a process id that was reused is never ended."""
-    if pid <= 0:
-        return False
-    if os.name == "nt":
-        return True                      # the recorded port answering as our server is all that can be checked
-    try:
-        command = subprocess.run(["ps", "-p", str(pid), "-o", "command="], capture_output=True, text=True,
-                                 timeout=5).stdout
-    except (OSError, subprocess.SubprocessError):
-        return False
-    return "lapis_design.preview" in command
+    """Whether the recorded port is answered by the recorded process. The process says who it is over HTTP, so no
+    process table is read: `ps` cuts a long command line at the terminal width (COLUMNS), and a reused process id
+    answers nothing."""
+    return _server_pid(rec["port"]) == rec["pid"]
 
 
 def _free_port() -> int:
@@ -203,9 +205,10 @@ def start(root: Path, task: str, directory: Path | None = None, port: int | None
     log = log_path(root, task)
     process = _spawn(folder, chosen, log)
     deadline = time.monotonic() + READY_S
+    reported = None
     while time.monotonic() < deadline:
-        found = _fetch(url_of(chosen), 1.0)
-        if process.poll() is None and found is not None and found[1].startswith(SERVER_NAME):
+        reported = _server_pid(chosen, 1.0)
+        if process.poll() is None and reported is not None:
             break
         if process.poll() is not None:
             raise PreviewError(f"the preview server stopped at once (exit {process.returncode}): {_tail(log)}")
@@ -213,7 +216,7 @@ def start(root: Path, task: str, directory: Path | None = None, port: int | None
     else:
         process.terminate()
         raise PreviewError(f"the preview server did not answer within {READY_S:g} s: {_tail(log)}")
-    rec = {"pid": process.pid, "port": chosen, "dir": str(folder)}
+    rec = {"pid": reported, "port": chosen, "dir": str(folder)}   # the pid it names: a venv launcher's child is not process.pid
     target = path(root, task)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(rec, indent=2) + "\n", encoding="utf-8")
@@ -221,16 +224,19 @@ def start(root: Path, task: str, directory: Path | None = None, port: int | None
 
 
 def stop(root: Path, task: str) -> str:
-    """End the recorded preview of `task` and forget it. A process that does not answer as our server on the recorded
-    port, or is not a preview server, is never signalled; the record is dropped either way. Returns what happened."""
+    """End the recorded preview of `task` and forget it. Only the process that answers on the recorded port as the
+    recorded pid is signalled, never a process id that was reused; the record is dropped either way. Returns what
+    happened."""
     root = Path(root).resolve()
     rec = record(root, task)
     if rec is None:
         return f"no preview is recorded for {task}"
     outcome = f"the preview of {task} was not running"
-    if _alive(rec):
-        if not _is_ours(rec["pid"]):
-            outcome = f"process {rec['pid']}, recorded for {task}, is not a preview server, so nothing was signalled"
+    found = _fetch(url_of(rec["port"]), TIMEOUT_S)
+    if found is not None and found[1].startswith(SERVER_NAME):
+        if _reported_pid(found[1]) != rec["pid"]:
+            outcome = (f"the server on port {rec['port']} is not process {rec['pid']}, recorded for {task}, so nothing "
+                       "was signalled")
         else:
             try:
                 os.kill(rec["pid"], signal.SIGTERM)
@@ -254,6 +260,7 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design preview serve"
         ap.add_argument("--dir", type=Path, required=True)
         ap.add_argument("--port", type=int, required=True)
         args = ap.parse_args(argv)
+        local_site._Handler.server_version = f"{SERVER_NAME}/pid-{os.getpid()}"   # how `stop` and `status` know this process
         server = local_site._Server(args.dir.resolve(), args.port)
         try:
             server.serve_forever()

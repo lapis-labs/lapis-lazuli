@@ -167,20 +167,56 @@ def test_starting_again_keeps_a_server_that_answers_and_serves_the_same_port_aga
         subprocess.run([*CLI, "stop", "--task", TASK, "--root", str(root)], capture_output=True, text=True)
 
 
+def start_preview(root: Path, site: Path) -> dict:
+    done = subprocess.run([*CLI, "start", "--task", TASK, "--root", str(root), "--dir", str(site)],
+                          capture_output=True, text=True, timeout=60)
+    assert done.returncode == 0, done.stderr
+    return json.loads(done.stdout)
+
+
 @POSIX_ONLY
-def test_stop_never_signals_a_process_that_is_not_a_preview_server(tmp_path, site):
+def test_stop_ends_the_server_without_asking_the_process_table_for_its_command_line(tmp_path, site):
+    """CI's `ps` printed the command line cut at the terminal width, so a server was not recognised and `stop` left it
+    running. The server names its own process id in its `Server` header, and `stop` runs with no `ps` on the path."""
+    root = tmp_path / "project"
+    root.mkdir()
+    started = start_preview(root, site)
+    url = started["url"] + "slice.html"
+    try:
+        nowhere = tmp_path / "no-bin"
+        nowhere.mkdir()
+        done = subprocess.run([*CLI, "stop", "--task", TASK, "--root", str(root)], capture_output=True, text=True,
+                              env={**os.environ, "PATH": str(nowhere), "COLUMNS": "80"}, timeout=60)
+        assert done.returncode == 0 and done.stdout.strip() == f"the preview of {TASK} was stopped", done.stderr
+        assert not preview.answers(url) and preview.record(root, TASK) is None
+    finally:
+        with contextlib.suppress(ProcessLookupError):
+            os.kill(started["pid"], signal.SIGKILL)
+
+
+@POSIX_ONLY
+def test_stop_never_signals_a_process_that_is_not_the_preview_server(tmp_path, site):
     root = tmp_path / "project"
     root.mkdir()
     bystander = subprocess.Popen(["sleep", "60"])
     try:
-        with serving(site) as port:                               # something of ours answers on the recorded port
+        with serving(site) as port:                               # a server of ours answers, but not as that process
             target = preview.path(root, TASK)
             target.parent.mkdir(parents=True)
             target.write_text(json.dumps({"pid": bystander.pid, "port": port, "dir": str(site)}), encoding="utf-8")
-            assert preview.stop(root, TASK) == (f"process {bystander.pid}, recorded for {TASK}, is not a preview server, "
-                                                "so nothing was signalled")
+            assert preview.stop(root, TASK) == (f"the server on port {port} is not process {bystander.pid}, recorded for "
+                                                f"{TASK}, so nothing was signalled")
         assert bystander.poll() is None and not target.exists()
         assert preview.stop(root, TASK) == f"no preview is recorded for {TASK}"
+        started = start_preview(root, site)                       # a real preview server, recorded under a reused pid
+        try:
+            record = json.loads(preview.path(root, TASK).read_text(encoding="utf-8"))
+            preview.path(root, TASK).write_text(json.dumps({**record, "pid": bystander.pid}), encoding="utf-8")
+            assert "so nothing was signalled" in preview.stop(root, TASK)
+            assert bystander.poll() is None and preview.answers(started["url"] + "slice.html")
+        finally:
+            with contextlib.suppress(ProcessLookupError):
+                os.kill(started["pid"], signal.SIGKILL)
     finally:
         bystander.kill()
         bystander.wait()

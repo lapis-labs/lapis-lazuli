@@ -400,7 +400,8 @@ need_sha() {
   return 1
 }
 
-# cleanup: delete the temporary clone need_checkout made.
+# cleanup: delete the temporary clone need_checkout made. It only runs from the EXIT trap, which shellcheck does not follow.
+# shellcheck disable=SC2317
 cleanup() {
   [ -z "$LL_CHECKOUT_DIR" ] || rm -rf "$LL_CHECKOUT_DIR"
 }
