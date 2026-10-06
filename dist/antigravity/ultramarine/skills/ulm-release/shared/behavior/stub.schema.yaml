@@ -1,0 +1,149 @@
+# LapisLazuli synthetic stub fixture v0. Values must be invented, never production data.
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/behavior-stub.v0.json
+title: LapisLazuli stub fixture
+type: object
+additionalProperties: false
+required: [version, clock, routes, collections, variants, values]
+dependentRequired: { auth: [accounts] } # sign-in needs the referenced synthetic account
+properties:
+  version: { const: 0 }                # fixture format version
+  clock:                             # shared controlled timeline
+    type: object
+    additionalProperties: false
+    required: [start]
+    properties:
+      start: { type: string, pattern: '^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?Z$' } # UTC ISO 8601
+  routes:                            # app API endpoints; first matching method and path wins
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [method, path]
+      oneOf:
+        - required: [response]
+        - required: [collection, operation]
+      properties:
+        method: { enum: [GET, POST, PUT, PATCH, DELETE] } # HTTP verb to intercept
+        path: { $ref: '#/$defs/path' } # :name consumes one nonempty URL segment
+        response: { $ref: '#/$defs/response' } # literal status and JSON body
+        collection: { type: string, minLength: 1 } # name in collections
+        operation: { enum: [list, get, create, update, delete] } # state action for this route
+        effects: { type: integer, minimum: 0 } # default 1 for create/update/delete, 0 otherwise
+        require_session: { type: boolean } # 401 without the auth cookie
+  collections:                       # initial records, each with a unique string id
+    type: object
+    additionalProperties:
+      type: array
+      items: { $ref: '#/$defs/record' }
+  variants:                          # named whole-collection overrides; other collections retain base data
+    type: object
+    required: [empty, partial]      # baseline variants used by state probes
+    additionalProperties:
+      type: object
+      additionalProperties:
+        type: array
+        items: { $ref: '#/$defs/record' }
+  values:                            # synthetic input by value id: v1, v2, ... (the ids a session records); never use real people or cards
+    type: object
+    propertyNames: { pattern: '^v[0-9]+$' }   # a session's value_id has this shape, so a fixture key must too
+    additionalProperties:
+      type: object
+      additionalProperties: false
+      required: [kind, valid, invalid, alternate]
+      properties:
+        kind: { enum: [name, email, phone, address, postal-code, card, card-expiry, card-cvc, password, code, text, number, date, url, search] } # field type used by probes
+        valid: { type: string }       # valid input sent by default
+        invalid: { type: string }     # rejected input scenario
+        alternate: { type: string }   # another synthetic input
+      # Only reserved email domains and explicit payment test tokens are permitted.
+      allOf:
+        - if: { properties: { kind: { const: email } }, required: [kind] }
+          then:
+            properties:
+              valid: { pattern: '^[^@\s]+@example\.(?:com|org)$' }
+              alternate: { pattern: '^[^@\s]+@example\.(?:com|org)$' }
+        - if: { properties: { kind: { const: card } }, required: [kind] }
+          then:
+            properties:
+              valid: { enum: ['4242 4242 4242 4242', '4000 0000 0000 0002'] }
+              alternate: { enum: ['4242 4242 4242 4242', '4000 0000 0000 0002'] }
+  accounts:                          # synthetic sign-in credentials refer to values ids
+    type: object
+    additionalProperties: false
+    required: [username, password]
+    properties:
+      username: { type: string, pattern: '^v[0-9]+$' } # id of the login identifier value
+      password: { type: string, pattern: '^v[0-9]+$' } # id of the login secret value
+  auth:                              # sign-in endpoint sets a session cookie on successful credentials
+    type: object
+    additionalProperties: false
+    required: [sign_in, cookie]
+    properties:
+      sign_in:                        # method/path must also appear in routes
+        type: object
+        additionalProperties: false
+        required: [method, path]
+        properties:
+          method: { enum: [POST] }   # sign-in submits by POST
+          path: { $ref: '#/$defs/path' } # exact sign-in route template
+      cookie: { type: string, pattern: '^[A-Za-z_][A-Za-z0-9_-]*$' } # session cookie name
+  urgency:                           # facts backing page claims, evaluated on the shared clock
+    type: object
+    additionalProperties: false
+    properties:
+      countdown: { $ref: '#/$defs/deadline' } # absolute expiry for relative countdown
+      deadline: { $ref: '#/$defs/deadline' }  # absolute expiry displayed as a deadline
+      hold:                            # duration from clock.start, not from each page load
+        type: object
+        additionalProperties: false
+        required: [hold_s]
+        properties:
+          hold_s: { type: number, minimum: 0 } # seconds from fixture clock.start
+      stock:                           # item id -> available count
+        type: object
+        additionalProperties: { type: integer, minimum: 0 }
+      demand:                          # item id -> number of viewers
+        type: object
+        additionalProperties: { type: integer, minimum: 0 }
+      activity:                        # recorded activity events and their displayed counts
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [event, count]
+          properties:
+            event: { type: string, minLength: 1 } # event description
+            count: { type: integer, minimum: 0 } # displayed count from this event
+  outside:                            # explicit third-party service stand-ins, never outbound calls
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [host, method, path, response]
+      properties:
+        host: { type: string, minLength: 1 } # host without scheme/port
+        method: { enum: [GET, POST, PUT, PATCH, DELETE] } # external request method
+        path: { $ref: '#/$defs/path' } # external request template
+        response: { $ref: '#/$defs/response' } # local replacement response
+$defs:
+  path: { type: string, pattern: '^/(?:[^/?#\s:]+|:[A-Za-z_][A-Za-z0-9_]*)(?:/(?:[^/?#\s:]+|:[A-Za-z_][A-Za-z0-9_]*))*$|^/$' } # absolute path, optional :param segments
+  record:
+    type: object
+    required: [id]
+    properties:
+      id: { type: string, minLength: 1 } # unique identifier inside its collection
+    additionalProperties: true
+  response:
+    type: object
+    additionalProperties: false
+    required: [status, json]
+    properties:
+      status: { type: integer, minimum: 100, maximum: 599 } # HTTP status code
+      json: {}                       # literal JSON-serializable body
+  deadline:
+    type: object
+    additionalProperties: false
+    required: [at]
+    properties:
+      at: { type: string, pattern: '^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?Z$' } # UTC ISO 8601 expiry

@@ -11,8 +11,8 @@ LL_REF='release'
 LL_RAW='https://raw.githubusercontent.com/lapis-labs/lapis-lazuli/release'
 LL_DOCS='https://github.com/lapis-labs/lapis-lazuli/blob/release/INSTALLATION.md'
 LL_ALL_PLUGINS='lapis ultramarine lazuli'
-LL_ALL_HARNESSES='claude-code codex oh-my-pi pi hermes other'
-LL_EXPERIMENTAL='pi hermes'
+LL_ALL_HARNESSES='claude-code codex oh-my-pi pi hermes antigravity other'
+LL_EXPERIMENTAL='pi hermes antigravity'
 LL_CLI_NAME='CLI (lapis-design, lapis-design-hook, lazuli)'
 LL_CLI_NEEDS='uv or pipx'
 LL_NL='
@@ -29,6 +29,9 @@ LL_H=
 LL_MANUAL=0
 LL_sha=
 LL_SHA_STATE=
+LL_checkout=
+LL_CHECKOUT_STATE=
+LL_CHECKOUT_DIR=
 LL_TOOL=
 LL_TODO=
 LL_CHECKS=
@@ -53,8 +56,8 @@ harness it finds. Guide: https://github.com/lapis-labs/lapis-lazuli/blob/release
 
 Options:
   --dry-run        print every command it would run; change nothing
-  --harness ID     only this harness (repeatable): claude-code, codex, oh-my-pi, pi, hermes, other
-                   experimental, so installed only when named here: pi, hermes
+  --harness ID     only this harness (repeatable): claude-code, codex, oh-my-pi, pi, hermes, antigravity, other
+                   experimental, so installed only when named here: pi, hermes, antigravity
   --plugin NAME    only this plugin (repeatable; default: all): lapis, ultramarine, lazuli
   --update         run the update steps and reinstall the CLI from release
   --uninstall      run the removal steps; a catalog goes only with every plugin, and
@@ -397,6 +400,41 @@ need_sha() {
   return 1
 }
 
+# cleanup: delete the temporary clone need_checkout made.
+cleanup() {
+  [ -z "$LL_CHECKOUT_DIR" ] || rm -rf "$LL_CHECKOUT_DIR"
+}
+
+# need_checkout: set LL_checkout to a shallow clone of the release ref in a temporary folder (deleted when the
+# script ends), for a harness that installs from a local folder.
+need_checkout() {
+  if [ "$LL_DRY" = 1 ]; then
+    [ -n "$LL_checkout" ] || say "  would run: git clone --depth 1 --branch $LL_REF https://github.com/$LL_REPO <checkout>"
+    LL_checkout='<checkout>'
+    return 0
+  fi
+  if [ "$LL_MANUAL" = 1 ]; then
+    LL_checkout='<checkout>'
+    return 0
+  fi
+  [ "$LL_CHECKOUT_STATE" != ok ] || return 0
+  if [ -z "$LL_CHECKOUT_STATE" ]; then
+    LL_CHECKOUT_STATE=failed
+    if has_cmd git && LL_dir=$(mktemp -d "${TMPDIR:-/tmp}/lapis-lazuli-checkout.XXXXXX"); then
+      LL_CHECKOUT_DIR=$LL_dir
+      say "  run: git clone --depth 1 --branch $LL_REF https://github.com/$LL_REPO $LL_dir"
+      if GIT_TERMINAL_PROMPT=0 command git clone --depth 1 --branch "$LL_REF" "https://github.com/$LL_REPO" "$LL_dir"; then
+        LL_checkout=$LL_dir
+        LL_CHECKOUT_STATE=ok
+        return 0
+      fi
+    fi
+    say "  could not clone $LL_REF (git clone --depth 1 --branch $LL_REF https://github.com/$LL_REPO)"
+  fi
+  failed "$LL_H: skipped a step that needs a clone of $LL_REF"
+  return 1
+}
+
 # verify_cmd EXPECT ARGV...: one CLI check.
 verify_cmd() {
   LL_exp=$1
@@ -722,6 +760,48 @@ h_hermes() {
   esac
 }
 
+# Antigravity CLI
+h_antigravity() {
+  case $1 in
+  name) LL_H='Antigravity CLI' ;;
+  detect)
+    LL_WHY=
+    if has_cmd agy; then LL_WHY="${LL_WHY:+$LL_WHY, }command agy"; fi
+    if has_dir "$HOME"/.gemini/antigravity-cli; then LL_WHY="${LL_WHY:+$LL_WHY, }folder ~/.gemini/antigravity-cli"; fi
+    [ -n "$LL_WHY" ] ;;
+  lookfor) LL_LOOK='command agy or folder ~/.gemini/antigravity-cli' LL_ANCHOR='#antigravity-cli' ;;
+  install)
+    begin 'Antigravity CLI' agy
+    for LL_plugin in $LL_PLUGINS; do
+      if need_checkout; then
+        step_run 0 'Antigravity installs only from a local folder, not from a repository' agy plugin install "$LL_checkout"/dist/antigravity/"$LL_plugin"
+      fi
+    done
+    ;;
+  update)
+    begin 'Antigravity CLI' agy
+    for LL_plugin in $LL_PLUGINS; do
+      if need_checkout; then
+        step_run 0 'installing a plugin again replaces its whole folder (agy 1.2.17, 2026-10-06: files the new version no longer has are gone)' agy plugin install "$LL_checkout"/dist/antigravity/"$LL_plugin"
+      fi
+    done
+    ;;
+  uninstall)
+    begin 'Antigravity CLI' agy
+    for LL_plugin in $LL_PLUGINS; do
+      step_run 0 '' agy plugin uninstall "$LL_plugin"
+    done
+    ;;
+  verify)
+    check_cmd agy plugin list
+    for LL_plugin in $LL_PLUGINS; do
+      check_expect "$LL_plugin"' listed with its components'
+    done
+    check_manual 'In a new session, ask which skills are available, or run /lapis'
+    : ;;
+  esac
+}
+
 # Other Agent Skills harnesses
 h_other() {
   case $1 in
@@ -776,6 +856,7 @@ harness() {
   oh-my-pi) h_oh_my_pi "$2" ;;
   pi) h_pi "$2" ;;
   hermes) h_hermes "$2" ;;
+  antigravity) h_antigravity "$2" ;;
   other) h_other "$2" ;;
   esac
 }
@@ -825,6 +906,9 @@ parse_args() {
 }
 
 main() {
+  trap cleanup EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM HUP
   parse_args "$@"
   if [ -z "${HOME:-}" ]; then
     err "install.sh: HOME is not set"

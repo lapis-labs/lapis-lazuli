@@ -1,0 +1,89 @@
+# LapisLazuli requirement record schema — v0
+# Location: .lapis/requirements/<task>.json in the project
+# The owner's own words, copied by the CLI (`lapis-design requirements seal`), never written by an agent. Each list
+# item, table body row, paragraph and fenced code block of the owner's brief files becomes one row, and so does
+# each `[declared]` answer in .lapis/answers/<task>.md. A row's id is "R" plus the first 6 hex digits of the SHA-256
+# of its text (NFKC, case-folded, white space collapsed); two different texts that share 6 digits both get 8. The
+# same text in two places is one row with two `at` entries. Every CLI call re-reads the recorded sources: new
+# text adds rows, vanished text moves a row to `removed`, and an owner reply that quotes a row's id
+# (`[declared] R3f2a1c: drop — <words>` or `narrow`) is copied to `owner_decisions`. A row is dropped from the
+# owner's block only by such a decision. The record holds no times, so its bytes are reproducible.
+# The critic judges every row (slop/finding.schema.yaml `requirements`), and `done` and approval waits show the result.
+
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/requirements.v0.json
+title: LapisLazuli requirement record
+type: object
+additionalProperties: false
+required: [version, task, sources, rows, owner_decisions, removed]
+properties:
+  version: {const: 0}
+  task: {type: string, pattern: "^[a-z0-9][a-z0-9-]{1,63}$"}
+  sources:                          # what the rows were read from; a source is never forgotten once sealed
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [path, sha256, kind]
+      properties:
+        path: {type: string, minLength: 1}      # project-relative, forward slashes
+        sha256: {type: string, pattern: "^[0-9a-f]{64}$"}   # of the bytes read; of nothing when the file is gone
+        kind: {enum: [owner-file, answers]}
+  rows:
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [id, text, kind, at]
+      properties:
+        id: {type: string, pattern: "^R[0-9a-f]{6}([0-9a-f]{2})?$"}
+        text: {type: string, minLength: 1}      # as the owner wrote it; the lines of a row are joined with \n
+        section: {type: string}                 # the nearest heading above it
+        kind: {enum: [item, table-row, paragraph, code, declared]}
+        at:
+          type: array
+          minItems: 1
+          items: {$ref: "#/$defs/place"}
+  owner_decisions:                  # one per owner reply that quotes a row's id
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [row, decision, quote, at]
+      properties:
+        row: {type: string, pattern: "^R[0-9a-f]{6}([0-9a-f]{2})?$"}
+        decision: {enum: [drop, narrow]}
+        quote: {type: string, minLength: 1}     # the answers item as written, verbatim
+        at:
+          type: object
+          additionalProperties: false
+          required: [path, line]
+          properties:
+            path: {type: string, minLength: 1}
+            line: {type: integer, minimum: 1}
+  removed:                          # rows whose source text disappeared, with the text they had
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [id, text, at]
+      properties:
+        id: {type: string, pattern: "^R[0-9a-f]{6}([0-9a-f]{2})?$"}
+        text: {type: string, minLength: 1}
+        at:
+          type: array
+          minItems: 1
+          items: {$ref: "#/$defs/place"}
+
+$defs:
+  place:
+    type: object
+    additionalProperties: false
+    required: [path, lines]
+    properties:
+      path: {type: string, minLength: 1}
+      lines:
+        type: array
+        minItems: 2
+        maxItems: 2
+        items: {type: integer, minimum: 1}      # first and last line, 1-based

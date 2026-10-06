@@ -1,0 +1,31 @@
+# Portable handoff identity only; binding design values remain in the canonical plan/contracts.
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/handoff.v0.json
+title: LapisLazuli handoff envelope
+type: object
+additionalProperties: false
+required: [version, task, scope, role, tool_version, plan_sha256, dependencies, body_sha256, handoff_id, approval_state]
+properties:
+  version: {const: 0}
+  task: {type: string, pattern: '^[a-z0-9][a-z0-9-]{1,63}$'}
+  scope: {type: string, pattern: '^[a-z0-9][a-z0-9-]*$'}
+  role: {enum: [design-head, implementer, reviewer]}
+  tool_version: {type: string, minLength: 1}
+  plan_sha256: {$ref: '#/$defs/digest'}
+  body_sha256: {$ref: '#/$defs/digest'}
+  handoff_id: {$ref: '#/$defs/digest'}
+  approval_state: {enum: [approved, assumed, unrecorded]}
+  dependencies:
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [id, path, scope, revision, sha256]
+      properties:
+        id: {type: string, pattern: '^[a-z0-9][a-z0-9-]*$'}
+        path: {type: string, minLength: 1}
+        scope: {type: string, minLength: 1}
+        revision: {type: string, minLength: 1}
+        sha256: {$ref: '#/$defs/digest'}
+$defs:
+  digest: {type: string, pattern: '^[0-9a-f]{64}$'}

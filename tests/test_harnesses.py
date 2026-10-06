@@ -13,7 +13,7 @@ sys.path.insert(0, str(ROOT / "tools" / "build"))
 
 import manifests  # noqa: E402
 
-PLACEHOLDERS = {"repo", "catalog", "plugin", "skill", "agent", "ref", "sha"}
+PLACEHOLDERS = {"repo", "catalog", "plugin", "skill", "agent", "ref", "sha", "checkout"}
 LICENSE = "LicenseRef-test"          # any expression: the emitters only pass the project's through
 
 
@@ -171,3 +171,49 @@ def test_catalog_removal_waits_for_the_last_plugin():
         for st in h.get("uninstall", []):
             if "marketplace" in st.get("run", []) and "remove" in st.get("run", []):
                 assert st.get("when") == "all-plugins", h["id"]
+
+
+def test_antigravity_manifest_holds_only_what_its_schema_allows():
+    for p in doc()["plugins"]:
+        m = manifests.antigravity_manifest(p)
+        assert m == {"$schema": manifests.ANTIGRAVITY_SCHEMA, "name": p["name"], "description": p["description"]}
+
+
+def test_antigravity_hooks_carry_only_the_hooks_it_can_run_and_never_fail():
+    plugins = {p["name"]: p for p in doc()["plugins"]}
+    # no ExitPlanMode tool, and no session-start event that holds an injected summary
+    assert manifests.antigravity_hooks_json(plugins["lazuli"], "0.1.0") is None
+    assert manifests.antigravity_hooks_json(plugins["ultramarine"], "0.1.0") is None
+    hooks = manifests.antigravity_hooks_json(plugins["lapis"], "0.1.0")
+    assert set(hooks) == {"lapis-stop", "lapis-pre-write"}
+    assert outputs()["antigravity-hooks"]["only"] == ["lapis"]
+    stop = hooks["lapis-stop"]["Stop"]
+    assert len(stop) == 1 and "matcher" not in stop[0] and stop[0]["type"] == "command"      # flat, no matcher group
+    group = hooks["lapis-pre-write"]["PreToolUse"][0]
+    assert set(group["matcher"].split("|")) == {"write_to_file", "replace_file_content", "multi_replace_file_content",
+                                                "notebook_edit"}
+    for handler in [stop[0], *group["hooks"]]:
+        # a hook that exits non-zero stops the tool call, so a missing runner must not
+        assert handler["command"].startswith("lapis-design-hook --plugin-version 0.1.0 --host antigravity ")
+        assert handler["command"].endswith(" || exit 0")
+        assert isinstance(handler["timeout"], int)
+
+
+def test_antigravity_mcp_is_the_same_server_under_its_own_file_name():
+    outs = outputs()
+    assert outs["antigravity-mcp"]["path"] == "dist/antigravity/{plugin}/mcp_config.json"
+    assert outs["antigravity-mcp"]["only"] == outs["plugin-mcp"]["only"]
+    assert outs["antigravity-mcp"]["format"] == "mcp-json"
+
+
+def test_antigravity_outputs_are_emitted_where_the_installer_installs_from():
+    d = doc()
+    files = manifests.emit(d, "0.1.0", LICENSE)
+    for p in d["plugins"]:
+        assert f"dist/antigravity/{p['name']}/plugin.json" in files
+    assert "dist/antigravity/lapis/hooks.json" in files and "dist/antigravity/lazuli/mcp_config.json" in files
+    assert "dist/antigravity/lazuli/hooks.json" not in files
+    antigravity = next(h for h in d["harnesses"] if h["id"] == "antigravity")
+    install = [st for st in antigravity["install"] if "run" in st]
+    assert [st["run"] for st in install] == [["agy", "plugin", "install", "{checkout}/dist/antigravity/{plugin}"]]
+    assert antigravity["status"] == "experimental"

@@ -60,10 +60,11 @@ the full list is under [What it will not do](#what-it-will-not-do).
 | [Other Agent Skills harnesses](INSTALLATION.md#other-agent-skills-harnesses) (Cursor, Gemini CLI, GitHub Copilot, opencode, Windsurf, Kiro CLI) | Listing verified through the `skills` CLI (1.7.0, 2026-09-30) | Skills only, plus an `AGENTS.md` snippet for the session summary and MCP setup. Each agent was not tested on its own. |
 | [pi](INSTALLATION.md#pi) | Experimental | Skills, a session-start extension, and an exit-gate extension that also guards writes; not yet confirmed on a real install. |
 | [Hermes Agent](INSTALLATION.md#hermes-agent) | Experimental | Skills, a Hermes plugin, and MCP; not yet confirmed on a real install. |
+| [Antigravity CLI](INSTALLATION.md#antigravity-cli) | Experimental | Plugins installed with `agy plugin install`, a write guard and an exit gate as `hooks.json` hooks, MCP server, critic as a subagent; run headless with `agy` 1.2.17 (2026-10-06) as workspace-level plugins, not yet confirmed as a global install. |
 
 The status comes from `install/harnesses.yaml`; the exact commands for each harness are in
 [INSTALLATION.md](INSTALLATION.md). The install script installs the CLI with `uv` or `pipx`, then
-registers the plugins in each harness it finds (pi and Hermes Agent only when you name them with
+registers the plugins in each harness it finds (pi, Hermes Agent, and Antigravity CLI only when you name them with
 `--harness`). Plugin commands run by hand install the plugins only; the hooks and the MCP server
 need the CLI on your PATH (see [CLI and optional components](INSTALLATION.md#cli-and-optional-components)).
 Hooks use the separate `lapis-design-hook --plugin-version <version> <name>` executable. If plugins
@@ -95,7 +96,7 @@ never a denied write or an endless Stop loop. Update both together with the inst
 To keep an unattended run on that path, `lapis-design next --task <task>` prints the remaining procedure
 step with its exact command, or `done`. A newer recorded environmental inability can stand in for a step,
 and a blocking report can end the procedure; `done` is not release approval. Keep the gate verdict and
-not-run evidence separate. When an agent is about to stop, a stop hook (Claude Code, Codex) or extension (Oh-My-Pi, pi)
+not-run evidence separate. When an agent is about to stop, a stop hook (Claude Code, Codex, Antigravity CLI) or extension (Oh-My-Pi, pi)
 asks it, and continues the agent with that step only if `LAPIS_UNATTENDED=1` is set; otherwise it prints one
 line and never blocks. The same switch holds the order, brief, references, plan, then code: a write of a page
 source file is refused with the step named until the brief, references, and plan exist. Set the agent's

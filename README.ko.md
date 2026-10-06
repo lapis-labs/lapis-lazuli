@@ -53,8 +53,9 @@ LapisLazuli는 검사가 찾은 것을 알려 줄 뿐이고, 접근성이나 법
 | [그 밖의 Agent Skills 하네스](INSTALLATION.md#other-agent-skills-harnesses) (Cursor, Gemini CLI, GitHub Copilot, opencode, Windsurf, Kiro CLI) | `skills` CLI로 목록 확인함 (1.7.0, 2026-09-30) | 스킬만 들어가고, 세션 요약과 MCP 설정은 `AGENTS.md` 조각으로 안내해요. 에이전트마다 따로 시험하지는 않았어요. |
 | [pi](INSTALLATION.md#pi) | 실험적 | 스킬, 세션 시작 확장, 종료 관문 확장이에요. 실제 설치에서는 아직 확인하지 않았어요. |
 | [Hermes Agent](INSTALLATION.md#hermes-agent) | 실험적 | 스킬, Hermes 플러그인, MCP예요. 실제 설치에서는 아직 확인하지 않았어요. |
+| [Antigravity CLI](INSTALLATION.md#antigravity-cli) | 실험적 | `agy plugin install`로 설치하는 플러그인, `hooks.json` 훅으로 된 쓰기 보호와 종료 관문, MCP 서버, 서브에이전트로 된 평가자예요. `agy` 1.2.17(2026-10-06)에서 작업 폴더 수준 플러그인으로 헤드리스 실행을 확인했고, 전역 설치는 아직 확인하지 않았어요. |
 
-상태는 `install/harnesses.yaml`에서 가져왔고, 하네스별 정확한 명령은 [INSTALLATION.md](INSTALLATION.md)에 있어요. 설치 스크립트는 `uv`나 `pipx`로 CLI를 설치하고, 찾은 하네스마다 플러그인을 등록해요(pi와 Hermes Agent는 `--harness`로 이름을 줄 때만이에요). 플러그인 명령만 직접 실행하면 플러그인만 설치돼요. 훅과 MCP 서버는 `PATH`에 CLI가 있어야 동작해요([CLI와 선택 구성 요소](INSTALLATION.md#cli-and-optional-components) 참고).
+상태는 `install/harnesses.yaml`에서 가져왔고, 하네스별 정확한 명령은 [INSTALLATION.md](INSTALLATION.md)에 있어요. 설치 스크립트는 `uv`나 `pipx`로 CLI를 설치하고, 찾은 하네스마다 플러그인을 등록해요(pi, Hermes Agent, Antigravity CLI는 `--harness`로 이름을 줄 때만이에요). 플러그인 명령만 직접 실행하면 플러그인만 설치돼요. 훅과 MCP 서버는 `PATH`에 CLI가 있어야 동작해요([CLI와 선택 구성 요소](INSTALLATION.md#cli-and-optional-components) 참고).
 훅은 별도 실행 파일인 `lapis-design-hook --plugin-version <version> <name>`을 불러요. 플러그인이 CLI보다 먼저 갱신되면, 실행 파일이 없거나 버전이 다른 훅은 알림을 남기고 건너뛰어요. 파일 쓰기를 전부 거부하거나 Stop 훅을 무한 반복하지 않아요. 설치 스크립트의 `--update`로 둘을 함께 갱신한 뒤 하네스를 다시 시작하세요. Codex에서 바뀐 훅은 다시 신뢰해야 해요.
 
 ## 작동 방식
@@ -196,7 +197,7 @@ Markdown 파일을 다시 쓸 때는 출처를 밝히고, 라이선스 링크를
 | `cli/lapis_design/plan_check.py` | plan_check v0: 스키마, 기본값(계획 층 탐지기 6종과 기본값 묶음), 계약, 폰트(배포 경로, 배포할 수 없는 취득 경로, 용도별 허가), 레퍼런스, 흐름 짝 검사. 발견 보고 형식으로 출력. 하네스 계획 속 블록 검사(`--from-markdown`)와 요약(`--summary`) |
 | `cli/lapis_design/rights_check.py` | 권리 검사 기준 구현: 배포 파일·원격 호스트·아이콘 라이브러리의 원장 대조, 라이선스·용도·만료·크레딧·고지·예약 이름·표장·생성 매체·동의 검사. 원천 호스트가 내 것인 렌더에서는 같은 출처·루프백·사설 주소의 매체를 소스 규칙에 맡기고, 이미지 최적화 경로(`/_next/image?url=...`)가 나르는 다른 호스트의 이미지는 원격으로 대조해요 |
 | `cli/lapis_design/lint/` | `lapis-design slop lint`: 규칙마다 계획·소스·렌더·동작·리뷰 층의 탐지기를 부르고, 심각도·예외(`keep`)·차단 여부는 엔진만 정해요. 탐지기는 관찰(`Hit`)을 돌려주거나 판단할 수 없으면 이유와 함께 건너뛰어서, 입력이 없는 것이 통과로 읽히지 않아요. 탐지기는 `detectors/`의 여섯 모듈(source, render_type, render_layout, render_visual, copy, behavior)에 있어요 |
-| `install/harnesses.schema.yaml`, `install/harnesses.yaml` | 하네스 정의 단일 원천 v0: 빌드 산출물 15종, 하네스 6종(Claude Code, Codex, Oh-My-Pi, pi, Hermes, 그 밖)의 감지·설치·갱신·제거·확인 명령(argv 배열), 세션 시작·평가자·MCP 방식, 신뢰 단계, 충돌, 미확인 사항(`unverified`), 로컬에서 확인한 사실(`verified`, 날짜·버전과 함께) |
+| `install/harnesses.schema.yaml`, `install/harnesses.yaml` | 하네스 정의 단일 원천 v0: 빌드 산출물 21종, 하네스 7종(Claude Code, Codex, Oh-My-Pi, pi, Hermes, Antigravity, 그 밖)의 감지·설치·갱신·제거·확인 명령(argv 배열), 세션 시작·평가자·MCP 방식, 신뢰 단계, 충돌, 미확인 사항(`unverified`), 로컬에서 확인한 사실(`verified`, 날짜·버전과 함께) |
 | `tools/build/installers.py`, `install/install.sh`, `install/install.ps1`, `INSTALLATION.md` | 설치 도구. `install/harnesses.yaml`에서 설치 스크립트(macOS·Linux용 sh, Windows용 PowerShell)와 설치 안내서를 생성해요. 감지된 하네스마다 CLI 설치와 플러그인 등록을 하고, `--dry-run`, `--harness`, `--plugin`, `--update`, `--uninstall`, `--yes`를 받아요. 설치 방법은 [INSTALLATION.md](INSTALLATION.md)에 있어요 |
 | `install/OUTPUTS.md`, `tools/build/build.py`, `tools/build/manifests.py` | 빌드 산출물 명세와 빌드. `build.py`가 `src/`와 `install/harnesses.yaml`에서 스킬·공유 보기·매니페스트·카탈로그·훅·MCP·에이전트·확장·Hermes 플러그인·패키지를 만들고, `--check`로 커밋된 산출물과 비교해요. 매니페스트·카탈로그·훅·MCP·패키지 형태는 `manifests.py`가 정해요 |
 | `pyproject.toml`, `uv.lock`, `.python-version` | CLI 배포 패키지 `lapis-design`(PyPI의 `lapis-lazuli`는 다른 프로젝트가 써요). 진입점 `lapis-design`·`lapis-design-hook`·`lazuli`, `src/shared` 전체를 `lapis_design/shared` 패키지 데이터로 넣어요 |

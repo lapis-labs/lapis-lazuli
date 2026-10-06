@@ -1,0 +1,75 @@
+# LapisLazuli color vocabulary — v0 draft
+# Shared by lapis (decisions), lps-system (tokens), lzl-color (lookups), and ultramarine (checks).
+# All color values are OKLCH [L, C, H]. Korean names appear as data fields (ko).
+
+version: 0
+
+# Six axes every color decision answers before choosing swatches
+decision_axes:
+  - { id: medium, ko: 매체·출력, asks: "Where and how is color reproduced (screen, print, material)?" }
+  - { id: task_structure, ko: 과업·정보 구조, asks: "What must color help people find, compare, or act on?" }
+  - { id: content_colors, ko: 콘텐츠 색, asks: "Which colors already come from the content (photos, products, data)?" }
+  - { id: identity, ko: 정체성 제약, asks: "Which brand or contract colors are fixed?" }
+  - { id: environment, ko: 환경·시각 조건, asks: "Lighting, displays, color vision differences, themes?" }
+  - { id: tone, ko: 톤, asks: "What should the palette feel like, grounded in the subject?" }
+
+# Every color in a plan has exactly one role
+roles:
+  - { id: field, ko: 바탕·구조, note: "surfaces, dividers, structural fills" }
+  - { id: foreground, ko: 전경, note: "text and icons on fields" }
+  - { id: identity, ko: 정체성, note: "brand marks and signature accents" }
+  - { id: interaction, ko: 상호작용, note: "links, controls, focus, selection" }
+  - { id: status, ko: 상태, note: "success, warning, error, info — never color alone" }
+  - { id: data, ko: 데이터, note: "series and scales in charts" }
+  - { id: content, ko: 콘텐츠, note: "colors that belong to imagery or products" }
+
+# Relations between palette members (proposal vocabulary, not recipes)
+relations:
+  - { id: tonal, ko: 톤 }
+  - { id: neighboring, ko: 이웃색 }
+  - { id: opposing, ko: 대립 }
+  - { id: temperature-contrast, ko: 온도 대비 }
+  - { id: near-monochrome, ko: 준단색 }
+  - { id: multi-hue, ko: 다색 }
+
+data_scales:
+  - { id: categorical, ko: 범주, check: "pairwise distinguishability, including simulated color vision deficiency" }
+  - { id: sequential, ko: 순차, check: "monotonic OKLCH lightness across steps" }
+  - { id: diverging, ko: 발산, check: "symmetric lightness around a neutral midpoint" }
+  - { id: cyclic, ko: 순환, check: "continuity where the scale wraps" }
+
+themes: [light, dark, high-contrast]
+
+# Where a color value came from. Anchors, plans, and locks label every value with one class.
+# Spec path (values that reach tokens and deliverables) accepts only the classes marked spec: true.
+value_source_classes:
+  - { id: authored, spec: true, note: "defined by us or the project (e.g. an OKLCH region center)" }
+  - { id: provider, spec: true, note: "published by the standard's owner through authorized access (e.g. Pantone Connect data)" }
+  - { id: brand-approved, spec: true, note: "approved by the brand owner for this use" }
+  - { id: measured, spec: true, note: "measured from a physical sample with a stated instrument and condition" }
+  - { id: published, spec: true, note: "openly licensed palette values (e.g. Tailwind, Open Color)" }
+  - { id: computed, spec: false, note: "computed from a coordinate code (e.g. HLC, RAL DESIGN SYSTEM plus); approximate" }
+  - { id: converted, spec: false, note: "converted between spaces or profiles; state the transform" }
+  - { id: nearest-match, spec: false, note: "closest candidate in another system; never an identity" }
+  - { id: screen-sample, spec: false, note: "sampled from a screen or photo; detection only" }
+  - { id: unofficial, spec: false, note: "third-party lookup table; detection only" }
+
+# Color systems that can label anchors and plan roles
+systems:
+  - { id: pantone, store: code-and-link, values_from: [provider, measured, screen-sample] }
+  - { id: ral-classic, store: code-and-link, values_from: [provider, measured] }
+  - id: ral-design-plus
+    store: code
+    values_from: [computed, provider, measured]
+    note: >-
+      H/L/C code is a position in RAL's system, not OKLCH; computed values read it as CIELAB LCh under
+      D65 and the 10° observer (secondary sources; RAL publishes no reference conditions), measuring
+      geometry unspecified
+  - { id: ncs, store: code-and-link, values_from: [provider, measured], note: "no axis-by-axis mapping to OKLCH" }
+  - { id: munsell, store: code-and-link, values_from: [provider, measured], note: "irregular solid; no axis-by-axis mapping to OKLCH" }
+  - { id: hlc, store: code, values_from: [computed, measured], note: "freieFarbe HLC codes are CIELAB LCh coordinates" }
+  - { id: freetone, store: code-and-link, values_from: [unofficial] }
+  - { id: tailwind, store: name-and-value, values_from: [published] }
+  - { id: open-color, store: name-and-value, values_from: [published] }
+  - { id: material, store: name-and-value, values_from: [published] }
+  - { id: shadcn, store: name-and-value, values_from: [published] }

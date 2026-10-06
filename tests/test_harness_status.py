@@ -66,10 +66,19 @@ def make(tmp_path, sources):
     return build
 
 
+def sharing_the_folder(doc: dict, h: dict) -> list[str]:
+    """Other harnesses that the folder detecting `h` also detects, because their own detection folder holds it
+    (Gemini CLI's ~/.gemini holds Antigravity's ~/.gemini/antigravity-cli); they install as usual."""
+    own = h["detect"].get("dirs", [])
+    return [o["id"] for o in doc["harnesses"] if o is not h and any(
+        mine.startswith(d.rstrip("/") + "/") for mine in own
+        for d in [*o.get("detect", {}).get("dirs", []), *(x for a in o.get("agents", []) for x in a["dirs"])])]
+
+
 @pytest.mark.parametrize("runner", RUNNERS)
 @pytest.mark.parametrize("found_by", ["command", "folder"])
 @pytest.mark.parametrize("case, harness", CASES)
-def test_detection_alone_never_installs_an_experimental_harness(make, case, harness, found_by, runner):
+def test_detection_alone_never_installs_an_experimental_harness(make, sources, case, harness, found_by, runner):
     m, h = make(case, harness, command=found_by == "command", folder=found_by == "folder")
     r = getattr(m, runner)("--yes")
     assert r.returncode == 0, r.stdout + r.stderr
@@ -78,7 +87,10 @@ def test_detection_alone_never_installs_an_experimental_harness(make, case, harn
     assert len(found) == 1 and "experimental" in found[0] and f"--harness {harness}" in found[0], found
     assert [line for line in lines if mentions(line, h["name"]) and line not in found] == []
     assert [c for c in m.calls() if c[0] == h["detect"]["commands"][0]] == []
-    assert "no harness to install" in r.stdout
+    if found_by == "folder" and sharing_the_folder(sources[case][1], h):
+        assert "no harness to install" not in r.stdout          # the harness that shares the folder installs as usual
+    else:
+        assert "no harness to install" in r.stdout
 
 
 @pytest.mark.parametrize("runner", RUNNERS)

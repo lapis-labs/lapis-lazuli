@@ -28,6 +28,17 @@ HOOKS = {
 # extensions/ folder and its source is named by the output that emits it (install/harnesses.yaml). The exit-gate
 # extension also registers the tool_call handler that runs `pre-write`, so that hook has no entry of its own.
 EXTENSIONS = {"session-start": "session-start.ts", "stop": "exit-gate.ts"}
+# Antigravity has its own hooks.json (a hook name maps to events; install/OUTPUTS.md, Antigravity) and no ExitPlanMode
+# tool, so `exit-plan` has no entry. A hook that fails, prints a field Antigravity does not know, or prints `{}` stops
+# the tool or the model call it ran for, so each command ends in `|| exit 0` (sh and cmd.exe both read it): a missing or
+# crashed runner then prints nothing and the agent goes on. `pre-write` gets the file-edit tools. Antigravity has
+# no session-start event, and PreInvocation's ephemeral message fades after a few steps, so `session-start` has no entry.
+ANTIGRAVITY_SCHEMA = "https://antigravity.google/schemas/v1/plugin.json"
+ANTIGRAVITY_WRITE_TOOLS = "write_to_file|replace_file_content|multi_replace_file_content|notebook_edit"
+ANTIGRAVITY_HOOKS = {
+    "stop": {"event": "Stop", "matcher": None, "timeout": 60},
+    "pre-write": {"event": "PreToolUse", "matcher": ANTIGRAVITY_WRITE_TOOLS, "timeout": 30},
+}
 MCP_COMMAND = {"command": "lapis-design", "args": ["mcp"]}
 # The first sentence of the repository's GitHub About text, which the maintainers set by hand.
 ABOUT = "Design skills for coding agents, plus two CLIs."
@@ -77,6 +88,11 @@ def codex_manifest(doc: dict, plugin: dict, version: str, license_id: str) -> di
     return out
 
 
+def antigravity_manifest(plugin: dict) -> dict:
+    """plugin.json for Antigravity: `name` and `description` only (the schema allows nothing else)."""
+    return {"$schema": ANTIGRAVITY_SCHEMA, "name": plugin["name"], "description": plugin["description"]}
+
+
 def _catalog_entry(plugin: dict, version: str) -> dict:
     return {"name": plugin["name"], "source": f"./plugins/{plugin['name']}", "description": plugin["description"],
             "version": version, "category": "design"}
@@ -97,6 +113,21 @@ def codex_catalog(doc: dict, version: str) -> dict:
 def hooks_json(plugin: dict, version: str) -> dict | None:
     """hooks/hooks.json: hooks both Claude Code and Codex run."""
     return _hooks(plugin, "shared", version)
+
+
+def antigravity_hooks_json(plugin: dict, version: str) -> dict | None:
+    """hooks.json for Antigravity: one named hook per hook the plugin lists that Antigravity can run. The events
+    that take no matcher (Stop) hold their handlers directly; PreToolUse wraps them in a group."""
+    out: dict[str, dict] = {}
+    for name in plugin.get("hooks", []):
+        h = ANTIGRAVITY_HOOKS.get(name)
+        if h is None:
+            continue
+        handler = {"type": "command", "timeout": h["timeout"],
+                   "command": f"lapis-design-hook --plugin-version {version} --host antigravity {name} || exit 0"}
+        out[f"{plugin['name']}-{name}"] = {h["event"]: [{"matcher": h["matcher"], "hooks": [handler]}]
+                                           if h["matcher"] else [handler]}
+    return out or None
 
 
 def mcp_json(plugin: dict) -> dict | None:
@@ -151,7 +182,9 @@ REPO_FORMATS = {
 PLUGIN_FORMATS = {
     "claude-plugin-manifest": claude_manifest,
     "codex-plugin-manifest": codex_manifest,
+    "antigravity-plugin-manifest": lambda doc, plugin, version, license_id: antigravity_manifest(plugin),
     "hooks-json": lambda doc, plugin, version, license_id: hooks_json(plugin, version),
+    "antigravity-hooks-json": lambda doc, plugin, version, license_id: antigravity_hooks_json(plugin, version),
     "mcp-json": lambda doc, plugin, version, license_id: mcp_json(plugin),
     "omp-package": lambda doc, plugin, version, license_id: omp_package(plugin, version, license_id),
 }

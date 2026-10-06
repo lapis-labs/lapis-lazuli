@@ -1,0 +1,167 @@
+# LapisLazuli fonts lock schema — v0 draft
+# Location: .lapis/fonts.lock.json in the project
+# lapis decides; `lazuli lock` pins the source, license, and delivery path as of that moment.
+# plan_check and ulm-release read this file, not the machine-local lazuli DB.
+# One lock per project; each font lists the plan tasks that use it (plans are per task).
+# This is the fonts' provenance record; other media is recorded in the asset ledger
+# (assets/ledger.schema.yaml). The rights check (assets/CHECKS.md) reads both.
+# Files that ship are recorded with where they came from (`source_url`), the license text that came with
+# them (`notices`), and how the license was looked for (`license.research`: the places looked at, each
+# with its address, the words that grant or restrict, and the date, and where the search ended). A
+# license with no research record was never researched; one recorded `unknown-after-research` was
+# looked for and not found. Evidence is a document's address and words, never metadata that an Adobe
+# integration returned about a font.
+# Never store credentials, license keys, payment data, or private receipts here.
+
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/fonts-lock.v0.json
+title: LapisLazuli fonts lock
+type: object
+additionalProperties: false
+required: [version, locked_at, fonts]
+properties:
+  version: { const: 0 }
+  locked_at: { type: string, format: date-time }
+  fonts:
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [role, family, postscript_names, source, license, delivery, used_by]
+      properties:
+        role: { enum: [display, heading, body, ui, data, code, caption] }
+        used_by: { type: array, minItems: 1, items: { type: string } }   # plan task ids
+        family: { type: string }
+        postscript_names: { type: array, minItems: 1, items: { type: string } }
+        scripts: { type: array, items: { type: string } }
+        source:                                     # where the files come from (the acquisition channel)
+          # foundry-purchase: files delivered by the foundry or reseller under a purchased license;
+          # adobe-sync, sandoll: a subscription client's synced files; user-installed: provenance unknown
+          enum: [system, adobe-sync, google-fonts, fontsource, fontshare, noonnu, sandoll, open-source-other,
+                 foundry-purchase, user-installed]
+        source_url:                                 # the official page, repository folder, or release the shipped files came from
+          type: string
+          pattern: "^https?://[^?#\\s]*$"
+        catalog_match:
+          type: object
+          properties:
+            catalog: { type: string }
+            key: { type: string }
+            method: { enum: [exact_ps, exact_family, fuzzy] }
+            confidence: { type: number, minimum: 0, maximum: 1 }
+        license:
+          type: object
+          additionalProperties: false
+          required: [kind, checked_at]
+          properties:
+            kind: { enum: [ofl, apache, kogl-1, commercial-subscription, commercial-perpetual, system, unknown] }
+            uses:                                   # what the license grants per use; a missing use is unknown
+              type: object
+              additionalProperties: false
+              properties:
+                web: { $ref: "#/$defs/grant" }        # font data served to visitors, by the delivery path below
+                app: { $ref: "#/$defs/grant" }        # files bundled in a native or desktop app
+                server: { $ref: "#/$defs/grant" }     # installed on a server that renders images or documents
+                document: { $ref: "#/$defs/grant" }   # embedded in PDFs or ebooks
+                editor: { $ref: "#/$defs/grant" }     # customers compose their own text with it
+            url: { type: string, pattern: "^https?://[^?#]*$" }   # the governing license text
+            checked_at: { type: string, format: date }
+            # rights-holder: the license text shipped with the files or published by the foundry or rights holder
+            # provider: the terms of the service that delivers the files
+            # user-declared: facts the user states without a document at hand
+            # catalog summaries and file metadata are hints only
+            source_class: { enum: [rights-holder, provider, catalog-summary, file-metadata, user-declared] }
+            research:                               # how the governing license was looked for; absent = never researched
+              type: object
+              additionalProperties: false
+              required: [outcome, evidence]
+              properties:
+                # verified: the governing document was read and grants the planned uses (the files may ship)
+                # restricted: read, and it grants use only within `restrictions` (ship within them, or with the user's approval)
+                # unknown-after-research: looked for where the skill says and not found (a candidate only; do not ship)
+                outcome: { enum: [verified, restricted, unknown-after-research] }
+                evidence:                           # what was looked at, in order; a document or a search that found nothing
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [via, checked_at]
+                    properties:
+                      # font-metadata: the license and URL name records of the files (a hint, never the grant)
+                      # license-file: the license text that came with the files; the project's copy is a notice
+                      # rights-holder-page: the foundry's or author's published license
+                      # distributor-page: the terms of the catalog, store, or service that delivers the files
+                      # installer-terms: the terms of the app or system that installed or activated the font
+                      # web-search: a search; with no document found it is the record of looking
+                      via: { enum: [font-metadata, license-file, rights-holder-page, distributor-page, installer-terms, web-search] }
+                      url: { type: string, pattern: "^https?://[^?#\\s]*$" }
+                      quote: { type: string, minLength: 1, maxLength: 600 }   # the source's words that grant or restrict
+                      note: { type: string, minLength: 1 }   # your words: what was searched, or what the page does not say
+                      checked_at: { type: string, format: date }
+                restrictions: { type: array, minItems: 1, items: { type: string, minLength: 1 } }
+                note: { type: string, minLength: 1 }      # what was searched and what was found
+              allOf:
+                - if: { properties: { outcome: { enum: [verified, restricted] } } }
+                  then:                                 # a document, not a name record or a search
+                    properties:
+                      evidence:
+                        contains: { required: [via], properties: { via: { enum: [license-file, rights-holder-page, distributor-page, installer-terms] } } }
+                - if: { properties: { outcome: { const: restricted } } }
+                  then: { required: [restrictions] }
+                - if: { properties: { outcome: { const: unknown-after-research } } }
+                  then: { required: [note] }
+          allOf:
+            - if: { required: [research], properties: { research: { properties: { outcome: { const: unknown-after-research } } } } }
+              then: { properties: { kind: { const: unknown } } }
+            - if: { required: [research], properties: { research: { properties: { outcome: { enum: [verified, restricted] } } } } }
+              then:
+                required: [source_class]
+                properties:
+                  kind: { not: { const: unknown } }
+                  source_class: { enum: [rights-holder, provider] }
+        files:                                      # font files that ship (self-host or app bundle); globs allowed
+          type: array
+          minItems: 1
+          items: { type: string, pattern: "^(?!/)(?!.*\\.\\.)[^\\0]+$" }
+        modified:                                   # woff-unchanged: compressed only, data and metadata kept
+          enum: [none, woff-unchanged, subset, converted, rebuilt]
+        reserved_names:                             # reserved font names the license declares
+          type: object
+          additionalProperties: false
+          required: [names, permission]
+          properties:
+            names: { type: array, items: { type: string, minLength: 1 } }
+            permission: { type: boolean }           # written permission to keep them on a modified version
+        shipped_names:                              # family, full, and PostScript names inside the shipped files
+          type: array
+          items: { type: string }
+        notices:                                    # license and copyright texts that ship with the files
+          type: array
+          items: { type: string }
+        notices_embedded: { type: boolean }         # copyright and license name records inside the shipped files
+        delivery:                                   # how the font is delivered in the target environment
+          enum: [self-host, adobe-web-project, google-fonts-api, app-bundle, system-only, not-deliverable]
+        fallback: { type: array, items: { type: string } }
+      allOf:
+        - if: { required: [files] }
+          then: { required: [modified] }
+        - if:                                       # a copy of a license file that came with shipped files is kept as a notice
+            required: [files, license]
+            properties:
+              license:
+                required: [research]
+                properties:
+                  research:
+                    properties:
+                      evidence: { contains: { required: [via], properties: { via: { const: license-file } } } }
+          then: { required: [notices], properties: { notices: { minItems: 1 } } }
+        - if:
+            properties:
+              license: { properties: { kind: { const: ofl } } }
+              modified: { enum: [subset, converted, rebuilt] }
+            required: [modified]
+          then: { required: [reserved_names] }
+
+$defs:
+  grant: { enum: [allowed, allowed-with-conditions, not-allowed, unknown] }

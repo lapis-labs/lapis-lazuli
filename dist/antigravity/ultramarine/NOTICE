@@ -1,0 +1,115 @@
+LapisLazuli: notices
+
+This file says where the repository's content came from and lists the third-party material it
+keeps, with the basis for keeping each item. Third-party material stays under its owner's terms or
+under the quotation basis given here. The repository's own license does not relicense it.
+
+1. Where the content came from
+
+Most of the knowledge in src/skills/ and src/shared/ was migrated from the author's previous
+repository, design-and-frontend, which is not part of this repository. tools/migration-map.yaml and
+tools/reference-provenance.yaml record which files became which. Sources named "memo:" in
+src/shared/slop/rules.yaml are the author's own memos on text, layout, color, and structure. They
+are unpublished and kept outside this repository.
+
+The previous repository's text was written by its author and the author's agents, with research and
+reference material mixed in. The migration rewrote that material or left it out. On 2026-09-30 the
+text published through 0.1.1 was compared with the standards, guidelines, and agent-skill repositories the
+previous repository draws on, looking for shared passages of twelve or more words (Korean: twenty
+or more syllables) and for lists and tables in the same order. Apart from the quotations in
+section 2, no such passage was found in that scope. Passages that text shares with the previous
+repository itself are the author's own writing. References added in 0.1.2 and later were not part of
+that comparison.
+
+2. Quoted terms of service
+
+src/shared/sources/registry.yaml keeps short quotations from the terms of eleven services in the
+`clause` field of their entries. Each explains why lazuli sends no automated request to that
+service. The quotations are attributed and dated so the decision can be checked against the source.
+They are kept under the right to quote short passages for that purpose. Each service's terms
+remain its own, and the pages may have changed since 2026-09-26, the date they were checked.
+
+| Registry entry | Terms page | Quoted (words) |
+|---|---|---|
+| myfonts (MyFonts) | https://www.myfonts.com/a/font/legal/terms-of-use | 1 passage (19) |
+| coolors (Coolors) | https://coolors.co/license | 2 passages (8, 7) |
+| lospec (Lospec Palette List) | https://lospec.com/terms-and-conditions | 1 passage (9) |
+| openverse (Openverse) | https://docs.openverse.org/terms_of_service.html | 1 passage (10) |
+| undraw (unDraw) | https://undraw.co/license | 1 passage (20) |
+| poly-haven (Poly Haven) | https://polyhaven.com/license | 1 passage (8) |
+| land-book (Land-book) | https://land-book.com/terms-of-service | 1 passage (10) |
+| fonts-in-use (Fonts In Use) | https://fontsinuse.com/terms-and-conditions-of-use/ | 1 passage (14) |
+| are-na (Are.na) | https://www.are.na/terms | 1 passage (12) |
+| pinterest (Pinterest) | https://policy.pinterest.com/en/terms-of-service | 1 passage (23) |
+| dribbble (Dribbble) | https://dribbble.com/terms | 1 passage (24) |
+
+The entries for Apple's website terms and Pinterest also name a section of those terms ("Your Use
+of the Site", "Using Pinterest") without quoting it.
+
+3. Recorded catalog test data
+
+tests/fixtures/catalog/ holds test data shaped like responses from open font catalogs, recorded
+on 2026-09-26 and trimmed. Only facts stayed as recorded (family names, ids and slugs, categories,
+subsets, weights, axis ranges, license identifiers). Every value a catalog curates or measures is
+synthetic. tests/fixtures/catalog/README.md gives each file's source and the license of the
+original.
+
+- google-fonts/: shaped like https://fonts.google.com/metadata/fonts and the google/fonts
+  repository on GitHub (tags/all/families.csv and git trees). No data license is stated for the
+  metadata or the tags. The repository's README gives the font licenses by directory: OFL-1.1 in
+  ofl/, Apache-2.0 in apache/, UFL-1.0 in ufl/.
+- fontshare/: shaped like https://api.fontshare.com/v2/fonts. Names, slugs, and license types stay.
+  The fonts are under the ITF Free Font License; no license for the API data was found.
+- fontsource/: shaped like https://api.fontsource.org/v1/fonts. Ids, family names, subsets, weights,
+  and SPDX license ids stay. The Fontsource repository is MIT (Copyright (c) 2024 Ayuhito).
+- sandoll/ and anshim/: hand-written samples shaped like pages of sandollcloud.com and
+  gongu.copyright.or.kr. They keep short labels, font names, and license holders. Their robots.txt
+  files are hand-written descriptions of the rules, not copies.
+
+Family names can be trademarks. They name the fonts and nothing more. No font file is in the
+repository.
+
+4. Projects that shaped ideas and vocabulary
+
+These projects informed the plan fields, the slop rule families, and the structure of the skills.
+No text was copied from them; a reference that restates one of their ideas in its own words names the project
+here. Their licenses and owners are given so their terms are easy to find.
+
+- Impeccable, https://github.com/pbakaus/impeccable (Apache-2.0): surface modes, task vocabulary,
+  audit and improvement patterns, and the pattern vocabulary of its slop catalog (cards, icon tiles, repeated
+  layouts, hero metrics, italic serif headlines) that four render rules restate with detectors of their own.
+- taste-skill, https://github.com/Leonxlnx/taste-skill (MIT): brief inference, qualitative dials,
+  keeping decisions when redesigning, and a stated context overriding a default dial.
+- better-ui skills, https://github.com/jakubkrehel/skills (MIT): optical alignment, surfaces,
+  interaction polish.
+- Vercel Web Interface Guidelines, https://github.com/vercel-labs/web-interface-guidelines (MIT):
+  browser behavior review.
+- Anthropic frontend-design skill, https://github.com/anthropics/skills (Apache-2.0):
+  subject-grounded direction, the first view as the surface's own task, and the subject's material carried past the
+  hero picture.
+- AntiSlop, a skill of recurring generated-interface patterns (MIT, Copyright (c) 2026 Miqdad Badjuber):
+  the per-domain way of describing a pattern with its honest exceptions.
+- scroll-craft, https://github.com/nateherkai/scroll-craft (MIT, Copyright (c) 2026 Nate Herk): comparing
+  page structure apart from its finish, and page organizations that change the opening, navigation, content
+  unit, and ending together.
+- StyleSeed, https://github.com/bitjaru/styleseed (MIT, Copyright (c) 2026 StyleSeed Contributors): the
+  first view's job and its focal point.
+- Open Design, https://github.com/nexu-io/open-design (Apache-2.0; its imagegen-frontend-web skill is MIT,
+  Copyright (c) 2026 Leonxlnx): composition anchors as a way to look past the mirrored arrangement.
+- designer-skills, https://github.com/julianoczkowski/designer-skills (Apache-2.0): alignment lines shared by
+  text and image across sections.
+- modern-web-guidance, https://github.com/GoogleChrome/modern-web-guidance (Apache-2.0): subgrid for lining
+  up the facts inside sibling objects.
+- motion-design, https://github.com/LottieFiles/motion-design-skill (MIT, Copyright (c) 2025 LottieFiles):
+  rhythm that changes at more than one scale.
+- Superloopy, https://github.com/beefiker/superloopy (MIT, Copyright (c) 2026; the license file names no
+  holder): one bounded direction read and one rendered refinement pass, and anti-slop checks scoped to a new
+  visual direction.
+
+tools/reference-provenance.yaml names the standards and other works behind each skill reference.
+
+5. Names and marks
+
+Names of standards, products, fonts, services, and companies appear only to identify them. They
+belong to their owners. The repository states no proprietary color standard's values, and lazuli
+stores only codes and links for those standards.

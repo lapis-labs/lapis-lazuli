@@ -64,6 +64,9 @@ LICENSE_FILES = ("LICENSE", "LICENSE-docs", "NOTICE")
 SKILL_KEYS = {"name", "description", "license"}   # portable keys a source sets; the build adds metadata
 DESCRIPTION_MAX = 1024
 AGENT_KEYS = {"name", "description"}              # plugin agents ignore permissionMode, hooks, mcpServers
+# The tools an Antigravity agent file lists (its `tools`; an agent with none gets only the defaults, and a name it does not
+# know can hang the subagent): the critic reads files and writes its report, and has no shell, web, or browser.
+ANTIGRAVITY_AGENT_TOOLS = ["view_file", "list_dir", "grep_search", "find_by_name", "write_to_file"]
 HERMES_KEYS = {"description", "provides_hooks"}   # the build adds name, version, and author
 
 # src/shared/index.yaml views that are not plain copies (fields-for-lookup: each item's `lookup_fields`)
@@ -273,8 +276,11 @@ class Build:
         return texts
 
     def plugin_licenses(self) -> dict[str, bytes]:
-        """plugins/<plugin>/LICENSE, LICENSE-docs, and NOTICE for every plugin in install/harnesses.yaml."""
-        return {f"plugins/{p['name']}/{name}": data for p in self.doc["plugins"]
+        """LICENSE, LICENSE-docs, and NOTICE in every folder a harness installs on its own: plugins/<plugin>/ and
+        the Antigravity plugin folders (the directory of each `antigravity-plugin-manifest` output)."""
+        roots = ["plugins/{plugin}"] + [out["path"].rsplit("/", 1)[0] for out in self.doc["outputs"]
+                                        if out["format"] == "antigravity-plugin-manifest"]
+        return {f"{root.format(plugin=p['name'])}/{name}": data for root in roots for p in self.doc["plugins"]
                 for name, data in self.license_texts.items()}
 
     @cached_property
@@ -414,6 +420,14 @@ class Build:
                 files[path] = _frontmatter({"name": agent, "description": desc}, body)
         return files
 
+    def antigravity_agent(self, out: dict) -> dict[str, str]:
+        files = {}
+        for agent, (plugin, desc, body) in self.agents.items():
+            if plugin in self._agent_plugins(out):
+                path = out["path"].format(plugin=plugin["name"]) + f"{agent}.md"
+                files[path] = _frontmatter({"name": agent, "description": desc, "tools": ANTIGRAVITY_AGENT_TOOLS}, body)
+        return files
+
     def codex_agent(self, out: dict) -> dict[str, str]:
         return {out["path"] + f"{plugin['prefix']}{agent}.toml":
                 manifests.codex_agent_toml(f"{plugin['prefix']}{agent}", desc, body.lstrip("\n"))
@@ -465,6 +479,7 @@ class Build:
         "agent-skill": agent_skill,
         "claude-agent": claude_agent,
         "codex-agent": codex_agent,
+        "antigravity-agent": antigravity_agent,
         "ts-extension": ts_extension,
         "gate-extension": ts_extension,
         "hermes-plugin": hermes_plugin,

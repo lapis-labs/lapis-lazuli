@@ -1,0 +1,280 @@
+# LapisLazuli default cards — v0
+# Source for the named-defaults view that generators read. Rules stay in slop/rules.yaml; a card
+# only groups default-class rules under one name that a designer recognizes while planning.
+#
+# What a card holds
+#   id       kebab-case, unique
+#   name     short name used in plans, reports, and conversation
+#   cue      how to notice the default in your own plan or draft; never a threshold or list value
+#   routes   two or three alternative directions, each an imperative sentence; a route may point
+#            at world_materials, the signature, or a plan field, never at another default
+#   decide   where the decision shows in the plan (plan paths). `defaults` comes first when the plan has
+#            no field for the value itself (tracking)
+#   rules    the default-class rule ids this card covers
+#
+# Invariants (tests/test_cards.py)
+#   - every default-class rule in rules.yaml appears in exactly one card
+#   - every id in `rules` exists and has class default
+#   - cue and routes carry no digits and no term from a locale-scoped list in rules.yaml `lists`
+#     (values under `all` and `latin` name families or regions, not terms, so they are exempt);
+#     the generator view then leaks no checker bounds or lexicons
+#
+# How generators use cards
+#   Walk the cards while planning. For each card the plan or the draft hits, record a `defaults`
+#   entry for each of its rules that applies: keep with a basis, a `keep_when` id of the rule, the
+#   evidence that case lists, and a reason, or reject and take a route. Rule-level why, better, and
+#   keep_when (with its evidence) come from the rules view.
+
+version: 0
+as_of: 2026-09
+
+cards:
+  # ------------------------------------------------------------------ type
+  - id: label-above-heading
+    name: Label above every heading
+    cue: Most sections open with something small above the heading - a tracked capital label, an index number, a badge, or an icon tile - and it would read the same in every section; or each item of a group opens with an icon tile that outweighs the heading it introduces.
+    routes:
+      - Let the heading carry the proposition and delete the label.
+      - Where readers need context, write a specific label that names a category, scope, state, or real step that differs between sections.
+      - Vary each section's opening by what the section holds.
+    decide: [layout.sections, content.key_copy]
+    rules: [type.eyebrow-kicker, type.heading-badge, type.icon-tile-heading, type.oversized-icon-tile, layout.decorative-numbering]
+
+  - id: one-neutral-voice
+    name: One neutral voice
+    cue: A single featureless grotesque carries display, body, interface, and data with the same width and weight habits.
+    routes:
+      - Pair faces by role - one for reading, one with a voice the subject earns for display.
+      - Keep one family and vary optical size, width, or weight by role.
+      - Keep the neutral face for body text and record why readability or the platform decides it.
+    decide: [tokens.type.roles]
+    rules: [type.overused-neutral-grotesque, type.single-neutral-sans]
+
+  - id: headline-formula
+    name: Headline formula
+    cue: The headline is a line, a break, and a closing phrase set in italic or another typeface, so the emphasis comes from the type switch and not from the words.
+    routes:
+      - Write one headline whose words carry the emphasis, set in one voice.
+      - Name what the page is for in plain words, and set a quoted title or a term in italic only where it is one.
+      - Compare headline candidates on the surface's own copy and choose the one that needs no styling to be heard.
+    decide: [content.key_copy, tokens.type.roles]
+    rules: [type.headline-emphasis-formula]
+
+  - id: premium-serif
+    name: Premium serif
+    cue: A high-contrast or italic serif display is chosen to look premium, and nothing in the subject asks for it.
+    routes:
+      - Derive display type from the product's material, voice, and content.
+      - Compare a subject-earned serif, a sans, and a mixed route side by side before choosing.
+    decide: [tokens.type.roles]
+    rules: [type.serif-luxury-display]
+
+  - id: type-costume
+    name: Type as costume
+    cue: Capitals or monospace are worn for mood - technical, urgent, editorial - on prose and headings.
+    routes:
+      - Keep monospace for code, identifiers, and aligned numbers.
+      - Keep capitals for short labels whose role is established.
+      - Set tone through the text face, scale, and spacing instead.
+    decide: [tokens.type.roles]
+    rules: [type.caps-prose, type.costume-monospace]
+
+  # ------------------------------------------------------------------ color
+  - id: warm-editorial
+    name: Warm editorial package
+    cue: A cream field, a clay or brass accent, and a serif display arrive together as the premium look for any category.
+    routes:
+      - Take warmth from the subject's materials and photographs, not from the field color.
+      - Choose the field from the subject's paper or material and check it against the content colors.
+      - Take the accent from world_materials, or choose it again from the plan's color relations.
+    decide: [tokens.color.roles, tokens.color.relations]
+    rules: [color.warm-editorial, color.cream-base, color.terracotta-accent]
+
+  - id: dark-luminous
+    name: Dark luminous package
+    cue: Violet-to-blue gradients, a halo behind the hero, glowing edges, or gradient text supply the mood of an otherwise ordinary layout, most often on a dark field.
+    routes:
+      - Build the palette, light or dark, from semantic roles, and let the product's real output supply any ambient color.
+      - Let a gradient or halo appear only where it encodes something, such as a spectrum or light as the subject; keep one light and surface model, and mark focus and state with borders and contrast.
+      - Recompose the opening around its content and write a precise title; give emphasis a solid role color only when it encodes meaning.
+    decide: [tokens.color.roles, tokens.color.themes]
+    rules: [color.dark-luminous, color.violet-blue-gradient, color.hero-halo, color.neon-glow, color.gradient-headline]
+
+  - id: category-palette
+    name: Category palette
+    cue: The colors came with the category - calm green for care and safety, and by now for software, transit, wellness, and shops alike, indigo for software, near-black with an acid accent for anything young, teal for health - and nothing in the subject asked for them. Green is a default family of its own, reached for because it feels safe and fresh and not because the subject has green in it.
+    routes:
+      - Take the field and the accent from world_materials - the subject's own objects, paper, packaging, or places.
+      - Choose the accent for the one role the page needs it for, then check the content colors against it.
+      - Keep a category color where the brand already owns it, and record that.
+    decide: [tokens.color.roles, tokens.color.relations]
+    rules: [color.sage-soft-field, color.violet-indigo-accent, color.acid-on-black, color.teal-accent]
+
+  - id: pale-template-family
+    name: Pale field with a rotated accent
+    cue: A high-key pale field, one muted accent and category-default structure remain even when cream, green, teal or coral changes; hue alone is not the cause.
+    routes:
+      - Separate fixed roles from open ones and trace product, photo, brand, material or data inputs with their authority.
+      - Compare two input-derived palettes on the same real screen, with one consequential variable and candidate artifacts, role values and matched captures in explorations.
+      - Keep an approved brand or brief-fixed house style; otherwise remove role failures, judge the tradeoff and stop without a novelty search.
+    decide: [tokens.color.roles, explorations, layout.procedure]
+    rules: [color.pale-template-family]
+
+  - id: starter-surface
+    name: Starter surface
+    cue: The component library's starter look or a starter template stays, and the only change is a new palette or primary color.
+    routes:
+      - Keep the useful primitives, then define type, color roles, radius, spacing, and states from the product.
+      - Derive color roles from the subject, then resolve composition and imagery on their own terms.
+    decide: [tokens, layout.procedure]
+    rules: [color.palette-swap-only, component.library-default-theme]
+
+  - id: global-habit-values
+    name: One value everywhere
+    cue: One value is applied globally by habit - pure black and white endpoints, one large radius on every container, bouncy easing on every transition, negative tracking on Korean body text.
+    routes:
+      - Assign the value per role or component, and record the assignment where the plan holds it or in the defaults entry.
+      - Choose endpoints, radii, easing, and tracking for the platform and the face, keeping required contrast.
+    decide: [defaults, tokens.shape.radius, tokens.color.roles, tokens.motion.principles]
+    rules: [color.pure-endpoints, surface.uniform-large-radius, motion.bounce-default, type.ko.body-negative-tracking]
+
+  # ------------------------------------------------------------------ surface
+  - id: ornamental-surface
+    name: Ornamental surface
+    cue: A surface treatment is borrowed for texture - glass on most panels, a colored side stripe on cards, a grid or crosshair background - and marks no layer, state, or subject.
+    routes:
+      - Reserve transparency for real overlays above live content.
+      - Use a border only for real selection, status, or a callout type.
+      - Take texture from the subject's world_materials, or leave the surface plain.
+    decide: [tokens.surface.treatments, layout.signature]
+    rules: [surface.glass-everywhere, surface.side-accent-border, surface.decorative-grid-texture]
+
+  - id: hard-edge
+    name: Hard-edge package
+    cue: Thick outlines, hard offset shadows, saturated blocks, and heavy type replace one package with another over an unchanged structure.
+    routes:
+      - Resolve structure, type roles, and palette from the subject before choosing a graphic voice.
+      - Keep hard edges only where a direct graphic voice is established for this brand or subject.
+    decide: [tokens.surface.treatments, direction.levers]
+    rules: [surface.hard-edge-graphic, surface.hard-offset-shadow]
+
+  # ------------------------------------------------------------------ layout
+  - id: template-page
+    name: Template page
+    cue: The page structure was picked before the content was ranked - a centered or split hero, the category's usual section order, a middle plan set apart as the pick, image and text rows that alternate, sections that repeat one shape with new words, everything on one axis.
+    routes:
+      - Rank the content first, then choose the composition that expresses that order, conventional or not.
+      - Order sections by the questions the reader brings; give each section the structure its content relation needs.
+      - Build the page around the signature instead of a hero shell.
+    decide: [layout.procedure, layout.sections, layout.signature]
+    rules: [layout.hero-before-priority, layout.template-section-sequence, layout.repeated-section-shape, layout.pricing-trio-recommendation, layout.reassurance-landing, layout.zigzag, layout.symmetry-excess, layout.typical-composition]
+
+  - id: split-opening
+    name: Split opening
+    cue: The first screen divides in two - the large heading with a short paragraph and a pair of buttons on one side, an image, illustration, or product mock on the other - and the same split would open a page for any other subject.
+    routes:
+      - Name the relation the opening has to show - the object and its state, a question and its answer, before and after - and let that relation set the composition.
+      - Build the opening from the subject's own objects at their real arrangement and scale, so it could not open another subject's page.
+      - Order the first screen by the sequence the visitor follows - what they see, what they decide, what they do - and let the sequence, not a column pair, set the structure.
+    decide: [layout.procedure.relationships, layout.procedure.reading_order, world_materials, layout.signature]
+    rules: [layout.split-hero]
+
+  - id: boxed-everything
+    name: Everything in a box
+    cue: Cards are the whole page structure - equal cards for unequal content, cards inside cards, grid cells that exist to complete the shape.
+    routes:
+      - Use rows, groups, sections, or bare content where they express the relation better.
+      - Give one cell to each meaningful item and let importance set span, order, and emphasis.
+      - Group with space and rules; keep a surface only where it has its own role.
+    decide: [layout.sections, layout.procedure.relationships]
+    rules: [layout.card-everything, layout.nested-cards, layout.equal-siblings, layout.bento-filler]
+
+  - id: big-numbers
+    name: Big numbers first
+    cue: The first view is a row of tiles, each a big number over a small label - totals and counts that would fit any product - before anything the reader has to decide or do.
+    routes:
+      - Open with what the reader must decide or act on - the exception, the next arrival, what is late or full - and give it the rank.
+      - Show a number only where a decision hangs on it, with its limit or its change beside it.
+      - Take the measures from the task and its people, and leave out totals nobody acts on.
+    decide: [content.key_copy, layout.procedure.relationships, layout.procedure.reading_order]
+    rules: [layout.metric-tile-opening]
+
+  # ------------------------------------------------------------------ component and imagery
+  - id: improvised-icons
+    name: Improvised icons
+    cue: Emoji, Unicode glyphs, or hand-drawn paths stand in for product icons next to a real icon set or instead of one.
+    routes:
+      - Use one maintained icon family and label icon-only buttons.
+      - Draw custom icons only for subject concepts the family lacks, on the family's grid and stroke.
+    decide: [tokens.icons]
+    rules: [component.emoji-icons, component.hand-drawn-icons]
+
+  - id: stand-in-imagery
+    name: Stand-in imagery
+    cue: Imagery stands in for the subject - a div-built app window, status panels floating around the hero object, an illustration assembled from CSS shapes, a generic stock scene, a decorative jagged crop.
+    routes:
+      - Use a real capture of the product, or a clearly labeled illustrative slot.
+      - Art-direct imagery from the real objects, processes, or data in world_materials.
+      - Choose crop and contour from the image content.
+    decide: [world_materials, sources]
+    rules: [component.fake-app-window, component.floating-chips, imagery.css-illustration, imagery.generic-stock, imagery.jagged-clip]
+
+  # ------------------------------------------------------------------ motion
+  - id: ambient-motion
+    name: Ambient motion
+    cue: Motion performs liveness without a state change - a pulsing dot, a blinking cursor, looping decoration, every image zooming on hover.
+    routes:
+      - Keep motion that state, expression, or the subject earns, and record it on the plan's motion dial.
+      - Show a stable status or real progress instead of a pulse.
+      - Use hover to reveal actionable information, or keep images still.
+    decide: [direction.dials.motion, tokens.motion.principles]
+    rules: [motion.pulse-without-status, motion.decorative-cursor, motion.ambient-loops, motion.hover-zoom-everything]
+
+  # ------------------------------------------------------------------ copy
+  - id: sales-voice
+    name: Sales voice
+    cue: Claims of improvement, significance, or degree would fit any product - sales words, unsupported importance, intensifiers and stacked hedges.
+    routes:
+      - Name the user action, the handoff removed, or the capability someone can verify.
+      - State each claim at the strength the evidence supports.
+      - Anchor key copy in a fact, number, or material from world_materials.
+    decide: [content.key_copy, claims]
+    rules: [copy.buzzwords, copy.empty-significance, copy.intensifier-hedging]
+
+  - id: rhetorical-shells
+    name: Rhetorical shells
+    cue: Sentences follow a shell instead of the content - "not X but Y" with no belief to correct, an announcement before the point, padded threes, a stock closing line.
+    routes:
+      - Write the direct proposition.
+      - List the actual parts, however many there are.
+      - End on the last fact or the next action.
+    decide: [content.key_copy]
+    rules: [copy.contrast-frame, copy.staging, copy.forced-triad, copy.closing-formula]
+
+  - id: mechanical-rhythm
+    name: Mechanical rhythm
+    cue: The same cadence recurs regardless of content - dashes in labels and every paragraph, sentences of one length, repeated openings or endings.
+    routes:
+      - Let sentence structure and punctuation state the relation - cause, contrast, or aside.
+      - Merge repeated structures and let sentence shape follow the content.
+    decide: [content.voice]
+    rules: [copy.dash-cadence, copy.uniform-rhythm]
+
+  - id: formatting-by-rule
+    name: Formatting by rule
+    cue: Formatting follows a habit - bold-labeled bullets, emoji markers, headings that restate the sentence, label-separator-tail headings, middle-dot metadata strips, ambient status strips.
+    routes:
+      - Format only the relationships the content has.
+      - Express a title and its qualifier with grammar or hierarchy, keeping every fact.
+      - Keep metadata and status the user filters or decides by, beside the object they affect.
+    decide: [content.key_copy, layout.sections]
+    rules: [copy.formatting-residue, copy.separator-join, copy.decorative-metadata]
+
+  - id: generic-content
+    name: Content that fits anywhere
+    cue: Names, companies, and phrasing could sit on any product - placeholder people, placeholder brands, the first phrasing that comes to mind, comfort wording, and trial terms that nobody set.
+    routes:
+      - Use representative, clearly synthetic content from the domain, including long and local names.
+      - Rewrite around the subject's facts and world_materials instead of swapping synonyms.
+    decide: [content.key_copy, content.source]
+    rules: [copy.placeholder-content, copy.typical-phrasing, copy.stock-reassurance, copy.template-offer-terms]

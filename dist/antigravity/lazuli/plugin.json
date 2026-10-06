@@ -1,0 +1,5 @@
+{
+  "$schema": "https://antigravity.google/schemas/v1/plugin.json",
+  "name": "lazuli",
+  "description": "Local fonts and colors, catalogs, references, and the lazuli CLI"
+}

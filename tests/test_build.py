@@ -87,13 +87,15 @@ def test_a_changed_skill_source_is_drift_and_the_build_removes_what_it_no_longer
     root = make_root(tmp_path, skills=True)
     assert build.main(["--version", VERSION], root=root) == 0
     write_skill(root, "lps-copy", f"name: lps-copy\ndescription: Use for copy in tests.\n{LICENSE_LINE}", "\nNew body.\n")
-    assert problems(root) == [("differs", "dist/skills/lps-copy/SKILL.md"),
+    assert problems(root) == [("differs", "dist/antigravity/lapis/skills/lps-copy/SKILL.md"),
+                              ("differs", "dist/skills/lps-copy/SKILL.md"),
                               ("differs", "plugins/lapis/skills/lps-copy/SKILL.md")]
     shutil.rmtree(root / "src/skills/lps-copy")
     stale = [p for p in problems(root) if p[0] == "extra"]
     assert stale and all("/lps-copy/" in rel for _, rel in stale)
     assert build.main(["--version", VERSION], root=root) == 0
     assert not (root / "dist/skills/lps-copy").exists() and not (root / "plugins/lapis/skills/lps-copy").exists()
+    assert not (root / "dist/antigravity/lapis/skills/lps-copy").exists()
     assert problems(root) == []
 
 
@@ -380,23 +382,28 @@ def test_plugin_skill_copies_equal_the_flat_skills():
     # `npx skills add <checkout>` reads plugins/*/skills through the Claude catalog, the documented
     # install reads dist/skills; both must hand out the same skills with the same bytes.
     files = build.collect(ROOT, VERSION)
-    flat, plugin = {}, {}
+    flat, plugin, antigravity = {}, {}, {}
     for rel, body in files.items():
         if m := re.fullmatch(r"dist/skills/([^/]+)/(.+)", rel):
             flat.setdefault(m[1], {})[m[2]] = body
         elif m := re.fullmatch(r"plugins/[^/]+/skills/([^/]+)/(.+)", rel):
             assert m[1] not in plugin or m[2] not in plugin[m[1]], f"{m[1]} is in two plugins"
             plugin.setdefault(m[1], {})[m[2]] = body
-    assert sorted(plugin) == sorted(flat)
-    assert {s: sorted(c for c in flat[s] if plugin[s].get(c) != flat[s][c]) for s in flat} == {s: [] for s in flat}
-    assert {s: sorted(set(plugin[s]) - set(flat[s])) for s in flat} == {s: [] for s in flat}
+        elif m := re.fullmatch(r"dist/antigravity/[^/]+/skills/([^/]+)/(.+)", rel):      # `agy plugin install` reads these
+            antigravity.setdefault(m[1], {})[m[2]] = body
+    for copy in (plugin, antigravity):
+        assert sorted(copy) == sorted(flat)
+        assert {s: sorted(c for c in flat[s] if copy[s].get(c) != flat[s][c]) for s in flat} == {s: [] for s in flat}
+        assert {s: sorted(set(copy[s]) - set(flat[s])) for s in flat} == {s: [] for s in flat}
 
 
 def _installable_folders(doc: dict) -> list[str]:
     """Every generated folder that a harness can install on its own."""
     return [*(f"plugins/{p['name']}" for p in doc["plugins"]), "plugins/hermes/lapis-lazuli",
             *(f"dist/skills/{s}" for p in doc["plugins"] for s in p["skills"]),
-            *(f"plugins/{p['name']}/skills/{s}" for p in doc["plugins"] for s in p["skills"])]
+            *(f"plugins/{p['name']}/skills/{s}" for p in doc["plugins"] for s in p["skills"]),
+            *(f"dist/antigravity/{p['name']}" for p in doc["plugins"]),
+            *(f"dist/antigravity/{p['name']}/skills/{s}" for p in doc["plugins"] for s in p["skills"])]
 
 
 def test_every_installable_folder_carries_both_license_texts_and_the_notice_byte_for_byte():
@@ -413,8 +420,8 @@ def test_every_generated_skill_and_manifest_states_the_project_license():
     files = build.collect(ROOT, VERSION)
     plugins = harnesses(ROOT)["plugins"]
     skills = {rel: build._split_frontmatter(body, rel)[0].get("license") for rel, body in files.items()
-              if re.fullmatch(r"(dist/skills|plugins/[^/]+/skills)/[^/]+/SKILL\.md", rel)}
-    assert len(skills) == 2 * sum(len(p["skills"]) for p in plugins)
+              if re.fullmatch(r"(dist/skills|plugins/[^/]+/skills|dist/antigravity/[^/]+/skills)/[^/]+/SKILL\.md", rel)}
+    assert len(skills) == 3 * sum(len(p["skills"]) for p in plugins)
     assert set(skills.values()) == {PROJECT_LICENSE}
     manifest = re.compile(r"(plugins/[^/]+/)?(\.claude-plugin/plugin\.json|\.codex-plugin/plugin\.json|package\.json)")
     found = {rel for rel in files if manifest.fullmatch(rel)}
@@ -434,7 +441,9 @@ def test_the_license_comes_from_pyproject_and_every_skill_source_must_agree(tmp_
         for s in p["skills"]:
             write_skill(root, s, f"name: {s}\ndescription: Use for {s} work in tests.\nlicense: Apache-2.0\n")
     files = build.collect(root, VERSION)
-    manifests = [rel for rel in files if rel.endswith(("plugin.json", "package.json"))]
+    # Antigravity's plugin.json has no license key (its schema allows only name and description)
+    manifests = [rel for rel in files if rel.endswith(("plugin.json", "package.json"))
+                 and not rel.startswith("dist/antigravity/")]
     assert manifests and {json.loads(files[rel])["license"] for rel in manifests} == {"Apache-2.0"}
     assert build._split_frontmatter(files["dist/skills/lapis/SKILL.md"], "SKILL.md")[0]["license"] == "Apache-2.0"
 
@@ -475,7 +484,8 @@ def test_every_output_in_harnesses_yaml_is_emitted_at_its_path(tmp_path):
     doc = harnesses(root)
     files = build.collect(root, VERSION)
     owners = {rel: [o["id"] for o in doc["outputs"] if _matches(o["path"], rel, doc, o)] for rel in files}
-    licenses = {f"plugins/{p['name']}/{name}" for p in doc["plugins"] for name in build.LICENSE_FILES}
+    licenses = {f"{root}/{p['name']}/{name}" for root in ("plugins", "dist/antigravity") for p in doc["plugins"]
+                for name in build.LICENSE_FILES}
     assert {rel: ids for rel, ids in owners.items()
             if len(ids) != 1 and rel not in build.INSTALLER_PATHS and rel not in licenses} == {}   # texts: not outputs
     assert {o["id"] for o in doc["outputs"]} == {i for ids in owners.values() for i in ids}
@@ -512,3 +522,42 @@ def test_a_release_version_equal_to_the_previous_tag_is_refused(tmp_path, capsys
     assert build.main(["--version", "0.2.0"], root=root) == 0
 
 
+
+
+def test_antigravity_plugin_folders_are_what_agy_installs():
+    files = build.collect(ROOT, VERSION)
+    doc = harnesses(ROOT)
+    for p in doc["plugins"]:
+        root = f"dist/antigravity/{p['name']}"
+        # the manifest holds exactly what Antigravity's schema allows: no version, license, or hooks
+        assert json.loads(files[f"{root}/plugin.json"]) == {
+            "$schema": "https://antigravity.google/schemas/v1/plugin.json", "name": p["name"],
+            "description": p["description"]}
+        kept = {rel.removeprefix(root + "/").split("/")[0] for rel in files if rel.startswith(root + "/")}
+        wanted = {"plugin.json", "skills", "LICENSE", "LICENSE-docs", "NOTICE",
+                  *({"hooks.json"} if p["name"] == "lapis" else ()),
+                  *({"mcp_config.json"} if p.get("mcp") else ()), *({"agents"} if p.get("agents") else ())}
+        assert kept == wanted, p["name"]
+    # none of the other harnesses' files leaks into the folder agy copies
+    assert not [rel for rel in files if rel.startswith("dist/antigravity/")
+                and re.search(r"(\.claude-plugin|\.codex-plugin|/hooks/|\.mcp\.json|/extensions/|package\.json)", rel)]
+
+
+def test_the_antigravity_critic_keeps_the_body_and_lists_only_file_tools():
+    files = build.collect(ROOT, VERSION)
+    meta, body = build._split_frontmatter(files["dist/antigravity/ultramarine/agents/critic.md"], "critic.md")
+    claude_meta, claude_body = build._split_frontmatter(files["plugins/ultramarine/agents/critic.md"], "critic.md")
+    assert body == claude_body
+    assert meta == {**claude_meta, "tools": ["view_file", "list_dir", "grep_search", "find_by_name", "write_to_file"]}
+    assert not {"run_command", "search_web", "read_url_content", "invoke_subagent"} & set(meta["tools"])
+
+
+def test_the_antigravity_hooks_output_must_list_exactly_the_plugins_with_hooks_it_can_run(tmp_path):
+    root = make_root(tmp_path)
+    path = root / "install/harnesses.yaml"
+    doc = harnesses(root)
+    next(o for o in doc["outputs"] if o["id"] == "antigravity-hooks")["only"] = ["lapis", "lazuli"]
+    path.write_text(yaml.safe_dump(doc, sort_keys=False), encoding="utf-8")
+    # lazuli lists only `session-start`, which Antigravity has no event for
+    with pytest.raises(build.BuildError, match=r"antigravity-hooks lists plugin lazuli, which has nothing for it"):
+        build.collect(root, VERSION)

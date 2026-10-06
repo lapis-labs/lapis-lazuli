@@ -1,0 +1,803 @@
+# LapisLazuli glossary — v0 draft
+# Migrated from the glossary of the previous repository, design-and-frontend (178 terms), plus LapisLazuli terms.
+# Definitions are English; Korean terms appear in the ko field.
+
+version: 0
+entries:
+- id: accessibility
+  term: Accessibility
+  ko: 접근성
+  definition: The quality of enabling people with varied abilities, technologies, and contexts to perceive, understand,
+    navigate, and operate a product.
+- id: accessible-name
+  term: Accessible name
+  ko: 접근 가능한 이름
+  definition: The programmatic name assistive technology uses to identify a control or region.
+- id: affordance
+  term: Affordance
+  ko: 행동유도성
+  definition: What actions an object makes possible; a visible cue for that possibility is a signifier.
+- id: alignment
+  term: Alignment
+  ko: 정렬
+  definition: Placement against shared visual lines so related content reads as an organized system.
+- id: alias-token
+  term: Alias token
+  ko: 별칭 토큰
+  definition: A token that refers to another token, often connecting semantic roles to primitive values.
+- id: analytics
+  term: Analytics
+  ko: 분석 데이터
+  definition: Instrumented product data about recorded behavior; it shows what occurred, not automatically why.
+- id: anti-pattern
+  term: Anti-pattern
+  ko: 안티패턴
+  definition: A recurring solution that appears useful but predictably creates harmful consequences in context.
+- id: archetype
+  term: Archetype
+  ko: 전형
+  definition: A recurring task structure such as a dashboard, checkout, or editor; it is not a visual style.
+- id: art-direction
+  term: Art direction
+  ko: 아트 디렉션
+  definition: Coordinated choices for imagery, type, composition, color, and tone that express a subject-specific
+    direction.
+- id: aspect-ratio
+  term: Aspect ratio
+  ko: 가로세로비
+  definition: The proportional relationship between width and height, such as `16:9`.
+- id: baseline
+  term: Baseline
+  ko: 기준선
+  definition: The line on which type sits; baseline systems can coordinate vertical rhythm across text roles.
+- id: benchmark
+  term: Benchmark
+  ko: 벤치마크
+  definition: A defined comparison point; a synthetic score is useful only when it represents the product decision.
+- id: bento-grid
+  term: Bento grid
+  ko: 벤토 그리드
+  definition: An unequal modular grid for genuinely different content units; not a reason to invent empty cells.
+- id: bleed
+  term: Bleed
+  definition: Visual content extending beyond a trim or container edge; in digital UI it often means edge-to-edge
+    media.
+- id: breakpoint
+  term: Breakpoint
+  ko: 중단점
+  definition: A viewport or container threshold at which layout rules change.
+- id: breadcrumb
+  term: Breadcrumb
+  ko: 이동 경로
+  definition: Hierarchical navigation showing the current location and parent levels.
+- id: brief
+  term: Brief
+  ko: 브리프
+  definition: A compact statement of problem, audience, evidence, desired outcome, and constraints.
+- id: card
+  term: Card
+  ko: 카드
+  definition: A bounded grouping of related content and actions; not a default wrapper for every section.
+- id: card-sorting
+  term: Card sorting
+  ko: 카드 소팅
+  definition: A research method in which participants group or label content to inform information architecture.
+- id: cognitive-load
+  term: Cognitive load
+  ko: 인지 부하
+  definition: Mental effort required to understand, remember, decide, or act; reducing necessary complexity can
+    be harmful.
+- id: color-role
+  term: Color role
+  ko: 색상 역할
+  definition: A semantic use such as surface, text, primary action, success, or danger rather than a raw swatch
+    name.
+- id: column-grid
+  term: Column grid
+  ko: 단 그리드
+  definition: Repeated vertical divisions used to coordinate width, alignment, and spanning.
+- id: component
+  term: Component
+  ko: 컴포넌트
+  definition: A reusable interface unit with defined anatomy, variants, states, semantics, and behavior.
+- id: composition
+  term: Composition
+  ko: 구성
+  definition: Arrangement of visual elements to establish relationships, emphasis, balance, and movement.
+- id: conceptual-model
+  term: Conceptual model
+  ko: 개념 모형
+  definition: A person’s understanding of how a system works and what will happen after an action.
+- id: constraint-frame
+  term: Constraint frame
+  ko: 제약 프레임
+  definition: The protected systems, standards, platform rules, brand decisions, budgets, and regulations a design
+    must respect.
+- id: container-query
+  term: Container query
+  ko: 컨테이너 쿼리
+  definition: A CSS rule that responds to an element’s containing size rather than the whole viewport.
+- id: content-design
+  term: Content design
+  ko: 콘텐츠 디자인
+  definition: Designing information and language so people can understand and complete a task.
+- id: content-model
+  term: Content model
+  ko: 콘텐츠 모델
+  definition: A structured definition of content types, fields, relationships, and rules.
+- id: contrast
+  term: Contrast
+  ko: 대비
+  definition: Perceptual difference between elements; contrast ratio is a specific luminance measure, not a synonym
+    for emphasis.
+- id: conversion
+  term: Conversion
+  ko: 전환
+  definition: Completion of a defined desired action; it must not justify deception or removal of informed choice.
+- id: critique
+  term: Critique
+  ko: 크리틱
+  definition: Evidence-backed comparison between intent and observed execution, separated from personal preference.
+- id: cross-platform
+  term: Cross-platform
+  ko: 크로스 플랫폼
+  definition: A product strategy spanning platforms through shared logic, shared rendering, or coordinated native
+    implementations.
+- id: cta-call-to-action
+  term: CTA, call to action
+  ko: 행동 유도 문구
+  definition: A control or prompt naming the intended next outcome, such as “Save changes.”
+- id: dark-pattern-deceptive-pattern
+  term: Dark pattern / deceptive pattern
+  ko: 다크 패턴 / 기만적 패턴
+  definition: Interface behavior that steers, obstructs, or manipulates people against their informed interests.
+- id: design-debt
+  term: Design debt
+  ko: 디자인 부채
+  definition: Accumulated inconsistency, obsolete patterns, and undocumented exceptions that increase future design
+    and implementation cost.
+- id: design-direction
+  term: Design direction
+  ko: 디자인 방향
+  definition: A coherent proposal connecting subject, audience, type, color, layout, imagery, motion, and tone.
+- id: design-read
+  term: Design Read
+  definition: This skill’s one-line statement of product, surface mode, platform, audience, style, constraints,
+    and V/M/D dials.
+- id: design-system
+  term: Design system
+  ko: 디자인 시스템
+  definition: Shared principles, tokens, components, patterns, documentation, and governance that support repeated
+    product decisions.
+- id: design-token
+  term: Design token
+  ko: 디자인 토큰
+  definition: A named, portable design decision such as a color, dimension, duration, or typography composite.
+- id: dial
+  term: Dial
+  definition: 'A qualitative creative control in this skill: VARIANCE, MOTION, or DENSITY; it is not a quality score.'
+- id: density
+  term: Density
+  ko: 밀도
+  definition: The amount of information and interaction visible in a given area, balanced against targets, grouping,
+    and readability.
+- id: design-qa
+  term: Design QA
+  ko: 디자인 품질 보증
+  definition: Review of implemented interfaces against intended visuals, states, responsive rules, behavior, and
+    access requirements.
+- id: disclosure
+  term: Disclosure
+  ko: 정보 공개
+  definition: Making relevant details, terms, status, or consequences available; progressive disclosure is the narrower
+    timing pattern defined below.
+- id: dtcg
+  term: DTCG
+  definition: The Design Tokens Community Group format for portable typed design-token data.
+- id: dynamic-type
+  term: Dynamic Type
+  ko: 동적 텍스트 크기
+  definition: Apple’s semantic text-scaling system that responds to user-selected content size.
+- id: easing
+  term: Easing
+  ko: 이징
+  definition: The rate curve controlling how an animated value changes over time.
+- id: edge-case
+  term: Edge case
+  ko: 예외 상황
+  definition: A less common but plausible condition at the boundary of content, state, permission, device, or input.
+- id: elevation
+  term: Elevation
+  ko: 고도
+  definition: A system’s representation of layer relationship, often through tone, border, shadow, or platform material.
+- id: empty-state
+  term: Empty state
+  ko: 빈 상태
+  definition: A state explaining absent content and a relevant next action, not merely decorative filler.
+- id: error-prevention
+  term: Error prevention
+  ko: 오류 방지
+  definition: Removing opportunities for mistakes through constraints, defaults, preview, or reversible action.
+- id: error-recovery
+  term: Error recovery
+  ko: 오류 복구
+  definition: Helping a person understand what happened, retain work, and complete or safely exit the task.
+- id: experience-mode
+  term: Experience mode
+  ko: 경험 모드
+  definition: A surface mode centered on immersion, exploration, or presentation of the work.
+- id: f-pattern
+  term: F-pattern
+  definition: A tendency observed in some text-heavy scanning contexts; it is not a universal layout law.
+- id: fidelity
+  term: Fidelity
+  ko: 충실도
+  definition: How closely an artifact represents the aspects of a final experience relevant to the current question.
+- id: figma-variables
+  term: Figma Variables
+  definition: Figma’s system for reusable values and modes; API access and write capability depend on authorization
+    and product gates.
+- id: figure-ground
+  term: Figure/ground
+  ko: 도형과 배경
+  definition: The perceptual separation of a focal object from its surrounding field.
+- id: flow
+  term: Flow
+  ko: 흐름
+  definition: A sequence of states and decisions through which a person pursues an outcome.
+- id: focus-order
+  term: Focus order
+  ko: 초점 순서
+  definition: The sequence in which keyboard focus moves through focusable elements.
+- id: focus-ring
+  term: Focus ring
+  ko: 초점 표시
+  definition: A visible indicator showing which interactive element currently has keyboard focus.
+- id: font-family
+  term: Font family
+  ko: 글꼴 계열
+  definition: A related set of typefaces sharing a design, often with multiple weights, widths, or styles.
+- id: font-weight
+  term: Font weight
+  ko: 글꼴 굵기
+  definition: The stroke-weight role of type, typically represented numerically from light to bold.
+- id: formative-research
+  term: Formative research
+  ko: 형성 연구
+  definition: Research used during framing and development to understand needs and improve a design.
+- id: frame
+  term: Frame
+  ko: 프레임
+  definition: In this skill, the product, platform, style, or constraint lens that determines relevant guidance.
+- id: gestalt-principles
+  term: Gestalt principles
+  ko: 게슈탈트 원리
+  definition: Perceptual tendencies such as proximity, similarity, continuity, closure, and common region used to
+    organize information.
+- id: grid
+  term: Grid
+  ko: 그리드
+  definition: A system of alignment lines, columns, rows, and gaps that coordinates composition.
+- id: guardrail-metric
+  term: Guardrail metric
+  ko: 가드레일 지표
+  definition: A measure monitored to prevent an optimization from causing unacceptable harm elsewhere.
+- id: gutter
+  term: Gutter
+  ko: 거터
+  definition: Space separating columns, rows, or neighboring regions in a grid.
+- id: handoff
+  term: Handoff
+  ko: 인계
+  definition: Transfer of design intent, tokens, states, rules, assets, and acceptance criteria to another contributor
+    or tool.
+- id: headless-component
+  term: Headless component
+  ko: 헤드리스 컴포넌트
+  definition: A behavior and accessibility primitive that leaves most visual styling to the product.
+- id: heuristic
+  term: Heuristic
+  ko: 휴리스틱
+  definition: A useful diagnostic rule of thumb, not a standard or guaranteed law.
+- id: hierarchy
+  term: Hierarchy
+  ko: 위계
+  definition: The ordering of attention and importance through size, weight, contrast, position, spacing, and sequence.
+- id: hit-target-target-size
+  term: Hit target / target size
+  ko: 터치 대상 크기
+  definition: The interactive area available for pointer or touch activation, which may exceed the visible icon.
+- id: information-architecture-ia
+  term: Information architecture, IA
+  ko: 정보 구조
+  definition: Organization, labeling, navigation, and search systems that help people find and understand information.
+- id: information-scent
+  term: Information scent
+  ko: 정보 향기
+  definition: Cues that help someone predict where a link or action will lead.
+- id: interaction-design
+  term: Interaction design
+  ko: 인터랙션 디자인
+  definition: 'Design of behavior over time: input, state, feedback, flow, error prevention, and recovery.'
+- id: interaction-cost
+  term: Interaction cost
+  ko: 상호작용 비용
+  definition: The physical and mental effort required to complete an action or sequence.
+- id: intrinsic-layout
+  term: Intrinsic layout
+  ko: 콘텐츠 기반 레이아웃
+  definition: Layout that responds to content and available space rather than fixed device-specific dimensions.
+- id: journey-map
+  term: Journey map
+  ko: 사용자 여정 지도
+  definition: A representation of a person’s steps, context, goals, pain points, and touchpoints over time.
+- id: jobs-to-be-done-jtbd
+  term: Jobs to Be Done, JTBD
+  definition: A framing of the progress someone seeks in a particular circumstance, rather than a feature or demographic
+    persona.
+- id: kerning
+  term: Kerning
+  ko: 커닝
+  definition: Adjustment of spacing between a particular pair of glyphs.
+- id: leading-line-height
+  term: Leading / line-height
+  ko: 행간
+  definition: Vertical distance between lines of text; in CSS, line-height also shapes the line box.
+- id: legibility
+  term: Legibility
+  ko: 판독성
+  definition: Ease of distinguishing letters, symbols, and words at the rendered size and conditions.
+- id: localization-l10n
+  term: Localization, l10n
+  ko: 현지화
+  definition: Adapting language, formats, content, assets, and behavior for a locale and culture.
+- id: logical-properties
+  term: Logical properties
+  definition: CSS properties such as `margin-inline` that adapt to writing direction and mode.
+- id: material
+  term: Material
+  definition: A coherent visual/behavioral treatment of surfaces and layers; not merely a blur or texture effect.
+- id: measure
+  term: Measure
+  ko: 행 길이
+  definition: The width of a line of text, often discussed in characters for sustained reading.
+- id: mental-model
+  term: Mental model
+  ko: 멘탈 모델
+  definition: A person’s expectation of how a product or task works, formed through experience and cues.
+- id: microcopy
+  term: Microcopy
+  ko: 마이크로카피
+  definition: Short interface text such as labels, helper messages, errors, confirmations, and empty-state guidance.
+- id: microinteraction
+  term: Microinteraction
+  ko: 마이크로인터랙션
+  definition: A small, bounded interaction with trigger, rules, feedback, and loops or modes.
+- id: minimum-viable-prototype
+  term: Minimum viable prototype
+  definition: The smallest representation capable of answering a specific design question; not necessarily product-ready
+    code.
+- id: modal
+  term: Modal
+  ko: 모달
+  definition: A temporary surface that restricts interaction to a focused task until dismissed or completed.
+- id: mode
+  term: Mode
+  ko: 모드
+  definition: A state in which the same input has a different effect; modes require clear visibility and exit behavior.
+- id: moodboard
+  term: Moodboard
+  ko: 무드보드
+  definition: An annotated reference set used to discuss variables and direction, not a design system or copy license.
+- id: motion-choreography
+  term: Motion choreography
+  ko: 모션 연출
+  definition: The coordinated timing and sequence of related interface changes.
+- id: navigation-model
+  term: Navigation model
+  ko: 탐색 모델
+  definition: The structural rules by which people move among destinations, levels, and tasks.
+- id: neutral-ramp
+  term: Neutral ramp
+  ko: 중립색 단계
+  definition: A sequence of low-chroma colors used for surfaces, text, borders, and disabled states.
+- id: nielsen-heuristics
+  term: Nielsen heuristics
+  definition: Ten broad usability principles used for expert evaluation; they are not accessibility conformance
+    criteria.
+- id: non-text-contrast
+  term: Non-text contrast
+  ko: 비텍스트 대비
+  definition: Contrast of meaningful controls, boundaries, states, and graphics rather than text.
+- id: object-model
+  term: Object model
+  ko: 객체 모델
+  definition: Definition of the key entities, attributes, relationships, and actions in a product domain.
+- id: onboarding
+  term: Onboarding
+  ko: 온보딩
+  definition: The path from arrival to first meaningful success, including only necessary orientation and setup.
+- id: operate-mode
+  term: Operate mode
+  ko: 작업 모드
+  definition: A surface mode centered on completing tasks, managing state, and recovering from errors.
+- id: optical-size
+  term: Optical size
+  ko: 옵티컬 사이즈
+  definition: A type design axis adapting letterforms for the intended rendered size.
+- id: persona
+  term: Persona
+  ko: 페르소나
+  definition: A research-grounded model of relevant behaviors and goals; demographic decoration alone is not a persona.
+- id: persuade-mode
+  term: Persuade mode
+  ko: 설득 모드
+  definition: A surface mode helping people understand an offer, build confidence, and decide or act.
+- id: platform-frame
+  term: Platform frame
+  ko: 플랫폼 프레임
+  definition: The operating environment—web, Apple, Android, desktop, cross-platform, or embedded—that owns conventions.
+- id: primitive-token
+  term: Primitive token
+  ko: 기초 토큰
+  definition: A raw reusable value such as a palette step or spacing value before semantic role assignment.
+- id: progressive-enhancement
+  term: Progressive enhancement
+  ko: 점진적 향상
+  definition: Starting with a complete baseline and adding capabilities where the environment supports them.
+- id: progressive-disclosure
+  term: Progressive disclosure
+  ko: 점진적 공개
+  definition: Delaying secondary detail until it becomes relevant without hiding essential status or choices.
+- id: prototype
+  term: Prototype
+  ko: 프로토타입
+  definition: A testable representation built at the fidelity required to answer a defined question.
+- id: proximity
+  term: Proximity
+  ko: 근접성
+  definition: A Gestalt tendency in which nearby items are perceived as related.
+- id: qualitative-research
+  term: Qualitative research
+  ko: 정성 연구
+  definition: Evidence about experiences, motives, language, and breakdowns gathered through observation or open-ended
+    methods.
+- id: quantitative-research
+  term: Quantitative research
+  ko: 정량 연구
+  definition: Numerical evidence about frequency, distribution, relationships, or measured outcomes under a defined
+    method.
+- id: read-mode
+  term: Read mode
+  ko: 읽기 모드
+  definition: A surface mode centered on comprehension, wayfinding, continuity, and resumption.
+- id: readability
+  term: Readability
+  ko: 가독성
+  definition: Ease of understanding extended text as shaped by language, typography, measure, structure, and context.
+- id: redline
+  term: Redline
+  ko: 치수 명세
+  definition: An annotated specification of dimensions, spacing, alignment, and behavior; it should use system tokens
+    where possible.
+- id: reduced-motion
+  term: Reduced motion
+  ko: 모션 줄이기
+  definition: A user preference and design response that removes or replaces nonessential spatial, zoom, rotation,
+    or looping effects.
+- id: reflow
+  term: Reflow
+  ko: 리플로
+  definition: Adaptation that keeps content perceivable and operable at required zoom or narrow-width conditions
+    without loss; applicable standards define the allowed scrolling exceptions.
+- id: responsive-design
+  term: Responsive design
+  ko: 반응형 디자인
+  definition: Layout and behavior that adapt across available sizes, content, input, and user preferences.
+- id: reversal-cost
+  term: Reversal cost
+  ko: 되돌림 비용
+  definition: The effort and coupling involved in changing a decision later.
+- id: rhythm
+  term: Rhythm
+  ko: 리듬
+  definition: Repetition and variation in spacing, type, imagery, or sequence that shapes pacing.
+- id: safe-area
+  term: Safe area
+  ko: 안전 영역
+  definition: Platform-defined space avoiding hardware cutouts, rounded corners, or system UI.
+- id: semantic-html
+  term: Semantic HTML
+  ko: 시맨틱 HTML
+  definition: Native elements selected for meaning and behavior, such as `button`, `nav`, and correctly labeled
+    form controls.
+- id: semantic-token
+  term: Semantic token
+  ko: 의미 토큰
+  definition: A token named for role, such as `color.text.muted`, whose value can change by theme or context.
+- id: service-blueprint
+  term: Service blueprint
+  ko: 서비스 청사진
+  definition: A map connecting user-facing steps with backstage people, processes, systems, and evidence.
+- id: signifier
+  term: Signifier
+  ko: 기표
+  definition: A perceivable cue indicating where or how an action can occur.
+- id: sitemap
+  term: Sitemap
+  ko: 사이트맵
+  definition: A representation of pages or destinations and their hierarchical relationships.
+- id: skeleton-screen
+  term: Skeleton screen
+  ko: 스켈레톤 화면
+  definition: A loading representation that mirrors the incoming content structure rather than displaying generic
+    activity.
+- id: slop
+  term: Slop
+  definition: Contextual shorthand for generic, ungrounded, or carelessly repeated generated conventions; a visual
+    tell alone does not prove authorship.
+- id: spacing-scale
+  term: Spacing scale
+  ko: 간격 체계
+  definition: A named set of reusable spacing values that supports consistent grouping and rhythm.
+- id: state
+  term: State
+  ko: 상태
+  definition: A meaningful condition such as default, hover, focus, active, disabled, loading, empty, error, success,
+    selected, or offline.
+- id: style-frame
+  term: Style frame
+  ko: 스타일 프레임
+  definition: The inherited, named, or undecided visual language governing expression rather than product behavior.
+- id: surface-mode
+  term: Surface mode
+  ko: 화면 모드
+  definition: 'The primary intent of one surface: Persuade, Operate, Read, or Experience.'
+- id: system-image
+  term: System image
+  ko: 시스템 이미지
+  definition: The information a product exposes through appearance and behavior from which people form a conceptual
+    model.
+- id: task-flow
+  term: Task flow
+  ko: 과업 흐름
+  definition: The sequence of decisions, inputs, states, and recovery paths for completing a goal.
+- id: theme
+  term: Theme
+  ko: 테마
+  definition: A coordinated mapping of semantic roles for a mode or brand, such as light, dark, or high contrast.
+- id: token-mode
+  term: Token mode
+  ko: 토큰 모드
+  definition: A named set of alternative values for the same token roles, such as light and dark.
+- id: tracking
+  term: Tracking
+  ko: 자간 조정
+  definition: Uniform spacing adjustment across a range of letters, distinct from pair-specific kerning.
+- id: tree-testing
+  term: Tree testing
+  ko: 트리 테스트
+  definition: A method for evaluating whether people can find items in a text-only hierarchy.
+- id: typography
+  term: Typography
+  ko: 타이포그래피
+  definition: The system of typeface, roles, size, weight, line-height, tracking, measure, and hierarchy.
+- id: usability
+  term: Usability
+  ko: 사용성
+  definition: The extent to which specified people can achieve specified goals effectively, efficiently, and satisfactorily
+    in context.
+- id: usability-testing
+  term: Usability testing
+  ko: 사용성 테스트
+  definition: Observation of representative people attempting realistic tasks with a product or prototype.
+- id: user-flow
+  term: User flow
+  ko: 사용자 흐름
+  definition: A path through screens and states from an entry point toward an outcome; the term should name the
+    specific task.
+- id: user-research
+  term: User research
+  ko: 사용자 조사
+  definition: Ethical inquiry into people, contexts, behaviors, needs, and outcomes using an appropriate method.
+- id: variable-font
+  term: Variable font
+  ko: 가변 글꼴
+  definition: A font file exposing continuous or discrete axes such as weight, width, slant, or optical size.
+- id: variant
+  term: Variant
+  ko: 변형
+  definition: A supported component option such as tone, size, emphasis, or layout, distinct from transient state.
+- id: variance
+  term: Variance
+  ko: 변주도
+  definition: This skill’s dial from conventional/symmetric to experimental; it does not measure quality.
+- id: visual-hierarchy
+  term: Visual hierarchy
+  ko: 시각적 위계
+  definition: The perceivable ordering of importance and reading through visual variables.
+- id: visual-regression
+  term: Visual regression
+  ko: 시각적 회귀
+  definition: An unintended rendered change detected by comparison, review, or screenshot-diff tooling.
+- id: wayfinding
+  term: Wayfinding
+  ko: 길찾기
+  definition: Cues that help people understand location, available routes, and how to return.
+- id: wcag
+  term: WCAG
+  definition: Web Content Accessibility Guidelines; cite the applicable version, success criterion, and conformance
+    level.
+- id: wireframe
+  term: Wireframe
+  ko: 와이어프레임
+  definition: A low- or medium-fidelity representation of content priority, structure, flow, and states.
+- id: z-pattern
+  term: Z-pattern
+  definition: A directional composition heuristic for some sparse left-to-right layouts, not a universal reading
+    law.
+- id: typeface
+  term: Typeface
+  ko: 서체
+  definition: The designed system of letterforms; related styles may be delivered through multiple font files or
+    variable-font instances.
+- id: font-face
+  term: Font face
+  ko: 글꼴 스타일
+  definition: A usable style/weight/width instance within a family; a file can contain several faces or a variable
+    range.
+- id: character-and-glyph
+  term: Character and glyph
+  ko: 문자와 글리프
+  definition: A character is an abstract text unit; a glyph is a rendered shape. Their mapping is not necessarily
+    one-to-one.
+- id: script-and-locale
+  term: Script and locale
+  ko: 문자 체계와 로케일
+  definition: A script is a writing system; a locale adds language/region conventions. Shared Han characters can
+    require different regional glyph forms.
+- id: font-fallback
+  term: Font fallback
+  ko: 대체 글꼴
+  definition: Selection of another face for unavailable families, styles, or glyphs; declared CSS alone does not
+    prove the actual rendered face.
+- id: text-shaping
+  term: Text shaping
+  ko: 텍스트 조형 처리
+  definition: Converting characters into positioned glyphs using script, language, direction, and font features;
+    codepoint coverage alone does not prove correct shaping.
+- id: font-entitlement
+  term: Font entitlement
+  ko: 폰트 사용 권한
+  definition: The permission for a particular acquired artifact and use, such as design output, hosted web delivery,
+    or app embedding; price and installation are separate.
+- id: acquisition-channel
+  term: Acquisition channel
+  ko: 취득 경로
+  definition: The provider/release through which an asset was obtained; preserve its applicable license, version,
+    and notices rather than relying on a family name.
+- id: reserved-font-name-rfn
+  term: Reserved Font Name, RFN
+  ko: 예약 글꼴 이름
+  definition: A name explicitly reserved under the OFL; modification may require renaming unless the relevant permission
+    or exception applies.
+- id: font-embedding
+  term: Font embedding
+  ko: 폰트 임베딩
+  definition: Including font data in a document or application; permissions differ from merely referencing a family
+    already present on a device.
+- id: color-profile
+  term: Color profile
+  ko: 색상 프로파일
+  definition: Information defining how encoded color values map to a color space; identical numeric channels need
+    not mean identical colors across profiles.
+- id: gamut
+  term: Gamut
+  ko: 색역
+  definition: The range of reproducible colors for a space or device; it is distinct from HDR capability and from
+    CSS syntax support.
+- id: compositing
+  term: Compositing
+  ko: 합성
+  definition: Combining foreground and backdrop contributions, including alpha; contrast must account for the resulting
+    visible pair.
+- id: mesh
+  term: Mesh
+  ko: 메시
+  definition: Geometry defined by vertices and connected primitives; mesh complexity is only one part of a 3D asset's
+    delivery and rendering cost.
+- id: pbr-material
+  term: PBR material
+  ko: 물리 기반 재질
+  definition: A model of surface response to light using parameters and textures; lighting, color-space interpretation,
+    and renderer support affect appearance.
+- id: asset-provenance
+  term: Asset provenance
+  ko: 에셋 출처 이력
+  definition: The source, acquired version, rights evidence, transformations, and delivery record for an asset;
+    an aggregator label alone is insufficient.
+- id: characterization-data
+  term: Characterization data
+  ko: 특성화 데이터
+  definition: Measured device control values paired with resulting colorimetry for an output condition; it can inform
+    one or more profiles but is not itself the ICC profile file.
+- id: icc-profile
+  term: ICC profile
+  ko: ICC 프로파일
+  definition: A color-management data structure describing an encoding or transform for a characterized source,
+    display, or output condition; it does not prove that a device is calibrated or a press result is approved.
+- id: perceptual-master
+  term: Perceptual master
+  ko: 지각 기반 마스터
+  definition: The authoritative high-precision authoring values used to control relationships such as lightness,
+    chroma, and hue before target-specific conversion; it is not a delivery file.
+- id: output-rendition
+  term: Output rendition
+  ko: 출력용 결과물
+  definition: A target-specific conversion such as sRGB, Display P3, profiled CMYK, or a proof simulation, derived
+    from a master with its transform assumptions recorded.
+- id: proportional-type
+  term: Proportional type
+  ko: 비례 글꼴
+  definition: Type in which glyph advances vary by character; it can still provide uniformly advanced figures through
+    the `tnum` feature.
+- id: monospaced-family
+  term: Monospaced family
+  ko: 고정폭 글꼴
+  definition: A family designed with a fixed glyph advance; this does not by itself determine Unicode terminal-cell
+    width.
+- id: tabular-figures
+  term: Tabular figures
+  ko: 고정폭 숫자
+  definition: Uniformly advanced numeral alternates, usually selected with OpenType `tnum`, inside a proportional
+    family; they do not make the whole family monospaced.
+- id: json-render-catalog
+  term: json-render catalog
+  definition: The finite model-facing declaration of allowed component names, prop schemas, slots, and actions;
+    it constrains vocabulary but does not implement components or authorize operations.
+- id: json-render-registry
+  term: json-render registry
+  definition: The application-owned mapping from catalog names to concrete renderers and handlers; it does not replace
+    server authorization or design-system governance.
+- id: bu-ri
+  term: Bu-ri (serifed Hangul)
+  ko: 부리
+  definition: Korean term for Hangul typefaces with stroke-start and stroke-end serifs, traditionally called myeongjo
+    or batang.
+- id: min-bu-ri
+  term: Min-bu-ri (sans Hangul)
+  ko: 민부리
+  definition: Korean term for Hangul typefaces without serifs, traditionally called gothic or dotum.
+- id: tal-nemo
+  term: Tal-nemo (non-square Hangul)
+  ko: 탈네모꼴
+  definition: Hangul designs whose syllable blocks do not fill a fixed square, so block heights vary with structure.
+- id: world-materials
+  term: World materials
+  ko: 세계 소재
+  definition: Concrete materials, objects, and vocabulary drawn from the subject that ground design decisions and
+    imagery.
+- id: named-default
+  term: Named default
+  ko: 이름 붙인 기본값
+  definition: A choice models reach for regardless of the brief; plans record a keep or reject decision with a reason
+    whenever one is hit.
+- id: typicality-distance
+  term: Typicality distance
+  ko: 전형성 거리
+  definition: Distance between an output profile and a corpus of unconstrained default outputs, used to detect slop
+    without literal lists.
+distinctions:
+- 'Affordance vs signifier: possibility versus the cue communicating it.'
+- 'Legibility vs readability: recognizing glyphs versus understanding extended text.'
+- 'State vs variant: transient or data condition versus a supported component option.'
+- 'Style vs system: expressive language versus operational tokens, components, behavior, and governance.'
+- 'Responsive vs cross-platform: adaptation within an environment versus strategy across environments.'
+- 'Observation vs inference: directly available evidence versus an interpretation that must remain labeled.'
+- 'Heuristic vs requirement: a diagnostic convention versus a standard, policy, or protected project contract.'
+- 'Characterization data vs ICC profile vs master vs output: measured condition evidence versus a transform description
+  versus the authoritative authoring values versus a target-specific rendition.'
+- 'Proportional vs monospaced vs tabular vs variable: varying glyph advances versus a fixed-advance family versus
+  fixed-width numeral alternates versus a file technology that can vary one or more axes.'
+- 'json-render catalog vs registry: the allowed model-facing vocabulary versus the application-owned implementations
+  and handlers.'
