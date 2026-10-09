@@ -101,8 +101,8 @@ the user-validation requirement in `forms-and-recovery.md`, **Check**.
 ### Korean labels
 
 - Destinations are nouns: 작품, 소성 기록, 예약 내역. The -하기 form (예약하기) belongs to buttons that
-  act. A sentence ending (보러 가요) is copy, not a label, so the register in `content.voice` does not
-  show in navigation.
+  act. A sentence ending (보러 가요) is copy, not a label: a label is compact, so the sentence register in
+  `content.voice` does not show in navigation.
 - Hangul syllables are wide, about 0.85 to 1 em depending on the face, so Korean labels are short in
   characters but not narrow: four syllables at 12 px take about 41 to 48 px, and five bottom-bar
   items on a 360 CSS px screen get about 72 px each. Keep tab labels to two to four syllables and

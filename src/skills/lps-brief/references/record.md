@@ -198,7 +198,7 @@ that will be kept and extended), not a one-off page. Write the proposal into the
 would go. It holds what the brief settled and nothing visual:
 
 - the subject and its one job, the audience, and the situation they arrive in;
-- the voice: register, the words to avoid, the terms to use for the product's own objects;
+- the voice: who speaks to whom, the words to avoid, the terms to use for the product's own objects (the sentence register per role is `lps-copy`'s work);
 - constraints and protected assets: marks, colors, faces, duties, delivery format;
 - visual decisions as open: "decided in the plan's explorations; `lps-system` writes them to `DESIGN.md`
   after the plan".

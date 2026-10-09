@@ -170,7 +170,7 @@ content:
   real_copy: false
   source: Written for this page; every figure, name and price is a labeled placeholder under the page's single fictional-data notice.
   voice:
-    register: en-formal
+    locales: { en: { prose: en-formal } }
     notes: Direct and factual, second person. Describes the mechanism in the product's own terms (snapshot, restore point, recovery kit). Avoids military-grade, unbreakable and 100 percent secure.
   key_copy:
     - { slot: headline, text: Go back to the last clean snapshot., locale: en }

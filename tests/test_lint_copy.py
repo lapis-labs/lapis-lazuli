@@ -78,14 +78,16 @@ def doc(*sections, lang: str = "en", width: int = 1440, derived: bool = True) ->
     return out
 
 
-def plan(key_copy=(), *, locales=("en",), register=None, world=None, claims=None,
+def plan(key_copy=(), *, locales=("en",), register=None, voice=None, world=None, claims=None,
          subject="Online sales for a small pottery studio") -> dict:
     p = {"version": 0, "mode": "repair", "task": {"id": "demo", "title": "Kiln shop"},
          "brief": {"subject": subject, "one_job": "Reserve a piece", "platform": ["web"], "locales": list(locales),
                    "product_frame": "e-commerce"},
          "defaults": [], "content": {"key_copy": [{"slot": s, "text": t} for s, t in key_copy]}}
-    if register:
-        p["content"]["voice"] = {"register": register}
+    if register:        # the sentence register of the register's own language, nothing per role
+        voice = {"locales": {copy_detectors._REGISTER_LANG[register]: {"prose": register}}}
+    if voice:
+        p["content"]["voice"] = voice
     if world:
         p["world_materials"] = list(world)
     if claims:
@@ -115,7 +117,8 @@ COPY_RULES = [(rule["id"], layer) for rule in RULES["rules"] for layer, det in (
               if det["detector"] in {"copy-family-rate", "rhetorical-shell", "construction-rate", "punctuation-density",
                                      "rhythm-variance", "formatting-residue", "separator-shape",
                                      "register-consistency", "placeholder-genericness", "meta-text",
-                                     "name-swap-test", "counterfactual-test"}]
+                                     "name-swap-test", "counterfactual-test", "role-voice", "headline-budget",
+                                     "speaker-anchor"}]
 
 
 @pytest.mark.parametrize("rule_id,layer", COPY_RULES)
@@ -658,6 +661,209 @@ def test_consistent_register_and_nominal_labels():
 def test_japanese_register_mix():
     extract = doc(("other", [r("器はすべて手作りです。"), r("窯出しは九月だ。")]), lang="ja")
     assert "da-dearu" in observed(lint("copy.register-mix", extract=extract, plan=plan(register="desu-masu")))
+
+
+def edit_boxes(extract: dict, box_id: str, **fields) -> dict:
+    """Set box fields (a11y, rect) on a built extract and keep it schema-valid."""
+    for b in extract["viewports"][0]["boxes"]:
+        if b["id"] == box_id:
+            b.update(fields)
+    assert [e.message for e in EXTRACT.iter_errors(extract)] == []
+    return extract
+
+
+VOICE_KO = {"locales": {"ko": {"prose": "hapnida", "by_role": {"headline": "compact", "label": "compact",
+                                                               "action": "compact", "status": "haeyo"}}}}
+
+
+def test_a_role_policy_allows_a_compact_title_a_neutral_action_and_a_friendly_status():
+    """Retry-site wording split on purpose: hapnida facts, an endingless title and button, haeyo operational copy."""
+    status = box(77)
+    extract = doc(("other", [r("선택을 비교하는 화면", "heading"), r("계획과 검사를 하나의 흐름으로 제공합니다."),
+                             r("설치 명령 복사", "ui"), r("설치 명령을 복사했어요.", box=status)]), lang="ko")
+    edit_boxes(extract, status, a11y={"role": "status"})
+    result = lint("copy.register-mix", extract=extract, plan=plan(voice=VOICE_KO))
+    assert result.hits == [] and result.skipped is None
+
+
+def test_a_status_the_page_marks_is_judged_against_the_status_register():
+    status = box(77)
+    extract = doc(("other", [r("계획과 검사를 제공합니다."), r("설치 명령이 복사되었습니다.", box=status)]), lang="ko")
+    edit_boxes(extract, status, a11y={"role": "status"})
+    result = lint("copy.register-mix", extract=extract, plan=plan(voice=VOICE_KO))
+    assert "hapnida" in observed(result) and "plan sets haeyo for status text" in observed(result)
+
+
+def test_a_headline_is_not_judged_against_the_prose_register():
+    extract = doc(("other", [r("예약을 접수합니다.", "heading"), r("사발은 모두 손으로 빚었어요.")]), lang="ko")
+    assert lint("copy.register-mix", extract=extract, plan=plan(register="haeyo")).hits == []
+
+
+def test_a_register_the_plan_sets_for_a_headline_is_enforced():
+    voice = {"locales": {"ko": {"prose": "haeyo", "by_role": {"headline": "hapnida"}}}}
+    extract = doc(("other", [r("예약을 접수해요.", "heading"), r("사발은 모두 손으로 빚었어요.")]), lang="ko")
+    assert "plan sets hapnida for headline text" in observed(lint("copy.register-mix", extract=extract, plan=plan(voice=voice)))
+
+
+def test_hapnida_facts_beside_haeyo_help_are_intentional():
+    voice = {"locales": {"ko": {"prose": "hapnida", "by_role": {"help": "haeyo", "legal": "hapnida"}}}}
+    extract = doc(("other", [r("예약은 이번 주까지 받습니다."), r("날짜를 고르면 시간이 나와요.")]), lang="ko")
+    assert lint("copy.register-mix", extract=extract, plan=plan(voice=voice)).hits == []
+
+
+def test_a_written_definition_is_haera_and_is_not_read_as_a_command():
+    extract = doc(("other", [r("스킬은 화면의 계획을 먼저 쓴다."), r("검사는 렌더된 화면을 읽는다.")]), lang="ko")
+    assert lint("copy.register-mix", extract=extract, plan=plan(voice={"locales": {"ko": {"prose": "haera"}}})).hits == []
+    assert "haera" in observed(lint("copy.register-mix", extract=extract, plan=plan(register="hapnida")))
+
+
+def test_policies_of_two_locales_do_not_overwrite_each_other():
+    voice = {"locales": {"ko": {"prose": "haeyo"}, "en": {"prose": "en-formal"}}}
+    extract = doc(("other", [r("예약을 접수합니다."), r("Bowls from the September firing.", lang="en")]), lang="ko")
+    result = lint("copy.register-mix", extract=extract, plan=plan(locales=("ko", "en"), voice=voice))
+    assert len(result.hits) == 1 and "ko sentences" in result.hits[0].observed and "plan sets haeyo" in result.hits[0].observed
+
+
+def test_a_japanese_noun_title_an_action_and_polite_prose_are_one_policy():
+    extract = doc(("other", [r("予約の確認", "heading"), r("予約を確認", "ui"), r("内容を確認してください。"),
+                             r("器はすべて手作りです。")]), lang="ja")
+    assert lint("copy.register-mix", extract=extract, plan=plan(register="desu-masu")).hits == []
+
+
+def test_quoted_speech_and_a_role_the_page_does_not_set_are_not_classified():
+    extract = doc(("other", [r("“예약했어요.”"), r("예약해요", "ui"), r("예약은 이번 주까지 받습니다.")]), lang="ko")
+    assert lint("copy.register-mix", extract=extract, plan=plan(register="hapnida")).hits == []
+
+
+@pytest.mark.parametrize("text", ["개인정보 수집 필요", "이용 요금 수요", "서비스 중요", "핵심 기능 주요"])
+def test_a_noun_that_ends_in_a_yo_syllable_is_not_a_speech_level(text):
+    assert copy_detectors._register(text, "ko") is None
+
+
+# ---------------------------------------------------------------- role-voice
+
+RETRY_HEADS = ["마크업 첫 줄보다 계획이 먼저예요.", "브리프는 언제 예약하는지부터 물어요.",
+               "휴대폰에는 휴대폰의 순서가 있어요.", "눌러도 아무 일 없는 버튼은 지적 대상이에요."]
+HAEYO_BODY = ["스킬은 계획을 먼저 파일에 남겨요.", "검사는 렌더된 화면을 읽어요.", "계획 파일에 비교한 선택을 적어요."]
+
+
+def test_headlines_that_narrate_in_the_body_register_are_one_voice_in_two_jobs():
+    runs = [r(t, "heading") for t in RETRY_HEADS] + [r(t) for t in HAEYO_BODY] + [r("설치", "ui"), r("소개", "nav")]
+    result = lint("copy.role-collapse", extract=doc(("other", runs), lang="ko"))
+    assert len(result.hits) == 1
+    text = observed(result)
+    assert "headline 4 of 4" in text and "body 3 of 3" in text and "action 0 of 1" in text and "haeyo" in text
+
+
+def test_compact_headlines_over_polite_body_are_a_role_split():
+    heads = ["감각에 근거를", "코드보다 계획 먼저", "계획이 화면이 되는 과정"]
+    result = lint("copy.role-collapse", extract=doc(("other", [r(t, "heading") for t in heads] + [r(t) for t in HAEYO_BODY]), lang="ko"))
+    assert result.hits == [] and result.skipped is None
+
+
+def test_an_instruction_heading_among_compact_titles_is_not_a_collapse():
+    heads = ["예약 내용을 확인해 주세요", "진료 예약", "진료과 선택", "예약 현황"]
+    result = lint("copy.role-collapse", extract=doc(("other", [r(t, "heading") for t in heads] + [r(t) for t in HAEYO_BODY]), lang="ko"))
+    assert result.hits == []
+
+
+def test_too_few_headlines_are_not_judged_for_collapse():
+    result = lint("copy.role-collapse", extract=doc(("other", [r(t, "heading") for t in RETRY_HEADS[:2]] + [r(t) for t in HAEYO_BODY]), lang="ko"))
+    assert result.hits == []
+
+
+def test_japanese_headlines_in_desu_masu_over_desu_masu_body():
+    heads = ["予約はここから始めます。", "器は手作りです。", "窯出しは九月です。"]
+    body = ["器はすべて手作りです。", "予約は今週まで受け付けます。"]
+    result = lint("copy.role-collapse", extract=doc(("other", [r(t, "heading") for t in heads] + [r(t) for t in body]), lang="ja"))
+    assert "ja headlines" in observed(result)
+
+
+# ---------------------------------------------------------------- headline-budget
+
+def test_a_heading_past_its_language_budget_is_a_lead_and_a_short_sentence_is_not():
+    long = "원석을 갈아 만든 안료, 검사가 들여다보는 완성된 작업이에요."
+    result = lint("copy.headline-budget", extract=doc(("other", [r(long, "heading")]), lang="ko"))
+    assert f"is {len(long)} characters, above the 32" in observed(result)
+    short = "마크업 첫 줄보다 계획이 먼저예요."
+    assert lint("copy.headline-budget", extract=doc(("other", [r(short, "heading")]), lang="ko")).hits == []
+
+
+def test_english_headings_count_words():
+    long = "Every file, every version, every device and a way back to the last clean snapshot before it went wrong"
+    assert "words, above the 12" in observed(lint("copy.headline-budget", extract=doc(("other", [r(long, "heading")]))))
+    assert lint("copy.headline-budget", extract=doc(("other", [r("Every file. A way back.", "heading")]))).hits == []
+
+
+def test_an_untagged_bilingual_heading_is_not_measured():
+    mixed = r("빛이 머무는 자리 Where Light Rests in the Quiet Rooms of the Museum", "heading", script="mixed")
+    assert lint("copy.headline-budget", extract=doc(("other", [mixed]), lang="ko")).hits == []
+
+
+def spans_hero(width: int, rows: int, role: str = "display") -> dict:
+    """A title set as five word spans under one heading box, each span a one-line run, spread over `rows` rows."""
+    words = ["LapisLazuli는", "원석을", "갈아", "만든", "안료"]
+    parent = box(900)
+    extract = doc(("other", [r(w, role, parent=parent, parent_role="heading", box_role="text", lines=1) for w in words]),
+                  lang="ko", width=width)
+    for i in range(len(words)):
+        edit_boxes(extract, box(i + 1), rect={"x": 0, "y": (i * rows // len(words)) * 40, "w": 120, "h": 40})
+    return extract
+
+
+def test_word_spans_of_one_title_are_counted_as_the_title_at_a_narrow_width():
+    result = lint("copy.headline-budget", extract=spans_hero(390, 4))
+    assert "wraps to 4 lines at 390 px, above the 3" in observed(result)
+    assert lint("copy.headline-budget", extract=spans_hero(390, 2)).hits == []
+    assert lint("copy.headline-budget", extract=spans_hero(1440, 4)).hits == []
+    assert "above the 2" in observed(lint("copy.headline-budget", extract=spans_hero(390, 3, "heading")))
+
+
+def test_a_single_display_run_is_left_to_the_oversized_display_rule():
+    extract = doc(("other", [r("계획이 먼저예요", "display", lines=5)]), lang="ko", width=390)
+    assert lint("copy.headline-budget", extract=extract).hits == []
+
+
+# ---------------------------------------------------------------- translationese: the report's candidates
+
+def test_a_route_that_names_a_means_is_not_translationese_alone():
+    for one in ("macOS의 Adobe Fonts는 시스템을 통해 목록을 만들고 측정할 뿐, 글꼴 파일을 열지 않아요.",
+                "서로 다른 물질을 통해 보이지 않던 감각을 드러냅니다."):
+        result = lint("copy.translationese", extract=doc(("other", [r(one)]), lang="ko"))
+        assert result.hits == [] and result.skipped is None
+
+
+def test_passive_agent_and_possibility_calques_count_by_density():
+    body = "요청은 시스템에 의해 처리되고, 이 화면을 통해 예약 내역을 변경하는 것이 가능해요."
+    text = observed(lint("copy.translationese", extract=doc(("other", [r(body)]), lang="ko")))
+    assert "~에 의해" in text and "~것이 가능" in text and "~를 통해" in text
+
+
+def test_japanese_nominal_ability_counts_without_する():
+    body = "この画面から予約内容を確認することができます。写真を見ることができます。"
+    assert "することができる" in observed(lint("copy.translationese", extract=doc(("other", [r(body)]), lang="ja")))
+    one = "この画面で予約内容を確認できます。写真を見ることができます。"
+    assert lint("copy.translationese", extract=doc(("other", [r(one)]), lang="ja")).hits == []
+
+
+# ---------------------------------------------------------------- speaker-anchor
+
+RENDER_LEAK = "ultramarine은 내 렌더에 lapis-design을 돌려요."
+
+
+def test_a_first_person_possessive_with_no_speaker_is_a_lead():
+    result = lint("copy.unanchored-speaker", extract=doc(("other", [r(RENDER_LEAK)]), lang="ko"))
+    assert '"내 렌더에' in observed(result)
+    assert '"my render' in observed(lint("copy.unanchored-speaker", extract=doc(("other", [r("The checker runs on my render.")]))))
+
+
+def test_a_declared_user_voice_labels_and_within_are_not_leads():
+    extract = doc(("other", [r(RENDER_LEAK)]), lang="ko")
+    user = {"locales": {"ko": {"prose": "haeyo", "speaker": "user"}}}
+    assert lint("copy.unanchored-speaker", extract=extract, plan=plan(voice=user)).hits == []
+    labels = doc(("other", [r("내 예약", "ui"), r("내 예약", "nav"), r("내 예약 내역", "heading"), r("3일 내 배송해요."),
+                            r("기간 내 취소하면 돌려받아요.")]), lang="ko")
+    assert lint("copy.unanchored-speaker", extract=labels).hits == []
 
 
 # ---------------------------------------------------------------- placeholder-genericness

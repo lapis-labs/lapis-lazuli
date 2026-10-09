@@ -1676,8 +1676,9 @@ rules:
     - source
     - brief
 - id: copy.register-mix
-  why: Honorific or formality registers mix on one surface
-  better: Set the register per surface in the plan and keep it
+  why: Honorific or formality registers mix inside one speaker, role, and locale
+  better: Set the sentence register per locale, and per role where roles differ, in content.voice.locales;
+    headlines, labels, and actions are compact unless the plan says otherwise
   keep_when:
   - id: quoted-speech
     when: quoted speech
@@ -1688,6 +1689,51 @@ rules:
     evidence:
     - source
     - brief
+- id: copy.role-collapse
+  why: Headlines and body copy end in the same sentence register, so a title does the job of a deck and
+    the page reads as one narrator speaking everywhere
+  better: Let a headline name or assert in a compact form, keep the explanation in the deck and body,
+    and compare the headline candidates in the real layout
+  keep_when:
+  - id: conversational-product
+    when: a product whose voice is deliberately conversational and says so in content.voice, with headlines
+      that carry the subject's own claim
+    evidence:
+    - brief
+    - design
+  - id: titled-proposition
+    when: editorial or named titles whose full sentence is the title
+    evidence:
+    - brief
+    - source
+- id: copy.headline-budget
+  why: A heading longer than its language usually holds, or one that wraps past the lines its role keeps
+    on a phone, makes an explanation do a title's job
+  better: Keep the strongest proposition in the heading, move the condition or detail to the deck beside
+    it, and compare two candidates in place
+  keep_when:
+  - id: named-title
+    when: a named editorial or campaign title whose length is the content
+    evidence:
+    - brief
+    - source
+  - id: instruction-heading
+    when: a heading that is a complete instruction, warning, or legal statement
+    evidence: none
+- id: copy.unanchored-speaker
+  why: Running copy says my or 내 with no speaker, so a README's voice or the writer's own session reads
+    as the product's
+  better: Say whose it is - the brand's we, the product's third person, or the visitor's, set as the speaker
+    in content.voice.locales - or name the thing without a possessive
+  keep_when:
+  - id: user-voice-surface
+    when: the surface speaks in the visitor's own words, such as a my-account area, and the plan sets
+      speaker user
+    evidence: none
+  - id: labeled-testimonial
+    when: a labeled customer quotation
+    evidence:
+    - source
 - id: copy.name-swap
   why: The key copy stays true when the product name is swapped for another product, so it says nothing
     specific

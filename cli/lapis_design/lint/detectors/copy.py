@@ -155,7 +155,9 @@ _CONSTRUCTIONS: dict[str, dict[str, re.Pattern]] = {
         r"|(?:" + "|".join(_passive_form_pattern(form) for _, form in _PASSIVE_PAIRS) + r")[\uc9c0-\uc9db\uc838-\uc853]")},
     "~에 있어서": {"ko": re.compile(r"에\s?있어서")},
     "~를 통해": {"ko": re.compile(r"[을를]\s?통(?:해|하여)")},
-    "することができる": {"ja": re.compile(r"することが(?:でき|出来)")},
+    "~에 의해": {"ko": re.compile(r"에\s?의(?:해|하여)")},
+    "~것이 가능": {"ko": re.compile(r"것이\s?가능")},
+    "することができる": {"ja": re.compile(r"(?:する)?ことが(?:でき|出来)")},
     "bei-passive-overuse": {"zh": re.compile(r"被")},
 }
 
@@ -1577,7 +1579,40 @@ def separator_shape(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
     return Result(hits=hits)
 
 
-# ---------------------------------------------------------------- register-consistency
+# ---------------------------------------------------------------- writing roles and register
+
+_COMPACT_ROLES = ("headline", "label", "action")     # no sentence register unless the plan names one for the role
+_STATUS_ARIA = ("alert", "status", "log")
+
+
+def _writing_role(page: _Page, s: _Seg) -> str | None:
+    """The writing role of a run: headline, label, action, status, or body. The extract cannot tell a deck,
+    help text, or legal text from body copy, so those read as body. None for code and data."""
+    if s.role in ("code", "data"):
+        return None
+    if not page.has_roles:
+        return "body"
+    if s.role in ("display", "heading"):
+        return "headline"
+    if s.role == "ui":
+        return "action" if s.control == "button" else "label"
+    if s.role in ("label", "nav") or s.in_nav:
+        return "label"
+    if any((b.get("a11y") or {}).get("role") in _STATUS_ARIA for b in _chain(page.boxes, s.box)):
+        return "status"
+    return "body"
+
+
+def _voice_entry(ctx: Context, det: dict, locale: str) -> dict:
+    """The plan's voice policy for one locale (params.policy is the path to content.voice.locales)."""
+    path = (det.get("params") or {}).get("policy")
+    if ctx.plan and path:
+        from lapis_design.plan_check import resolve
+        for value in resolve(ctx.plan, path):
+            if isinstance(value, dict) and isinstance(value.get(locale), dict):
+                return value[locale]
+    return {}
+
 
 def _register(sentence: str, locale: str | None) -> str | None:
     s = re.sub(r"[\W_]+$", "", unicodedata.normalize("NFKC", sentence))
@@ -1599,21 +1634,38 @@ def _register(sentence: str, locale: str | None) -> str | None:
     return None
 
 
+def _wanted(by_role: dict, prose: str | None, role: str, major: str | None, locale: str) -> tuple[set[str] | None, str]:
+    """The registers a sentence of this role may end in, and the basis to quote; None when the role is not judged.
+    A role the plan sets to `compact`, and a headline, label, or action it sets nothing for, takes no register.
+    Body copy may also end in any register the plan names for the roles the extract reads as body."""
+    own = by_role.get(role)
+    if own == "compact":
+        return None, ""
+    if _REGISTER_LANG.get(own) == locale:
+        return {own}, f"the plan sets {own} for {role} text"
+    if role in _COMPACT_ROLES:
+        return None, ""
+    if prose:
+        want = {prose}
+        if role == "body":
+            want |= {by_role[r] for r in ("deck", "help", "status", "legal") if _REGISTER_LANG.get(by_role.get(r)) == locale}
+        return want, "the plan sets " + "/".join(sorted(want))
+    if major:
+        return {major}, f"most use {major} (the plan sets no {locale} register)"
+    return None, ""
+
+
 @detector("register-consistency", layers=("render",))
 def register_consistency(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
     got = _render_segs(ctx, rule)
     if isinstance(got, Result):
         return got
     page, segs = got
-    expected = None
-    path = (det.get("params") or {}).get("expected")
-    if ctx.plan and path:
-        from lapis_design.plan_check import resolve
-        expected = next((v for v in resolve(ctx.plan, path) if isinstance(v, str)), None)
-    classified: dict[str, list[tuple[str, str, _Seg]]] = defaultdict(list)
+    classified: dict[str, list[tuple[str, str, _Seg, str]]] = defaultdict(list)
     unjudged = set()
     for s in segs:
-        if s.role == "code":
+        role = _writing_role(page, s)
+        if role is None:
             continue
         if s.locale not in _CJK_LOCALES:
             unjudged.add(s.locale or "unknown")
@@ -1621,28 +1673,221 @@ def register_consistency(ctx: Context, det: dict, rule: dict, layer: str) -> Res
         for sent in _sentences(s.text):
             reg = _register(sent, s.locale)
             if reg:
-                classified[s.locale].append((reg, sent, s))
+                classified[s.locale].append((reg, sent, s, role))
     if not classified:
         if unjudged:
             return _unjudged("register classification", unjudged)
         return Result(skipped="no ko, ja, or zh sentence ending to classify")
     hits = []
     for locale, rows in sorted(classified.items()):
-        tally = Counter(r for r, _, _ in rows)
-        want = expected if expected and _REGISTER_LANG.get(expected) == locale else None
-        if want:
-            off = [r for r in tally if r != want]
-            basis = f"while the plan sets {want}"
-        else:
-            major = tally.most_common(1)[0][0]
-            off = [r for r in tally if r != major] if len(tally) >= 2 else []
-            basis = f"while most use {major} (the plan sets no {locale} register)"
-        for reg in off:
-            these = [(sent, s) for r, sent, s in rows if r == reg]
-            hits.append(Hit(observed=f"{len(these)} of {len(rows)} {locale} sentences end in the {reg} register "
-                                     f'{basis}: "{_clip(these[0][0], 60)}"',
+        entry = _voice_entry(ctx, det, locale)
+        by_role = entry.get("by_role") if isinstance(entry.get("by_role"), dict) else {}
+        prose = entry.get("prose") if _REGISTER_LANG.get(entry.get("prose")) == locale else None
+        tally = Counter(reg for reg, *_ in rows)
+        major = tally.most_common(1)[0][0] if len(tally) >= 2 else None
+        off: dict[tuple[str, str], list[tuple[str, _Seg]]] = defaultdict(list)
+        judged = 0
+        for reg, sent, s, role in rows:
+            want, basis = _wanted(by_role, prose, role, major, locale)
+            if want is None:
+                continue
+            judged += 1
+            if reg not in want:
+                off[(reg, basis)].append((sent, s))
+        for (reg, basis), these in off.items():
+            hits.append(Hit(observed=f"{len(these)} of {judged} {locale} sentences end in the {reg} register "
+                                     f'while {basis}: "{_clip(these[0][0], 60)}"',
                             location={**page.loc(ctx), "box": these[0][1].box} if these[0][1].box else page.loc(ctx),
                             refs=list(dict.fromkeys(s.loc["path"] for _, s in these))))
+    return Result(hits=hits)
+
+
+# ---------------------------------------------------------------- role-voice
+
+_VOICE_ROLES = ("headline", "body", "status", "label", "action")
+
+
+@detector("role-voice", layers=("render",))
+def role_voice(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
+    """Leads for review: the headlines of a page speak in the same sentence register as its body copy. The
+    hit carries the ending counts by role; no count is a score, and a page with few headlines is not judged."""
+    th = det.get("threshold") or {}
+    headlines_min = th.get("headlines_min", 3)
+    share_min = th.get("headline_share_min", 0.5)
+    roles_min = th.get("roles_min", 2)
+    got = _render_segs(ctx, rule)
+    if isinstance(got, Result):
+        return got
+    page, segs = got
+    if not page.has_roles:
+        return Result(skipped="text runs carry no type_role, so headlines cannot be told from body copy")
+    runs: dict[str, dict[str, list[tuple[_Seg, str | None]]]] = defaultdict(lambda: defaultdict(list))
+    for s in segs:
+        role = _writing_role(page, s)
+        if role not in _VOICE_ROLES or s.locale not in ("ko", "ja"):
+            continue
+        if not (_HANGUL.search(s.text) or _KANA.search(s.text)):
+            continue
+        regs = Counter(r for sent in _sentences(s.text) if (r := _register(sent, s.locale)))
+        runs[s.locale][role].append((s, regs.most_common(1)[0][0] if regs else None))
+    if not runs:
+        return Result(skipped="no ko or ja text runs to read the sentence endings of")
+    hits = []
+    for locale, by_role in sorted(runs.items()):
+        heads = by_role.get("headline", [])
+        tally = Counter(reg for _, reg in heads if reg)
+        if len(heads) < headlines_min or not tally:
+            continue
+        reg, count = tally.most_common(1)[0]
+        if count / len(heads) < share_min:
+            continue
+        shared = {role: sum(1 for _, r in by_role.get(role, []) if r == reg) for role in _VOICE_ROLES}
+        total = {role: len(by_role.get(role, [])) for role in _VOICE_ROLES}
+        others = [role for role in _VOICE_ROLES[1:] if total[role] >= 2 and shared[role] / total[role] >= share_min]
+        if 1 + len(others) < roles_min:
+            continue
+        histogram = ", ".join(f"{role} {shared[role]} of {total[role]}" for role in _VOICE_ROLES if total[role])
+        first = next(s for s, r in heads if r == reg)
+        hits.append(Hit(observed=f"{locale} headlines and {', '.join(others) or 'no other role'} mostly end in the {reg} "
+                                 f"register, the same sentence shape in different jobs (runs ending in {reg}: {histogram}): "
+                                 f'"{_clip(first.text, 60)}"',
+                        location={**page.loc(ctx), "box": first.box} if first.box else page.loc(ctx),
+                        refs=list(dict.fromkeys(s.loc["path"] for s, r in heads if r == reg))))
+    return Result(hits=hits)
+
+
+# ---------------------------------------------------------------- headline-budget
+
+_NARROW_PX = 600                     # captures narrower than this are judged for lines, as compact-navigation does
+
+
+def _title_groups(vp: dict) -> list[tuple[str, str, list[dict]]]:
+    """Heading and display runs of one viewport as logical headings: the runs under one heading box are one title
+    (a hero set as word spans), as paired-headings groups them. (key, role, runs)."""
+    boxes = {b["id"]: b for b in vp.get("boxes") or [] if isinstance(b, dict) and b.get("id")}
+    groups: dict[str, tuple[str, list[dict]]] = {}
+    for t in vp.get("text") or []:
+        if t.get("type_role") not in ("display", "heading") or not (t.get("text") or "").strip():
+            continue
+        key = next((b["id"] for b in _chain(boxes, t.get("box")) if b.get("role") == "heading"), t.get("box") or "")
+        role, members = groups.setdefault(key, (t["type_role"], []))
+        members.append(t)
+        groups[key] = ("display" if "display" in (role, t["type_role"]) else role, members)
+    return [(key, role, members) for key, (role, members) in groups.items()]
+
+
+def _rendered_lines(vp: dict, members: list[dict]) -> int:
+    """Lines of a logical heading: the rows its boxes occupy, at least the most lines any one run reports."""
+    boxes = {b["id"]: b for b in vp.get("boxes") or [] if isinstance(b, dict) and b.get("id")}
+    rects = sorted((boxes[t["box"]]["rect"] for t in members if (boxes.get(t.get("box")) or {}).get("rect")),
+                   key=lambda q: (q["y"], q["x"]))
+    rows, edge = 0, None
+    for q in rects:
+        if edge is None or q["y"] > edge:
+            rows += 1
+            edge = q["y"] + q["h"] / 2
+        else:
+            edge = max(edge, q["y"] + q["h"] / 2)
+    return max(rows, *(t.get("lines") or 1 for t in members))
+
+
+@detector("headline-budget", layers=("render",))
+def headline_budget(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
+    """Leads for review: a heading longer than its language usually holds, or one that wraps past the lines its role
+    keeps at a narrow capture. Lines are read on the logical heading, so a title set as word spans counts once; a
+    single display run is left to the oversized-display rule."""
+    th = det.get("threshold") or {}
+    chars_max = th.get("chars_max") or {}
+    words_max = th.get("words_max")
+    lines_max = {"display": th.get("display_lines_max"), "heading": th.get("heading_lines_max")}
+    ex = ctx.extract
+    if not ex:
+        return Result(skipped="no render extract given")
+    vps = ex.get("viewports") or []
+    if not any(t.get("text") for vp in vps for t in vp.get("text") or []):
+        return Result(skipped="the render extract stores no copy to measure")
+    fallback = _fallback_locale(ctx)
+    hits, seen, judged = [], set(), 0
+    for vi, vp in enumerate(vps):
+        width = vp.get("width")
+        for key, role, members in _title_groups(vp):
+            text = " ".join(" ".join(t["text"].split()) for t in members)
+            script = members[0].get("script")
+            locale = _locale(script, members[0].get("lang"), fallback)
+            loc = {"viewport": width, "box": key, **({"file": ctx.extract_path} if ctx.extract_path else {})}
+            if text not in seen:
+                seen.add(text)
+                if script in chars_max:
+                    judged += 1
+                    if len(text) > chars_max[script]:
+                        hits.append(Hit(observed=f'{role} heading "{_clip(text, 60)}" is {len(text)} characters, above the '
+                                                 f"{chars_max[script]} a {locale} heading holds",
+                                        location=loc, refs=[key]))
+                elif script == "latn" and words_max:
+                    judged += 1
+                    if len(text.split()) > words_max:
+                        hits.append(Hit(observed=f'{role} heading "{_clip(text, 60)}" is {len(text.split())} words, above the '
+                                                 f"{words_max} a heading holds",
+                                        location=loc, refs=[key]))
+            limit = lines_max.get(role)
+            if (width or 9999) <= _NARROW_PX and limit and not (len(members) == 1 and role == "display"):
+                lines = _rendered_lines(vp, members)
+                if lines > limit:
+                    hits.append(Hit(observed=f'{role} heading "{_clip(text, 60)}" wraps to {lines} lines at {width} px, '
+                                             f"above the {limit} its role keeps",
+                                    location=loc, refs=[key]))
+    if not hits and not judged:
+        return Result(skipped="the render extract has no heading or display run in a script with a length budget")
+    return Result(hits=hits)
+
+
+# ---------------------------------------------------------------- speaker-anchor
+
+_FIRST_PERSON = {
+    "ko": re.compile(r"(?:^|(?<=[\s\"'(]))내\s(?=[\uac00-\ud7a3A-Za-z])"),
+    "en": re.compile(r"\bmy\b", re.I),
+    "ja": re.compile(r"[私僕俺]の"),
+    "zh": re.compile(r"我的"),
+}
+_KO_PARTICLE_END = re.compile(r"[은는이가을를에도의]$")
+
+
+def _first_person(text: str, locale: str | None) -> str | None:
+    """The first first-person possessive in the text. Korean 내 is a possessive only after a particle or at the
+    start: 3일 내 and 기간 내 mean within."""
+    rx = _FIRST_PERSON.get(locale or "")
+    if not rx:
+        return None
+    for m in rx.finditer(text):
+        if locale == "ko":
+            before = text[: m.start()].split()
+            if before and not _KO_PARTICLE_END.search(before[-1]):
+                continue
+        after = text[m.end():].split()[:1]
+        return (m.group(0).strip() + (" " if locale in ("ko", "en") else "") + (after[0][:12] if after else "")).strip()
+    return None
+
+
+@detector("speaker-anchor", layers=("render",))
+def speaker_anchor(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
+    """Leads for review: running copy that says my, with no user voice declared. The speaker is unestablished when
+    the possessive sits in a sentence about a product's behavior; whether it belongs to the visitor, the brand, or
+    the writer's own session is for the reviewer."""
+    got = _render_segs(ctx, rule)
+    if isinstance(got, Result):
+        return got
+    page, segs = got
+    hits = []
+    for s in segs:
+        if s.role in (*_NOT_PROSE, "label") or s.in_nav or _first_person(s.text, s.locale) is None:
+            continue
+        if (_chars(s.text) < 12) if s.locale in ("ja", "zh") else _tokens(s.text) < 4:
+            continue                # a short title such as 내 예약 is the visitor's own area, not a sentence
+        if _voice_entry(ctx, det, s.locale or "").get("speaker") == "user":
+            continue
+        hits.append(Hit(observed=f'{s.where} says "{_first_person(s.text, s.locale)}" and no speaker is set for '
+                                 f'{s.locale} copy: "{_clip(s.text, 60)}"',
+                        location={**page.loc(ctx), "box": s.box} if s.box else page.loc(ctx), refs=[s.loc["path"]]))
     return Result(hits=hits)
 
 

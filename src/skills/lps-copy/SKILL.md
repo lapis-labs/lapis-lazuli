@@ -1,6 +1,6 @@
 ---
 name: lps-copy
-description: Writes and edits interface copy - headlines, calls to action, labels, errors, empty states, consent and pricing text - in the target language with one register per surface, built from the subject's facts instead of sales voice. Use for UI text and microcopy, Korean, Japanese, or Chinese copy, "this sounds generated", and copy passes before code.
+description: Writes and edits interface copy - headlines, decks, calls to action, labels, errors, empty states, consent and pricing text - in the target language, deciding each line's job and speaker before its register, built from the subject's facts instead of sales voice or the writer's own voice. Use for UI text and microcopy, Korean, Japanese, or Chinese copy, "this sounds generated", and copy passes before code.
 license: MIT AND CC-BY-4.0
 ---
 
@@ -31,34 +31,60 @@ add the Korean section as another `--read` when used. This attests the sections 
    users already use. Where it does not exist yet, write synthetic content that is clearly
    synthetic, with long and local names, and say so in `content.source`.
 3. Never present invented metrics, customers, quotes, reviews, or logos as real.
+4. Take facts from a README or a document, never its narrator or its register: a README speaks to
+   a developer, and the chat with the owner is not the product's voice.
 
 ## Set the voice - `content.voice`
 
-- Choose one register per surface and locale. Record the main one in `content.voice.register` -
-  `haeyo` or `hapnida` for Korean, `desu-masu` or `da-dearu` for Japanese, `zh-formal` or
-  `zh-casual`, `en-formal` or `en-casual` - and any split by surface or locale in
-  `content.voice.notes`. Legal, payment, and account text often takes the more formal register of
-  the same product.
+Decide each line's job, then its speaker, then its form. The roles are headline, deck, body, label,
+action, help, status, and legal; read them from the rendered outline when there is one, not from font
+size alone.
+
+- Record the policy per locale in `content.voice.locales.<language>`: `prose`, the sentence register of
+  the roles that carry sentences (Korean `haeyo`, `hapnida`, `haera`; Japanese `desu-masu`, `da-dearu`; Chinese
+  `zh-formal`, `zh-casual`; English `en-formal`, `en-casual`), a `speaker` (`brand`, `product`, `editorial`,
+  `user`) where a page could mistake who speaks, and `by_role` for a role that differs.
+- `compact` is a form, not a speech level: a noun phrase, an action phrase, or an ending left off. Headline,
+  label, and action are compact unless `by_role` says otherwise; the other roles take `prose`. A deliberate
+  difference between roles is not register mixing; keep one policy within a speaker, a role, and a locale.
+  Legal, payment, and account text often keep the more formal register of the same product.
+- `content.voice.notes` is for people: who speaks to whom and why. No check reads it.
 - Name each thing once: the product, the user's objects, the actions. Keep one term per concept
   across screens, and use the project's glossary when there is one.
-- Say who speaks and to whom, in `content.voice.notes`: the product addressing the user, or the
-  user labeling their own action.
-- Decide definition, factual capability, visitor instruction, action label, and status separately.
-  Choose speaker and register by role; labels are not sentences. Copy explains the product for
-  its visitor, not this website's making; design rationale stays in the plan unless requested.
+- Copy explains the product for its visitor, not this website's making; design rationale stays in the
+  plan unless requested.
 
 ## Write in the target language
 
-Write directly in each locale in `brief.locales`. When copy starts in another language, translate
-the meaning, then rewrite it as a native writer would: never ship a line-by-line translation.
+Keep one meaning contract across locales: names, figures, obligations, destinations, recovery, and
+certainty are translated faithfully. Headlines and decks are written again around the same proposition and
+genre; operational and legal copy moves little. Write directly in each locale in `brief.locales`; when
+copy starts in another language, translate the meaning, then rewrite it as a native writer would:
+never ship a line-by-line translation, and carry no line break, character count, or "you" frequency from one
+locale into another.
 
 - **Korean.** Let particles and endings carry the relations, keep the meaningful parts of a
-  sentence, and keep one register per surface.
-- **Japanese.** Keep です・ます and だ・である apart on one surface.
-- **Chinese.** Keep one written register on one surface.
-- **English.** Plain verbs, concrete nouns, sentence case unless the contract says otherwise.
+  sentence, and choose the form by role: a headline may leave its ending off only when it still reads as
+  intentional Korean.
+- **Japanese.** Keep です・ます and だ・である apart in running text; titles are noun phrases and buttons action forms.
+- **Chinese.** Keep one written register for running text.
+- **English.** Plain verbs, concrete nouns, sentence case without a final period on headings unless the contract says otherwise.
 - **Every language.** Read the sentence aloud as a native reader would. A sentence that only makes
   sense when turned back into the language it came from gets rewritten.
+- **Reviewer.** The English and Japanese guidance here has not been read by a proficient reader. Report
+  naturalness, register, and title craft in any locale as unconfirmed until one has read the rendered text.
+
+## Writing pass
+
+After a draft, read the page as if no conversation with the owner existed.
+
+- **Who speaks.** Who is "I", "we", "my", "내"? Unless it is the brand, a labeled quotation, or the visitor
+  in a control that says so, resolve it. A line that reports what you did to build the page belongs in the plan.
+- **Job.** Does the line describe the product, instruct the visitor, or narrate a task list? Read the
+  headings alone, then the buttons alone; if both sound like an assistant reporting, give each its own job.
+- **Headline.** State its proposition, keep the subject, object, scope, and certainty, and move the
+  explanation to the deck beside it. A word that only restates the sentence goes; a meaning never does.
+- **Terms.** Keep a term the visitor needs (finding, critic, world material) and explain it at the right depth.
 
 ## Write key copy - `content.key_copy`
 
@@ -77,17 +103,17 @@ before code, one entry per slot and locale.
    document says about history, origin, naming, or third parties is a claim for the owner to confirm,
    not a fact. Put it in the questions you send as unconfirmed, with the document it came from.
 5. **Two candidates.** For the headline, subhead, and cta, write a second line that comes from a
-   different material or fact and set both in the real layout. Record the pair and why the loser lost
-   in `explorations` (decision `copy`, `covers` the slot); `plan.uncompared-decision` reads that it is there.
+   different material or fact and set both in the real layout, at the narrow and the wide width. Record the pair
+   and why the loser lost in `explorations` (decision `copy`, `covers` the slot); `plan.uncompared-decision` reads that it is there.
 6. **Provisional.** Key copy is provisional until the owner has seen it rendered. Never call it final in
    a spec, an assignment to another agent, or a handoff before then; hand it over as a proposal. After the
    owner approves a rendered slice, an edit to key copy is listed to the owner as a change.
 
 ## Interface text
 
-For the roles a string can have, error and empty-state wording by cause, confirmations, consent and price
-copy, register notes for Korean, Japanese, and Chinese, messages with variables, and what an edit must
-preserve, read `references/interface-copy.md`.
+For the roles a string can have and each role's form, error and empty-state wording by cause, confirmations,
+consent and price copy, headlines and breaks, register notes for Korean, Japanese, and Chinese, translating
+against writing again, messages with variables, and what an edit must preserve, read `references/interface-copy.md`.
 
 The reference opens with a `## Sections` index; read the section for the string being written, found by its heading, not the whole file.
 
@@ -126,10 +152,13 @@ still the default.
 
 Run `lapis-design plan check .lapis/plans/<task>.yaml` after writing key copy; it tests the plan's
 copy. Rendered copy is checked by `lapis-design slop lint` with a render extract, which the
-`ultramarine` skill runs. You wrote the copy, so the critic, not you, judges whether it is earned.
+`ultramarine` skill runs: endings per role against the plan's voice, a headline that speaks in the body's
+register, heading length and lines, an unanchored "my", and translated constructions, each a lead for review.
+You wrote the copy, so the critic, not you, judges whether it is earned.
 
 ## Reporting
 
-Tell the user the register per surface, the key copy in each locale, each copy default kept or
+Tell the user the speaker and form per role and locale, the key copy in each locale, each copy default kept or
 rejected with its route, any claim that needs a source the product has not given, and every statement
 about history, origin, naming, or third parties with the document it came from, for the owner to confirm.
+Say which English or Japanese wording no proficient reader has confirmed.

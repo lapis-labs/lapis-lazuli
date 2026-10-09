@@ -324,7 +324,7 @@ supplied assets, read `references/visual-assets.md`. Use authorized material and
 ### 9. Content - `content`
 
 Use real copy, or synthetic content from the domain that is clearly synthetic - long and local
-names included. Set the voice register per surface. Write key copy (headline, subhead, cta, empty
+names included. Set the voice per locale and role (`content.voice.locales`: sentence register, speaker, compact roles). Write key copy (headline, subhead, cta, empty
 state, error) in the target locale. Test each key line by swapping the product's name for another
 product's: if it stays true, rewrite it around a fact, number, or world material. Write two candidates
 for the headline, subhead, and cta and keep the stronger (`explorations`, decision `copy`). Detailed

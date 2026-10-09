@@ -437,12 +437,19 @@ def check_non_string_keys(plan: Any, plan_file: str) -> list[dict]:
             for path in non_string_key_paths(plan)]
 
 
+_REMOVED_REGISTER = ("content.voice.register was replaced: write content.voice.locales.<language>.prose (the sentence register) "
+                     "and, where a role differs, by_role (compact or a register); see shared/plan/schema.yaml")
+
+
 def check_schema(plan: dict, schema: dict, plan_file: str) -> list[dict]:
     out = []
     try:
         for err in sorted(Draft202012Validator(schema).iter_errors(plan), key=lambda e: list(e.path)):
             loc = "/".join(str(p) for p in err.path) or "(root)"
-            out.append(finding("schema.invalid", "requirement", err.message, blocking=True, create="gate",
+            message = err.message
+            if err.validator == "additionalProperties" and loc == "content/voice" and "'register'" in message:
+                message = f"{message}. {_REMOVED_REGISTER}"
+            out.append(finding("schema.invalid", "requirement", message, blocking=True, create="gate",
                                review="P1", path=loc, file=plan_file))
     except RecursionError:
         return [finding("schema.invalid", "requirement", "plan nesting is too deep to validate",

@@ -63,7 +63,7 @@ layout:
 content:
   real_copy: false
   source: synthetic campground, labeled as sample data on the page
-  voice: { register: haeyo }
+  voice: { locales: { ko: { prose: haeyo, by_role: { headline: compact, action: compact } } } }
   key_copy:
     - { slot: headline, text: "최적의 캠핑 경험을 선사합니다", locale: ko-KR }
     - { slot: cta, text: 계속하기, locale: ko-KR }
