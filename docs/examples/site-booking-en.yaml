@@ -63,7 +63,7 @@ layout:
 content:
   real_copy: false
   source: synthetic campground, labeled as sample data on the page
-  voice: { register: en-casual }
+  voice: { locales: { en: { prose: en-casual } } }
   key_copy:
     - { slot: headline, text: "Elevate your camping experience", locale: en-US }
     - { slot: cta, text: Continue, locale: en-US }

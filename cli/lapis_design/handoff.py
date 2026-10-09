@@ -465,7 +465,7 @@ def _sections(plan: dict, scope: dict, role: str, projection: Projection, report
         ("Composition and components", "\n".join(grouped["Composition and components"]) +
          "\nFollow supplied anatomy, maintained component APIs, route/state, phone transformations, reading/focus order, keyboard and recovery rules. "
          "An absent required rule blocks implementation; return the exact missing input instead of inventing it.\n"),
-        ("Copy", "\n".join(grouped["Copy"]) + "\nUse the supplied locale copy and register; do not invent product facts or unsupported claims. "
+        ("Copy", "\n".join(grouped["Copy"]) + "\nUse the supplied locale copy and its per-role form; do not invent product facts or unsupported claims. "
          "Only explicitly delegated proposed copy is editable.\n"),
         ("Assets and rights", _asset_instructions(projection, plan, scope, acceptance) +
          "\nNo binaries, base64, font files/tables/outlines, private receipts or account access travel. "

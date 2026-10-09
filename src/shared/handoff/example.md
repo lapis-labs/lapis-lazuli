@@ -199,13 +199,13 @@ Canonical address: /explorations
   covers:
   - headline
   candidates:
-  - name: 9월 소성분, 스물네 점이 나왔어요
+  - name: 9월 소성분 스물네 점
     source: firing log sheet
   - name: 이달의 도자기를 만나보세요
     source: generic
   compared_on:
   - specimen
-  chosen: 9월 소성분, 스물네 점이 나왔어요
+  chosen: 9월 소성분 스물네 점
   runner_up_lost: the second line fits any shop; the first names the month and the
     count only this firing has
 - decision: copy
@@ -565,17 +565,25 @@ Canonical address: /content
 ```yaml
 real_copy: true
 voice:
-  register: haeyo
+  notes: The studio speaks to a visitor; the headline names the firing and is not a sentence.
+  locales:
+    ko:
+      prose: haeyo
+      speaker: brand
+      by_role:
+        headline: compact
+        label: compact
+        action: compact
 key_copy:
 - slot: headline
-  text: 9월 소성분, 스물네 점이 나왔어요
+  text: 9월 소성분 스물네 점
   locale: ko-KR
 - slot: cta
   text: 예약하기
   locale: ko-KR
 ```
 
-Use the supplied locale copy and register; do not invent product facts or unsupported claims. Only explicitly delegated proposed copy is editable.
+Use the supplied locale copy and its per-role form; do not invent product facts or unsupported claims. Only explicitly delegated proposed copy is editable.
 
 
 ## Assets and rights

@@ -1514,9 +1514,21 @@ references:
   - kind: practice
     name: Anthropic frontend-design skill, anthropics/claude-plugins-official at ab024cd (Apache-2.0), copy guidance
     used_for: Words that serve the user's next decision, without reassurance or narration of the interface. Rewritten; no text copied. Choosing a dashboard's measures from the operator's decisions, and the flow that narrates its next step, come from the blind evaluation of 2026-10-04
-  skill_body_pointer: For the roles a string can have, error and empty-state wording by cause, confirmations,
-    consent and price copy, register notes for Korean, Japanese, and Chinese, messages with variables, and what
-    an edit must preserve, read `references/interface-copy.md`.
+  - kind: practice
+    name: Wording research of 2026-10-09 (maintainers' internal report; sources read the same day - KRDS detailed-information and
+      button components, Toss writing principles and its miniapp UX writing guide, the Karrot SEED writing document, the
+      National Institute of Korean Language Q&A on 이해됩니다 and 확인됩니다, the fluent-korean and im-not-ai pattern
+      inventories, Microsoft and Google heading and global-audience style guides, the Japan Digital Agency heading and
+      typography pages, SmartHR UI text, CSS Text Level 3 word-break)
+    used_for: The role table (headline, deck, body, label, action, help, status, legal), compact as a form and not a speech
+      level, the writing pass (speaker, session leakage, source narrator), headline compression, breaks and joins, and the
+      translate-or-write-again contract. Decision types and failure patterns only; no name or wording reaches the text.
+      Toss mandates 해요체 for its own miniapps and Karrot lets automatic messages take 니다; neither is a universal Korean
+      voice, so the text states neither. The English and Japanese guidance has no proficient reader (see verify_before_release).
+  skill_body_pointer: For the roles a string can have and each role's form, error and empty-state wording by cause,
+    confirmations, consent and price copy, headlines and breaks, register notes for Korean, Japanese, and Chinese,
+    translating against writing again, messages with variables, and what an edit must preserve, read
+    `references/interface-copy.md`.
   resolved_2026_09_29:
   - 'Register names follow the plan enum (haeyo, hapnida, haera, desu-masu, da-dearu, zh-formal, zh-casual,
     en-formal, en-casual, other). The source''s 하십시오체 and 합니다체 are written hapnida; zh-casual and
@@ -1562,13 +1574,20 @@ references:
   - 'The Korean lines corrected on 2026-09-30 (the cancel confirmation, the unknown-outcome line, the no-results line,
     the landing line, the saved-state line, and the error example): the maintainer confirmed the earlier wording, not
     these; a native Korean reader checks them before release.'
-  - 'Checker behavior quoted in the text: copy.register-mix reading sentence endings against content.voice.register
-    (never the notes), skipping quoted speech and endingless labels, and not knowing legal text; copy.vague-cta reading
-    a whole control label and duplicate labels (gate); copy.name-swap on headline, subhead, and other;
-    copy.translationese counting by density the constructions named in the text; copy.fabricated-proof and an opening
-    quotation mark; the states probe inducing error, offline, empty, and partial states, the forms probe reading field
-    errors, and the commits probe reading success and failure claims and confirmations. Keep interface-copy.md in step
-    if these change.'
+  - 'Checker behavior quoted in the text (2026-10-09): copy.register-mix reading sentence endings per locale and role against
+    content.voice.locales (never the notes), skipping compact roles, quoted speech, and endingless labels, accepting for body
+    the registers the plan names for deck, help, status, and legal because the extract reads those as body, and not knowing
+    legal text otherwise; copy.role-collapse, copy.headline-budget, and copy.unanchored-speaker as P3 leads; copy.vague-cta
+    reading a whole control label and duplicate labels (gate); copy.name-swap on headline, subhead, and other;
+    copy.translationese counting by density the constructions named in the text (five in Korean, ことができる with or
+    without する in Japanese); copy.fabricated-proof and an opening quotation mark; the states probe inducing error, offline,
+    empty, and partial states, the forms probe reading field errors, and the commits probe reading success and failure
+    claims and confirmations. Keep interface-copy.md in step if these change.'
+  - 'Korean lines added on 2026-10-09 and not confirmed by a native Korean reader: the role table examples, the four-genre
+    table (a consumer booking, an exhibition, a public service, a developer product), the headline candidates
+    휴대폰에 맞는 정보 순서 and 동작하지 않는 버튼도 검사, the leak repair 렌더된 화면과 동작을 검사해요, and the
+    kiln-shop deck. English and Japanese guidance added the same day (role forms, noun titles and action buttons, ことができる
+    without する, the translate-or-write-again table) has had no proficient English or Japanese reader.'
   verified_2026_09_30:
   - 'The known checker gap in the states probe is closed: probes/states.py now takes its problem and retry words from
     probes/_decision.py, which include Korean (오류, 실패, 다시 시도, 새로고침, and others), and

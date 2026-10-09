@@ -116,7 +116,7 @@ for `lapis` and `ultramarine`; `lazuli` runs lookups.
 | `lapis` | `lapis` | Plans new interfaces, redesigns, and visual direction before code, in a plan file the CLI checks. |
 | | `lps-brief` | Gets the facts a distinctive design needs before the plan: reads, looks things up, asks at most six questions a round, and records what was found, said, and assumed. |
 | | `lps-ux` | Designs flows, states, and navigation so they work and recover, then writes the stub that lets them be checked. |
-| | `lps-copy` | Writes interface copy from the subject's facts, in the target language, with one register per surface. |
+| | `lps-copy` | Writes interface copy from the subject's facts, in the target language, with each line's job and speaker decided before its register. |
 | | `lps-system` | Turns a plan's decisions into a design system: OKLCH color ramps, type scale, spacing, motion, themes, `DESIGN.md`. |
 | `ultramarine` | `ultramarine` | Checks interfaces that exist: render capture, behavior probes, slop lint, and a separate critic. |
 | | `ulm-maintain` | Maintains an existing frontend (refactors, upgrades, performance, design debt) in small checked steps from a captured baseline. |

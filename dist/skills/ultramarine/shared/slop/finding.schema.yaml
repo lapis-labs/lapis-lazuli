@@ -180,7 +180,7 @@ $defs:
     properties:
       rule_id: { type: string }                      # a rules.yaml id, a built-in check id (schema.*, contract.*, font.*, reference.*, flow.*,
                                                     # release.* from release/GATE.md), or a critic judgement no rule covers
-                                                    # (review.counterfactual, review.world-materials, review.package-drift, review.task-walkthrough, review.making-of)
+                                                    # (review.counterfactual, review.world-materials, review.package-drift, review.task-walkthrough, review.making-of, review.wording)
       class: { enum: [requirement, quality, default, contract] }
       severity:
         type: object

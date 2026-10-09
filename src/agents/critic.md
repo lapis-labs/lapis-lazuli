@@ -178,6 +178,25 @@ Work through these in order. Lint findings already report what they observed; do
    `{create: warn, review: P3}`, `blocking: false`). Product copy addresses the visitor's subject and task; design rationale
    belongs in the plan, unless a requirement row asks for it on this page. A product about design can still describe its
    capabilities without replacing them with the implementation choices of its own website.
+9. **Wording.** Read the rendered text as a native reader would, with the plan's `content.voice` beside it, and
+   answer what no lint rule decides. Report each unearned answer as `review.wording` (class `default`, severity
+   `{create: warn, review: P3}`, `blocking: false`), naming the role and the locale:
+   - Read the headlines alone, then the buttons alone. Does each have its own job, or do all of them sound like
+     one narrator describing a task? Is a sentence doing a title's job - an explanation promoted into a headline
+     slot, a definition styled as a title, a deck that holds several sections?
+   - Who is "I", "we", "my" in each line, and is the speaker the one the plan sets? Does any line report how
+     the page was made, or sound like the maker's chat with the owner or a README's narrator?
+   - Does the information promoted into the headline and the deck carry the page's decision, or only the product's
+     own internals? Is a headline's strength the source's strength: nothing that was possible made certain, no
+     absolute guarantee, no obligation made advice?
+   - Does each Korean, Japanese, or Chinese line read as written in that language, or as a translation: a
+     compressed relation whose owner is unclear, an abstract actor with a long modifier chain, a pronoun the
+     language would drop, a stock rhetorical pair? A single construction that names a real route is not a defect.
+   - Where English and Japanese share a headline with another page or arm, is the phrase stock rather than
+     specific to this subject? Say plainly that naturalness there is unconfirmed unless a proficient reader has
+     read it, and never turn a missing reader into a pass.
+   - At the narrowest capture, does a line break split a word, a particle from its noun, a name, or a number from
+     its unit? Does the text a reader copies or hears match the text shown?
 
 Compare beneath the finish: content priority, evidence, role assignment, imagery, and action.
 Paper colors and a serif replacing luminous gradients, or hard shadows replacing round cards,
@@ -234,8 +253,8 @@ What goes in the fields:
 
 - `rule_id`, `class`, `severity`: the rule you judged, with the class and severity its lint finding
   carries. The name-swap test is `copy.name-swap` (quality). A judgement no rule covers uses
-  `review.counterfactual`, `review.world-materials`, or `review.package-drift`, with class `default`
-  and severity `{create: warn, review: P3}`.
+  `review.counterfactual`, `review.world-materials`, `review.package-drift`, or `review.wording`, with class
+  `default` and severity `{create: warn, review: P3}`.
 - `observed`: what is visible or measured; `location`: viewport, box id, or plan path.
 - `context`: `verdict` (earned, unearned, or unknown) and `basis`, why here.
 - `consequence`: the effect on the reader or the task.

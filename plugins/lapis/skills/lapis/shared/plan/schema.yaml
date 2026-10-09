@@ -206,11 +206,26 @@ properties:
     properties:
       real_copy: { type: boolean }
       source: { type: string }
+      # Who speaks and in which form, per locale and writing role. `prose` is the sentence register of the
+      # roles that carry sentences (deck, body, help, status, legal). `by_role` overrides one role; `compact`
+      # is a form, not a speech level: a noun phrase, an action phrase, or an ending left off. A role that
+      # names no entry keeps its ordinary form: headline, label, and action are compact, the others take `prose`.
+      # Checks read this and never `notes`. `speaker` says who the sentences speak as.
       voice:
         type: object
+        additionalProperties: false
         properties:
-          register: { enum: [haeyo, hapnida, haera, desu-masu, da-dearu, zh-formal, zh-casual, en-formal, en-casual, other] }
-          notes: { type: string }
+          notes: { type: string }                   # who speaks to whom and why, for writers and reviewers
+          locales:
+            type: object
+            minProperties: 1
+            propertyNames: { pattern: "^[a-z]{2,3}$" }
+            additionalProperties: { $ref: "#/$defs/voice_locale" }
+            properties:
+              ko: { $ref: "#/$defs/voice_locale_ko" }
+              ja: { $ref: "#/$defs/voice_locale_ja" }
+              zh: { $ref: "#/$defs/voice_locale_zh" }
+              en: { $ref: "#/$defs/voice_locale_en" }
       key_copy:
         type: array
         items:
@@ -441,6 +456,54 @@ allOf:
 
 $defs:
   strings: { type: array, items: { type: string } }
+  # Voice policy of one locale (content.voice.locales). The four languages below narrow the registers to
+  # that language; any other locale takes the general enums.
+  voice_speaker: { enum: [brand, product, editorial, user] }   # we, the product's own third person, a writer's voice, the user's own words
+  voice_roles:
+    type: object
+    additionalProperties: false
+    properties:
+      headline: { $ref: "#/$defs/voice_role_any" }
+      deck: { $ref: "#/$defs/voice_role_any" }
+      body: { $ref: "#/$defs/voice_role_any" }
+      label: { $ref: "#/$defs/voice_role_any" }
+      action: { $ref: "#/$defs/voice_role_any" }
+      help: { $ref: "#/$defs/voice_role_any" }
+      status: { $ref: "#/$defs/voice_role_any" }
+      legal: { $ref: "#/$defs/voice_role_any" }
+  voice_role_any: { enum: [compact, haeyo, hapnida, haera, desu-masu, da-dearu, zh-formal, zh-casual, en-formal, en-casual, other] }
+  voice_locale:
+    type: object
+    additionalProperties: false
+    required: [prose]
+    properties:
+      prose: { enum: [haeyo, hapnida, haera, desu-masu, da-dearu, zh-formal, zh-casual, en-formal, en-casual, other] }
+      speaker: { $ref: "#/$defs/voice_speaker" }
+      by_role: { $ref: "#/$defs/voice_roles" }
+  voice_locale_ko:
+    allOf:
+      - { $ref: "#/$defs/voice_locale" }
+      - properties:
+          prose: { enum: [haeyo, hapnida, haera, other] }
+          by_role: { additionalProperties: { enum: [compact, haeyo, hapnida, haera, other] } }
+  voice_locale_ja:
+    allOf:
+      - { $ref: "#/$defs/voice_locale" }
+      - properties:
+          prose: { enum: [desu-masu, da-dearu, other] }
+          by_role: { additionalProperties: { enum: [compact, desu-masu, da-dearu, other] } }
+  voice_locale_zh:
+    allOf:
+      - { $ref: "#/$defs/voice_locale" }
+      - properties:
+          prose: { enum: [zh-formal, zh-casual, other] }
+          by_role: { additionalProperties: { enum: [compact, zh-formal, zh-casual, other] } }
+  voice_locale_en:
+    allOf:
+      - { $ref: "#/$defs/voice_locale" }
+      - properties:
+          prose: { enum: [en-formal, en-casual, other] }
+          by_role: { additionalProperties: { enum: [compact, en-formal, en-casual, other] } }
   path_or_null: { oneOf: [ { type: "null" }, { type: string } ] }
   pointer: { type: string, pattern: "^(/([^~/]|~[01])*)+$" }
   local_path: { type: string, pattern: "^(?!/)(?!.*\\\\)(?!.*(^|/)\\.\\.(/|$))[^\\0]+$" }

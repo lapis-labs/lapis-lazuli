@@ -50,7 +50,7 @@ def project(tmp_path):
                                       "before_result": ["piece list"],
                                       "acceptance": "The first available piece and its reserve action show before any studio story"},
                        "sections": [{"id": "pieces", "archetype": "list", "answers": "Which piece is available"}]},
-            "content": {"real_copy": True, "voice": {"register": "haeyo"}, "key_copy": [
+            "content": {"real_copy": True, "voice": {"locales": {"ko": {"prose": "haeyo"}}}, "key_copy": [
                 {"slot": "cta", "text": "예약하기", "locale": "ko-KR"},
                 {"slot": "error", "text": "예약하지 못했어요. 다시 시도해 주세요", "locale": "ko-KR"}]},
             "flows": [{"id": "reserve", "kind": "primary", "goal": "Reserve once and see the number",

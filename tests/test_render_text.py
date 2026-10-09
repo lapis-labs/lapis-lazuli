@@ -253,6 +253,20 @@ def test_density_unions_ink_with_media_and_control_boxes():
     assert result['density'] == .0038  # 28 px covered in line row plus 10 px button.
 
 
+def test_a_line_break_between_text_nodes_is_a_space_in_the_run(browser, render_server, tmp_path):
+    """The run kept `감각에근거를` for `감각에<br>근거를`: adjacent text nodes of one run were joined with nothing between
+    them, so a forced break fused two words in the stored text, in every check that reads it."""
+    with pytest.MonkeyPatch.context() as monkeypatch:
+        monkeypatch.setattr(fields, 'FIELD_MODULES', (text,))
+        vp = capture(browser, f'{render_server}/text-breaks.html', _configs(False, [390])[0],
+                     tmp_path / 'breaks.png', bytes(range(32)))
+    texts = [run['text'] for run in vp['text']]
+    assert '감각에 근거를' in texts
+    assert '첫 줄 둘째 줄 ' in texts
+    assert 'one two three' in texts
+    assert 'already spaced' in texts
+    assert not any(fused in ''.join(texts) for fused in ('감각에근거를', 'onetwo', 'already  spaced'))
+
 def test_text_pass_capture_duration(measured):
     _, duration = measured
     print(f'text pass per-capture: {duration:.3f}s')

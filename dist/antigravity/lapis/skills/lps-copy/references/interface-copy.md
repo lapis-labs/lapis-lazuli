@@ -4,7 +4,7 @@
 
 Read the section for the string being written, by heading; the rest are other strings.
 
-- One owner for every string: which string answers which reader question, and who owns it
+- One owner for every string: each line's role, form, speaker, length, and who owns it
 - Decide what the screen must show: the information before the words - the decision the reader makes next, what the genre always shows, what a dashboard counts, and a flow that narrates itself
 - Labels, buttons, and fields: naming controls, fields, and headings
 - Errors: what an error names, and what it keeps
@@ -13,47 +13,59 @@ Read the section for the string being written, by heading; the rest are other st
 - Consent, price, and leaving: price, renewal, consent, and cancellation wording at the decision
 - Claims, proof, and real content: the strength a claim may state and the fact behind it
 - Preserve the proposition when editing: routing a complaint before rewriting copy
-- Register and language: the one register value and notes; then the section for the language you write in
-- Korean: register levels (haeyo and others), honorific and wording conventions
-- Japanese: politeness level (desu-masu or da-dearu) and script mix
+- Reject the writer's own voice: whose "I" is on the page, session narration, and source wording that is not the product's
+- Headlines: compress the proposition, not the ending; breaks and joins
+- Register and language: the voice policy per locale and role; then the section for the language you write in
+- Korean: register levels, role forms across genres, honorific and wording conventions
+- Japanese: politeness level (desu-masu or da-dearu), role forms, and script mix
 - Chinese: script and region first, vocabulary by market, punctuation
+- Translate, or write again: the meaning contract and what each locale rewrites
 - One state in four languages: one state written in English, Korean, Japanese, and Chinese
 - Messages with variables, numbers, and dates: whole messages per case, plurals, dates
 - One voice, one term per thing: voice and terminology across the product
 - The kiln shop: the worked copy example
 - Check: the copy rules `plan check` and lint apply
 
-This file backs the skill's **Interface text** and the plan's `content`: `content.voice` (register and
-notes) and the `content.key_copy` slots `cta`, `nav`, `empty-state`, and `error`. Where a message
-appears, how long it stays, what is announced, and where focus goes belong to the `lps-ux` skill; this
+This file backs the skill's **Interface text** and the plan's `content`: `content.voice` (the speaker and the form
+of each role, per locale, and notes) and the `content.key_copy` slots `cta`, `nav`, `empty-state`, and `error`. Where a
+message appears, how long it stays, what is announced, and where focus goes belong to the `lps-ux` skill; this
 file decides the words, the register, and the facts the words may state. Examples continue the example
-plan's pottery shop: one firing of twenty-four pieces, reserved mostly on phones, in ko-KR in the `haeyo`
-register, with Japanese and Chinese candidates where a second locale shows the same decision. Product
+plan's pottery shop: one firing of twenty-four pieces, reserved mostly on phones, in ko-KR with `haeyo`
+sentences, with Japanese and Chinese candidates where a second locale shows the same decision. Product
 facts in the examples are synthetic; a real project supplies its own.
 
 ## One owner for every string
 
 A string earns its place by answering a question the reader has on this surface, in this state. Name
-its role before writing it; each role has one place and one test.
-Separate the product's definition, factual capabilities, and the visitor's actions before choosing
-endings. Record the speaker and grammatical role in `content.voice.notes`: the product states what
-it is or can do; the visitor labels an action; an instruction asks that visitor to do something.
-Choose register for the sentences of each role/surface, with a deliberate split documented when
-needed. A compact label has no sentence ending and does not conflict with a polite product voice.
+its role before writing it; each role has one place, one test, and its own form. Read the rendered
+outline, not the markup: a paragraph can be a deck, a heading can be a dialog's instruction, and font
+size alone does not name a role.
 
-| Role | Visitor question | Korean example (synthetic facts) |
-|---|---|---|
-| Product definition | What is this product? | 코딩 에이전트를 위한 디자인 스킬 |
-| Factual capability | What does it actually do? | 비교한 선택과 탈락 이유를 계획에 남겨요. |
-| Visitor instruction | What must I do here? | 설치 명령을 터미널에서 실행해 주세요. |
-| Visitor action label | Which action/result do I choose? | 설치 명령 복사 |
-| Status | What changed after my action? | 설치 명령을 복사했어요. |
+Choose the form of each role, then the register of the roles that carry sentences. `compact` is a form,
+not a speech level: a noun phrase, an action phrase, or an ending left off, and it never conflicts with a
+polite product voice. The plan's `content.voice.locales.<language>` holds `prose` (the register of deck, body,
+help, status, and legal), an optional `speaker`, and `by_role` where a role differs. Say who speaks only where
+the page could mistake it: the product states what it is or can do, the visitor labels an action, an
+instruction asks the visitor, and a disclosure speaks for the maker.
 
-The examples distinguish roles, not a mandatory suffix or product slogan. Keep the real subject,
-facts, and claim strength. Page copy explains the subject/product for the visitor; this website's
-own font, palette, layout, and workflow rationale belongs in the plan unless the brief asks to show
-it. A design product may explain typography as a capability, but the site's font pairing alone is
-not an example of that product's actual output. Review the rendered text for that substitution.
+| Role | Visitor question | Form (Korean) | Length and composition | Never lose |
+|---|---|---|---|---|
+| Headline, display | What is this, or what does it claim? | a content name, a compact proposition, a noun phrase, an ending left off; a full sentence when the genre or the claim earns it | one proposition, set to fit its narrow block | object, contrast, scope, certainty |
+| Deck, summary | What is it, and for whom? | a full explanation in the publication's register, not the chat's | definition first, one or two short sentences; implementation detail goes to the body | what the product is, whom it serves, the material qualification |
+| Body | What does it do, and how? | the publication's register: consumer guidance, formal service facts, or an article's written form | paragraphs that each make a move; no quota of short sentences | qualifications, transitions, facts |
+| Label, navigation | What is this thing or place? | a noun or status phrase, an ordinary compact action; no speech-level ending | identifiable at a glance, parallel with its peers | the term; visible and accessible names agreeing |
+| Action (button) | What happens if I choose this? | the outcome as an action phrase: 설치 명령 복사, 예약 내용 확인, 삭제; never stretched into 복사해요 to sound friendly | fits the control, tells different outcomes apart | object, destination, consequence |
+| Instruction, help | What must I do here? | addressed to the visitor: 해 주세요, 선택하세요 | one task at a time; longer when it prevents an error | the required format or condition, the actor, the object |
+| Error, status | What happened, and what now? | the surface's operational voice; a compact diagnosis as the title, a sentence as the detail | the cause or state and a way forward | kept work, the actual outcome, uncertainty, recovery |
+| Legal, consent, price | What am I agreeing to, or paying? | the approved legal register, never converted from help text | no cosmetic ceiling; hierarchy and disclosure carry the length | obligation, possibility, price, renewal, refusal rights |
+
+The table sets starting points, not required fields: the same polite register may serve several roles while
+naming, acting, and narrating keep their own forms, and no role is made different only to look varied. Changing
+`haeyo` to `hapnida` alone repairs no hierarchy. Keep the real subject, facts, and claim strength. Page copy
+explains the subject or product for the visitor; this website's own font, palette, layout, and workflow rationale
+belongs in the plan unless the brief asks to show it. A design product may explain typography as a capability,
+but the site's font pairing alone is not an example of that product's actual output. Review the rendered text
+for that substitution.
 
 
 | Role | The reader asks | It goes | Test |
@@ -286,11 +298,11 @@ A confirmation names the object and the consequence, and each button names its o
   sequence matters.
 - Friendly wording does not make consent valid, and legal text is a qualified reviewer's. Keep the force
   and scope words exactly (must, may, the period, the exceptions), list wording that needs review as
-  unresolved, and never soften a term to fit a button. Legal text may keep its own fixed register, but
-  `copy.register-mix` cannot tell it from a slip, so record a `keep` with
-  `keep_when: fixed-legal-register`, that reason, and the `evidence` (the legal source in `sources`, or a quoted brief line). Payment and account
-  text more often take the product's formal register, named per surface in `content.voice.notes` (a note
-  for writers and reviewers; no check reads it).
+  unresolved, and never soften a term to fit a button. Legal text keeps its own fixed register: name it in
+  `content.voice.locales.<language>.by_role.legal`, and the register check accepts it in body copy. When it
+  still reads as a slip, record a `keep` with `keep_when: fixed-legal-register`, that reason, and the `evidence`
+  (the legal source in `sources`, or a quoted brief line). Payment and account text more often take the
+  product's formal register, set the same way in `by_role`.
 
 ## Claims, proof, and real content
 
@@ -365,19 +377,95 @@ like it, record a `keep` with `keep_when: scope-or-misconception` and the reason
 scope), a precise term for its audience, legal
 scope with its exception, and a short true consequence such as 삭제하면 되돌릴 수 없어요.
 
+## Reject the writer's own voice
+
+Read the page as if no conversation with the owner existed, then ask of every suspect line:
+
+- **Who is "I", "we", "my", "내"?** If it is not the brand, a labeled quotation, or the visitor in a control that
+  says so, resolve it. Do not delete every pronoun: a brand's "we" and a visitor's 내 예약 are right where the
+  speaker is established. `copy.unanchored-speaker` leads to a possessive in running copy; set `speaker` in the
+  plan when the page speaks as the user.
+- **Does it describe the product, instruct the visitor, or report what you did to build the page?** Production
+  reasoning stays in the plan. A limit of the evidence, or a disclosure the reader needs, stays once, where it applies.
+- **Would it still sound right if the owner had spoken in another register in chat?** If not, the chat register
+  is leaking: the language of a report to the owner is not the page's voice.
+- **Does a term help this audience decide?** Keep the product's own vocabulary (finding, critic, world material)
+  where the visitor needs it and explain it at the right depth; do not swap in a euphemism.
+- **Read the headings alone, then the buttons alone.** If both sound like an assistant narrating a checklist,
+  give them back their separate jobs.
+
+Facts come from a README or a document; its narrator does not. A sentence lifted whole carries the document's
+"I", its reader, and its register with it:
+
+```text
+Before: 구현이 끝나면 ultramarine이 내 렌더에 lapis-design을 돌려요.
+After:  ultramarine은 렌더된 화면과 동작을 검사해요.
+```
+
+The after line drops the possessor and keeps the product's action. The wider explanation still has to say which
+command runs and under what conditions, and promise nothing the source does not support.
+
+## Headlines
+
+A long or sentence-shaped headline is a role problem before it is an ending problem: an explanation is doing a
+title's job. Work in this order:
+
+1. Write the literal proposition.
+2. Keep its subject, object, scope, and certainty.
+3. Put the strongest piece of information in the headline and the condition or detail in the deck beside it.
+4. Compare two candidates that really differ, set in the real layout at the narrow and the wide width.
+5. Leave an ending off only when what remains reads as intentional in the language. Stripping 요 from
+   계획이 먼저예요 does not make a headline.
+
+Candidates to compare, not approved copy:
+
+```text
+휴대폰에는 휴대폰의 순서가 있어요        →  휴대폰에 맞는 정보 순서
+눌러도 아무 일 없는 버튼은 지적 대상이에요  →  동작하지 않는 버튼도 검사   (the checker's detail goes in the line below)
+```
+
+For a product hero, compare a proposition (코드보다 먼저, 화면 계획) with a factual line (코딩 에이전트용 화면 계획과
+검사); the facts do not pick the winner. Never turn a promise into a noun phrase that hides whether it is
+possible, mandatory, or only proposed, and never cut a medical or legal possibility for rhythm.
+
+A length is a lead, not a limit: no source sets a number. `copy.headline-budget` starts at 32 characters in
+Korean, Japanese, and Chinese or 12 words in English, and at three lines for a display heading or two for any other
+heading at phone width, and it reads a title set as word spans as one title. A deliberate exception needs a
+rendered reason, not a field in the plan. A 19-character line can still dominate the wrong part of the page, so
+look at the render.
+
+**Breaks and joins.** A forced break is not a word separator. Keep the phrase, a particle with its noun, a proper
+name, and a number with its unit together, and never add or remove a Korean space to fix a line.
+`word-break: keep-all` is not a pass: it still allows an emergency break, so read the actual lines. For a title with
+a `<br>`, check the canonical string, the visible lines, the extracted text, and the accessible name. Do not shrink
+body text to hide a long title.
+
 ## Register and language
 
-`content.voice.register` holds one value for the surface, and `content.voice.notes` holds any split by
-surface or locale (a formal register for payment text, a plainer one for help). The checks read the
-register and never the notes, so a split lives with the writer and the reviewer. `copy.register-mix`
-warns at P2 when honorific or formality registers mix on one surface; it reads the sentence endings of
-each locale against the plan's register, and does not classify compact labels that carry no ending or a
-sentence that opens with a quotation mark. It does not know legal text or a surface whose register the
-notes change, and flags their endings against the plan's register: for legal text record a `keep` with
-`keep_when: fixed-legal-register` with the same evidence, and name any other surface that sets its own register in the notes.
-Register follows the product, the surface, and the reader, never a nationality. Read the notes below
-as decisions to confirm, not settled style: a reader proficient in the locale confirms product terms
-and tone, and the report says so when none has.
+`content.voice.locales.<language>` holds the voice of one locale. `prose` is the sentence register of the roles that
+carry sentences; `speaker` says who they speak as (`brand`, `product`, `editorial`, `user`); `by_role` sets one role
+(`headline`, `deck`, `body`, `label`, `action`, `help`, `status`, `legal`) to `compact` or to a register of its own. A
+role the plan names nothing for keeps its form: headline, label, and action are compact, the rest take `prose`.
+`content.voice.notes` is free text for writers and reviewers; no check reads it.
+
+The checks read what the plan holds, per locale and role:
+
+- `copy.register-mix` (P2) reads the sentence endings of each locale against the register of that role. It does not
+  classify a compact role, a sentence that opens with a quotation mark, or a role the plan sets nothing for, and it
+  reads Korean, Japanese, and Chinese: an English `prose` value is for writers and the critic. The render tells a
+  headline, a label, an action, and a status the page marks as an alert or status; a deck, help text, or legal text
+  reads as body, so body copy may end in any register the plan names for those roles. With no sentence register in
+  the plan, the page's majority stands in.
+- `copy.role-collapse` (P3) is a lead when most headlines end in the same sentence register as the body: one narrator
+  in two jobs. Uniform voice alone is no defect; a deliberately conversational product records a `keep` with
+  `keep_when: conversational-product`, saying so.
+- `copy.headline-budget`, `copy.unanchored-speaker`, and `copy.translationese` (P3) lead to the headline rules, the
+  speaker, and translated constructions below.
+
+The counts route a review. No ending count approves a text, and no check replaces a proficient reader. Register
+follows the product, the surface, and the reader, never a nationality. Read the notes below as decisions to
+confirm, not settled style: a reader proficient in the locale confirms product terms and tone, and the report says
+so when none has.
 
 ### Korean
 
@@ -393,13 +481,25 @@ and tone, and the report says so when none has.
   sentences.
 - **Role before ending.** A title can name content, a definition says what the product is, a
   capability states a verifiable fact, an instruction names what the visitor should do, and an
-  action label names their chosen outcome. Do not turn all of them into “~해요” sentences because
-  the prose register is `haeyo`. Keep the speaker and the statement/request distinction visible;
-  “화면을 계획해요” cannot stand indiscriminately for a product definition, a feature, and a button.
-- **Choose by surface, then keep it.** Consumer interfaces are commonly `haeyo`; public, financial, and
-  enterprise surfaces `hapnida` or a restrained `haeyo`. Formality is no safety mechanism: an alert or a
-  destructive decision keeps the surface's register and adds the object, the consequence, and the
-  recovery, never jokes or a softened consequence.
+  action label names their chosen outcome. Do not turn all of them into "~해요" sentences because
+  `prose` is `haeyo`: "화면을 계획해요" cannot stand indiscriminately for a product definition, a feature,
+  and a button. Keep the speaker and the statement/request distinction visible. A noun phrase is a form, not a
+  speech level.
+- **Choose by speaker and role, then keep it.** `haeyo` is common in consumer interfaces; `hapnida` in public,
+  financial, enterprise, and cultural surfaces and in a formal product voice; `haera` in definitions, reports, and
+  articles. Roles may rightly differ, as below; inside one speaker, role, and locale, keep one. Formality is no
+  safety mechanism: an alert or a destructive decision keeps the surface's register and adds the object, the
+  consequence, and the recovery, never jokes or a softened consequence.
+
+  | Job | Consumer booking | Exhibition | Public service | Developer product |
+  |---|---|---|---|---|
+  | Headline | 진료 예약 | 빛이 머무는 자리 | 주민등록 등본 발급 | 코딩 에이전트용 화면 계획과 검사 |
+  | Deck | 원하는 날짜를 고르면 가능한 시간이 나와요. | 재료가 다른 작품 서른 점을 전시합니다. | 수수료와 처리 기간을 확인한 뒤 신청합니다. | 스킬은 코드를 쓰기 전에 요청을 계획 파일로 정리하고, CLI는 렌더된 화면을 그 계획과 대조한다. |
+  | Action | 예약 내용 확인 | 관람 예약 | 발급 신청 | 설치 명령 복사 |
+  | Error | 예약을 저장하지 못했어요. 입력한 내용은 그대로 남아 있어요. | 예약이 저장되지 않았습니다. 입력한 내용은 그대로 남아 있습니다. | 신청이 접수되지 않았습니다. 잠시 후 다시 시도해 주십시오. | 명령을 복사하지 못했어요. 직접 선택해 복사해 주세요. |
+
+  The facts are synthetic and a native Korean reader has not confirmed these lines. The point is the spread: four
+  genres, four mixes of compact and sentence forms, no shared ending.
 - **Never convert by suffix.** The same facts in each register:
 
   ```text
@@ -427,28 +527,34 @@ and tone, and the report says so when none has.
   없어요.; the stronger 관리자가 승인하기 전에는 게시할 수 없어요 is written only when the rule and the
   actor are confirmed.
 - **Translationese.** `copy.translationese` warns when, by density, constructions carried over from
-  English accumulate. In Korean it counts three: double passives (되어지다, 쓰여지다), ~에 있어서, and
-  ~를 통해. It does not count agentless passives, chains of nouns, 에 의해, or 것이 가능하다; the writer
-  catches those. 요청은 시스템에 의해 처리됩니다 becomes 시스템이 요청을 처리해요, and 이 화면을 통해
-  예약 내역을 변경하는 것이 가능해요 becomes 이 화면에서 예약 내역을 바꿀 수 있어요 (the check sees
-  only the 통해). A needless pronoun goes too: 우리는 결제를 처리하지 못했어요 becomes 결제를 처리하지
-  못했어요. One construction that names a real route stays; a surface made of them reads as
-  translated. Keep a passive when the result matters more than the actor.
+  English accumulate. In Korean it counts five: double passives (되어지다, 쓰여지다), ~에 있어서, ~를 통해, ~에 의해,
+  and ~것이 가능. One instance alone is never counted, since one construction that names a real route stays correct:
+  시스템을 통해 목록을 만들어요 names the system the list passes through. A surface made of them reads as
+  translated: 요청은 시스템에 의해 처리됩니다 becomes 시스템이 요청을 처리해요, and 이 화면을 통해 예약 내역을 변경하는
+  것이 가능해요 becomes 이 화면에서 예약 내역을 바꿀 수 있어요. Agentless passives (이해됩니다, 확인됩니다) are
+  grammatical, so repeating them is a style question for the writer, not a count. The check does not see chains of
+  nouns, a compressed relation (대상의 사실로, 그 언어로 화면 문구를 써요: whose facts, which language?), or an
+  abstract actor with a long modifier (검사가 들여다보는 완성된 작업); the writer and the critic catch those. A
+  needless pronoun goes too: 우리는 결제를 처리하지 못했어요 becomes 결제를 처리하지 못했어요. Keep a passive when
+  the result matters more than the actor.
 
 ### Japanese
 
-- Use `desu-masu` for sentences addressed to the reader on most product surfaces and `da-dearu` for
-  definitions, reports, and explanatory articles. Never both on one surface. Compact labels and
-  headings are noun phrases or action forms, and the choice is the product's: 予約を確認 (object and
-  verbal noun) or 予約の確認 (noun phrase). Pick one pattern for buttons and keep it.
+- Use `desu-masu` for explanatory sentences addressed to the reader on most product surfaces and `da-dearu` for
+  definitions, reports, and explanatory articles. Never both in running text. Screen titles and item names are
+  noun phrases and buttons are action forms, and the choice is the product's: 予約を確認 (object and
+  verbal noun) or 予約の確認 (noun phrase). Pick one pattern for buttons and keep it; です・ます belongs to the
+  explanation, not the title.
 - Use the direct potential form. `copy.translationese` counts the nominal ability construction
-  することができる: この画面から予約内容を変更することができます becomes この画面で予約内容を変更できます.
+  することができる, and ことができる without する, by density: この画面から予約内容を変更することができます becomes この画面で予約内容を変更できます.
 - A polite request stays polite in a formal flow: 送信前に内容をご確認ください. Do not drop ご or slide
   into plain speech to sound lighter.
 - Japanese omits a recoverable subject; do not add あなた to fill the gap, and name the object when the
   actor is ambiguous. Use the counter that goes with the noun (作品24点, 3件).
 - An error keeps the same shape as in Korean: 予約を保存できませんでした。入力した内容はそのまま残って
   います。もう一度お試しください。
+- No proficient Japanese reader has read these notes. Genre, honorific level, title wording, and button convention
+  need one before they are called settled.
 
 ### Chinese
 
@@ -467,6 +573,21 @@ and tone, and the report says so when none has.
   Kong varies), full-width marks inside Chinese sentences, half-width in Latin runs. Choose the measure
   word by the noun (一件作品, 一个订单) and do not reuse one across nouns.
 - An error: 没能保存预约。已填写的内容仍然保留，请重试。
+
+### Translate, or write again
+
+Keep one meaning and facts contract across locales, not one rhythm. Names, figures, obligations, destinations,
+recovery, and uncertainty are translated faithfully. Headlines and decks are written again around the same
+proposition and genre; operational and legal copy permits much less movement.
+
+- Korean may leave off a headline's ending and a recoverable subject; Japanese may use a noun title and an action
+  button, with です・ます only in explanation; English may use a task verb and sentence case without a final period.
+- Carry no forced line break, "you" frequency, italic closing phrase, or character count from another locale, and
+  never put あなた or 당신 in everywhere because the English source said "you". Compare each locale's own layout, not a
+  back-translated elegance.
+- Back-translation checks for drift in meaning; it is no evidence that the target reads as native.
+- Naturalness, register, and title craft in English and Japanese need a proficient reader of that language. Say in
+  the report that none has read the text until one has.
 
 ### One state in four languages
 
@@ -532,35 +653,44 @@ someone proficient has judged them.
 
 ## The kiln shop
 
-The example plan already holds the headline and the 예약하기 call to action. Add the source note, the voice
-notes, and the states the flows can reach:
+The example plan already holds the headline, a compact title, and the 예약하기 call to action, a compact action.
+Add the source note, the voice, a deck, and the states the flows can reach:
 
 ```yaml
 content:
   source: Synthetic wording written from the brief; the studio has supplied none yet
   voice:
-    register: haeyo
-    notes: >
-      ko-KR sentences in haeyo, including reservation and notice text; labels are compact nouns or -하기
-      forms. Terms: 소성분, 예약 (not 주문).
+    notes: The studio speaks to a visitor. Terms: 소성분, 예약 (not 주문).
+    locales:
+      ko:
+        prose: haeyo
+        speaker: brand
+        by_role: { headline: compact, label: compact, action: compact }
   key_copy:
+    - { slot: headline, text: 9월 소성분 스물네 점, locale: ko-KR }
+    - { slot: subhead, text: "한 달에 한 번 가마를 열어요. 이번에는 청자 사발과 찻잔이 나왔어요.", locale: ko-KR }
     - { slot: cta, text: 작품 보기, locale: ko-KR }
     - { slot: empty-state, text: "선택한 조건에 맞는 작품이 없어요. 필터를 지우면 9월 소성분 전체가 보여요.", locale: ko-KR }
     - { slot: error, text: "예약을 저장하지 못했어요. 입력한 내용은 그대로 남아 있어요.", locale: ko-KR }
 ```
 
+The title names the firing, the deck says what the shop does in the studio's own sentence voice, the action
+names its outcome with no ending, and the empty and error lines speak as the studio does in operation. Each open
+headline, subhead, and cta takes a second candidate in `explorations`.
+
 The cancel confirmation and the notice signup are interface text written with the code, in the wording
 shown above; the flows' `done.text` values (알림을 신청했어요, 알림을 껐어요) match what the interface
 shows. If ja-JP and zh-Hant join `brief.locales`, each gets its own `key_copy` entries, written from the
-same facts, and `content.voice.notes` names its register and address form.
+same facts, and its own entry in `content.voice.locales` with its `prose`, `speaker`, and `by_role`.
 
 ## Check
 
 After writing key copy, run `lapis-design plan check .lapis/plans/<task>.yaml`. It applies `copy.vague-cta`
 to `cta` entries (a gate), `copy.name-swap` to `headline`, `subhead`, and `other` entries, and reads every
 entry for `copy.meta-text`, `copy.placeholder-content`, and `copy.buzzwords`. `lapis-design slop lint`
-with a render extract, which the `ultramarine` skill runs, reads the rendered copy: register,
-translationese, rhetorical habits, proof, and repeated notices. The P3 copy rules warn; walk each card
+with a render extract, which the `ultramarine` skill runs, reads the rendered copy: sentence endings per role
+against the plan's voice, headlines that speak in the body's register, heading length and lines, an unanchored
+"my", translated constructions, rhetorical habits, proof, and repeated notices. The P3 copy rules warn; walk each card
 and keep or reject it with a reason. The `keep_when` cases of a rule, such as a legal register or a
 contrast that carries scope, are decisions the check cannot see: record each `keep` with its id, its reason, and
 the `evidence` the case lists; a case that lists `evidence: none` takes the reason alone.
@@ -569,5 +699,6 @@ Error, offline, and empty states are read from a behavior session. `behavior che
 probe induces them from the stub and records whether each says what went wrong and offers a way forward;
 the `forms` probe reads field errors and kept input; the `commits` probe compares a success or failure
 claim with what happened and looks for a confirmation that names the object, or an undo. No check reads
-whether Korean, Japanese, or Chinese wording is natural, whether an honorific level suits the reader, or
-whether a term is the right one. Say which of those a proficient reader has confirmed, and which not.
+whether Korean, Japanese, or Chinese wording is natural, whether an honorific level suits the reader, whether a
+term is the right one, or whether a rewrite kept a possibility or an obligation; an ending count approves nothing.
+Say which of those a proficient reader has confirmed, and which not.

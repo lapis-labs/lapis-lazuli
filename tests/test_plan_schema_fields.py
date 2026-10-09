@@ -56,3 +56,48 @@ def test_older_plans_keep_the_ral_system_id():
     assert errors(plan) == []
     plan["tokens"]["color"]["roles"][0]["system_code"]["system"] = "ral-design-plus"
     assert errors(plan) == []
+
+
+def with_voice(voice: dict) -> dict:
+    plan = copy.deepcopy(EXAMPLE)
+    plan["content"]["voice"] = voice
+    return plan
+
+
+def test_example_plan_sets_a_voice_per_locale_and_role():
+    ko = EXAMPLE["content"]["voice"]["locales"]["ko"]
+    assert ko["prose"] == "haeyo" and ko["by_role"]["headline"] == "compact" and ko["speaker"] == "brand"
+
+
+@pytest.mark.parametrize("voice", [
+    {"locales": {"ko": {"prose": "hapnida", "by_role": {"status": "haeyo", "legal": "hapnida", "label": "compact"}}}},
+    {"locales": {"ko": {"prose": "haera", "speaker": "editorial"}, "en": {"prose": "en-formal"}}},
+    {"locales": {"ja": {"prose": "desu-masu", "by_role": {"headline": "compact", "action": "compact"}}, "fr": {"prose": "other"}}},
+    {"notes": "Product explains screen planning to developers.", "locales": {"zh": {"prose": "zh-casual"}}},
+])
+def test_a_voice_policy_per_locale_validates(voice):
+    assert errors(with_voice(voice)) == []
+
+
+@pytest.mark.parametrize("voice", [
+    {"locales": {"ko": {"prose": "en-casual"}}},                                   # another language's register
+    {"locales": {"ja": {"prose": "haeyo"}}},
+    {"locales": {"ko": {"prose": "compact"}}},                                     # a form, not a sentence register
+    {"locales": {"ko": {"prose": "haeyo", "by_role": {"headline": "desu-masu"}}}},  # a role of another language
+    {"locales": {"ko": {"prose": "haeyo", "by_role": {"tooltip": "compact"}}}},    # no such role
+    {"locales": {"ko": {"prose": "haeyo", "speaker": "robot"}}},
+    {"locales": {"ko-KR": {"prose": "haeyo"}}},                                    # the language, not the region
+    {"locales": {"ko": {"by_role": {"headline": "compact"}}}},                     # no prose register
+    {"locales": {}},
+])
+def test_a_voice_policy_that_contradicts_itself_is_refused(voice):
+    assert errors(with_voice(voice))
+
+
+def test_the_page_wide_register_is_refused_and_explained():
+    from lapis_design import plan_check
+    plan = with_voice({"register": "haeyo", "notes": "ko sentences in haeyo"})
+    schema = yaml.safe_load((SHARED / "plan" / "schema.yaml").read_text(encoding="utf-8"))
+    found = plan_check.check_schema(plan, schema, "plan.yaml")
+    assert len(found) == 1 and found[0]["location"]["path"] == "content/voice"
+    assert "content.voice.locales.<language>.prose" in found[0]["observed"]
