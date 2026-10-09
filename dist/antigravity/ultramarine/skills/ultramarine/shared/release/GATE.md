@@ -300,33 +300,58 @@ or the state no longer matches what the CLI wrote. A change is surfaced to the o
 and the gate counts no change as a defect.
 
 `slice` comes after the plan's own blockers and `plan-order` and before the fonts lock, only in an attended run (no
-`LAPIS_UNATTENDED`) with a plan in `mode: create` and no slice sealed in `.lapis/state/<task>.json`. The run builds the
-first view and the one section the brief puts first, serves them (`lapis-design preview start`, below), captures both
-at 390 and 1440, has them reviewed, and asks the owner
-to approve them in `.lapis/questions/<task>.md`, linking the page; approval questions that link no draft page while
-no slice is sealed return `slice` instead of `waiting-for-user`. A harness with a question tool may show two or three
-candidates, each its own `direction: new` page linked in the questions; the owner picks one or gives feedback, and the
-pick is recorded in `.lapis/answers/<task>.md` as `[declared] Slice: <address> — <their words>`. `next` seals when the
-questions were asked and answered (the answers are newer), `draft check` passes for the linked pages, one linked
-`direction: new` page is the chosen one, and the plan says `approval: {state: approved}`. `state.slice` then holds the
-chosen address, every candidate when there were several, and the digests of the draft record, the critic packet, the
-questions, the answers, and the requirement record. Protected changes after the seal are flagged `after_slice` in the
-change log and listed in the owner block. Unattended runs skip the step.
+`LAPIS_UNATTENDED`) with a plan in `mode: create`, no slice sealed in `.lapis/state/<task>.json`, and no
+`- Slice skipped: "<owner words>"` line in the answers file (an untagged line, not a requirement row, that lifts the hold
+and the step; the owner block says "Slice skipped by you"). The slice is one page. The run declares it first, as a
+`direction: new` page of `.lapis/drafts/<task>.yaml` with its `url` and `sources`, builds the first view and the one
+section the brief puts first, serves them (`lapis-design preview start`, below), captures both at 390 and 1440, has them
+reviewed, and asks the owner to approve them in questions of kind `approval` that link the page and carry the owner
+block. Approval questions that link no draft page while no slice is sealed return `slice` instead of `waiting-for-user`,
+and so does a shown page taller than 3,600 px at 1440.
+
+Hold and clock (`slice_step.py`, enforced by `order.decide`): from the first time `next` names `slice` (`state.slice_since`)
+until the slice is sealed or skipped, an attended run's edit tools may write only the files the slice page declares; with
+no declared page or more than 12 declared files every page write is refused, with no refusal cap. The slice is overdue after
+60 minutes or 40 page writes (counted in `.lapis/order/<task>.json`) since the clock started, without a waiting `approval`
+question that links the page and carries the current owner block; `next` then says "overdue" and every page write is
+refused until that question exists. The clock starts at `slice_since`, at each owner reply that asks for a revision, and
+at every answered set of questions of any kind. A page written through a shell is found afterwards, not refused.
+
+`next` seals when the questions were asked and answered (the answers are newer), `draft check` passes, one linked
+`direction: new` page is the slice, the plan says `approval: {state: approved}`, the owner acknowledged the gaps the
+questions' block listed (below), and every open core finding of the critic's report (`approval_impact:
+core-product-explanation`, `review.world-materials` unless marked ordinary) is closed by a fresh critic report or decided
+by the owner as `[declared] Ask finding-vs-decision: <rule id> — <their words>`. Open core findings do not block the wait
+itself: the block lists them under `## Open core findings: your decision`. An answered but unapproved slice is round 2,
+3, and so on (`state.slice_rounds`, `slice_heights`), under the same hold and a restarted clock. `state.slice` holds the
+address, the digests of the draft record, the critic packet, the questions, the answers, and the requirement record, and
+the protected values. Protected changes after the seal are flagged `after_slice` in the change log and listed in the
+owner block. Unattended runs skip the step.
 
 While questions the run wrote for its user are unanswered, `next` returns the state `waiting-for-user` instead
 of a step: `step.id` is `waiting-for-user` (stop, and wait for the answers), `then` is the step that comes
-after them, and `waiting` names the files and the `phase`, `plan` while there is no plan file and `approval`
-once there is one. The questions are in `.lapis/questions/<task>.md` and count when the file has two words or
-more outside its heading lines (an empty or one-word file is no question); the answers are in
-`.lapis/answers/<task>.md`, the brief record, where the plan can cite them from `context.other` and `claims.declared`. The
-questions are unanswered when no answers file with a word in it is at least as new, by modification time, as the
-questions file. A procedure that is `done` stays `done`. The exit gate (`lapis-design hook stop` with
-`LAPIS_UNATTENDED=1`) lets a waiting run stop without counting a continue, and counts each set of questions it let
-pass in `.lapis/gate/<task>.json` under `waits` (`plan`, `approval`, and `last`, the set's id): at most two sets
-while there is no plan file and one after it. A set is one text written once, so writing the same words again is a
-new set. Past the cap `next` and the gate name the step the files call for, as without questions. Without
-`--task`, `next` takes the task of the newest plan, counted questions file, counted answers file, or counted references
-record.
+after them, and `waiting` names the files, the `kind`, and the `phase`, `plan` while there is no plan file and
+`approval` once there is one. The questions are in `.lapis/questions/<task>.md`, and the first non-blank line of the
+file declares its kind, `lapis-questions: brief|direction|approval|ask` (that line is no word of the questions). A file
+without a kind, or with another word, does not wait: `next` names the step it would name and says to mark the kind. The
+kind says what the file must hold. `brief`: at most six numbered questions (the cap on a brief's questions is read from
+this kind only). `direction`: the direction items (`direction.py`). `approval`: today's slice conversation, with the
+owner block and the preview check below, and with draft structure errors blocking. `ask`: one numbered question, a
+`Trigger:` with one of six ids, a `Default:`, at most two "unless you object" lines and at most 150 words, with no owner
+block and no draft review (`asks.py`); an ask that breaks that shape, or that is a second ask the agent raised at a
+checkpoint that already has an answered ask, does not wait. The CLI logs every set it waited on in
+`.lapis/state/<task>.asks.json` as `{set, kind, trigger, then, asked, answered, cli}`. An unattended run (`LAPIS_UNATTENDED=1`)
+never waits on a `direction` or `ask` file: it records `[assumed]` items with their `Basis:` under `## Asks` in the brief
+record and goes on. Questions count when the file has two words or more outside its heading lines (an empty or one-word
+file is no question); the answers are in `.lapis/answers/<task>.md`, the brief record, where the plan can cite them
+from `context.other` and `claims.declared`. The questions are unanswered when no answers file with a word in it is at
+least as new, by modification time, as the questions file. A procedure that is `done` stays `done`. The exit gate
+(`lapis-design hook stop` with `LAPIS_UNATTENDED=1`) lets a waiting run stop without counting a continue, and counts
+each `brief` or `approval` set it let pass in `.lapis/gate/<task>.json` under `waits` (`plan`, `approval`, and `last`,
+the set's id): at most two sets while there is no plan file and one after it. `direction` and `ask` sets are not
+counted. A set is one text written once, so writing the same words again is a new set. Past the cap `next` and the gate
+name the step the files call for, as without questions. Without `--task`, `next` takes the task of the newest plan,
+counted questions file, counted answers file, or counted references record.
 
 `done` and every wait on approval questions carry the owner block (`owner.py`), which `next` writes to
 `.lapis/owner/<task>.md` and returns as `owner_block`. It lists the requirement outcome, the owner's decisions, the
@@ -339,6 +364,21 @@ ends with the line `lapis-owner-block <sha8>`, the digest of its body. The quest
 wait whose questions lack the current line is `draft-review` ("paste the owner block"), and `done` tells the agent to
 paste the block unchanged ahead of its own summary. `draft check` writes the block too when the review holds. A pasted
 block is not counted as words or links of the questions.
+
+The block's section `## Decisions you have not made` is the gap list (`gaps.py`). Which decisions were the owner's is a
+fact the records hold, so the CLI computes it rather than the critic: an area (style, objects, signature, color, layout,
+motion, type per role, copy per locale) is the owner's when the answers file holds a `[declared]` item for it
+(`color: ...`, `layout: ...`, `motion: ...`, `signature: ...`, `type <role>: ...`, `copy <locale> <role>: ...`, or a
+direction item the owner decided), or when a plan exploration of that decision is `fixed_by: brief` and its `reason`
+quotes the id of a live row of `.lapis/requirements/<task>.json`. Each other area is listed with what the plan filled in,
+at most 15 lines and then "and N more", with no time in it, so the block's digest stays the same for the same files. An
+unattended run's block at `done` titles the section `## Decisions made without you`. `owner.write` records the ids each
+block listed in `.lapis/state/<task>.gaps.json` (a record only `lapis-design` writes). `slice` does not seal, and a
+redesign or repair plan that says `approval: {state: approved}` after an answered approval question does not pass
+(step `approval-gaps`), until each gap the questions' block listed is acknowledged by an untagged `- Gaps seen
+(lapis-owner-block <sha8>): "<owner words>"` line in the answers file that names the block's digest, or decided by the
+owner since. Unattended runs need no acknowledgment: the section is the record. A create plan needs an `area` on each
+`field` and `identity` color role (`plan.color-area-missing`, blocking).
 
 A link in approval questions has to be alive when they are shown. Before `next` returns the wait on approval questions
 that link an `http(s)` address on this computer (`localhost`, `127.0.0.1`, `::1`), it asks each such address with one

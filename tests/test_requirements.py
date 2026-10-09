@@ -358,11 +358,11 @@ def test_an_owner_decision_lands_in_owner_decisions_with_the_line_verbatim_and_i
     seal(project, "brief.md")
     fader = row_ids(loaded(project))["Main preview: a fader, switch, or animation that the visitor can touch."]
     line = f"- [declared] {fader}: drop — no fader in the first version, the owner said"
-    reply(project, line + "\n- [declared] Slice: http://localhost:4173/slice-b.html — this one\n", 60)
+    reply(project, line + "\n- [declared] Pick: C2 — this one\n", 60)
     changes = requirements.refresh(project, TASK)
     doc = loaded(project)
     assert doc["owner_decisions"] == [{"row": fader, "decision": "drop", "quote": line.removeprefix("- "),
-                                       "at": {"path": f".lapis/answers/{TASK}.md", "line": 14}}]
+                                       "at": {"path": f".lapis/answers/{TASK}.md", "line": 22}}]
     assert len(doc["rows"]) == 11                                         # neither the decision nor the pick is a row
     assert [(c["pointer"], c["before"]) for c in changes] == [
         (f"/requirements/owner_decisions/{fader}", None)]

@@ -605,6 +605,9 @@ $defs:
             oklch: { $ref: "#/$defs/oklch" }
             ref: { type: string }                     # e.g. DESIGN.md#colors.primary
             theme: { enum: [light, dark, high-contrast] }   # the theme this value is for; absent means every theme
+            area:                                     # where the color sits and about how much of the screen it owns; a create plan needs it on `field` and `identity` roles (plan.color-area-missing)
+              type: string
+              minLength: 8
             source_class:                             # where the value came from (vocab/color.yaml value_source_classes)
               enum: [authored, provider, brand-approved, measured, published, computed, converted, nearest-match,
                      screen-sample, unofficial]

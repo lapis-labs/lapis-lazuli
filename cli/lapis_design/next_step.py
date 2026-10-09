@@ -40,8 +40,8 @@ from typing import Any
 
 import yaml
 
-from lapis_design import (asks, attempts, brief, critic_packet, direction, diverge, draft, gate, owner, preview,
-                          references, release_check, requirements, shared_dir, slice_step, taste, waiting)
+from lapis_design import (asks, attempts, brief, critic_packet, direction, diverge, draft, gaps, gate, owner,
+                          preview, references, release_check, requirements, shared_dir, slice_step, taste, waiting)
 from lapis_design.lint.cli import problems
 from lapis_design.plan_check import PlanOverLimit, read_plan, yaml_reason
 from lapis_design.summary import NOT_JUDGED
@@ -299,6 +299,8 @@ def _evaluate(root: Path, task: str, page: str | None = None, integrity_error: s
         if dead := preview.unreachable(shown):
             serve = _step(draft.STEP, preview.why(task, dead), preview.command(task, dead))
             return {**result, "state": "needs-step", "step": serve, "reason": serve["why"]}
+        if (cut := slice_step.tall(root, task, shown)) and slice_step.owed(root, task, _plan_or_none(root, task)):
+            return {**result, "state": "needs-step", "step": slice_step.step(task, cut), "reason": cut}
     wait = _step(waiting.STEP, waiting.why(task, found, step["id"]) +
                  (" Include the recorded draft review summary and every unresolved finding in that message."
                   if result.get("draft_review") else ""))
@@ -496,6 +498,8 @@ def _steps(root: Path, task: str, page: str | None, integrity_error: str | None 
                            shared / "plan" / "schema.yaml"), interactive)
     if why := slice_step.check(root, task, plan):
         return state(slice_step.step(task, why), interactive)
+    if why := gaps.approval_problem(root, task, plan):
+        return state(_step("approval-gaps", why), interactive)
     if "fonts-lock" in from_plan_steps or "fonts-lock" in need:
         commands = _lock_commands(plan, task)
         why = GENERIC_LOCK.format(task=task) + " " + (

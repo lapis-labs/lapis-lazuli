@@ -132,6 +132,21 @@ def write_direction(root: Path, task: str = TASK) -> None:
         append(PICKED)
 
 
+def clear_direction(root: Path, task: str = TASK) -> None:
+    """A project that has not been through the direction conversation: no proposal, no rough, and no `## Direction` section
+    in the brief record (kept as old as it was). For the tests of the gap list, which state the conversation themselves."""
+    (root / ".lapis" / "direction" / f"{task}.yaml").unlink(missing_ok=True)
+    for name in (".lapis/diverge", ".lapis/state/diverge"):
+        shutil.rmtree(root / name / task, ignore_errors=True)
+    for file in (root / ".lapis/renders").glob(f"{task}-C*.narrow*"):
+        shutil.rmtree(file) if file.is_dir() else file.unlink()
+    answers = root / ".lapis" / "answers" / f"{task}.md"
+    if answers.is_file():
+        stamp = answers.stat().st_mtime_ns
+        answers.write_text(answers.read_text(encoding="utf-8").replace(DIRECTION_ANSWERS, ""), encoding="utf-8")
+        os.utime(answers, ns=(stamp, stamp))
+
+
 def load_skills(root: Path, task: str = TASK) -> None:
     from lapis_design import skill_load
 
@@ -301,7 +316,15 @@ def ask(root: Path, text: str, at: int, task: str = TASK, kind: str | None = Non
 
 def reply(root: Path, text: str, at: int, task: str = TASK) -> Path:
     """The answers the run recorded: the brief record with the replies added under their own heading."""
-    return record(root, "answers", f"{BRIEF_RECORD}\n## Replies\n\n{text}\n{DIRECTION_ANSWERS}", at, task)
+    return record(root, "answers", f"{BRIEF_RECORD}{DIRECTION_ANSWERS}\n## Replies\n\n{text}", at, task)
+
+
+def gaps_seen(root: Path, task: str = TASK) -> str:
+    """The owner's acknowledgment of the gaps in the owner block the questions file carries, as the run records it."""
+    from lapis_design import waiting
+
+    sha8 = waiting.carried((root / ".lapis" / "questions" / f"{task}.md").read_text(encoding="utf-8"))
+    return f"- Gaps seen (lapis-owner-block {sha8}): \"seen, all of it\"\n"
 
 
 def capture_file(root: Path, name: str, seed: int, task: str = TASK) -> str:

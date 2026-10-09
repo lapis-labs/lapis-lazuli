@@ -79,9 +79,10 @@ under one answers heading:
 six, or when a third round appears (`## Answers (round 3)`, or a line such as `Round 3 of 3.`). Items all under
 `## Answers` are round 1, so put a second round's under its own heading. An answer is one item: the request's own
 statements share one `[declared]` item per question they settle, not one item per fact, and what the project or a
-lookup gave belongs in `Found`. A sub-list inside an item is not counted. `.lapis/questions/<task>.md` holds the
-round being asked; its numbered questions are counted the same way, and more than six returns `brief` instead of
-`waiting-for-user`.
+lookup gave belongs in `Found`. A sub-list inside an item is not counted. `.lapis/questions/<task>.md` of kind `brief`
+(its first line is `lapis-questions: brief`) holds the round being asked; its numbered questions are counted the same
+way, and more than six returns `brief` instead of `waiting-for-user`. The cap reads only that kind: questions of the
+other kinds are not the brief's.
 
 ## Requirements and owner decisions
 

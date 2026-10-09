@@ -380,6 +380,9 @@ def test_the_hook_refuses_an_edit_tools_write_to_each_record_the_cli_owns(projec
 
 @pytest.mark.parametrize("session", list(SESSIONS))
 def test_the_hook_leaves_every_other_write_as_it_was(project, monkeypatch, capsys, session):
+    from procedure_support import seal_slice
+
+    seal_slice(project)                                   # an unsealed slice holds an attended run to its slice files (`order.py`)
     for rel in (ANSWERS, PLAN, f".lapis/critic/{TASK}.json", f".lapis/stateless/{TASK}.json", "index.html",
                 "README.md", ".lapis/statement.md"):
         assert hook(monkeypatch, capsys, project, "Write", {"file_path": str(project / rel), "content": "x"},

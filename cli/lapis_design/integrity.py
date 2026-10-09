@@ -664,11 +664,21 @@ def record_findings(root: Path, task: str, findings: Iterable[Any], source: str)
 
 
 def seal_slice(root: Path, task: str, row: Mapping[str, Any]) -> None:
-    """Record the slice the owner approved: `state.slice` is `row` (`url`, `candidates`, and the digests of the draft
-    record, the packet, the questions, the answers and the requirement record) plus the time and the digest of the
-    protected values. The change chain is not touched; rows written after this one carry `after_slice`."""
+    """Record the slice the owner approved: `state.slice` is `row` (`url` and the digests of the draft record, the
+    packet, the questions, the answers and the requirement record) plus the time, the digest of the protected values,
+    and the values themselves, so that a later change can be told from a revert. The change chain is not touched; rows
+    written after this one carry `after_slice`."""
     with lock(root, task):
         state = read_state(root, task) or {"version": 0, "task": task, "values": {}, "open": [],
                                            "requirements_sha256": None, "last_change": None}
-        sealed = {**row, "protected_sha256": digest(state["values"]), "at": _now()}
+        sealed = {**row, "protected_sha256": digest(state["values"]), "values": dict(state["values"]), "at": _now()}
         _write_state(state_path(root, task), {**state, "slice": sealed})
+
+
+def mark_slice(root: Path, task: str, **fields: Any) -> None:
+    """Set `fields` (`slice_since`, `slice_rounds`, `slice_set`, `slice_heights`) in the state of `task`, the clock and the
+    rounds of the slice (`slice_step.py`)."""
+    with lock(root, task):
+        state = read_state(root, task) or {"version": 0, "task": task, "values": {}, "open": [],
+                                           "requirements_sha256": None, "last_change": None}
+        _write_state(state_path(root, task), {**state, **fields})

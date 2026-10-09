@@ -88,8 +88,17 @@ def _judged(root: Path, name: str, file: Path, report: dict, page: dict, review:
     return report["target"]["packet"]["sha256"]
 
 
+def is_core(finding: dict) -> bool:
+    """Whether a critic finding is a core product explanation that is still open: marked so by the critic, or the world
+    materials finding unless the critic marked it ordinary."""
+    return finding["status"] == "open" and (
+        finding.get("approval_impact") == "core-product-explanation"
+        or (finding["rule_id"] == "review.world-materials" and finding.get("approval_impact") != "ordinary"))
+
+
 def check(root: Path, task: str, *, asked: list[str] | None = None) -> tuple[list[str], list[dict]]:
-    """Problems and owner-facing summaries. Open findings may remain, but none may go unreported."""
+    """Problems and owner-facing summaries. Open findings may remain, but none may go unreported; an open core finding is
+    no problem here, it is listed in the page's `core_open` and goes to the owner as a decision."""
     from lapis_design.lint.cli import LintError, _load
 
     try:
@@ -133,7 +142,7 @@ def check(root: Path, task: str, *, asked: list[str] | None = None) -> tuple[lis
             if critic:
                 reports.append((critic["report"], "critic"))
             inputs = sources + extracts
-            dispositions, packet_sha = [], None
+            dispositions, packet_sha, core_open = [], None, []
             for name, tool in reports:
                 file = local(root, name)
                 report = _load(file, "report")
@@ -159,14 +168,11 @@ def check(root: Path, task: str, *, asked: list[str] | None = None) -> tuple[lis
                         continue
                     if i not in handled:
                         raise ValueError(f"{name} finding {i} ({finding['rule_id']}) has no fixed/justified-keep/unresolved disposition")
-                    # the critic's own report decides: an open core finding blocks whatever the maker answered
-                    core = (tool == "critic" and finding["status"] == "open" and
-                            (finding.get("approval_impact") == "core-product-explanation" or
-                             (finding["rule_id"] == "review.world-materials" and finding.get("approval_impact") != "ordinary")))
+                    # the critic's own report decides which findings are core, whatever the maker answered; they go to
+                    # the owner as decisions (the owner block lists them) instead of blocking the question
+                    core = tool == "critic" and is_core(finding)
                     if core:
-                        errors.append(f"{page['url']}: core product explanation {finding['rule_id']} is still open in the "
-                                      "current critic report; a fresh critic stops reporting it once real product output "
-                                      "resolves it, whatever the disposition says")
+                        core_open.append({"rule_id": finding["rule_id"], "observed": finding["observed"], "report": name})
                     state = {"rule_id": finding["rule_id"], "approval_blocking": core, "status": finding["status"], **handled[i]}
                     if core:
                         state.update(disposition="unresolved", reported_disposition=handled[i]["disposition"])
@@ -181,7 +187,7 @@ def check(root: Path, task: str, *, asked: list[str] | None = None) -> tuple[lis
             if not _fresh(path(root, task), inputs):
                 raise ValueError("review record is older than its evidence; review the changed area again")
             summaries.append({"url": page["url"], "area": page["area"], "widths": page["widths"],
-                              "findings": dispositions,
+                              "findings": dispositions, "core_open": core_open,
                               "critic": {"report": critic["report"], "packet_sha256": packet_sha} if critic else None})
         except (OSError, ValueError, KeyError, LintError, yaml.YAMLError) as exc:
             errors.append(f"{page['url']}: {exc}")
