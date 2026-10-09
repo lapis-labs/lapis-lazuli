@@ -107,6 +107,14 @@ items:
   view: summary
   path: diverge/card.schema.yaml
   summary: LapisLazuli diverge card schema — v0
+- id: gaps-record
+  view: summary
+  path: gaps/schema.yaml
+  summary: LapisLazuli gap record schema — v0
+- id: asks-log
+  view: summary
+  path: asks/schema.yaml
+  summary: LapisLazuli asks log schema — v0
 - id: type-vocabulary
   view: full
   path: vocab/type.yaml

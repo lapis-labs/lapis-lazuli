@@ -143,6 +143,28 @@ def checkpoint_problem(root: Path, task: str, then: str, exempt: Collection[str]
     return None
 
 
+_ASK_ITEM = re.compile(r"^[\s*_`:\-–—]*Ask\s+([a-z][a-z-]*)\s*:\s*(.*)$", re.IGNORECASE | re.DOTALL)
+_BASIS_TAIL = re.compile(r"\s*\bbasis\b\s*:.*$", re.IGNORECASE | re.DOTALL)
+
+
+def recorded(root: Path, task: str) -> list[dict[str, str]]:
+    """The items under `## Asks` of the brief record, in file order, as `{"trigger", "by", "said"}`: `by` is `owner` for a
+    `[declared]` item and `run` for an `[assumed]` one, and `said` is the decision (or the question and the default the run
+    took) in the words written, without a `Basis:` (the run's own reason is not the critic's to read)."""
+    try:
+        text = waiting.answers_path(root, task).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return []
+    found = []
+    for item in brief.items(brief.sections(text).get("asks", "")):
+        tag = brief._TAG.match(item)
+        match = _ASK_ITEM.match(item[tag.end():] if tag else item)
+        trigger, said = (match.group(1).lower(), match.group(2)) if match else ("unnamed", item)
+        found.append({"trigger": trigger, "by": "run" if tag and tag.group(1).lower() == "assumed" else "owner",
+                      "said": " ".join(_BASIS_TAIL.sub("", said).split())})
+    return found
+
+
 # ---------------------------------------------------------------- the triggers the CLI raises
 
 def budget_minutes(root: Path, task: str) -> int:

@@ -31,6 +31,11 @@ The packet holds:
   the owner's pick among the rough first views (its card and captures), and `contact` the contact sheet of every rough, so you
   see the alternatives that lost: say in a note when the roughs are nominally different and functionally the same (the same
   structure with other colors, one representation under three names)
+- `gaps`: the decisions the owner has not made, `{id, area, text}`, with what the agent filled in (the owner block lists the
+  same lines under "Decisions you have not made"). Judge the page on what it shows, and say in a note when a gap is the
+  reason a page reads as generic: a color, layout, type, or copy choice no one but the agent made
+- `asks`: what the work asked the owner during the build, `{trigger, by, said}`: the owner's decision (`by: owner`) or the
+  default the run took without asking (`by: run`). A row the owner decided there still binds the page
 - `inputs`: every file you may read, as `{kind, path, sha256}`: the render extracts and their screenshots, the behavior
   session, the lint report, the reference record and its study captures, the exploration artifacts and captures, the
   user's taste, and the product and contract documents. A file that is not listed is not yours to read

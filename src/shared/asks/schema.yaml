@@ -1,0 +1,38 @@
+# LapisLazuli asks log schema — v0
+# Location: .lapis/state/<task>.asks.json in the project (a folder only `lapis-design` writes)
+# Every set of questions the run waited on: its kind, the trigger of an ask, the checkpoint (`then`: the step `next` named
+# while it waited, which is what "one ask per checkpoint" counts), when it was asked and answered (the modification times of the
+# questions file and of the answers file, so the log does not depend on when `next` ran), and whether the CLI itself raised
+# it (`cli`: `new-direction`, `finding-vs-decision`, or `budget`, exempt from one ask per checkpoint). The answers to asks are
+# `## Asks` items of the brief record: `- [declared] Ask <trigger>: <the decision>`, or `- [assumed] Ask <trigger>: <question>
+# — took <default>. Basis: <why>`; the critic packet carries them without the basis.
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/asks.v0.json
+title: LapisLazuli asks log
+type: object
+additionalProperties: false
+required: [version, task, sets]
+properties:
+  version: {const: 0}
+  task: {type: string, pattern: "^[a-z0-9][a-z0-9-]{1,63}$"}
+  sets:
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [set, kind, trigger, then, asked, answered, cli]
+      properties:
+        set: {type: string, minLength: 1}                     # a hash of the text and the file's modification time
+        kind: {enum: [brief, direction, approval, ask]}
+        trigger:
+          anyOf:
+            - {enum: [requirement-unmeetable, requirement-conflict, finding-vs-decision, new-direction, reference-vs-brief, budget]}
+            - {type: string}                                   # as written, when it is no known id
+            - {type: "null"}                                   # kinds other than `ask`
+        then: {type: string, minLength: 1}
+        asked: {type: string, pattern: "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\dZ$"}
+        answered:
+          anyOf:
+            - {type: string, pattern: "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\dZ$"}
+            - {type: "null"}
+        cli: {type: boolean}

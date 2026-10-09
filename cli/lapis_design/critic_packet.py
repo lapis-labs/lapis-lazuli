@@ -27,7 +27,7 @@ from pathlib import Path, PurePosixPath
 import yaml
 from jsonschema import Draft202012Validator
 
-from lapis_design import direction, shared_dir
+from lapis_design import asks, direction, gaps, shared_dir
 
 TASK = re.compile(r"[a-z0-9][a-z0-9-]{1,63}")
 # What the critic never reads: the maker's plan and records. The packet carries what it may know of them.
@@ -368,6 +368,8 @@ def build(root: Path, task: str, inputs: dict) -> bytes:
         "args": _wrap(extracts=extract_names, lint=_rel(root, lint), session=session_name),
         "requirements": _requirements(record), "plan": _design(plan),
         "direction": direction.packet(root, task),
+        "gaps": [_wrap(id=g["id"], area=g["area"], text=g["text"]) for g in gaps.compute(root, task)],
+        "asks": [_wrap(trigger=a["trigger"], by=a["by"], said=a["said"]) for a in asks.recorded(root, task)],
         "inputs": _listed(root, task, plan, record, extracts, lint, session),
         "findings": _findings(root, lint), "changes": _changes(root, task), "disputes": _disputes(root, task)}
     if problem := _first_error(_validator("review/critic-packet.schema.yaml"), document):

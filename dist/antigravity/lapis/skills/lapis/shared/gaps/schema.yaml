@@ -1,0 +1,22 @@
+# LapisLazuli gap record schema — v0
+# Location: .lapis/state/<task>.gaps.json in the project (a folder only `lapis-design` writes)
+# The decisions the owner did not make, as each owner block listed them: `owner.write` stores, under the block's 8-hex
+# digest, the ids of the gaps (`style:S1`, `objects:O1`, `signature`, `color`, `layout`, `motion`, `type:<role>`,
+# `copy:<locale>`) that block showed. A reply `- Gaps seen (lapis-owner-block <sha8>): "<their words>"` acknowledges the block
+# with that digest; the slice is not sealed, and an approved redesign plan does not proceed, until every gap of that block is
+# acknowledged or decided by the owner (`gaps.unacknowledged`). The critic packet carries the gaps as they stand now.
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/gaps.v0.json
+title: LapisLazuli gap record
+type: object
+additionalProperties: false
+required: [version, task, blocks]
+properties:
+  version: {const: 0}
+  task: {type: string, pattern: "^[a-z0-9][a-z0-9-]{1,63}$"}
+  blocks:                          # at most the last 20 blocks, oldest first
+    type: object
+    propertyNames: {pattern: "^[0-9a-f]{8}$"}
+    additionalProperties:
+      type: array
+      items: {type: string, pattern: "^(style|objects|type|copy):[^\\s]+$|^(signature|color|layout|motion)$"}

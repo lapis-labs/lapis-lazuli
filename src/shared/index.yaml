@@ -329,6 +329,22 @@ items:
       lapis: full
       ultramarine: summary
 
+  - id: gaps-record
+    kind: contract
+    path: gaps/schema.yaml
+    note: v0; which decisions each owner block listed as not the owner's, kept by `lapis-design` so a reply that acknowledges a block by its digest covers exactly those gaps
+    consumers:
+      lapis: full
+      ultramarine: summary
+
+  - id: asks-log
+    kind: contract
+    path: asks/schema.yaml
+    note: v0; every set of questions the run waited on, with its kind, trigger, checkpoint and times, and whether the CLI raised it; one ask per checkpoint reads it
+    consumers:
+      lapis: full
+      ultramarine: summary
+
   - id: system-fonts
     kind: data
     path: fonts/system-fonts.yaml

@@ -7,7 +7,7 @@ title: LapisLazuli critic packet
 # `target.packet.sha256`; `lapis-design critic packet` rebuilds the packet from `args` and the project to check that.
 type: object
 additionalProperties: false
-required: [version, task, args, requirements, plan, direction, inputs, findings, changes, disputes]
+required: [version, task, args, requirements, plan, direction, gaps, asks, inputs, findings, changes, disputes]
 properties:
   version: { const: 0 }
   task: { type: string, pattern: "^[a-z0-9][a-z0-9-]{1,63}$" }
@@ -187,6 +187,26 @@ properties:
           card: { type: object }                   # the picked rough's card.yaml (diverge/card.schema.yaml)
           captures: { type: array, items: { type: string } }   # project-relative screenshots of the picked rough
       contact: { type: [string, "null"] }          # the contact sheet of the sealed roughs
+  gaps:                                            # the decisions the owner has not made, as the owner block lists them now (`gaps.py`)
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [id, area, text]
+      properties:
+        id: { type: string }                       # style:S1, objects:O1, signature, color, layout, motion, type:<role>, copy:<locale>
+        area: { enum: [style, objects, signature, color, layout, motion, type, copy] }
+        text: { type: string }                     # what the agent filled in
+  asks:                                            # the `## Asks` items of the brief record, without the run's `Basis:`
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [trigger, by, said]
+      properties:
+        trigger: { type: string }
+        by: { enum: [owner, run] }
+        said: { type: string }
   inputs:                                          # every file the critic may read, with its digest; nothing else is an input
     type: array
     items:

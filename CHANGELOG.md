@@ -17,6 +17,9 @@ between minor versions; render extraction is v1 and the other contract formats a
   element carries (`G`), as `[declared]` items under `## Direction <n>` of the brief record (or one `Defaults accepted` line).
   The run writes the proposal `.lapis/direction/<task>.yaml` (`direction/schema.yaml`); the critic packet gains a
   `direction` section with the option texts, so `O1: a,c` is judged against what `a` and `c` say.
+  It also carries `gaps` (the decisions the owner has not made) and `asks` (what was asked during the work, without the
+  run's `Basis:`); the records behind them, `.lapis/state/<task>.gaps.json` and `.asks.json`, have schemas (`gaps/schema.yaml`,
+  `asks/schema.yaml`).
 - `ask` questions: one short question with a `Trigger:`, a `Default:`, at most 150 words, and one per checkpoint. The CLI
   raises three triggers itself and names them as the step `ask`: `new-direction` (a direction value changed after the
   slice seal), `finding-vs-decision` (a change on an area the owner decided while a finding was open), and `budget` (more

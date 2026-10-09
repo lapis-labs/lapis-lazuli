@@ -63,7 +63,7 @@ version 1, which keeps only what the CLI and the critic can check.
 The packet is deterministic JSON (`../shared/review/critic-packet.schema.yaml`): the owner's requirement rows, the plan's
 design fields without your reasons, a digest of every file the critic may read, the lint findings, the edits to
 protected plan fields that were reactive, touched an open finding, or came after the owner approved the slice, and your
-disputes without their reasons, and the direction conversation with its ids resolved (each item's option texts, who chose, the
+disputes without their reasons, the decisions the owner has not made, the asks put to the owner during the work, and the direction conversation with its ids resolved (each item's option texts, who chose, the
 owner's pick among the rough first views). The critic's report names it in `target.packet` (`path` and `sha256`), and a report
 counts only for that packet: the CLI rebuilds the packet from the arguments it records. A changed capture, lint report,
 requirement row, protected plan value, or change row, and a packet rebuilt after the critic ran, make the report stale,
