@@ -321,6 +321,21 @@ wait whose questions lack the current line is `draft-review` ("paste the owner b
 paste the block unchanged ahead of its own summary. `draft check` writes the block too when the review holds. A pasted
 block is not counted as words or links of the questions.
 
+The block's section `## Decisions you have not made` is the gap list (`gaps.py`). Which decisions were the owner's is a
+fact the records hold, so the CLI computes it rather than the critic: an area (style, objects, signature, color, layout,
+motion, type per role, copy per locale) is the owner's when the answers file holds a `[declared]` item for it
+(`color: ...`, `layout: ...`, `motion: ...`, `signature: ...`, `type <role>: ...`, `copy <locale> <role>: ...`, or a
+direction item the owner decided), or when a plan exploration of that decision is `fixed_by: brief` and its `reason`
+quotes the id of a live row of `.lapis/requirements/<task>.json`. Each other area is listed with what the plan filled in,
+at most 15 lines and then "and N more", with no time in it, so the block's digest stays the same for the same files. An
+unattended run's block at `done` titles the section `## Decisions made without you`. `owner.write` records the ids each
+block listed in `.lapis/state/<task>.gaps.json` (a record only `lapis-design` writes). `slice` does not seal, and a
+redesign or repair plan that says `approval: {state: approved}` after an answered approval question does not pass
+(step `approval-gaps`), until each gap the questions' block listed is acknowledged by an untagged `- Gaps seen
+(lapis-owner-block <sha8>): "<owner words>"` line in the answers file that names the block's digest, or decided by the
+owner since. Unattended runs need no acknowledgment: the section is the record. A create plan needs an `area` on each
+`field` and `identity` color role (`plan.color-area-missing`, blocking).
+
 A link in approval questions has to be alive when they are shown. Before `next` returns the wait on approval questions
 that link an `http(s)` address on this computer (`localhost`, `127.0.0.1`, `::1`), it asks each such address with one
 GET, without a proxy; an address that does not end in HTTP 200 turns the wait into `draft-review` ("the questions link

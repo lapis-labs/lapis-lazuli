@@ -29,7 +29,7 @@ from urllib.parse import unquote, urlsplit
 
 import yaml
 
-from lapis_design import attempts, brief, critic_packet, integrity, requirements, slice_step
+from lapis_design import attempts, brief, critic_packet, gaps, gate, integrity, requirements, slice_step
 
 MARKER = "lapis-owner-block"
 LIST_MAX = 15
@@ -115,15 +115,32 @@ def _outcome(root: Path, task: str, record: dict | None, sources: list[tuple[str
     return out
 
 
-def _decisions(decisions: list[dict], record: dict | None) -> list[str]:
+def _decisions(root: Path, task: str, decisions: list[dict], record: dict | None) -> list[str]:
     out = ["## Your decisions"]
-    if not decisions:
-        return out + ["- none recorded."]
     known = {r["id"] for r in (record or {}).get("rows", [])}
     for d in decisions:
         extra = "" if d["row"] in known else " (no row has this id)"
         out.append(f"- {d['decision']} {d['row']}{extra}: {_cut(d['quote'], 200)} ({d['at']['path']} line {d['at']['line']})")
-    return out
+    try:
+        answers = (root / ".lapis" / "answers" / f"{task}.md").read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        answers = ""
+    out += [f"- gaps seen (lapis-owner-block {m.group(1)}): {_cut(m.group(2), 200)}" for m in gaps.SEEN.finditer(answers)]
+    return out if len(out) > 1 else out + ["- none recorded."]
+
+
+def _gaps(found: list[dict], done: bool) -> list[str]:
+    """The decisions the owner did not make, with what the agent filled in (`gaps.py`). An unattended run's block at
+    `done` says they were made without the owner."""
+    if done and gate.is_unattended():
+        out = ["## Decisions made without you", "The run made these for you; nobody was there to ask."]
+    else:
+        out = ["## Decisions you have not made",
+               "The agent filled these in. Approval needs your word on them: say they are seen, or change any of them."]
+    if not found:
+        return out + ["- none."]
+    out += [f"- {g['text']}" for g in found[:LIST_MAX]]
+    return out + ([f"- and {len(found) - LIST_MAX} more"] if len(found) > LIST_MAX else [])
 
 
 _ASK_ITEM = re.compile(r"^\s*Ask\s+([a-z][a-z-]*)\s*:\s*(.*)$", re.IGNORECASE | re.DOTALL)
@@ -354,18 +371,19 @@ def _not_run(root: Path, task: str, record: dict | None, sources: list[tuple[str
     return out + (lines or ["- nothing recorded as skipped."])
 
 
-def block(root: Path, task: str, result: Mapping[str, Any] | None = None) -> tuple[str, str]:
-    """The owner block for `task` and the first 8 hex digits of the SHA-256 of its body."""
+def _build(root: Path, task: str, result: Mapping[str, Any] | None) -> tuple[str, str, list[str]]:
     result = result or {}
     root = Path(root)
     record = requirements.record(root, task)
     decisions = list((record or {}).get("owner_decisions") or [])
     done = bool(result.get("verdict"))
     sources = _sources(root, task, done)
+    found = gaps.compute(root, task)
     sections = [
         [f"# Owner block: {task}"],
         _outcome(root, task, record, sources, decisions),
-        _decisions(decisions, record),
+        _decisions(root, task, decisions, record),
+        _gaps(found, done),
         _asks(root, task, record),
         _facts(root, sources),
         _integrity(root, task, sources, result.get("integrity_error")),
@@ -377,15 +395,22 @@ def block(root: Path, task: str, result: Mapping[str, Any] | None = None) -> tup
         sections.append(["## Release", f"- {result['verdict']}"])
     body = "\n\n".join("\n".join(lines) for lines in sections) + "\n\n"
     sha8 = hashlib.sha256(body.encode("utf-8")).hexdigest()[:8]
-    return f"{body}{MARKER} {sha8}\n", sha8
+    return f"{body}{MARKER} {sha8}\n", sha8, [g["id"] for g in found]
+
+
+def block(root: Path, task: str, result: Mapping[str, Any] | None = None) -> tuple[str, str]:
+    """The owner block for `task` and the first 8 hex digits of the SHA-256 of its body."""
+    text, sha8, _ = _build(root, task, result)
+    return text, sha8
 
 
 def write(root: Path, task: str, result: Mapping[str, Any] | None = None) -> tuple[str, str]:
-    """`block`, also written to `.lapis/owner/<task>.md`. A folder that cannot be written is told on stderr; the block
-    comes back either way."""
-    text, sha8 = block(root, task, result)
+    """`block`, also written to `.lapis/owner/<task>.md`, with the gaps it lists recorded under its digest. A folder that
+    cannot be written is told on stderr; the block comes back either way."""
+    text, sha8, listed = _build(root, task, result)
     try:
         requirements.write_atomic(path(Path(root), task), text)
     except OSError as exc:
         print(f"lapis-design owner: {path(Path(root), task)} cannot be written: {exc}", file=sys.stderr)
+    gaps.record(Path(root), task, sha8, listed)
     return text, sha8

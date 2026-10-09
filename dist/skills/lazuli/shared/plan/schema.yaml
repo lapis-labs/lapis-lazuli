@@ -350,6 +350,9 @@ $defs:
               - light
               - dark
               - high-contrast
+            area:
+              type: string
+              minLength: 8
             source_class:
               enum:
               - authored

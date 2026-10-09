@@ -227,6 +227,14 @@ def reply(root: Path, text: str, at: int, task: str = TASK) -> Path:
     return record(root, "answers", f"{BRIEF_RECORD}\n## Replies\n\n{text}", at, task)
 
 
+def gaps_seen(root: Path, task: str = TASK) -> str:
+    """The owner's acknowledgment of the gaps in the owner block the questions file carries, as the run records it."""
+    from lapis_design import waiting
+
+    sha8 = waiting.carried((root / ".lapis" / "questions" / f"{task}.md").read_text(encoding="utf-8"))
+    return f"- Gaps seen (lapis-owner-block {sha8}): \"seen, all of it\"\n"
+
+
 def capture_file(root: Path, name: str, seed: int, task: str = TASK) -> str:
     """An image under `.lapis/references/<task>/` that differs from every other seed's (noise does not shrink below
     the record's size floor); returns its path as a record names it."""

@@ -857,6 +857,21 @@ def check_taste(plan: dict, root: Path, plan_file: str) -> list[dict]:
     return out
 
 
+def check_color_area(plan: dict, plan_file: str) -> list[dict]:
+    """A create plan says where each `field` and `identity` color sits and about how much of the screen it owns: the
+    values survive into CSS and their area does not, and the area is what makes a palette read as a different one."""
+    if plan.get("mode") != "create":
+        return []
+    roles = ((plan.get("tokens") or {}).get("color") or {}).get("roles") or []
+    return [finding("plan.color-area-missing", "requirement",
+                    f"the {role['role']} color {role.get('name')!r} has no `area`", blocking=True, create="gate",
+                    review="P1", path=f"tokens.color.roles[{index}]", file=plan_file,
+                    fix="Add `area`: where the color sits and about how much of the screen it owns, as in \"canvas of "
+                        "every section, about 70% of the first view\".")
+            for index, role in enumerate(roles)
+            if isinstance(role, dict) and role.get("role") in ("field", "identity") and not role.get("area")]
+
+
 # Exit flows and the kinds of flow each may reverse (behavior/DERIVED.md, Flows)
 EXIT_PAIRS = {
     "cancel-subscription": {"subscribe", "purchase"},
@@ -995,6 +1010,7 @@ def run(plan_path: Path | None, rules_path: Path | None, lock_path: Path | None,
         findings += check_fonts(plan, lock, plan_file)
         findings += check_references(plan, root, plan_file)
         findings += check_taste(plan, root, plan_file)
+        findings += check_color_area(plan, plan_file)
         findings += check_flows(plan, plan_file)
     blocking = sum(1 for f in findings if f["blocking"])
     return {

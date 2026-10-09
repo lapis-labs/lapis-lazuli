@@ -32,7 +32,12 @@ metadata:
   `.lapis/owner/<task>.md`: the requirement states, the owner's decisions, the facts shown with their sources, protected
   changes, disputes, and what did not run. It ends in a `lapis-owner-block <sha8>` line. Paste it unchanged ahead of your
   own summary at `done`, and into the questions file of an approval ask (an ask without the current line comes back as
-  `draft-review`). Never edit, shorten, or write it yourself.
+  `draft-review`). Never edit, shorten, or write it yourself. It lists `## Decisions you have not made`: what you filled
+  in that the owner never decided (style, objects, signature, color and where each color sits, layout, motion, type,
+  copy). Nothing is sealed or approved until the owner's reply acknowledges that block by its digest, as the untagged
+  line `- Gaps seen (lapis-owner-block <sha8>): "<their words>"`, or decides the items (`- [declared] color: <what they
+  decided>`, `layout:`, `motion:`, `signature:`, `type <role>:`); a plan approved without it comes back as
+  `approval-gaps`.
 - Report whether taste was given and cited, not given (the direction is your own reading), or unrecorded;
   `.lapis/taste.md` and `direction.taste` are described in `lps-brief`'s record guide.
 - Follow the user's words. When they forbid network use, lookups, or downloads during the work and nobody can be
@@ -284,6 +289,11 @@ ramps, themes, data scales, and physical standards, read `references/color.md`.
 For an open decision, run `references/color.md` → **Run the color comparison**: fixed/open inputs,
 role hypotheses, two palettes on matched real-screen specimens, then remove role failures, choose,
 and stop. Record candidate artifacts/values and same-context captures in `explorations`.
+
+Give each `field` and `identity` role an `area`: where the color sits and about how much of the screen it owns, as in
+"canvas of every section, about 70% of the first view" or "the stone and the primary action only, about 3%". The values
+survive into CSS and their areas do not, and the area is what makes a palette a different one; a create plan without
+it is `plan.color-area-missing`.
 
 ### 7. Type - `tokens.type`
 

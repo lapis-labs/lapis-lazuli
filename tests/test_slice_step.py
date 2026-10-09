@@ -9,7 +9,17 @@ from pathlib import Path
 import pytest
 
 from lapis_design import draft, gate, integrity, next_step, owner
-from procedure_support import (TASK, ask, make_project, record, reply, save, seal_slice, unseal_slice, update)
+from procedure_support import TASK, ask, gaps_seen, make_project, record, save, seal_slice, unseal_slice, update
+from procedure_support import reply as reply_to
+
+
+def reply(root: Path, text: str, at: int) -> Path:
+    """The owner's reply as the run records it, with their acknowledgment of the gaps the questions' owner block listed
+    (once the questions exist): the block lists the decisions the agent filled in, and no slice seals before they are seen."""
+    questions = root / f".lapis/questions/{TASK}.md"
+    seen = gaps_seen(root) if questions.is_file() else ""
+    return reply_to(root, text.rstrip("\n") + "\n" + seen, at)
+
 
 URL = "http://127.0.0.1:4173/slice.html"
 URL_B = "http://127.0.0.1:4173/slice-b.html"

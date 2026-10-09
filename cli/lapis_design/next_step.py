@@ -40,8 +40,8 @@ from typing import Any
 
 import yaml
 
-from lapis_design import (asks, attempts, brief, critic_packet, draft, gate, owner, preview, references, release_check,
-                          requirements, shared_dir, slice_step, taste, waiting)
+from lapis_design import (asks, attempts, brief, critic_packet, draft, gaps, gate, owner, preview, references,
+                          release_check, requirements, shared_dir, slice_step, taste, waiting)
 from lapis_design.lint.cli import problems
 from lapis_design.plan_check import PlanOverLimit, read_plan, yaml_reason
 from lapis_design.summary import NOT_JUDGED
@@ -482,6 +482,8 @@ def _steps(root: Path, task: str, page: str | None, integrity_error: str | None 
                            shared / "plan" / "schema.yaml"), interactive)
     if why := slice_step.check(root, task, plan):
         return state(slice_step.step(task, why), interactive)
+    if why := gaps.approval_problem(root, task, plan):
+        return state(_step("approval-gaps", why), interactive)
     if "fonts-lock" in from_plan_steps or "fonts-lock" in need:
         commands = _lock_commands(plan, task)
         why = GENERIC_LOCK.format(task=task) + " " + (

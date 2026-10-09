@@ -28,7 +28,7 @@ from typing import Any, Mapping
 
 import yaml
 
-from lapis_design import draft, gate, integrity, requirements, waiting
+from lapis_design import draft, gaps, gate, integrity, requirements, waiting
 
 STEP = "slice"
 
@@ -103,6 +103,13 @@ def _packet(root: Path, page: Mapping[str, Any]) -> str | None:
     return found if isinstance(found, str) else None
 
 
+def _read(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return ""
+
+
 def check(root: Path, task: str, plan: Any, env: Mapping[str, str] = os.environ) -> str | None:
     """None when no slice is owed or the one asked for has just been sealed, else what the `slice` step says."""
     if not owed(root, task, plan, env):
@@ -134,6 +141,9 @@ def check(root: Path, task: str, plan: Any, env: Mapping[str, str] = os.environ)
         return ("The owner has answered the questions about the slice, but the plan does not say `approval: {state: "
                 "approved}`. If they approved the slice, record that in the plan. If they asked for changes, revise "
                 "the changed area as `direction: iteration`, show it, and ask again.")
+    carried = waiting.carried(_read(questions))
+    if missing := gaps.unacknowledged(root, task, carried, env):
+        return gaps.problem(missing, carried, approval="The slice")
     row = {"url": chosen["url"], **({"candidates": [p["url"] for p in candidates]} if len(candidates) > 1 else {}),
            "draft_sha256": _digest(draft.path(root, task)), "packet_sha256": _packet(root, chosen),
            "questions_sha256": _digest(questions), "answers_sha256": _digest(waiting.answers_path(root, task)),
