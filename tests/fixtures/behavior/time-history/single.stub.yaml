@@ -1,0 +1,7 @@
+version: 0
+clock: { start: '2026-09-26T00:00:00Z' }
+routes: []
+collections: {}
+variants: { empty: {}, partial: {} }
+values:
+  v3: { kind: search, valid: ceramics, invalid: '?', alternate: bowls }

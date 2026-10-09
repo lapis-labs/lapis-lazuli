@@ -166,6 +166,10 @@ between minor versions; render extraction is v1 and the other contract formats a
   message with the entry to add, a critic report built for another page or locale says which captures and lint report its
   packet has, which this page's review names, and the `critic packet` command for it, and a schema "additional properties"
   problem names the fields the object does hold.
+- The history probe no longer reports `partial` for a page with no link to another route (a one-page site): there is no
+  navigation to go back from, the entry Back probe still runs, and the four requirements that read the probe
+  (`ux.back-trap`, `ux.duplicate-submit`, `ux.false-status`, `ux.destructive-without-undo`) are no longer left unverified for it.
+  The POST reload check looks for a form before it asks for a stub backend.
 - A `<br>` between two text nodes of one run is stored as a space, so `감각에<br>근거를` is no longer one word in every check
   that reads the text.
 - `install.sh` passes `shellcheck` 0.9 and later: `cleanup`, which only the `EXIT` trap calls, carries

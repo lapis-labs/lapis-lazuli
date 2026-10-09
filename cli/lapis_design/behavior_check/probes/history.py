@@ -99,8 +99,8 @@ def _navigation_back(session, driver):
     _prepare(driver, session.values_engine)
     before = _state(driver)
     link = _local_link(driver, before["links"])
-    if not link:
-        return False
+    if not link:                           # a page with no link to another route has no navigation to go back from
+        return None
     driver.act({"kind": "click", "target": link["id"]})
     if _path(driver) == safe_path(session.source["url"], session.fixture_values):
         return False
@@ -161,11 +161,11 @@ def _entry_back(session, driver):
 
 def _reload_post(session, driver):
     driver.open(urlsplit(session.source["url"]).path or "/")
-    if session.meta["backend"] != "stub" and session.meta.get("outbound") != "none":
-        return "Form submission not safe without stub or local-dev outbound none"
     form = driver.page.locator("form[method=post],form[method=POST]").first
     if not form.count():
         return None
+    if session.meta["backend"] != "stub" and session.meta.get("outbound") != "none":
+        return "Form submission not safe without stub or local-dev outbound none"
     if not form.locator("button[type=submit],input[type=submit]").count():
         return "POST form has no submit control"
     if form.locator("input[required]:not([type=hidden])").count():

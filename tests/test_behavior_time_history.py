@@ -219,6 +219,18 @@ def test_history_exposes_broken_filter_pushed_entries_and_home_redirect(browser,
     assert next(entry for entry in document["coverage"] if entry["probe"] == "history")["status"] == "ran"
 
 
+def test_a_page_with_no_link_to_another_route_has_no_navigation_to_go_back_from_and_history_still_ran(browser, app_server):
+    session = Session(app_server + "single.html", "time-history", engine=StubEngine.load(APP / "single.stub.yaml"))
+    def open_driver(ctx):
+        return Driver(browser, session, ctx)
+    history.run(session, open_driver)
+    document = session.document()
+    status = next(entry for entry in document["coverage"] if entry["probe"] == "history")
+    assert status["status"] == "ran" and status.get("reason") is None, status
+    assert {item["action"] for item in document["probes"]["history"]} == {"back"}      # the entry Back; no navigation entry
+    assert all("restored" not in item for item in document["probes"]["history"])
+
+
 def test_reload_after_redirected_post_offers_no_resubmission(browser, app_server):
     session = Session(app_server + "prg.html", "time-history", engine=StubEngine.load(APP / "app.stub.yaml"))
     driver = Driver(browser, session, "d")
