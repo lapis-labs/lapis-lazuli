@@ -29,7 +29,7 @@ from urllib.parse import unquote, urlsplit
 
 import yaml
 
-from lapis_design import attempts, critic_packet, integrity, requirements, slice_step
+from lapis_design import attempts, brief, critic_packet, integrity, requirements, slice_step
 
 MARKER = "lapis-owner-block"
 LIST_MAX = 15
@@ -124,6 +124,38 @@ def _decisions(decisions: list[dict], record: dict | None) -> list[str]:
         extra = "" if d["row"] in known else " (no row has this id)"
         out.append(f"- {d['decision']} {d['row']}{extra}: {_cut(d['quote'], 200)} ({d['at']['path']} line {d['at']['line']})")
     return out
+
+
+_ASK_ITEM = re.compile(r"^\s*Ask\s+([a-z][a-z-]*)\s*:\s*(.*)$", re.IGNORECASE | re.DOTALL)
+_BASIS = re.compile(r"\bbasis\b\s*:\s*(\S.*)", re.IGNORECASE | re.DOTALL)
+
+
+def _asks(root: Path, task: str, record: dict | None) -> list[str]:
+    """Each item under `## Asks` of the brief record: its trigger and, for what the owner answered, its row id and their
+    words; for what the run answered itself, the default it took and why. When the run answered every one itself (an
+    unattended run), the title says so."""
+    try:
+        text = (root / ".lapis" / "answers" / f"{task}.md").read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        text = ""
+    rows = {requirements.norm(r["text"]): r["id"] for r in (record or {}).get("rows", [])}
+    lines: list[str] = []
+    owner_answered = False
+    for item in brief.items(brief.sections(text).get("asks", "")):
+        tag = brief._TAG.match(item)
+        body = requirements._LEAD.sub("", item[tag.end():]) if tag else item
+        found = _ASK_ITEM.match(body)
+        trigger, said = (found.group(1).lower(), found.group(2)) if found else ("unnamed", body)
+        if tag and tag.group(1).lower() == "assumed":
+            basis = _BASIS.search(said)
+            lines.append(f"- {trigger}: default taken, not asked: "
+                         f"{_cut(basis.group(1), 200) if basis else _cut(said, 200)}")
+        else:
+            owner_answered = True
+            row = rows.get(requirements.norm(body))
+            lines.append(f"- {trigger}{f' ({row})' if row else ''}: {_cut(said, 200)}")
+    title = "## Questions during the work" if owner_answered or not lines else "## Questions the run answered itself"
+    return [title] + (lines or ["- none."])
 
 
 def _facts(root: Path, sources: list[tuple[str, str]]) -> list[str]:
@@ -334,6 +366,7 @@ def block(root: Path, task: str, result: Mapping[str, Any] | None = None) -> tup
         [f"# Owner block: {task}"],
         _outcome(root, task, record, sources, decisions),
         _decisions(decisions, record),
+        _asks(root, task, record),
         _facts(root, sources),
         _integrity(root, task, sources, result.get("integrity_error")),
         _disputes(root, task, sources),

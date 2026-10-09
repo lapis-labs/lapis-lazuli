@@ -78,7 +78,7 @@ def problem(text: str) -> str | None:
     for name in SECTIONS:
         if waiting.words(body.get(name, "")) < waiting.MIN_WORDS:
             return f"it has no `## {name.capitalize()}` section with text in it"
-    for item in items(body["answers"]):
+    for item in (*items(body["answers"]), *items(body.get("asks", ""))):     # `## Asks` holds the asks the run answered
         tag = _TAG.match(item)
         if tag and tag.group(1).lower() == "assumed":
             basis = _BASIS.search(item)
