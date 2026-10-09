@@ -299,6 +299,8 @@ def _evaluate(root: Path, task: str, page: str | None = None, integrity_error: s
         if dead := preview.unreachable(shown):
             serve = _step(draft.STEP, preview.why(task, dead), preview.command(task, dead))
             return {**result, "state": "needs-step", "step": serve, "reason": serve["why"]}
+        if (cut := slice_step.tall(root, task, shown)) and slice_step.owed(root, task, _plan_or_none(root, task)):
+            return {**result, "state": "needs-step", "step": slice_step.step(task, cut), "reason": cut}
     wait = _step(waiting.STEP, waiting.why(task, found, step["id"]) +
                  (" Include the recorded draft review summary and every unresolved finding in that message."
                   if result.get("draft_review") else ""))

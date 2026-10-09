@@ -238,16 +238,6 @@ def _declared(text: str, name: str) -> tuple[list[dict], list[dict]]:
     return rows, decisions
 
 
-def picks(root: Path, task: str) -> list[str]:
-    """The addresses the owner picked among slice candidates, in the order the answers file holds them: each
-    `[declared] Slice: <address> — <their words>` item. A trailing `.,;)` is not part of the address."""
-    try:
-        text = (root / answers_name(task)).read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError):
-        return []
-    return [m.group(1).rstrip(".,;)") for _, _, body in _declared_items(text) if (m := _PICK_URL.match(body))]
-
-
 # ---------------------------------------------------------------- the record
 
 def _problem(doc: Any, task: str) -> str | None:

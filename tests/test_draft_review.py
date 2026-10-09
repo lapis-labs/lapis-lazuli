@@ -90,7 +90,7 @@ def test_review_of_the_exact_page_allows_waiting_without_a_release_pass(project)
     result = next_step.evaluate(project, TASK)
     assert result["state"] == "waiting-for-user"
     [page] = result["draft_review"]
-    assert set(page) == {"url", "area", "widths", "findings", "critic"}        # no maker prose reaches the summary
+    assert set(page) == {"url", "area", "widths", "findings", "core_open", "critic"}   # no maker prose reaches the summary
     assert page["critic"]["report"] == CRITIC
     assert page["critic"]["packet_sha256"] == json.loads((project / CRITIC).read_text())["target"]["packet"]["sha256"]
     assert (project / ".lapis/critic/shown-page.packet.json").is_file()

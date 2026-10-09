@@ -29,7 +29,7 @@ from urllib.parse import unquote, urlsplit
 
 import yaml
 
-from lapis_design import attempts, brief, critic_packet, gaps, gate, integrity, requirements, slice_step
+from lapis_design import attempts, brief, critic_packet, draft, gaps, gate, integrity, requirements, slice_step
 
 MARKER = "lapis-owner-block"
 LIST_MAX = 15
@@ -251,18 +251,23 @@ def _disputes(root: Path, task: str, sources: list[tuple[str, str]]) -> list[str
     return out
 
 
-def _height(root: Path, page: Mapping[str, Any]) -> int | None:
-    """The document height at 1440: the largest `rect.y + rect.h` among the boxes of the page's extracts."""
-    review = page.get("review") if isinstance(page.get("review"), dict) else {}
-    bottoms = []
-    for name in review.get("extracts") or ():
-        for view in (_json(root / name) or {}).get("viewports") or ():
-            if isinstance(view, dict) and view.get("width") == 1440:
-                for box in view.get("boxes") or ():
-                    rect = box.get("rect") if isinstance(box, dict) else None
-                    if isinstance(rect, dict) and all(isinstance(rect.get(k), (int, float)) for k in ("y", "h")):
-                        bottoms.append(rect["y"] + rect["h"])
-    return round(max(bottoms)) if bottoms else None
+def _core_open(root: Path, task: str) -> list[str]:
+    """The core findings of the critic reports of the pages shown that are still open: the owner's decisions to make,
+    each with the rule id and what the critic observed. Empty when there is none, and then the block has no section."""
+    found: list[tuple[str, str]] = []
+    for page in _pages(root, task):
+        report = slice_step.critic_report(page)
+        for finding in (_json(root / report) or {}).get("findings") or () if report else ():
+            if isinstance(finding, dict) and "rule_id" in finding and "status" in finding and draft.is_core(finding):
+                entry = (finding["rule_id"], _cut(finding.get("observed", ""), 200))
+                if entry not in found:
+                    found.append(entry)
+    if not found:
+        return []
+    out = ["## Open core findings: your decision",
+           "The critic's report still holds these open. Say what to do about each: the slice is not sealed until a fresh "
+           "critic report closes it or you decide it."]
+    return out + [f"- {rule_id}: {observed}" for rule_id, observed in found[:LIST_MAX]]
 
 
 def _captures(root: Path, page: Mapping[str, Any]) -> list[str]:
@@ -325,7 +330,7 @@ def _shown(root: Path, task: str) -> list[str]:
     pages = _pages(root, task)
     for page in pages:
         widths = ", ".join(str(w) for w in page.get("widths") or ()) or "unknown widths"
-        height = _height(root, page)
+        height = slice_step.height(root, page)
         tall = f"{height:,} px" if height is not None else "not measured"
         out.append(f"- {page['url']} at {widths}; document height at 1440: {tall}")
         if captures := _captures(root, page):
@@ -335,8 +340,14 @@ def _shown(root: Path, task: str) -> list[str]:
     if not pages:
         out.append("- no rendered page is recorded for this task.")
     if sealed := slice_step.sealed(root, task):
-        among = f" (chosen among {', '.join(sealed['candidates'])})" if sealed.get("candidates") else ""
-        out.append(f"- Slice sealed: {sealed['url']}{among}")
+        out.append(f"- Slice sealed: {sealed['url']}")
+    state = integrity.read_state(root, task) or {}
+    if (state.get("slice_rounds") or 1) > 1:                   # the first showing is the page above; the clock alone changes no block
+        out.append(f"- Slice rounds: {state['slice_rounds']}")
+        out += [f"  - round {n}: document height at 1440: {h:,} px"
+                for n, h in sorted((state.get("slice_heights") or {}).items(), key=lambda item: int(item[0]))]
+    if said := slice_step.skipped(root, task):
+        out.append(f"- Slice skipped by you: {_cut(said, 200)}")
     return out
 
 
@@ -384,6 +395,7 @@ def _build(root: Path, task: str, result: Mapping[str, Any] | None) -> tuple[str
         _outcome(root, task, record, sources, decisions),
         _decisions(root, task, decisions, record),
         _gaps(found, done),
+        _core_open(root, task),
         _asks(root, task, record),
         _facts(root, sources),
         _integrity(root, task, sources, result.get("integrity_error")),
@@ -391,6 +403,7 @@ def _build(root: Path, task: str, result: Mapping[str, Any] | None) -> tuple[str
         _shown(root, task),
         _not_run(root, task, record, sources, done),
     ]
+    sections = [lines for lines in sections if lines]
     if done:
         sections.append(["## Release", f"- {result['verdict']}"])
     body = "\n\n".join("\n".join(lines) for lines in sections) + "\n\n"

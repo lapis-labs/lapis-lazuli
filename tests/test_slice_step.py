@@ -84,7 +84,9 @@ def test_an_attended_create_run_stops_at_the_slice_once_the_plan_steps_pass_and_
     assert "first view and the one section the brief puts first, not the whole page" in why
     assert "390 and 1440" in why and "direction: new" in why and "Copy is provisional" in why
     assert f"`lapis-design preview start --task {TASK}`" in why and "outlives this turn" in why
-    assert "question tool" in why and "2-3 candidates" in why and "Without a question tool, show one slice" in why
+    assert "declare the slice page" in why.lower() and "at most 12 files" in why and "at most 3,600 px tall" in why
+    assert "within 60 minutes or 40 page writes" in why and "lapis-questions: approval" in why
+    assert "candidates" not in why and "question tool" not in why
     monkeypatch.setenv("LAPIS_UNATTENDED", "1")
     assert step_of(project) == "fonts-lock"                  # the run goes on to what comes after the slice
 
@@ -157,11 +159,11 @@ def test_the_slice_is_sealed_only_when_it_was_asked_answered_approved_and_linked
     reply(project, "- [declared] The first view is right; keep the quiet tone.", 210)
     approve(project, "assumed")                              # the plan does not say the owner approved
     result = next_step.evaluate(project, TASK)
-    assert result["step"]["id"] == "slice" and "does not say `approval: {state: approved}`" in result["step"]["why"]
+    assert result["step"]["id"] == "slice" and result["step"]["why"].startswith("Slice round 2: the owner answered and did not approve")
     assert sealed(project) is None
     approve(project)
     assert step_of(project) == "fonts-lock"                  # sealed, so the step after the slice
-    assert sealed(project)["url"] == URL and "candidates" not in sealed(project)
+    assert sealed(project)["url"] == URL and "candidates" not in sealed(project) and sealed(project)["values"]
 
 
 def test_the_seal_records_the_digests_of_what_the_owner_saw_and_said(project, checked):
@@ -240,70 +242,13 @@ def test_a_protected_change_after_the_seal_is_flagged_and_listed_in_the_block(pr
     assert "Changed since you approved the slice:\n- /brief/one_job" in text
 
 
-# ---- 4. candidates: the owner picks one or gives feedback
+# ---- 4. one page
 
-def candidates(project: Path, *urls: str) -> None:
-    draft_pages(project, *[(url, "new") for url in urls])
+def test_the_slice_is_one_page_and_the_step_text_offers_no_candidates(project, checked):
+    draft_pages(project, (URL, "new"), (URL_B, "new"))
     approve(project)
-    ask(project, "Which slice do you pick, or what would you change? " + " ".join(urls), 200)
-
-
-def test_a_pick_among_several_candidates_seals_the_chosen_one_and_records_all_of_them(project, checked):
-    candidates(project, URL, URL_B, URL_C)
-    reply(project, f"- [declared] Slice: {URL_B} — the second composition, with the calmer header", 210)
-    assert step_of(project) == "fonts-lock"
-    found = sealed(project)
-    assert found["url"] == URL_B and found["candidates"] == [URL, URL_B, URL_C]
-    assert found["packet_sha256"] == "2" * 64                # the critic report of the chosen page, not the first one's
-
-
-def test_feedback_without_a_pick_seals_nothing_and_a_pick_after_it_does(project, checked):
-    candidates(project, URL, URL_B)
-    reply(project, "- [declared] Make the headline calmer, and show the firing log higher up.", 210)
-    result = next_step.evaluate(project, TASK)
-    why = result["step"]["why"]
-    assert result["step"]["id"] == "slice" and "2 candidates" in why and "names none of them" in why
-    assert "[declared] Slice: <the page's address exactly as linked>" in why and "revise the candidates" in why
-    assert sealed(project) is None
-    reply(project, f"- [declared] Make the headline calmer.\n- [declared] Slice: {URL} — this one, calmer\n", 220)
-    assert step_of(project) == "fonts-lock"
-    assert sealed(project)["url"] == URL
-
-
-def test_a_pick_that_names_no_candidate_is_no_pick_and_the_last_pick_wins(project, checked):
-    candidates(project, URL, URL_B)
-    reply(project, f"- [declared] Slice: {URL_C} — a page that was not shown", 210)
-    assert step_of(project) == "slice" and sealed(project) is None
-    reply(project, f"- [declared] Slice: {URL} — first\n- [declared] Slice: {URL_B}. — no, the second\n", 220)
-    assert step_of(project) == "fonts-lock" and sealed(project)["url"] == URL_B
-
-
-def test_a_pick_does_not_seal_a_plan_the_owner_did_not_approve(project, checked):
-    candidates(project, URL, URL_B)
-    approve(project, "assumed")
-    reply(project, f"- [declared] Slice: {URL_B} — this one", 210)
-    assert "does not say `approval: {state: approved}`" in next_step.evaluate(project, TASK)["step"]["why"]
-    assert sealed(project) is None
-
-
-def test_a_pick_and_a_decision_line_are_no_requirement_rows(project, checked):
-    from lapis_design import requirements
-
-    candidates(project, URL, URL_B)
-    reply(project, f"- [declared] Slice: {URL_B} — the second\n- [declared] Keep the firing log above the fold.\n", 210)
-    next_step.evaluate(project, TASK)
-    assert [r["text"] for r in requirements.rows(project, TASK)] == ["Keep the firing log above the fold."]
-
-
-def test_the_chosen_candidate_shows_in_the_owner_block(project, checked):
-    candidates(project, URL, URL_B)
-    reply(project, f"- [declared] Slice: {URL_B} — the second composition", 210)
-    next_step.evaluate(project, TASK)
-    text, _ = owner.block(project, TASK)
-    assert f"Slice sealed: {URL_B} (chosen among {URL}, {URL_B})" in text
-
-
-def test_the_step_text_carries_both_branches_for_a_harness_with_and_without_a_question_tool(project):
+    ask(project, f"Approve this slice? {URL} {URL_B}", 200)
+    reply(project, "- [declared] The first one.", 210)
     why = next_step.evaluate(project, TASK)["step"]["why"]
-    assert "If this harness has a question tool" in why and "Without a question tool, show one slice" in why
-    assert "record a pick as `- [declared] Slice: <the page's address exactly as linked> — <their words>`" in why
+    assert "The slice is one page, and the questions link 2 `direction: new` pages" in why
+    assert sealed(project) is None

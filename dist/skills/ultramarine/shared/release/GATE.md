@@ -271,18 +271,33 @@ or the state no longer matches what the CLI wrote. A change is surfaced to the o
 and the gate counts no change as a defect.
 
 `slice` comes after the plan's own blockers and `plan-order` and before the fonts lock, only in an attended run (no
-`LAPIS_UNATTENDED`) with a plan in `mode: create` and no slice sealed in `.lapis/state/<task>.json`. The run builds the
-first view and the one section the brief puts first, serves them (`lapis-design preview start`, below), captures both
-at 390 and 1440, has them reviewed, and asks the owner
-to approve them in `.lapis/questions/<task>.md`, linking the page; approval questions that link no draft page while
-no slice is sealed return `slice` instead of `waiting-for-user`. A harness with a question tool may show two or three
-candidates, each its own `direction: new` page linked in the questions; the owner picks one or gives feedback, and the
-pick is recorded in `.lapis/answers/<task>.md` as `[declared] Slice: <address> — <their words>`. `next` seals when the
-questions were asked and answered (the answers are newer), `draft check` passes for the linked pages, one linked
-`direction: new` page is the chosen one, and the plan says `approval: {state: approved}`. `state.slice` then holds the
-chosen address, every candidate when there were several, and the digests of the draft record, the critic packet, the
-questions, the answers, and the requirement record. Protected changes after the seal are flagged `after_slice` in the
-change log and listed in the owner block. Unattended runs skip the step.
+`LAPIS_UNATTENDED`) with a plan in `mode: create`, no slice sealed in `.lapis/state/<task>.json`, and no
+`- Slice skipped: "<owner words>"` line in the answers file (an untagged line, not a requirement row, that lifts the hold
+and the step; the owner block says "Slice skipped by you"). The slice is one page. The run declares it first, as a
+`direction: new` page of `.lapis/drafts/<task>.yaml` with its `url` and `sources`, builds the first view and the one
+section the brief puts first, serves them (`lapis-design preview start`, below), captures both at 390 and 1440, has them
+reviewed, and asks the owner to approve them in questions of kind `approval` that link the page and carry the owner
+block. Approval questions that link no draft page while no slice is sealed return `slice` instead of `waiting-for-user`,
+and so does a shown page taller than 3,600 px at 1440.
+
+Hold and clock (`slice_step.py`, enforced by `order.decide`): from the first time `next` names `slice` (`state.slice_since`)
+until the slice is sealed or skipped, an attended run's edit tools may write only the files the slice page declares; with
+no declared page or more than 12 declared files every page write is refused, with no refusal cap. The slice is overdue after
+60 minutes or 40 page writes (counted in `.lapis/order/<task>.json`) since the clock started, without a waiting `approval`
+question that links the page and carries the current owner block; `next` then says "overdue" and every page write is
+refused until that question exists. The clock starts at `slice_since`, at each owner reply that asks for a revision, and
+at every answered set of questions of any kind. A page written through a shell is found afterwards, not refused.
+
+`next` seals when the questions were asked and answered (the answers are newer), `draft check` passes, one linked
+`direction: new` page is the slice, the plan says `approval: {state: approved}`, the owner acknowledged the gaps the
+questions' block listed (below), and every open core finding of the critic's report (`approval_impact:
+core-product-explanation`, `review.world-materials` unless marked ordinary) is closed by a fresh critic report or decided
+by the owner as `[declared] Ask finding-vs-decision: <rule id> — <their words>`. Open core findings do not block the wait
+itself: the block lists them under `## Open core findings: your decision`. An answered but unapproved slice is round 2,
+3, and so on (`state.slice_rounds`, `slice_heights`), under the same hold and a restarted clock. `state.slice` holds the
+address, the digests of the draft record, the critic packet, the questions, the answers, and the requirement record, and
+the protected values. Protected changes after the seal are flagged `after_slice` in the change log and listed in the
+owner block. Unattended runs skip the step.
 
 While questions the run wrote for its user are unanswered, `next` returns the state `waiting-for-user` instead
 of a step: `step.id` is `waiting-for-user` (stop, and wait for the answers), `then` is the step that comes
