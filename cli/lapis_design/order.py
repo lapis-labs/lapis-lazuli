@@ -33,7 +33,7 @@ block), every page write is refused, with no cap: an agent held here has one way
 file-edit tools are held, as below.
 
 Before that, in every session and whatever step `next` names, a write to a record only `lapis-design` writes
-(`CLI_OWNED`: `.lapis/requirements/`, `.lapis/state/`, `.lapis/changes/`, `.lapis/owner/`) is refused, once per tool
+(`CLI_OWNED`: `.lapis/requirements/`, `.lapis/state/`, `.lapis/changes/`, `.lapis/owner/`, `.lapis/order/`) is refused, once per tool
 call and with no cap. That stops the agent's tool, not a person. A write through the shell is not prevented; the change
 log notices it (`integrity.py`: the log or the state no longer matches) and the owner sees the row.
 
@@ -58,7 +58,7 @@ BEFORE_CODE = (*ORDER_STEPS, "requirements", "owner-direction", "diverge", "plan
 CAP = 3                              # refusals of one step; then the write goes through and is recorded
 # the folders of `.lapis/` that only `lapis-design` writes (integrity.py, requirements.py, owner.py); a write to one
 # is refused in every session, since the CLI computes what is in them and a hand edit would not be trusted
-CLI_OWNED = (".lapis/requirements", ".lapis/state", ".lapis/changes", ".lapis/owner")
+CLI_OWNED = (".lapis/requirements", ".lapis/state", ".lapis/changes", ".lapis/owner", ".lapis/order")
 
 # the suffixes the source layer of the lint reads (lint/detectors/source.py), in the folders it walks
 PAGE_SUFFIXES = {".css", ".scss", ".sass", ".less", ".styl", ".pcss", ".postcss", ".html", ".htm", ".vue",
@@ -87,21 +87,53 @@ def record_path(root: Path, task: str) -> Path:
     return root / ".lapis" / "order" / f"{task}.json"
 
 
+def _mac(state: dict[str, Any]) -> str:
+    """The keyed digest of an order record's content: the key is the user's own (`sig_key.py`), kept outside the project, so
+    an agent that edits the record cannot make a digest that holds."""
+    import hashlib
+    import hmac
+
+    from lapis_design.sig_key import load_key
+
+    body = json.dumps({k: v for k, v in state.items() if k != "mac"}, ensure_ascii=False, sort_keys=True)
+    return hmac.new(load_key(), body.encode("utf-8"), hashlib.sha256).hexdigest()
+
+
+def tampered(root: Path, task: str) -> bool:
+    """Whether `.lapis/order/<task>.json` exists and is not what `lapis-design` wrote: it is no mapping or its keyed digest
+    does not hold. An edit tool's write to it is refused (`CLI_OWNED`); this finds any other."""
+    import hmac
+
+    try:
+        state = json.loads(record_path(root, task).read_text(encoding="utf-8"))
+    except OSError:
+        return False
+    except ValueError:
+        return True
+    try:
+        return not (isinstance(state, dict) and isinstance(state.get("mac"), str) and hmac.compare_digest(state["mac"], _mac(state)))
+    except (OSError, ValueError):
+        return False                                        # no key to check with: not a finding of ours
+
+
 def load(root: Path, task: str) -> dict[str, Any]:
-    """The order record of `task`: `{}` when there is none or it cannot be read."""
+    """The order record of `task`: `{}` when there is none, it cannot be read, or it was edited outside `lapis-design`
+    (`tampered`; the owner block says so)."""
     try:
         state = json.loads(record_path(root, task).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {}
-    return state if isinstance(state, dict) else {}
+    if not isinstance(state, dict) or tampered(root, task):
+        return {}
+    return {k: v for k, v in state.items() if k != "mac"}
 
 
 def _save(root: Path, task: str, state: dict[str, Any]) -> None:
     target = record_path(root, task)
     try:
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(json.dumps({"version": 0, "task": task, **state}, ensure_ascii=False, indent=2) + "\n",
-                          encoding="utf-8")
+        body = {"version": 0, "task": task, **{k: v for k, v in state.items() if k != "mac"}}
+        target.write_text(json.dumps({**body, "mac": _mac(body)}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     except OSError as exc:
         print(f"lapis-design order: {target} cannot be written: {exc}", file=sys.stderr)
 
@@ -265,7 +297,7 @@ def _lapis_folder(start: Path, env: Mapping[str, str]) -> Path | None:
 
 def _owned_refusal(rel: str) -> dict[str, Any]:
     reason = (f"LapisLazuli refuses this write: {rel} is a record only `lapis-design` writes (`.lapis/requirements/`, "
-              "`.lapis/state/`, `.lapis/changes/`, `.lapis/owner/`). A write to it by any other route is found "
+              "`.lapis/state/`, `.lapis/changes/`, `.lapis/owner/`, `.lapis/order/`). A write to it by any other route is found "
               "afterwards and shown to the owner as an integrity change. Run the command that makes the record "
               "(`lapis-design requirements seal`, `lapis-design next`), and tell the owner when it holds something wrong.")
     return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",

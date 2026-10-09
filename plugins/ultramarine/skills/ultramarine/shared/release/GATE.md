@@ -290,7 +290,7 @@ folder holds no page source. A session without `LAPIS_UNATTENDED=1` gets one `sy
 refused. The hook sees the harness's file-edit tools, so a page written through the shell is found afterwards, by file
 times.
 
-`.lapis/requirements/`, `.lapis/state/`, `.lapis/changes/`, and `.lapis/owner/` hold records only `lapis-design`
+`.lapis/requirements/`, `.lapis/state/`, `.lapis/changes/`, `.lapis/owner/`, and `.lapis/order/` hold records only `lapis-design`
 writes, and the hook refuses an edit tool's write to them in every session, with no cap and whatever step `next` names.
 A shell write is not prevented; it is found afterwards. Every command that reads the plan (`plan check`, `slop lint
 --plan`, `next`, `draft check`, `release check`, `handoff export`) first compares the plan's protected inputs with the
@@ -342,7 +342,13 @@ block and no draft review (`asks.py`); an ask that breaks that shape, or that is
 checkpoint that already has an answered ask, does not wait. The CLI logs every set it waited on in
 `.lapis/state/<task>.asks.json` as `{set, kind, trigger, then, asked, answered, cli}`. An unattended run (`LAPIS_UNATTENDED=1`)
 never waits on a `direction` or `ask` file: it records `[assumed]` items with their `Basis:` under `## Asks` in the brief
-record and goes on. Questions count when the file has two words or more outside its heading lines (an empty or one-word
+record and goes on. `next` itself returns the step `ask` (no command; its text names the rows, batched into one question) while one of
+three triggers is pending: `new-direction` (a pointer under `/direction/concept`, `/direction/levers`, `/layout/signature`,
+`/layout/sections`, `/tokens/type/roles`, or `/tokens/motion/principles` holds another value than at the slice seal), `finding-vs-decision` (a
+protected change on an area the owner decided, color, type, layout, motion, or signature, while a finding that reads it was
+open), and `budget` (more than 90 minutes, or the owner's untagged `- Budget: <n> min` line, since the later of the slice seal and the
+last answered set; attended runs only). An item `Ask <trigger>` under `## Asks` written after the change lifts it, as does
+putting a changed direction value back; these asks are exempt from one ask per checkpoint. Questions count when the file has two words or more outside its heading lines (an empty or one-word
 file is no question); the answers are in `.lapis/answers/<task>.md`, the brief record, where the plan can cite them
 from `context.other` and `claims.declared`. The questions are unanswered when no answers file with a word in it is at
 least as new, by modification time, as the questions file. A procedure that is `done` stays `done`. The exit gate

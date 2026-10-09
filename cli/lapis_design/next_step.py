@@ -259,7 +259,7 @@ def _evaluate(root: Path, task: str, page: str | None = None, integrity_error: s
     step = result["step"]
     plan_exists = (root / ".lapis" / "plans" / f"{task}.yaml").exists()
     found = waiting.pending(root, task, "approval" if plan_exists else "plan", gate.load(root, task).get("waits"))
-    asks.observe(root, task, step["id"] if step else "done", found)
+    asks.observe(root, task, step["id"] if step else "done", found, _raised(step))
     if found is None:
         return _marked(root, task, result)
     kind = found["kind"]
@@ -283,7 +283,7 @@ def _evaluate(root: Path, task: str, page: str | None = None, integrity_error: s
     if kind == "brief" and (over := brief.questions_problem(root, task)):
         cut = _step(brief.STEP, brief.over_why(task, over))
         return {**result, "step": cut, "reason": cut["why"]}
-    if unfit := _unfit(root, task, kind, step["id"]):
+    if unfit := _unfit(root, task, kind, step["id"], _raised(step)):
         return _prefixed(result, f"The questions in {found['questions']} (kind {kind}) do not wait: {unfit}.")
     if approval:
         block, sha8 = owner.write(root, task, {"integrity_error": integrity_error})
@@ -326,12 +326,18 @@ def _marked(root: Path, task: str, result: dict) -> dict:
                      "holds (the lapis skill's \"Questions and kinds\" section).")
 
 
-def _unfit(root: Path, task: str, kind: str, then: str) -> str | None:
+def _raised(step: dict | None) -> tuple[str, ...]:
+    """The triggers the CLI itself is raising now (the step `ask`, `asks.detected`): an ask with one of them is exempt from
+    one ask per checkpoint, since the agent's own change caused it."""
+    return tuple(step.get("triggers") or ()) if step and step.get("id") == "ask" else ()
+
+
+def _unfit(root: Path, task: str, kind: str, then: str, exempt: tuple[str, ...] = ()) -> str | None:
     """Why the questions of `kind` are not in the shape that waits (the step stays `then`, the one `next` would name), or
     None when they are."""
     if kind == "ask":
         return (asks.shape_problem(_read_text(waiting.questions_path(root, task)))
-                or asks.checkpoint_problem(root, task, then))
+                or asks.checkpoint_problem(root, task, then, exempt))
     if kind == "direction":
         return direction.questions_problem(root, task)
     return None
@@ -496,6 +502,8 @@ def _steps(root: Path, task: str, page: str | None, integrity_error: str | None 
                            "rebuild the parts that lose. This step lifts when the plan cites the brief record and holds "
                            "that candidate; it does not judge whether the comparison was fair.", check,
                            shared / "plan" / "schema.yaml"), interactive)
+    if raised := asks.detected(root, task, plan):
+        return state(raised, interactive)
     if why := slice_step.check(root, task, plan):
         return state(slice_step.step(task, why), interactive)
     if why := gaps.approval_problem(root, task, plan):

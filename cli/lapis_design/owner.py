@@ -131,6 +131,13 @@ def _decisions(root: Path, task: str, decisions: list[dict], record: dict | None
             out.append(f"- picked rough {d['text']} ({d['by']}): {_cut(d['quote'], 200)}")
         else:
             out.append(f"- took the defaults of the direction conversation (turn {d['turn']}): {_cut(d['quote'], 200)}")
+    from lapis_design import asks
+
+    budget = asks._BUDGET.findall(answers)
+    if budget:
+        out.append(f"- agent-alone budget set by you: {budget[-1]} min")
+    if said := slice_step.skipped(root, task):
+        out.append(f"- slice skipped by you: {_cut(said, 200)}")
     return out if len(out) > 1 else out + ["- none recorded."]
 
 
@@ -227,6 +234,11 @@ def _integrity(root: Path, task: str, sources: list[tuple[str, str]], error: str
             if isinstance(change, dict) and change.get("verdict") == "narrows":
                 lines.append(f"- the critic says change {change.get('seq')} narrows what you asked: "
                              f"{_cut(change.get('why', ''), 160)}")
+    from lapis_design import order
+
+    if order.tampered(root, task):
+        out.append("- the order record `.lapis/order/" + task + ".json` was edited outside lapis-design: its page-write "
+                   "counts are not trusted")
     out.append(f"- {len(protected)} protected changes observed, {len(flagged)} listed here, {len(since)} since the slice.")
     out += lines
     if since:

@@ -12,12 +12,20 @@ the questions file and of the answers file that answered it, so the log does not
 ask the agent raises at a checkpoint that already has an answered ask does not wait (`checkpoint_problem`): the run
 takes its default and records it under `## Asks`. An ask the CLI itself raised (`cli`) is exempt.
 
-Stdlib and `waiting`/`brief` only: the stop hook imports `next` at the end of every turn.
+Three triggers are the CLI's own (`detected`, `CLI_TRIGGERS`), read from the change log and the clocks after the slice
+is sealed: `new-direction` (a direction pointer of `DIRECTION_POINTERS` holds another value than at the seal),
+`finding-vs-decision` (a change on an area the owner decided while a finding about it was open), and `budget` (more than
+`BUDGET_MINUTES`, or the owner's `- Budget: <n> min` line, since the later of the last answered set and the seal; attended
+runs only). `detected` gives the step `ask` while a trigger is pending; an answer to it, or the value put back, lifts it.
+
+Stdlib and `waiting`/`brief` only until `detected` reads the change log: the stop hook imports `next` at the end of every turn.
 """
 from __future__ import annotations
 
 import json
 import re
+import os
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Collection
@@ -26,12 +34,20 @@ from lapis_design import brief, requirements, waiting
 
 TRIGGERS = ("requirement-unmeetable", "requirement-conflict", "finding-vs-decision", "new-direction",
             "reference-vs-brief", "budget")
+CLI_TRIGGERS = ("new-direction", "finding-vs-decision", "budget")   # raised by `detected`: exempt from one ask per checkpoint
+BUDGET_MINUTES = 90                    # provisional: agent-alone time after the seal before the budget ask
+DIRECTION_POINTERS = ("/direction/concept", "/direction/levers", "/layout/signature", "/layout/sections",
+                      "/tokens/type/roles", "/tokens/motion/principles")
+AREA_POINTERS = {"color": ("/tokens/color/roles",), "type": ("/tokens/type/roles",), "layout": ("/layout/",),
+                 "motion": ("/tokens/motion",), "signature": ("/layout/signature", "/direction/levers")}
 MAX_WORDS = 150
 MAX_UNLESS = 2
 
 _TRIGGER = re.compile(r"^[ \t]*trigger[ \t]*:[ \t]*([^\s—–]+)", re.IGNORECASE | re.MULTILINE)
 _DEFAULT = re.compile(r"^[ \t]*default[ \t]*:[ \t]*\S", re.IGNORECASE | re.MULTILINE)
 _UNLESS = re.compile(r"unless you object", re.IGNORECASE)
+_BUDGET = re.compile(r"^[ \t]*[-*+][ \t]+Budget[ \t]*:[ \t]*(\d+)[ \t]*min(?:ute)?s?\b", re.IGNORECASE | re.MULTILINE)
+_ROLE = re.compile(r"role=([^,\]]+)")
 
 
 def log_path(root: Path, task: str) -> Path:
@@ -125,3 +141,106 @@ def checkpoint_problem(root: Path, task: str, then: str, exempt: Collection[str]
                     "brief record, and go on; the owner sees it at the next checkpoint (the next approval wait, the next "
                     "ask, or `done`)")
     return None
+
+
+# ---------------------------------------------------------------- the triggers the CLI raises
+
+def budget_minutes(root: Path, task: str) -> int:
+    """The minutes of agent-alone time before the budget ask: the owner's last untagged `- Budget: <n> min` line of the
+    answers file, else `BUDGET_MINUTES`."""
+    try:
+        text = waiting.answers_path(root, task).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return BUDGET_MINUTES
+    found = _BUDGET.findall(text)
+    return int(found[-1]) if found and int(found[-1]) > 0 else BUDGET_MINUTES
+
+
+def _epoch(stamp: Any) -> float | None:
+    try:
+        return datetime.strptime(str(stamp), "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc).timestamp()
+    except ValueError:
+        return None
+
+
+def _asked_since(root: Path, task: str, named: str, since: float) -> bool:
+    """Whether the answers file holds an item `Ask <named>: ...` (the owner's, or the run's own with its `Basis:`) and is
+    newer than `since`: the trigger was asked after the change."""
+    path = waiting.answers_path(root, task)
+    try:
+        text, mtime = path.read_text(encoding="utf-8", errors="replace"), path.stat().st_mtime
+    except OSError:
+        return False
+    if mtime < since:
+        return False
+    for item in brief.items(brief.sections(text).get("asks", "")):
+        tag = brief._TAG.match(item)
+        body = item[tag.end():] if tag else item
+        if re.match(rf"^[\s*_`:\-–—]*Ask\s+{re.escape(named)}\b", body, re.IGNORECASE):
+            return True
+    return False
+
+
+def _area_of(pointer: str) -> tuple[str, str | None] | None:
+    """The area a protected pointer belongs to (`AREA_POINTERS`) and, for a type role, the role."""
+    for area, heads in AREA_POINTERS.items():
+        if any(pointer.startswith(head) for head in heads):
+            role = _ROLE.search(pointer)
+            return area, role.group(1) if area == "type" and role else None
+    return None
+
+
+def detected(root: Path, task: str, plan: Any, env: Any = os.environ, now: float | None = None) -> dict[str, Any] | None:
+    """The step `ask` while a trigger the CLI raises is pending, else None: `{"id": "ask", "why", "command": None,
+    "triggers": [...]}` with every pending row batched into one question. See the module text for the three triggers."""
+    from lapis_design import gate, integrity, slice_step
+
+    if not isinstance(plan, dict):
+        return None
+    sealed = slice_step.sealed(root, task)
+    rows = [r for r in integrity.changes(root, task) if r.get("kind") == "protected" and isinstance(r.get("pointer"), str)]
+    pending: dict[str, list[str]] = {}
+    state_values = (integrity.read_state(root, task) or {}).get("values") or {}
+    # new-direction: the value now is not the sealed one, and no ask about it was answered since its change
+    if sealed and isinstance(sealed.get("values"), dict):
+        latest: dict[str, dict] = {}
+        for row in rows:
+            if row.get("after_slice") and any(row["pointer"].startswith(head) for head in DIRECTION_POINTERS):
+                latest[row["pointer"]] = row
+        for pointer, row in latest.items():
+            if state_values.get(pointer) != sealed["values"].get(pointer):
+                when = _epoch(row.get("at")) or 0.0
+                if not _asked_since(root, task, "new-direction", when):
+                    pending.setdefault("new-direction", []).append(pointer)
+    # finding-vs-decision: a finding was open on an area the owner decided when it changed
+    from lapis_design import gaps
+
+    undecided = {(g["area"], g["id"].partition(":")[2] or None) for g in gaps.compute(root, task, env)}
+    for row in rows:
+        found = _area_of(row["pointer"])
+        if not found or not row.get("related_open"):
+            continue
+        area, role = found
+        if area == "type" and role:
+            decided = ("type", role) not in undecided
+        else:
+            decided = not any(a == area for a, _ in undecided)
+        if decided and not _asked_since(root, task, "finding-vs-decision", _epoch(row.get("at")) or 0.0):
+            pending.setdefault("finding-vs-decision", []).append(f"{row['pointer']} (findings open: {', '.join(row['related_open'])})")
+    # budget: agent-alone time after the seal, attended runs only
+    if sealed and not gate.is_unattended(env):
+        stamps = [_epoch(sealed.get("at"))] + [_epoch(s.get("answered")) for s in load(root, task)["sets"] if s.get("answered")]
+        since = max((t for t in stamps if t is not None), default=None)
+        minutes = budget_minutes(root, task)
+        if since is not None and ((time.time() if now is None else now) - since) / 60 > minutes:
+            pending["budget"] = [f"more than {minutes} minutes since the owner last answered or saw the slice"]
+    if not pending:
+        return None
+    lines = [f"{named}: {'; '.join(items[:4])}" for named, items in pending.items()]
+    why = ("A trigger the CLI raises is pending: " + " | ".join(lines) + ". Ask the owner one short question about it "
+           "(`.lapis/questions/<task>.md`, first line `lapis-questions: ask`, a `Trigger:` line naming the first trigger, one "
+           "question, a `Default:` line, at most 150 words; it batches every row above), or put the changed values back. "
+           "Record the answer under `## Asks` as `- [declared] Ask <trigger>: <their decision>`, or, with nobody to ask, as "
+           "`- [assumed] Ask <trigger>: <the question> — took <default>. Basis: <why>`, and run `lapis-design next` again. "
+           "The owner sees every ask in the owner block.")
+    return {"id": "ask", "why": why, "command": None, "triggers": list(pending)}

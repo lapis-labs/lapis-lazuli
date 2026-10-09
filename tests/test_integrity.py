@@ -511,11 +511,11 @@ def test_the_protected_pointers_are_keyed_by_the_item_they_address(integrity):
         "/flows[id=f]/reach/selections",
         "/tokens/space/base_px", "/tokens/space/scale", "/tokens/type/scale/base_px", "/tokens/type/scale/ratio",
         "/tokens/shape/radius/scale", "/tokens/shape/radius/by_role/control",
-        "/tokens/color/roles[name=ink,theme=light]",
+        "/tokens/color/roles[name=ink,theme=light]", "/tokens/type/roles[role=body,n=1]",
         "/layout/phone_task/decision", "/layout/phone_task/first_result", "/layout/phone_task/before_result",
         "/layout/phone_task/acceptance",
         "/content/key_copy[slot=nav,n=1]", "/content/key_copy[slot=nav,n=2]",
-        "/content/key_copy[slot=headline,locale=ko-KR,n=1]"])
+        "/content/key_copy[slot=headline,locale=ko-KR,n=1]", "/direction/concept"])
     assert integrity.protected_values(PROTECTED_PLAN)["/explorations[decision=type,covers=display|heading]"
                                                       "/candidates/*/name"] == ["A", "B"]
 

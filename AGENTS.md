@@ -279,7 +279,7 @@ files beside it; the database file itself does not change.
   `.lapis/changes/<task>.jsonl`, with the rule ids open on that input (a rule's `detect.plan.path` and its detector's
   `reads_plan` in `slop/detectors.yaml`, a `defaults` id, a flow id). A change is surfaced, never forbidden. `observe` never
   raises: a failure prints one stderr line and the command goes on. Only `lapis-design` writes `.lapis/requirements/`,
-  `.lapis/state/`, `.lapis/changes/`, and `.lapis/owner/`: `hook pre-write` refuses an edit tool's write to them in every
+  `.lapis/state/`, `.lapis/changes/`, `.lapis/owner/`, and `.lapis/order/` (a keyed digest in the order record finds any other write, `order.tampered`): `hook pre-write` refuses an edit tool's write to them in every
   session (`order.CLI_OWNED`), and a shell write shows up as an `integrity` row. A detector that reads a plan field
   declares it in `reads_plan`, or a change to that field never names the rule.
 - `next` lives in `cli/lapis_design/next_step.py`: `lapis-design next --task demo [--json]` runs `release_check.run(...,

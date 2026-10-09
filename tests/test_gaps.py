@@ -80,7 +80,7 @@ def direction(root: Path, *lines: str, at: int = 60) -> None:
 # ---- 1. the areas, with and without answers
 
 def test_color_layout_motion_and_type_are_gaps_with_what_the_plan_filled_in(stated):
-    assert ids(stated) == ["signature", "color", "layout", "motion", "type:heading", "type:body"]
+    assert ids(stated) == ["signature", "color", "layout", "motion", "type:heading", "type:body", "copy:ko"]
     assert text_of(stated, "color") == ("color: field oklch(.97 .01 85) — canvas of every section outside the photographs, "
                                          "about 80% of the first view")
     assert text_of(stated, "layout") == "layout: list-detail; sections firing-log, works"
@@ -92,7 +92,7 @@ def test_a_declared_item_for_an_area_decides_it(stated):
     declare(stated, "Color: the page stays white, the kiln blue only on the reserve button",
             "layout: a ruled sheet, no cards", "motion: nothing moves until I press", "signature: the firing log row",
             "type heading: Gowun Batang, as the firing sheets")
-    assert ids(stated) == ["type:body"]
+    assert ids(stated) == ["type:body", "copy:ko"]
     declare(stated, "Color: the page stays white", "layout: a ruled sheet", "motion: nothing moves", "signature: the row",
             "type heading: Gowun Batang", "type body: Pretendard", "copy ko headline: say the month and the count")
     assert ids(stated) == []
@@ -100,13 +100,13 @@ def test_a_declared_item_for_an_area_decides_it(stated):
 
 def test_a_gap_of_one_type_role_is_not_decided_by_another_role_or_by_an_item_that_names_none(stated):
     declare(stated, "type heading: Gowun Batang", "type: something serif")
-    assert ids(stated) == ["signature", "color", "layout", "motion", "type:body"]
+    assert ids(stated) == ["signature", "color", "layout", "motion", "type:body", "copy:ko"]
 
 
 def test_no_plan_and_a_plan_with_everything_decided_have_no_gaps(stated, tmp_path_factory):
     assert gaps.compute(tmp_path_factory.mktemp("bare"), TASK) == []
     declare(stated, "signature: x row", "color: white", "layout: ruled", "motion: still", "type heading: Gowun",
-            "type body: Pretendard")
+            "type body: Pretendard", "copy ko headline: the month")
     assert gaps.compute(stated, TASK) == []
 
 
@@ -173,7 +173,7 @@ def test_a_fixed_by_brief_with_a_live_id_decides_the_type_roles_it_covers_and_th
     update(stated, f"plans/{TASK}.yaml", lambda plan: plan["explorations"].append(
         {"decision": "type", "covers": ["heading"], "fixed_by": "brief", "reason": f"{heading} names the face"}))
     fixed(stated, "palette", f"{palette} names the paper")
-    assert ids(stated) == ["signature", "layout", "motion", "type:body"]
+    assert ids(stated) == ["signature", "layout", "motion", "type:body", "copy:ko"]
 
 
 # ---- 3. the section
@@ -211,7 +211,7 @@ def test_the_block_recorded_the_gaps_it_listed_under_its_digest(project):
     declare(project, "color: white")                                       # decided after the block was shown
     assert gaps.state_path(project, TASK).is_file()
     assert [g["id"] for g in gaps.unacknowledged(project, TASK, sha)] == ["objects:O1", "signature", "layout", "motion",
-                                                                          "type:heading", "type:body"]
+                                                                          "type:heading", "type:body", "copy:ko"]
 
 
 # ---- 4. the seal
@@ -255,7 +255,7 @@ def test_the_slice_is_not_sealed_without_the_acknowledgment_and_the_step_says_wh
     result = next_step.evaluate(project, TASK)
     why = result["step"]["why"]
     assert result["step"]["id"] == "slice" and sealed(project) is None
-    assert "lists 7 decisions the owner did not make" in why and "color: field oklch(.97 .01 85)" in why
+    assert "lists 8 decisions the owner did not make" in why and "color: field oklch(.97 .01 85)" in why
     assert f"`- Gaps seen (lapis-owner-block {carried}): <their words>`" in why and "not approved while they are unacknowledged" in why
 
 
@@ -270,14 +270,16 @@ def test_a_gaps_seen_line_with_the_wrong_digest_does_not_acknowledge_and_the_rig
 def test_deciding_each_gap_also_lets_the_slice_seal(project, checked):
     asked_and_answered(project, "[declared] signature: the row",
                        "[declared] color: white stays", "[declared] layout: ruled sheet", "[declared] motion: still",
-                       "[declared] type heading: Gowun Batang", "[declared] type body: Pretendard", decided=True)
+                       "[declared] type heading: Gowun Batang", "[declared] type body: Pretendard",
+                       "[declared] copy ko headline: the month and the count", decided=True)
     assert next_step.evaluate(project, TASK)["step"]["id"] == "fonts-lock" and sealed(project)
 
 
 def test_a_gap_decided_since_the_block_is_not_asked_again_and_one_still_open_is(project, checked):
     asked_and_answered(project, "[declared] signature: the row",
                        "[declared] color: white stays", "[declared] layout: ruled sheet", "[declared] motion: still",
-                       "[declared] type heading: Gowun Batang", decided=True)
+                       "[declared] type heading: Gowun Batang", "[declared] copy ko headline: the month and the count",
+                       decided=True)
     result = next_step.evaluate(project, TASK)
     assert result["step"]["id"] == "slice" and "lists 1 decisions" in result["step"]["why"]
     assert "type: body (hang, latn) Pretendard" in result["step"]["why"]

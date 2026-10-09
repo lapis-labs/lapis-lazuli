@@ -53,6 +53,9 @@ PROTECTED = (
     "/tokens/shape/radius/scale", "/tokens/shape/radius/by_role", "/tokens/color/roles[name,theme]",
     "/layout/phone_task",
     "/content/key_copy[slot,locale,#]",
+    # the direction the owner saw in the slice: a change after it is a `new-direction` ask (`asks.detected`)
+    "/direction/concept", "/direction/levers", "/layout/signature", "/layout/sections[id]",
+    "/tokens/type/roles[role,#]", "/tokens/motion/principles",
 )
 
 _MISSING = object()
