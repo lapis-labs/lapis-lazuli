@@ -244,6 +244,17 @@ def test_the_block_lists_the_outcome_the_decisions_the_facts_the_changes_the_dis
     assert str(project) not in text and not re.search(r"\d{4}-\d\d-\d\dT\d\d:\d\d", text)       # no path, no time
 
 
+def test_facts_with_no_source_are_capped_and_the_block_says_where_else_they_may_come_from(tmp_path):
+    facts = [{"text": f"Fact number {n} as shown", "source": "none", "quote": ""} for n in range(20)]
+    facts.append({"text": "Fires once a month", "source": "PRODUCT.md#L3-L3", "quote": "fires once a month"})
+    (tmp_path / "report.json").write_text(json.dumps({"facts": facts}), encoding="utf-8")
+    lines = owner._facts(tmp_path, [("the whole page", "report.json")])
+    assert sum(line.startswith('- "') and line.endswith("no source found") for line in lines) == owner.LIST_MAX
+    assert f"- and {20 - owner.LIST_MAX} more facts with no source found" in lines
+    assert any(line.startswith("A fact with no source found may still come from your own answers") for line in lines)
+    assert any("asserted by PRODUCT.md#L3-L3" in line for line in lines)
+
+
 def test_the_block_is_deterministic_and_written_whole_to_the_owner_file(rich):
     project, verdict = rich
     first = owner.write(project, TASK, {"verdict": verdict})

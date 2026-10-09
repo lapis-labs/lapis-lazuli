@@ -429,7 +429,9 @@ def _why(task: str, phase: int, reason: str, unattended: bool, unbased: list[str
                 "it decodes to, for each core object two or three representations, and for each signature element the "
                 "brief names what it carries. ")
     else:
-        what = "The `diverge` set is sealed: show the owner the contact sheet and ask for the pick and the picked rough's signature items. "
+        what = ("The `diverge` set is sealed: show the owner the contact sheet and ask for the pick and the picked rough's "
+                "signature items. Say per rough what its captures show and what its card claims beyond them (\"claimed, not "
+                "shown\"): the distances compare card family names, not captures. ")
     note = (f" ({len(unbased)} [assumed] items give no `Basis:` and do not count: {'; '.join(unbased[:2])})" if unbased else "")
     return (f"Direction conversation, turn {'one' if phase == 1 else 'two'}: {reason}{note}. {what}{how} Format and examples: {guide}.")
 

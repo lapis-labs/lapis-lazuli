@@ -2407,11 +2407,24 @@ def name_swap_test(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
         return Result(skipped=f"the plan has no headline, subhead, or other key copy at {det.get('path')}")
     stems, bigrams = _subject_anchors(ctx.plan)
     title = set(_fold(str((ctx.plan.get("task") or {}).get("title") or "")).split())
+    anchored = {id(s) for s in keyed if _anchored(s, stems, bigrams, title)}
+    # A translation of anchored copy is anchored: the world materials are written in one language, so a label in another
+    # one (`수령 목록: 드릴` for `Pickup list: Drill`) shares no word with them; it takes the anchor of its twin, the
+    # entry at the same place among the same slot's entries of another locale, when every locale lists as many.
+    groups: dict[str | None, dict[str | None, list[_Seg]]] = {}
+    for s in keyed:
+        groups.setdefault(s.role, {}).setdefault(s.locale, []).append(s)
+    for by_locale in groups.values():
+        rows = list(by_locale.values())
+        if len(rows) > 1 and len({len(row) for row in rows}) == 1:
+            for twins in zip(*rows):
+                if any(id(t) in anchored for t in twins):
+                    anchored.update(id(t) for t in twins)
     return Result(hits=[
         Hit(observed=f'the {s.where} "{_clip(s.text)}" names no world material, subject term, number, date, or '
                      "proper name, so nothing in it depends on this product",
             location=dict(s.loc), evidence="plan")
-        for s in keyed if not _anchored(s, stems, bigrams, title)])
+        for s in keyed if id(s) not in anchored])
 
 
 # ---------------------------------------------------------------- plan-anchored-text

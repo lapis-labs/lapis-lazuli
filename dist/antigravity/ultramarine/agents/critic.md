@@ -37,7 +37,10 @@ The packet holds:
   item, never against the bare letters, and a dropped `K` item is `met` only when the page shows no such element. `pick` is
   the owner's pick among the rough first views (its card and captures), and `contact` the contact sheet of every rough, so you
   see the alternatives that lost: say in a note when the roughs are nominally different and functionally the same (the same
-  structure with other colors, one representation under three names)
+  structure with other colors, one representation under three names), and ask of each rough's card whether its captures show
+  the representation the card names (an annotated diff with a change marked, a ledger with rows) or only a state every rough
+  shares such as an empty tray: a claim the captures do not show is `not-observable`, never `met`, and the same holds for the
+  picked rough's own row until a capture of the selected state shows it
 - `gaps`: the decisions the owner has not made, `{id, area, text}`, with what the agent filled in (the owner block lists the
   same lines under "Decisions you have not made"). Judge the page on what it shows, and say in a note when a gap is the
   reason a page reads as generic: a color, layout, type, or copy choice no one but the agent made

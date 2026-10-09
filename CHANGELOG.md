@@ -173,6 +173,12 @@ between minor versions; render extraction is v1 and the other contract formats a
 - A `won-comparison` keep on a rendered face no longer asks for a comparison of a text role the plan does not declare
   (the extract's `nav` or `label`) while a declared role has that face for that script, so the six declared type roles'
   comparisons are enough and the finding is waived instead of staying blocking after a `false-positive` verdict.
+- `copy.name-swap` (plan layer) takes the anchor of a translation from its twin: key copy in another locale at the same place
+  among the same slot's entries is anchored when its twin is, so `수령 목록: 드릴` is not flagged when `Pickup list: Drill`
+  names a world material.
+- The owner block lists at most 15 facts with no source (then "and N more") and says such a fact may come from the owner's own
+  answers, which the critic cannot read. The second direction turn, `diverge.md`, and the critic ask for what each rough's
+  captures show against what its card claims ("claimed, not shown", `not-observable` for the critic); no field changes.
 - A `<br>` between two text nodes of one run is stored as a space, so `감각에<br>근거를` is no longer one word in every check
   that reads the text.
 - `install.sh` passes `shellcheck` 0.9 and later: `cleanup`, which only the `EXIT` trap calls, carries

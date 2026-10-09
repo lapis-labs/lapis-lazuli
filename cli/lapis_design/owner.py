@@ -200,11 +200,19 @@ def _facts(root: Path, sources: list[tuple[str, str]]) -> list[str]:
     if not found:
         return out + ["- none listed."]
     found.sort(key=lambda e: bool(e[1]))              # facts without a source first; the order of the report otherwise
-    for text, source, quote in found:
+    bare = [e for e in found if not e[1]]
+    for text, source, quote in [*bare[:LIST_MAX], *[e for e in found if e[1]][:LIST_MAX]]:
         if source:
             out.append(f"- \"{_cut(text, 200)}\" — asserted by {source}" + (f": \"{_cut(quote, 160)}\"" if quote else ""))
         else:
             out.append(f"- \"{_cut(text, 200)}\" — no source found")
+    if len(bare) > LIST_MAX:
+        out.append(f"- and {len(bare) - LIST_MAX} more facts with no source found")
+    if len(found) - len(bare) > LIST_MAX:
+        out.append(f"- and {len(found) - len(bare) - LIST_MAX} more facts with a source")
+    if bare:
+        out.append("A fact with no source found may still come from your own answers to the fact questions: the critic "
+                   "did not cite them, so compare it with what you said.")
     return out + ["These are asserted by their source and not independently checked."]
 
 

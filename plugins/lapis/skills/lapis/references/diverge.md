@@ -69,6 +69,12 @@ lapis-design render check .lapis/diverge/<task>/C<n>/index.html --task <task>-C<
 `check` refuses a card whose direction, draws, or object families disagree with the draws, an object the owner decided that the
 card shows another way, a missing or stale render, and a pair that differs in order or finish only.
 
+A card claims more than its captures show unless you make them match. The captures are what the owner and the critic see, so
+each rough's capture has to show its own representation in the state that decides it (the annotated diff with a change
+marked, the ledger with rows, the tray after a tag was moved), not an empty state shared with the other roughs; where that
+state needs an action, take one more 1440 capture after it. Say in the owner's message, per rough, what its captures show and
+what its card claims beyond them ("claimed, not shown"), so the pick is not made on a difference only the card names.
+
 ## Distances and the contact sheet
 
 `check` writes `fingerprints.json`, `distances.json`, and `contact.png` under `.lapis/state/diverge/<task>/`. The distance of two
@@ -76,6 +82,8 @@ roughs is a weighted sum of how their first views are laid out (text, media, and
 structure), how the color mass is allocated (the field's lightness and chroma, the share of vivid and of dark pixels, the media
 share, the line share), and how many core objects are represented differently. The weights (`diverge/pools.yaml`) were calibrated on the E1b roughs and the owner's verdicts there; structure leads. The
 numbers are facts shown next to the contact sheet; they are never a quality score, and there is no novelty target.
+The representation part of a distance compares the card's family names; it does not read the captures, so it is no evidence
+that the captures show that difference.
 
 ## After the seal
 

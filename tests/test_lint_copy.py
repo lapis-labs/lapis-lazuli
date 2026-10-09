@@ -1285,6 +1285,20 @@ def test_name_swap_passes_anchored_key_copy(headline):
     assert lint("copy.name-swap", "plan", plan=p).hits == []
 
 
+def test_name_swap_takes_a_translations_anchor_from_its_twin_in_the_other_locale():
+    p = plan([("other", "Pickup list: Drill"), ("other", "Pickup list: Hand saw"),
+              ("other", "수령 목록: 드릴"), ("other", "수령 목록: 수동 톱")],
+             locales=("en", "ko"), world=["Drill for holes", "Hand saw for cutting"])
+    for entry, lang in zip(p["content"]["key_copy"], ("en", "en", "ko", "ko")):
+        entry["locale"] = lang
+    assert lint("copy.name-swap", "plan", plan=p).hits == []
+    p["content"]["key_copy"].append({"slot": "other", "text": "더 보기", "locale": "ko"})       # counts differ: no twins to pair
+    assert [h.location["path"] for h in lint("copy.name-swap", "plan", plan=p).hits] == [f"content.key_copy[{i}].text" for i in (2, 3, 4)]
+    p["content"]["key_copy"][0]["text"] = "Pickup list"                                              # the twin of the label is bare too
+    p["content"]["key_copy"].pop()
+    assert [h.location["path"] for h in lint("copy.name-swap", "plan", plan=p).hits] == ["content.key_copy[0].text", "content.key_copy[2].text"]
+
+
 def test_name_swap_needs_key_messages():
     result = lint("copy.name-swap", "plan", plan=plan([("cta", "Reserve")]))
     assert result.hits == [] and "headline" in result.skipped
