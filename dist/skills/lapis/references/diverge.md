@@ -74,7 +74,7 @@ card shows another way, a missing or stale render, and a pair that differs in or
 `check` writes `fingerprints.json`, `distances.json`, and `contact.png` under `.lapis/state/diverge/<task>/`. The distance of two
 roughs is a weighted sum of how their first views are laid out (text, media, and control boxes on a grid, and the markup
 structure), how the color mass is allocated (the field's lightness and chroma, the share of vivid and of dark pixels, the media
-share, the line share), and how many core objects are represented differently. The weights are provisional until calibrated. The
+share, the line share), and how many core objects are represented differently. The weights (`diverge/pools.yaml`) were calibrated on the E1b roughs and the owner's verdicts there; structure leads. The
 numbers are facts shown next to the contact sheet; they are never a quality score, and there is no novelty target.
 
 ## After the seal

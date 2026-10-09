@@ -249,10 +249,11 @@ def test_distances_are_measured_from_the_renders_and_written_with_the_contact_sh
     assert set(prints["C1"]["grids"]["1440"]) == {"text", "media", "control"} and len(prints["C1"]["grids"]["1440"]["text"]) == 8
     assert len(prints["C1"]["grids"]["390"]["text"]) == 10 and len(prints["C1"]["grids"]["390"]["text"][0]) == 4
     report = json.loads((state / "distances.json").read_text(encoding="utf-8"))
-    assert report["calibrated"] is False and report["weights"] == {"struct": 0.35, "mass": 0.35, "repr": 0.30}
+    assert report["calibrated"] is True and report["weights"] == {"struct": 0.55, "mass": 0.20, "repr": 0.25}
     for pair in report["pairs"]:
         assert 0 <= pair["total"] <= 1 and pair["repr"] == 1.0 and not pair["refused"]   # three families, none shared
     assert report["minimum_pair"] == min(p["total"] for p in report["pairs"])
+    assert report["close"] == [[p["a"], p["b"]] for p in report["pairs"] if p["total"] < 0.39]
     from PIL import Image
 
     with Image.open(state / "contact.png") as sheet:

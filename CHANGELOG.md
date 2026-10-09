@@ -33,8 +33,8 @@ between minor versions; render extraction is v1 and the other contract formats a
   conversation the run makes two to four rough first views, each on a different reference direction, that differ in how the
   open core objects are represented and how color is allocated. The CLI draws and records the draws in a hash chain, reads
   each card (`diverge/card.schema.yaml`) against them and against the renders, measures the distance between roughs from the
-  first-view layout, color mass, and drawn representation (provisional weights in `diverge/pools.yaml`; reported, not
-  gated, except that a pair with the same markup structure and almost the same color mass is refused), makes the contact
+  first-view layout, color mass, and drawn representation (weights in `diverge/pools.yaml`, calibrated on the E1b roughs against the owner's blind verdicts; reported,
+  not gated, except that a pair with the same markup structure and almost the same color mass is refused), makes the contact
   sheet, and seals the digests. The owner picks one (`[declared] Pick: C2`); the slice then shows only that page.
 - The slice is held and clocked in an attended create run: only the declared slice files (at most 12) may be written until
   the slice is sealed or the owner skips it (`- Slice skipped: "..."`); after 60 minutes or 40 page writes without a waiting

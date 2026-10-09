@@ -269,7 +269,7 @@ under `.lapis/state/diverge/<task>/`, a folder only `lapis-design` writes, befor
 (twice per candidate at most, each with its reason) and `variant` adds the rough an owner asked for (`reason: owner`). The agent
 writes `.lapis/diverge/<task>/C<n>/index.html` and `card.yaml` (`diverge/card.schema.yaml`) and renders each narrow
 (`render check ... --task <task>-C<n> --width 390 --width 1440`). `diverge check` reads each card against the draws and the
-renders and writes `fingerprints.json`, `distances.json` (`0.35·struct + 0.35·mass + 0.30·repr`, weights provisional in
+renders and writes `fingerprints.json`, `distances.json` (`0.55·struct + 0.20·mass + 0.25·repr`, weights calibrated in
 `diverge/pools.yaml`; reported, never gated, except that a pair with the same markup structure and a mass distance under
 `reject_mass_below` is refused as differing in order or finish only) and `contact.png`; `diverge seal` writes `seal.json` with
 the digests of the cards, roughs, captures, and draws. The step is owed until `seal.json` holds every drawn candidate and the

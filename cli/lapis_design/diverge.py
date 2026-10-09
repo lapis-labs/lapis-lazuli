@@ -17,8 +17,8 @@ The agent writes each rough as `.lapis/diverge/<task>/C<n>/index.html` with its 
 and `next` names `diverge` until it exists. Everything the CLI writes is under `.lapis/state/diverge/<task>/`, a
 folder only `lapis-design` writes (`order.CLI_OWNED`).
 
-The distance between two roughs is `0.35·d_struct + 0.35·d_mass + 0.30·d_repr` (weights in the pools file; provisional
-until calibrated). `d_struct` is the IoU distance of the first view's occupancy by text, media, and control boxes on a
+The distance between two roughs is `0.55·d_struct + 0.20·d_mass + 0.25·d_repr` (weights in the pools file, calibrated over the E1b
+roughs against the owner's verdicts). `d_struct` is the IoU distance of the first view's occupancy by text, media, and control boxes on a
 12x8 grid at 1440 and a 4x10 grid at 390, and whether the markup structure (`alternatives.signature`) is equal;
 `d_mass` is the mean absolute difference of the field's lightness and chroma, the share of pixels with chroma of 0.12 or
 more, the share of dark pixels, the media box share, and the line-ink share; `d_repr` is the share of open core objects
@@ -664,7 +664,8 @@ def distances(fingerprints: Mapping[str, Mapping[str, Any]], families: Mapping[s
             pairs.append({"a": a, "b": b, "struct": round(struct, 4), "mass": round(mass, 4), "repr": round(repr_, 4),
                           "total": round(total, 4), "same_structure": same, "refused": refused})
     return {"calibrated": weights["calibrated"], "weights": w, "pairs": pairs,
-            "minimum_pair": min((p["total"] for p in pairs), default=None)}
+            "minimum_pair": min((p["total"] for p in pairs), default=None),
+            "close": [[p["a"], p["b"]] for p in pairs if weights["minimum_pair"] is not None and p["total"] < weights["minimum_pair"]]}
 
 
 def _font(size: int):
@@ -887,6 +888,7 @@ def show(root: Path, task: str, env: Mapping[str, str] = os.environ) -> str:
     if isinstance(report, dict):
         lines += [f"{p['a']}-{p['b']}: total {p['total']:.2f} (struct {p['struct']:.2f}, mass {p['mass']:.2f}, repr {p['repr']:.2f})"
                   for p in report.get("pairs", [])]
+        lines += [f"{a}-{b}: below the calibrated minimum pair distance (reported, not gated)" for a, b in report.get("close") or ()]
         lines.append("distances are facts, not a quality score" + ("" if report.get("calibrated") else "; weights not calibrated"))
     record = sealed(root, task)
     lines.append("sealed" if record else "not sealed")

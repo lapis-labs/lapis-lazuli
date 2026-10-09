@@ -5,9 +5,15 @@
 # starting points of the same sort. Each `text` says what the family lets a visitor do, never how it looks.
 # `color_allocation`: where the color mass sits in the first view. `high-key-one-signal` is today's default (a pale
 # field and one small vivid signal, _internal/divergence/sameness/REPORT.md): a draw gives it to at most one candidate.
-# `distance`: the provisional weights of `diverge check` (DESIGN §6.5). They stay `calibrated: false` until the
-# calibration over E1b's 54 roughs and round 3's 60 pages (F7) replaces them; until then only a pair with the same
-# markup structure and `reject_mass_below` is refused, and every other number is reported, not gated.
+# `distance`: the weights of `diverge check`, reported and never gated (only a pair with the same markup structure and a mass
+# distance under `reject_mass_below` is refused). Calibrated on 2026-10-10 over the 54 E1b roughs (9 sets of 6, one run of
+# `_internal/divergence/e1b`) against the owner's 9 blind set comparisons (8 decisive): the mean pair distance of a set
+# picks the owner's set in 8 of 8 with structure alone, 7 of 8 at struct 0.55 / mass 0.20, 3 of 8 with mass alone (the
+# owner said color did not separate the E1b sets, and their field mass barely varies: median 0.06). So structure leads, mass
+# keeps a small weight, and the representation term (no E1b card names its families) takes the rest. `minimum_pair` is the
+# 10th percentile of the structure-and-mass part over the 135 E1b pairs (0.39): a pair below it is listed as close on the
+# contact sheet. Nine comparisons from nine sets are not independent samples; recalibrate when owner verdicts on diverge
+# roughs exist. Round 3's 60 pages were not used: they carry no owner verdicts on pairs.
 version: 0
 observed_on: '2026-10-09'
 
@@ -83,8 +89,8 @@ color_allocation:
   - { id: high-key-one-signal, text: "a pale field with one small vivid signal; today's default, so at most one candidate takes it" }
 
 distance:
-  calibrated: false
-  weights: { struct: 0.35, mass: 0.35, repr: 0.30 }
+  calibrated: true
+  weights: { struct: 0.55, mass: 0.20, repr: 0.25 }
   struct: { grid_1440: 0.48, grid_390: 0.32, signature: 0.20 }
   reject_mass_below: 0.10
-  minimum_pair: null
+  minimum_pair: 0.39
