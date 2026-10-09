@@ -30,6 +30,19 @@ BRIEF_RECORD = """# Brief: kiln shop landing
 - [known] Q1 Who buys? Craft lovers in their 30s and 40s. Basis: PRODUCT.md.
 - [assumed] Q2 What is the one job? Reserve a piece from this firing. Basis: nobody to ask; the request names no other action.
 """
+DIRECTION_ANSWERS = """
+## Direction 1
+
+- Defaults accepted (direction 1): "go with your defaults"
+"""
+DIRECTION_PROPOSAL = {
+    "version": 0, "task": "kiln-shop-landing", "styles": [],
+    "objects": [{"id": "O1", "object": "the monthly firing log", "kind": "record-document", "default": "all",
+                 "options": [{"id": "a", "text": "the log as ruled rows, one per piece", "family": "ledger",
+                              "does": "scan which pieces are still free", "source": "the firing log"},
+                             {"id": "b", "text": "this firing laid over last month's", "family": "fader-overlay",
+                              "does": "move a fader to see what changed", "source": "own"}]}],
+    "signature": []}
 
 
 def save(root: Path, name: str, document) -> Path:
@@ -53,6 +66,17 @@ def touch(root: Path, name: str, seconds: int) -> None:
 def report(tool: str, **target) -> dict:
     return {"version": 0, "tool": {"name": tool, "version": "0.1.0"}, "target": {"task": TASK, **target},
             "findings": [], **({"scope": {"layers": ["plan", "source", "render"]}} if tool == "slop_lint" else {})}
+
+
+def write_direction(root: Path, task: str = TASK) -> None:
+    """The direction conversation of a run that went through it: the proposal, and the owner's `Defaults accepted` in the
+    brief record (kept as old as it was)."""
+    save(root, f"direction/{task}.yaml", {**DIRECTION_PROPOSAL, "task": task})
+    answers = root / ".lapis" / "answers" / f"{task}.md"
+    if answers.is_file() and "## Direction 1" not in (text := answers.read_text(encoding="utf-8")):
+        stamp = answers.stat().st_mtime_ns
+        answers.write_text(text + DIRECTION_ANSWERS, encoding="utf-8")
+        os.utime(answers, ns=(stamp, stamp))
 
 
 def load_skills(root: Path, task: str = TASK) -> None:
@@ -224,7 +248,7 @@ def ask(root: Path, text: str, at: int, task: str = TASK, kind: str | None = Non
 
 def reply(root: Path, text: str, at: int, task: str = TASK) -> Path:
     """The answers the run recorded: the brief record with the replies added under their own heading."""
-    return record(root, "answers", f"{BRIEF_RECORD}\n## Replies\n\n{text}", at, task)
+    return record(root, "answers", f"{BRIEF_RECORD}\n## Replies\n\n{text}\n{DIRECTION_ANSWERS}", at, task)
 
 
 def capture_file(root: Path, name: str, seed: int, task: str = TASK) -> str:
@@ -263,4 +287,5 @@ def write_references(root: Path, at: int = 50, task: str = TASK) -> list[dict]:
     entries = reference_entries(root, task)
     hints.draw(root, task, "none", "2026-10-05")                  # these tests exercise evidence, not genre selection
     record(root, "references", references_text(entries), at, task)
+    write_direction(root, task)                                   # the conversation that follows the references
     return entries

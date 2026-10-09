@@ -49,7 +49,7 @@ _QUOTE = re.compile(r"^\s{0,3}(?:>\s?)+")
 _ID = re.compile(r"R[0-9a-f]{6}(?:[0-9a-f]{2})?")
 _DECISION = re.compile(r"^(R[0-9a-f]{6}(?:[0-9a-f]{2})?)\s*:\s*(drop|narrow)\s*(?:—|–|--|-)\s*(\S.*)$",
                        re.IGNORECASE | re.DOTALL)
-_PICK = re.compile(r"^slice\s*:", re.IGNORECASE)
+_PICK = re.compile(r"^(?:slice\s*:|pick\s*:\s*C\d+\b)", re.IGNORECASE)   # a pick among slice candidates, or among roughs
 _PICK_URL = re.compile(r"^slice\s*:\s*(\S+)", re.IGNORECASE)
 _LEAD = re.compile(r"^[\s*_`:\-–—]+")
 
@@ -226,7 +226,8 @@ def _declared_items(text: str) -> Iterable[tuple[dict, str, str]]:
 
 
 def _declared(text: str, name: str) -> tuple[list[dict], list[dict]]:
-    """`[declared]` answers as rows, and the owner's decisions among them. A decision line and a slice pick are no rows."""
+    """`[declared]` answers as rows, and the owner's decisions among them. A decision line and a pick (among slice
+    candidates, or among the `diverge` roughs: `[declared] Pick: C2 — <words>`, see `direction.py`) are no rows."""
     rows, decisions = [], []
     for found, quote, body in _declared_items(text):
         if decided := _DECISION.match(body):

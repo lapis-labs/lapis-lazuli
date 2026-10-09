@@ -7,7 +7,7 @@ title: LapisLazuli critic packet
 # `target.packet.sha256`; `lapis-design critic packet` rebuilds the packet from `args` and the project to check that.
 type: object
 additionalProperties: false
-required: [version, task, args, requirements, plan, inputs, findings, changes, disputes]
+required: [version, task, args, requirements, plan, direction, inputs, findings, changes, disputes]
 properties:
   version: { const: 0 }
   task: { type: string, pattern: "^[a-z0-9][a-z0-9-]{1,63}$" }
@@ -150,6 +150,43 @@ properties:
             decision: { enum: [keep, reject] }
             keep_when: { type: string }
             case_when: { type: string }            # `when` of that `keep_when` case in slop/rules.yaml
+  direction:                                       # the direction conversation resolved for the critic: ids, option texts, who chose, the pick; no maker reason
+    type: object
+    additionalProperties: false
+    required: [items, pick, contact]
+    properties:
+      items:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [id, label, state, by, choice, options]
+          properties:
+            id: { type: string }                   # S1, K2, O1, G1, or C2.G1
+            label: { type: string }
+            state: { enum: [open, narrowed, decided, delegated] }
+            by: { enum: [owner, assumed, null] }
+            choice: { type: [array, "null"], items: { type: string } }   # option ids, keep, drop, all, other
+            options:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required: [id, text]
+                properties:
+                  id: { type: string }
+                  text: { type: string }
+                  does: { type: string }
+      pick:
+        type: [object, "null"]
+        additionalProperties: false
+        required: [candidate, by, card, captures]
+        properties:
+          candidate: { type: string }
+          by: { enum: [owner, assumed] }
+          card: { type: object }                   # the picked rough's card.yaml (diverge/card.schema.yaml)
+          captures: { type: array, items: { type: string } }   # project-relative screenshots of the picked rough
+      contact: { type: [string, "null"] }          # the contact sheet of the sealed roughs
   inputs:                                          # every file the critic may read, with its digest; nothing else is an input
     type: array
     items:
@@ -159,7 +196,8 @@ properties:
       properties:
         kind:
           enum: [extract, screenshot, lint, session, requirement-source, product, design, context, taste,
-                 references-record, reference-capture, reference-profile, exploration]
+                 references-record, reference-capture, reference-profile, exploration, direction-contact,
+                 direction-capture]
         path: { type: string, minLength: 1 }       # relative to the project root, with `/`
         sha256: { $ref: "#/$defs/digest" }
   findings:                                        # the lint report's findings by index, without their `fix` text or waivers

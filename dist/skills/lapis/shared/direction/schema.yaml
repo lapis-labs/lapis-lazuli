@@ -1,0 +1,107 @@
+# LapisLazuli direction proposal schema — v0
+# Location: .lapis/direction/<task>.yaml in the project
+# What the run proposes to ask the owner before it plans: what each named style should DO (jobs, and the trend-kit
+# items it decodes to), how each core object is represented (2-3 options each), and what each signature element
+# carries. The owner's answers are not here: they go under `## Direction n` headings of the brief record
+# `.lapis/answers/<task>.md` as `[declared] K2 ticker band: drop — <their words>` items, which `requirements seal`
+# turns into rows the critic judges (`lapis-design direction` reads them; the grammar is in
+# `lapis/references/direction-conversation.md`). `lapis-design next` names `owner-direction` until every style, kit,
+# and object item has an owner answer (or `- Defaults accepted (direction n): "<their words>"`), and again after
+# `diverge` for the pick and the picked candidate's signature items.
+# `direction.proposal_problem` checks form, never quality: ids, option counts, that every `seen_in` names a reference
+# of the references record, that each object names a pool kind of `diverge/pools.yaml`, and that each default is an
+# option id (or `all` for an object).
+
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/direction.v0.json
+title: LapisLazuli direction proposal
+type: object
+additionalProperties: false
+required: [version, task, styles, objects, signature]
+properties:
+  version: {const: 0}
+  task: {type: string, pattern: "^[a-z0-9][a-z0-9-]{1,63}$"}
+  styles:                              # [] when nobody named a style
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [id, name, options, default, kit]
+      properties:
+        id: {type: string, pattern: "^S[1-9][0-9]?$"}
+        name: {type: string, minLength: 2}          # the owner's words
+        rows:                                       # requirement rows that name the style
+          type: array
+          items: {type: string, pattern: "^R[0-9a-f]{6}([0-9a-f]{2})?$"}
+        options:                                    # 2-3 jobs: what the style does for the visitor, never a look
+          type: array
+          minItems: 2
+          maxItems: 3
+          items: {$ref: "#/$defs/text_option"}
+        default: {type: string, pattern: "^[a-e]$"}
+        kit:                                        # the trend-kit elements the style decodes to today
+          type: array
+          minItems: 1
+          items:
+            type: object
+            additionalProperties: false
+            required: [id, item, seen_in, default, why]
+            properties:
+              id: {type: string, pattern: "^K[1-9][0-9]?$"}
+              item: {type: string, minLength: 3}
+              seen_in:                              # reference ids of the references record
+                type: array
+                items: {type: string, minLength: 1}
+              default: {enum: [keep, drop]}
+              why: {type: string, minLength: 3}     # never given to the critic
+  objects:                                          # 1-4 core objects
+    type: array
+    minItems: 1
+    maxItems: 4
+    items:
+      type: object
+      additionalProperties: false
+      required: [id, object, kind, options, default]
+      properties:
+        id: {type: string, pattern: "^O[1-4]$"}
+        object: {type: string, minLength: 2}        # a world_materials entry or the brief's one job, as written
+        kind: {type: string, pattern: "^[a-z][a-z-]*$"}   # a key of diverge/pools.yaml `representation`
+        options:
+          type: array
+          minItems: 2
+          maxItems: 3
+          items:
+            type: object
+            additionalProperties: false
+            required: [id, text, does, family, source]
+            properties:
+              id: {type: string, pattern: "^[a-e]$"}
+              text: {type: string, minLength: 3}
+              does: {type: string, minLength: 3}    # what the visitor can do with it
+              family: {type: string, pattern: "^[a-z][a-z0-9-]*$"}
+              source: {type: string, minLength: 2}  # a reference id, a world material, or `own`
+        default: {type: string, pattern: "^([a-e]|all)$"}
+  signature:                                        # elements the brief names; the roughs add their own in their cards
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [id, element, options, default]
+      properties:
+        id: {type: string, pattern: "^G[1-9][0-9]?$"}
+        element: {type: string, minLength: 2}
+        options:
+          type: array
+          minItems: 1
+          maxItems: 3
+          items: {$ref: "#/$defs/text_option"}
+        default: {type: string, pattern: "^[a-e]$"}
+$defs:
+  text_option:
+    type: object
+    additionalProperties: false
+    required: [id, text]
+    properties:
+      id: {type: string, pattern: "^[a-e]$"}
+      text: {type: string, minLength: 3}
+      source: {type: string, minLength: 2}

@@ -37,9 +37,9 @@ license: MIT AND CC-BY-4.0
   asked, do not look things up and do not stop: decline the references step with their line, as the brief record
   holds it (`lapis-design next --task <task> --declined references --brief-line "<the line>"`), and plan from local
   material. Render and behavior checks serve the page on 127.0.0.1 and run locally.
-- The order is brief, requirements, references, plan, then code: write no markup, style, script, or component file while
-  `next` names `brief`, `requirements`, `references`, or a plan step. Page code written first comes back as `plan-order`,
-  and an unattended run's page writes may be refused until then. With a person to answer, the first code is a thin slice
+- The order is brief, requirements, references, direction, plan, then code: write no markup, style, script, or component
+  file while `next` names `brief`, `requirements`, `references`, `owner-direction`, `diverge`, or a plan step. Page
+  code written first comes back as `plan-order`, and an unattended run's page writes may be refused until then. With a person to answer, the first code is a thin slice
   (see Slice).
 - The owner's words are kept by the CLI, not by you. `requirements seal` (see `lps-brief`) copies their brief files and
   `[declared]` answers into `.lapis/requirements/<task>.json` as rows with stable ids, and the critic judges every row
@@ -92,6 +92,11 @@ A small edit inside an established system needs no plan. Say so and make the edi
    `.lapis/references/<task>.md` passes. Search, capture with `lazuli ref ... --task <task>`, open the
    captures, and read a page's HTML and CSS, as the `lzl-research` skill's exploration guide describes. If the
    user's words forbid the lookups, decline the step with their line instead (see Done).
+6. After the references, hold the direction conversation (`references/direction-conversation.md`): `next` names
+   `owner-direction` until the owner has decided, item by item, what each named style does, how each core object is
+   represented, and what each signature element carries. Write `.lapis/direction/<task>.yaml`, ask in one message
+   (`lapis-questions: direction`), record the answers under `## Direction <n>`, and never decode a named style alone.
+   With nobody to ask, record `[assumed]` answers with their basis.
 
 For supplied design sources or a role transfer, read `shared/handoff/HANDOFF.md` → **Intake and authority**
 and **Projection annotations** before reconciling them; read **Export** and **Return and freshness** when
@@ -194,8 +199,9 @@ Starting points, which the brief and existing designs override:
 "Premium" in a brief is not a style. Never turn it silently into low density, cream, and serif.
 
 When the request names a look - modern, professional, minimal, clean, editorial, bento, or another
-style word - set `style_frame: named`, write the word in `direction.read.style_name`, and keep it in
-`claims.declared`. When a style file matches, read it before step 4:
+style word - it is decoded with the owner, not alone (start, step 6;
+`references/direction-conversation.md`) - set `style_frame: named`, write the word in `direction.read.style_name`, and
+keep it in `claims.declared`. When a style file matches, read it before step 4:
 `references/style-bento-and-modern-saas.md` when the word is bento, or modern or professional for a
 software product's page or tool; `references/style-minimalism-and-editorial.md` when it is minimal,
 clean, or editorial. When none matches, write in `direction.read.text` what the word assumes about
@@ -379,7 +385,8 @@ List every document, page, and file the plan relied on.
 2. Run `lapis-design plan check .lapis/plans/<task>.yaml` and fix every blocking finding.
 3. Run `lapis-design plan check .lapis/plans/<task>.yaml --summary` and read the summary with the defaults decisions
    yourself. In a create run that a person answers, do not ask them to approve the plan on that text: build the slice
-   and ask on the rendered page (see Slice). In any other run show the user the summary and the defaults decisions
+   and ask on the rendered page (see Slice); the direction was decided with them before the plan (start, step 6). In any
+   other run show the user the summary and the defaults decisions
    and wait for approval before code (a relayed run asks it as Done says). Once the user approves, record
    `approval: {state: approved}` in the plan; with nobody to ask, record `assumed` (see Done). In a harness plan
    mode, embed the plan as described in `shared/plan/HARNESS-PLAN-MODES.md`.

@@ -80,8 +80,8 @@ six, or when a third round appears (`## Answers (round 3)`, or a line such as `R
 `## Answers` are round 1, so put a second round's under its own heading. An answer is one item: the request's own
 statements share one `[declared]` item per question they settle, not one item per fact, and what the project or a
 lookup gave belongs in `Found`. A sub-list inside an item is not counted. `.lapis/questions/<task>.md` holds the
-round being asked; its numbered questions are counted the same way, and more than six returns `brief` instead of
-`waiting-for-user`.
+round being asked, and its first line is `lapis-questions: brief`; its numbered questions are counted the same way,
+and more than six returns `brief` instead of `waiting-for-user`.
 
 ## Requirements and owner decisions
 
@@ -108,9 +108,10 @@ format is the `requirements-record` item in `../shared/index.yaml`. Only `lapis-
   ```
 
   Never write such a line for a reply the owner did not give. The owner block shows every decision line back to the owner.
-- **A slice pick.** When the owner picked one of several slice candidates, record it under the same reply heading as
-  `- [declared] Slice: <the chosen page's URL exactly as the questions file links it> — <the owner's words>`. Feedback
-  without a pick is an ordinary `[declared]` item with no `Slice:` line.
+- **A pick among roughs.** The direction conversation in `lapis` records its answers under `## Direction <n>` headings,
+  not under an answers heading, so the cap on rounds does not count them. The owner's pick among the `diverge` roughs is
+  `- [declared] Pick: C2 — <the owner's words>`; it is the owner's decision, not a row. Every other `[declared]` item
+  there (`- [declared] K2 ticker band: drop — <their words>`) is a row (the direction-conversation guide of the `lapis` skill).
 - **Approval is not a requirement.** Every other top-level `[declared]` item, under any heading, becomes a row that the
   critic must judge before `done`. Record an owner's plain approval ("looks right, go on") as an untagged item
   (`- Approved the slice: <the owner's words>`), and tag `[declared]` only a reply that says what the owner wants.

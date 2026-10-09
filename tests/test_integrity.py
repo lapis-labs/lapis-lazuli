@@ -230,8 +230,9 @@ def test_renaming_an_answers_heading_is_a_row(integrity, project):
     (project / ANSWERS).write_text(text.replace("## Answers", "## Replies"), encoding="utf-8")
     rows = of(observe(integrity, project), "answers-headings")
     assert len(rows) == 1 and rows[0]["pointer"] == "answers:headings"
-    assert rows[0]["before"] == [{"heading": "Found", "items": 1}, {"heading": "Answers", "items": 2}]
-    assert rows[0]["after"] == [{"heading": "Found", "items": 1}, {"heading": "Replies", "items": 2}]
+    taken = {"heading": "Direction 1", "items": 1}                       # the owner took the direction defaults
+    assert rows[0]["before"] == [{"heading": "Found", "items": 1}, {"heading": "Answers", "items": 2}, taken]
+    assert rows[0]["after"] == [{"heading": "Found", "items": 1}, {"heading": "Replies", "items": 2}, taken]
 
 
 # ---------------------------------------------------------------- 7. every plan-reading command observes before it computes

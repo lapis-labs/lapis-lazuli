@@ -40,8 +40,8 @@ from typing import Any
 
 import yaml
 
-from lapis_design import (asks, attempts, brief, critic_packet, draft, gate, owner, preview, references, release_check,
-                          requirements, shared_dir, slice_step, taste, waiting)
+from lapis_design import (asks, attempts, brief, critic_packet, direction, draft, gate, owner, preview, references,
+                          release_check, requirements, shared_dir, slice_step, taste, waiting)
 from lapis_design.lint.cli import problems
 from lapis_design.plan_check import PlanOverLimit, read_plan, yaml_reason
 from lapis_design.summary import NOT_JUDGED
@@ -330,6 +330,8 @@ def _unfit(root: Path, task: str, kind: str, then: str) -> str | None:
     if kind == "ask":
         return (asks.shape_problem(_read_text(waiting.questions_path(root, task)))
                 or asks.checkpoint_problem(root, task, then))
+    if kind == "direction":
+        return direction.questions_problem(root, task)
     return None
 
 
@@ -364,6 +366,10 @@ def _steps(root: Path, task: str, page: str | None, integrity_error: str | None 
             return state(_requirements_step(task, reason), False)
         if found := _references_owed(root, task):
             return state(_step(references.STEP, references.why(task, found, planned=False)), False)
+        if owed := direction.owed(root, task, 1):
+            return state(direction.step(task, owed), False)
+        if owed := direction.owed(root, task, 2):
+            return state(direction.step(task, owed), False)
         answers = waiting.answers_path(Path('.'), task).as_posix()
         if declined := references.declined(root, task) if references.problems(root, task) else None:
             cited = (f"the brief record {answers} in its `context.other`: the brief, and the decisions with the candidates "
@@ -395,6 +401,10 @@ def _steps(root: Path, task: str, page: str | None, integrity_error: str | None 
             return state(_requirements_step(task, reason), False)
         if found := _references_owed(root, task, plan):
             return state(_step(references.STEP, references.why(task, found, planned=True)), False)
+        if owed := direction.owed(root, task, 1):
+            return state(direction.step(task, owed), False)
+        if owed := direction.owed(root, task, 2):
+            return state(direction.step(task, owed), False)
 
     interactive = _interactive(plan, page_file, _json(paths["extract"]))
     try:

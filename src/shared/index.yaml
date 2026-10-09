@@ -297,6 +297,38 @@ items:
       lps-brief: summary
       lps-copy: summary
 
+  - id: direction-proposal
+    kind: contract
+    path: direction/schema.yaml
+    note: v0; what the run proposes to ask the owner before it plans (what each named style does, how each core object is represented, what each signature element carries); the answers are `[declared]` items under `## Direction <n>` of the brief record
+    consumers:
+      lapis: full
+      ultramarine: summary
+      lps-brief: summary
+
+  - id: diverge-pools
+    kind: data
+    path: diverge/pools.yaml
+    note: v0; the representation families by kind of core object and the color-allocation stances `lapis-design diverge` draws from, and its provisional distance weights
+    consumers:
+      lapis: full
+      ultramarine: summary
+
+  - id: diverge-pools-schema
+    kind: contract
+    path: diverge/pools.schema.yaml
+    note: v0; shape of the diverge pools
+    consumers:
+      lapis: summary
+
+  - id: diverge-card
+    kind: contract
+    path: diverge/card.schema.yaml
+    note: v0; the card of one rough first view (reference direction, the draws it spends, core-object representations, color roles with their area, signature elements)
+    consumers:
+      lapis: full
+      ultramarine: summary
+
   - id: system-fonts
     kind: data
     path: fonts/system-fonts.yaml

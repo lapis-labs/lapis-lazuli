@@ -7,9 +7,10 @@ import os
 from pathlib import Path
 
 import pytest
+import yaml
 
 from lapis_design import asks, brief, gate, next_step, owner, waiting
-from procedure_support import TASK, ask, make_project, record, reply, unseal_slice
+from procedure_support import DIRECTION_ANSWERS, TASK, ask, make_project, record, reply, save, unseal_slice
 
 QUESTIONS = "1. Who visits the kiln shop page?\n2. Is the monthly firing date fixed?\n"
 ASK = ("1. Give each plate its own composition, or keep the repeated plate?\n   a) one composition per plate  "
@@ -31,6 +32,21 @@ def project(tmp_path) -> Path:
     root = make_project(tmp_path)
     (root / ".lapis/fonts.lock.json").unlink()
     return root
+
+
+def open_item(root: Path) -> str:
+    """The direction proposal gains a signature item no owner answer settles, so that a `direction` file has an item to
+    ask about; returns a question that names it."""
+    doc = yaml.safe_load((root / f".lapis/direction/{TASK}.yaml").read_text(encoding="utf-8"))
+    answers = root / f".lapis/answers/{TASK}.md"
+    stamp = answers.stat().st_mtime_ns
+    answers.write_text(answers.read_text(encoding="utf-8").replace(
+        DIRECTION_ANSWERS, '\n## Direction 1\n\n- [declared] O1 the log: all — "try them all"\n'), encoding="utf-8")
+    os.utime(answers, ns=(stamp, stamp))                     # the owner answered the object and has not taken the defaults
+    doc["signature"] = [{"id": "G1", "element": "procedure animation", "default": "a",
+                         "options": [{"id": "a", "text": "which step is current"}, {"id": "b", "text": "only the order"}]}]
+    save(root, f"direction/{TASK}.yaml", doc)
+    return "G1: what should the procedure animation carry?\n"
 
 
 def numbered(count: int) -> str:
@@ -68,19 +84,19 @@ def test_a_brief_with_seven_numbered_questions_returns_brief_and_six_wait(tmp_pa
     assert next_step.evaluate(tmp_path, TASK)["state"] == "waiting-for-user"
 
 
-def test_the_cap_on_questions_is_the_briefs_alone(tmp_path):
-    ask(tmp_path, numbered(15), 200, kind="direction")
-    result = next_step.evaluate(tmp_path, TASK)
+def test_the_cap_on_questions_is_the_briefs_alone(project):
+    ask(project, numbered(15) + open_item(project), 200, kind="direction")
+    result = next_step.evaluate(project, TASK)
     assert (result["state"], result["waiting"]["kind"]) == ("waiting-for-user", "direction")
-    ask(tmp_path, numbered(7), 210, kind="brief")
-    assert next_step.evaluate(tmp_path, TASK)["step"]["id"] == "brief"
+    ask(project, numbered(7), 210, kind="brief")
+    assert next_step.evaluate(project, TASK)["step"]["id"] == "brief"
 
 
 def test_an_approval_file_with_no_draft_before_the_seal_returns_slice_and_the_other_kinds_wait(project):
     unseal_slice(project)
     ask(project, "Do you approve this plan as it reads?", 200)
     assert step_of(project) == "slice"
-    ask(project, "Which of these two looks is closer: a or b?", 210, kind="direction")
+    ask(project, "Which of these two looks is closer: a or b? " + open_item(project), 210, kind="direction")
     result = next_step.evaluate(project, TASK)
     assert (result["state"], result["then"]["id"]) == ("waiting-for-user", "slice")
     ask(project, ASK, 220, kind="ask")
@@ -92,7 +108,7 @@ def test_a_wait_names_its_kind_and_what_to_record_for_it(project):
     ask(project, ASK, 200, kind="ask")
     why = next_step.evaluate(project, TASK)["step"]["why"]
     assert "under `## Asks`" in why and "[declared] Ask <trigger>:" in why and "may wait for" not in why
-    ask(project, "Which of the options?", 210, kind="direction")
+    ask(project, "Which of the options? " + open_item(project), 210, kind="direction")
     assert "under `## Direction <n>`" in next_step.evaluate(project, TASK)["step"]["why"]
     ask(project, QUESTIONS, 220, kind="approval")
     assert "may wait for 2 sets of questions before a plan exists and 1 after" in next_step.evaluate(project, TASK)["step"]["why"]
@@ -104,7 +120,7 @@ def test_direction_and_ask_sets_are_not_counted_against_the_briefs_cap(project):
     saved = json.loads((project / f".lapis/gate/{TASK}.json").read_text(encoding="utf-8"))
     assert "plan" not in saved["waits"] and "approval" not in saved["waits"] and saved["waits"]["last"]
     reply(project, "- [declared] Ask finding-vs-decision: a — one each", 210)
-    ask(project, "Which look is closer?", 220, kind="direction")
+    ask(project, "Which look is closer? " + open_item(project), 220, kind="direction")
     for _ in range(3):
         assert gate.stop_output(project, "s1", unattended=True, task=TASK) is None
     ask(project, QUESTIONS, 230, kind="approval")

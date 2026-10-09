@@ -204,7 +204,7 @@ record (the later one stands), and `next` counts it only while the line is still
 of the run's own is newer.
 
 `lapis-design next --task <task>` runs this gate offline on the files and returns the one step still to
-take, with its exact command or schema: `brief`, `requirements`, `references`, `plan`, `plan-fix`, `plan-flows`,
+take, with its exact command or schema: `brief`, `requirements`, `references`, `owner-direction`, `plan`, `plan-fix`, `plan-flows`,
 `plan-explorations`, `plan-order`, `slice`, `fonts-lock`, `stub`, `ledger`, `render`, `behavior`, `lint`, `critic`,
 `release`, or `done`. The gate's
 own findings that report a check that did not run or an input that is missing (the ten under
@@ -247,13 +247,27 @@ project, the brief's facts); when the procedure is `done` its reason says no ref
 check` lists a decline as `release.references-declined`. The captures are for study only, git-ignored, and never
 shipped or copied into the page.
 
+`owner-direction` follows the references on the same terms (no plan file, or `mode: create`; a redesign or repair plan never
+gets it): the direction conversation in which the owner decides, item by item, what each named style does (`S`, with the
+trend-kit items `K` it decodes to), how each core object is represented (`O`), and what each signature element carries (`G`).
+The run writes the proposal `.lapis/direction/<task>.yaml` (`direction/schema.yaml`), asks in one message, and records the
+answers in the brief record under `## Direction <n>` headings as `[declared] K2 ticker band: drop — <their words>` items,
+which become requirement rows, or as one untagged `- Defaults accepted (direction <n>): "<their words>"` line that takes
+every open item's default. The step is owed while the proposal is missing or fails its checks (ids, two or three options,
+every `seen_in` a reference of the record, each object's `kind` a key of `diverge/pools.yaml`, each default an option id)
+or a style, kit, or object item has no owner answer; once `diverge` is sealed it is owed again until the owner's
+`[declared] Pick: C<n>` stands and the picked rough's signature items `C<n>.G<m>` have an answer (a `Pick:` line is the
+owner's decision and no row). In an attended run an `[assumed]` answer does not count; an unattended run never waits and
+records `[assumed] ... Basis: ...` items instead. Questions of kind `direction` wait only when at least one item is open and
+the file names every open item id, and they are not under the brief's cap on questions.
+
 `plan-order` comes after the plan's own blockers and before the fonts lock: a blocking `release.procedure-order` (an
 unattended run whose page code came before the brief, references, or plan) sends the run back to redo the direction
 from the brief, citing the brief record and comparing the existing code as one candidate of a `direction`
 exploration; the code stays only if it wins. A person's session is only told. Where a harness can ask before a
 file is written (Claude Code and Codex `PreToolUse`, the `tool_call` event of Oh-My-Pi and pi), `lapis-design hook
 pre-write` refuses an unattended create run's write of a page source file while `next` names `brief`, `requirements`,
-`references`, `plan`, `plan-fix`, or `plan-explorations`: `permissionDecision: deny` with the step named, at most three times in a
+`references`, `owner-direction`, `diverge`, `plan`, `plan-fix`, or `plan-explorations`: `permissionDecision: deny` with the step named, at most three times in a
 row for one step, after which the write goes through and a write that came before the brief, references, or plan is
 recorded in `.lapis/order/<task>.json`. Writes under `.lapis/` (except the next paragraph's folders), to files that are
 not page source, and outside the project are never refused. With no plan file the run counts as create only while the
