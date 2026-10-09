@@ -476,8 +476,8 @@ def test_host_resolver_rules_cover_all_refused_and_link_hosts(registry):
 
 def test_host_resolver_rules_cover_real_registry():
     rules, hosts = site._host_resolver_rules(sources.load_registry())
-    assert len(hosts) == 32
-    assert len(rules.split(", ")) == 128
+    assert len(hosts) == 36
+    assert len(rules.split(", ")) == 144
     assert "github.com" not in hosts
 
 
@@ -1397,3 +1397,13 @@ def test_only_user_named_loopback_page_gets_network_permission(given, vetted, ex
     assert named._loopback_origin == expected
 
 
+
+
+def test_motion_capture_records_a_webm_and_a_four_frame_strip(real_browser, render_server, project, cache):
+    assert run(project, "capture", f"{render_server}/scroll-driven.html", "--rights", "reference-only",
+               "--slug", "moving", "--task", "kiln-shop", "--motion") == 0
+    kept = project / ".lapis" / "references" / "kiln-shop" / "moving"
+    video = kept / "motion.webm"
+    assert video.read_bytes()[:4] == b"\x1a\x45\xdf\xa3" and video.stat().st_size >= 10 * 1024
+    with Image.open(kept / "strip.png") as strip:
+        assert strip.width > strip.height * 2 and strip.width <= 4 * 360 + 3 * 8

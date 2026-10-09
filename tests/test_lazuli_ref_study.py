@@ -12,7 +12,7 @@ import pytest
 
 from lapis_design.render.extract import validate
 from lazuli.catalog import net
-from lazuli.ref import study
+from lazuli.ref import site, study
 from test_lazuli_ref import (URL, cache, fake_capture, files, project, registry, run,  # noqa: F401 (fixtures)
                              synthetic_image)
 
@@ -224,3 +224,22 @@ def test_the_report_names_the_pictures_to_open_before_a_relation_is_written(site
     line = next(l for l in capsys.readouterr().out.splitlines() if "look before you cite" in l)
     kept = project / FOLDER / "ref-invalid-work"
     assert str(kept / "1440.png") in line and str(kept / "390.png") in line and "768.png" not in line
+
+
+def test_motion_needs_a_task_and_keeps_its_recording_and_strip_for_study(site_with_sheet, registry, project, monkeypatch, capsys):
+    assert run(project, "capture", URL, "--rights", "reference-only", "--motion") == 2
+    assert "--motion keeps its recording as a study copy, so it needs --task" in capsys.readouterr().err
+    assert run(project, "capture", URL, "--rights", "reference-only", "--task", "kiln-shop") == 0
+    assert "motion.webm" not in kept_names(project / FOLDER / "ref-invalid-work")       # only on request
+
+    def fake_motion(named, url, staging):
+        assert url.startswith("https://ref.invalid/") and staging.is_dir()
+        (staging / site.MOTION_NAME).write_bytes(b"\x1a\x45\xdf\xa3" + bytes(20 * 1024))
+        (staging / site.STRIP_NAME).write_bytes(site_with_sheet.png)
+
+    monkeypatch.setattr(site, "_record_motion", fake_motion)
+    assert run(project, "capture", URL, "--rights", "reference-only", "--task", "kiln-shop", "--motion") == 0
+    kept = project / FOLDER / "ref-invalid-work"
+    assert kept_names(kept) == ["1440.png", "390.png", "768.png", "facts.md", "motion.webm", "page.html", "strip.png",
+                                "style-1.css"]
+    assert (kept / "motion.webm").stat().st_size >= 10 * 1024

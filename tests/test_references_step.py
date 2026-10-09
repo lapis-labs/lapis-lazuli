@@ -14,7 +14,7 @@ import pytest
 from lapis_design import attempts, gate, hints, next_step, order, references
 from lapis_design.cli import main as cli_main
 from procedure_support import (BRIEF_RECORD, FACTS, TASK, finish, load_skills, make_project, record, reference_entries,
-                               references_text, refresh_critic, save, seal_requirements, update, write_references)
+                               references_text, refresh_critic, save, seal_requirements, spare_entries, update, write_references)
 
 
 @pytest.fixture
@@ -203,13 +203,13 @@ def test_a_text_page_costs_a_reference_but_never_counts_toward_the_kinds(bare):
 
 
 def test_two_text_pages_among_enough_images_are_allowed(bare):
-    entries = text_capture(bare, text_capture(bare, reference_entries(bare), 3, "a.md"), 4, "b.md")
+    entries = text_capture(bare, text_capture(bare, [*reference_entries(bare), *spare_entries(bare)], 3, "a.md"), 4, "b.md")
     write(bare, entries)
     assert references.problems(bare, TASK) == [] and step_of(bare) == "plan"
 
 
 def test_an_encyclopedia_counts_as_text_even_when_it_is_photographed_but_commons_files_do_not(bare):
-    entries = wikipedia(wikipedia(reference_entries(bare), 3), 4)
+    entries = wikipedia(wikipedia([*reference_entries(bare), *spare_entries(bare)], 3), 4)
     write(bare, entries)
     assert references.problems(bare, TASK) == []                       # two encyclopedia pages: allowed
     entries = swap(entries, 2, url="https://commons.wikimedia.org/wiki/File:Poster.jpg")

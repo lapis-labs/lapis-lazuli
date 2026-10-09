@@ -11,7 +11,8 @@ A reference-only profile keeps no copy, alt text, accessible names, or screensho
 signatures, images only as perceptual hashes. Screenshots and image copies stay in the lazuli cache,
 outside the project, unless --task TASK asks for study copies: a capture then also keeps its screenshots,
 the page's own HTML and stylesheets, and facts.md (a digest of what they state about type, color, and
-layout), a picture its file, in PROJECT/.lapis/references/TASK/SLUG/. Those are for study only, git-ignored,
+layout; with `capture --motion` also motion.webm, a 6-second scripted scroll at 1440 px, and strip.png, four
+frames of it), a picture its file, in PROJECT/.lapis/references/TASK/SLUG/. Those are for study only, git-ignored,
 and never shipped or copied into a page. A capture's screenshots and its profile change together: they are
 put in place one after the other and, if a step fails, the earlier profile and screenshots stay.
 Exit codes: 0 written, 1 refused (the source registry, robots.txt, a block or sign-in page, or rights
@@ -57,6 +58,8 @@ def _study_files(result: Profile, capture: Capture | None) -> dict[str, bytes | 
     from lazuli.ref import site
 
     files: dict[str, bytes | Path] = {f"{width}.png": capture.shots / f"{width}.png" for width, _ in site.VIEWPORTS}
+    if capture.motion:
+        files.update({name: capture.shots / name for name in (site.MOTION_NAME, site.STRIP_NAME)})
     if capture.source:
         files["page.html"] = capture.source.html
         files.update({f"style-{n}.css": body for n, (_, body) in enumerate(capture.source.sheets, start=1)})
@@ -83,6 +86,9 @@ def _parser(prog: str) -> argparse.ArgumentParser:
     sub = ap.add_subparsers(dest="command", required=True)
     capture = sub.add_parser("capture", parents=[common], help="capture a page you name (robots.txt respected)")
     capture.add_argument("url")
+    capture.add_argument("--motion", action="store_true",
+                         help="also record a scripted 6-second scroll at 1440 px as motion.webm with a 4-frame "
+                              "strip.png (needs --task; paced like the screenshots)")
     profile = sub.add_parser("profile", parents=[common], help="palette of a local image or one at an address")
     profile.add_argument("image", metavar="IMAGE_OR_URL")
     system = sub.add_parser("system", parents=[common], help="type scale, colors, and states of a design system")
@@ -181,6 +187,8 @@ def main(argv: list[str] | None = None, prog: str = "lazuli ref") -> int:
     args = _parser(prog).parse_args(argv)
     if not args.project.is_dir():
         return _fail(args, prog, f"project folder not found: {args.project}")
+    if getattr(args, "motion", False) and not args.task:
+        return _fail(args, prog, "--motion keeps its recording as a study copy, so it needs --task")
     if args.task and args.command == "system":
         return _fail(args, prog, "--task keeps study copies of a captured page or a picture; a design system has none")
     with contextlib.ExitStack() as stack:
@@ -190,7 +198,8 @@ def main(argv: list[str] | None = None, prog: str = "lazuli ref") -> int:
                 from lazuli.ref import site
 
                 slug = args.slug or url_slug(args.url)
-                capture = site.capture_site(args.url, args.rights, slug, with_source=bool(args.task))
+                capture = site.capture_site(args.url, args.rights, slug, with_source=bool(args.task),
+                                            motion=args.motion)
                 stack.callback(capture.discard)     # the staging folder, unless it was put in place
                 result: Profile = capture.profile
             elif args.command == "profile":

@@ -20,6 +20,7 @@ from lapis_design import shared_dir
 _SCHEMA = yaml.safe_load((shared_dir() / "sources" / "registry.schema.yaml").read_text(encoding="utf-8"))
 TYPES = tuple(_SCHEMA["$defs"]["source"]["properties"]["type"]["items"]["enum"])
 ACCESS = tuple(_SCHEMA["$defs"]["source"]["properties"]["access"]["enum"])
+AXES = tuple(_SCHEMA["$defs"]["source"]["properties"]["axes"]["items"]["enum"])
 # When no entry's path covers a URL on a listed host, the host's strictest entry decides: terms cover
 # the whole site, not the page the registry happens to link. An access value outside the schema counts
 # as stricter than refused, so a bad entry fails closed.
@@ -127,7 +128,8 @@ def render(entries: list[dict]) -> str:
     """Two lines per source (id, access, types, url; then name and use), plus why for links and refusals."""
     lines = []
     for e in entries:
-        lines.append(f"{e['id']:26} {_access_label(e):22} {','.join(e['type']):12} {e['url']}")
+        lines.append(f"{e['id']:26} {_access_label(e):22} {','.join(e['type']):12} {e['url']}"
+                     + (f"  [{','.join(e['axes'])}]" if e.get("axes") else ""))
         lines.append(f"    {e['name']}: {e['good_for']}")
         if e["access"] == "refused":
             lines.append(f"    refused: {e['reason']} ({e['clause']}; {e['terms_url']})")
@@ -145,9 +147,12 @@ def main(argv: list[str], prog: str = "lazuli sources") -> int:
     ap = argparse.ArgumentParser(prog=prog, description="List the source registry: where to look for fonts, "
                                  "colors, assets, and design references, and how lazuli may reach each.")
     ap.add_argument("--type", choices=TYPES, help="only sources of this type")
+    ap.add_argument("--axis", choices=AXES, help="only reference sources that serve this axis (genre, expression, "
+                    "or beyond-web)")
     ap.add_argument("--json", action="store_true", help="the registry entries as JSON")
     args = ap.parse_args(argv)
-    entries = [e for e in load_registry() if args.type is None or args.type in e["type"]]
+    entries = [e for e in load_registry() if (args.type is None or args.type in e["type"])
+               and (args.axis is None or args.axis in e.get("axes", ()))]
     if args.json:
         print(json.dumps(entries, ensure_ascii=False, indent=2))
         return 0

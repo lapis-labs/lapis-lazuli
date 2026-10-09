@@ -356,13 +356,13 @@ items:
   - id: sources-hints
     kind: data
     path: sources/hints.yaml
-    note: v0; starting points, not a canon; lazuli hints records three rotating examples and requires independent finds
+    note: v1; starting points on three axes (genre fields, expression modes, beyond-web media), not a canon; lazuli hints records the rotating offer and references require independent finds per axis
     consumers:
       lzl-research: summary
 
   - id: sources-hints-schema
     kind: contract
     path: sources/hints.schema.yaml
-    note: v0; URLs and facts with our own one-line study questions, separate from access policies
+    note: v1; per-axis layout, URLs and facts with our own one-line study questions (and `shows` for expression), separate from access policies
     consumers:
       lzl-research: summary

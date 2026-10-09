@@ -236,21 +236,39 @@ def capture_file(root: Path, name: str, seed: int, task: str = TASK) -> str:
 FACTS = "body 17px/1.55 in a serif, one 62ch column, ink #1a1a1a on #f4f0e8, rules 1px"
 
 
+# axis, direction, and kind of the six references: every axis twice, and every direction holds two axes
+REFERENCE_SHAPE = (("genre", "A", "web-ui"), ("genre", "C", "web-ui"), ("expression", "A", "print"),
+                   ("expression", "B", "signage"), ("beyond-web", "B", "physical-object"), ("beyond-web", "C", "archive"))
+DIRECTIONS = {"A": "the stone as a specimen sheet", "B": "the procedure as a transit map", "C": "the record as a ledger"}
+
+
 def reference_entries(root: Path, task: str = TASK) -> list[dict]:
-    """Six references seen as images in four kinds, two of them outside web-ui and two of them web-ui with facts."""
-    kinds = ("web-ui", "web-ui", "print", "signage", "physical-object", "archive")
+    """Six references seen as images on three axes in five kinds, four of them outside web-ui and two of them web-ui
+    with facts, in three directions; the first expression reference was found on a registry curation page."""
     entries = []
-    for index, kind in enumerate(kinds, start=1):
+    for index, (axis, direction, kind) in enumerate(REFERENCE_SHAPE, start=1):
         entries.append({"id": f"ref-{index}", "url": f"https://museum.example/{kind}/{index}", "maker": f"Maker {index}",
-                        "kind": kind, "decision": "the order of the page",
+                        "kind": kind, "axis": axis, "direction": direction, "decision": "the order of the page",
                         "capture": capture_file(root, f"ref-{index}.png", index, task),
                         "relation": "take the ruled rhythm and the label's job; leave the type and the marks",
-                        **({"source_facts": FACTS} if kind == "web-ui" else {})})
+                        **({"source_facts": FACTS} if kind == "web-ui" else {}),
+                        **({"found_at": "https://www.hoverstat.es/"} if index == 3 else {})})
     return entries
 
 
-def references_text(entries: list[dict], captures: str | None = "study-only") -> str:
-    body = yaml.safe_dump({**({"captures": captures} if captures else {}), "references": entries}, sort_keys=False)
+def spare_entries(root: Path, task: str = TASK) -> list[dict]:
+    """Two more images, one expression and one beyond-web, for a test that turns others into text-only pages."""
+    return [{"id": f"ref-{index}", "url": f"https://museum.example/spare/{index}", "maker": f"Maker {index}",
+             "kind": "print", "axis": axis, "direction": direction, "decision": "the order of the page",
+             "capture": capture_file(root, f"ref-{index}.png", index, task),
+             "relation": "take the ruled rhythm and the label's job; leave the type and the marks"}
+            for index, axis, direction in ((7, "expression", "B"), (8, "beyond-web", "B"))]
+
+
+def references_text(entries: list[dict], captures: str | None = "study-only", directions: dict | None = None) -> str:
+    body = yaml.safe_dump({**({"captures": captures} if captures else {}),
+                           "directions": DIRECTIONS if directions is None else directions, "references": entries},
+                          sort_keys=False)
     return f"# References: kiln shop landing\n\nThe captures are for study only.\n\n```yaml\n{body}```\n"
 
 

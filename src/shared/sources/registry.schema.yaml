@@ -11,6 +11,9 @@
 #                 restrict tool use without banning it outright (`reason` says which)
 #   refused       the terms forbid automated access; `clause` cites it and nothing is ever requested.
 #                 A refused catalog keeps its REFUSED adapter module, named in `adapter`.
+# axes (optional) tags a design-reference source with the reference axes it serves (genre, expression, beyond-web);
+# `lazuli sources --axis` lists them, and an expression reference's `found_at` must be on an expression source with
+# access read or adapter.
 # checked_at is the day the access policy was checked against the source's terms and robots.txt.
 
 $schema: https://json-schema.org/draft/2020-12/schema
@@ -45,6 +48,11 @@ $defs:
         uniqueItems: true
         items: { enum: [font, color, asset, search] }
       good_for: { type: string, minLength: 1 }
+      axes:                                     # reference axes the source serves (hints.yaml axes); omit for fonts, colors, assets
+        type: array
+        minItems: 1
+        uniqueItems: true
+        items: { enum: [genre, expression, beyond-web] }
       access: { enum: [adapter, read, browser-link, refused] }
       adapter: { type: string, pattern: "^[a-z0-9]+(-[a-z0-9]+)*$" }   # lazuli.catalog module NAME
       reason: { type: string, minLength: 1 }   # why the access is browser-link or refused, shown to the user
