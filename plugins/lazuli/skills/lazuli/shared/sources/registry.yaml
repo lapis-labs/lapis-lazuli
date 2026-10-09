@@ -707,49 +707,57 @@ sources:
     url: https://godly.design/
     type: [search]
     good_for: curated web and UI references and component-level expression
+    axes: [expression]
     access: read
     terms_url: https://godly.design/about/
-    checked_at: "2026-09-26"
+    checked_at: "2026-10-09"
+    note: godly.design is a live gallery separate from godly.website, which now redirects to recent-design; robots allows all and the site publishes no terms page; its markdown alternate for the home page serves an unrelated docs starter, so read the HTML page, not index.md
 
   - id: awwwards
     name: Awwwards
     url: https://www.awwwards.com/
     type: [search]
     good_for: ambitious authored sites and interaction leads; awards do not prove usability
+    axes: [genre, expression]
     access: read
     terms_url: https://www.awwwards.com/terms/
-    checked_at: "2026-09-26"
+    checked_at: "2026-10-09"
+    note: robots disallows the listing and search paths (/gallery/, /inspiration/search, /websites/?, /search-websites), so read single /sites/ pages only; the terms forbid reproducing content, so cite and link, keep no captures
 
   - id: siteinspire
     name: siteInspire
     url: https://www.siteinspire.com/
     type: [search]
     good_for: comparing composition, typography, and navigation across websites
+    axes: [genre]
     access: browser-link
-    reason: siteInspire answered lazuli's first request with HTTP 429, so its terms could not be read by a tool; open it in your browser.
+    reason: siteInspire answered lazuli's requests with HTTP 429 (2026-09-26 and again 2026-10-09 under lazuli's research User-Agent), so its terms could not be read by a tool; open it in your browser.
     terms_url: https://www.siteinspire.com/
-    checked_at: "2026-09-26"
+    checked_at: "2026-10-09"
+    note: its robots.txt allows AI search agents and bars training crawlers, but the site still turns tool fetches away
 
   - id: land-book
     name: Land-book
     url: https://land-book.com/
     type: [search]
-    good_for: landing-page composition references
-    access: refused
-    reason: Land-book's terms forbid bots, crawlers, and scrapers that collect or copy content; browse it yourself.
-    clause: Terms of Service 3, Acceptable Use ("use bots, crawlers, or scrapers to collect or copy content")
+    good_for: landing-page composition references, including a motion section
+    axes: [genre, expression]
+    access: read
     terms_url: https://land-book.com/terms-of-service
-    checked_at: "2026-09-26"
+    checked_at: "2026-10-09"
+    note: "owner decision 2026-10-09: read single entry pages only, never bulk-collect, keep no captures, and credit the designer or studio named on the entry page with a link to https://land-book.com/websites/{urlname} (its llms.txt asks for exactly this). Its robots.txt lists AI assistant crawlers as welcome, but its Terms of Service 3 still forbid using bots, crawlers, or scrapers to collect or copy content and section 7 forbids machine-learning or AI-training use of its content without written consent; the terms page itself answered lazuli's research User-Agent with a Cloudflare challenge (HTTP 403) on 2026-10-09, so this entry rests on the clauses read earlier that day. Nothing from it trains or calibrates a model"
 
   - id: mobbin
     name: Mobbin
     url: https://mobbin.com/
     type: [search]
     good_for: real product screens and flows by platform
+    axes: [genre]
     access: browser-link
     reason: screens need a signed-in account, and the terms forbid using AI tools to make derivative works from its content; open it in your browser.
     terms_url: https://mobbin.com/terms
-    checked_at: "2026-09-26"
+    checked_at: "2026-10-09"
+    note: the sanctioned programmatic route is Mobbin's own MCP server (api.mobbin.com/mcp, OAuth with the user's own Pro, Team, or Enterprise account, 60 requests per 60 seconds per user), which is the user's connection and not a lazuli adapter; its robots.txt allows every path for other agents
 
   - id: refero
     name: Refero
@@ -844,3 +852,248 @@ sources:
     clause: Terms of Service, prohibited activities ("Copying, distributing, or disclosing any part of the Website or any Services in any medium, including without limitation by any automated or non-automated scraping")
     terms_url: https://dribbble.com/terms
     checked_at: "2026-09-26"
+
+  # ---------------------------------------------------------------- expression axis
+  - id: httpster
+    name: Httpster
+    url: https://httpster.net/
+    type: [search]
+    good_for: hand-picked gallery (about 3,100 sites) with a minimal, brutalist-leaning selection
+    axes: [expression]
+    access: read
+    terms_url: https://httpster.net/about/
+    checked_at: "2026-10-09"
+    note: robots.txt is absent (HTTP 404) and no terms page is published; cite and link, keep no captures
+
+  - id: hoverstates
+    name: Hoverstat.es
+    url: https://www.hoverstat.es/
+    type: [search]
+    good_for: alternative web design since 2012 - sites experimenting with design, interactivity, and content
+    axes: [expression]
+    access: read
+    terms_url: https://www.hoverstat.es/about/
+    checked_at: "2026-10-09"
+    note: robots.txt absent (HTTP 404); no terms page published; an RSS feed lists new entries
+
+  - id: codrops
+    name: Codrops
+    url: https://tympanus.net/codrops/
+    type: [search]
+    good_for: technique articles, demos, case studies, and the Creative Hub exhibition of 2,000+ sites
+    axes: [expression]
+    access: read
+    terms_url: https://tympanus.net/codrops/licensing/
+    license: demos MIT (unless noted); article text excerpt-only
+    checked_at: "2026-10-09"
+    note: robots content signal allows reference use (search=yes, ai-train=no, use=reference) and blocks training crawlers; page HTML carries a noai, noimageai robots meta - read text for reference, never feed its images into models, and do not bulk-collect
+
+  - id: css-design-awards
+    name: CSS Design Awards
+    url: https://www.cssdesignawards.com/
+    type: [search]
+    good_for: award gallery with jury notes; a trend mirror, never a target
+    axes: [expression]
+    access: read
+    terms_url: https://www.cssdesignawards.com/terms
+    checked_at: "2026-10-09"
+    note: robots blocks only DotBot; the terms forbid copying any content or data (including screenshots and descriptions) without permission - read single pages as leads, keep no captures
+
+  - id: the-fwa
+    name: The FWA
+    url: https://thefwa.com/
+    type: [search]
+    good_for: cutting-edge digital projects - sites, apps, installations, VR/AR - with jury commentary
+    axes: [expression]
+    access: browser-link
+    reason: pages are client-rendered app shells that return no readable body to tools (cases, terms, privacy all checked 2026-10-09), and the Terms & Conditions body could not be read by any tool route; robots.txt allows everything except /admin/ - open it in your browser.
+    terms_url: https://thefwa.com/terms-conditions
+    checked_at: "2026-10-09"
+
+  - id: recent-design
+    name: Recent (formerly Godly)
+    url: https://recent.design/
+    hosts: [godly.website]
+    type: [search]
+    good_for: daily curated feed across web, interface, motion, print, packaging, editorial, and 3D
+    axes: [expression]
+    access: read
+    terms_url: https://recent.design/
+    checked_at: "2026-10-09"
+    note: godly.website now redirects here (the item pages say Godly has been moved to Recent); robots.txt allows all; no about, terms, or privacy pages were found
+
+  - id: motionographer
+    name: Motionographer
+    url: https://motionographer.com/
+    type: [search]
+    good_for: motion design news, interviews, Studio Stories, project breakdowns, and The Motion Awards
+    axes: [expression]
+    access: read
+    terms_url: https://motionographer.com/privacy-policy/
+    checked_at: "2026-10-09"
+    note: no reuse terms found (privacy notice only); robots disallows only /wp-admin/; link to hosted work instead of copying it
+
+  # ---------------------------------------------------------------- beyond the web
+  - id: design-reviewed
+    name: Design Reviewed
+    url: https://designreviewed.com/
+    type: [search]
+    good_for: independent archive of 11,000+ artifacts (posters, periodicals, ephemera) and 500+ designer profiles, free without login
+    axes: [beyond-web]
+    access: browser-link
+    reason: its pages answered lazuli's research User-Agent with HTTP 403 on 2026-10-09 (robots.txt itself was readable), so a tool cannot read it; open it in your browser.
+    terms_url: https://designreviewed.com/about/
+    checked_at: "2026-10-09"
+    note: "robots asks Bingbot, AhrefsBot, and SemrushBot for Crawl-delay: 10 (a human pace); no reuse license is published - cite and study, do not redistribute scans; articles need membership. An earlier read the same day, under another User-Agent, had found it readable"
+
+  - id: letterform-archive
+    name: Letterform Archive
+    url: https://letterformarchive.org/
+    hosts: [oa.letterformarchive.org]
+    type: [search]
+    good_for: typography and graphic design collection; the Online Archive browses images by country, designer, decade, and format
+    axes: [beyond-web]
+    access: read
+    terms_url: https://letterformarchive.org/
+    checked_at: "2026-10-09"
+    note: "robots.txt sets Crawl-delay: 10 and otherwise allows everything; the Online Archive was offline for maintenance on 2026-10-09; item images stay the rights holders' - study only"
+
+  - id: moma
+    name: MoMA
+    url: https://www.moma.org/
+    type: [search]
+    good_for: collection and exhibition pages of a defining modern-design museum
+    axes: [beyond-web]
+    access: browser-link
+    reason: the site answered this tool with HTTP 403 on /about/terms-conditions and /collection/ (2026-10-09) even though robots allows most pages; read it in your browser.
+    terms_url: https://www.moma.org/about/terms-conditions
+    checked_at: "2026-10-09"
+    note: images are licensed through Art Resource and Scala and are not part of the open dataset
+
+  - id: moma-collection-dataset
+    name: MoMA collection dataset
+    url: https://github.com/MuseumofModernArt/collection
+    type: [search]
+    good_for: 160,700 catalogued works and 15,935 artists as CC0 metadata for local study
+    axes: [beyond-web]
+    access: read
+    terms_url: https://github.com/MuseumofModernArt/collection
+    license: CC0-1.0
+    checked_at: "2026-10-09"
+    note: images are not included; attribution and the DOI 10.5281/zenodo.23182538 are requested, and the dataset must not be misrepresented
+
+  - id: design-museum
+    name: Design Museum (London)
+    url: https://designmuseum.org/
+    type: [search]
+    good_for: current displays and a past-exhibitions archive covering 30+ years, with installation imagery
+    axes: [beyond-web]
+    access: read
+    terms_url: https://designmuseum.org/
+    checked_at: "2026-10-09"
+    note: robots allows all; no terms page was reachable (/terms-and-conditions returned HTTP 500) - link and study only
+
+  - id: vitra-design-museum
+    name: Vitra Design Museum
+    url: https://www.design-museum.de/
+    type: [search]
+    good_for: design exhibitions with curatorial narratives and installation views (furniture, architecture, design history)
+    axes: [beyond-web]
+    access: read
+    terms_url: https://www.design-museum.de/
+    checked_at: "2026-10-09"
+    note: robots disallows only /typo3/ internals; no reuse terms found - link and study only
+
+  - id: met-museum
+    name: The Met Collection API
+    url: https://metmuseum.github.io/
+    hosts: [collectionapi.metmuseum.org, images.metmuseum.org]
+    type: [asset, search]
+    good_for: CC0 metadata and public-domain images for 470,000+ works; no key required
+    axes: [beyond-web]
+    access: read
+    terms_url: https://www.metmuseum.org/information/terms-and-conditions
+    license: CC0-1.0 (dataset and public-domain images)
+    checked_at: "2026-10-09"
+    note: limit requests to 80 per second; the v1 search endpoint is deprecated and was to be retired on 2026-10-01 - use /public/collection/v1.1/search; metmuseum.org HTML throttles tools (429 on 2026-10-09), so use the API and open pages in a browser
+
+  - id: art-institute-chicago
+    name: Art Institute of Chicago API
+    url: https://api.artic.edu/docs/
+    hosts: [api.artic.edu]
+    type: [asset, search]
+    good_for: collection, exhibitions, and IIIF images; nightly data dumps for analysis
+    axes: [beyond-web]
+    access: read
+    terms_url: https://www.artic.edu/terms
+    license: CC0-1.0 (data; the description field is CC-BY 4.0)
+    checked_at: "2026-10-09"
+    note: anonymous access is throttled to 60 requests per minute; if scraping, one request per second single-threaded; keep only images tagged public domain - prefer the data dumps
+
+  - id: rijksmuseum-data
+    name: Rijksmuseum Data Services
+    url: https://data.rijksmuseum.nl/
+    type: [asset, search]
+    good_for: 800,000 object records and 600,000 photographs under an open data policy; most digitised objects are public domain
+    axes: [beyond-web]
+    access: read
+    terms_url: https://data.rijksmuseum.nl/
+    checked_at: "2026-10-09"
+    note: the Search API needs no key and pages 100 results at a time; data.rijksmuseum.nl has no robots.txt (HTTP 404 on 2026-10-09, under lazuli's research User-Agent), and the museum's own site disallows collection search query URLs; check each object's rights before keeping an image
+
+  - id: smithsonian-open-access
+    name: Smithsonian Open Access (incl. Cooper Hewitt)
+    url: https://www.si.edu/openaccess
+    type: [asset, search]
+    good_for: the Smithsonian's open-access images and records, including the Cooper Hewitt design collection
+    axes: [beyond-web]
+    access: browser-link
+    reason: si.edu answered this tool with HTTP 403 on /openaccess and /collections/cooper-hewitt (and collection.cooperhewitt.org now redirects there) on 2026-10-09; read it in your browser.
+    terms_url: https://www.si.edu/openaccess
+    checked_at: "2026-10-09"
+    note: confirm the open-access terms and reuse scope in the browser before keeping any copy; the robots file itself allows the collection pages
+
+  - id: cover-art-archive
+    name: Cover Art Archive (Internet Archive + MusicBrainz)
+    url: https://coverartarchive.org/
+    hosts: [archive.org, musicbrainz.org]
+    type: [asset]
+    good_for: release cover art (front, back, other; 250/500/1200 px) reached by release MBID through a JSON API
+    axes: [beyond-web]
+    access: read
+    terms_url: https://musicbrainz.org/doc/Cover_Art_Archive/API
+    checked_at: "2026-10-09"
+    note: robots allows all and the API page states there are currently no rate limiting rules (a 503 exists for exceeded limits); all images are copyrighted by their owners - study copies only, no redistribution or training
+
+  - id: discogs
+    name: Discogs
+    url: https://www.discogs.com/
+    type: [search]
+    good_for: music packaging across decades and genres
+    axes: [beyond-web]
+    access: browser-link
+    reason: Discogs answered this tool with HTTP 403 for both the homepage and robots.txt on 2026-10-09; its developer API needs a user token and its own terms - open it in your browser.
+    terms_url: https://www.discogs.com/
+    checked_at: "2026-10-09"
+
+  - id: art-of-the-title
+    name: Art of the Title
+    url: https://www.artofthetitle.com/
+    type: [search]
+    good_for: title sequence design in film, TV, and games, with process interviews
+    axes: [beyond-web]
+    access: read
+    terms_url: https://www.artofthetitle.com/about/
+    checked_at: "2026-10-09"
+    note: no robots.txt (HTTP 404) and no terms page found; film stills stay the studios' copyright - study and link only
+
+  - id: watch-the-titles
+    name: Watch the Titles (Submarine Channel)
+    url: https://www.watchthetitles.com/
+    type: [search]
+    good_for: 200+ title sequences with behind-the-scenes content and designer documentaries
+    axes: [beyond-web]
+    access: read
+    terms_url: https://www.watchthetitles.com/about/
+    checked_at: "2026-10-09"
+    note: robots disallows only /wp/wp-admin/; no terms page found - study and link only

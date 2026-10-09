@@ -22,7 +22,7 @@ never decides the design: it hands `lapis` profiles and notes, which `lapis` rec
 
 ## The source registry
 
-`lazuli sources` (`--type font|color|asset|search`) lists `shared/sources/registry.yaml`: what each
+`lazuli sources` (`--type font|color|asset|search`, `--axis genre|expression|beyond-web`) lists `shared/sources/registry.yaml`: what each
 source is good for and how lazuli may reach it. `lazuli search --type source <words>` finds entries
 by name, use, or site; `--kind` narrows by type and `--access` by policy.
 
@@ -81,8 +81,9 @@ ship them or copy them into a page.
 
 A create run's `lapis-design next` names `references` after the brief. Here you choose sources yourself,
 at a human pace, through the registry and policies above: a `refused` or `browser-link` source stays so.
-First run `lazuli hints` and record the nearest field's offer with `--field <field> --task <task>`: starting
-points, not a canon. Find at least as many references beyond the whole hints list as were offered (section 0 below).
+First run `lazuli hints` and record an offer on three axes with `--genre <field|none> --expression <mode>
+--beyond-web <medium> --task <task>`: starting points, not a canon. On every axis find at least one reference
+beyond the whole hints list (section 0 below).
 A reference counts when you have looked at it: search for candidates beyond web design, capture them with
 `--task <task>`, open the capture images, read a page's saved HTML and CSS, then write
 `.lapis/references/<task>.md`. Read `references/exploration.md` for the steps and the record. If the user's
