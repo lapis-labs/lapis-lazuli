@@ -38,10 +38,12 @@ def read(root: Path, task: str) -> dict:
                          "critic.context, critic.independent, handled[].resolution_kind) that are no longer read; "
                          "rewrite it as version 1 without them (release/draft.schema.yaml): the critic's report, "
                          "built on `lapis-design critic packet`, now holds the walkthroughs and the requirement states")
+    from lapis_design.lint.cli import _message
+
     schema = yaml.safe_load((shared_dir() / "release/draft.schema.yaml").read_text(encoding="utf-8"))
     errors = list(Draft202012Validator(schema).iter_errors(doc))
     if errors:
-        raise ValueError("; ".join(f"{'/'.join(map(str, e.absolute_path))}: {e.message}" for e in errors[:3]))
+        raise ValueError("; ".join(f"{'/'.join(map(str, e.absolute_path))}: {_message(e)}" for e in errors[:3]))
     if doc["task"] != task:
         raise ValueError("draft task does not match the requested task")
     return doc
@@ -67,6 +69,10 @@ def _brief(problems: list[str], limit: int = 3) -> str:
     return "; ".join(problems[:limit]) + (f"; and {len(problems) - limit} more" if len(problems) > limit else "")
 
 
+def _names(root: Path, files: set[Path]) -> str:
+    return ", ".join(sorted(f.relative_to(root.resolve()).as_posix() for f in files)) or "nothing"
+
+
 def _judged(root: Path, name: str, file: Path, report: dict, page: dict, review: dict) -> str:
     """The sha256 of the packet a critic report judged, when that report counts for this page: it names the current
     packet, judges every row, change, and dispute in it, was built on this page's captures and lint report, and, for
@@ -77,9 +83,15 @@ def _judged(root: Path, name: str, file: Path, report: dict, page: dict, review:
     if verdict.problems:
         raise ValueError(f"{name}: {_brief(verdict.problems)}")
     args = verdict.packet["args"]
-    if ({local(root, p) for p in args["extracts"]} != {local(root, p) for p in review["extracts"]}
-            or local(root, args["lint"]) != local(root, review["lint"])):
-        raise ValueError(f"{name}: its packet was built from other captures or another lint report than this page's review")
+    extracts, lint = {local(root, p) for p in args["extracts"]}, local(root, args["lint"])
+    wanted, wanted_lint = {local(root, p) for p in review["extracts"]}, local(root, review["lint"])
+    if extracts != wanted or lint != wanted_lint:
+        raise ValueError(f"{name}: its packet was built from {_names(root, extracts)} and lint {_names(root, {lint})}, but this "
+                         f"page's review names {_names(root, wanted)} and lint {_names(root, {wanted_lint})}. A critic report "
+                         "serves one page (one locale, one URL): build its packet with `lapis-design critic packet --task "
+                         f"<task> --extract {' --extract '.join(sorted(_names(root, wanted).split(', ')))} --lint "
+                         f"{_names(root, {wanted_lint})}`, have a separate critic judge it, and name that report in "
+                         "this page's `review.critic.report`")
     if page["direction"] == "new":
         walked = {w.get("viewport") for w in report.get("walkthroughs") or [] if isinstance(w, dict)}
         if missing := sorted(set(page["widths"]) - walked):
@@ -147,7 +159,8 @@ def check(root: Path, task: str, *, asked: list[str] | None = None) -> tuple[lis
                 file = local(root, name)
                 report = _load(file, "report")
                 if report["tool"]["name"] != tool or local(root, report["target"].get("extract", "")) not in extracts:
-                    raise ValueError(f"{name} did not review this page's capture")
+                    raise ValueError(f"{name} is a {report['tool']['name']} report of {report['target'].get('extract') or 'no capture'}, "
+                                     f"but this page's review needs a {tool} report of one of {_names(root, set(extracts))}")
                 if tool == "slop_lint" and not {"source", "render"}.issubset(report.get("scope", {}).get("layers", [])):
                     raise ValueError("draft lint needs the shown source and render layers")
                 if tool == "slop_lint":
@@ -162,12 +175,26 @@ def check(root: Path, task: str, *, asked: list[str] | None = None) -> tuple[lis
                 if tool == "critic":
                     packet_sha = _judged(root, name, file, report, page, review)
                 handled = {h["finding"]: h for h in review["handled"] if h["report"] == name}
+                missing = [(i, f) for i, f in enumerate(report["findings"])
+                           if f["status"] in ("open",) and i not in handled]
+                if missing:
+                    shown = "; ".join(f"{i} ({f['rule_id']})" for i, f in missing[:6]) + (
+                        f"; and {len(missing) - 6} more" if len(missing) > 6 else "")
+                    raise ValueError(f"{name} has {len(missing)} open finding{'s' if len(missing) != 1 else ''} without a "
+                                     f"disposition: {shown}. Add to `review.handled` of this page in {path(Path('.'), task)}, "
+                                     f"one entry per finding: {{report: {name}, finding: <number>, disposition: "
+                                     "fixed|justified-keep|unresolved, reason: <for the owner, 8+ characters>, refs: "
+                                     "[<a file that shows it>]}")
                 for i, finding in enumerate(report["findings"]):
                     if finding["status"] == "skipped":
                         dispositions.append({"rule_id": finding["rule_id"], "disposition": "not-checked", "reason": finding["observed"]})
                         continue
-                    if i not in handled:
-                        raise ValueError(f"{name} finding {i} ({finding['rule_id']}) has no fixed/justified-keep/unresolved disposition")
+                    if finding["status"] != "open" and i not in handled:      # a finding the check itself closed needs no answer
+                        dispositions.append({"rule_id": finding["rule_id"], "approval_blocking": False, "status": finding["status"],
+                                             "report": name, "finding": i,
+                                             "disposition": "fixed" if finding["status"] == "fixed" else "justified-keep",
+                                             "reason": finding["observed"], "refs": []})
+                        continue
                     # the critic's own report decides which findings are core, whatever the maker answered; they go to
                     # the owner as decisions (the owner block lists them) instead of blocking the question
                     core = tool == "critic" and is_core(finding)

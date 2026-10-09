@@ -72,6 +72,17 @@ def _validator(kind: str) -> Draft202012Validator:
     return Draft202012Validator(schema, format_checker=FormatChecker())
 
 
+def _message(error: Any) -> str:
+    """The schema's message; for a field the object does not take, also the fields it does take, so the fix is to remove
+    the named ones or move their content under one of those."""
+    allowed = error.schema.get("properties") if error.validator == "additionalProperties" else None
+    if not isinstance(allowed, dict) or not allowed:
+        return error.message
+    names = sorted(allowed)
+    shown = ", ".join(names[:20]) + (f", and {len(names) - 20} more" if len(names) > 20 else "")
+    return f"{error.message}. Remove them (an object here holds only: {shown})"
+
+
 def problems(doc: Any, kind: str) -> list[str]:
     """Schema problems of a document, as `pointer: message` lines."""
     if kind == "plan":
@@ -82,7 +93,7 @@ def problems(doc: Any, kind: str) -> list[str]:
             return [f"{path}: plan mapping key must be a string" for path in keys]
     try:
         errors = sorted(_validator(kind).iter_errors(doc), key=lambda e: list(map(str, e.absolute_path)))
-        return [f"{'/'.join(map(str, e.absolute_path)) or '(root)'}: {e.message}" for e in errors]
+        return [f"{'/'.join(map(str, e.absolute_path)) or '(root)'}: {_message(e)}" for e in errors]
     except RecursionError:
         if kind != "plan":
             raise

@@ -40,9 +40,10 @@ version 1, which keeps only what the CLI and the critic can check.
    Main findings/summary concern the shown page. `specimen_findings` holds other candidate sources,
    `deferred_findings` retains non-requirement token/rights enforcement for release, and
    `scope.draft.aliases` shows requested/rendered font names without treating an alias as a new face.
-   Review the page's findings against its actual captures. For each non-skipped
-   finding write a `handled` entry with its report path, zero-based `finding` index, `disposition`
-   (`fixed`, `justified-keep`, or `unresolved`), reason, and capture/box/source `refs`. The reason is for
+   Review the page's findings against its actual captures. For each `open` finding (a `fixed` or `waived` one the check
+   itself closed needs no entry; a skipped one is not checked) write a `handled` entry with its report path, zero-based
+   `finding` index, `disposition` (`fixed`, `justified-keep`, or `unresolved`), reason, and capture/box/source `refs`.
+   `draft check` lists every open finding still without one in a single message, with the entry to add. The reason is for
    the owner: the critic never sees it. A finding you believe is wrong goes in
    `.lapis/disputes/<task>.yaml` (`../shared/review/disputes.schema.yaml`) instead of into the disposition or
    the page's markup; the critic re-judges it on the captures, the owner sees both, and a dispute does not

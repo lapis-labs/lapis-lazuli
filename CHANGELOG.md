@@ -161,6 +161,11 @@ between minor versions; render extraction is v1 and the other contract formats a
   direction answer: the choice is the first word after a colon that ends the line or goes on with a dash or a quote.
 - A revision counts as the next slice round when `next` first sees the owner's reply, even when the draft review is
   stale then (the round counter ran after the review check and stayed 1).
+- `draft check` asks for less and says exactly what to change: only `open` findings need a `review.handled` entry (a
+  `fixed` or `waived` one the check closed is listed from its status), all open findings still without one come in one
+  message with the entry to add, a critic report built for another page or locale says which captures and lint report its
+  packet has, which this page's review names, and the `critic packet` command for it, and a schema "additional properties"
+  problem names the fields the object does hold.
 - A `<br>` between two text nodes of one run is stored as a space, so `감각에<br>근거를` is no longer one word in every check
   that reads the text.
 - `install.sh` passes `shellcheck` 0.9 and later: `cleanup`, which only the `EXIT` trap calls, carries

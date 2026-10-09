@@ -136,6 +136,14 @@ def test_a_critic_is_no_longer_attested_by_the_maker(project, path, value):
     assert errors and "Additional properties" in errors[0] and path[1] in errors[0]
 
 
+def test_a_critic_report_with_fields_of_its_own_is_told_which_to_remove_and_what_the_root_holds(project):
+    reviewed(project)
+    update(project, CRITIC.removeprefix(".lapis/"), lambda d: d.update(evidence_limits=["x"], notes="y"))
+    errors, _ = draft.check(project, TASK)
+    assert errors and "('evidence_limits', 'notes' were unexpected)" in errors[0]
+    assert "Remove them (an object here holds only:" in errors[0] and "findings" in errors[0] and "walkthroughs" in errors[0]
+
+
 def test_resolution_kind_is_no_longer_a_disposition_field(project):
     record = reviewed(project)
     update(project, CRITIC.removeprefix(".lapis/"), lambda d: d["findings"].append(finding("review.world-materials")))
@@ -195,7 +203,8 @@ def test_a_critic_packet_built_from_other_captures_than_the_page_reviewed_does_n
     refresh_critic(project, task=TASK, extracts=[EXTRACT], lint=".lapis/lint/other.narrow.json", name="shown-page",
                    extra={"walkthroughs": walks(390, 1440)})
     errors, _ = draft.check(project, TASK)
-    assert errors and "another lint report than this page's review" in errors[0]
+    assert errors and "serves one page" in errors[0] and "lapis-design critic packet --task" in errors[0]
+    assert f"--extract {EXTRACT}" in errors[0] and "--lint .lapis/lint/shown-page.narrow.json" in errors[0]
 
 
 def test_a_critic_report_must_judge_every_requirement_row_of_its_packet(project):
@@ -240,6 +249,24 @@ def test_a_finding_must_be_disposed_and_unresolved_is_not_a_fake_pass(project):
         "reason": "The boxed comparison still dominates", "refs": ["shown-390.png"]}]
     save(project, f"drafts/{TASK}.yaml", record)
     assert next_step.evaluate(project, TASK)["state"] == "waiting-for-user"
+
+
+def test_the_missing_dispositions_come_in_one_message_with_the_entry_to_add_and_a_closed_finding_needs_none(project):
+    record = reviewed(project)
+    update(project, "lint/shown-page.narrow.json", lambda d: d["findings"].extend(
+        [finding("layout.card-everything"), finding("layout.eyebrow", status="fixed"), finding("copy.filler"),
+         finding("type.icon-tile", status="waived")]))
+    critic(project)
+    save(project, f"drafts/{TASK}.yaml", record)
+    errors, _ = draft.check(project, TASK)
+    assert len(errors) == 1 and "2 open findings without a disposition: 0 (layout.card-everything); 2 (copy.filler)" in errors[0]
+    assert "review.handled" in errors[0] and "disposition: fixed|justified-keep|unresolved" in errors[0]
+    record["pages"][0]["review"]["handled"] = [disposed(LINT, "unresolved", 0), disposed(LINT, "fixed", 2)]
+    save(project, f"drafts/{TASK}.yaml", record)
+    errors, summaries = draft.check(project, TASK)
+    assert errors == []
+    by_rule = {f["rule_id"]: f["disposition"] for f in summaries[0]["findings"]}
+    assert by_rule["layout.eyebrow"] == "fixed" and by_rule["type.icon-tile"] == "justified-keep"
 
 
 def test_a_source_edit_invalidates_the_review_and_attended_gate_records_the_warning(project):
