@@ -79,5 +79,5 @@ Keep it bounded: a few reads, chosen by the open areas, and stop when they are c
 | A fact about the product, in a file | Read it |
 | A fact about the field, public | Look it up; ask only what it leaves open |
 | A decision or belief of the owner | Ask |
-| A preference between looks | Do not ask; `lapis` compares candidates on the page's content |
+| A preference between looks | Do not ask in the brief; the direction conversation in `lapis` asks what a style does, how objects are represented, and what signature elements carry |
 | A fact only the owner has (price, name, customers, region) and nobody can answer | Assume a labeled placeholder with its basis |

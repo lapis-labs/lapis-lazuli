@@ -14,6 +14,7 @@ all. A reference-only profile keeps text only as keyed signatures, without alt t
 from __future__ import annotations
 
 import contextlib
+import io
 import ipaddress
 import shutil
 import sqlite3
@@ -38,6 +39,9 @@ from lazuli.ref.common import (MIN_INTERVAL_S, InputError, Profile, Refused, cac
 
 # (width, height) as in the render capture matrix; references need no dark, reduced-motion, or 320 px pass
 VIEWPORTS = ((390, 844), (768, 1024), (1440, 900))
+# `--motion`: a scripted scroll at the widest viewport, recorded by the browser, and four frames of it side by side
+MOTION_SECONDS, MOTION_STEP_MS, STRIP_FRAMES = 6, 100, 4
+MOTION_NAME, STRIP_NAME = "motion.webm", "strip.png"
 
 
 def _host_resolver_rules(registry: list[dict]) -> tuple[str, set[str]]:
@@ -270,15 +274,65 @@ class Capture:
     staging: Path
     shots: Path
     source: study.Source | None = None
+    motion: bool = False                # `motion.webm` and `strip.png` are in the staging folder
 
     def discard(self) -> None:
         """Remove what is left of the staging folder (nothing, once it has been put in place)."""
         shutil.rmtree(self.staging, ignore_errors=True)
 
 
-def capture_site(url: str, rights: str, slug: str, *, with_source: bool = False) -> Capture:
+def _record_motion(named: _NamedBrowser, url: str, staging: Path) -> None:
+    """Record a 6-second scripted scroll at 1440 px as `motion.webm` in `staging`, with a strip of four frames of
+    it as `strip.png`. The page loads through the same guarded routes as the screenshots; nothing is typed or clicked."""
+    from PIL import Image
+
+    width, height = VIEWPORTS[-1]
+    video_dir = staging / ".video"
+    steps = MOTION_SECONDS * 1000 // MOTION_STEP_MS
+    marks = {steps * n // (STRIP_FRAMES - 1) for n in range(STRIP_FRAMES)}
+    frames: list[bytes] = []
+    context = named.new_context(viewport={"width": width, "height": height}, device_scale_factor=1,
+                                record_video_dir=str(video_dir), record_video_size={"width": width, "height": height})
+    try:
+        page = context.new_page()
+        page.goto(url, wait_until="load")
+        named._check_document(page)
+        page.wait_for_timeout(800)
+        total = page.evaluate("Math.max(document.body.scrollHeight, document.documentElement.scrollHeight)")
+        travel = max(int(total) - height, 0)
+        for step in range(steps + 1):
+            progress = step / steps
+            eased = progress * progress * (3 - 2 * progress)
+            page.evaluate("y => window.scrollTo(0, y)", round(travel * eased))
+            if step in marks:
+                frames.append(page.screenshot(type="png"))
+            page.wait_for_timeout(MOTION_STEP_MS)
+        video = page.video
+    finally:
+        context.close()                                  # the recording is finished only now
+    try:
+        shutil.move(video.path(), staging / MOTION_NAME)
+    finally:
+        shutil.rmtree(video_dir, ignore_errors=True)
+    pictures = []
+    for frame in frames:
+        with Image.open(io.BytesIO(frame)) as image:
+            picture = image.convert("RGB")
+        picture.thumbnail((360, 225))
+        pictures.append(picture)
+    strip = Image.new("RGB", (sum(p.width for p in pictures) + 8 * (len(pictures) - 1), max(p.height for p in pictures)),
+                      (255, 255, 255))
+    x = 0
+    for picture in pictures:
+        strip.paste(picture, (x, 0))
+        x += picture.width + 8
+    strip.save(staging / STRIP_NAME)
+
+
+def capture_site(url: str, rights: str, slug: str, *, with_source: bool = False, motion: bool = False) -> Capture:
     """Capture the named page at every width into a staging folder and return it with the profile, and with
-    `with_source` the page's own HTML and stylesheets (`study.read_source`). Nothing reaches refs/<slug>/
+    `with_source` the page's own HTML and stylesheets (`study.read_source`), and with `motion` a recorded scroll
+    (`motion.webm`) and its four-frame strip (`strip.png`). Nothing reaches refs/<slug>/
     here: the caller publishes the folder together with the profile and then calls `discard()`. A capture
     that stops as blocked or fails leaves no staging folder."""
     if not is_url(url):
@@ -324,6 +378,21 @@ def capture_site(url: str, rights: str, slug: str, *, with_source: bool = False)
                     else:
                         vp["screenshot"] = str(shots / name)    # where the caller publishes it
                     viewports.append(vp)
+                if motion:
+                    if (wait := last + interval - net._clock()) > 0:
+                        net._sleep(wait)
+                    try:
+                        _record_motion(named, final_url, staging)
+                    except Exception as exc:
+                        if named.blocked is not None:
+                            raise named.blocked from exc
+                        raise
+                    finally:
+                        recorder.record(final_url)
+                    if named.blocked is not None:
+                        raise named.blocked
+                    if named.load_error is not None:
+                        raise named.load_error
             if named.blocked is not None:                       # a navigation seen while the browser closed
                 raise named.blocked
             if with_source:                                     # the page's HTML and stylesheets, paced like the rest
@@ -354,4 +423,4 @@ def capture_site(url: str, rights: str, slug: str, *, with_source: bool = False)
     if named is not None and named.unsent:
         profile.notes.append(f"at least {len(named.unsent)} page requests to refused or browser-link "
                              "hosts were blocked")
-    return Capture(profile, staging, shots, source)
+    return Capture(profile, staging, shots, source, motion)

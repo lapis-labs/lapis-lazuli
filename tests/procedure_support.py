@@ -30,6 +30,25 @@ BRIEF_RECORD = """# Brief: kiln shop landing
 - [known] Q1 Who buys? Craft lovers in their 30s and 40s. Basis: PRODUCT.md.
 - [assumed] Q2 What is the one job? Reserve a piece from this firing. Basis: nobody to ask; the request names no other action.
 """
+DEFAULTS_ACCEPTED = """
+## Direction 1
+
+- Defaults accepted (direction 1): "go with your defaults"
+"""
+PICKED = """
+## Direction 2
+
+- [declared] Pick: C1 — "the first one"
+"""
+DIRECTION_ANSWERS = DEFAULTS_ACCEPTED + PICKED     # both turns of the direction conversation, as an owner took them
+DIRECTION_PROPOSAL = {
+    "version": 0, "task": "kiln-shop-landing", "styles": [],
+    "objects": [{"id": "O1", "object": "the monthly firing log", "kind": "record-document", "default": "all",
+                 "options": [{"id": "a", "text": "the log as ruled rows, one per piece", "family": "ledger",
+                              "does": "scan which pieces are still free", "source": "the firing log"},
+                             {"id": "b", "text": "this firing laid over last month's", "family": "fader-overlay",
+                              "does": "move a fader to see what changed", "source": "own"}]}],
+    "signature": []}
 
 
 def save(root: Path, name: str, document) -> Path:
@@ -53,6 +72,79 @@ def touch(root: Path, name: str, seconds: int) -> None:
 def report(tool: str, **target) -> dict:
     return {"version": 0, "tool": {"name": tool, "version": "0.1.0"}, "target": {"task": TASK, **target},
             "findings": [], **({"scope": {"layers": ["plan", "source", "render"]}} if tool == "slop_lint" else {})}
+
+
+_DRAWN: dict[tuple[str, str], Path] = {}      # the roughs of a conversation, kept once per process and copied into each project
+
+
+def _roughs(root: Path, task: str) -> list[Path]:
+    """The folders and files `diverge` leaves in a project: the agent's roughs, the CLI's records, the narrow renders."""
+    return [root / ".lapis/diverge" / task, root / ".lapis/state/diverge" / task,
+            *sorted((root / ".lapis/renders").glob(f"{task}-C*.narrow*"))]
+
+
+def _drawn(root: Path, task: str) -> None:
+    """The `diverge` step of a finished conversation: drawn, made, and sealed with the real commands the first time a process
+    asks, copied from that run afterwards (every project of the suite would draw the same roughs)."""
+    import tempfile
+
+    from diverge_support import complete
+
+    record_file = root / ".lapis/references" / f"{task}.md"          # a declined run has none: its roughs draw on no direction
+    key = (task, record_file.read_text(encoding="utf-8") if record_file.is_file() else "")
+    if key not in _DRAWN:
+        complete(root, task)
+        keep = Path(tempfile.mkdtemp(prefix="diverge-fixture-"))
+        for source in _roughs(root, task):
+            target = keep / source.relative_to(root)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            (shutil.copytree if source.is_dir() else shutil.copy2)(source, target)
+        _DRAWN[key] = keep
+        return
+    for source in _roughs(_DRAWN[key], task):
+        target = root / source.relative_to(_DRAWN[key])
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if source.is_dir():
+            shutil.copytree(source, target, copy_function=shutil.copy2, dirs_exist_ok=True)
+        else:
+            shutil.copy2(source, target)
+
+
+def write_direction(root: Path, task: str = TASK) -> None:
+    """The direction conversation of a run that went through it, as old as the brief record: the proposal, the owner's
+    `Defaults accepted` (first turn) in the brief record, the `diverge` roughs drawn, made, and sealed, and the owner's
+    pick of C1 (second turn). Run again, or without a brief record, it adds nothing the second time."""
+    save(root, f"direction/{task}.yaml", {**DIRECTION_PROPOSAL, "task": task})
+    answers = root / ".lapis" / "answers" / f"{task}.md"
+    if not answers.is_file():
+        return
+    stamp = answers.stat().st_mtime_ns
+
+    def append(text: str) -> None:
+        answers.write_text(answers.read_text(encoding="utf-8") + text, encoding="utf-8")
+        os.utime(answers, ns=(stamp, stamp))
+
+    if "## Direction 1" not in answers.read_text(encoding="utf-8"):
+        append(DEFAULTS_ACCEPTED)
+    if not (root / ".lapis" / "state" / "diverge" / task / "seal.json").is_file():
+        _drawn(root, task)
+    if "## Direction 2" not in answers.read_text(encoding="utf-8"):
+        append(PICKED)
+
+
+def clear_direction(root: Path, task: str = TASK) -> None:
+    """A project that has not been through the direction conversation: no proposal, no rough, and no `## Direction` section
+    in the brief record (kept as old as it was). For the tests of the gap list, which state the conversation themselves."""
+    (root / ".lapis" / "direction" / f"{task}.yaml").unlink(missing_ok=True)
+    for name in (".lapis/diverge", ".lapis/state/diverge"):
+        shutil.rmtree(root / name / task, ignore_errors=True)
+    for file in (root / ".lapis/renders").glob(f"{task}-C*.narrow*"):
+        shutil.rmtree(file) if file.is_dir() else file.unlink()
+    answers = root / ".lapis" / "answers" / f"{task}.md"
+    if answers.is_file():
+        stamp = answers.stat().st_mtime_ns
+        answers.write_text(answers.read_text(encoding="utf-8").replace(DIRECTION_ANSWERS, ""), encoding="utf-8")
+        os.utime(answers, ns=(stamp, stamp))
 
 
 def load_skills(root: Path, task: str = TASK) -> None:
@@ -206,11 +298,14 @@ def record(root: Path, folder: str, text: str, at: int, task: str = TASK) -> Pat
     return path
 
 
-def ask(root: Path, text: str, at: int, task: str = TASK) -> Path:
-    """The questions the run wrote for its user. Once a plan exists they are approval questions, so they carry the
-    owner block, as the run pastes it."""
+def ask(root: Path, text: str, at: int, task: str = TASK, kind: str | None = None) -> Path:
+    """The questions the run wrote for its user, marked with their kind: `brief` before a plan exists, `approval` after
+    (the default), or the kind given. Approval questions carry the owner block, as the run pastes it."""
+    planned = (root / ".lapis" / "plans" / f"{task}.yaml").is_file()
+    kind = kind or ("approval" if planned else "brief")
+    text = f"lapis-questions: {kind}\n{text}" if text else text
     path = record(root, "questions", text, at, task)
-    if (root / ".lapis" / "plans" / f"{task}.yaml").is_file():
+    if planned and kind == "approval":
         from lapis_design import integrity, owner
 
         integrity.observe_task(root, task, "test")
@@ -221,7 +316,15 @@ def ask(root: Path, text: str, at: int, task: str = TASK) -> Path:
 
 def reply(root: Path, text: str, at: int, task: str = TASK) -> Path:
     """The answers the run recorded: the brief record with the replies added under their own heading."""
-    return record(root, "answers", f"{BRIEF_RECORD}\n## Replies\n\n{text}", at, task)
+    return record(root, "answers", f"{BRIEF_RECORD}{DIRECTION_ANSWERS}\n## Replies\n\n{text}", at, task)
+
+
+def gaps_seen(root: Path, task: str = TASK) -> str:
+    """The owner's acknowledgment of the gaps in the owner block the questions file carries, as the run records it."""
+    from lapis_design import waiting
+
+    sha8 = waiting.carried((root / ".lapis" / "questions" / f"{task}.md").read_text(encoding="utf-8"))
+    return f"- Gaps seen (lapis-owner-block {sha8}): \"seen, all of it\"\n"
 
 
 def capture_file(root: Path, name: str, seed: int, task: str = TASK) -> str:
@@ -236,21 +339,39 @@ def capture_file(root: Path, name: str, seed: int, task: str = TASK) -> str:
 FACTS = "body 17px/1.55 in a serif, one 62ch column, ink #1a1a1a on #f4f0e8, rules 1px"
 
 
+# axis, direction, and kind of the six references: every axis twice, and every direction holds two axes
+REFERENCE_SHAPE = (("genre", "A", "web-ui"), ("genre", "C", "web-ui"), ("expression", "A", "print"),
+                   ("expression", "B", "signage"), ("beyond-web", "B", "physical-object"), ("beyond-web", "C", "archive"))
+DIRECTIONS = {"A": "the stone as a specimen sheet", "B": "the procedure as a transit map", "C": "the record as a ledger"}
+
+
 def reference_entries(root: Path, task: str = TASK) -> list[dict]:
-    """Six references seen as images in four kinds, two of them outside web-ui and two of them web-ui with facts."""
-    kinds = ("web-ui", "web-ui", "print", "signage", "physical-object", "archive")
+    """Six references seen as images on three axes in five kinds, four of them outside web-ui and two of them web-ui
+    with facts, in three directions; the first expression reference was found on a registry curation page."""
     entries = []
-    for index, kind in enumerate(kinds, start=1):
+    for index, (axis, direction, kind) in enumerate(REFERENCE_SHAPE, start=1):
         entries.append({"id": f"ref-{index}", "url": f"https://museum.example/{kind}/{index}", "maker": f"Maker {index}",
-                        "kind": kind, "decision": "the order of the page",
+                        "kind": kind, "axis": axis, "direction": direction, "decision": "the order of the page",
                         "capture": capture_file(root, f"ref-{index}.png", index, task),
                         "relation": "take the ruled rhythm and the label's job; leave the type and the marks",
-                        **({"source_facts": FACTS} if kind == "web-ui" else {})})
+                        **({"source_facts": FACTS} if kind == "web-ui" else {}),
+                        **({"found_at": "https://www.hoverstat.es/"} if index == 3 else {})})
     return entries
 
 
-def references_text(entries: list[dict], captures: str | None = "study-only") -> str:
-    body = yaml.safe_dump({**({"captures": captures} if captures else {}), "references": entries}, sort_keys=False)
+def spare_entries(root: Path, task: str = TASK) -> list[dict]:
+    """Two more images, one expression and one beyond-web, for a test that turns others into text-only pages."""
+    return [{"id": f"ref-{index}", "url": f"https://museum.example/spare/{index}", "maker": f"Maker {index}",
+             "kind": "print", "axis": axis, "direction": direction, "decision": "the order of the page",
+             "capture": capture_file(root, f"ref-{index}.png", index, task),
+             "relation": "take the ruled rhythm and the label's job; leave the type and the marks"}
+            for index, axis, direction in ((7, "expression", "B"), (8, "beyond-web", "B"))]
+
+
+def references_text(entries: list[dict], captures: str | None = "study-only", directions: dict | None = None) -> str:
+    body = yaml.safe_dump({**({"captures": captures} if captures else {}),
+                           "directions": DIRECTIONS if directions is None else directions, "references": entries},
+                          sort_keys=False)
     return f"# References: kiln shop landing\n\nThe captures are for study only.\n\n```yaml\n{body}```\n"
 
 
@@ -260,4 +381,5 @@ def write_references(root: Path, at: int = 50, task: str = TASK) -> list[dict]:
     entries = reference_entries(root, task)
     hints.draw(root, task, "none", "2026-10-05")                  # these tests exercise evidence, not genre selection
     record(root, "references", references_text(entries), at, task)
+    write_direction(root, task)                                   # the conversation that follows the references
     return entries

@@ -40,8 +40,8 @@ from typing import Any
 
 import yaml
 
-from lapis_design import (attempts, brief, critic_packet, draft, gate, owner, preview, references, release_check,
-                          requirements, shared_dir, slice_step, taste, waiting)
+from lapis_design import (asks, attempts, brief, critic_packet, direction, diverge, draft, gaps, gate, owner,
+                          preview, references, release_check, requirements, shared_dir, slice_step, taste, waiting)
 from lapis_design.lint.cli import problems
 from lapis_design.plan_check import PlanOverLimit, read_plan, yaml_reason
 from lapis_design.summary import NOT_JUDGED
@@ -259,16 +259,18 @@ def _evaluate(root: Path, task: str, page: str | None = None, integrity_error: s
     step = result["step"]
     plan_exists = (root / ".lapis" / "plans" / f"{task}.yaml").exists()
     found = waiting.pending(root, task, "approval" if plan_exists else "plan", gate.load(root, task).get("waits"))
+    asks.observe(root, task, step["id"] if step else "done", found)
     if found is None:
-        return result
-    approval = found["phase"] == "approval"
-    shown = draft.links(root, task)
+        return _marked(root, task, result)
+    kind = found["kind"]
+    approval = kind == "approval"
+    shown = draft.links(root, task) if approval else []
     if approval and not shown and step is not None and slice_step.owed(root, task, _plan_or_none(root, task)):
         if step["id"] == slice_step.STEP:                    # approval questions with no rendered page ask for the slice
             return result
         asked = slice_step.step(task)
         return {**result, "state": "needs-step", "step": asked, "reason": asked["why"]}
-    if shown or draft.path(root, task).is_file():
+    if approval and (shown or draft.path(root, task).is_file()):
         errors, summaries = draft.check(root, task, asked=shown)
         if errors:
             review = _step(draft.STEP, "Before showing the draft, review the exact page: " + _brief(errors)
@@ -278,9 +280,11 @@ def _evaluate(root: Path, task: str, page: str | None = None, integrity_error: s
         result["draft_review"] = summaries
     if step is None:
         return result
-    if (found["phase"] == "plan" or step["id"] == brief.STEP) and (over := brief.questions_problem(root, task)):
+    if kind == "brief" and (over := brief.questions_problem(root, task)):
         cut = _step(brief.STEP, brief.over_why(task, over))
         return {**result, "step": cut, "reason": cut["why"]}
+    if unfit := _unfit(root, task, kind, step["id"]):
+        return _prefixed(result, f"The questions in {found['questions']} (kind {kind}) do not wait: {unfit}.")
     if approval:
         block, sha8 = owner.write(root, task, {"integrity_error": integrity_error})
         result["owner_block"] = block
@@ -295,10 +299,42 @@ def _evaluate(root: Path, task: str, page: str | None = None, integrity_error: s
         if dead := preview.unreachable(shown):
             serve = _step(draft.STEP, preview.why(task, dead), preview.command(task, dead))
             return {**result, "state": "needs-step", "step": serve, "reason": serve["why"]}
+        if (cut := slice_step.tall(root, task, shown)) and slice_step.owed(root, task, _plan_or_none(root, task)):
+            return {**result, "state": "needs-step", "step": slice_step.step(task, cut), "reason": cut}
     wait = _step(waiting.STEP, waiting.why(task, found, step["id"]) +
                  (" Include the recorded draft review summary and every unresolved finding in that message."
                   if result.get("draft_review") else ""))
     return {**result, "state": waiting.STEP, "step": wait, "then": step, "waiting": found, "reason": wait["why"]}
+
+
+def _prefixed(result: dict, text: str) -> dict:
+    """`result` with `text` ahead of what its step says: the step is the one `next` would name anyway."""
+    step = {**result["step"], "why": f"{text} {result['step']['why']}"}
+    return {**result, "step": step, "reason": step["why"]}
+
+
+def _marked(root: Path, task: str, result: dict) -> dict:
+    """`result`, with the reminder to mark the kind of the questions file when it holds unanswered questions of no
+    kind: such a file does not wait."""
+    found = waiting.unmarked(root, task)
+    if found is None or result["step"] is None:
+        return result
+    named = waiting.declared(_read_text(root / found))
+    now = f"names `{named}`, which is no kind" if named else "declares no kind"
+    return _prefixed(result, f"The questions in {found} {now}, so they do not wait. Mark the questions file's kind: "
+                     f"its first line is `lapis-questions: {'|'.join(waiting.KINDS)}`, and the kind says what the file "
+                     "holds (the lapis skill's \"Questions and kinds\" section).")
+
+
+def _unfit(root: Path, task: str, kind: str, then: str) -> str | None:
+    """Why the questions of `kind` are not in the shape that waits (the step stays `then`, the one `next` would name), or
+    None when they are."""
+    if kind == "ask":
+        return (asks.shape_problem(_read_text(waiting.questions_path(root, task)))
+                or asks.checkpoint_problem(root, task, then))
+    if kind == "direction":
+        return direction.questions_problem(root, task)
+    return None
 
 
 def _read_text(path: Path) -> str:
@@ -332,6 +368,12 @@ def _steps(root: Path, task: str, page: str | None, integrity_error: str | None 
             return state(_requirements_step(task, reason), False)
         if found := _references_owed(root, task):
             return state(_step(references.STEP, references.why(task, found, planned=False)), False)
+        if owed := direction.owed(root, task, 1):
+            return state(direction.step(task, owed), False)
+        if owed := diverge.owed(root, task):
+            return state(diverge.step(root, task, owed), False)
+        if owed := direction.owed(root, task, 2):
+            return state(direction.step(task, owed), False)
         answers = waiting.answers_path(Path('.'), task).as_posix()
         if declined := references.declined(root, task) if references.problems(root, task) else None:
             cited = (f"the brief record {answers} in its `context.other`: the brief, and the decisions with the candidates "
@@ -363,6 +405,12 @@ def _steps(root: Path, task: str, page: str | None, integrity_error: str | None 
             return state(_requirements_step(task, reason), False)
         if found := _references_owed(root, task, plan):
             return state(_step(references.STEP, references.why(task, found, planned=True)), False)
+        if owed := direction.owed(root, task, 1):
+            return state(direction.step(task, owed), False)
+        if owed := diverge.owed(root, task):
+            return state(diverge.step(root, task, owed), False)
+        if owed := direction.owed(root, task, 2):
+            return state(direction.step(task, owed), False)
 
     interactive = _interactive(plan, page_file, _json(paths["extract"]))
     try:
@@ -450,6 +498,8 @@ def _steps(root: Path, task: str, page: str | None, integrity_error: str | None 
                            shared / "plan" / "schema.yaml"), interactive)
     if why := slice_step.check(root, task, plan):
         return state(slice_step.step(task, why), interactive)
+    if why := gaps.approval_problem(root, task, plan):
+        return state(_step("approval-gaps", why), interactive)
     if "fonts-lock" in from_plan_steps or "fonts-lock" in need:
         commands = _lock_commands(plan, task)
         why = GENERIC_LOCK.format(task=task) + " " + (

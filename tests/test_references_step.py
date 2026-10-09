@@ -13,8 +13,9 @@ import pytest
 
 from lapis_design import attempts, gate, hints, next_step, order, references
 from lapis_design.cli import main as cli_main
-from procedure_support import (BRIEF_RECORD, FACTS, TASK, finish, load_skills, make_project, record, reference_entries,
-                               references_text, refresh_critic, save, seal_requirements, update, write_references)
+from procedure_support import (BRIEF_RECORD, DIRECTION_ANSWERS, FACTS, TASK, finish, load_skills, make_project, record,
+                               reference_entries, references_text, refresh_critic, save, seal_requirements, spare_entries,
+                               update, write_direction, write_references)
 
 
 @pytest.fixture
@@ -26,6 +27,7 @@ def bare(tmp_path, monkeypatch) -> Path:
     monkeypatch.setenv("LAZULI_DB", "")
     record(tmp_path, "answers", BRIEF_RECORD, 50)
     seal_requirements(tmp_path)
+    write_direction(tmp_path)                       # the conversation after the references, done in advance
     load_skills(tmp_path)
     return tmp_path
 
@@ -42,6 +44,7 @@ def step_of(root: Path) -> str:
 def write(root: Path, entries: list[dict], **kwargs) -> None:
     hints.draw(root, TASK, "none", "2026-10-05")
     record(root, "references", references_text(entries, **kwargs), 100)
+    write_direction(root)                                  # the conversation after the references is done
 
 
 def problems(root: Path) -> str:
@@ -203,13 +206,13 @@ def test_a_text_page_costs_a_reference_but_never_counts_toward_the_kinds(bare):
 
 
 def test_two_text_pages_among_enough_images_are_allowed(bare):
-    entries = text_capture(bare, text_capture(bare, reference_entries(bare), 3, "a.md"), 4, "b.md")
+    entries = text_capture(bare, text_capture(bare, [*reference_entries(bare), *spare_entries(bare)], 3, "a.md"), 4, "b.md")
     write(bare, entries)
     assert references.problems(bare, TASK) == [] and step_of(bare) == "plan"
 
 
 def test_an_encyclopedia_counts_as_text_even_when_it_is_photographed_but_commons_files_do_not(bare):
-    entries = wikipedia(wikipedia(reference_entries(bare), 3), 4)
+    entries = wikipedia(wikipedia([*reference_entries(bare), *spare_entries(bare)], 3), 4)
     write(bare, entries)
     assert references.problems(bare, TASK) == []                       # two encyclopedia pages: allowed
     entries = swap(entries, 2, url="https://commons.wikimedia.org/wiki/File:Poster.jpg")
@@ -320,7 +323,7 @@ QUOTED = f"- The request says: {LINE}.\n"
 
 def with_line(root: Path, text: str = QUOTED, at: int = 50) -> None:
     """The brief record with `text` among its findings."""
-    record(root, "answers", BRIEF_RECORD.replace("\n## Answers", text + "\n## Answers"), at)
+    record(root, "answers", BRIEF_RECORD.replace("\n## Answers", text + "\n## Answers") + DIRECTION_ANSWERS, at)
 
 
 def decline(root: Path, line: str = LINE) -> int:
@@ -400,7 +403,7 @@ def test_a_references_record_written_after_the_decline_takes_over(forbidden):
 
 def test_a_decline_stops_standing_once_its_line_is_gone_from_the_brief(forbidden):
     assert decline(forbidden) == 0 and step_of(forbidden) == "plan"
-    record(forbidden, "answers", BRIEF_RECORD, 50)
+    record(forbidden, "answers", BRIEF_RECORD + DIRECTION_ANSWERS, 50)
     assert step_of(forbidden) == "references"
 
 

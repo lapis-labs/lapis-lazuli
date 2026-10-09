@@ -39,4 +39,5 @@ items:
 - id: sources-hints-schema
   view: summary
   path: sources/hints.schema.yaml
-  summary: Rotating reference hints are separate from the access-policy source registry.
+  summary: 'Rotating reference hints are separate from the access-policy source registry. Version 1 groups
+    them by axis:'

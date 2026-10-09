@@ -1,0 +1,90 @@
+# Pools `lapis-design diverge` draws from — v0
+# `representation.<kind>`: ways a core object can be represented so that the visitor can DO something with it.
+# A kind is what the object is for (a time to choose, a route, a record). The first twelve families are what the E1b
+# roughs actually showed (_internal/divergence/e1b/REPORT.md, "콘택트 시트에서 관찰한 구체적 차이"); the rest are
+# starting points of the same sort. Each `text` says what the family lets a visitor do, never how it looks.
+# `color_allocation`: where the color mass sits in the first view. `high-key-one-signal` is today's default (a pale
+# field and one small vivid signal, _internal/divergence/sameness/REPORT.md): a draw gives it to at most one candidate.
+# `distance`: the provisional weights of `diverge check` (DESIGN §6.5). They stay `calibrated: false` until the
+# calibration over E1b's 54 roughs and round 3's 60 pages (F7) replaces them; until then only a pair with the same
+# markup structure and `reject_mass_below` is refused, and every other number is reported, not gated.
+version: 0
+observed_on: '2026-10-09'
+
+representation:
+  time:
+    means: a time, a duration, a schedule, or a deadline the visitor sets or reads
+    families:
+      - { id: time-dial, text: "a clock face the visitor turns or taps to pick the time" }
+      - { id: time-ribbon, text: "a day drawn as a strip the visitor drags a block along to choose a slot" }
+      - { id: recovery-timeline, text: "a past-to-now line with marked points the visitor steps back through" }
+      - { id: agenda-sentence, text: "the schedule written as one sentence whose time words are the controls" }
+  place-route:
+    means: a place, a route, a delay, or a distance the visitor moves along or compares
+    families:
+      - { id: route-line, text: "the route drawn as a line with stops, where a delay shows as a stretched segment" }
+      - { id: radial-hub, text: "one place at the center and every connection as a spoke the visitor can follow" }
+      - { id: two-stop-trip, text: "only the visitor's two stops and what lies between them, with the rest left out" }
+      - { id: posting-wall, text: "departures and arrivals posted as a wall of rows the visitor scans and filters" }
+  choice-booking:
+    means: a choice between options, ending in a booking, an order, or a reservation
+    families:
+      - { id: fork, text: "one question at a time as a fork whose branch the visitor takes" }
+      - { id: inline-control-sentence, text: "the booking written as a sentence whose blanks are the controls" }
+      - { id: top-console, text: "all options as one console at the top, with the result updating below it" }
+      - { id: choice-matrix, text: "options against criteria as a grid the visitor reads across before choosing" }
+  record-document:
+    means: a record, a file, a plan, or a document the visitor reads, compares, or annotates
+    families:
+      - { id: ledger, text: "records as ruled rows that show where one ends and the next begins" }
+      - { id: annotated-diff, text: "two versions of one document with the changes marked where the visitor can accept them" }
+      - { id: fader-overlay, text: "one document laid over its other version, with a fader the visitor moves between them" }
+      - { id: doctor-spread, text: "the record opened flat as a two-page spread the visitor pages through" }
+  process-sequence:
+    means: a procedure with ordered steps, a current step, and what each step produced
+    families:
+      - { id: procedure-map, text: "the steps as stations on a map, the current one marked and its output beside it" }
+      - { id: terminal-replay, text: "the run as a replayable log the visitor scrubs" }
+      - { id: filling-checklist, text: "the steps as a list that fills as each one is done" }
+      - { id: stepping-component, text: "one component shown stepping through each stage in place" }
+  quantity-data:
+    means: a number, a range, a comparison, or a distribution the visitor reads or adjusts
+    families:
+      - { id: bill-calculator, text: "a calculation the visitor edits, with the total recomputed where it is read" }
+      - { id: distribution-strip, text: "the spread of values as one strip the visitor can probe at any point" }
+      - { id: small-multiples, text: "the same measure repeated per case so the visitor compares by position" }
+      - { id: storage-map, text: "a quantity drawn as areas of a whole the visitor opens one by one" }
+  person-agent:
+    means: a person, a team, or an agent the visitor needs to recognize and contact
+    families:
+      - { id: roster-wall, text: "everyone shown at once as a wall the visitor scans to find one" }
+      - { id: role-spread, text: "people grouped by what they do, with the question each one answers" }
+      - { id: conversation-thread, text: "the person shown through an exchange the visitor can continue" }
+  product-thing:
+    means: a product, an object, or a material the visitor inspects before deciding
+    families:
+      - { id: specimen-sheet, text: "the thing shown as a labelled specimen whose parts the visitor can open" }
+      - { id: in-use-scene, text: "the thing shown in the situation it is used in, with its parts named there" }
+      - { id: exploded-parts, text: "the thing taken apart so the visitor can see and pick each part" }
+  other:
+    means: an object that fits none of the kinds above; the proposal says what the visitor does with it
+    families:
+      - { id: ledger, text: "records as ruled rows that show where one ends and the next begins" }
+      - { id: procedure-map, text: "the steps as stations on a map, the current one marked and its output beside it" }
+      - { id: specimen-sheet, text: "the thing shown as a labelled specimen whose parts the visitor can open" }
+      - { id: radial-hub, text: "one center and every connection as a spoke the visitor can follow" }
+
+color_allocation:
+  - { id: identity-as-field, text: "the identity color is the canvas of the first view; neutrals carry only text and rules" }
+  - { id: content-carries-color, text: "the page is neutral and the content's own colors (images, data, drawings) carry the chroma" }
+  - { id: dark-field, text: "a dark field takes most of the first view; light is the signal and the text" }
+  - { id: two-zone-temperature, text: "two fields of different temperature split the first view; the seam is where the action is" }
+  - { id: material-field, text: "the field is the subject's material (paper, glass, clay, metal) with its own texture of tone" }
+  - { id: high-key-one-signal, text: "a pale field with one small vivid signal; today's default, so at most one candidate takes it" }
+
+distance:
+  calibrated: false
+  weights: { struct: 0.35, mass: 0.35, repr: 0.30 }
+  struct: { grid_1440: 0.48, grid_390: 0.32, signature: 0.20 }
+  reject_mass_below: 0.10
+  minimum_pair: null

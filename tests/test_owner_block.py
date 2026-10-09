@@ -59,7 +59,7 @@ def judge(root: Path, states: list[str | None], **more) -> None:
 def test_a_wait_whose_questions_lack_the_current_block_line_is_sent_back_to_paste_it(project):
     seal = project / f".lapis/state/{TASK}.json"
     assert seal.is_file()
-    record(project, "questions", "Which headline do you prefer?", 200)
+    record(project, "questions", "lapis-questions: approval\nWhich headline do you prefer?", 200)
     result = next_step.evaluate(project, TASK)
     assert (result["state"], result["step"]["id"]) == ("needs-step", "draft-review")
     block = (project / f".lapis/owner/{TASK}.md").read_text(encoding="utf-8")
@@ -72,9 +72,9 @@ def test_a_wait_whose_questions_lack_the_current_block_line_is_sent_back_to_past
 
 
 def test_pasting_the_block_ends_it_and_a_block_that_has_gone_out_of_date_does_not_count(project):
-    record(project, "questions", "Which headline do you prefer?", 200)
+    record(project, "questions", "lapis-questions: approval\nWhich headline do you prefer?", 200)
     block = next_step.evaluate(project, TASK)["owner_block"]
-    record(project, "questions", f"Which headline do you prefer?\n\n{block}", 200)
+    record(project, "questions", f"lapis-questions: approval\nWhich headline do you prefer?\n\n{block}", 200)
     result = next_step.evaluate(project, TASK)
     assert (result["state"], result["then"]["id"]) == ("waiting-for-user", "critic")
     assert result["owner_block"] == block
@@ -85,7 +85,7 @@ def test_pasting_the_block_ends_it_and_a_block_that_has_gone_out_of_date_does_no
 
 
 def test_an_unattended_run_is_continued_with_the_paste_and_a_plan_phase_question_needs_no_block(project, tmp_path_factory):
-    record(project, "questions", "Which headline do you prefer?", 200)
+    record(project, "questions", "lapis-questions: approval\nWhich headline do you prefer?", 200)
     answer = gate.stop_output(project, "s1", unattended=True, task=TASK)
     assert answer["decision"] == "block" and "Next step: draft-review." in answer["reason"]
     assert f"paste .lapis/owner/{TASK}.md" in answer["reason"]
@@ -95,7 +95,7 @@ def test_an_unattended_run_is_continued_with_the_paste_and_a_plan_phase_question
 
 
 def test_a_questions_file_that_holds_only_the_block_asks_nothing_and_links_nothing(project):
-    record(project, "questions", "Which headline do you prefer?", 200)
+    record(project, "questions", "lapis-questions: approval\nWhich headline do you prefer?", 200)
     block = next_step.evaluate(project, TASK)["owner_block"]
     save(project, f"drafts/{TASK}.yaml", {"version": 0, "task": TASK, "pages": [
         {"url": PAGE, "direction": "new", "widths": [390, 1440], "review": {"extracts": []}}]})

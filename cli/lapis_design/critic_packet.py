@@ -27,11 +27,11 @@ from pathlib import Path, PurePosixPath
 import yaml
 from jsonschema import Draft202012Validator
 
-from lapis_design import shared_dir
+from lapis_design import direction, shared_dir
 
 TASK = re.compile(r"[a-z0-9][a-z0-9-]{1,63}")
 # What the critic never reads: the maker's plan and records. The packet carries what it may know of them.
-HIDDEN = (".lapis/plans", ".lapis/answers", ".lapis/drafts", ".lapis/questions", ".lapis/disputes")
+HIDDEN = (".lapis/plans", ".lapis/answers", ".lapis/drafts", ".lapis/questions", ".lapis/disputes", ".lapis/direction")
 # Keys that hold a maker's justification; a change row never carries them to the critic.
 REASONS = {"reason", "evidence", "runner_up_lost"}
 # A reference to one of these is a file; any other reference is a box id or a session step.
@@ -274,6 +274,12 @@ def _listed(root: Path, task: str, plan: dict, record: dict | None, extracts: li
         add("reference-capture", _inside(root, str(path)))
     for reference in _seq(plan.get("references")):
         add("reference-profile", _inside(root, _map(reference).get("profile")))
+    shown = direction.packet(root, task)
+    outside_state = [("direction-contact", shown["contact"]),
+                     *(("direction-capture", name) for name in _seq(_map(shown["pick"]).get("captures")))]
+    for kind, name in outside_state:
+        if isinstance(name, str):
+            add(kind, _inside(root, name))
     for exploration in _seq(plan.get("explorations")):
         exploration = _map(exploration)
         names = [c.get(key) for c in _seq(exploration.get("candidates")) for key in ("artifact", "token_file")
@@ -361,6 +367,7 @@ def build(root: Path, task: str, inputs: dict) -> bytes:
         "version": 0, "task": task,
         "args": _wrap(extracts=extract_names, lint=_rel(root, lint), session=session_name),
         "requirements": _requirements(record), "plan": _design(plan),
+        "direction": direction.packet(root, task),
         "inputs": _listed(root, task, plan, record, extracts, lint, session),
         "findings": _findings(root, lint), "changes": _changes(root, task), "disputes": _disputes(root, task)}
     if problem := _first_error(_validator("review/critic-packet.schema.yaml"), document):

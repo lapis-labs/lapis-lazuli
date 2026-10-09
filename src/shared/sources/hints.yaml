@@ -1,1042 +1,1563 @@
 # Hints to start a search, not a canon; no captures or copied page text.
-version: 0
+version: 1
 observed_on: '2026-10-04'
 note: Hints to start a search, not a canon. Recognition is historical, not proof of usability or current design;
   access policies still apply.
-fields:
-  saas-devtools:
-    means: Commercial software and developer-tool product pages.
-    entries:
-    - url: https://www.cerebrium.ai/
-      site: Cerebrium
-      maker: Cerebrium (award-page studio credit not shown)
-      locale: global
-      recognition: Awwwards Site of the Day (7.39/10); 2026-09-10
-      study: Study how a terminal and named deployment constraints explain the infrastructure, not its performance
-        claims as proof.
-      recognition_url: https://www.awwwards.com/sites/cerebrium
-    - url: https://filmbot.com/
-      site: Filmbot
-      maker: Somefolk®
-      locale: global
-      recognition: Awwwards Honorable Mention (per an archive listing); 2026-09-09
-      study: Study how real cinema names and venue images support a plain feature list and ticketing workflow.
-    - url: https://www.crealo.app/
-      site: Crealo
-      maker: Roland Vekemans (per category listing)
-      locale: global
-      recognition: Awwwards Nominee; 2026-09-04
-      study: Study how royalty tasks structure the product explanation and where customer evidence is attached.
-      recognition_url: https://www.awwwards.com/sites/crealo
-    - url: https://stripe.com/
-      site: Stripe
-      maker: Stripe in-house (Söhne per Typewolf)
-      locale: global
-      recognition: Typewolf Site of the Day; 2020-07-13 (classic)
-      study: Study how each payment capability is represented by its working object rather than an interchangeable
-        feature tile.
-      recognition_url: https://www.typewolf.com/site-of-the-day/stripe
-    - url: https://stores.fun/
-      site: STORES
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: SANKOU! gallery selection (not jury award); 2026-09-24
-      study: Study how actual shop photographs connect commerce, payment, reservation, and point-of-sale jobs.
-      recognition_url: https://sankoudesign.com/web/stores/
-  ai-products:
-    means: AI products whose workflows or outputs need explaining.
-    entries:
-    - url: https://claude.com/product/overview
-      site: Claude (Anthropic)
-      maker: Anthropic (Galaxie Copernicus + Tiempos Text + Styrene per Typewolf)
-      locale: global
-      recognition: Typewolf Site of the Day; 2024-10-18
-      study: Study the cream field and serif voice on the redirected Claude overview; the 2024 recognized illustration
-        is not today's hero.
-      recognition_url: https://www.typewolf.com/site-of-the-day/claude
-    - url: https://www.nexdash.com/
-      site: NexDash
-      maker: The Weather
-      locale: global
-      recognition: Awwwards Honorable Mention (per an archive listing); 2026-09-07
-      study: Study how depot imagery and dated fleet news connect the freight operating model to the product.
-    - url: https://www.clarvos.com/
-      site: Clarvos
-      maker: BRIGHTSCOUT
-      locale: global
-      recognition: Awwwards Honorable Mention (per an archive listing); 2026-09-07
-      study: Study how campaign states and budget allocation make the workflow legible; claimed savings remain unverified.
-    - url: https://physicalworks.ai/
-      site: LG CNS PhysicalWorks
-      maker: 샘서울
-      locale: KR
-      recognition: GDWEB WINNER PRIZE; 2026-09-21
-      study: Study how factory robot footage is connected to learning, fleet integration, and operational tasks.
-      recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=27636
-    - url: https://heronaiapp.com/
-      site: Heron AI
-      maker: Bearplus
-      locale: US
-      recognition: MUUUUU.ORG gallery selection (not jury award); 2026-09-16
-      study: Study how floor-plan imagery leads into concrete architecture-tool tasks rather than a generic AI capability
-        claim.
-      recognition_url: https://muuuuu.org/taglist/topjs/24860.html
-  editorial:
-    means: News, magazines, and long reported stories.
-    entries:
-    - url: https://www.theverge.com/
-      site: The Verge
-      maker: Vox Media in-house (design team named in the post; Duet platform)
-      locale: global
-      recognition: First-party redesign case study (editor-in-chief post; Nieman Lab coverage); 2022-09-13 redesign;
-        2026-04-21 homepage evolution
-      study: Study how a continuous news stream mixes headlines, short updates, and links instead of marketing sections.
-      recognition_url: https://www.theverge.com/2022/9/13/23349876/the-verge-website-redesign-new-newsfeed-blogs-logo
-    - url: https://dossiers.lalibre.be/ukraine-mines/
-      site: La Libre - "Ukraine, a country mined"
-      maker: La Libre (Virginie Nguyen Hoang + team; dev Raphael Batista)
-      locale: global
-      recognition: Awwwards Honorable Mention; 2026-04-04 published; 2026-04-22 HM
-      study: Study how chapter order, testimony, maps, and scoped footnotes carry a long reported story.
-      recognition_url: https://www.awwwards.com/sites/ukraine-a-country-mined
-    - url: https://every.to/
-      site: Every
-      maker: Every (Signifier + Switzer per Typewolf)
-      locale: global
-      recognition: Typewolf Site of the Day; 2025-09-28
-      study: Study how event details and attributed articles share the opening; current typography differs from
-        the historical listing.
-      recognition_url: https://www.typewolf.com/site-of-the-day/every-2025
-    - url: https://www.wkorea.com/
-      site: 더블유 코리아
-      maker: not credited on the pages we read
-      locale: KR
-      recognition: GDWEB GRAND PRIZE; 2025-04-29
-      study: Study how a large cover and two current stories establish editorial rank through real photography.
-      recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=24757
-    - url: https://landsapporo.jp/
-      site: LAND | 札幌発のカルチャーマガジン
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: Web Design Clip gallery selection (not jury award); Jun 22, 2026
-      study: Study how local photographs, issue numbers, and dated stories establish a regional magazine's editorial
-        world.
-      recognition_url: https://webdesignclip.com/landsapporo/
-  museums-culture:
-    means: Museums, exhibitions, cultural institutions, and archives.
-    entries:
-    - url: https://www.thebookofhov.com/
-      site: The Book of HOV
-      maker: Linked By Air (site); Economy CMS
-      locale: global
-      recognition: Webby Award, Cultural Institutions (28th); 2023 exhibit; Webby announced 2024-04-23
-      study: Study how an audio journey follows exhibition rooms and keeps transcripts beside the listening route.
-      recognition_url: https://www.webbyawards.com/press/press-releases/28th-annual-webby-award-winners-announced
-    - url: https://arkmfa.org/
-      site: Arkansas Museum of Fine Arts
-      maker: Few - Digital Product Agency (per category listing)
-      locale: US
-      recognition: Awwwards Nominee; 2026-06-15
-      study: 'Study the width-dependent opening: architecture footage on desktop, visiting information and hours
-        on the phone.'
-      recognition_url: https://www.awwwards.com/sites/arkansas-museum-of-fine-art
-    - url: https://obamaoralhistory.columbia.edu/
-      site: Obama Presidency Oral History
-      maker: Huncwot
-      locale: US
-      recognition: Awwwards Honorable Mention (per an archive listing); 2026-06-25
-      study: Study how named interview footage and the archive's source statement establish an oral-history collection.
-    - url: https://nakanoshimalab.jp/
-      site: クリエイティブアイランド中之島
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: Web Design Clip gallery selection (not jury award); Apr 21, 2026
-      study: Study how a map-like network of cultural disciplines connects place to specific exhibitions and events.
-      recognition_url: https://webdesignclip.com/nakanoshimalab-2/
-    - url: https://cornwallmuseum.org/
-      site: Cornwall Museum
-      maker: credited on the linked award page
-      locale: UK
-      recognition: Awwwards Nominee + detailed maker case; 2026-01-07
-      study: Study how the current exhibition's imagery shares the opening with hours, booking, and visit routes.
-      recognition_url: https://www.awwwards.com/sites/cornwall-museum-art-gallery
-  food-local:
-    means: Food, cafes, local shops, and hospitality rooted in a place.
-    entries:
-    - url: https://www.caffegilli.com/en
-      site: Caffe Gilli
-      maker: thebrandingcrew
-      locale: IT
-      recognition: Awwwards Honorable Mention (per an archive listing); 2026-08-04
-      study: Study how cafe photographs, pastry categories, and location details connect history to a real visit.
-    - url: https://latabledejoakim.fr/
-      site: La table de Joakim
-      maker: Cete Studio & CinqSeptembre
-      locale: FR
-      recognition: Awwwards Honorable Mention (per an archive listing); 2026-08-13
-      study: Study the chef's service sequence and plating photographs in the full page; the captured first views
-        were loaders.
-    - url: https://www.easytomorrow.com/en
-      site: EASY TOMORROW (Sanghyehwan)
-      maker: does interactive
-      locale: KR
-      recognition: Awwwards Site of the Day (7.24/10); 2025-07-04
-      study: Study the current product-led grid and virtual-room entry; the recognized 3D experience is not the
-        present first view.
-      recognition_url: https://www.awwwards.com/sites/easy-tomorrow-brand-website
-    - url: https://kr.bluebottlecoffee.com
-      site: Bule Bottle Coffee Korea
-      maker: 300cbt
-      locale: KR
-      recognition: Awwwards Honorable Mention; 2026-01-31
-      study: Study how seasonal coffee photography and Korean shopping copy lead directly into the store.
-      recognition_url: https://www.awwwards.com/sites/bule-bottle-coffee-korea
-    - url: https://a-bite-coffee.com/
-      site: A Bite Coffee
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: Web Design Clip gallery selection (not jury award); Oct 1, 2026
-      study: Study how a photographed snack and named store connect product form to a purchase location.
-      recognition_url: https://webdesignclip.com/a-bite-coffee/
-    - url: https://fondan.jp/
-      site: FONDAN（フォンダン）
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: Web Design Clip gallery selection (not jury award); Oct 1, 2026
-      study: Study how a pastry cross-section makes texture the opening object, with products and store details
-        as its practical continuation.
-      recognition_url: https://webdesignclip.com/fondan-jp/
-  ecommerce:
-    means: Product discovery, retail catalogs, and online shopping.
-    entries:
-    - url: https://tillysveaas.co.uk/
-      site: Tilly Sveaas
-      maker: Commerce-UI
-      locale: UK
-      recognition: Awwwards Honorable Mention (per an archive listing); 2026-09-03
-      study: Study how jewellery materials and on-body photographs organize product discovery without dominating
-        store chrome.
-    - url: https://www.coutumes.com/
-      site: Coutumes
-      maker: index
-      locale: FR
-      recognition: Awwwards Honorable Mention (per an archive listing); 2026-09-05
-      study: Study how collection stories are paired with concrete shipping, return, and warranty terms.
-    - url: https://www.delfonics.com/
-      site: DELFONICS
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: I/O 3000 gallery selection (not jury award); 2026-09-30
-      study: Study how a stationery brand connects a strong typographic introduction to products, shops, and a journal.
-      recognition_url: https://io3000.com/bm/delfonics/
-    - url: https://elorea.co.kr
-      site: ELOREA
-      maker: credited on the linked award page
-      locale: KR
-      recognition: Awwwards Honorable Mention; 2026-01-29
-      study: Study how fragrance material footage is tied to a named seasonal product and a purchase route.
-      recognition_url: https://www.awwwards.com/sites/elorea
-    - url: https://www.nivisgear.com/
-      site: Nivis Gear
-      maker: credited on the linked award page
-      locale: global
-      recognition: Awwwards Honorable Mention; 2026-04-09
-      study: Study how skiing photographs connect technical outerwear material to a product list.
-      recognition_url: https://www.awwwards.com/sites/nivis-gear
-  data-dashboards:
-    means: Public data, charts, reports, and analytical comparison.
-    entries:
-    - url: https://ourworldindata.org/
-      site: Our World in Data
-      maker: Global Change Data Lab (Max Roser)
-      locale: global
-      recognition: Lovie Award 2019 "Be Greater with Data" (IADAS); 2019-10-16 announcement
-      study: Study how data sources and citation blocks remain attached to readable charts and research narratives.
-      recognition_url: https://ourworldindata.org/we-won-the-lovie-award
-    - url: https://www.digital.go.jp/resources/dashboard-guidebook
-      site: Digital Agency dashboard guidebook
-      maker: Digital Agency (Japan)
-      locale: JP
-      recognition: Government standard (Digital Agency publication); 2026-03-31 formal release; 2026-07-17 update
-      study: Study the published dashboard worksheet and role-based chart palettes, not the palette as a genre preset.
-      recognition_url: https://www.digital.go.jp/resources/dashboard-guidebook
-    - url: https://stateofaidesign.com/
-      site: AI in Design Report 2026
-      maker: Designer Fund + Foundation Capital; site by ++hellohello
-      locale: global
-      recognition: Awwwards Site of the Day (per an archive listing); 2026-08-26
-      study: Study how a report exposes its sample and methodology alongside chapter navigation and case studies.
-    - url: https://www.gapminder.org/tools/
-      site: Gapminder Tools
-      maker: not credited on the pages we read
-      locale: SE
-      recognition: Gapminder historical design recognition (2010 World Technology Award) + current public data tool;
-        2010 (historical); current tool observed 2026-10-04
-      study: Study how chart axes, year, country choices, and a time slider become the page's working surface.
-      recognition_url: https://www.gapminder.org/about/about-gapminder/awards/
-    - url: https://kosis.kr/visual/economyBoard/index.do?lang=ko
-      site: KOSIS 경제상황판
-      maker: 국가데이터처
-      locale: KR
-      recognition: Official public statistical dashboard (not jury award); checked 2026-10-04
-      study: Study how named indicators and regional comparison entries organize a public economy dashboard; the
-        city image is not the data.
-      recognition_url: https://kosis.kr/easyViewStatis/visualizationIndex.do
-  government:
-    means: Public-service guidance and government design standards.
-    entries:
-    - url: https://www.gov.uk/service-manual/design
-      site: GOV.UK Service Manual (Design)
-      maker: Government Digital Service
-      locale: UK
-      recognition: Service standard (the canonical reference named in the assignment); first published 2016-10-19;
-        updated 2025-02-24
-      study: Study how service-design guidance is organized by the decisions a delivery team has to make.
-      recognition_url: https://www.gov.uk/service-manual/design
-    - url: https://www.digital.go.jp/
-      site: Digital Agency (Japan) - design system and service design
-      maker: Digital Agency (Japan)
-      locale: JP
-      recognition: Government design standard (first-party write-ups); design-system write-ups from 2022-08; dashboard
-        guidebook 2026
-      study: Study how a public agency exposes design standards and reusable service artifacts, distinguishing guidance
-        from a marketing home page.
-      recognition_url: https://digital-gov.note.jp/ne45bcdd43299
-    - url: https://www.krds.go.kr/
-      site: KRDS
-      maker: not credited on the pages we read
-      locale: KR
-      recognition: Maintainer/first-party design reference (not jury award); publication date unavailable; checked
-        2026-10-04
-      study: Study how public-service standards expose components and service patterns through explicit starting
-        paths.
-      recognition_url: https://www.krds.go.kr/
-    - url: https://www.nhs.uk/
-      site: NHS
-      maker: not credited on the pages we read
-      locale: UK
-      recognition: Maintainer/first-party design reference (not jury award); publication date unavailable; checked
-        2026-10-04
-      study: Study how health-information search and service access are separated by visitor need.
-      recognition_url: https://service-manual.nhs.uk/design-system
-    - url: https://designsystem.digital.gov/
-      site: US Web Design System
-      maker: not credited on the pages we read
-      locale: US
-      recognition: Maintainer/first-party design reference (not jury award); publication date unavailable; checked
-        2026-10-04
-      study: Study how download version, components, patterns, and tokens organize a government design system.
-      recognition_url: https://designsystem.digital.gov/design-principles/
-  portfolios:
-    means: A person or studio presenting its actual work.
-    entries:
-    - url: https://trstudio.co.uk/
-      site: TR Studio
-      maker: TR Studio (self)
-      locale: UK
-      recognition: Typewolf Site of the Day (Arizona Flare + Dia); 2025-09-27
-      study: Study how named architecture projects carry a photo-led portfolio with very little supporting copy.
-      recognition_url: https://www.typewolf.com/site-of-the-day/tr-studio
-    - url: http://jesperlandberg.com
-      site: Jesper Landberg
-      maker: Jesper Landberg (self)
-      locale: SE
-      recognition: Awwwards Site of the Day (7.73/10); 2026-09-29
-      study: Study the recognized portfolio's project-to-project transitions; the award description is not a current
-        usability verdict.
-      recognition_url: https://www.awwwards.com/sites/jesper-landberg-4
-    - url: https://www.hirotos.com
-      site: Hiroto Sato
-      maker: Hiroto Sato (self)
-      locale: JP
-      recognition: Awwwards Site of the Day (7.24/10); 2026-07-17
-      study: Study how the recognized portfolio treats interactive graphics as the work itself, not decoration on
-        a product page.
-      recognition_url: https://www.awwwards.com/sites/hiroto-sato
-    - url: https://en.dinotaeng.com/
-      site: DINO TAENG
-      maker: FAVE®
-      locale: KR
-      recognition: Awwwards Honorable Mention; 2026-01-25
-      study: Study the character-brand entry at the redirected English domain; the captured animated intro does
-        not prove later navigation.
-      recognition_url: https://www.awwwards.com/sites/dino-taeng
-    - url: https://www.insplanet.co.kr/
-      site: 인스플래닛
-      maker: 인스플래닛 (주)
-      locale: KR
-      recognition: GDWEB WINNER PRIZE; 2026-09-22
-      study: Study how named finance projects support the studio's portfolio below its decorative introduction.
-      recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=27644
-    - url: https://www.libretto-works.com/
-      site: リブレットワークス
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: Web Design Clip gallery selection (not jury award); Sep 30, 2026
-      study: Study how project names, process, and cost guidance support a studio's portfolio beyond its atmospheric
-        opening.
-      recognition_url: https://webdesignclip.com/libretto-works/
-  events:
-    means: Festivals, exhibitions, dates, lineups, and ticket information.
-    entries:
-    - url: https://www.paradigmfestival.com/
-      site: Paradigm Festival
-      maker: Bureau Breekijzer
-      locale: NL
-      recognition: Awwwards Honorable Mention (per an archive listing); 2026-09-09
-      study: Study how dates, artists, and stage information give festival media a practical reason to exist.
-    - url: https://www.sejongpac.or.kr/goods/goods2026/goodsMain.jsp
-      site: 서울아트굿즈페스티벌
-      maker: 세종문화회관,네오그라프
-      locale: KR
-      recognition: GDWEB WINNER PRIZE; 2026-09-22
-      study: Study how event dates, venue, exhibitors, and map access are compressed into a poster-like opening.
-      recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=27642
-    - url: https://2026.featuredprojects.jp/
-      site: Featured Projects 2026
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: I/O 3000 gallery selection (not jury award); 2026-09-29
-      study: Study how exhibition photographs and serial thumbnails keep dates, location, and tickets in view.
-      recognition_url: https://io3000.com/bm/featured-projects-2026/
-    - url: https://50th.designstudio-l.jp/
-      site: 五◯祭 GOENSAI
-      maker: Designstudio L
-      locale: JP
-      recognition: SANKOU! gallery selection (not jury award); 2026-09-29
-      study: Study how a commemorative poster structure connects anniversary identity to event information and history.
-      recognition_url: https://sankoudesign.com/web/designstudiol-50th/
-  documentation:
-    means: Learning, API lookup, manuals, and design-system guidance.
-    entries:
-    - url: https://react.dev/
-      site: react.dev
-      maker: React team (Dan Abramov, Rachel Nabors et al.)
-      locale: global
-      recognition: First-party launch case study; 2023-03-16 launch
-      study: Study the separation between guided learning and lookup, with runnable code and exercises tied to each
-        lesson.
-      recognition_url: https://react.dev/blog/2023/03/16/introducing-react-dev
-    - url: https://smarthr.design/
-      site: SmartHR Design System
-      maker: SmartHR
-      locale: JP
-      recognition: Public design system (open operation policy); ongoing public system
-      study: Study how principles, accessibility, components, and communication assets are grouped for different
-        design jobs.
-      recognition_url: https://smarthr.design/introduction/operate-policy/
-    - url: https://developer.mozilla.org/en-US/docs/Learn_web_development
-      site: MDN Learn
-      maker: not credited on the pages we read
-      locale: global
-      recognition: Maintainer curated learning resource (not jury award); publication date unavailable; checked
-        2026-10-04
-      study: Study how the learning tree, article, and current-page contents expose a reader's position at different
-        scales.
-      recognition_url: https://developer.mozilla.org/en-US/docs/Learn_web_development
-    - url: https://service-manual.nhs.uk/
-      site: NHS Service Manual
-      maker: not credited on the pages we read
-      locale: UK
-      recognition: Maintainer/first-party design reference (not jury award); publication date unavailable; checked
-        2026-10-04
-      study: Study the manual's search and service-standard routes beneath its cookie choices; this is service guidance,
-        not the NHS health home page.
-      recognition_url: https://service-manual.nhs.uk/design-system
-    - url: https://docusaurus.io/docs
-      site: Docusaurus
-      maker: not credited on the pages we read
-      locale: global
-      recognition: Maintainer/first-party design reference (not jury award); publication date unavailable; checked
-        2026-10-04
-      study: Study how documentation version, language, search, and local contents keep a reader oriented.
-      recognition_url: https://docusaurus.io/docs#design-principles
-  games-entertainment:
-    means: Games, film, performers, and entertainment discovery.
-    entries:
-    - url: https://letterboxd.com/
-      site: Letterboxd
-      maker: Letterboxd
-      locale: global
-      recognition: Webby People's Voice Award, Entertainment & Sports, General Apps (28th); 2024-04-23 announcement
-      study: Study the desktop film-discovery proposition and real activity; the phone capture stopped at a security
-        challenge.
-      recognition_url: https://www.webbyawards.com/press/press-releases/28th-annual-webby-award-winners-announced
-    - url: https://www.trevornoah.com/
-      site: Trevor Noah
-      maker: OFF+BRAND
-      locale: US
-      recognition: Awwwards Site of the Day (per an archive listing); 2026-09-03
-      study: Study how dated shows and location records make an entertainer's schedule more useful than a generic
-        biography.
-    - url: https://www.paulkalkbrenner.net/
-      site: Paul Kalkbrenner
-      maker: HOLOGRAPHIK
-      locale: DE
-      recognition: Awwwards Site of the Day (per an archive listing); 2026-09-02
-      study: Study how player state, albums, streaming, and tour dates form a music task; do not inherit placeholder
-        album descriptions.
-    - url: https://kj8-thegame.com/
-      site: 怪獣８号 THE GAME
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: Web Design Clip gallery selection (not jury award); Sep 1, 2025
-      study: Study how game artwork is paired with story, character, system, and platform entries beyond the captured
-        loading layer.
-      recognition_url: https://webdesignclip.com/kj8-thegame/
-    - url: https://10th.fate-go.jp/
-      site: Fate/Grand Order 10周年記念全国縦断広告 OVER THE SAME SKY
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: Web Design Clip gallery selection (not jury award); Aug 14, 2025
-      study: Study how a commemorative campaign connects illustrated figures to a location archive rather than to
-        product metrics.
-      recognition_url: https://webdesignclip.com/10th-fate-go/
-  healthcare:
-    means: Clinic information, care pathways, and appointment access.
-    entries:
-    - url: https://www.ssdream.co.kr/
-      site: 삼성드림이비인후과
-      maker: 소이정
-      locale: KR
-      recognition: GDWEB WINNER PRIZE; 2026-09-23
-      study: Study how branch, condition, and consultation routes collect actual clinic tasks; opening popups remain
-        a cost.
-      recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=27643
-    - url: https://shinyuclinic.com/index.html
-      site: 신유외과
-      maker: 매스티지
-      locale: KR
-      recognition: GDWEB WINNER PRIZE; 2026-09-21
-      study: Study the contrast between clear clinic paths and a promotional opening that delays medical information.
-      recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=27597
-    - url: https://musashinitta-cocoro.com/
-      site: 武蔵新田こころクリニック
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: Web Design Clip gallery selection (not jury award); Aug 24, 2026
-      study: Study how symptoms, station access, telephone, and a fixed reservation action serve a clinic visit.
-      recognition_url: https://webdesignclip.com/musashinitta-cocoro/
-    - url: https://morioka-ganka.com/
-      site: もりおか眼科
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: Web Design Clip gallery selection (not jury award); Jun 29, 2026
-      study: Study how a clinic's weekly schedule and reservation route sit beside photographs of the care environment.
-      recognition_url: https://webdesignclip.com/morioka-ganka/
-    - url: https://ewhabrain.eumc.ac.kr/
-      site: 이대뇌혈관병원
-      maker: 오상테크놀로지
-      locale: KR
-      recognition: Web Award Korea 2025 candidate + detailed first-party case (award not established); 2025-02 build;
-        assessment read 2026-10-04
-      study: Study how appointment, specialist, and certificate routes remain accessible around hospital footage.
-      recognition_url: https://www.i-award.or.kr/Web/Assess/FinalCandidateView.aspx?REG_SEQNO=15204
-  finance:
-    means: Banking, funds, payments, and financial product information.
-    entries:
-    - url: https://toss.im/
-      site: 토스
-      maker: not credited on the pages we read
-      locale: KR
-      recognition: GDWEB WINNER PRIZE; 2026-08-24
-      study: Study how actual banking actions and app screens follow the lifestyle film, without treating the film
-        as transaction feedback.
-      recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=27458
-    - url: https://kbam.co.kr/
-      site: RISE ETF
-      maker: not credited on the pages we read
-      locale: KR
-      recognition: GDWEB WINNER PRIZE; 2026-09-29
-      study: Study how ETF names, prices, and period controls organize comparison; promotional overlays and financial
-        claims need scrutiny.
-      recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=27669
-    - url: https://www.shinkin.co.jp/echishin/
-      site: 越前信用金庫
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: SANKOU! gallery selection (not jury award); 2026-09-22
-      study: Study how personal and business routes sit beside branch, rate, and fee lookup for a local financial
-        institution.
-      recognition_url: https://sankoudesign.com/web/echishin/
-    - url: https://www.veritran.com/en
-      site: Veritran
-      maker: credited on the linked award page
-      locale: global
-      recognition: Awwwards Honorable Mention; 2025-02-21
-      study: Study how solution and customer-story routes support a banking supplier's media-led introduction.
-      recognition_url: https://www.awwwards.com/sites/veritran
-    - url: https://www.contiant.com/
-      site: Contiant
-      maker: credited on the linked award page
-      locale: EU
-      recognition: Awwwards Honorable Mention; 2023-06-12
-      study: Study how a payment-flow illustration explains fees and settlement; the UI card is an argument, not
-        proof of performance.
-      recognition_url: https://www.awwwards.com/sites/contiant-open-banking-fintech
-  education:
-    means: Schools, courses, training, admissions, and learner pathways.
-    entries:
-    - url: https://robotoriedu.com/
-      site: 로보트리에듀
-      maker: not credited on the pages we read
-      locale: KR
-      recognition: GDWEB WINNER PRIZE; 2026-09-30
-      study: Study how learner groups and program examples connect education discovery to enrollment.
-      recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=27673
-    - url: https://likelion.net/
-      site: 멋쟁이사자처럼
-      maker: 멋쟁이사자처럼
-      locale: KR
-      recognition: GDWEB WINNER PRIZE; 2025-01-17
-      study: Study how distinct training and employer routes share an education landing without pretending all visitors
-        have the same goal.
-      recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=23933
-    - url: https://www.kobe-wu.ac.jp/
-      site: 神戸女子大学
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: Web Design Clip gallery selection (not jury award); Jul 29, 2026
-      study: Study how applicant groups, departments, and campus events organize university entry points.
-      recognition_url: https://webdesignclip.com/kobe-wu/
-    - url: https://bipocdesignhistory.com/
-      site: BIPOC Design History
-      maker: not credited on the pages we read
-      locale: US
-      recognition: I/O 3000 gallery selection (not jury award); 2026-09-17
-      study: Study how historical poster images sit beside course topics and access to the learning material.
-      recognition_url: https://io3000.com/bm/bipoc-design-history/
-    - url: https://primer.com/
-      site: Primer
-      maker: credited on the linked award page
-      locale: US
-      recognition: Awwwards Honorable Mention; 2026-06-20
-      study: Study how student photographs are connected to school, grade, and tuition choices.
-      recognition_url: https://www.awwwards.com/sites/primer
-  nonprofits:
-    means: Charities, foundations, campaigns, and donation or support tasks.
-    entries:
-    - url: https://chunman.or.kr/
-      site: 천만문화재단
-      maker: 내가그린기린그림
-      locale: KR
-      recognition: GDWEB WINNER PRIZE; 2026-09-28
-      study: Study how an arts foundation organizes dated programs and support questions; do not copy its opening
-        notices.
-      recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=27648
-    - url: https://hangeul.naver.com/2023
-      site: 네이버 한글 캠페인
-      maker: 라이트브레인
-      locale: KR
-      recognition: GDWEB GRAND PRIZE; 2024-08-08
-      study: Study how handwriting footage connects a language campaign to font, document, and archive entry points.
-      recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=22868
-    - url: https://typography.or.jp/
-      site: NPO法人 日本タイポグラフィ協会
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: Web Design Clip gallery selection (not jury award); Aug 26, 2026
-      study: Study how actual publication pages and submission deadlines organize a typography association's tasks.
-      recognition_url: https://webdesignclip.com/typography/
-    - url: https://msf.org.uk/
-      site: MSF UK
-      maker: Torchbox
-      locale: UK
-      recognition: Maker user-research case study (historical; not jury award); 2017-01-17
-      study: Study how field-care photography connects an emergency story to donation and regional activity routes.
-      recognition_url: https://torchbox.com/charity/blog/m%C3%A9decins-sans-fronti%C3%A8res-renovates-uk-website-help-torchbox
-    - url: https://wwf.ca/
-      site: WWF Canada
-      maker: Loop
-      locale: CA
-      recognition: Maker conservation-data UX case study (not jury award); undated case; checked 2026-10-04
-      study: Study how real wildlife topics carry reading and donation paths rather than a decorative nature palette.
-      recognition_url: https://weareloop.com/work/wwf-canada
-  real-estate:
-    means: Buildings, property management, architecture, and development.
-    entries:
-    - url: https://cheonan-iparkcity.com
-      site: 천안 아이파크 시티
-      maker: 히어앤나우
-      locale: KR
-      recognition: GDWEB WINNER PRIZE; 2025-07-07
-      study: Study how a planned city illustration exposes separate development routes; it is not evidence of a
-        completed neighborhood.
-      recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=25177
-    - url: https://bright-avenue.jp/
-      site: 株式会社ブライトアベニュー
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: Web Design Clip gallery selection (not jury award); Sep 30, 2026
-      study: Study the renovation business explanation beyond the captured loader; do not generalize the delayed
-        opening as a strength.
-      recognition_url: https://webdesignclip.com/bright-avenue/
-    - url: https://ateliercu.jp/
-      site: アトリエシーユー一級建築士事務所
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: Web Design Clip gallery selection (not jury award); Sep 23, 2026
-      study: Study how a named house photograph links to the next architecture project with restrained supporting
-        text.
-      recognition_url: https://webdesignclip.com/ateliercu-jp/
-    - url: https://www.buena.com/en/home
-      site: Buena
-      maker: not credited on the pages we read
-      locale: DE
-      recognition: I/O 3000 gallery selection (not jury award); 2026-09-21
-      study: Study how two building photographs frame different paths for property owners and managers.
-      recognition_url: https://io3000.com/bm/buena/
-    - url: https://www.union-tec.jp/
-      site: UNION TEC
-      maker: SHIFTBRAIN; CHO-P; Sunny; yoru
-      locale: JP
-      recognition: MUUUUU.ORG gallery selection (not jury award); 2026-09-18
-      study: Study how occupied-space footage is supported by named projects and the space-making business.
-      recognition_url: https://muuuuu.org/industry/building/24875.html
-  travel-hotels:
-    means: Destinations, lodging, rooms, and travel booking.
-    entries:
-    - url: https://www.lottehotel.com/
-      site: 롯데호텔앤리조트
-      maker: not credited on the pages we read
-      locale: KR
-      recognition: GDWEB GRAND PRIZE; 2025-11-11
-      study: Study how hotel, room, date, and guest choices stay next to campaign media; the captured cookie dialog
-        obscures the opening.
-      recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=25983
-    - url: https://www.shirahone.org/
-      site: 白骨温泉
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: Web Design Clip gallery selection (not jury award); Jun 16, 2026
-      study: Study the regional lodging and transport information beneath vertical type and water imagery; the opening
-        is delayed.
-      recognition_url: https://webdesignclip.com/shirahone/
-    - url: https://yama-niwa.jp/
-      site: yama-niwa
-      maker: Re:design; HOLON
-      locale: JP
-      recognition: MUUUUU.ORG gallery selection (not jury award); 2026-09-12
-      study: Study how lodging and sauna bookings remain distinct actions beside an actual property photograph.
-      recognition_url: https://muuuuu.org/industry/trip/24827.html
-    - url: https://www.miirohotels.com/en
-      site: Miiro Hotels
-      maker: Propeller
-      locale: EU
-      recognition: Maker UX case study (not jury award); undated case; checked 2026-10-04
-      study: Study how city-specific property photographs connect location information and benefits to a booking
-        action.
-      recognition_url: https://www.propeller.co.uk/work/miiro
-    - url: https://tengilemalamala.com/
-      site: Tengile Malamala
-      maker: DashDigital
-      locale: ZA
-      recognition: Awwwards SOTD + Developer Award; 2026-10-03
-      study: Study how accommodation, stay planning, and inquiry remain distinct next steps around safari imagery.
-      recognition_url: https://www.awwwards.com/sites/tengile-malamala-collection
-    - url: https://www.vanderhotel.com
-      site: Vander Hotel
-      maker: credited on the linked award page
-      locale: SI
-      recognition: Awwwards Honorable Mention; 2026-08-29
-      study: Study how multiple hotel spaces surround a central room-booking action without hiding the action.
-      recognition_url: https://www.awwwards.com/sites/vander-hotel
-  fashion-beauty:
-    means: Clothing, jewellery, beauty products, and brand retail.
-    entries:
-    - url: https://www.kolonworkwear.com/
-      site: 코오롱 워크웨어
-      maker: not credited on the pages we read
-      locale: KR
-      recognition: GDWEB WINNER PRIZE; 2026-09-30
-      study: Study how workwear on real people makes fabric and fit lead over interface color.
-      recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=27671
-    - url: https://instantfunk.kr/
-      site: 인스턴트펑크
-      maker: 디파이 (DFY®)
-      locale: KR
-      recognition: GDWEB WINNER PRIZE; 2026-09-16
-      study: Study how campaign footage carries clothing identity while shopping tools recede; first-view purchase
-        terms are not established.
-      recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=27604
-    - url: https://www.kolonmall.com/
-      site: 코오롱몰
-      maker: 플러스엑스
-      locale: KR
-      recognition: GDWEB GRAND PRIZE; 2024-09-10
-      study: Study how seasonal brand campaigns and product categories share a retail shell; countdown pressure
-        is not a pattern to inherit.
-      recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=23118
-    - url: https://amprem.jp/
-      site: Amprem
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: SANKOU! gallery selection (not jury award); 2026-09-30
-      study: Study how bottle and liquid imagery expose shampoo materials; do not treat ingredient claims as verified
-        efficacy.
-      recognition_url: https://sankoudesign.com/web/amprem/
-    - url: https://wwake.com/
-      site: WWAKE
-      maker: not credited on the pages we read
-      locale: US
-      recognition: I/O 3000 gallery selection (not jury award); 2026-09-24
-      study: Study how worn jewellery photographs connect collection discovery to appointments and customization.
-      recognition_url: https://io3000.com/bm/wwake/
-  music-labels:
-    means: Musicians, labels, releases, players, and performance dates.
-    entries:
-    - url: https://scramblelabel.jp/
-      site: SCRAMBLE LABEL
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: Web Design Clip gallery selection (not jury award); Sep 28, 2026
-      study: Study the release and artist list below the label intro; the loader is not evidence of a successful
-        music task.
-      recognition_url: https://webdesignclip.com/scramblelabel/
-    - url: https://sasukeharaguchi.com/
-      site: 原口沙輔
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: Web Design Clip gallery selection (not jury award); Jul 2, 2026
-      study: Study the musician's vertical name and short navigation, while checking the cost of the nearly empty
-        captured opening.
-      recognition_url: https://webdesignclip.com/sasukeharaguchi/
-    - url: https://sekainoowari.jp/
-      site: SEKAI NO OWARI オフィシャルサイト
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: Web Design Clip gallery selection (not jury award); May 11, 2026
-      study: Study how a collage of real band photographs connects history to schedules and releases.
-      recognition_url: https://webdesignclip.com/sekainoowari/
-    - url: https://nakajin-official.com/
-      site: Nakajin Offcial Site
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: Web Design Clip gallery selection (not jury award); Feb 2, 2026
-      study: Study how performance footage is connected to releases, news, and a musician's profile.
-      recognition_url: https://webdesignclip.com/nakajin-official/
-    - url: https://maltine20.net/
-      site: Maltine Records 20th Anniversary 「CITY」
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: Web Design Clip gallery selection (not jury award); Dec 9, 2025
-      study: Study how release players and day/night schedules occupy distinct columns on a music anniversary page.
-      recognition_url: https://webdesignclip.com/maltine20/
-  publishing-books:
-    means: Books, magazines, publishers, bookstores, and reading.
-    entries:
-    - url: https://tokyo.bunkitsu.jp/
-      site: BUNKITSU TOKYO（ブンキツ トーキョー） 心が躍る、自由で、楽しい本屋
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: Web Design Clip gallery selection (not jury award); Aug 4, 2026
-      study: Study how a bookstore's space and operating notices support an illustrated invitation to browse.
-      recognition_url: https://webdesignclip.com/tokyo-bunkitsu/
-    - url: https://shuro.world/
-      site: SHURO | シュロ
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: Web Design Clip gallery selection (not jury award); Mar 19, 2026
-      study: Study how publication categories sit beside the actual manga and artwork being distributed.
-      recognition_url: https://webdesignclip.com/shuro-world/
-    - url: https://tsuzuku-ni-tsuzuke.jp/
-      site: つづくにつづけ | リターナブルびん飲料を飲むともらえるオリジナル短編集
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: Web Design Clip gallery selection (not jury award); Dec 25, 2025
-      study: Study how a reading-page metaphor connects short fiction to a returnable-bottle campaign without borrowing
-        the page wholesale.
-      recognition_url: https://webdesignclip.com/tsuzuku-ni-tsuzuke/
-    - url: https://links.taiyo-p.co.jp/
-      site: 大洋LINKS
-      maker: RED
-      locale: JP
-      recognition: MUUUUU.ORG gallery selection (not jury award); 2026-10-02
-      study: Study how printing-scale typography leads into business, media, and factory-visit routes.
-      recognition_url: https://muuuuu.org/industry/publication/25011.html
-    - url: https://www.kurashi-no-techo.co.jp/
-      site: 暮しの手帖社
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: Web Design Clip gallery selection (not jury award); May 6, 2025
-      study: Study how a current issue's cover, number, season, and store routes establish a magazine's publication
-        sequence.
-      recognition_url: https://webdesignclip.com/kurashi-no-techo/
-  science-research:
-    means: Scientific institutions, research resources, and science communication.
-    entries:
-    - url: https://alleninstitute.org/
-      site: Allen Institute
-      maker: Allen Institute
-      locale: US
-      recognition: First-party brand/design case (not jury award); 2026-05-04
-      study: Study how laboratory footage is connected to research resources, education, and dated news.
-      recognition_url: https://alleninstitute.org/news/charting-a-brand-revolution
-    - url: https://home.cern/
-      site: CERN
-      maker: CERN
-      locale: CH
-      recognition: First-party audience-research case (historical; not jury award); 2013-03-07
-      study: Study how an accelerator photograph and specific research updates share the science institution's opening.
-      recognition_url: https://home.cern/new-website-cern
-    - url: https://www.embl.org/
-      site: EMBL
-      maker: EMBL
-      locale: EU
-      recognition: First-party design principles (not jury award); undated principles; checked 2026-10-04
-      study: Study how laboratory imagery and dated updates across research sites establish institutional scope.
-      recognition_url: https://www.embl.org/guidelines/design/design-guidelines/design-principles
-    - url: https://www.ebi.ac.uk/
-      site: EMBL-EBI
-      maker: EMBL-EBI
-      locale: EU
-      recognition: First-party website redesign case (not jury award); 2022-01
-      study: Study how resource search, scope selection, and example queries lead before research and training routes.
-      recognition_url: https://www.embl.org/about/info/communications/blog/2022/01/coming-soon-a-new-look-for-the-embl-ebi-website
-    - url: https://science.nasa.gov/
-      site: NASA Science
-      maker: NASA
-      locale: US
-      recognition: First-party redesign + Horizon Design System case; 2023-09-28
-      study: Study how real science imagery is organized by exploration, learning, and viewing tasks.
-      recognition_url: https://www.nasa.gov/general/nasa-publishes-beta-flagship-science-websites-as-improvements-continue
-  forms-services:
-    means: A service task, quote, application, or administrative transaction.
-    entries:
-    - url: https://octopus.energy/
-      site: Octopus Energy
-      maker: Octopus Energy
-      locale: UK
-      recognition: First-party accessibility case (not jury award); undated; checked 2026-10-04
-      study: Study how a postcode starts the quote task immediately beside a domestic photograph.
-      recognition_url: https://octopus.energy/blog/making-octopus-accessible-everyone
-    - url: https://www.n-ssi.co.jp/
-      site: SBI日本少額短期保険
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: SANKOU! gallery selection (not jury award); 2025-05-08
-      study: Study how policyholder, product, incident, and inquiry routes separate insurance service needs.
-      recognition_url: https://sankoudesign.com/web/nihonssi/
-    - url: https://www.sumitomolife.co.jp/chakin/index.html
-      site: 住友生命 Chakin
-      maker: not credited on the pages we read
-      locale: JP
-      recognition: SANKOU! gallery selection (not jury award); 2025-05-25
-      study: Study how one savings-insurance product explains its terms and enrollment sequence before a commitment.
-      recognition_url: https://sankoudesign.com/web/sumitomolife-chakin/
-    - url: https://www.gov.uk/apply-renew-passport
-      site: Renew a passport
-      maker: GOV.UK
-      locale: UK
-      recognition: Government service-design standard (not jury award); checked 2026-10-04
-      study: Study how scope, processing time, and required materials prepare a visitor to renew a passport.
-      recognition_url: https://www.gov.uk/service-manual/design
-    - url: https://www.gov.uk/vehicle-tax
-      site: Tax your vehicle
-      maker: GOV.UK
-      locale: UK
-      recognition: Government service-design standard (not jury award); checked 2026-10-04
-      study: Study how document references and alternatives are explained before the vehicle-tax action.
-      recognition_url: https://www.gov.uk/service-manual/design
-    - url: https://www.lemonade.com/
-      site: Lemonade insurance
-      maker: Lemonade
-      locale: US
-      recognition: First-party design case; source fetch HTTP403, claim not independently verified; checked 2026-10-04
-      study: Study how insurance types and price access organize a quote decision without assuming a successful
-        conversion.
-      recognition_url: https://www.lemonade.com/car/explained/under-the-hood-of-lemonade-cars-landing-page
-  developer-open-source:
-    means: Open-source tools, installation, examples, and contribution.
-    entries:
-    - url: https://vite.dev/
-      site: Vite
-      maker: VoidZero
-      locale: global
-      recognition: First-party unified tooling identity case; 2026-02-05
-      study: Study how an install command and package-manager choice give a developer a concrete first action.
-      recognition_url: https://voidzero.dev/posts/whats-new-jan-2026
-    - url: https://vitest.dev/
-      site: Vitest
-      maker: VoidZero
-      locale: global
-      recognition: First-party unified tooling identity case; 2026-02-05
-      study: Study how actual test-runner output explains a testing tool rather than implying fabricated application
-        performance.
-      recognition_url: https://voidzero.dev/posts/whats-new-jan-2026
-    - url: https://rolldown.rs/
-      site: Rolldown
-      maker: VoidZero
-      locale: global
-      recognition: First-party unified tooling identity case; 2026-02-05
-      study: Study how compatibility, configuration code, and a playground support the bundler's adoption task.
-      recognition_url: https://voidzero.dev/posts/whats-new-jan-2026
-    - url: https://oxc.rs/
-      site: Oxc
-      maker: VoidZero
-      locale: global
-      recognition: First-party unified tooling identity case; 2026-02-05
-      study: Study how separate tool, contribution, playground, and sponsorship paths explain an open-source tool
-        family.
-      recognition_url: https://voidzero.dev/posts/whats-new-jan-2026
-    - url: https://svelte.dev/
-      site: Svelte
-      maker: Svelte team
-      locale: global
-      recognition: First-party accessibility/website overhaul case (historical); 2023-06-29
-      study: Study how a compiler metaphor connects the framework to runnable examples, documentation, and a tutorial.
-      recognition_url: https://svelte.dev/blog/svelte-dev-overhaul
-  internal-admin:
-    means: Internal workspaces, records, operations, and administration.
-    entries:
-    - url: https://preview.tabler.io/
-      site: Tabler demo
-      maker: not credited on the pages we read
-      locale: global
-      recognition: Maintainer/first-party design reference (not jury award); publication date unavailable; checked
-        2026-10-04
-      study: Study the density and grouping of report, time-range, and administrative modules; a demo does not settle
-        this project's information priorities.
-      recognition_url: https://tabler.io/
-    - url: https://adminlte.io/themes/v3/
-      site: AdminLTE demo
-      maker: not credited on the pages we read
-      locale: global
-      recognition: Maintainer/first-party design reference (not jury award); publication date unavailable; checked
-        2026-10-04
-      study: Study how a dense work menu relates to charts, chat, tasks, and calendar; keep only modules a real
-        task needs.
-      recognition_url: https://adminlte.io/
-    - url: https://preview.pro.ant.design/
-      site: Ant Design Pro preview
-      maker: not credited on the pages we read
-      locale: global
-      recognition: Maintainer/first-party design reference (not jury award); publication date unavailable; checked
-        2026-10-04
-      study: Study the relation between period controls, ranking, chart, and table; metric cards are not a default
-        recommendation.
-      recognition_url: https://pro.ant.design/
-    - url: https://ui.shadcn.com/examples/dashboard
-      site: shadcn dashboard example
-      maker: not credited on the pages we read
-      locale: global
-      recognition: Maintainer/first-party design reference (not jury award); publication date unavailable; checked
-        2026-10-04
-      study: Study how the document workspace relates its table, period controls, and chart rather than copying
-        the example shell.
-      recognition_url: https://ui.shadcn.com/
-    - url: https://retool.com/templates
-      site: Retool public templates
-      maker: Retool
-      locale: global
-      recognition: Maintainer product showcase (not jury award); checked 2026-10-04
-      study: Study how template search and use filters organize real workflow previews for internal tools.
-      recognition_url: https://retool.com/templates
-    - url: https://www.appsmith.com/templates
-      site: Appsmith public templates
-      maker: Appsmith
-      locale: global
-      recognition: Maintainer product showcase (not jury award); checked 2026-10-04
-      study: Study how task-specific templates pair a screen preview with a practical explanation rather than a
-        generic dashboard promise.
-      recognition_url: https://www.appsmith.com/templates
+axes:
+  genre:
+    saas-devtools:
+      means: Commercial software and developer-tool product pages.
+      entries:
+      - url: https://www.cerebrium.ai/
+        site: Cerebrium
+        maker: Cerebrium (award-page studio credit not shown)
+        locale: global
+        recognition: Awwwards Site of the Day (7.39/10); 2026-09-10
+        study: Study how a terminal and named deployment constraints explain the infrastructure, not its performance
+          claims as proof.
+        recognition_url: https://www.awwwards.com/sites/cerebrium
+      - url: https://filmbot.com/
+        site: Filmbot
+        maker: Somefolk®
+        locale: global
+        recognition: Awwwards Honorable Mention (per an archive listing); 2026-09-09
+        study: Study how real cinema names and venue images support a plain feature list and ticketing workflow.
+      - url: https://www.crealo.app/
+        site: Crealo
+        maker: Roland Vekemans (per category listing)
+        locale: global
+        recognition: Awwwards Nominee; 2026-09-04
+        study: Study how royalty tasks structure the product explanation and where customer evidence is attached.
+        recognition_url: https://www.awwwards.com/sites/crealo
+      - url: https://stripe.com/
+        site: Stripe
+        maker: Stripe in-house (Söhne per Typewolf)
+        locale: global
+        recognition: Typewolf Site of the Day; 2020-07-13 (classic)
+        study: Study how each payment capability is represented by its working object rather than an interchangeable
+          feature tile.
+        recognition_url: https://www.typewolf.com/site-of-the-day/stripe
+      - url: https://stores.fun/
+        site: STORES
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: SANKOU! gallery selection (not jury award); 2026-09-24
+        study: Study how actual shop photographs connect commerce, payment, reservation, and point-of-sale jobs.
+        recognition_url: https://sankoudesign.com/web/stores/
+    ai-products:
+      means: AI products whose workflows or outputs need explaining.
+      entries:
+      - url: https://claude.com/product/overview
+        site: Claude (Anthropic)
+        maker: Anthropic (Galaxie Copernicus + Tiempos Text + Styrene per Typewolf)
+        locale: global
+        recognition: Typewolf Site of the Day; 2024-10-18
+        study: Study the cream field and serif voice on the redirected Claude overview; the 2024 recognized illustration
+          is not today's hero.
+        recognition_url: https://www.typewolf.com/site-of-the-day/claude
+      - url: https://www.nexdash.com/
+        site: NexDash
+        maker: The Weather
+        locale: global
+        recognition: Awwwards Honorable Mention (per an archive listing); 2026-09-07
+        study: Study how depot imagery and dated fleet news connect the freight operating model to the product.
+      - url: https://www.clarvos.com/
+        site: Clarvos
+        maker: BRIGHTSCOUT
+        locale: global
+        recognition: Awwwards Honorable Mention (per an archive listing); 2026-09-07
+        study: Study how campaign states and budget allocation make the workflow legible; claimed savings remain unverified.
+      - url: https://physicalworks.ai/
+        site: LG CNS PhysicalWorks
+        maker: 샘서울
+        locale: KR
+        recognition: GDWEB WINNER PRIZE; 2026-09-21
+        study: Study how factory robot footage is connected to learning, fleet integration, and operational tasks.
+        recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=27636
+      - url: https://heronaiapp.com/
+        site: Heron AI
+        maker: Bearplus
+        locale: US
+        recognition: MUUUUU.ORG gallery selection (not jury award); 2026-09-16
+        study: Study how floor-plan imagery leads into concrete architecture-tool tasks rather than a generic AI capability
+          claim.
+        recognition_url: https://muuuuu.org/taglist/topjs/24860.html
+    editorial:
+      means: News, magazines, and long reported stories.
+      entries:
+      - url: https://www.theverge.com/
+        site: The Verge
+        maker: Vox Media in-house (design team named in the post; Duet platform)
+        locale: global
+        recognition: First-party redesign case study (editor-in-chief post; Nieman Lab coverage); 2022-09-13 redesign;
+          2026-04-21 homepage evolution
+        study: Study how a continuous news stream mixes headlines, short updates, and links instead of marketing sections.
+        recognition_url: https://www.theverge.com/2022/9/13/23349876/the-verge-website-redesign-new-newsfeed-blogs-logo
+      - url: https://dossiers.lalibre.be/ukraine-mines/
+        site: La Libre - "Ukraine, a country mined"
+        maker: La Libre (Virginie Nguyen Hoang + team; dev Raphael Batista)
+        locale: global
+        recognition: Awwwards Honorable Mention; 2026-04-04 published; 2026-04-22 HM
+        study: Study how chapter order, testimony, maps, and scoped footnotes carry a long reported story.
+        recognition_url: https://www.awwwards.com/sites/ukraine-a-country-mined
+      - url: https://every.to/
+        site: Every
+        maker: Every (Signifier + Switzer per Typewolf)
+        locale: global
+        recognition: Typewolf Site of the Day; 2025-09-28
+        study: Study how event details and attributed articles share the opening; current typography differs from
+          the historical listing.
+        recognition_url: https://www.typewolf.com/site-of-the-day/every-2025
+      - url: https://www.wkorea.com/
+        site: 더블유 코리아
+        maker: not credited on the pages we read
+        locale: KR
+        recognition: GDWEB GRAND PRIZE; 2025-04-29
+        study: Study how a large cover and two current stories establish editorial rank through real photography.
+        recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=24757
+      - url: https://landsapporo.jp/
+        site: LAND | 札幌発のカルチャーマガジン
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: Web Design Clip gallery selection (not jury award); Jun 22, 2026
+        study: Study how local photographs, issue numbers, and dated stories establish a regional magazine's editorial
+          world.
+        recognition_url: https://webdesignclip.com/landsapporo/
+    museums-culture:
+      means: Museums, exhibitions, cultural institutions, and archives.
+      entries:
+      - url: https://www.thebookofhov.com/
+        site: The Book of HOV
+        maker: Linked By Air (site); Economy CMS
+        locale: global
+        recognition: Webby Award, Cultural Institutions (28th); 2023 exhibit; Webby announced 2024-04-23
+        study: Study how an audio journey follows exhibition rooms and keeps transcripts beside the listening route.
+        recognition_url: https://www.webbyawards.com/press/press-releases/28th-annual-webby-award-winners-announced
+      - url: https://arkmfa.org/
+        site: Arkansas Museum of Fine Arts
+        maker: Few - Digital Product Agency (per category listing)
+        locale: US
+        recognition: Awwwards Nominee; 2026-06-15
+        study: 'Study the width-dependent opening: architecture footage on desktop, visiting information and hours
+          on the phone.'
+        recognition_url: https://www.awwwards.com/sites/arkansas-museum-of-fine-art
+      - url: https://obamaoralhistory.columbia.edu/
+        site: Obama Presidency Oral History
+        maker: Huncwot
+        locale: US
+        recognition: Awwwards Honorable Mention (per an archive listing); 2026-06-25
+        study: Study how named interview footage and the archive's source statement establish an oral-history collection.
+      - url: https://nakanoshimalab.jp/
+        site: クリエイティブアイランド中之島
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: Web Design Clip gallery selection (not jury award); Apr 21, 2026
+        study: Study how a map-like network of cultural disciplines connects place to specific exhibitions and events.
+        recognition_url: https://webdesignclip.com/nakanoshimalab-2/
+      - url: https://cornwallmuseum.org/
+        site: Cornwall Museum
+        maker: credited on the linked award page
+        locale: UK
+        recognition: Awwwards Nominee + detailed maker case; 2026-01-07
+        study: Study how the current exhibition's imagery shares the opening with hours, booking, and visit routes.
+        recognition_url: https://www.awwwards.com/sites/cornwall-museum-art-gallery
+    food-local:
+      means: Food, cafes, local shops, and hospitality rooted in a place.
+      entries:
+      - url: https://www.caffegilli.com/en
+        site: Caffe Gilli
+        maker: thebrandingcrew
+        locale: IT
+        recognition: Awwwards Honorable Mention (per an archive listing); 2026-08-04
+        study: Study how cafe photographs, pastry categories, and location details connect history to a real visit.
+      - url: https://latabledejoakim.fr/
+        site: La table de Joakim
+        maker: Cete Studio & CinqSeptembre
+        locale: FR
+        recognition: Awwwards Honorable Mention (per an archive listing); 2026-08-13
+        study: Study the chef's service sequence and plating photographs in the full page; the captured first views
+          were loaders.
+      - url: https://www.easytomorrow.com/en
+        site: EASY TOMORROW (Sanghyehwan)
+        maker: does interactive
+        locale: KR
+        recognition: Awwwards Site of the Day (7.24/10); 2025-07-04
+        study: Study the current product-led grid and virtual-room entry; the recognized 3D experience is not the
+          present first view.
+        recognition_url: https://www.awwwards.com/sites/easy-tomorrow-brand-website
+      - url: https://kr.bluebottlecoffee.com
+        site: Bule Bottle Coffee Korea
+        maker: 300cbt
+        locale: KR
+        recognition: Awwwards Honorable Mention; 2026-01-31
+        study: Study how seasonal coffee photography and Korean shopping copy lead directly into the store.
+        recognition_url: https://www.awwwards.com/sites/bule-bottle-coffee-korea
+      - url: https://a-bite-coffee.com/
+        site: A Bite Coffee
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: Web Design Clip gallery selection (not jury award); Oct 1, 2026
+        study: Study how a photographed snack and named store connect product form to a purchase location.
+        recognition_url: https://webdesignclip.com/a-bite-coffee/
+      - url: https://fondan.jp/
+        site: FONDAN（フォンダン）
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: Web Design Clip gallery selection (not jury award); Oct 1, 2026
+        study: Study how a pastry cross-section makes texture the opening object, with products and store details
+          as its practical continuation.
+        recognition_url: https://webdesignclip.com/fondan-jp/
+    ecommerce:
+      means: Product discovery, retail catalogs, and online shopping.
+      entries:
+      - url: https://tillysveaas.co.uk/
+        site: Tilly Sveaas
+        maker: Commerce-UI
+        locale: UK
+        recognition: Awwwards Honorable Mention (per an archive listing); 2026-09-03
+        study: Study how jewellery materials and on-body photographs organize product discovery without dominating
+          store chrome.
+      - url: https://www.coutumes.com/
+        site: Coutumes
+        maker: index
+        locale: FR
+        recognition: Awwwards Honorable Mention (per an archive listing); 2026-09-05
+        study: Study how collection stories are paired with concrete shipping, return, and warranty terms.
+      - url: https://www.delfonics.com/
+        site: DELFONICS
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: I/O 3000 gallery selection (not jury award); 2026-09-30
+        study: Study how a stationery brand connects a strong typographic introduction to products, shops, and a journal.
+        recognition_url: https://io3000.com/bm/delfonics/
+      - url: https://elorea.co.kr
+        site: ELOREA
+        maker: credited on the linked award page
+        locale: KR
+        recognition: Awwwards Honorable Mention; 2026-01-29
+        study: Study how fragrance material footage is tied to a named seasonal product and a purchase route.
+        recognition_url: https://www.awwwards.com/sites/elorea
+      - url: https://www.nivisgear.com/
+        site: Nivis Gear
+        maker: credited on the linked award page
+        locale: global
+        recognition: Awwwards Honorable Mention; 2026-04-09
+        study: Study how skiing photographs connect technical outerwear material to a product list.
+        recognition_url: https://www.awwwards.com/sites/nivis-gear
+    data-dashboards:
+      means: Public data, charts, reports, and analytical comparison.
+      entries:
+      - url: https://ourworldindata.org/
+        site: Our World in Data
+        maker: Global Change Data Lab (Max Roser)
+        locale: global
+        recognition: Lovie Award 2019 "Be Greater with Data" (IADAS); 2019-10-16 announcement
+        study: Study how data sources and citation blocks remain attached to readable charts and research narratives.
+        recognition_url: https://ourworldindata.org/we-won-the-lovie-award
+      - url: https://www.digital.go.jp/resources/dashboard-guidebook
+        site: Digital Agency dashboard guidebook
+        maker: Digital Agency (Japan)
+        locale: JP
+        recognition: Government standard (Digital Agency publication); 2026-03-31 formal release; 2026-07-17 update
+        study: Study the published dashboard worksheet and role-based chart palettes, not the palette as a genre preset.
+        recognition_url: https://www.digital.go.jp/resources/dashboard-guidebook
+      - url: https://stateofaidesign.com/
+        site: AI in Design Report 2026
+        maker: Designer Fund + Foundation Capital; site by ++hellohello
+        locale: global
+        recognition: Awwwards Site of the Day (per an archive listing); 2026-08-26
+        study: Study how a report exposes its sample and methodology alongside chapter navigation and case studies.
+      - url: https://www.gapminder.org/tools/
+        site: Gapminder Tools
+        maker: not credited on the pages we read
+        locale: SE
+        recognition: Gapminder historical design recognition (2010 World Technology Award) + current public data tool;
+          2010 (historical); current tool observed 2026-10-04
+        study: Study how chart axes, year, country choices, and a time slider become the page's working surface.
+        recognition_url: https://www.gapminder.org/about/about-gapminder/awards/
+      - url: https://kosis.kr/visual/economyBoard/index.do?lang=ko
+        site: KOSIS 경제상황판
+        maker: 국가데이터처
+        locale: KR
+        recognition: Official public statistical dashboard (not jury award); checked 2026-10-04
+        study: Study how named indicators and regional comparison entries organize a public economy dashboard; the
+          city image is not the data.
+        recognition_url: https://kosis.kr/easyViewStatis/visualizationIndex.do
+    government:
+      means: Public-service guidance and government design standards.
+      entries:
+      - url: https://www.gov.uk/service-manual/design
+        site: GOV.UK Service Manual (Design)
+        maker: Government Digital Service
+        locale: UK
+        recognition: Service standard (the canonical reference named in the assignment); first published 2016-10-19;
+          updated 2025-02-24
+        study: Study how service-design guidance is organized by the decisions a delivery team has to make.
+        recognition_url: https://www.gov.uk/service-manual/design
+      - url: https://www.digital.go.jp/
+        site: Digital Agency (Japan) - design system and service design
+        maker: Digital Agency (Japan)
+        locale: JP
+        recognition: Government design standard (first-party write-ups); design-system write-ups from 2022-08; dashboard
+          guidebook 2026
+        study: Study how a public agency exposes design standards and reusable service artifacts, distinguishing guidance
+          from a marketing home page.
+        recognition_url: https://digital-gov.note.jp/ne45bcdd43299
+      - url: https://www.krds.go.kr/
+        site: KRDS
+        maker: not credited on the pages we read
+        locale: KR
+        recognition: Maintainer/first-party design reference (not jury award); publication date unavailable; checked
+          2026-10-04
+        study: Study how public-service standards expose components and service patterns through explicit starting
+          paths.
+        recognition_url: https://www.krds.go.kr/
+      - url: https://www.nhs.uk/
+        site: NHS
+        maker: not credited on the pages we read
+        locale: UK
+        recognition: Maintainer/first-party design reference (not jury award); publication date unavailable; checked
+          2026-10-04
+        study: Study how health-information search and service access are separated by visitor need.
+        recognition_url: https://service-manual.nhs.uk/design-system
+      - url: https://designsystem.digital.gov/
+        site: US Web Design System
+        maker: not credited on the pages we read
+        locale: US
+        recognition: Maintainer/first-party design reference (not jury award); publication date unavailable; checked
+          2026-10-04
+        study: Study how download version, components, patterns, and tokens organize a government design system.
+        recognition_url: https://designsystem.digital.gov/design-principles/
+    portfolios:
+      means: A person or studio presenting its actual work.
+      entries:
+      - url: https://trstudio.co.uk/
+        site: TR Studio
+        maker: TR Studio (self)
+        locale: UK
+        recognition: Typewolf Site of the Day (Arizona Flare + Dia); 2025-09-27
+        study: Study how named architecture projects carry a photo-led portfolio with very little supporting copy.
+        recognition_url: https://www.typewolf.com/site-of-the-day/tr-studio
+      - url: http://jesperlandberg.com
+        site: Jesper Landberg
+        maker: Jesper Landberg (self)
+        locale: SE
+        recognition: Awwwards Site of the Day (7.73/10); 2026-09-29
+        study: Study the recognized portfolio's project-to-project transitions; the award description is not a current
+          usability verdict.
+        recognition_url: https://www.awwwards.com/sites/jesper-landberg-4
+      - url: https://www.hirotos.com
+        site: Hiroto Sato
+        maker: Hiroto Sato (self)
+        locale: JP
+        recognition: Awwwards Site of the Day (7.24/10); 2026-07-17
+        study: Study how the recognized portfolio treats interactive graphics as the work itself, not decoration on
+          a product page.
+        recognition_url: https://www.awwwards.com/sites/hiroto-sato
+      - url: https://en.dinotaeng.com/
+        site: DINO TAENG
+        maker: FAVE®
+        locale: KR
+        recognition: Awwwards Honorable Mention; 2026-01-25
+        study: Study the character-brand entry at the redirected English domain; the captured animated intro does
+          not prove later navigation.
+        recognition_url: https://www.awwwards.com/sites/dino-taeng
+      - url: https://www.insplanet.co.kr/
+        site: 인스플래닛
+        maker: 인스플래닛 (주)
+        locale: KR
+        recognition: GDWEB WINNER PRIZE; 2026-09-22
+        study: Study how named finance projects support the studio's portfolio below its decorative introduction.
+        recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=27644
+      - url: https://www.libretto-works.com/
+        site: リブレットワークス
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: Web Design Clip gallery selection (not jury award); Sep 30, 2026
+        study: Study how project names, process, and cost guidance support a studio's portfolio beyond its atmospheric
+          opening.
+        recognition_url: https://webdesignclip.com/libretto-works/
+    events:
+      means: Festivals, exhibitions, dates, lineups, and ticket information.
+      entries:
+      - url: https://www.paradigmfestival.com/
+        site: Paradigm Festival
+        maker: Bureau Breekijzer
+        locale: NL
+        recognition: Awwwards Honorable Mention (per an archive listing); 2026-09-09
+        study: Study how dates, artists, and stage information give festival media a practical reason to exist.
+      - url: https://www.sejongpac.or.kr/goods/goods2026/goodsMain.jsp
+        site: 서울아트굿즈페스티벌
+        maker: 세종문화회관,네오그라프
+        locale: KR
+        recognition: GDWEB WINNER PRIZE; 2026-09-22
+        study: Study how event dates, venue, exhibitors, and map access are compressed into a poster-like opening.
+        recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=27642
+      - url: https://2026.featuredprojects.jp/
+        site: Featured Projects 2026
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: I/O 3000 gallery selection (not jury award); 2026-09-29
+        study: Study how exhibition photographs and serial thumbnails keep dates, location, and tickets in view.
+        recognition_url: https://io3000.com/bm/featured-projects-2026/
+      - url: https://50th.designstudio-l.jp/
+        site: 五◯祭 GOENSAI
+        maker: Designstudio L
+        locale: JP
+        recognition: SANKOU! gallery selection (not jury award); 2026-09-29
+        study: Study how a commemorative poster structure connects anniversary identity to event information and history.
+        recognition_url: https://sankoudesign.com/web/designstudiol-50th/
+    documentation:
+      means: Learning, API lookup, manuals, and design-system guidance.
+      entries:
+      - url: https://react.dev/
+        site: react.dev
+        maker: React team (Dan Abramov, Rachel Nabors et al.)
+        locale: global
+        recognition: First-party launch case study; 2023-03-16 launch
+        study: Study the separation between guided learning and lookup, with runnable code and exercises tied to each
+          lesson.
+        recognition_url: https://react.dev/blog/2023/03/16/introducing-react-dev
+      - url: https://smarthr.design/
+        site: SmartHR Design System
+        maker: SmartHR
+        locale: JP
+        recognition: Public design system (open operation policy); ongoing public system
+        study: Study how principles, accessibility, components, and communication assets are grouped for different
+          design jobs.
+        recognition_url: https://smarthr.design/introduction/operate-policy/
+      - url: https://developer.mozilla.org/en-US/docs/Learn_web_development
+        site: MDN Learn
+        maker: not credited on the pages we read
+        locale: global
+        recognition: Maintainer curated learning resource (not jury award); publication date unavailable; checked
+          2026-10-04
+        study: Study how the learning tree, article, and current-page contents expose a reader's position at different
+          scales.
+        recognition_url: https://developer.mozilla.org/en-US/docs/Learn_web_development
+      - url: https://service-manual.nhs.uk/
+        site: NHS Service Manual
+        maker: not credited on the pages we read
+        locale: UK
+        recognition: Maintainer/first-party design reference (not jury award); publication date unavailable; checked
+          2026-10-04
+        study: Study the manual's search and service-standard routes beneath its cookie choices; this is service guidance,
+          not the NHS health home page.
+        recognition_url: https://service-manual.nhs.uk/design-system
+      - url: https://docusaurus.io/docs
+        site: Docusaurus
+        maker: not credited on the pages we read
+        locale: global
+        recognition: Maintainer/first-party design reference (not jury award); publication date unavailable; checked
+          2026-10-04
+        study: Study how documentation version, language, search, and local contents keep a reader oriented.
+        recognition_url: https://docusaurus.io/docs#design-principles
+    games-entertainment:
+      means: Games, film, performers, and entertainment discovery.
+      entries:
+      - url: https://letterboxd.com/
+        site: Letterboxd
+        maker: Letterboxd
+        locale: global
+        recognition: Webby People's Voice Award, Entertainment & Sports, General Apps (28th); 2024-04-23 announcement
+        study: Study the desktop film-discovery proposition and real activity; the phone capture stopped at a security
+          challenge.
+        recognition_url: https://www.webbyawards.com/press/press-releases/28th-annual-webby-award-winners-announced
+      - url: https://www.trevornoah.com/
+        site: Trevor Noah
+        maker: OFF+BRAND
+        locale: US
+        recognition: Awwwards Site of the Day (per an archive listing); 2026-09-03
+        study: Study how dated shows and location records make an entertainer's schedule more useful than a generic
+          biography.
+      - url: https://www.paulkalkbrenner.net/
+        site: Paul Kalkbrenner
+        maker: HOLOGRAPHIK
+        locale: DE
+        recognition: Awwwards Site of the Day (per an archive listing); 2026-09-02
+        study: Study how player state, albums, streaming, and tour dates form a music task; do not inherit placeholder
+          album descriptions.
+      - url: https://kj8-thegame.com/
+        site: 怪獣８号 THE GAME
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: Web Design Clip gallery selection (not jury award); Sep 1, 2025
+        study: Study how game artwork is paired with story, character, system, and platform entries beyond the captured
+          loading layer.
+        recognition_url: https://webdesignclip.com/kj8-thegame/
+      - url: https://10th.fate-go.jp/
+        site: Fate/Grand Order 10周年記念全国縦断広告 OVER THE SAME SKY
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: Web Design Clip gallery selection (not jury award); Aug 14, 2025
+        study: Study how a commemorative campaign connects illustrated figures to a location archive rather than to
+          product metrics.
+        recognition_url: https://webdesignclip.com/10th-fate-go/
+    healthcare:
+      means: Clinic information, care pathways, and appointment access.
+      entries:
+      - url: https://www.ssdream.co.kr/
+        site: 삼성드림이비인후과
+        maker: 소이정
+        locale: KR
+        recognition: GDWEB WINNER PRIZE; 2026-09-23
+        study: Study how branch, condition, and consultation routes collect actual clinic tasks; opening popups remain
+          a cost.
+        recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=27643
+      - url: https://shinyuclinic.com/index.html
+        site: 신유외과
+        maker: 매스티지
+        locale: KR
+        recognition: GDWEB WINNER PRIZE; 2026-09-21
+        study: Study the contrast between clear clinic paths and a promotional opening that delays medical information.
+        recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=27597
+      - url: https://musashinitta-cocoro.com/
+        site: 武蔵新田こころクリニック
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: Web Design Clip gallery selection (not jury award); Aug 24, 2026
+        study: Study how symptoms, station access, telephone, and a fixed reservation action serve a clinic visit.
+        recognition_url: https://webdesignclip.com/musashinitta-cocoro/
+      - url: https://morioka-ganka.com/
+        site: もりおか眼科
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: Web Design Clip gallery selection (not jury award); Jun 29, 2026
+        study: Study how a clinic's weekly schedule and reservation route sit beside photographs of the care environment.
+        recognition_url: https://webdesignclip.com/morioka-ganka/
+      - url: https://ewhabrain.eumc.ac.kr/
+        site: 이대뇌혈관병원
+        maker: 오상테크놀로지
+        locale: KR
+        recognition: Web Award Korea 2025 candidate + detailed first-party case (award not established); 2025-02 build;
+          assessment read 2026-10-04
+        study: Study how appointment, specialist, and certificate routes remain accessible around hospital footage.
+        recognition_url: https://www.i-award.or.kr/Web/Assess/FinalCandidateView.aspx?REG_SEQNO=15204
+    finance:
+      means: Banking, funds, payments, and financial product information.
+      entries:
+      - url: https://toss.im/
+        site: 토스
+        maker: not credited on the pages we read
+        locale: KR
+        recognition: GDWEB WINNER PRIZE; 2026-08-24
+        study: Study how actual banking actions and app screens follow the lifestyle film, without treating the film
+          as transaction feedback.
+        recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=27458
+      - url: https://kbam.co.kr/
+        site: RISE ETF
+        maker: not credited on the pages we read
+        locale: KR
+        recognition: GDWEB WINNER PRIZE; 2026-09-29
+        study: Study how ETF names, prices, and period controls organize comparison; promotional overlays and financial
+          claims need scrutiny.
+        recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=27669
+      - url: https://www.shinkin.co.jp/echishin/
+        site: 越前信用金庫
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: SANKOU! gallery selection (not jury award); 2026-09-22
+        study: Study how personal and business routes sit beside branch, rate, and fee lookup for a local financial
+          institution.
+        recognition_url: https://sankoudesign.com/web/echishin/
+      - url: https://www.veritran.com/en
+        site: Veritran
+        maker: credited on the linked award page
+        locale: global
+        recognition: Awwwards Honorable Mention; 2025-02-21
+        study: Study how solution and customer-story routes support a banking supplier's media-led introduction.
+        recognition_url: https://www.awwwards.com/sites/veritran
+      - url: https://www.contiant.com/
+        site: Contiant
+        maker: credited on the linked award page
+        locale: EU
+        recognition: Awwwards Honorable Mention; 2023-06-12
+        study: Study how a payment-flow illustration explains fees and settlement; the UI card is an argument, not
+          proof of performance.
+        recognition_url: https://www.awwwards.com/sites/contiant-open-banking-fintech
+    education:
+      means: Schools, courses, training, admissions, and learner pathways.
+      entries:
+      - url: https://robotoriedu.com/
+        site: 로보트리에듀
+        maker: not credited on the pages we read
+        locale: KR
+        recognition: GDWEB WINNER PRIZE; 2026-09-30
+        study: Study how learner groups and program examples connect education discovery to enrollment.
+        recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=27673
+      - url: https://likelion.net/
+        site: 멋쟁이사자처럼
+        maker: 멋쟁이사자처럼
+        locale: KR
+        recognition: GDWEB WINNER PRIZE; 2025-01-17
+        study: Study how distinct training and employer routes share an education landing without pretending all visitors
+          have the same goal.
+        recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=23933
+      - url: https://www.kobe-wu.ac.jp/
+        site: 神戸女子大学
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: Web Design Clip gallery selection (not jury award); Jul 29, 2026
+        study: Study how applicant groups, departments, and campus events organize university entry points.
+        recognition_url: https://webdesignclip.com/kobe-wu/
+      - url: https://bipocdesignhistory.com/
+        site: BIPOC Design History
+        maker: not credited on the pages we read
+        locale: US
+        recognition: I/O 3000 gallery selection (not jury award); 2026-09-17
+        study: Study how historical poster images sit beside course topics and access to the learning material.
+        recognition_url: https://io3000.com/bm/bipoc-design-history/
+      - url: https://primer.com/
+        site: Primer
+        maker: credited on the linked award page
+        locale: US
+        recognition: Awwwards Honorable Mention; 2026-06-20
+        study: Study how student photographs are connected to school, grade, and tuition choices.
+        recognition_url: https://www.awwwards.com/sites/primer
+    nonprofits:
+      means: Charities, foundations, campaigns, and donation or support tasks.
+      entries:
+      - url: https://chunman.or.kr/
+        site: 천만문화재단
+        maker: 내가그린기린그림
+        locale: KR
+        recognition: GDWEB WINNER PRIZE; 2026-09-28
+        study: Study how an arts foundation organizes dated programs and support questions; do not copy its opening
+          notices.
+        recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=27648
+      - url: https://hangeul.naver.com/2023
+        site: 네이버 한글 캠페인
+        maker: 라이트브레인
+        locale: KR
+        recognition: GDWEB GRAND PRIZE; 2024-08-08
+        study: Study how handwriting footage connects a language campaign to font, document, and archive entry points.
+        recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=22868
+      - url: https://typography.or.jp/
+        site: NPO法人 日本タイポグラフィ協会
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: Web Design Clip gallery selection (not jury award); Aug 26, 2026
+        study: Study how actual publication pages and submission deadlines organize a typography association's tasks.
+        recognition_url: https://webdesignclip.com/typography/
+      - url: https://msf.org.uk/
+        site: MSF UK
+        maker: Torchbox
+        locale: UK
+        recognition: Maker user-research case study (historical; not jury award); 2017-01-17
+        study: Study how field-care photography connects an emergency story to donation and regional activity routes.
+        recognition_url: https://torchbox.com/charity/blog/m%C3%A9decins-sans-fronti%C3%A8res-renovates-uk-website-help-torchbox
+      - url: https://wwf.ca/
+        site: WWF Canada
+        maker: Loop
+        locale: CA
+        recognition: Maker conservation-data UX case study (not jury award); undated case; checked 2026-10-04
+        study: Study how real wildlife topics carry reading and donation paths rather than a decorative nature palette.
+        recognition_url: https://weareloop.com/work/wwf-canada
+    real-estate:
+      means: Buildings, property management, architecture, and development.
+      entries:
+      - url: https://cheonan-iparkcity.com
+        site: 천안 아이파크 시티
+        maker: 히어앤나우
+        locale: KR
+        recognition: GDWEB WINNER PRIZE; 2025-07-07
+        study: Study how a planned city illustration exposes separate development routes; it is not evidence of a
+          completed neighborhood.
+        recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=25177
+      - url: https://bright-avenue.jp/
+        site: 株式会社ブライトアベニュー
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: Web Design Clip gallery selection (not jury award); Sep 30, 2026
+        study: Study the renovation business explanation beyond the captured loader; do not generalize the delayed
+          opening as a strength.
+        recognition_url: https://webdesignclip.com/bright-avenue/
+      - url: https://ateliercu.jp/
+        site: アトリエシーユー一級建築士事務所
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: Web Design Clip gallery selection (not jury award); Sep 23, 2026
+        study: Study how a named house photograph links to the next architecture project with restrained supporting
+          text.
+        recognition_url: https://webdesignclip.com/ateliercu-jp/
+      - url: https://www.buena.com/en/home
+        site: Buena
+        maker: not credited on the pages we read
+        locale: DE
+        recognition: I/O 3000 gallery selection (not jury award); 2026-09-21
+        study: Study how two building photographs frame different paths for property owners and managers.
+        recognition_url: https://io3000.com/bm/buena/
+      - url: https://www.union-tec.jp/
+        site: UNION TEC
+        maker: SHIFTBRAIN; CHO-P; Sunny; yoru
+        locale: JP
+        recognition: MUUUUU.ORG gallery selection (not jury award); 2026-09-18
+        study: Study how occupied-space footage is supported by named projects and the space-making business.
+        recognition_url: https://muuuuu.org/industry/building/24875.html
+    travel-hotels:
+      means: Destinations, lodging, rooms, and travel booking.
+      entries:
+      - url: https://www.lottehotel.com/
+        site: 롯데호텔앤리조트
+        maker: not credited on the pages we read
+        locale: KR
+        recognition: GDWEB GRAND PRIZE; 2025-11-11
+        study: Study how hotel, room, date, and guest choices stay next to campaign media; the captured cookie dialog
+          obscures the opening.
+        recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=25983
+      - url: https://www.shirahone.org/
+        site: 白骨温泉
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: Web Design Clip gallery selection (not jury award); Jun 16, 2026
+        study: Study the regional lodging and transport information beneath vertical type and water imagery; the opening
+          is delayed.
+        recognition_url: https://webdesignclip.com/shirahone/
+      - url: https://yama-niwa.jp/
+        site: yama-niwa
+        maker: Re:design; HOLON
+        locale: JP
+        recognition: MUUUUU.ORG gallery selection (not jury award); 2026-09-12
+        study: Study how lodging and sauna bookings remain distinct actions beside an actual property photograph.
+        recognition_url: https://muuuuu.org/industry/trip/24827.html
+      - url: https://www.miirohotels.com/en
+        site: Miiro Hotels
+        maker: Propeller
+        locale: EU
+        recognition: Maker UX case study (not jury award); undated case; checked 2026-10-04
+        study: Study how city-specific property photographs connect location information and benefits to a booking
+          action.
+        recognition_url: https://www.propeller.co.uk/work/miiro
+      - url: https://tengilemalamala.com/
+        site: Tengile Malamala
+        maker: DashDigital
+        locale: ZA
+        recognition: Awwwards SOTD + Developer Award; 2026-10-03
+        study: Study how accommodation, stay planning, and inquiry remain distinct next steps around safari imagery.
+        recognition_url: https://www.awwwards.com/sites/tengile-malamala-collection
+      - url: https://www.vanderhotel.com
+        site: Vander Hotel
+        maker: credited on the linked award page
+        locale: SI
+        recognition: Awwwards Honorable Mention; 2026-08-29
+        study: Study how multiple hotel spaces surround a central room-booking action without hiding the action.
+        recognition_url: https://www.awwwards.com/sites/vander-hotel
+    fashion-beauty:
+      means: Clothing, jewellery, beauty products, and brand retail.
+      entries:
+      - url: https://www.kolonworkwear.com/
+        site: 코오롱 워크웨어
+        maker: not credited on the pages we read
+        locale: KR
+        recognition: GDWEB WINNER PRIZE; 2026-09-30
+        study: Study how workwear on real people makes fabric and fit lead over interface color.
+        recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=27671
+      - url: https://instantfunk.kr/
+        site: 인스턴트펑크
+        maker: 디파이 (DFY®)
+        locale: KR
+        recognition: GDWEB WINNER PRIZE; 2026-09-16
+        study: Study how campaign footage carries clothing identity while shopping tools recede; first-view purchase
+          terms are not established.
+        recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=27604
+      - url: https://www.kolonmall.com/
+        site: 코오롱몰
+        maker: 플러스엑스
+        locale: KR
+        recognition: GDWEB GRAND PRIZE; 2024-09-10
+        study: Study how seasonal brand campaigns and product categories share a retail shell; countdown pressure
+          is not a pattern to inherit.
+        recognition_url: https://www.gdweb.co.kr/sub/view.asp?Txt_fgbn=5&str_no=23118
+      - url: https://amprem.jp/
+        site: Amprem
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: SANKOU! gallery selection (not jury award); 2026-09-30
+        study: Study how bottle and liquid imagery expose shampoo materials; do not treat ingredient claims as verified
+          efficacy.
+        recognition_url: https://sankoudesign.com/web/amprem/
+      - url: https://wwake.com/
+        site: WWAKE
+        maker: not credited on the pages we read
+        locale: US
+        recognition: I/O 3000 gallery selection (not jury award); 2026-09-24
+        study: Study how worn jewellery photographs connect collection discovery to appointments and customization.
+        recognition_url: https://io3000.com/bm/wwake/
+    music-labels:
+      means: Musicians, labels, releases, players, and performance dates.
+      entries:
+      - url: https://scramblelabel.jp/
+        site: SCRAMBLE LABEL
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: Web Design Clip gallery selection (not jury award); Sep 28, 2026
+        study: Study the release and artist list below the label intro; the loader is not evidence of a successful
+          music task.
+        recognition_url: https://webdesignclip.com/scramblelabel/
+      - url: https://sasukeharaguchi.com/
+        site: 原口沙輔
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: Web Design Clip gallery selection (not jury award); Jul 2, 2026
+        study: Study the musician's vertical name and short navigation, while checking the cost of the nearly empty
+          captured opening.
+        recognition_url: https://webdesignclip.com/sasukeharaguchi/
+      - url: https://sekainoowari.jp/
+        site: SEKAI NO OWARI オフィシャルサイト
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: Web Design Clip gallery selection (not jury award); May 11, 2026
+        study: Study how a collage of real band photographs connects history to schedules and releases.
+        recognition_url: https://webdesignclip.com/sekainoowari/
+      - url: https://nakajin-official.com/
+        site: Nakajin Offcial Site
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: Web Design Clip gallery selection (not jury award); Feb 2, 2026
+        study: Study how performance footage is connected to releases, news, and a musician's profile.
+        recognition_url: https://webdesignclip.com/nakajin-official/
+      - url: https://maltine20.net/
+        site: Maltine Records 20th Anniversary 「CITY」
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: Web Design Clip gallery selection (not jury award); Dec 9, 2025
+        study: Study how release players and day/night schedules occupy distinct columns on a music anniversary page.
+        recognition_url: https://webdesignclip.com/maltine20/
+    publishing-books:
+      means: Books, magazines, publishers, bookstores, and reading.
+      entries:
+      - url: https://tokyo.bunkitsu.jp/
+        site: BUNKITSU TOKYO（ブンキツ トーキョー） 心が躍る、自由で、楽しい本屋
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: Web Design Clip gallery selection (not jury award); Aug 4, 2026
+        study: Study how a bookstore's space and operating notices support an illustrated invitation to browse.
+        recognition_url: https://webdesignclip.com/tokyo-bunkitsu/
+      - url: https://shuro.world/
+        site: SHURO | シュロ
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: Web Design Clip gallery selection (not jury award); Mar 19, 2026
+        study: Study how publication categories sit beside the actual manga and artwork being distributed.
+        recognition_url: https://webdesignclip.com/shuro-world/
+      - url: https://tsuzuku-ni-tsuzuke.jp/
+        site: つづくにつづけ | リターナブルびん飲料を飲むともらえるオリジナル短編集
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: Web Design Clip gallery selection (not jury award); Dec 25, 2025
+        study: Study how a reading-page metaphor connects short fiction to a returnable-bottle campaign without borrowing
+          the page wholesale.
+        recognition_url: https://webdesignclip.com/tsuzuku-ni-tsuzuke/
+      - url: https://links.taiyo-p.co.jp/
+        site: 大洋LINKS
+        maker: RED
+        locale: JP
+        recognition: MUUUUU.ORG gallery selection (not jury award); 2026-10-02
+        study: Study how printing-scale typography leads into business, media, and factory-visit routes.
+        recognition_url: https://muuuuu.org/industry/publication/25011.html
+      - url: https://www.kurashi-no-techo.co.jp/
+        site: 暮しの手帖社
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: Web Design Clip gallery selection (not jury award); May 6, 2025
+        study: Study how a current issue's cover, number, season, and store routes establish a magazine's publication
+          sequence.
+        recognition_url: https://webdesignclip.com/kurashi-no-techo/
+    science-research:
+      means: Scientific institutions, research resources, and science communication.
+      entries:
+      - url: https://alleninstitute.org/
+        site: Allen Institute
+        maker: Allen Institute
+        locale: US
+        recognition: First-party brand/design case (not jury award); 2026-05-04
+        study: Study how laboratory footage is connected to research resources, education, and dated news.
+        recognition_url: https://alleninstitute.org/news/charting-a-brand-revolution
+      - url: https://home.cern/
+        site: CERN
+        maker: CERN
+        locale: CH
+        recognition: First-party audience-research case (historical; not jury award); 2013-03-07
+        study: Study how an accelerator photograph and specific research updates share the science institution's opening.
+        recognition_url: https://home.cern/new-website-cern
+      - url: https://www.embl.org/
+        site: EMBL
+        maker: EMBL
+        locale: EU
+        recognition: First-party design principles (not jury award); undated principles; checked 2026-10-04
+        study: Study how laboratory imagery and dated updates across research sites establish institutional scope.
+        recognition_url: https://www.embl.org/guidelines/design/design-guidelines/design-principles
+      - url: https://www.ebi.ac.uk/
+        site: EMBL-EBI
+        maker: EMBL-EBI
+        locale: EU
+        recognition: First-party website redesign case (not jury award); 2022-01
+        study: Study how resource search, scope selection, and example queries lead before research and training routes.
+        recognition_url: https://www.embl.org/about/info/communications/blog/2022/01/coming-soon-a-new-look-for-the-embl-ebi-website
+      - url: https://science.nasa.gov/
+        site: NASA Science
+        maker: NASA
+        locale: US
+        recognition: First-party redesign + Horizon Design System case; 2023-09-28
+        study: Study how real science imagery is organized by exploration, learning, and viewing tasks.
+        recognition_url: https://www.nasa.gov/general/nasa-publishes-beta-flagship-science-websites-as-improvements-continue
+    forms-services:
+      means: A service task, quote, application, or administrative transaction.
+      entries:
+      - url: https://octopus.energy/
+        site: Octopus Energy
+        maker: Octopus Energy
+        locale: UK
+        recognition: First-party accessibility case (not jury award); undated; checked 2026-10-04
+        study: Study how a postcode starts the quote task immediately beside a domestic photograph.
+        recognition_url: https://octopus.energy/blog/making-octopus-accessible-everyone
+      - url: https://www.n-ssi.co.jp/
+        site: SBI日本少額短期保険
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: SANKOU! gallery selection (not jury award); 2025-05-08
+        study: Study how policyholder, product, incident, and inquiry routes separate insurance service needs.
+        recognition_url: https://sankoudesign.com/web/nihonssi/
+      - url: https://www.sumitomolife.co.jp/chakin/index.html
+        site: 住友生命 Chakin
+        maker: not credited on the pages we read
+        locale: JP
+        recognition: SANKOU! gallery selection (not jury award); 2025-05-25
+        study: Study how one savings-insurance product explains its terms and enrollment sequence before a commitment.
+        recognition_url: https://sankoudesign.com/web/sumitomolife-chakin/
+      - url: https://www.gov.uk/apply-renew-passport
+        site: Renew a passport
+        maker: GOV.UK
+        locale: UK
+        recognition: Government service-design standard (not jury award); checked 2026-10-04
+        study: Study how scope, processing time, and required materials prepare a visitor to renew a passport.
+        recognition_url: https://www.gov.uk/service-manual/design
+      - url: https://www.gov.uk/vehicle-tax
+        site: Tax your vehicle
+        maker: GOV.UK
+        locale: UK
+        recognition: Government service-design standard (not jury award); checked 2026-10-04
+        study: Study how document references and alternatives are explained before the vehicle-tax action.
+        recognition_url: https://www.gov.uk/service-manual/design
+      - url: https://www.lemonade.com/
+        site: Lemonade insurance
+        maker: Lemonade
+        locale: US
+        recognition: First-party design case; source fetch HTTP403, claim not independently verified; checked 2026-10-04
+        study: Study how insurance types and price access organize a quote decision without assuming a successful
+          conversion.
+        recognition_url: https://www.lemonade.com/car/explained/under-the-hood-of-lemonade-cars-landing-page
+    developer-open-source:
+      means: Open-source tools, installation, examples, and contribution.
+      entries:
+      - url: https://vite.dev/
+        site: Vite
+        maker: VoidZero
+        locale: global
+        recognition: First-party unified tooling identity case; 2026-02-05
+        study: Study how an install command and package-manager choice give a developer a concrete first action.
+        recognition_url: https://voidzero.dev/posts/whats-new-jan-2026
+      - url: https://vitest.dev/
+        site: Vitest
+        maker: VoidZero
+        locale: global
+        recognition: First-party unified tooling identity case; 2026-02-05
+        study: Study how actual test-runner output explains a testing tool rather than implying fabricated application
+          performance.
+        recognition_url: https://voidzero.dev/posts/whats-new-jan-2026
+      - url: https://rolldown.rs/
+        site: Rolldown
+        maker: VoidZero
+        locale: global
+        recognition: First-party unified tooling identity case; 2026-02-05
+        study: Study how compatibility, configuration code, and a playground support the bundler's adoption task.
+        recognition_url: https://voidzero.dev/posts/whats-new-jan-2026
+      - url: https://oxc.rs/
+        site: Oxc
+        maker: VoidZero
+        locale: global
+        recognition: First-party unified tooling identity case; 2026-02-05
+        study: Study how separate tool, contribution, playground, and sponsorship paths explain an open-source tool
+          family.
+        recognition_url: https://voidzero.dev/posts/whats-new-jan-2026
+      - url: https://svelte.dev/
+        site: Svelte
+        maker: Svelte team
+        locale: global
+        recognition: First-party accessibility/website overhaul case (historical); 2023-06-29
+        study: Study how a compiler metaphor connects the framework to runnable examples, documentation, and a tutorial.
+        recognition_url: https://svelte.dev/blog/svelte-dev-overhaul
+    internal-admin:
+      means: Internal workspaces, records, operations, and administration.
+      entries:
+      - url: https://preview.tabler.io/
+        site: Tabler demo
+        maker: not credited on the pages we read
+        locale: global
+        recognition: Maintainer/first-party design reference (not jury award); publication date unavailable; checked
+          2026-10-04
+        study: Study the density and grouping of report, time-range, and administrative modules; a demo does not settle
+          this project's information priorities.
+        recognition_url: https://tabler.io/
+      - url: https://adminlte.io/themes/v3/
+        site: AdminLTE demo
+        maker: not credited on the pages we read
+        locale: global
+        recognition: Maintainer/first-party design reference (not jury award); publication date unavailable; checked
+          2026-10-04
+        study: Study how a dense work menu relates to charts, chat, tasks, and calendar; keep only modules a real
+          task needs.
+        recognition_url: https://adminlte.io/
+      - url: https://preview.pro.ant.design/
+        site: Ant Design Pro preview
+        maker: not credited on the pages we read
+        locale: global
+        recognition: Maintainer/first-party design reference (not jury award); publication date unavailable; checked
+          2026-10-04
+        study: Study the relation between period controls, ranking, chart, and table; metric cards are not a default
+          recommendation.
+        recognition_url: https://pro.ant.design/
+      - url: https://ui.shadcn.com/examples/dashboard
+        site: shadcn dashboard example
+        maker: not credited on the pages we read
+        locale: global
+        recognition: Maintainer/first-party design reference (not jury award); publication date unavailable; checked
+          2026-10-04
+        study: Study how the document workspace relates its table, period controls, and chart rather than copying
+          the example shell.
+        recognition_url: https://ui.shadcn.com/
+      - url: https://retool.com/templates
+        site: Retool public templates
+        maker: Retool
+        locale: global
+        recognition: Maintainer product showcase (not jury award); checked 2026-10-04
+        study: Study how template search and use filters organize real workflow previews for internal tools.
+        recognition_url: https://retool.com/templates
+      - url: https://www.appsmith.com/templates
+        site: Appsmith public templates
+        maker: Appsmith
+        locale: global
+        recognition: Maintainer product showcase (not jury award); checked 2026-10-04
+        study: Study how task-specific templates pair a screen preview with a practical explanation rather than a
+          generic dashboard promise.
+        recognition_url: https://www.appsmith.com/templates
+  expression:
+    motion-led:
+      means: 'Pages whose meaning is carried by movement over time: scroll-driven staging, transitions, and animated type
+        or scenes.'
+      words:
+      - motion
+      - animated
+      - animation
+      - dynamic
+      - kinetic
+      - movement
+      - 움직임
+      - 모션
+      - 역동적
+      - 동적
+      motion: true
+      entries:
+      - url: https://lusion.co/
+        site: Lusion
+        maker: Lusion (studio)
+        locale: global
+        recognition: First-party studio site, not a jury award; observed 2026-10-09
+        study: Study what the 3D scenes and transitions say about the work that the work list alone would not, and what is
+          left when they stop.
+        shows: Per its own description, a studio presenting work through 3D and interactive scenes; check what moves on scroll
+          and on pointer and in what order.
+      - url: https://activetheory.net/
+        site: Active Theory
+        maker: Active Theory (studio)
+        locale: global
+        recognition: First-party studio site, not a jury award; observed 2026-10-09
+        study: Study how one continuous motion system links the studio's pages, and where a still frame would be enough.
+        shows: A studio site built on a real-time web toolset (per its description); check which elements move on entry, on
+          scroll, and between pages.
+      - url: https://resn.co.nz/
+        site: Resn
+        maker: Resn (studio)
+        locale: NZ
+        recognition: First-party studio site, not a jury award; observed 2026-10-09
+        study: Study how animated interface and imagery give a studio a voice, and how readable the project list stays while
+          it moves.
+        shows: A creative-agency site; check what animates on load, on hover, and on route change, and how long each takes.
+      - url: https://locomotive.ca/en
+        site: Locomotive
+        maker: Locomotive (studio)
+        locale: CA
+        recognition: First-party studio site, not a jury award; observed 2026-10-09
+        study: Study how scroll-linked reveals and page transitions pace a case-study page, and what they cost reading speed.
+        shows: A Montreal agency site from the makers of a smooth-scroll library (per its description); check reveals and
+          transitions against the scroll position.
+      - url: https://www.makemepulse.com/
+        site: makemepulse
+        maker: makemepulse (studio)
+        locale: global
+        recognition: First-party studio site, not a jury award; observed 2026-10-09
+        study: Study how an immersive-experience studio stages its own portfolio, and which motion is navigation rather than
+          display.
+        shows: A studio site describing standout digital platforms and immersive experiences; check the entry sequence and
+          how work is revealed.
+    experimental-type:
+      means: 'Letterforms treated as the subject: variable-font axes, unusual specimens, and type that is set, stretched,
+        or animated as the image.'
+      words:
+      - experimental type
+      - expressive type
+      - variable font
+      - typographic
+      - lettering
+      - glyph
+      - 실험적 타이포
+      - 타이포그래피
+      - 레터링
+      - 글자
+      motion: false
+      entries:
+      - url: https://www.axis-praxis.org/
+        site: Axis-Praxis
+        maker: Laurence Penney
+        locale: global
+        recognition: Tool and playground, not a jury award; observed 2026-10-09
+        study: Study how dragging an axis turns one set of letters into many, and which positions are worth freezing for a
+          layout.
+        shows: Per its own description, a playground for OpenType variable fonts in the browser; check how letterforms change
+          as each axis moves.
+      - url: https://velvetyne.fr/
+        site: Velvetyne
+        maker: Velvetyne Type Foundry
+        locale: FR
+        recognition: Open-source type foundry site, not a jury award; observed 2026-10-09
+        study: Study how a foundry's own pages show odd, libre faces in use, and what the page does to let the type lead.
+        shows: A libre type foundry presenting fonts made by many designers; check the specimens' scale, crop, and the page's
+          own type choices.
+      - url: https://abcdinamo.com/
+        site: Dinamo
+        maker: Dinamo (type studio)
+        locale: DE
+        recognition: Type foundry site, not a jury award; observed 2026-10-09
+        study: Study how a type studio's site demonstrates faces with live text, and where the interface stays out of the
+          way.
+        shows: A Berlin type studio selling retail and bespoke typefaces; check the live specimens and testers and what they
+          let you change.
+      - url: https://www.futurefonts.com/
+        site: Future Fonts
+        maker: Future Fonts
+        locale: global
+        recognition: Type marketplace site, not a jury award; observed 2026-10-09
+        study: Study how unfinished, work-in-progress type is shown, and what version labels do to a specimen page.
+        shows: A marketplace for typefaces still in progress (per its description); check how each specimen is set and updated.
+      - url: https://v-fonts.com/
+        site: Variable Fonts
+        maker: not credited on the page we read
+        locale: global
+        recognition: Resource site, not a jury award; observed 2026-10-09
+        study: Study how a catalogue lets you try axes side by side, and which comparisons it makes obvious.
+        shows: A resource for finding and trying variable fonts; check the live axis controls and the preview text.
+    generative-interactive:
+      means: 'Work that responds to the visitor or builds itself from rules: sound-and-shape toys, sketches, data visual essays,
+        creative coding.'
+      words:
+      - generative
+      - interactive
+      - interaction
+      - playful
+      - creative coding
+      - experiment
+      - 인터랙티브
+      - 인터랙션
+      - 생성형
+      - 실험
+      motion: true
+      entries:
+      - url: https://patatap.com/
+        site: Patatap
+        maker: not checked (a portable animation and sound kit)
+        locale: global
+        recognition: Standalone interactive piece, not a jury award; observed 2026-10-09
+        study: Study how each key press maps to a shape and a sound, and what the first ten seconds teach without any text.
+        shows: 'Per its own description, a portable animation and sound kit: a keystroke creates a sound with a moving shape.'
+      - url: https://pudding.cool/
+        site: The Pudding
+        maker: The Pudding
+        locale: US
+        recognition: Independent publication, not a jury award; observed 2026-10-09
+        study: Study how a data story reveals one chart state per scroll step, and how the prose stays tied to the graphic.
+        shows: 'Per its own description, visual essays: scroll-linked charts and interactive explanations of a single idea.'
+      - url: https://www.tylerxhobbs.com/
+        site: Tyler Hobbs
+        maker: Tyler Hobbs
+        locale: US
+        recognition: Artist's own site; exhibition history is stated on the page; observed 2026-10-09
+        study: Study how a generative artist presents rule-made work as a series, and how the page frames its outputs.
+        shows: The site of a generative artist and creative coder (per its description); check how the series and outputs
+          are organised.
+      - url: https://openprocessing.org/
+        site: OpenProcessing
+        maker: OpenProcessing community
+        locale: global
+        recognition: Community site, not a jury award; observed 2026-10-09
+        study: Study how a sketch's live output and its code sit side by side, and which sketches read as images without explanation.
+        shows: A creative-coding community of live sketches; check how a sketch runs in the page and how its code is shown.
+      - url: https://showcase.p5js.org/
+        site: p5.js Showcase
+        maker: p5.js community
+        locale: global
+        recognition: Community showcase, not a jury award; observed 2026-10-09
+        study: Study how a curated set of creative-coding projects is introduced, and what each card says about the work's
+          behaviour.
+        shows: A showcase of creative work made with p5.js by its international community; check which entries are interactive
+          and how they are framed.
+    spatial-3d:
+      means: 'Depth you move through or around: real-time 3D scenes, scroll-driven product renders, and explorable models.'
+      words:
+      - 3d
+      - three.js
+      - webgl
+      - immersive
+      - spatial
+      - depth
+      - 입체
+      - 몰입
+      - 공간
+      - 3차원
+      motion: true
+      entries:
+      - url: https://bruno-simon.com/
+        site: Bruno Simon
+        maker: Bruno Simon
+        locale: FR
+        recognition: Personal portfolio, not a jury award; observed 2026-10-09
+        study: Study how a 3D scene doubles as navigation, and what a visitor who wants only the contact line has to do.
+        shows: A portfolio built as a 3D scene (per its title and common description); check how a visitor moves and how content
+          is reached.
+      - url: https://science.nasa.gov/eyes/
+        site: NASA Eyes
+        maker: NASA
+        locale: US
+        recognition: Public agency site; observed 2026-10-09
+        study: Study how real data is shown in explorable 3D, and how the page introduces apps that need a longer visit.
+        shows: Per its own description, 3D visualization applications for exploring real NASA data and imagery.
+      - url: https://www.apple.com/airpods-pro/
+        site: AirPods Pro 3
+        maker: Apple
+        locale: US
+        recognition: Commercial product page, not a jury award; observed 2026-10-09
+        study: Study how product renders are staged against scroll, and which sections stay still so text can be read.
+        shows: A scroll-staged product page; check which renders animate with scroll and how each section holds the type.
+      - url: https://immersive-g.com/
+        site: Immersive Garden
+        maker: Immersive Garden (studio)
+        locale: FR
+        recognition: First-party studio site, not a jury award; observed 2026-10-09
+        study: Study how a digital experience studio frames its immersive projects, and how the 3D handles a small screen.
+        shows: A studio of digital experiences (per its description); check the depth cues, transitions, and mobile composition.
+      - url: https://threejs.org/examples/
+        site: three.js examples
+        maker: three.js contributors
+        locale: global
+        recognition: Library examples, not a jury award; observed 2026-10-09
+        study: Study which examples are real-time scenes and which are techniques, and what each one says it is for.
+        shows: An index of runnable 3D examples; check the range from lighting and materials to interaction.
+    collage-grunge:
+      means: 'Layered, torn, photocopied, and hand-set surfaces: zine energy, overprinted type, and deliberate roughness.'
+      words:
+      - collage
+      - grunge
+      - zine
+      - punk
+      - diy
+      - handmade
+      - 콜라주
+      - 그런지
+      - 지인
+      - 핸드메이드
+      motion: false
+      entries:
+      - url: https://www.davidcarson.com/
+        site: David Carson
+        maker: David Carson
+        locale: US
+        recognition: Designer's own site; observed 2026-10-09
+        study: Study how a designer known for rule-breaking type sets his own pages, and what stays readable.
+        shows: The site of the designer known for the grunge-era magazine layouts (per its description); check how type and
+          image overlap.
+      - url: https://www.emigre.com/
+        site: Emigre
+        maker: Emigre, Inc.
+        locale: US
+        recognition: Type foundry and magazine publisher; founded 1984 per its own text; observed 2026-10-09
+        study: Study how a digital foundry born with the Macintosh shows its experimental faces, and what the page keeps plain.
+        shows: A digital type foundry (per its description); check how specimens are layered and how rough or ruled the surrounding
+          page is.
+      - url: https://remember.style/grunge
+        site: 'Remember Style: Grunge / Punk'
+        maker: not credited on the page we read
+        locale: global
+        recognition: Style-gallery demo page, not a jury award; observed 2026-10-09
+        study: Study which marks (xerox grain, tape, ransom-note type) the demo uses to say punk, and which of them carry
+          no information.
+        shows: A live demo of the grunge and punk style as a real clickable site (per its own text); check texture, type,
+          and spacing.
+      - url: https://vaporprobe.neocities.org/zine
+        site: 'vaporprobe: Collage Zine'
+        maker: vaporprobe
+        locale: global
+        recognition: Personal site, not a jury award; observed 2026-10-09
+        study: Study how a zine page holds a messy working-out on screen, and what order the reader is given.
+        shows: A personal collage-zine page (per its own text) with a small window-style navigation; check how pieces are
+          laid out and linked.
+    brutalist-raw:
+      means: 'Plain HTML, default type, hard edges, and structure left visible: sites that refuse polish on purpose or by
+        history.'
+      words:
+      - brutalist
+      - brutalism
+      - raw
+      - plain html
+      - anti-design
+      - ugly
+      - 브루탈리즘
+      - 날것
+      - 투박
+      - 거친
+      motion: false
+      entries:
+      - url: https://brutalistwebsites.com/
+        site: Brutalist Websites
+        maker: not credited on the page we read
+        locale: global
+        recognition: Collection site, not a jury award; observed 2026-10-09
+        study: Study what the listed sites have in common beyond default fonts, and which of them stay usable.
+        shows: A gallery of websites in the raw, unpolished manner; check the range between plain pages and deliberate collisions.
+      - url: https://www.spacejam.com/1996/
+        site: Space Jam (1996)
+        maker: Warner Bros. (preserved site)
+        locale: US
+        recognition: Preserved 1996 promotional site; observed 2026-10-09
+        study: Study how a page built from plain tables and images of its time organises information, and what a modern page
+          lacks that it still has.
+        shows: The film's 1996 website kept online as it was; check the table layout, image-based navigation, and absence
+          of responsive design.
+      - url: https://www.lingscars.com/
+        site: LINGsCARS
+        maker: LINGsCARS
+        locale: GB
+        recognition: Commercial site, not a jury award; observed 2026-10-09
+        study: Study how a deliberately loud page still gets a visitor to the lease form, and what that costs a calm reader.
+        shows: A car-leasing site known for its crowded, loud look; check type, colour, and what the page asks you to do first.
+      - url: https://mschf.com/
+        site: MSCHF
+        maker: MSCHF
+        locale: US
+        recognition: Studio site, not a jury award; observed 2026-10-09
+        study: Study how a studio presents drops with little chrome, and which default-looking elements are chosen.
+        shows: A studio site describing its practice (per its description); check the plainness of the layout and where it
+          breaks.
+  beyond-web:
+    poster:
+      means: 'Posters as designed objects: type and image at one scale, with a single message read in seconds.'
+      kind: print
+      entries:
+      - url: https://museum-gestaltung.ch/en/poster
+        site: 'Museum für Gestaltung Zürich: Poster Collection'
+        maker: Museum für Gestaltung Zürich
+        locale: CH
+        recognition: Museum collection page; over 380,000 posters per its own text; observed 2026-10-09
+        study: Study how one poster holds a single idea through scale and contrast, and what its text hierarchy would be as
+          a first screen.
+      - url: https://swisspostermuseum.com/en/home
+        site: Swiss Poster Museum
+        maker: Swiss Poster Museum
+        locale: CH
+        recognition: Private museum site; lithographic-era Swiss posters per its own text; observed 2026-10-09
+        study: Study how lithographic-era posters make a product legible from afar, and what their flat colour planes do for
+          hierarchy.
+      - url: https://commons.wikimedia.org/wiki/Category:Posters_of_Switzerland
+        site: 'Wikimedia Commons: Posters of Switzerland'
+        maker: Wikimedia Commons contributors
+        locale: global
+        recognition: Open-media category; check each file's licence; observed 2026-10-09
+        study: Study the range of poster eras in one place and pick the one whose spacing and type scale answer an open decision.
+      - url: https://commons.wikimedia.org/wiki/Category:Posters_of_Poland
+        site: 'Wikimedia Commons: Posters of Poland'
+        maker: Wikimedia Commons contributors
+        locale: global
+        recognition: Open-media category; check each file's licence; observed 2026-10-09
+        study: Study how image-led posters carry meaning with few words, and what that means for a hero without a headline.
+    exhibition:
+      means: 'Exhibition design: rooms, labels, plinths, and routes arranged so that a visit has an order.'
+      kind: physical-object
+      entries:
+      - url: https://designmuseum.org/exhibitions
+        site: 'Design Museum (London): Exhibitions'
+        maker: Design Museum
+        locale: GB
+        recognition: Museum programme page; observed 2026-10-09
+        study: Study how a show is introduced as a route with a time and place, and what its installation images say about
+          density.
+      - url: https://www.design-museum.de/en/exhibitions/current-exhibitions.html
+        site: 'Vitra Design Museum: Current Exhibitions'
+        maker: Vitra Design Museum
+        locale: DE
+        recognition: Museum programme page; observed 2026-10-09
+        study: Study how curatorial text and installation photography are paired, and which object gets the largest view.
+      - url: https://www.serpentinegalleries.org/
+        site: Serpentine
+        maker: Serpentine Galleries
+        locale: GB
+        recognition: Gallery site; free contemporary art gallery per its own text; observed 2026-10-09
+        study: Study how a gallery with changing shows and pavilions organises the present, the past, and the visit information.
+      - url: https://www.vam.ac.uk/
+        site: V&A
+        maker: V&A
+        locale: GB
+        recognition: Museum site; observed 2026-10-09
+        study: Study how a very large collection is led into by exhibitions, and how the page balances objects and practical
+          visit facts.
+    record-cover:
+      means: 'Record sleeves and label identities: one square that has to name a sound, and a system that holds across a catalogue.'
+      kind: print
+      entries:
+      - url: https://ecmrecords.com/
+        site: ECM Records
+        maker: ECM Records
+        locale: DE
+        recognition: Label site; observed 2026-10-09
+        study: Study how a label keeps one visual voice across its catalogue, and how much space the image gets on a page.
+      - url: https://www.bluenote.com/
+        site: Blue Note Records
+        maker: Blue Note
+        locale: US
+        recognition: Label site; in catalogue since 1939 per its own text; observed 2026-10-09
+        study: Study how a label's history is told through its sleeves, and how type and a single colour carry the era.
+      - url: https://warp.net/
+        site: WARP
+        maker: Warp Records
+        locale: GB
+        recognition: Label site; observed 2026-10-09
+        study: Study how a label that releases very different music presents each artist, and what stays constant across pages.
+      - url: https://coverartarchive.org/
+        site: Cover Art Archive
+        maker: Internet Archive and MusicBrainz
+        locale: global
+        recognition: Community archive; images remain their owners' copyright; observed 2026-10-09
+        study: Study a run of sleeves from one period side by side, and name the shared moves in scale, crop, and type.
+    film-title:
+      means: 'Title sequences and film graphics: type and image timed to a story, with a few seconds to set a tone.'
+      kind: media
+      entries:
+      - url: https://www.artofthetitle.com/title/se7en/
+        site: 'Art of the Title: Se7en (1995)'
+        maker: Art of the Title; titles by Kyle Cooper
+        locale: US
+        recognition: Editorial article; observed 2026-10-09
+        study: Study how fragmented, scratched type sets dread before a story starts, and which of its marks carry no information.
+      - url: https://www.artofthetitle.com/title/catch-me-if-you-can/
+        site: 'Art of the Title: Catch Me If You Can (2002)'
+        maker: Art of the Title
+        locale: US
+        recognition: Editorial article; observed 2026-10-09
+        study: Study how flat shapes and type move as a fugitive chase, and what that rhythm would mean for a page's reading
+          order.
+      - url: https://www.artofthetitle.com/designer/saul-bass/
+        site: 'Art of the Title: Saul Bass'
+        maker: Art of the Title
+        locale: US
+        recognition: Editorial profile; observed 2026-10-09
+        study: Study how a few cut shapes and one type voice reduce a film to a symbol, and what a page can take from such
+          reduction.
+      - url: https://www.watchthetitles.com/
+        site: Watch the Titles
+        maker: Submarine Channel
+        locale: NL
+        recognition: Editorial collection of 200+ sequences per its own text; observed 2026-10-09
+        study: Study how the same collection sorts sequences by approach, and which approach best matches your brief's tempo.
+    book-editorial:
+      means: 'Books and magazines: grids, running heads, plates, and covers that organise long reading.'
+      kind: print
+      entries:
+      - url: https://magculture.com/
+        site: magCulture
+        maker: magCulture
+        locale: GB
+        recognition: Magazine shop and journal; observed 2026-10-09
+        study: Study how issue covers and spreads are shown, and what the journal's own layout does to let them lead.
+      - url: https://letterformarchive.org/
+        site: Letterform Archive
+        maker: Letterform Archive
+        locale: US
+        recognition: Nonprofit archive site; observed 2026-10-09
+        study: Study how items of lettering and print are photographed and captioned, and what the caption carries.
+      - url: https://mackbooks.co.uk/
+        site: MACK
+        maker: MACK
+        locale: GB
+        recognition: Publisher site; observed 2026-10-09
+        study: Study how photo-book covers and spreads are presented, and how little the page adds around each book.
+      - url: https://gestalten.com/
+        site: gestalten
+        maker: gestalten
+        locale: DE
+        recognition: Publisher site; observed 2026-10-09
+        study: Study how a publisher of design books lays out its list, and which book gets a full-width cover.
+    signage-wayfinding:
+      means: 'Wayfinding and transit graphics: standard systems of type, colour, arrows, and maps that work at a glance.'
+      kind: signage
+      entries:
+      - url: https://standardsmanual.com/
+        site: Standards Manual
+        maker: Standards Manual (publisher)
+        locale: US
+        recognition: Publisher of reissued graphics standards manuals; observed 2026-10-09
+        study: Study how a manual specifies a system in a few rules, and which rule you could carry into a component library.
+      - url: https://transitmap.net/
+        site: Transit Maps
+        maker: not credited on the page we read
+        locale: global
+        recognition: Collection site on transit map design; observed 2026-10-09
+        study: Study how maps simplify a network into lines and stations, and what that suggests for a step-by-step page.
+      - url: https://commons.wikimedia.org/wiki/Category:Wayfinding
+        site: 'Wikimedia Commons: Wayfinding'
+        maker: Wikimedia Commons contributors
+        locale: global
+        recognition: Open-media category; check each file's licence; observed 2026-10-09
+        study: 'Study photographs of real signs at distance and name what makes a sign legible: contrast, size, and placement.'
+      - url: https://www.nycsubway.org/
+        site: nycsubway.org
+        maker: not credited on the page we read
+        locale: US
+        recognition: Reference site on a subway system; observed 2026-10-09
+        study: Study how a documented signage system handles lines, directions, and exceptions, and what its history says
+          about change.
+    physical-object:
+      means: 'Products and instruments designed as objects: controls, materials, and labelling that explain use without text.'
+      kind: physical-object
+      entries:
+      - url: https://teenage.engineering/
+        site: teenage engineering
+        maker: teenage engineering
+        locale: SE
+        recognition: Manufacturer site; observed 2026-10-09
+        study: Study how a product's controls are labelled and photographed, and what the page leaves out around the object.
+      - url: https://www.braun-audio.com/
+        site: Braun Audio
+        maker: Braun Audio
+        locale: DE
+        recognition: Manufacturer site; brand history kept on the site per its own text; observed 2026-10-09
+        study: Study how a product line's form language is carried onto its pages, and how much is image against text.
+      - url: https://www.hay.com/
+        site: HAY
+        maker: HAY
+        locale: DK
+        recognition: Furniture maker site; observed 2026-10-09
+        study: Study how furniture is shown in rooms and alone, and how colour is used to group products.
+      - url: https://leica-camera.com/
+        site: Leica Camera
+        maker: Leica Camera
+        locale: DE
+        recognition: Manufacturer site; observed 2026-10-09
+        study: Study how an instrument's few controls are shown close up, and what the product pages say about use rather
+          than specs.

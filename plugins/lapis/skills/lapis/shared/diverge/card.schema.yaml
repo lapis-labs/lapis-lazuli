@@ -1,0 +1,63 @@
+# LapisLazuli diverge card schema — v0
+# Location: .lapis/diverge/<task>/C<n>/card.yaml, next to the rough's index.html
+# What one rough first view is: the reference direction it draws on, the draws it spends (the CLI made them,
+# `.lapis/state/diverge/<task>/draws.jsonl`), how each open core object is represented, the color roles with the area
+# each owns, and the signature elements it adds. `lapis-design diverge check` reads the card against the draws and the
+# renders; the picked card's `color` becomes the plan's `tokens.color.roles` unchanged. A card holds no reason for
+# choosing itself: the owner sees the contact sheet, not a defence.
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/diverge-card.v0.json
+title: LapisLazuli diverge card
+type: object
+additionalProperties: false
+required: [version, id, direction, draws, objects, color, signature, made_in]
+properties:
+  version: {const: 0}
+  id: {type: string, pattern: "^C[1-9][0-9]?$"}
+  direction: {type: string, pattern: "^([A-E]|none)$"}   # the references record's direction (`none` when it has none)
+  draws: {type: array, minItems: 1, items: {type: string, pattern: "^d[1-9][0-9]*$"}}
+  objects:
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [id, family, medium, first_view_share, representation]
+      properties:
+        id: {type: string, pattern: "^O[1-4]$"}
+        option: {type: string, pattern: "^[a-e]$"}      # the D1 option this draws on, when it does
+        family: {type: string, pattern: "^[a-z][a-z0-9-]*$"}
+        medium: {enum: [drawn-svg, css-drawing, image, control, diagram, motion, text, other]}
+        first_view_share: {type: number, minimum: 0, maximum: 1}   # the share of the 1440 first view the object owns
+        representation: {type: string, minLength: 12}   # what the visitor sees and can do with it, on this subject
+  color:
+    type: array
+    minItems: 2
+    items:
+      type: object
+      additionalProperties: false
+      required: [name, role, oklch]
+      properties:
+        name: {type: string, minLength: 1}
+        role: {enum: [field, foreground, identity, interaction, status, data, content]}
+        oklch:
+          type: array
+          minItems: 3
+          maxItems: 3
+          prefixItems:
+            - {type: number, minimum: 0, maximum: 1}
+            - {type: number, minimum: 0, maximum: 0.5}
+            - {type: number, minimum: 0, maximum: 360}
+        area: {type: string, minLength: 8}              # where the color sits and about how much of the screen it owns
+      if: {properties: {role: {enum: [field, identity]}}, required: [role]}
+      then: {required: [area]}
+  signature:                                            # elements this rough adds; the owner decides each at D2
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [id, element, carries]
+      properties:
+        id: {type: string, pattern: "^G[1-9][0-9]?$"}
+        element: {type: string, minLength: 2}
+        carries: {type: string, minLength: 8}           # the information or job the element carries, not its look
+  made_in: {enum: [subagent, main]}

@@ -83,6 +83,22 @@ items:
   view: full
   path: requirements/schema.yaml
   summary: LapisLazuli requirement record schema — v0
+- id: direction-proposal
+  view: full
+  path: direction/schema.yaml
+  summary: LapisLazuli direction proposal schema — v0
+- id: diverge-pools
+  view: full
+  path: diverge/pools.yaml
+  summary: Pools `lapis-design diverge` draws from — v0
+- id: diverge-pools-schema
+  view: summary
+  path: diverge/pools.schema.yaml
+  summary: Schema of diverge/pools.yaml — v0
+- id: diverge-card
+  view: full
+  path: diverge/card.schema.yaml
+  summary: LapisLazuli diverge card schema — v0
 - id: system-fonts
   view: summary
   path: fonts/system-fonts.yaml

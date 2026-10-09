@@ -159,7 +159,8 @@ def plan_sets_dark(root, how):
         if how == "themes":
             color["themes"] = ["light", "dark"]
         else:
-            color["roles"].append({"name": "kiln-night", "role": "field", "oklch": [0.22, 0.01, 60], "theme": "dark"})
+            color["roles"].append({"name": "kiln-night", "role": "field", "oklch": [0.22, 0.01, 60], "theme": "dark",
+                                   "area": "canvas of every section in the dark theme, about 80% of the first view"})
     os.utime(update(root, "plans/kiln-shop-landing.yaml", change), (100, 100))
 
 

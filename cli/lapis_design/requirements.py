@@ -49,8 +49,7 @@ _QUOTE = re.compile(r"^\s{0,3}(?:>\s?)+")
 _ID = re.compile(r"R[0-9a-f]{6}(?:[0-9a-f]{2})?")
 _DECISION = re.compile(r"^(R[0-9a-f]{6}(?:[0-9a-f]{2})?)\s*:\s*(drop|narrow)\s*(?:—|–|--|-)\s*(\S.*)$",
                        re.IGNORECASE | re.DOTALL)
-_PICK = re.compile(r"^slice\s*:", re.IGNORECASE)
-_PICK_URL = re.compile(r"^slice\s*:\s*(\S+)", re.IGNORECASE)
+_PICK = re.compile(r"^pick\s*:\s*C\d+\b", re.IGNORECASE)         # the owner's pick among the `diverge` roughs
 _LEAD = re.compile(r"^[\s*_`:\-–—]+")
 
 
@@ -226,7 +225,8 @@ def _declared_items(text: str) -> Iterable[tuple[dict, str, str]]:
 
 
 def _declared(text: str, name: str) -> tuple[list[dict], list[dict]]:
-    """`[declared]` answers as rows, and the owner's decisions among them. A decision line and a slice pick are no rows."""
+    """`[declared]` answers as rows, and the owner's decisions among them. A decision line and the pick among the
+    `diverge` roughs (`[declared] Pick: C2 — <words>`, see `direction.py`) are no rows."""
     rows, decisions = [], []
     for found, quote, body in _declared_items(text):
         if decided := _DECISION.match(body):
@@ -236,16 +236,6 @@ def _declared(text: str, name: str) -> tuple[list[dict], list[dict]]:
             rows.append({"text": body, **({"section": found["section"]} if found["section"] else {}),
                          "kind": "declared", "at": [{"path": name, "lines": found["lines"]}]})
     return rows, decisions
-
-
-def picks(root: Path, task: str) -> list[str]:
-    """The addresses the owner picked among slice candidates, in the order the answers file holds them: each
-    `[declared] Slice: <address> — <their words>` item. A trailing `.,;)` is not part of the address."""
-    try:
-        text = (root / answers_name(task)).read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError):
-        return []
-    return [m.group(1).rstrip(".,;)") for _, _, body in _declared_items(text) if (m := _PICK_URL.match(body))]
 
 
 # ---------------------------------------------------------------- the record

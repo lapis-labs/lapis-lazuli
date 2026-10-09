@@ -1,0 +1,62 @@
+# Schema of diverge/pools.yaml — v0
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/diverge-pools.v0.json
+title: LapisLazuli diverge pools
+type: object
+additionalProperties: false
+required: [version, observed_on, representation, color_allocation, distance]
+properties:
+  version: {const: 0}
+  observed_on: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
+  representation:
+    type: object
+    minProperties: 9
+    propertyNames: {pattern: "^[a-z][a-z-]*$"}
+    required: [time, place-route, choice-booking, record-document, process-sequence, quantity-data, person-agent,
+               product-thing, other]
+    additionalProperties:
+      type: object
+      additionalProperties: false
+      required: [means, families]
+      properties:
+        means: {type: string, minLength: 8}
+        families:
+          type: array
+          minItems: 3
+          items: {$ref: "#/$defs/entry"}
+  color_allocation:
+    type: array
+    minItems: 5
+    items: {$ref: "#/$defs/entry"}
+  distance:
+    type: object
+    additionalProperties: false
+    required: [calibrated, weights, struct, reject_mass_below, minimum_pair]
+    properties:
+      calibrated: {type: boolean}
+      weights:
+        type: object
+        additionalProperties: false
+        required: [struct, mass, repr]
+        properties:
+          struct: {type: number, minimum: 0, maximum: 1}
+          mass: {type: number, minimum: 0, maximum: 1}
+          repr: {type: number, minimum: 0, maximum: 1}
+      struct:
+        type: object
+        additionalProperties: false
+        required: [grid_1440, grid_390, signature]
+        properties:
+          grid_1440: {type: number, minimum: 0, maximum: 1}
+          grid_390: {type: number, minimum: 0, maximum: 1}
+          signature: {type: number, minimum: 0, maximum: 1}
+      reject_mass_below: {type: number, minimum: 0, maximum: 1}
+      minimum_pair: {type: [number, "null"], minimum: 0, maximum: 1}
+$defs:
+  entry:
+    type: object
+    additionalProperties: false
+    required: [id, text]
+    properties:
+      id: {type: string, pattern: "^[a-z][a-z0-9-]*$"}
+      text: {type: string, minLength: 8}

@@ -29,7 +29,7 @@ from urllib.parse import unquote, urlsplit
 
 import yaml
 
-from lapis_design import attempts, critic_packet, integrity, requirements, slice_step
+from lapis_design import attempts, brief, critic_packet, direction, diverge, draft, gaps, gate, integrity, requirements, slice_step
 
 MARKER = "lapis-owner-block"
 LIST_MAX = 15
@@ -115,15 +115,69 @@ def _outcome(root: Path, task: str, record: dict | None, sources: list[tuple[str
     return out
 
 
-def _decisions(decisions: list[dict], record: dict | None) -> list[str]:
+def _decisions(root: Path, task: str, decisions: list[dict], record: dict | None) -> list[str]:
     out = ["## Your decisions"]
-    if not decisions:
-        return out + ["- none recorded."]
     known = {r["id"] for r in (record or {}).get("rows", [])}
     for d in decisions:
         extra = "" if d["row"] in known else " (no row has this id)"
         out.append(f"- {d['decision']} {d['row']}{extra}: {_cut(d['quote'], 200)} ({d['at']['path']} line {d['at']['line']})")
-    return out
+    try:
+        answers = (root / ".lapis" / "answers" / f"{task}.md").read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        answers = ""
+    out += [f"- gaps seen (lapis-owner-block {m.group(1)}): {_cut(m.group(2), 200)}" for m in gaps.SEEN.finditer(answers)]
+    for d in direction.decisions(root, task):
+        if d["kind"] == "pick":
+            out.append(f"- picked rough {d['text']} ({d['by']}): {_cut(d['quote'], 200)}")
+        else:
+            out.append(f"- took the defaults of the direction conversation (turn {d['turn']}): {_cut(d['quote'], 200)}")
+    return out if len(out) > 1 else out + ["- none recorded."]
+
+
+def _gaps(found: list[dict], done: bool) -> list[str]:
+    """The decisions the owner did not make, with what the agent filled in (`gaps.py`). An unattended run's block at
+    `done` says they were made without the owner."""
+    if done and gate.is_unattended():
+        out = ["## Decisions made without you", "The run made these for you; nobody was there to ask."]
+    else:
+        out = ["## Decisions you have not made",
+               "The agent filled these in. Approval needs your word on them: say they are seen, or change any of them."]
+    if not found:
+        return out + ["- none."]
+    out += [f"- {g['text']}" for g in found[:LIST_MAX]]
+    return out + ([f"- and {len(found) - LIST_MAX} more"] if len(found) > LIST_MAX else [])
+
+
+_ASK_ITEM = re.compile(r"^\s*Ask\s+([a-z][a-z-]*)\s*:\s*(.*)$", re.IGNORECASE | re.DOTALL)
+_BASIS = re.compile(r"\bbasis\b\s*:\s*(\S.*)", re.IGNORECASE | re.DOTALL)
+
+
+def _asks(root: Path, task: str, record: dict | None) -> list[str]:
+    """Each item under `## Asks` of the brief record: its trigger and, for what the owner answered, its row id and their
+    words; for what the run answered itself, the default it took and why. When the run answered every one itself (an
+    unattended run), the title says so."""
+    try:
+        text = (root / ".lapis" / "answers" / f"{task}.md").read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        text = ""
+    rows = {requirements.norm(r["text"]): r["id"] for r in (record or {}).get("rows", [])}
+    lines: list[str] = []
+    owner_answered = False
+    for item in brief.items(brief.sections(text).get("asks", "")):
+        tag = brief._TAG.match(item)
+        body = requirements._LEAD.sub("", item[tag.end():]) if tag else item
+        found = _ASK_ITEM.match(body)
+        trigger, said = (found.group(1).lower(), found.group(2)) if found else ("unnamed", body)
+        if tag and tag.group(1).lower() == "assumed":
+            basis = _BASIS.search(said)
+            lines.append(f"- {trigger}: default taken, not asked: "
+                         f"{_cut(basis.group(1), 200) if basis else _cut(said, 200)}")
+        else:
+            owner_answered = True
+            row = rows.get(requirements.norm(body))
+            lines.append(f"- {trigger}{f' ({row})' if row else ''}: {_cut(said, 200)}")
+    title = "## Questions during the work" if owner_answered or not lines else "## Questions the run answered itself"
+    return [title] + (lines or ["- none."])
 
 
 def _facts(root: Path, sources: list[tuple[str, str]]) -> list[str]:
@@ -202,18 +256,23 @@ def _disputes(root: Path, task: str, sources: list[tuple[str, str]]) -> list[str
     return out
 
 
-def _height(root: Path, page: Mapping[str, Any]) -> int | None:
-    """The document height at 1440: the largest `rect.y + rect.h` among the boxes of the page's extracts."""
-    review = page.get("review") if isinstance(page.get("review"), dict) else {}
-    bottoms = []
-    for name in review.get("extracts") or ():
-        for view in (_json(root / name) or {}).get("viewports") or ():
-            if isinstance(view, dict) and view.get("width") == 1440:
-                for box in view.get("boxes") or ():
-                    rect = box.get("rect") if isinstance(box, dict) else None
-                    if isinstance(rect, dict) and all(isinstance(rect.get(k), (int, float)) for k in ("y", "h")):
-                        bottoms.append(rect["y"] + rect["h"])
-    return round(max(bottoms)) if bottoms else None
+def _core_open(root: Path, task: str) -> list[str]:
+    """The core findings of the critic reports of the pages shown that are still open: the owner's decisions to make,
+    each with the rule id and what the critic observed. Empty when there is none, and then the block has no section."""
+    found: list[tuple[str, str]] = []
+    for page in _pages(root, task):
+        report = slice_step.critic_report(page)
+        for finding in (_json(root / report) or {}).get("findings") or () if report else ():
+            if isinstance(finding, dict) and "rule_id" in finding and "status" in finding and draft.is_core(finding):
+                entry = (finding["rule_id"], _cut(finding.get("observed", ""), 200))
+                if entry not in found:
+                    found.append(entry)
+    if not found:
+        return []
+    out = ["## Open core findings: your decision",
+           "The critic's report still holds these open. Say what to do about each: the slice is not sealed until a fresh "
+           "critic report closes it or you decide it."]
+    return out + [f"- {rule_id}: {observed}" for rule_id, observed in found[:LIST_MAX]]
 
 
 def _captures(root: Path, page: Mapping[str, Any]) -> list[str]:
@@ -276,7 +335,7 @@ def _shown(root: Path, task: str) -> list[str]:
     pages = _pages(root, task)
     for page in pages:
         widths = ", ".join(str(w) for w in page.get("widths") or ()) or "unknown widths"
-        height = _height(root, page)
+        height = slice_step.height(root, page)
         tall = f"{height:,} px" if height is not None else "not measured"
         out.append(f"- {page['url']} at {widths}; document height at 1440: {tall}")
         if captures := _captures(root, page):
@@ -286,9 +345,22 @@ def _shown(root: Path, task: str) -> list[str]:
     if not pages:
         out.append("- no rendered page is recorded for this task.")
     if sealed := slice_step.sealed(root, task):
-        among = f" (chosen among {', '.join(sealed['candidates'])})" if sealed.get("candidates") else ""
-        out.append(f"- Slice sealed: {sealed['url']}{among}")
+        out.append(f"- Slice sealed: {sealed['url']}")
+    state = integrity.read_state(root, task) or {}
+    if (state.get("slice_rounds") or 1) > 1:                   # the first showing is the page above; the clock alone changes no block
+        out.append(f"- Slice rounds: {state['slice_rounds']}")
+        out += [f"  - round {n}: document height at 1440: {h:,} px"
+                for n, h in sorted((state.get("slice_heights") or {}).items(), key=lambda item: int(item[0]))]
+    if said := slice_step.skipped(root, task):
+        out.append(f"- Slice skipped by you: {_cut(said, 200)}")
     return out
+
+
+def _roughs(root: Path, task: str) -> list[str]:
+    """The rough first views the owner picked among, sealed, and what changed in them after the seal (`diverge.py`); no
+    section when the run made none."""
+    lines = diverge.owner_lines(root, task)
+    return ["## Rough first views", *lines] if lines else []
 
 
 def _not_run(root: Path, task: str, record: dict | None, sources: list[tuple[str, str]], done: bool) -> list[str]:
@@ -322,37 +394,49 @@ def _not_run(root: Path, task: str, record: dict | None, sources: list[tuple[str
     return out + (lines or ["- nothing recorded as skipped."])
 
 
-def block(root: Path, task: str, result: Mapping[str, Any] | None = None) -> tuple[str, str]:
-    """The owner block for `task` and the first 8 hex digits of the SHA-256 of its body."""
+def _build(root: Path, task: str, result: Mapping[str, Any] | None) -> tuple[str, str, list[str]]:
     result = result or {}
     root = Path(root)
     record = requirements.record(root, task)
     decisions = list((record or {}).get("owner_decisions") or [])
     done = bool(result.get("verdict"))
     sources = _sources(root, task, done)
+    found = gaps.compute(root, task)
     sections = [
         [f"# Owner block: {task}"],
         _outcome(root, task, record, sources, decisions),
-        _decisions(decisions, record),
+        _decisions(root, task, decisions, record),
+        _gaps(found, done),
+        _core_open(root, task),
+        _asks(root, task, record),
         _facts(root, sources),
         _integrity(root, task, sources, result.get("integrity_error")),
         _disputes(root, task, sources),
         _shown(root, task),
+        _roughs(root, task),
         _not_run(root, task, record, sources, done),
     ]
+    sections = [lines for lines in sections if lines]
     if done:
         sections.append(["## Release", f"- {result['verdict']}"])
     body = "\n\n".join("\n".join(lines) for lines in sections) + "\n\n"
     sha8 = hashlib.sha256(body.encode("utf-8")).hexdigest()[:8]
-    return f"{body}{MARKER} {sha8}\n", sha8
+    return f"{body}{MARKER} {sha8}\n", sha8, [g["id"] for g in found]
+
+
+def block(root: Path, task: str, result: Mapping[str, Any] | None = None) -> tuple[str, str]:
+    """The owner block for `task` and the first 8 hex digits of the SHA-256 of its body."""
+    text, sha8, _ = _build(root, task, result)
+    return text, sha8
 
 
 def write(root: Path, task: str, result: Mapping[str, Any] | None = None) -> tuple[str, str]:
-    """`block`, also written to `.lapis/owner/<task>.md`. A folder that cannot be written is told on stderr; the block
-    comes back either way."""
-    text, sha8 = block(root, task, result)
+    """`block`, also written to `.lapis/owner/<task>.md`, with the gaps it lists recorded under its digest. A folder that
+    cannot be written is told on stderr; the block comes back either way."""
+    text, sha8, listed = _build(root, task, result)
     try:
         requirements.write_atomic(path(Path(root), task), text)
     except OSError as exc:
         print(f"lapis-design owner: {path(Path(root), task)} cannot be written: {exc}", file=sys.stderr)
+    gaps.record(Path(root), task, sha8, listed)
     return text, sha8

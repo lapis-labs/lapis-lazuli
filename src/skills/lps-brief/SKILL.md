@@ -11,7 +11,9 @@ reading and what just happened to them, what they lose without the product, what
 claimed, what the owner believes, which words and looks they refuse, what is fixed. Without it every plan
 falls back on what any page of that kind gets. lps-brief collects it before `lapis` plans: it reads what is
 already there, looks up what can be found, asks only what stays open, and writes one record the plan cites.
-It decides nothing visual; type, color, layout, and motion stay with `lapis` and its explorations.
+It decides nothing visual; type, color, layout, and motion stay with `lapis` and its explorations, and the
+direction conversation with the owner (what a named style does, how objects are represented) belongs to `lapis`,
+after the references.
 For supplied sources or role transfers, resolve only missing authority, inspected scope and disclosure
 questions; record owner replies in the existing brief record. The shared handoff protocol owns their
 meanings (`shared/index.yaml`, handoff-protocol); source access is not permission to share.
@@ -43,8 +45,8 @@ reply says so (`references/record.md`, Requirements and owner decisions).
 ## Order of work
 
 1. **Read the request** sentence by sentence. Every named thing, number, constraint, delivery rule, and look
-   word is `[declared]`, kept as written. A look word such as "modern" is a named style to unpack, not a taste
-   decision to settle by guessing. Copy as written any line that forbids network use, lookups, or downloads;
+   word is `[declared]`, kept as written. A look word such as "modern" is a named style to unpack with the owner
+   in `lapis`'s direction conversation after the references, not a taste decision to settle by guessing. Copy as written any line that forbids network use, lookups, or downloads;
    declining a lookup cites it (`references/research.md`, "What stops a lookup").
 2. **Read the project**, then **look up the subject's world** (`references/research.md`). Record what each
    source says and where; a lookup that cannot run, or that the request forbids, is recorded with its reason,
@@ -60,8 +62,9 @@ reply says so (`references/record.md`, Requirements and owner decisions).
      yourself from the research, mark choices `[assumed]` with their basis, and go on. Taste stays `[open]` and
      `Taste: not given` goes under `Found`; never invent preferences.
    - **An operator relays replies**: their instructions say so. Write the same message to
-     `.lapis/questions/<task>.md` and stop with it as your last message; `next` says `waiting-for-user` and the
-     exit gate lets the stop pass. Record the replies when they come.
+     `.lapis/questions/<task>.md`, its first line `lapis-questions: brief`, and stop with it as your last message;
+     `next` says `waiting-for-user` and the exit gate lets the stop pass. A file without that line does not wait.
+     Record the replies when they come.
    - **Otherwise a person reads your last message**: send one message, the findings to correct first and then the
      numbered questions, and stop. Plan and build nothing before the reply.
 5. **A second round** only when the replies opened something that changes the page, or an unanswered question

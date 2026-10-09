@@ -14,8 +14,15 @@ an existing file under the task's folder, each one its own; every `web-ui` refer
 state a value; and at most two text-only references. A reference is text-only when its capture is not an image
 (a page saved as text) or its page is an encyclopedia: reading about a thing is not looking at it, so a
 text-only reference counts toward the total and toward nothing else.
-The task also records a rotating hints offer (`hints.py`); at least as many references must be agent-found
-beyond the whole hints list as were offered. Hints do not replace searching or change access policies.
+
+References stand on three axes (`genre`, `expression`, `beyond-web`; hints.py). Each reference names its `axis`
+and a `direction` (a lettered direction of the record's `directions` mapping, or `none`); it may name `found_at`
+(the curation page where it was found) and `motion` (a recorded `.webm` or `.mp4`). Among the references seen as
+images: at least two per axis, every beyond-web one outside `web-ui`; at least one expression reference found at
+a registry source tagged `axes: [expression]` that lazuli may read; a motion file when the recorded hints offer
+includes an expression mode that needs one; and at least one agent-found reference per axis beyond the whole hints
+list. The record has at least three lettered directions, each holding at least two references from at least two axes.
+Hints do not replace searching or change access policies.
 
 A run with no network records that with `lapis-design next --unavailable references` (attempts.py), which
 `next` counts as the step done and reports as a step that did not run. The command first tries one plain GET
@@ -42,7 +49,7 @@ from urllib.parse import urlsplit
 
 import yaml
 
-from lapis_design import attempts, hints, waiting
+from lapis_design import attempts, hints, shared_dir, waiting
 
 STEP = "references"
 KINDS = {
@@ -53,8 +60,13 @@ KINDS = {
     "archive": "a record from a museum, library, or archive",
     "media": "a painting, photograph, film, or other work",
 }
+AXES = hints.AXES
+DIRECTION_LETTERS = "ABCDE"
 MIN_REFERENCES, MIN_KINDS, MIN_OUTSIDE, MAX_TEXT_ONLY = 6, 3, 2, 2
+MIN_PER_AXIS, MIN_DIRECTIONS, MIN_PER_DIRECTION = 2, 3, 2
 MIN_IMAGE_BYTES = 1024
+MIN_MOTION_BYTES = 10 * 1024
+MOTION_SUFFIXES = {".webm", ".mp4"}
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
 ENCYCLOPEDIAS = ("wikipedia.org", "wikiwand.com", "britannica.com", "wiktionary.org", "namu.wiki", "grokipedia.com")
 STUDY_ONLY = "study-only"
@@ -135,6 +147,90 @@ def parse(text: str) -> tuple[dict | None, str | None]:
     return data, None
 
 
+def _registry() -> list[dict]:
+    return yaml.safe_load((shared_dir() / "sources/registry.yaml").read_text(encoding="utf-8"))["sources"]
+
+
+def _expression_source(url: str) -> bool:
+    """Whether `url` is on a host of a registry source tagged `axes: [expression]` that lazuli may read (access `read`
+    or `adapter`). The host is all that can be checked: it proves the form of the claim, not the visit."""
+    host = _host(url).removeprefix("www.")
+    if not host:
+        return False
+    for entry in _registry():
+        if "expression" in entry.get("axes", ()) and entry.get("access") in ("read", "adapter"):
+            own = [urlsplit(entry["url"]).hostname or "", *entry.get("hosts", ())]
+            if host in {name.lower().removeprefix("www.") for name in own}:
+                return True
+    return False
+
+
+def _motion_problem(root: Path, task: str, value: Any, who: str) -> str | None:
+    """Why `value` is no motion file (a `.webm` or `.mp4` of at least 10 KB under the task's folder), or None."""
+    base = folder(root, task).resolve()
+    if not isinstance(value, str) or not value.strip():
+        return f"{who}: `motion` is empty"
+    given = Path(value)
+    target = (given if given.is_absolute() else root / given).resolve()
+    if not target.is_relative_to(base) or not target.is_file():
+        return f"{who}: the motion file {value} does not exist under {folder(root, task).relative_to(root).as_posix()}/"
+    try:
+        with target.open("rb") as handle:
+            head = handle.read(12)
+        size = target.stat().st_size
+    except OSError:
+        return f"{who}: the motion file {value} cannot be read"
+    magic = (head.startswith(b"\x1a\x45\xdf\xa3") if target.suffix.lower() == ".webm" else head[4:8] == b"ftyp")
+    if target.suffix.lower() not in MOTION_SUFFIXES or not magic or size < MIN_MOTION_BYTES:
+        return (f"{who}: {value} is not a recording ({' or '.join(sorted(MOTION_SUFFIXES))} of at least "
+                f"{MIN_MOTION_BYTES // 1024} KB)")
+    return None
+
+
+def directions(root: Path, task: str) -> dict[str, dict]:
+    """The record's lettered directions: {letter: {"name": the relation it organizes the page around, "refs": the
+    references that name it}}; {} when there is no readable record."""
+    try:
+        data, _ = parse(record_path(root, task).read_text(encoding="utf-8", errors="replace"))
+    except OSError:
+        return {}
+    if data is None or not isinstance(data.get("directions"), dict):
+        return {}
+    refs = [ref for ref in data["references"] if isinstance(ref, dict)]
+    return {letter: {"name": name, "refs": [ref for ref in refs if ref.get("direction") == letter]}
+            for letter, name in sorted(data["directions"].items())
+            if letter in DIRECTION_LETTERS and len(letter) == 1 and isinstance(name, str)}
+
+
+def direction_letters(root: Path, task: str) -> list[str]:
+    """The letters the record defines under `directions`, sorted; [] when there is no readable record."""
+    return list(directions(root, task))
+
+
+def _direction_problems(data: dict, visual: list[tuple[str | None, str | None, str | None]]) -> list[str]:
+    """At least three lettered directions, each named by a relation and holding at least two references seen as
+    images from at least two axes."""
+    defined = data.get("directions")
+    if not isinstance(defined, dict):
+        return [f"it has no `directions` mapping; at least {MIN_DIRECTIONS} letters ({DIRECTION_LETTERS[0]}-"
+                f"{DIRECTION_LETTERS[-1]}), each named by the relation it would organize the page around"]
+    found = []
+    for letter, name in defined.items():
+        if not (isinstance(letter, str) and len(letter) == 1 and letter in DIRECTION_LETTERS):
+            found.append(f"direction {letter!r} is not one letter of {DIRECTION_LETTERS}")
+        elif _words(name) < waiting.MIN_WORDS:
+            found.append(f"direction {letter} has no name; name the relation it organizes the page around, not a mood")
+    if len(defined) < MIN_DIRECTIONS:
+        found.append(f"it defines {len(defined)} directions; at least {MIN_DIRECTIONS} are needed")
+    for letter in defined:
+        axes = {axis for _, axis, direction in visual if direction == letter and axis}
+        count = sum(1 for _, _, direction in visual if direction == letter)
+        if count < MIN_PER_DIRECTION or len(axes) < 2:
+            found.append(f"direction {letter} holds {count} references seen as images from {len(axes)} axes; at least "
+                         f"{MIN_PER_DIRECTION} references from 2 axes are needed")
+    return found
+
+
 def problems(root: Path, task: str) -> list[str]:
     """Why `.lapis/references/<task>.md` under `root` is not a references record, one line each; [] when it is."""
     path = record_path(root, task)
@@ -148,17 +244,17 @@ def problems(root: Path, task: str) -> list[str]:
     found: list[str] = []
     offered = hints.read(root, task)
     if offered is None:
-        found.append(f"no valid hints offer is recorded; run `lazuli hints --field <nearest-field-or-none> --task {task}`")
-    elif (own := hints.agent_found(data["references"])) < len(offered["offered"]):
-        found.append(f"it lists {own} agent-found references beyond the whole hints list; at least "
-                     f"{len(offered['offered'])} are needed, as many as the recorded offer")
+        found.append(hints.stale(root, task) or f"no valid hints offer is recorded; run `lazuli hints --task {task} "
+                     "--genre <nearest-field-or-none> [--expression <mode>] [--beyond-web <medium>]`")
     if data.get("captures") != STUDY_ONLY:
         found.append(f"it does not say `captures: {STUDY_ONLY}`")
     base = folder(root, task).resolve()
     seen: dict[str, str] = {}
     urls: dict[str, str] = {}
     ids: set[str] = set()
-    visual: list[str | None] = []                  # the kind of each reference seen as an image
+    visual: list[tuple[str | None, str | None, str | None]] = []     # (kind, axis, direction) of each reference seen as an image
+    letters = [letter for letter in (data.get("directions") if isinstance(data.get("directions"), dict) else {})
+               if isinstance(letter, str) and len(letter) == 1 and letter in DIRECTION_LETTERS]
     text_only = total = 0
     for index, ref in enumerate(data["references"], start=1):
         if not isinstance(ref, dict):
@@ -191,6 +287,23 @@ def problems(root: Path, task: str) -> list[str]:
         if kind == "web-ui" and not (_words(facts) >= 4 and _VALUE.search(facts)):
             found.append(f"{who} is a web-ui reference without `source_facts` that state values read from its HTML or "
                          "CSS (a size, a color, a column count)")
+        axis = ref.get("axis")
+        if axis not in AXES:
+            found.append(f"{who}: `axis` is {axis!r}, not one of {', '.join(AXES)}")
+            axis = None
+        elif axis == "beyond-web" and kind == "web-ui":
+            found.append(f"{who} is on the beyond-web axis but its kind is web-ui; a beyond-web reference is print, "
+                         "signage, a physical object, an archive record, or a work")
+        direction = ref.get("direction")
+        if direction != "none" and direction not in letters and (direction is None or isinstance(data.get("directions"), dict)):
+            found.append(f"{who}: `direction` is {direction!r}; use a letter of the record's `directions` "
+                         f"({', '.join(letters) or 'none defined'}) or `none`")
+            direction = None
+        if ref.get("found_at") is not None and not (isinstance(ref["found_at"], str) and _host(ref["found_at"])
+                                                    and urlsplit(ref["found_at"]).scheme in ("http", "https")):
+            found.append(f"{who}: `found_at` is not an http(s) address")
+        if ref.get("motion") is not None and (why_not := _motion_problem(root, task, ref["motion"], who)):
+            found.append(why_not)
         capture = ref.get("capture")
         if not isinstance(capture, str) or not capture.strip():
             found.append(f"{who} has no `capture`")
@@ -218,18 +331,38 @@ def problems(root: Path, task: str) -> list[str]:
         if image is None or (url is not None and _encyclopedia(url)):
             text_only += 1
         else:
-            visual.append(kind)
+            visual.append((kind, axis, direction))
     if total < MIN_REFERENCES:
         found.append(f"it lists {total} references; at least {MIN_REFERENCES} are needed")
     if text_only > MAX_TEXT_ONLY:
         found.append(f"{text_only} references are text-only (a capture that is no image, or an encyclopedia); at most "
                      f"{MAX_TEXT_ONLY} may be, and a text-only reference counts toward neither the kinds nor the "
                      "references outside web-ui")
-    kinds = [kind for kind in visual if kind]
+    kinds = [kind for kind, _, _ in visual if kind]
     outside = sum(kind != "web-ui" for kind in kinds)
     if len(set(kinds)) < MIN_KINDS or outside < MIN_OUTSIDE:
         found.append(f"the references seen as images cover {len(set(kinds))} kinds and {outside} references outside "
                      f"web-ui; at least {MIN_KINDS} kinds and {MIN_OUTSIDE} references outside web-ui are needed")
+    for name in AXES:
+        count = sum(1 for _, axis, _ in visual if axis == name)
+        if count < MIN_PER_AXIS:
+            found.append(f"{count} references on the {name} axis are seen as images; at least {MIN_PER_AXIS} are needed "
+                         f"per axis ({', '.join(AXES)})")
+        if hints.agent_found(data["references"], name) < 1:
+            found.append(f"no agent-found reference is on the {name} axis beyond the whole hints list; at least one per "
+                         "axis is needed (a list entry's host and path do not count)")
+    expression = [ref for ref in data["references"] if isinstance(ref, dict) and ref.get("axis") == "expression"]
+    if not any(isinstance(ref.get("found_at"), str) and _expression_source(ref["found_at"]) for ref in expression):
+        found.append("no expression reference has a `found_at` on a registry source tagged `axes: [expression]` that "
+                     "lazuli may read (`lazuli sources --axis expression`); look at one of those curation pages and "
+                     "name the page where you found the work")
+    if offered is not None and any(hints.load()["axes"]["expression"][mode]["motion"] for mode in offered["expression"]):
+        if not any(isinstance(ref.get("motion"), str) and not _motion_problem(root, task, ref["motion"], "x")
+                   for ref in expression):
+            found.append("the hints offer includes an expression mode that moves, so at least one expression reference "
+                         "needs a `motion` file (`lazuli ref capture <url> --motion --task <task>`, or your own "
+                         f"recording of at least {MIN_MOTION_BYTES // 1024} KB under {folder(root, task).relative_to(root).as_posix()}/)")
+    found += _direction_problems(data, visual)
     return found
 
 
@@ -321,30 +454,40 @@ def why(task: str, found: list[str], planned: bool) -> str:
         lead,
         "A reference counts when you have looked at it, not when you have read about it: an encyclopedia or any text",
         "page is not a visual reference. Follow the lzl-research skill's exploration guide.",
-        "(0) Pick the nearest field from `lazuli hints`, then record its rotating offer with",
-        f"`lazuli hints --field <field> --task {task}` (`none` only when no field fits). These are starting points,",
-        "not a canon: find at least as many agent-found references beyond the whole hints list as were offered,",
-        "not just beyond this draw. The offer is saved in .lapis/references/<task>.hints.json; repeating the same",
-        "field keeps its original date and offer.",
-        "(1) Search for candidates (WebSearch, or `lazuli search --type source <words>` for where to look) in worlds",
-        "beyond web design: the subject's own field, print, signage, objects, archives, works. Do not only recall",
-        "addresses.",
+        "(0) Draw starting points on three axes: `lazuli hints` lists the genre fields, expression modes, and",
+        f"beyond-web media; record the offer with `lazuli hints --task {task} --genre <field|none> --expression <mode>",
+        "--beyond-web <medium>` (`lazuli hints --suggest --task <task>` names the modes the owner's words point at; you",
+        "choose, and the direction conversation states the choice). These are starting points, not a canon: on every",
+        "axis find at least one reference beyond the whole hints list. The offer is saved in",
+        ".lapis/references/<task>.hints.json; repeating the same choice keeps its original date and offer.",
+        "(1) Search per axis (WebSearch, or `lazuli sources --axis <axis>` for where to look). Genre: pages of the",
+        "subject's own kind. Expression: start from the registry sources tagged expression and from the owner's",
+        "expression words, for work that does what they ask (motion, experimental type, generative or 3D). Beyond-web:",
+        "the subject's world in print, exhibitions, music, film, and objects, never a web-ui reference. Do not only",
+        "recall addresses.",
         f"(2) Capture each: a web page with `lazuli ref capture <url> --rights reference-only --task {task}`",
         "(screenshots at 390, 768, and 1440 px, and the page's own HTML and CSS); a picture or an object with",
         f"`lazuli ref profile <image-url> --rights reference-only --task {task}` (the image itself; a page names its",
         "pictures in its saved digest). Both read the source registry first, so a `refused` or `browser-link` source",
         "stays refused: choose another. Keep a human pace, a few dozen requests in all, and follow no links.",
+        "For an expression reference whose point is movement, add `--motion` (a 6-second scripted scroll at 1440 px, saved",
+        "as motion.webm with a 4-frame strip.png beside the screenshots).",
         "(3) Look, before you write anything about it: open each capture image with your harness's image viewer",
         "(Claude Code: the Read tool on the image path; a description from a search snippet, a page summary, or",
         "memory is not looking, and a relation that describes a picture you did not open is invented). For a web",
         "page also read the saved HTML and CSS for its layout, type, and color decisions.",
-        f"(4) Write {record}: a fenced ```yaml block with `captures: {STUDY_ONLY}` and `references`, each with `id`,",
-        "`url` (or `source`), `maker` (author or institution), `kind`, `decision` (the open decision it informs),",
-        f"`relation` (what you take from it, in what you saw), `capture` (a file under {captures}/), and, for web-ui,",
-        "`source_facts` (values read from its CSS: sizes, faces, colors, grid).",
+        f"(4) Write {record}: a fenced ```yaml block with `captures: {STUDY_ONLY}`, `directions` (at least",
+        f"{MIN_DIRECTIONS} letters A-E, each named by the relation it would organize the page around, not a mood), and",
+        "`references`, each with `id`, `url` (or `source`), `maker` (author or institution), `kind`, `axis`, `direction`",
+        "(a letter, or `none`), `decision` (the open decision it informs), `relation` (what you take from it, in what",
+        f"you saw), `capture` (a file under {captures}/), for web-ui `source_facts` (values read from its CSS), and",
+        "where they apply `found_at` (the curation page where you found it) and `motion` (a recording).",
         f"Kinds: {', '.join(KINDS)}. Need at least {MIN_REFERENCES} references; among those seen as images at least",
-        f"{MIN_KINDS} kinds and {MIN_OUTSIDE} references outside web-ui; every capture an existing file of its own; at",
-        f"most {MAX_TEXT_ONLY} text-only.",
+        f"{MIN_KINDS} kinds and {MIN_OUTSIDE} references outside web-ui, {MIN_PER_AXIS} per axis, a beyond-web kind that is",
+        "never web-ui, one expression reference with `found_at` on a registry expression source, a `motion` file when the",
+        f"offer has a moving mode, and each direction holding {MIN_PER_DIRECTION} references from 2 axes; every capture an",
+        f"existing file of its own; at most {MAX_TEXT_ONLY} text-only. `lapis-design references sheet --task {task}` makes",
+        "the sheet for the owner.",
         "Take relations (order, ratio, rhythm, density, a label's job), never assets, text, or a layout wholesale.",
         "The captures are for study only: never ship them or copy them into the page.",
         "Follow the user's words. If the request or the brief forbids network use, lookups, or downloads during the work",

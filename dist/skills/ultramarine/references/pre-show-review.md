@@ -63,7 +63,8 @@ version 1, which keeps only what the CLI and the critic can check.
 The packet is deterministic JSON (`../shared/review/critic-packet.schema.yaml`): the owner's requirement rows, the plan's
 design fields without your reasons, a digest of every file the critic may read, the lint findings, the edits to
 protected plan fields that were reactive, touched an open finding, or came after the owner approved the slice, and your
-disputes without their reasons. The critic's report names it in `target.packet` (`path` and `sha256`), and a report
+disputes without their reasons, and the direction conversation with its ids resolved (each item's option texts, who chose, the
+owner's pick among the rough first views). The critic's report names it in `target.packet` (`path` and `sha256`), and a report
 counts only for that packet: the CLI rebuilds the packet from the arguments it records. A changed capture, lint report,
 requirement row, protected plan value, or change row, and a packet rebuilt after the critic ran, make the report stale,
 so rebuild the packet and run the critic again. An edit to something the packet leaves out (a reason you wrote, the
@@ -80,10 +81,11 @@ decisions, or compliance with the procedure) is its finding `review.making-of`: 
 subject and task, and design rationale belongs in the plan unless a requirement asks for it on this page.
 
 A core product-explanation finding (`approval_impact: core-product-explanation`, including `review.world-materials`
-unless the critic marks it ordinary) that is still open in the current critic report blocks the approval wait,
-whatever your disposition says. A settings display or a partial fix leaves it open; it closes once a fresh critic no
-longer reports it open, after real product output resolves it. Showing current settings or adding a candidate button is
-not that repair.
+unless the critic marks it ordinary) that is still open in the current critic report no longer blocks showing: the owner
+block lists it under `## Open core findings: your decision`, and you put it to the owner as a decision in the approval
+question. The slice is not sealed while it is open and undecided: a fresh critic report that no longer reports it open
+closes it (after real product output resolves it; a settings display, a partial fix, or a candidate button is not that
+repair), or the owner decides it and you record `- [declared] Ask finding-vs-decision: <rule id> — <their words>`.
 
 `lapis-design draft check --task <task>` validates this narrow record. `next` will not turn a draft approval question
 into `waiting-for-user` until it is current. Editing a shown source invalidates its evidence; refresh only the affected

@@ -45,7 +45,9 @@ def project(tmp_path) -> Path:
     """A project whose plan is approved and whose brief record exists: the state of a run past its plan, before
     anything observed it (`make_project` sealed a slice in the state file for the procedure tests; this is not that)."""
     root = make_project(tmp_path)
-    shutil.rmtree(root / ".lapis" / "state")
+    for record in (root / ".lapis" / "state").iterdir():
+        if record.name != "diverge":                           # the roughs are the CLI's too, and nothing observed them
+            shutil.rmtree(record) if record.is_dir() else record.unlink()
     return root
 
 
@@ -230,8 +232,9 @@ def test_renaming_an_answers_heading_is_a_row(integrity, project):
     (project / ANSWERS).write_text(text.replace("## Answers", "## Replies"), encoding="utf-8")
     rows = of(observe(integrity, project), "answers-headings")
     assert len(rows) == 1 and rows[0]["pointer"] == "answers:headings"
-    assert rows[0]["before"] == [{"heading": "Found", "items": 1}, {"heading": "Answers", "items": 2}]
-    assert rows[0]["after"] == [{"heading": "Found", "items": 1}, {"heading": "Replies", "items": 2}]
+    taken = [{"heading": "Direction 1", "items": 1}, {"heading": "Direction 2", "items": 1}]   # defaults, then the pick
+    assert rows[0]["before"] == [{"heading": "Found", "items": 1}, {"heading": "Answers", "items": 2}, *taken]
+    assert rows[0]["after"] == [{"heading": "Found", "items": 1}, {"heading": "Replies", "items": 2}, *taken]
 
 
 # ---------------------------------------------------------------- 7. every plan-reading command observes before it computes
@@ -377,6 +380,9 @@ def test_the_hook_refuses_an_edit_tools_write_to_each_record_the_cli_owns(projec
 
 @pytest.mark.parametrize("session", list(SESSIONS))
 def test_the_hook_leaves_every_other_write_as_it_was(project, monkeypatch, capsys, session):
+    from procedure_support import seal_slice
+
+    seal_slice(project)                                   # an unsealed slice holds an attended run to its slice files (`order.py`)
     for rel in (ANSWERS, PLAN, f".lapis/critic/{TASK}.json", f".lapis/stateless/{TASK}.json", "index.html",
                 "README.md", ".lapis/statement.md"):
         assert hook(monkeypatch, capsys, project, "Write", {"file_path": str(project / rel), "content": "x"},
@@ -444,7 +450,7 @@ def test_a_lock_that_stays_held_makes_observe_fail_open_and_the_command_still_ru
                                                                                    capsys):
     monkeypatch.setattr(integrity, "LOCK_WAIT_S", 0.2)
     lock = project / ".lapis" / "state" / f"{TASK}.lock"
-    lock.parent.mkdir(parents=True)
+    lock.parent.mkdir(parents=True, exist_ok=True)
     lock.write_text("1", encoding="utf-8")
     result = integrity.observe_task(project, TASK, "test")
     assert result["rows"] == [] and "held by another lapis-design command" in result["error"]
@@ -456,7 +462,7 @@ def test_a_lock_that_stays_held_makes_observe_fail_open_and_the_command_still_ru
 
 def test_a_lock_left_by_a_process_that_died_is_taken_over(integrity, bare):
     lock = bare / ".lapis" / "state" / f"{TASK}.lock"
-    lock.parent.mkdir(parents=True)
+    lock.parent.mkdir(parents=True, exist_ok=True)
     lock.write_text("1", encoding="utf-8")
     os.utime(lock, (time.time() - 3600, time.time() - 3600))
     assert observe(integrity, bare) == [] and not lock.exists()

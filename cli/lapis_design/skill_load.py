@@ -73,7 +73,7 @@ def missing(root: Path, task: str, skill: str) -> bool:
 
 def needed(root: Path, task: str, result: dict) -> tuple[str, ...]:
     step = (result.get("step") or {}).get("id", "done")
-    if step in ("brief", "requirements", "references") or (step == "waiting-for-user" and not result.get("draft_review")):
+    if step in ("brief", "requirements", "references", "owner-direction", "diverge") or (step == "waiting-for-user" and not result.get("draft_review")):
         return ()
     primary = []
     if step in ("plan", "plan-fix", "plan-explorations", "plan-order"):

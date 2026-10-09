@@ -24,6 +24,14 @@ refused. A person's session gets one line, once. A refusal repeats at most `CAP`
 agent cannot lift must not keep it from writing anything, and a write let through after the cap is recorded as above.
 The hook sees the harness's file-edit tools only; a page written through the shell is found afterwards.
 
+The slice hold (`_held`): in an attended create run, from the first time `next` names `slice` until the slice is sealed or
+skipped, a page write goes through only to a file the slice page declares in `.lapis/drafts/<task>.yaml` (`direction:
+new`, at most `slice_step.MAX_FILES` files). With no slice page declared, with too many files declared, or when the slice
+is overdue (`slice_step.MINUTES` minutes or `slice_step.WRITES` page writes, counted here under `slice_writes` in
+`.lapis/order/<task>.json`, since the clock started and without a waiting `approval` question that carries the owner
+block), every page write is refused, with no cap: an agent held here has one way on, asking the owner. Only the agent's
+file-edit tools are held, as below.
+
 Before that, in every session and whatever step `next` names, a write to a record only `lapis-design` writes
 (`CLI_OWNED`: `.lapis/requirements/`, `.lapis/state/`, `.lapis/changes/`, `.lapis/owner/`) is refused, once per tool
 call and with no cap. That stops the agent's tool, not a person. A write through the shell is not prevented; the change
@@ -46,7 +54,7 @@ from lapis_design import attempts, gate
 
 EXISTING = "existing-code"           # the `source` of the candidate that stands for code written before the plan
 ORDER_STEPS = ("brief", "references", "plan")        # the records a page write can come before
-BEFORE_CODE = (*ORDER_STEPS, "requirements", "plan-fix", "plan-explorations")    # steps after which page code may start
+BEFORE_CODE = (*ORDER_STEPS, "requirements", "owner-direction", "diverge", "plan-fix", "plan-explorations")    # steps after which page code may start
 CAP = 3                              # refusals of one step; then the write goes through and is recorded
 # the folders of `.lapis/` that only `lapis-design` writes (integrity.py, requirements.py, owner.py); a write to one
 # is refused in every session, since the CLI computes what is in them and a hand edit would not be trusted
@@ -68,6 +76,8 @@ LABEL = {"brief": "brief record", "references": "references record", "plan": "pl
 OWES = {"brief": "the brief record `.lapis/answers/{task}.md` (the lps-brief skill)",
         "requirements": "the requirement record `.lapis/requirements/{task}.json` (`lapis-design requirements seal`)",
         "references": "the references record `.lapis/references/{task}.md` (the lzl-research skill)",
+        "owner-direction": "the direction conversation (`.lapis/direction/{task}.yaml` and the owner's answers; the lapis skill)",
+        "diverge": "the rough first views of `lapis-design diverge` (the lapis skill)",
         "plan": "the plan `.lapis/plans/{task}.yaml`, citing the records it rests on (a declined step has none)",
         "plan-fix": "a plan that `lapis-design plan check` reads and passes",
         "plan-explorations": "a plan that compares each open decision (`plan.uncompared-decision`)"}
@@ -235,7 +245,7 @@ def _create(project: Path, task: str) -> bool:
 
 def _refusal(page: str, task: str, step: str) -> dict[str, Any]:
     reason = (f"LapisLazuli refuses this write: {page} is page code, and task {task} is in create mode with "
-              f"{OWES[step].format(task=task)} still owed. The order is brief, requirements, references, plan, then code. "
+              f"{OWES[step].format(task=task)} still owed. The order is brief, requirements, references, direction, plan, then code. "
               f"Write that first (files under .lapis/ are never refused), run `lapis-design next --task {task}` "
               "for the step and its command, and write page files once it names a later step.")
     if step == "references":
@@ -262,6 +272,54 @@ def _owned_refusal(rel: str) -> dict[str, Any]:
                                    "permissionDecisionReason": reason}}
 
 
+def slice_writes(root: Path, task: str, since: str) -> int:
+    """The page writes the hook let through while the slice clock that started at `since` ran (`.lapis/order/<task>.json`)."""
+    found = load(root, task).get("slice_writes")
+    count = found.get("count") if isinstance(found, Mapping) and found.get("since") == since else 0
+    return count if isinstance(count, int) and not isinstance(count, bool) and count > 0 else 0
+
+
+def _held_refusal(reason: str) -> dict[str, Any]:
+    return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
+                                   "permissionDecisionReason": reason}}
+
+
+def _held(project: Path, task: str, written: list[str], env: Mapping[str, str]) -> dict[str, Any] | None:
+    """The refusal for a page write while the slice is held, or None. From the first time `next` named `slice` until the
+    slice is sealed or skipped an attended create run may write only the files its slice page declares
+    (`slice_step.hold`); with no declared page, more than `MAX_FILES` declared files, or an overdue slice, no page write
+    goes through. There is no cap on this refusal: the way on is to ask the owner. A write that goes through is counted
+    for the clock. The hook sees the harness's file-edit tools only; a write through a shell is found afterwards."""
+    from lapis_design import slice_step
+    from lapis_design.plan_check import read_plan
+
+    plan = read_plan(project / ".lapis" / "plans" / f"{task}.yaml")
+    info = slice_step.hold(project, task, plan, env)
+    if info is None:
+        return None
+    drafts = f".lapis/drafts/{task}.yaml"
+    first = (f"LapisLazuli refuses this write: {written[0]} is page code, and task {task} has an unsealed slice. ")
+    ask = ("To build further, first ask the owner the slice question: a questions file of kind `approval` "
+           f"(`lapis-questions: approval` on its first line) that links the slice page and carries the owner block "
+           f"(`.lapis/owner/{task}.md`, pasted unchanged); files under .lapis/ are never refused.")
+    if not info["pages"]:
+        return _held_refusal(first + f"Declare the slice page first: a `direction: new` page in {drafts} with its `url` and "
+                             f"`sources`, at most {slice_step.MAX_FILES} files, then build only those files. " + ask)
+    if len(info["sources"]) > slice_step.MAX_FILES:
+        return _held_refusal(first + f"{drafts} declares {len(info['sources'])} files, and a slice is at most "
+                             f"{slice_step.MAX_FILES}: cut the slice to its first view and the one section the brief puts "
+                             "first, and declare only the files it needs. " + ask)
+    if info["overdue"]:
+        return _held_refusal(first + f"The slice is overdue ({info['overdue']}): every page write is refused until the owner "
+                             "has the question. Ask now with what is built. " + ask)
+    if outside := [rel for rel in written if rel not in info["sources"]]:
+        return _held_refusal(first + f"Build only the slice files declared in {drafts}; {outside[0]} is not one of them. " + ask)
+    state = load(project, task)
+    count = slice_writes(project, task, info["since"]) + 1
+    _save(project, task, {**state, "slice_writes": {"since": info["since"], "count": count}})
+    return None
+
+
 def decide(event: Mapping[str, Any], env: Mapping[str, str] = os.environ) -> dict[str, Any] | None:
     """The JSON a pre-write hook prints for a file-edit event: Claude Code's and Codex's `PreToolUse` refusal
     (the extensions translate it), `{"systemMessage": ...}` as the one line for a person, or None to let the
@@ -284,9 +342,12 @@ def decide(event: Mapping[str, Any], env: Mapping[str, str] = os.environ) -> dic
         return None
     try:
         step = _pending(project, task)
+        denial = None if unattended else _held(project, task, written, env)
     except Exception as exc:        # a bug or an unreadable file here must not keep an agent from writing
         print(f"lapis-design hook pre-write: {type(exc).__name__}: {exc}", file=sys.stderr)
         return None
+    if denial is not None:
+        return denial
     if step not in BEFORE_CODE or not _create(project, task):
         return None
     state = load(project, task)

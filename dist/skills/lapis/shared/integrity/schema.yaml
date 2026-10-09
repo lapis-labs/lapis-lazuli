@@ -67,6 +67,12 @@ $defs:
             flow: { type: string }                    # the flow id the finding names
       requirements_sha256: { $ref: "#/$defs/digest_or_null" }   # sha256 of .lapis/requirements/<task>.json, null without one
       last_change: { $ref: "#/$defs/digest_or_null" } # sha256 of the last line of the change log, null before the first row
+      slice_since: { $ref: "#/$defs/time" }           # when `next` first named `slice`, or when the owner's last reply asked for a revision: the start of the clock
+      slice_rounds: { type: integer, minimum: 1 }     # slice rounds so far: 1 for the first showing, +1 for each reply that asked for a revision
+      slice_set: { type: string }                     # the id of the answered questions set the last round was counted for
+      slice_heights:                                  # document height at 1440 of the page each round showed, by round number
+        type: object
+        additionalProperties: { type: integer, minimum: 0 }
       slice:                                          # sealed by `next` when the owner approved a rendered slice
         type: object
         additionalProperties: false
@@ -74,7 +80,7 @@ $defs:
                    protected_sha256, at]
         properties:
           url: { type: string, minLength: 1 }
-          candidates: { type: array, items: { type: string, minLength: 1 } }   # the urls of the candidates shown when more than one was
+          values: { type: object }                    # the protected values as sealed (concrete pointer -> JSON value), so a revert is recognized
           draft_sha256: { $ref: "#/$defs/digest_or_null" }
           packet_sha256: { $ref: "#/$defs/digest_or_null" }
           questions_sha256: { $ref: "#/$defs/digest_or_null" }
