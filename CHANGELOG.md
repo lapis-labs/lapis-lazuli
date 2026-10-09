@@ -9,6 +9,48 @@ between minor versions; render extraction is v1 and the other contract formats a
 
 ### Added
 
+- The owner decides direction before the build. A questions file declares its kind on its first line
+  (`lapis-questions: brief|direction|approval|ask`); a file without one does not wait. Only `brief` questions keep the cap
+  of six a round and two rounds. `direction` questions are the direction conversation: after the references the step
+  `owner-direction` is owed until the owner has answered, item by item, what each named style does (`S`, with the trend-kit
+  elements `K` it decodes to), how each core object is represented (`O`, two or three options each), and what each signature
+  element carries (`G`), as `[declared]` items under `## Direction <n>` of the brief record (or one `Defaults accepted` line).
+  The run writes the proposal `.lapis/direction/<task>.yaml` (`direction/schema.yaml`); the critic packet gains a
+  `direction` section with the option texts, so `O1: a,c` is judged against what `a` and `c` say.
+- `ask` questions: one short question with a `Trigger:`, a `Default:`, at most 150 words, and one per checkpoint. The CLI
+  raises three triggers itself and names them as the step `ask`: `new-direction` (a direction value changed after the
+  slice seal), `finding-vs-decision` (a change on an area the owner decided while a finding was open), and `budget` (more
+  than 90 minutes alone since the seal or the last answer, or the owner's `- Budget: <n> min`). `PROTECTED` gains the
+  direction pointers (`/direction/concept`, `/direction/levers`, `/layout/signature`, `/layout/sections`,
+  `/tokens/type/roles`, `/tokens/motion/principles`) and the slice seal keeps their values. Unattended runs record
+  `[assumed] Ask` items with a `Basis:` and go on.
+- The gap list: the owner block lists the decisions the owner did not make (style, objects, signature, color, layout,
+  motion, type), each with what the agent filled in; the slice is not sealed, and an approved redesign plan does not
+  proceed (`approval-gaps`), until the owner's reply acknowledges the block by its digest (`- Gaps seen (lapis-owner-block
+  <sha8>): "..."`) or decides each. A create plan states where each `field` and `identity` color sits and how much of the
+  screen it owns (`tokens.color.roles[].area`, `plan.color-area-missing`).
+- `lapis-design diverge` (`start`, `resample`, `variant`, `check`, `seal`, `show`): between the two turns of the direction
+  conversation the run makes two to four rough first views, each on a different reference direction, that differ in how the
+  open core objects are represented and how color is allocated. The CLI draws and records the draws in a hash chain, reads
+  each card (`diverge/card.schema.yaml`) against them and against the renders, measures the distance between roughs from the
+  first-view layout, color mass, and drawn representation (provisional weights in `diverge/pools.yaml`; reported, not
+  gated, except that a pair with the same markup structure and almost the same color mass is refused), makes the contact
+  sheet, and seals the digests. The owner picks one (`[declared] Pick: C2`); the slice then shows only that page.
+- The slice is held and clocked in an attended create run: only the declared slice files (at most 12) may be written until
+  the slice is sealed or the owner skips it (`- Slice skipped: "..."`); after 60 minutes or 40 page writes without a waiting
+  approval question, every page write is refused; a slice taller than 3,600 px at 1440 goes back; open core findings go to
+  the owner as decisions instead of blocking the wait; a revision request starts the next round. `.lapis/order/` is a
+  record only `lapis-design` writes, with a keyed digest that finds any other write.
+- References on three axes: genre, expression, and beyond-web, at least two per axis seen as images, grouped into at least
+  three lettered directions; one expression reference found on an expression curation source (registry `axes`), and a
+  motion capture when the offer includes a moving mode. `lazuli hints` offers per axis (`--genre`, `--expression`,
+  `--beyond-web`, `--suggest`), `lazuli sources --axis` lists sources, `lazuli ref capture --motion` records a scripted
+  scroll, and `lapis-design references sheet` composes the direction sheet. The registry gains 24 entries for expression
+  and beyond-web work; `land-book` is readable with a credit note.
+- Copy has a voice per locale and role: `content.voice.locales.<lang>` holds the sentence register, an optional speaker, and
+  the roles that stay compact. New review rules `copy.role-collapse`, `copy.headline-budget`, and an unanchored-speaker
+  lead; `copy.register-mix` reads the policy instead of one page-wide register. The critic judges wording as
+  `review.wording`. `lps-copy` is restructured around each line's job.
 - Antigravity CLI (`agy`) is a harness, marked experimental. `dist/antigravity/<plugin>/` holds the three plugins as
   `agy plugin install` reads them: a `plugin.json`, the skills, the lapis plugin's `hooks.json` (the write guard as
   `PreToolUse` on the file-edit tools and the exit gate as `Stop`), the lazuli plugin's `mcp_config.json`, and the
@@ -82,6 +124,12 @@ between minor versions; render extraction is v1 and the other contract formats a
 
 ### Changed
 
+- **Breaking:** `content.voice.register` is removed. Plans state `content.voice.locales.<lang>: { prose, speaker?,
+  by_role? }`; the scalar field no longer validates, and the example plan, handoff example, and docs examples are migrated.
+- The multi-candidate slice is removed. Choosing among candidates moved to the second turn of the direction conversation, so
+  `[declared] Slice: <url>` picks, `requirements.picks`, and the sealed `candidates` list are gone; the slice is one page.
+- `lazuli hints --field` is replaced by `--genre`, and a version 0 `hints.json` is refused with a message that says to draw
+  again.
 - Draft review is version 1: `summary`, `making_of`, maker `walkthroughs`, `claim_evidence`, `critic.context`,
   `critic.independent`, and `handled[].resolution_kind` are removed, since the CLI cannot verify them. A version 0 record
   gets an explanation. A new direction needs a critic report built on a packet with a walkthrough at every shown width;
@@ -104,6 +152,8 @@ between minor versions; render extraction is v1 and the other contract formats a
 
 ### Fixed
 
+- A `<br>` between two text nodes of one run is stored as a space, so `감각에<br>근거를` is no longer one word in every check
+  that reads the text.
 - `install.sh` passes `shellcheck` 0.9 and later: `cleanup`, which only the `EXIT` trap calls, carries
   `# shellcheck disable=SC2317` in the generator (`tools/build/installers.py`).
 - A critic report no longer refuses a short real name. `facts[].text`, `walkthroughs[].task`, `walkthroughs[].first_look`,
