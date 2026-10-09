@@ -285,17 +285,20 @@ def _evaluate(root: Path, task: str, page: str | None = None, integrity_error: s
         return {**result, "step": cut, "reason": cut["why"]}
     if unfit := _unfit(root, task, kind, step["id"], _raised(step)):
         return _prefixed(result, f"The questions in {found['questions']} (kind {kind}) do not wait: {unfit}.")
-    if approval:
+    if approval or kind == direction.KIND:
         block, sha8 = owner.write(root, task, {"integrity_error": integrity_error})
         result["owner_block"] = block
         if not owner.carries(_read_text(root / found["questions"]), sha8):
-            paste = _step(draft.STEP, f"The questions for the owner must carry the owner block that lapis-design wrote "
+            paste = _step(draft.STEP if approval else direction.STEP,
+                          f"The questions for the owner must carry the owner block that lapis-design wrote "
                           f"from the files: paste .lapis/owner/{task}.md into {found['questions']} unchanged, so that "
                           f"its last line `{owner.MARKER} {sha8}` is in the file, and stop with the questions as your "
                           "last message. A block that is missing, or out of date because a record it reports changed "
-                          f"since, does not count; run `lapis-design draft check --task {task}` after changing one.",
-                          f"lapis-design draft check --task {task}")
+                          f"since, does not count; run `lapis-design {'draft check' if approval else 'next'} --task {task}` "
+                          "after changing one.",
+                          f"lapis-design {'draft check' if approval else 'next'} --task {task}")
             return {**result, "state": "needs-step", "step": paste, "reason": paste["why"]}
+    if approval:
         if dead := preview.unreachable(shown):
             serve = _step(draft.STEP, preview.why(task, dead), preview.command(task, dead))
             return {**result, "state": "needs-step", "step": serve, "reason": serve["why"]}

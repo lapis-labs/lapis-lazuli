@@ -28,11 +28,11 @@ metadata:
   as your last message: `next` says `waiting-for-user` and the exit gate lets that stop pass. A file with no kind does
   not wait. Record the replies in `.lapis/answers/<task>.md`, the brief record: keep what it holds, add replies under
   their own headings, cite it in the plan (`context.other`), and run `next` again.
-- At `done` and at every approval wait, `next` returns an owner block (`--json`: `owner_block`) and writes it to
+- At `done` and at every approval or direction wait, `next` returns an owner block (`--json`: `owner_block`) and writes it to
   `.lapis/owner/<task>.md`: the requirement states, the owner's decisions, the facts shown with their sources, protected
   changes, disputes, and what did not run. It ends in a `lapis-owner-block <sha8>` line. Paste it unchanged ahead of your
-  own summary at `done`, and into the questions file of an approval ask (an ask without the current line comes back as
-  `draft-review`). Never edit, shorten, or write it yourself. It lists `## Decisions you have not made`: what you filled
+  own summary at `done`, and into the questions file of an approval or direction ask (an ask without the current line comes
+  back as `draft-review`, or as `owner-direction` for direction). Never edit, shorten, or write it yourself. It lists `## Decisions you have not made`: what you filled
   in that the owner never decided (style, objects, signature, color and where each color sits, layout, motion, type,
   copy). Nothing is sealed or approved until the owner's reply acknowledges that block by its digest, as the untagged
   line `- Gaps seen (lapis-owner-block <sha8>): "<their words>"`, or decides the items (`- [declared] color: <what they

@@ -41,13 +41,31 @@ KIND = "direction"
 PICK_ID = "Pick"                       # the id the second turn's questions name for the pick
 
 _HEAD = re.compile(r"^direction\s+(\d+)\b", re.IGNORECASE)
-_ANSWER = re.compile(r"^(?:(?P<cand>C\d+)\.)?(?P<id>[SKOG]\d+)\b[^:\n]*:\s*"
-                     r"(?P<choice>keep|drop|default|other|all|[a-e](?:\s*,\s*[a-e])*)\b", re.IGNORECASE)
+_ANSWER_ID = re.compile(r"^(?:(?P<cand>C\d+)\.)?(?P<id>[SKOG]\d+)\b", re.IGNORECASE)
+_CHOICE = re.compile(r"\s*(?P<choice>keep|drop|default|other|all|[a-e](?:\s*,\s*[a-e])*)\b", re.IGNORECASE)
+_CHOICE_END = re.compile(r"\s*(?:$|[—–\"“(]|-\s)")   # what follows a choice when the name may hold colons: the end, a dash, or a quote
 _PICK = re.compile(r"^pick\s*:\s*(?P<cand>C\d+)\b", re.IGNORECASE)
 _DEFAULTS = re.compile(r"^defaults\s+accepted\s*\(\s*direction\s+(?P<turn>\d+)\s*\)\s*:\s*(?P<words>\S.*)$",
                        re.IGNORECASE | re.DOTALL)
 _LEAD = re.compile(r"^[\s*_`:\-–—]+")
 _ID = re.compile(r"^(?:C\d+\.)?[SKOG]\d+$")
+
+
+def _answer(text: str) -> dict[str, str | None] | None:
+    """The `{"cand", "id", "choice"}` an answer line names, or None. The name between the id and the choice may hold a
+    colon (`S1 neo-brutalism: bold and dynamic: a`): the choice is the first word after a colon that is a choice and
+    ends the line or goes on with a dash or a quote. Without such a colon, the first colon's choice stands."""
+    head = _ANSWER_ID.match(text)
+    if not head:
+        return None
+    line = text.split("\n", 1)[0]
+    found = [m for i in range(head.end(), len(line)) if line[i] == ":" and (m := _CHOICE.match(line, i + 1))]
+    chosen = next((m for m in found if _CHOICE_END.match(line, m.end())), None)
+    if chosen is None and found and line.find(":", head.end()) + 1 == found[0].start():
+        chosen = found[0]
+    if chosen is None:
+        return None
+    return {"cand": head.group("cand"), "id": head.group("id"), "choice": chosen.group("choice")}
 
 
 def path(root: Path, task: str) -> Path:
@@ -256,11 +274,11 @@ def items(root: Path, task: str, env: Mapping[str, str] = os.environ) -> list[di
     lines = _lines(root, task)
     answers: dict[str, dict[str, Any]] = {}
     for line in lines:
-        found = _ANSWER.match(line["text"])
+        found = _answer(line["text"])
         if not found or not _counts(line, unattended):
             continue
-        key = (f"{found.group('cand').upper()}." if found.group("cand") else "") + found.group("id").upper()
-        choice = [c.strip().lower() for c in found.group("choice").split(",")]
+        key = (f"{found['cand'].upper()}." if found["cand"] else "") + found["id"].upper()
+        choice = [c.strip().lower() for c in found["choice"].split(",")]
         answers[key] = {"choice": choice, "by": "owner" if line["tag"] == "declared" else "assumed",
                         "quote": _clean(line["item"]), "turn": line["turn"]}
     d1 = _d1_turns(root, task)
@@ -400,7 +418,8 @@ def _why(task: str, phase: int, reason: str, unattended: bool, unbased: list[str
                "every open item id and attaching "
                + (f"the contact sheet `.lapis/state/diverge/{task}/contact.png`" if phase == 2 else
                   f"the reference sheet (`lapis-design references sheet --task {task}`)")
-               + ", and stop with it as your last message; no fixed number of turns, but each turn needs an open item. "
+               + f", paste the owner block `lapis-design next --task {task}` writes to .lapis/owner/{task}.md into it unchanged, "
+               "and stop with it as your last message; no fixed number of turns, but each turn needs an open item. "
                f"Record the answers in {answers} under `{turn}` as `- [declared] <id> <name>: <choice> — \"<their words>\"`"
                + (", the pick as `- [declared] Pick: C<n> — \"<their words>\"`, " if phase == 2 else ", ")
                + "or one untagged `- Defaults accepted (direction <n>): \"<their words>\"` line when they take every default.")

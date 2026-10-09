@@ -13,7 +13,7 @@ import yaml
 
 from diverge_support import complete, write_rough
 from lapis_design import critic_packet, direction, diverge, next_step, requirements
-from procedure_support import (BRIEF_RECORD, DIRECTION_PROPOSAL, TASK, load_skills, make_project, record, save,
+from procedure_support import (BRIEF_RECORD, DIRECTION_PROPOSAL, TASK, ask, load_skills, make_project, record, save,
                                seal_requirements, write_references)
 
 BRIEF = BRIEF_RECORD.split("## Direction 1")[0]
@@ -271,11 +271,28 @@ def test_a_direction_file_with_fifteen_items_waits_and_is_not_under_the_brief_ca
         {**proposal()["styles"][0], "kit": [{"id": f"K{n}", "item": f"kit item {n}", "seen_in": ["ref-1"],
                                              "default": "keep", "why": "seen"} for n in range(1, 14)]}]})
     ids = ["S1", *[f"K{n}" for n in range(1, 14)], "O1", "G1"]
-    record(run, "questions", "lapis-questions: direction\n" + "".join(f"{n}. {i} — keep or drop?\n" for n, i in
-                                                                       enumerate(ids, 1)), 200)
+    questions = "".join(f"{n}. {i} — keep or drop?\n" for n, i in enumerate(ids, 1))
+    record(run, "questions", "lapis-questions: direction\n" + questions, 200)
+    unpasted = next_step.evaluate(run, TASK)                     # the owner block is the CLI's: the file must carry it
+    assert unpasted["state"] == "needs-step" and unpasted["step"]["id"] == "owner-direction"
+    assert ".lapis/owner/" in unpasted["step"]["why"] and "lapis-owner-block" in unpasted["step"]["why"]
+    ask(run, questions, 201, kind="direction")
     result = next_step.evaluate(run, TASK)
     assert (result["state"], result["then"]["id"]) == ("waiting-for-user", "owner-direction")
-    assert result["waiting"]["kind"] == "direction"
+    assert result["waiting"]["kind"] == "direction" and result["owner_block"].startswith(f"# Owner block: {TASK}")
+
+
+def test_a_style_name_with_colons_does_not_hide_the_choice(run):
+    answer(run, '- [declared] S1 neo-brutalism: bold and dynamic: a — "the record one"',
+           '- [declared] K1 slabs: drop — "no"', '- [declared] K2 ticker: all: keep',
+           '- [declared] O1 the log: all — "all"', '- [declared] G1 animation: other: the first one: b')
+    found = {i["id"]: i for i in direction.items(run, TASK, {})}
+    assert found["S1"]["state"] == "decided" and found["S1"]["choice"] == ["a"]
+    assert found["K2"]["choice"] == ["keep"] and found["O1"]["choice"] == ["all"]
+    assert found["G1"]["choice"] == ["b"]
+    answer(run, '- [declared] S1 neo-brutalism: other — "my own"', '- [declared] O1 the log: a,c — "two"')
+    found = {i["id"]: i for i in direction.items(run, TASK, {})}
+    assert found["S1"]["choice"] == ["other"] and found["O1"]["choice"] == ["a", "c"]
 
 
 def test_a_direction_file_that_leaves_an_open_item_out_or_has_none_open_does_not_wait(run):

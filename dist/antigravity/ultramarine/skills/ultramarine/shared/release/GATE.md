@@ -359,7 +359,7 @@ counted. A set is one text written once, so writing the same words again is a ne
 name the step the files call for, as without questions. Without `--task`, `next` takes the task of the newest plan,
 counted questions file, counted answers file, or counted references record.
 
-`done` and every wait on approval questions carry the owner block (`owner.py`), which `next` writes to
+`done` and every wait on approval or direction questions carry the owner block (`owner.py`), which `next` writes to
 `.lapis/owner/<task>.md` and returns as `owner_block`. It lists the requirement outcome, the owner's decisions, the
 facts shown with their sources, what changed behind the page, the disputes, what was shown (each page's address, widths,
 document height at 1440, the capture files of those widths, and, for a plain static page, the HTML file that opens
@@ -367,7 +367,7 @@ without a server), and what did not run or is
 stale (the checks recorded as not run, and each place a critic report does not hold against its packet, as `critic
 packet`'s check finds it), and
 ends with the line `lapis-owner-block <sha8>`, the digest of its body. The questions file has to contain that line: a
-wait whose questions lack the current line is `draft-review` ("paste the owner block"), and `done` tells the agent to
+wait whose questions lack the current line is `draft-review` ("paste the owner block"; `owner-direction` for a direction file), and `done` tells the agent to
 paste the block unchanged ahead of its own summary. `draft check` writes the block too when the review holds. A pasted
 block is not counted as words or links of the questions.
 

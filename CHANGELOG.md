@@ -155,6 +155,10 @@ between minor versions; render extraction is v1 and the other contract formats a
 
 ### Fixed
 
+- A direction wait carries the owner block as an approval wait does: a `direction` questions file without the current
+  `lapis-owner-block` line comes back as `owner-direction` with the paste step, and `next` returns `owner_block` for it.
+- A style or object name that holds a colon (`S1 neo-brutalism: bold and dynamic: a`) no longer hides the choice of a
+  direction answer: the choice is the first word after a colon that ends the line or goes on with a dash or a quote.
 - A `<br>` between two text nodes of one run is stored as a space, so `감각에<br>근거를` is no longer one word in every check
   that reads the text.
 - `install.sh` passes `shellcheck` 0.9 and later: `cleanup`, which only the `EXIT` trap calls, carries

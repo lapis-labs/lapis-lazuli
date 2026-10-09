@@ -79,6 +79,8 @@ the owner and the critic do.
 
 - Write `.lapis/questions/<task>.md` with `lapis-questions: direction` on its first line, name every open item id in it, and
   stop with it as your last message. A harness with a question tool may ask through it; the file is the record either way.
+- Paste the owner block `next` writes (`.lapis/owner/<task>.md`, last line `lapis-owner-block <sha8>`) unchanged into the
+  file, as at an approval: a direction file without the current line comes back as `owner-direction`, with the paste step.
 - The file waits only when at least one item is open and every open id is named. Otherwise `next` names the step it would
   name, so a turn cannot be a check-in.
 - Do not write a line such as `Round 3 of 3.` in the message or the answers: the brief reads it as a third brief round.
@@ -98,7 +100,9 @@ one line per item, keeping what the file holds. The fact cap of the brief (six q
 - Defaults accepted (direction 2): "<owner words>"               untagged; every open item takes its default
 ```
 
-The choice after the colon is an option id, a comma list of option ids, `keep`, `drop`, `default`, or `other`. Each `[declared]`
+The choice after the colon is an option id, a comma list of option ids, `keep`, `drop`, `default`, or `other`. A name may
+itself hold colons (`S1 neo-brutalism: bold and dynamic: a`): the choice is the first word after a colon that ends the line
+or goes on with `—`, `–`, a quote, or `- `. Each `[declared]`
 item becomes a requirement row the critic judges (`K2 …: drop` is `met` when no ticker is shown); `Pick:` and the untagged
 line are the owner's decisions and are listed in the owner block, not rows. The critic reads the options by their texts, not
 by their letters. Record only what the owner said: never write a `[declared]` line for a reply they did not give.
