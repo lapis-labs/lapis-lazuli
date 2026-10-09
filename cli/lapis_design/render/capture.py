@@ -177,7 +177,12 @@ _DOM = r"""() => {
      if (sibling.nodeType===3) textOrdinal++;
    const fontNode=[Number(parent.getAttribute('data-lapis-capture-index')),textOrdinal];
    if (previous && previous.box===box && JSON.stringify(previous.style)===JSON.stringify(style)) {
-      previous.text+=text; previous.original+=original;
+      // A <br> between two text nodes of one run is the line break a reader sees; the run keeps it as a space,
+      // so "감각에<br>근거를" is not stored as one word. `original` stays the signature input.
+      const gap=document.createRange();
+      gap.setStartAfter(previous.nodes.at(-1)); gap.setEndBefore(node);
+      const broken=!!gap.cloneContents().querySelector('br') && !/\s$/.test(previous.text) && !/^\s/.test(text);
+      previous.text+=(broken?' ':'')+text; previous.original+=original;
       previous.lineYs.push(...lineYs);
       previous.fontNodes.push(fontNode);
       previous.nodes.push(node);
