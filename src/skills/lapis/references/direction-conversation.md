@@ -6,13 +6,13 @@ vote on adjectives: every option is a job, a representation, or a carried meanin
 
 ## Sections
 
-- When the turns happen — turn one after the references, turn two after `diverge`; more only while an answer opens something.
-- The three questions — what a named style does, how each core object is represented, what a signature element carries.
-- The proposal — `.lapis/direction/<task>.yaml`, written before you ask.
-- Asking — one message per turn, in the owner's language, naming every open item.
-- Recording answers — `## Direction <n>` in the brief record, one line per item.
-- Unattended — nobody to ask: `[assumed]` with a basis, nothing waits.
-- What it is not — limits, so a turn never becomes a progress check-in.
+- When the turns happen: turn one after the references, turn two after `diverge`; more only while an answer opens something.
+- The three questions: what a named style does, how each core object is represented, what a signature element carries.
+- The proposal: `.lapis/direction/<task>.yaml`, written before you ask.
+- Asking: one message per turn, in the owner's language, naming every open item.
+- Recording answers: `## Direction <n>` in the brief record, one line per item.
+- Unattended: nobody to ask: `[assumed]` with a basis, nothing waits.
+- What it is not: limits, so a turn never becomes a progress check-in.
 
 ## When the turns happen
 
