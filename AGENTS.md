@@ -283,7 +283,7 @@ files beside it; the database file itself does not change.
   session (`order.CLI_OWNED`), and a shell write shows up as an `integrity` row. A detector that reads a plan field
   declares it in `reads_plan`, or a change to that field never names the rule.
 - `next` lives in `cli/lapis_design/next_step.py`: `lapis-design next --task demo [--json]` runs `release_check.run(...,
-  offline=True)` on the files and returns the one step still to take (`brief`, `requirements`, `references`, `plan`,
+  offline=True)` on the files and returns the one step still to take (`brief`, `requirements`, `references`, `owner-direction`, `diverge`, `plan`,
   `plan-fix`, `plan-flows`,
   `plan-explorations`, `plan-order`, `slice`, `fonts-lock`, `stub`, `ledger`, `render`, `behavior`, `lint`, `critic`,
   `release`) with its exact
@@ -324,9 +324,13 @@ files beside it; the database file itself does not change.
   A run that stopped to ask its user (`waiting.py`: `.lapis/questions/<task>.md` newer than `.lapis/answers/<task>.md`)
   makes `next` say `waiting-for-user` and the gate let the stop pass without a continue: two sets before a plan, one
   after (`waits` in the gate state).
-  The order brief, requirements, references, plan, then code is `order.py`: `hook pre-write` refuses an unattended
-  create run's write of a page source file while `next` names `brief`, `requirements`, `references`, `plan`, `plan-fix`,
-  or `plan-explorations` (three
+  The direction conversation (`direction.py`: the proposal `.lapis/direction/<task>.yaml`, the owner's items under
+  `## Direction <n>` in the brief record, `owner-direction` turns one and two) and the rough first views (`diverge.py`:
+  CLI-owned draws, cards, distances, contact sheet, seal in `.lapis/state/diverge/<task>/`) sit between the references and
+  the plan; the pools and weights are `src/shared/diverge/pools.yaml`.
+  The order brief, requirements, references, direction, plan, then code is `order.py`: `hook pre-write` refuses an
+  unattended create run's write of a page source file while `next` names `brief`, `requirements`, `references`,
+  `owner-direction`, `diverge`, `plan`, `plan-fix`, or `plan-explorations` (three
   refusals for one step, then the write passes and is recorded in `.lapis/order/<task>.json`), and `release check`
   reports page code that came first as `release.procedure-order`, which `next` turns into the step `plan-order`.
 - `lazuli` lives in `cli/lazuli/`: `scan.py` (read-only inventory; `LAZULI_FONT_ROOTS` replaces the

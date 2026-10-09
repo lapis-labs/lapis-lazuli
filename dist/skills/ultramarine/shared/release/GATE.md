@@ -204,7 +204,7 @@ record (the later one stands), and `next` counts it only while the line is still
 of the run's own is newer.
 
 `lapis-design next --task <task>` runs this gate offline on the files and returns the one step still to
-take, with its exact command or schema: `brief`, `requirements`, `references`, `owner-direction`, `plan`, `plan-fix`, `plan-flows`,
+take, with its exact command or schema: `brief`, `requirements`, `references`, `owner-direction`, `diverge`, `plan`, `plan-fix`, `plan-flows`,
 `plan-explorations`, `plan-order`, `slice`, `fonts-lock`, `stub`, `ledger`, `render`, `behavior`, `lint`, `critic`,
 `release`, or `done`. The gate's
 own findings that report a check that did not run or an input that is missing (the ten under
@@ -260,6 +260,21 @@ or a style, kit, or object item has no owner answer; once `diverge` is sealed it
 owner's decision and no row). In an attended run an `[assumed]` answer does not count; an unattended run never waits and
 records `[assumed] ... Basis: ...` items instead. Questions of kind `direction` wait only when at least one item is open and
 the file names every open item id, and they are not under the brief's cap on questions.
+
+`diverge` comes after the first turn of the direction conversation, on the same terms: the run makes two to four rough first
+views (three by default) that differ in how the open core objects are represented and how color is allocated, each on a
+different lettered direction of the references record. `lapis-design diverge start --task <task>` writes `seed.json` (the
+task's hash and OS entropy) and the draws `draws.jsonl` (`{id, candidate, slot, pool, item, reason, prev}` in a hash chain)
+under `.lapis/state/diverge/<task>/`, a folder only `lapis-design` writes, before any card exists; `resample` replaces one draw
+(twice per candidate at most, each with its reason) and `variant` adds the rough an owner asked for (`reason: owner`). The agent
+writes `.lapis/diverge/<task>/C<n>/index.html` and `card.yaml` (`diverge/card.schema.yaml`) and renders each narrow
+(`render check ... --task <task>-C<n> --width 390 --width 1440`). `diverge check` reads each card against the draws and the
+renders and writes `fingerprints.json`, `distances.json` (`0.35·struct + 0.35·mass + 0.30·repr`, weights provisional in
+`diverge/pools.yaml`; reported, never gated, except that a pair with the same markup structure and a mass distance under
+`reject_mass_below` is refused as differing in order or finish only) and `contact.png`; `diverge seal` writes `seal.json` with
+the digests of the cards, roughs, captures, and draws. The step is owed until `seal.json` holds every drawn candidate and the
+current draws. An edit after the seal shows in `diverge check` and in the owner block. The slice then shows one page, built from
+the owner's pick (`[declared] Pick: C<n>`, the second turn of the direction conversation).
 
 `plan-order` comes after the plan's own blockers and before the fonts lock: a blocking `release.procedure-order` (an
 unattended run whose page code came before the brief, references, or plan) sends the run back to redo the direction

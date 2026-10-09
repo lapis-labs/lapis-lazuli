@@ -1,16 +1,18 @@
 """The direction conversation (`direction.py`): the proposal's form, the answers that settle each item, when the step
 `owner-direction` is owed and when a `direction` questions file waits, the pick of the second turn, and what the
-requirement record and the critic packet make of the answers. Files only; the draws and renders of `diverge` have
-their own tests (`test_diverge.py`)."""
+requirement record and the critic packet make of the answers. The roughs of the second turn are drawn, made, and sealed with
+the real `diverge` commands; their own cases are in `test_diverge.py`."""
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 
 import pytest
 import yaml
 
-from lapis_design import critic_packet, direction, next_step, requirements
+from diverge_support import complete, write_rough
+from lapis_design import critic_packet, direction, diverge, next_step, requirements
 from procedure_support import (BRIEF_RECORD, DIRECTION_PROPOSAL, TASK, load_skills, make_project, record, save,
                                seal_requirements, write_references)
 
@@ -54,6 +56,7 @@ def run(tmp_path) -> Path:
     record(tmp_path, "answers", BRIEF, 50)
     seal_requirements(tmp_path)
     write_references(tmp_path)
+    reset_diverge(tmp_path)                                      # the fixture ran the whole conversation: undo it
     record(tmp_path, "answers", BRIEF, 50)                       # no answer to the conversation yet
     save(tmp_path, f"direction/{TASK}.yaml", proposal())
     return tmp_path
@@ -73,18 +76,22 @@ def states(root: Path, env: dict | None = None) -> dict[str, str]:
     return {i["id"]: i["state"] for i in direction.items(root, TASK, env or {})}
 
 
-def seal_diverge(root: Path, signature: dict[str, list[dict]], d1_turns: int = 1) -> None:
-    """A sealed set of roughs as the CLI writes it, with the cards the agent wrote."""
+def reset_diverge(root: Path) -> None:
+    """No rough drawn, made, or sealed."""
+    for name in (".lapis/state/diverge", ".lapis/diverge"):
+        shutil.rmtree(root / name, ignore_errors=True)
+    for file in (root / ".lapis/renders").glob(f"{TASK}-C*.narrow*"):
+        shutil.rmtree(file) if file.is_dir() else file.unlink()
+
+
+def seal_diverge(root: Path, signature: dict[str, list[dict]]) -> None:
+    """The roughs drawn, made, and sealed with the real commands (`diverge_support.complete`); each rough's card then
+    holds the signature elements given, as an agent may add them (the seal reports an edit, never refuses it)."""
+    reset_diverge(root)
+    complete(root, TASK, len(signature))
     for cid, elements in signature.items():
-        card = root / ".lapis" / "diverge" / TASK / cid / "card.yaml"
-        card.parent.mkdir(parents=True, exist_ok=True)
-        card.write_text(yaml.safe_dump({"id": cid, "signature": elements}), encoding="utf-8")
-    state = root / ".lapis" / "state" / "diverge" / TASK
-    state.mkdir(parents=True, exist_ok=True)
-    (state / "seal.json").write_text(json.dumps({
-        "version": 0, "task": TASK, "d1_turns": d1_turns, "contact": {"path": f".lapis/state/diverge/{TASK}/contact.png"},
-        "candidates": {cid: {"captures": {"1440": {"path": f".lapis/diverge/{TASK}/{cid}/1440.png"}}}
-                       for cid in signature}}), encoding="utf-8")
+        file = root / ".lapis" / "diverge" / TASK / cid / "card.yaml"
+        file.write_text(yaml.safe_dump({**yaml.safe_load(file.read_text(encoding="utf-8")), "signature": elements}), encoding="utf-8")
 
 
 # ---- 1. the proposal's form
@@ -220,7 +227,7 @@ def test_a_pick_of_a_rough_the_set_does_not_have_is_not_a_pick_and_the_last_pick
 
 def test_a_defaults_line_after_the_seal_takes_the_picked_rough_signature_and_one_before_it_does_not(run):
     settled(run)
-    seal_diverge(run, {"C1": [{"id": "G1", "element": "crystal stone", "carries": "the three plugin names"}]})
+    seal_diverge(run, {"C1": [{"id": "G1", "element": "crystal stone", "carries": "the three plugin names"}], "C2": []})
     base = '- Defaults accepted (direction 1): "your defaults are fine"'
     answer(run, base, '- [declared] Pick: C1 — "this one"')
     assert next_step.evaluate(run, TASK)["step"]["id"] == "owner-direction"          # the turn-1 line is not a turn-2 answer
@@ -235,12 +242,26 @@ def test_a_variant_asked_for_after_the_pick_makes_the_pick_owed_again(run):
     seal_diverge(run, {"C1": [], "C2": []})
     answer(run, '- Defaults accepted (direction 1): "x"', '- [declared] Pick: C2 — "this"')
     assert step_of(run) != "owner-direction"
-    state = run / ".lapis" / "state" / "diverge" / TASK
-    (state / "draws.jsonl").write_text(json.dumps({"id": "d1", "candidate": "C3", "variant": True, "picks_seen": 1}) + "\n",
-                                       encoding="utf-8")
-    assert direction.pick(run, TASK, {}) is None and step_of(run) == "owner-direction"
+    diverge.variant(run, TASK, "bolder, not a card list")
+    assert direction.pick(run, TASK, {}) is None and step_of(run) == "diverge"          # the new rough is not made or sealed
+    write_rough(run, TASK, "C3")
+    diverge.seal(run, TASK)
+    assert step_of(run) == "owner-direction" and "no `Pick:`" in next_step.evaluate(run, TASK)["step"]["why"]
     answer(run, '- Defaults accepted (direction 1): "x"', '- [declared] Pick: C2 — "this"', '- [declared] Pick: C2 — "still this"')
-    assert direction.pick(run, TASK, {})["candidate"] == "C2"
+    assert direction.pick(run, TASK, {})["candidate"] == "C2" and step_of(run) != "owner-direction"
+
+
+def test_an_unattended_pick_is_assumed_and_counts_only_with_its_basis(run, monkeypatch):
+    monkeypatch.setenv("LAPIS_UNATTENDED", "1")
+    settled(run)
+    seal_diverge(run, {"C1": [], "C2": []})
+    base = '- Defaults accepted (direction 1): "your defaults are fine"'
+    answer(run, base, "- [assumed] Pick: C2 — it looks fine")
+    assert direction.pick(run, TASK, {"LAPIS_UNATTENDED": "1"}) is None
+    assert "1 [assumed] items give no `Basis:`" in next_step.evaluate(run, TASK)["step"]["why"]
+    answer(run, base, "- [assumed] Pick: C2 — Basis: the references show the fader strip working on a phone.")
+    assert direction.pick(run, TASK, {"LAPIS_UNATTENDED": "1"})["by"] == "assumed" and step_of(run) != "owner-direction"
+    assert direction.pick(run, TASK, {}) is None                                          # an attended run takes no assumed pick
 
 
 # ---- 4. the questions that wait
@@ -302,6 +323,10 @@ def test_the_critic_packet_resolves_the_chosen_option_to_its_text_and_leaves_the
     assert (o1["state"], o1["choice"], o1["by"]) == ("narrowed", ["a", "c"], "owner")
     assert [(o["id"], o["text"]) for o in o1["options"]][0] == ("a", "the log as ruled rows")
     assert next(i for i in section["items"] if i["id"] == "K2")["choice"] == ["drop"]
-    assert section["pick"]["candidate"] == "C2" and section["pick"]["captures"] == [f".lapis/diverge/{TASK}/C2/1440.png"]
+    assert section["pick"]["candidate"] == "C2" and section["pick"]["captures"] == [
+        f".lapis/renders/{TASK}-C2.narrow.shots/{width}-light.png" for width in (1440, 390)]
     assert section["contact"] == f".lapis/state/diverge/{TASK}/contact.png"
+    assert section["pick"]["card"]["id"] == "C2" and section["pick"]["card"]["signature"][0]["element"] == "fader strip"
+    listed = {i["path"]: i["kind"] for i in data["inputs"]}
+    assert listed[section["contact"]] == "direction-contact" and listed[section["pick"]["captures"][0]] == "direction-capture"
     assert "why" not in json.dumps(section) and "they can carry the three plugins" not in json.dumps(section)

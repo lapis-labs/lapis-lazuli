@@ -10,7 +10,7 @@ import pytest
 import yaml
 
 from lapis_design import asks, brief, gate, next_step, owner, waiting
-from procedure_support import DIRECTION_ANSWERS, TASK, ask, make_project, record, reply, save, unseal_slice
+from procedure_support import DEFAULTS_ACCEPTED, TASK, ask, make_project, record, reply, save, unseal_slice
 
 QUESTIONS = "1. Who visits the kiln shop page?\n2. Is the monthly firing date fixed?\n"
 ASK = ("1. Give each plate its own composition, or keep the repeated plate?\n   a) one composition per plate  "
@@ -41,7 +41,7 @@ def open_item(root: Path) -> str:
     answers = root / f".lapis/answers/{TASK}.md"
     stamp = answers.stat().st_mtime_ns
     answers.write_text(answers.read_text(encoding="utf-8").replace(
-        DIRECTION_ANSWERS, '\n## Direction 1\n\n- [declared] O1 the log: all — "try them all"\n'), encoding="utf-8")
+        DEFAULTS_ACCEPTED, '\n## Direction 1\n\n- [declared] O1 the log: all — "try them all"\n'), encoding="utf-8")
     os.utime(answers, ns=(stamp, stamp))                     # the owner answered the object and has not taken the defaults
     doc["signature"] = [{"id": "G1", "element": "procedure animation", "default": "a",
                          "options": [{"id": "a", "text": "which step is current"}, {"id": "b", "text": "only the order"}]}]

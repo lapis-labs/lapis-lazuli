@@ -30,11 +30,17 @@ BRIEF_RECORD = """# Brief: kiln shop landing
 - [known] Q1 Who buys? Craft lovers in their 30s and 40s. Basis: PRODUCT.md.
 - [assumed] Q2 What is the one job? Reserve a piece from this firing. Basis: nobody to ask; the request names no other action.
 """
-DIRECTION_ANSWERS = """
+DEFAULTS_ACCEPTED = """
 ## Direction 1
 
 - Defaults accepted (direction 1): "go with your defaults"
 """
+PICKED = """
+## Direction 2
+
+- [declared] Pick: C1 — "the first one"
+"""
+DIRECTION_ANSWERS = DEFAULTS_ACCEPTED + PICKED     # both turns of the direction conversation, as an owner took them
 DIRECTION_PROPOSAL = {
     "version": 0, "task": "kiln-shop-landing", "styles": [],
     "objects": [{"id": "O1", "object": "the monthly firing log", "kind": "record-document", "default": "all",
@@ -68,15 +74,62 @@ def report(tool: str, **target) -> dict:
             "findings": [], **({"scope": {"layers": ["plan", "source", "render"]}} if tool == "slop_lint" else {})}
 
 
+_DRAWN: dict[tuple[str, str], Path] = {}      # the roughs of a conversation, kept once per process and copied into each project
+
+
+def _roughs(root: Path, task: str) -> list[Path]:
+    """The folders and files `diverge` leaves in a project: the agent's roughs, the CLI's records, the narrow renders."""
+    return [root / ".lapis/diverge" / task, root / ".lapis/state/diverge" / task,
+            *sorted((root / ".lapis/renders").glob(f"{task}-C*.narrow*"))]
+
+
+def _drawn(root: Path, task: str) -> None:
+    """The `diverge` step of a finished conversation: drawn, made, and sealed with the real commands the first time a process
+    asks, copied from that run afterwards (every project of the suite would draw the same roughs)."""
+    import tempfile
+
+    from diverge_support import complete
+
+    record_file = root / ".lapis/references" / f"{task}.md"          # a declined run has none: its roughs draw on no direction
+    key = (task, record_file.read_text(encoding="utf-8") if record_file.is_file() else "")
+    if key not in _DRAWN:
+        complete(root, task)
+        keep = Path(tempfile.mkdtemp(prefix="diverge-fixture-"))
+        for source in _roughs(root, task):
+            target = keep / source.relative_to(root)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            (shutil.copytree if source.is_dir() else shutil.copy2)(source, target)
+        _DRAWN[key] = keep
+        return
+    for source in _roughs(_DRAWN[key], task):
+        target = root / source.relative_to(_DRAWN[key])
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if source.is_dir():
+            shutil.copytree(source, target, copy_function=shutil.copy2, dirs_exist_ok=True)
+        else:
+            shutil.copy2(source, target)
+
+
 def write_direction(root: Path, task: str = TASK) -> None:
-    """The direction conversation of a run that went through it: the proposal, and the owner's `Defaults accepted` in the
-    brief record (kept as old as it was)."""
+    """The direction conversation of a run that went through it, as old as the brief record: the proposal, the owner's
+    `Defaults accepted` (first turn) in the brief record, the `diverge` roughs drawn, made, and sealed, and the owner's
+    pick of C1 (second turn). Run again, or without a brief record, it adds nothing the second time."""
     save(root, f"direction/{task}.yaml", {**DIRECTION_PROPOSAL, "task": task})
     answers = root / ".lapis" / "answers" / f"{task}.md"
-    if answers.is_file() and "## Direction 1" not in (text := answers.read_text(encoding="utf-8")):
-        stamp = answers.stat().st_mtime_ns
-        answers.write_text(text + DIRECTION_ANSWERS, encoding="utf-8")
+    if not answers.is_file():
+        return
+    stamp = answers.stat().st_mtime_ns
+
+    def append(text: str) -> None:
+        answers.write_text(answers.read_text(encoding="utf-8") + text, encoding="utf-8")
         os.utime(answers, ns=(stamp, stamp))
+
+    if "## Direction 1" not in answers.read_text(encoding="utf-8"):
+        append(DEFAULTS_ACCEPTED)
+    if not (root / ".lapis" / "state" / "diverge" / task / "seal.json").is_file():
+        _drawn(root, task)
+    if "## Direction 2" not in answers.read_text(encoding="utf-8"):
+        append(PICKED)
 
 
 def load_skills(root: Path, task: str = TASK) -> None:

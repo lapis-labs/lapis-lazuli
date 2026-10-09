@@ -34,7 +34,7 @@ from typing import Any, Mapping
 
 import yaml
 
-from lapis_design import brief, diverge, gate, references, shared_dir, waiting
+from lapis_design import brief, diverge, gate, references, waiting
 
 STEP = "owner-direction"
 KIND = "direction"
@@ -74,8 +74,7 @@ def proposal(root: Path, task: str) -> dict[str, Any] | None:
 
 def pool_kinds() -> list[str]:
     """The kinds of core object `diverge/pools.yaml` has representation families for."""
-    found = yaml.safe_load((shared_dir() / "diverge/pools.yaml").read_text(encoding="utf-8"))
-    return list((found.get("representation") or {}))
+    return list((diverge.pools().get("representation") or {}))
 
 
 def _reference_ids(root: Path, task: str) -> set[str]:
@@ -105,8 +104,7 @@ def proposal_problem(root: Path, task: str) -> str | None:
         return f"{where} does not exist"
     except yaml.YAMLError as exc:
         return f"{where} cannot be read: {(str(exc).splitlines() or [''])[0]}"
-    schema = yaml.safe_load((shared_dir() / "direction/schema.yaml").read_text(encoding="utf-8"))
-    errors = sorted(Draft202012Validator(schema).iter_errors(found), key=lambda e: (len(list(e.absolute_path)), e.message))
+    errors = sorted(Draft202012Validator(diverge.shared_yaml("direction/schema.yaml")).iter_errors(found), key=lambda e: (len(list(e.absolute_path)), e.message))
     if errors:
         first = errors[0]
         return f"{where} does not match direction/schema.yaml: {'/'.join(map(str, first.absolute_path)) or 'it'}: {first.message[:160]}"
@@ -294,6 +292,11 @@ def _pick_lines(root: Path, task: str, env: Mapping[str, str]) -> list[dict[str,
             found.append({"candidate": match.group("cand").upper(), "by": "owner" if line["tag"] == "declared" else "assumed",
                           "quote": _clean(line["item"]), "turn": line["turn"]})
     return found
+
+
+def pick_count(root: Path, task: str, env: Mapping[str, str] = os.environ) -> int:
+    """How many `Pick:` lines the answers hold now (an owner-requested variant records it, so the pick is asked again)."""
+    return len(_pick_lines(root, task, env))
 
 
 def pick(root: Path, task: str, env: Mapping[str, str] = os.environ) -> dict[str, Any] | None:

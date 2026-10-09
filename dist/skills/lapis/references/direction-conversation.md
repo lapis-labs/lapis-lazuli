@@ -18,7 +18,7 @@ vote on adjectives: every option is a job, a representation, or a carried meanin
 
 - **Turn one** comes after the references record passes. Ask about every open style, kit, object, and brief-named signature
   item in one message, with the reference sheet (`lapis-design references sheet --task <task>`) attached.
-- **Turn two** comes after `diverge` is sealed (the `diverge` step). Show the contact sheet and ask for the pick and
+- **Turn two** comes after `diverge` is sealed (`diverge.md`). Show the contact sheet and ask for the pick and
   for the picked rough's signature items. It may also ask about color role and area for the pick; what you do not ask goes
   to the gap list the owner sees at the slice.
 - **More turns** only while an answer opens something: a variant they want, a narrowing that needs another look, a pool

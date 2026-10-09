@@ -97,6 +97,10 @@ A small edit inside an established system needs no plan. Say so and make the edi
    represented, and what each signature element carries. Write `.lapis/direction/<task>.yaml`, ask in one message
    (`lapis-questions: direction`), record the answers under `## Direction <n>`, and never decode a named style alone.
    With nobody to ask, record `[assumed]` answers with their basis.
+7. Then make the rough first views (`references/diverge.md`): `next` names `diverge` until
+   `lapis-design diverge start`, the roughs and their cards, `check`, and `seal` are done. The CLI draws each rough's
+   reference direction, core-object representation, and color allocation, so you cannot pick them; the owner picks one at
+   the second turn of the direction conversation, and the plan starts from that pick.
 
 For supplied design sources or a role transfer, read `shared/handoff/HANDOFF.md` → **Intake and authority**
 and **Projection annotations** before reconciling them; read **Export** and **Return and freshness** when
@@ -220,10 +224,11 @@ the comparison in `explorations` (decision `motion`).
 
 ### 4. Concept and signature - `direction.concept`, `direction.levers`, `layout.signature`
 
-Before committing, write two directions that differ in relationship or structure - the page organized
-around a different thing from the subject, not the same layout in another palette - and keep both in
-`explorations` (decision `direction`), each named by its relation. The pick becomes
-`direction.concept`; the other says why it lost.
+Before committing, compare directions that differ in relationship or structure - the page organized
+around a different thing from the subject, not the same layout in another palette. In a create run they
+are the `diverge` roughs (start, step 7) with the pick the owner made at the second turn; keep them in
+`explorations` (decision `direction`), each named by its relation. Otherwise write two. The pick
+becomes `direction.concept`; the others say why they lost.
 
 Write the concept as a relation that changes order, emphasis, or labels, starting from a live tension
 in the subject: a pottery shop's sales page becomes the record of one kiln firing. A mood or a style
@@ -260,6 +265,10 @@ the user's records (`lazuli color record`) or `DESIGN.md`; a computed approximat
 code can seed a value you author, labeled as yours. Never invent a standard's value. For what counts
 as an answer on each axis, how many colors each role needs, building from world materials, OKLCH
 ramps, themes, data scales, and physical standards, read `references/color.md`.
+
+Give every `field` and `identity` role an `area`: where the color sits and roughly how much of the screen it owns
+(a picked rough's card carries it, and the plan takes the card's roles unchanged). A value survives into the CSS; its area
+does not unless the plan says it.
 
 For an open decision, run `references/color.md` → **Run the color comparison**: fixed/open inputs,
 role hypotheses, two palettes on matched real-screen specimens, then remove role failures, choose,

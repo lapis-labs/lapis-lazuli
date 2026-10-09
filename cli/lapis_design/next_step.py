@@ -40,8 +40,8 @@ from typing import Any
 
 import yaml
 
-from lapis_design import (asks, attempts, brief, critic_packet, direction, draft, gate, owner, preview, references,
-                          release_check, requirements, shared_dir, slice_step, taste, waiting)
+from lapis_design import (asks, attempts, brief, critic_packet, direction, diverge, draft, gate, owner, preview,
+                          references, release_check, requirements, shared_dir, slice_step, taste, waiting)
 from lapis_design.lint.cli import problems
 from lapis_design.plan_check import PlanOverLimit, read_plan, yaml_reason
 from lapis_design.summary import NOT_JUDGED
@@ -368,6 +368,8 @@ def _steps(root: Path, task: str, page: str | None, integrity_error: str | None 
             return state(_step(references.STEP, references.why(task, found, planned=False)), False)
         if owed := direction.owed(root, task, 1):
             return state(direction.step(task, owed), False)
+        if owed := diverge.owed(root, task):
+            return state(diverge.step(root, task, owed), False)
         if owed := direction.owed(root, task, 2):
             return state(direction.step(task, owed), False)
         answers = waiting.answers_path(Path('.'), task).as_posix()
@@ -403,6 +405,8 @@ def _steps(root: Path, task: str, page: str | None, integrity_error: str | None 
             return state(_step(references.STEP, references.why(task, found, planned=True)), False)
         if owed := direction.owed(root, task, 1):
             return state(direction.step(task, owed), False)
+        if owed := diverge.owed(root, task):
+            return state(diverge.step(root, task, owed), False)
         if owed := direction.owed(root, task, 2):
             return state(direction.step(task, owed), False)
 

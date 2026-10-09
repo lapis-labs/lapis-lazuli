@@ -19,6 +19,14 @@ The packet holds:
   spacing, size, or radius is judged against), the voice and `key_copy`,
   `flows`, `references` with what each `take`s and `leave`s, `explorations` with their candidates and the chosen one,
   and `defaults` as `{id, decision, keep_when, case_when}`
+- `direction`: what the owner decided in the direction conversation, with the ids resolved: `items`, each `{id, label,
+  state, by, choice, options}` (`S` a named style's job, `K` a trend-kit element to keep or drop, `O` how a core object is
+  represented, `G` what a signature element carries; `choice` is the option ids, `keep`, `drop`, `all`, or `other` that
+  stand, and `by` says whether the owner or the run decided). Judge a row such as `O1: a,c` against the option texts of the
+  item, never against the bare letters, and a dropped `K` item is `met` only when the page shows no such element. `pick` is
+  the owner's pick among the rough first views (its card and captures), and `contact` the contact sheet of every rough, so you
+  see the alternatives that lost: say in a note when the roughs are nominally different and functionally the same (the same
+  structure with other colors, one representation under three names)
 - `inputs`: every file you may read, as `{kind, path, sha256}`: the render extracts and their screenshots, the behavior
   session, the lint report, the reference record and its study captures, the exploration artifacts and captures, the
   user's taste, and the product and contract documents. A file that is not listed is not yours to read
