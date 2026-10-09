@@ -147,7 +147,6 @@ OWED = [
      r"The slice shows one page, built from the pick"),
     ("the brief leaves the visual direction to the conversation in lapis", "lps-brief", "references/research.md",
      r"Do not ask in the brief; the direction conversation in `lapis` asks what a style does"),
-    ("the brief's questions file is marked brief", "lps-brief", "SKILL.md", r"first line `lapis-questions: brief`"),
     ("a plain approval is untagged, not a requirement row", "lapis", "SKILL.md",
      r"A plain approval \(\"looks right, go on\"\) is an untagged item \(`- Approved the slice: <their words>`\), because every `\[declared\]` item becomes a requirement row"),
     ("the record guide keeps approval out of the rows", "lps-brief", "references/record.md",
