@@ -170,6 +170,9 @@ between minor versions; render extraction is v1 and the other contract formats a
   navigation to go back from, the entry Back probe still runs, and the four requirements that read the probe
   (`ux.back-trap`, `ux.duplicate-submit`, `ux.false-status`, `ux.destructive-without-undo`) are no longer left unverified for it.
   The POST reload check looks for a form before it asks for a stub backend.
+- A `won-comparison` keep on a rendered face no longer asks for a comparison of a text role the plan does not declare
+  (the extract's `nav` or `label`) while a declared role has that face for that script, so the six declared type roles'
+  comparisons are enough and the finding is waived instead of staying blocking after a `false-positive` verdict.
 - A `<br>` between two text nodes of one run is stored as a space, so `감각에<br>근거를` is no longer one word in every check
   that reads the text.
 - `install.sh` passes `shellcheck` 0.9 and later: `cleanup`, which only the `EXIT` trap calls, carries

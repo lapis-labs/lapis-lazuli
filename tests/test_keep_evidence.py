@@ -149,6 +149,20 @@ def test_a_keep_that_cites_a_face_it_did_not_win_names_the_ones_that_won(tmp_pat
     assert verdict(found) == ("open", True) and "won: system-ui" in found["observed"]
 
 
+def test_a_text_role_the_plan_does_not_declare_asks_for_no_comparison_of_its_own_while_a_declared_role_has_its_face(tmp_path):
+    won = type_exploration("system-ui", ["system-ui", "Pretendard"], covers=("heading", "body", "ui"))
+    plan = platform_face_plan(won)
+    case = {"id": "won-comparison", "when": "the face won its comparison", "evidence": ["exploration"]}
+    render = [{"role": role, "family": "system-ui", "scripts": ["Latn"]} for role in ("heading", "body", "ui", "nav")]
+    assert keep_evidence.gap(case, {"evidence": {"exploration": "system-ui"}}, Sources(plan, None, None, tmp_path, render)) is None
+    plan["tokens"]["type"]["roles"] = [r for r in plan["tokens"]["type"]["roles"] if r["role"] != "ui"]
+    plan["tokens"]["type"]["roles"][0]["family"] = "Pretendard"                   # no declared role has system-ui for nav now
+    plan["tokens"]["type"]["roles"][1]["family"] = "Pretendard"
+    render = [{"role": "nav", "family": "system-ui", "scripts": ["Latn"]}]
+    found = keep_evidence.gap(case, {"evidence": {"exploration": "system-ui"}}, Sources(plan, None, None, tmp_path, render))
+    assert found and "needs evidence" in found and "exploration:" in found        # an undeclared face with no declared cover is still asked
+
+
 # ---------------------------------------------------------------- slop lint applies the same evidence
 
 @pytest.fixture

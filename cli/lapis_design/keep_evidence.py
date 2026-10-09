@@ -151,8 +151,13 @@ def _exploration(cite: Any, sources: Sources) -> str | None:
 
     plan = sources.plan
     design = (plan.get("context") or {}).get("design")
-    roles = (sources.actual_roles if sources.actual_roles is not None else
-             [r for r in resolve(plan, "tokens.type.roles[*]") if isinstance(r, dict)])
+    declared = [r for r in resolve(plan, "tokens.type.roles[*]") if isinstance(r, dict)]
+    roles = declared if sources.actual_roles is None else [
+        r for r in sources.actual_roles                                # a run's role the plan does not declare asks for no
+        if r.get("role") in {d.get("role") for d in declared} or not any(    # comparison of its own while a declared role has
+            _norm(d.get("family")) == _norm(r.get("family"))
+            and (not d.get("scripts") or set(r.get("scripts") or ()) <= set(d["scripts"]))
+            for d in declared)]                                          # that face for the script
     won = []
     for entry in plan.get("explorations") or ():
         if not isinstance(entry, dict) or entry.get("decision") != "type" or entry.get("fixed_by"):
