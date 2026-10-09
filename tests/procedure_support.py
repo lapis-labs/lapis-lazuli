@@ -206,11 +206,14 @@ def record(root: Path, folder: str, text: str, at: int, task: str = TASK) -> Pat
     return path
 
 
-def ask(root: Path, text: str, at: int, task: str = TASK) -> Path:
-    """The questions the run wrote for its user. Once a plan exists they are approval questions, so they carry the
-    owner block, as the run pastes it."""
+def ask(root: Path, text: str, at: int, task: str = TASK, kind: str | None = None) -> Path:
+    """The questions the run wrote for its user, marked with their kind: `brief` before a plan exists, `approval` after
+    (the default), or the kind given. Approval questions carry the owner block, as the run pastes it."""
+    planned = (root / ".lapis" / "plans" / f"{task}.yaml").is_file()
+    kind = kind or ("approval" if planned else "brief")
+    text = f"lapis-questions: {kind}\n{text}" if text else text
     path = record(root, "questions", text, at, task)
-    if (root / ".lapis" / "plans" / f"{task}.yaml").is_file():
+    if planned and kind == "approval":
         from lapis_design import integrity, owner
 
         integrity.observe_task(root, task, "test")
