@@ -257,6 +257,21 @@ def test_an_unapproved_reply_starts_round_two_restarts_the_clock_and_keeps_the_h
     assert "- Slice rounds: 2\n  - round 1: document height at 1440: 2,400 px" in text
 
 
+def test_a_revision_is_round_two_even_when_the_draft_review_is_stale_when_next_first_sees_the_reply(project, checked, monkeypatch):
+    declare(project, extracts=[extract(project, 2400)])
+    update(project, f"plans/{TASK}.yaml", lambda plan: plan.update(approval={"state": "assumed", "reason": "nobody could be asked"}))
+    ask(project, f"Approve this slice? {URL}", 200)
+    reply(project, "- [declared] Make the headline calmer.\n" + gaps_seen(project), 210)
+    fresh = draft.check
+    monkeypatch.setattr(draft, "check", lambda root, task, *, asked=None: (["the critic packet is stale"], []))
+    assert "The slice cannot be sealed: the critic packet is stale" in step_of(project)["why"]
+    state = integrity.read_state(project, TASK)
+    assert state["slice_rounds"] == 2 and state["slice_heights"] == {"1": 2400}
+    monkeypatch.setattr(draft, "check", fresh)
+    assert step_of(project)["why"].startswith("Slice round 2")                   # counted once
+    assert integrity.read_state(project, TASK)["slice_rounds"] == 2
+
+
 def test_a_slice_of_more_than_one_linked_new_page_is_not_sealed(project, checked):
     declare(project)
     update(project, f"drafts/{TASK}.yaml", lambda doc: doc["pages"].append({**doc["pages"][0], "url": URL + "?b"}))

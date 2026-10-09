@@ -306,10 +306,12 @@ def check(root: Path, task: str, plan: Any, env: Mapping[str, str] = os.environ)
     shown = draft.links(root, task)
     if not shown:
         return ("The owner answered, but the questions link no rendered page, so no slice was shown. " + text(task))
+    candidates = [p for p in pages(root, task) if p["url"] in shown and p.get("direction") == "new"]
+    unapproved = (plan.get("approval") or {}).get("state") != "approved"
+    rounds = _round(root, task, current, candidates[0]) if unapproved and len(candidates) == 1 else None   # before any return below
     errors, summaries = draft.check(root, task, asked=shown)
     if errors:
         return "The slice cannot be sealed: " + "; ".join(errors[:3]) + ". Fix the draft record and ask again."
-    candidates = [p for p in pages(root, task) if p["url"] in shown and p.get("direction") == "new"]
     if not candidates:
         return ("No page the questions link is a `direction: new` page of the draft record, so no slice was shown. "
                 + text(task))
@@ -318,8 +320,7 @@ def check(root: Path, task: str, plan: Any, env: Mapping[str, str] = os.environ)
                 f"({', '.join(p['url'] for p in candidates)}). Show the one page: the choice among roughs was the owner's "
                 "at the second direction turn.")
     chosen = candidates[0]
-    if (plan.get("approval") or {}).get("state") != "approved":
-        rounds = _round(root, task, current, chosen)
+    if unapproved:
         rows = _reply_rows(root, task)
         return (f"Slice round {rounds}: the owner answered and did not approve" + (f" (rows {', '.join(rows)})" if rows else "")
                 + ". Revise for their reply, within the slice files you declared, show it, and ask again; the hold and the "
