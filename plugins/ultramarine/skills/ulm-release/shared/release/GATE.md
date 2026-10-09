@@ -286,18 +286,28 @@ change log and listed in the owner block. Unattended runs skip the step.
 
 While questions the run wrote for its user are unanswered, `next` returns the state `waiting-for-user` instead
 of a step: `step.id` is `waiting-for-user` (stop, and wait for the answers), `then` is the step that comes
-after them, and `waiting` names the files and the `phase`, `plan` while there is no plan file and `approval`
-once there is one. The questions are in `.lapis/questions/<task>.md` and count when the file has two words or
-more outside its heading lines (an empty or one-word file is no question); the answers are in
-`.lapis/answers/<task>.md`, the brief record, where the plan can cite them from `context.other` and `claims.declared`. The
-questions are unanswered when no answers file with a word in it is at least as new, by modification time, as the
-questions file. A procedure that is `done` stays `done`. The exit gate (`lapis-design hook stop` with
-`LAPIS_UNATTENDED=1`) lets a waiting run stop without counting a continue, and counts each set of questions it let
-pass in `.lapis/gate/<task>.json` under `waits` (`plan`, `approval`, and `last`, the set's id): at most two sets
-while there is no plan file and one after it. A set is one text written once, so writing the same words again is a
-new set. Past the cap `next` and the gate name the step the files call for, as without questions. Without
-`--task`, `next` takes the task of the newest plan, counted questions file, counted answers file, or counted references
-record.
+after them, and `waiting` names the files, the `kind`, and the `phase`, `plan` while there is no plan file and
+`approval` once there is one. The questions are in `.lapis/questions/<task>.md`, and the first non-blank line of the
+file declares its kind, `lapis-questions: brief|direction|approval|ask` (that line is no word of the questions). A file
+without a kind, or with another word, does not wait: `next` names the step it would name and says to mark the kind. The
+kind says what the file must hold. `brief`: at most six numbered questions (the cap on a brief's questions is read from
+this kind only). `direction`: the direction items (`direction.py`). `approval`: today's slice conversation, with the
+owner block and the preview check below, and with draft structure errors blocking. `ask`: one numbered question, a
+`Trigger:` with one of six ids, a `Default:`, at most two "unless you object" lines and at most 150 words, with no owner
+block and no draft review (`asks.py`); an ask that breaks that shape, or that is a second ask the agent raised at a
+checkpoint that already has an answered ask, does not wait. The CLI logs every set it waited on in
+`.lapis/state/<task>.asks.json` as `{set, kind, trigger, then, asked, answered, cli}`. An unattended run (`LAPIS_UNATTENDED=1`)
+never waits on a `direction` or `ask` file: it records `[assumed]` items with their `Basis:` under `## Asks` in the brief
+record and goes on. Questions count when the file has two words or more outside its heading lines (an empty or one-word
+file is no question); the answers are in `.lapis/answers/<task>.md`, the brief record, where the plan can cite them
+from `context.other` and `claims.declared`. The questions are unanswered when no answers file with a word in it is at
+least as new, by modification time, as the questions file. A procedure that is `done` stays `done`. The exit gate
+(`lapis-design hook stop` with `LAPIS_UNATTENDED=1`) lets a waiting run stop without counting a continue, and counts
+each `brief` or `approval` set it let pass in `.lapis/gate/<task>.json` under `waits` (`plan`, `approval`, and `last`,
+the set's id): at most two sets while there is no plan file and one after it. `direction` and `ask` sets are not
+counted. A set is one text written once, so writing the same words again is a new set. Past the cap `next` and the gate
+name the step the files call for, as without questions. Without `--task`, `next` takes the task of the newest plan,
+counted questions file, counted answers file, or counted references record.
 
 `done` and every wait on approval questions carry the owner block (`owner.py`), which `next` writes to
 `.lapis/owner/<task>.md` and returns as `owner_block`. It lists the requirement outcome, the owner's decisions, the

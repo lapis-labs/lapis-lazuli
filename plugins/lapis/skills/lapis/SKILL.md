@@ -23,12 +23,11 @@ metadata:
   when you report, and do not call a pass good.
 - With nobody to ask (`LAPIS_UNATTENDED=1`), record `approval: {state: assumed, reason: ...}` in the plan and go on;
   `approved` is only a person's.
-- When a person will answer, a user or an operator who relays replies, write the questions the plan needs (the
-  brief before it, or its approval) to `.lapis/questions/<task>.md` and stop with them as your last message: `next`
-  says `waiting-for-user` and the exit gate lets that stop pass, twice before a plan and once after, never for a
-  file of fewer than two words or a brief set of more than six numbered questions. Record the replies in
-  `.lapis/answers/<task>.md`, the brief record: keep what it holds, add approval replies under their own heading,
-  cite it in the plan (`context.other`), and run `next` again.
+- When a person will answer, a user or an operator who relays replies, write the questions to
+  `.lapis/questions/<task>.md`, marked with their kind on the first line (see Questions and kinds), and stop with them
+  as your last message: `next` says `waiting-for-user` and the exit gate lets that stop pass. A file with no kind does
+  not wait. Record the replies in `.lapis/answers/<task>.md`, the brief record: keep what it holds, add replies under
+  their own headings, cite it in the plan (`context.other`), and run `next` again.
 - At `done` and at every approval wait, `next` returns an owner block (`--json`: `owner_block`) and writes it to
   `.lapis/owner/<task>.md`: the requirement states, the owner's decisions, the facts shown with their sources, protected
   changes, disputes, and what did not run. It ends in a `lapis-owner-block <sha8>` line. Paste it unchanged ahead of your
@@ -55,6 +54,30 @@ metadata:
 lapis turns a request into a design contract - the plan file `.lapis/plans/<task>.yaml` - and then
 into an implementation that follows it. The plan is written before code, checked by
 `lapis-design plan check`, approved by the user, and read by every later check.
+
+## Questions and kinds
+
+The first line of `.lapis/questions/<task>.md` says what the file is: `lapis-questions: brief|direction|approval|ask`.
+A file without it, or with another word, does not wait; `next` names its step and says to mark the kind.
+
+| Kind | Holds | Limits |
+|---|---|---|
+| `brief` | facts only the owner has (`lps-brief`) | at most 6 numbered questions a round, 2 rounds; the exit gate lets a run wait twice before a plan and once after |
+| `direction` | what a named style, a core object, or a signature element should do (the direction conversation) | none; every turn needs an open item |
+| `approval` | the rendered slice, with the owner block (see Slice) | the exit gate lets a run wait once after a plan |
+| `ask` | one doubt during the work (see Ask on doubt) | one question, at most 150 words, one per checkpoint |
+
+### Ask on doubt
+
+When the work hits a conflict or a doubt, ask one short question instead of settling it alone or burying it in a report.
+Ask for one of six reasons: a requirement that cannot be met as written, two requirements that conflict, a finding whose
+fix would change what the owner decided, a move to a direction the sealed slice does not cover, a reference that
+contradicts a requirement, or agent-alone time or a job past its budget. `next` raises three of them itself as the step
+`ask`. An ask is one numbered question with a `Trigger:`, a `Default:`, and at most two "unless you object" lines, and it
+has no owner block. Only one ask is allowed per checkpoint; past it, take your default and record it as `[assumed]` with
+its `Basis:` under `## Asks`. With nobody to ask, take the default and record it the same way. Read
+`references/asks.md` for the triggers, the file shape, how the question is shown with or without a question tool, and
+how answers are recorded.
 
 ## Order of authority
 
