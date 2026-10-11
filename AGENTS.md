@@ -233,6 +233,9 @@ files beside it; the database file itself does not change.
   (`cli/lapis_design/mcp_server.py`, official MCP Python SDK). Hooks run at every session start (`stop`, at every
   turn's end; `pre-write`, before every file edit), so keep heavy imports out of them. pi and Oh-My-Pi have no
   hooks.json: extensions call the same versioned hook runner; the build stamps their version placeholders.
+  `session-start` prints nothing outside a lapis project (a `.lapis` folder at or above the event's `cwd`, within the git
+  root) and, inside one, counts only: never a family name or any other string read from a font file, because the text
+  goes into model context at every session start of that project.
 - `render check` lives in `cli/lapis_design/render/`: `capture.py` (capture matrix, boxes, base
   text runs), field passes in `render/fields/` (`text`, `visual`, `interaction`, run in that
   order on the live page, each restoring what it changed), `derived.py`, and `extract.py`

@@ -112,7 +112,7 @@ turns exit 2 stderr into a continuation and other execution failures into failed
 
 | Plugin | Where | Event | Matcher | Name | CLI behavior |
 |---|---|---|---|---|---|
-| lazuli | `hooks/hooks.json` (Claude Code and Codex) | `SessionStart` | `startup\|resume\|clear\|compact\|fork` | `session-start` | prints the inventory summary as context |
+| lazuli | `hooks/hooks.json` (Claude Code and Codex) | `SessionStart` | `startup\|resume\|clear\|compact\|fork` | `session-start` | prints nothing unless the event's `cwd` is in a lapis project (a `.lapis` folder at or above it, within the git root, or in `$CLAUDE_PROJECT_DIR`; a `.lapis` that holds only `hooks/` does not count); inside one it prints the inventory summary as context: counts only, framed as data, with no family name or other string read from a font file, or one line that says to run `lazuli local fonts` when there is no inventory yet (cli/lapis_design/hooks.py) |
 | lapis | inline in `.claude-plugin/plugin.json` (Claude Code only) | `PermissionRequest` | `ExitPlanMode` | `exit-plan` | denies with findings when the plan's lapis-plan block has blocking findings, and denies when the block cannot be read or checked (cli/lapis_design/hooks.py) |
 | lapis | `hooks/hooks.json` (Claude Code and Codex) | `Stop` | none | `stop` | the exit gate (cli/lapis_design/gate.py): with a plan under the project and `LAPIS_UNATTENDED=1`, continues the agent with the step `lapis-design next` still asks for (`{"decision": "block", "reason": …}`), at most three times in a row for one step and fifteen in a session; an unattended run with no plan is continued to write one (step `plan`, task named for the project folder unless `LAPIS_TASK` is set); a run waiting for its user's answers (`.lapis/questions/<task>.md` newer than `.lapis/answers/<task>.md`) is let stop, two sets of questions before a plan and one after; otherwise prints a one-line `systemMessage` and never blocks; prints nothing with no plan and no unattended run, or when it fails |
 | lapis | `hooks/hooks.json` (Claude Code and Codex) | `PreToolUse` | `Write\|Edit\|MultiEdit\|apply_patch` | `pre-write` | the write guard (cli/lapis_design/order.py): in every session, refuses with the same JSON a write to `.lapis/requirements/`, `.lapis/state/`, `.lapis/changes/`, or `.lapis/owner/`, the records only `lapis-design` writes (no cap; it stops the agent's tool, not a person, and a shell write is detected afterwards, never prevented); with `LAPIS_UNATTENDED=1` and a create run whose brief, references, or plan `lapis-design next` still asks for (or whose plan has blockers), refuses a write of a page source file with `{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": …}}` naming the step, at most three times in a row for one step; other writes under `.lapis/`, to other files, and outside the project pass; a person's session gets one `systemMessage` the first time; prints nothing on any failure of ours |
@@ -153,7 +153,8 @@ per-request versions from 2026-07-28, so older and newer harness clients connect
 - `plugins/lazuli/extensions/session-start.ts` exports a default factory that listens for
   `session_start` and runs `lapis-design-hook --plugin-version VERSION session-start`. It imports
   the host API with `import type` only, so the same module loads under pi and Oh-My-Pi, whose
-  package names differ. The event on stdin includes the session id and project for notice deduplication.
+  package names differ. The event on stdin includes the session id and the working directory, which
+  the hook uses for notice deduplication and to stay silent outside a lapis project.
 - `plugins/lapis/extensions/exit-gate.ts` (from `src/extensions/exit-gate.ts`) is the `stop` hook for the two
   harnesses that have no hooks.json. It starts `lapis-design-hook --plugin-version VERSION stop` with the event JSON (`cwd`,
   `session_id`) on stdin and translates the answer: Oh-My-Pi's `session_stop` takes `{ decision: "block",
@@ -180,8 +181,9 @@ per-request versions from 2026-07-28, so older and newer harness clients connect
 
 `plugins/hermes/lapis-lazuli/` holds `plugin.yaml` (`name`, `version`, `description`, `author`,
 `provides_hooks: [pre_llm_call]`) and `__init__.py` with `register(ctx)`. The hook adds the session
-summary on the first turn (`is_first_turn`); `on_session_start` cannot add context. It runs the
-versioned hook-only entry point, passes the session id, and prints version/missing-runner notices
+summary on the first turn (`is_first_turn`), only inside a lapis project like every other harness;
+`on_session_start` cannot add context. It runs the versioned hook-only entry point, passes the session id and the
+working directory, and prints version/missing-runner notices
 to stderr without adding model context or a blocking decision. Skills are not bundled in the
 plugin: plugin skills get a `plugin:` namespace and stay out of the skill index, so they install
 flat from `dist/skills`.

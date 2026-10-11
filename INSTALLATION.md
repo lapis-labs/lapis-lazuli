@@ -88,7 +88,7 @@ What gets installed:
 - Hooks: `plugins/<plugin>/hooks/hooks.json` (lapis, lazuli only)
 - MCP server: `plugins/lazuli/.mcp.json`
 - Critic agent (Claude format): `plugins/ultramarine/agents/`
-- Session summary: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `SessionStart startup|resume|clear|compact|fork`.
+- Session summary: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `SessionStart startup|resume|clear|compact|fork`. Prints nothing outside a lapis project (a `.lapis` folder at or above the working directory, within the git root); inside one it prints font inventory counts only, framed as data, with no family name or other string from a font file.
 - Separate critic: plugin agent, from `plugins/ultramarine/agents/`. Invoked as ultramarine:critic; the plan check runs from a hook inline in the lapis manifest.
 - Exit gate: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `Stop`. `lapis-design-hook --plugin-version \<version> stop` continues the agent with the next step only when LAPIS_UNATTENDED=1 and says so in one line otherwise; at most 3 continues in a row for one step and 15 in a session; version skew skips the gate.
 - Write guard: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `PreToolUse Write|Edit|MultiEdit`. `lapis-design-hook --plugin-version \<version> pre-write` refuses a page source file's write with `permissionDecision: deny` only when LAPIS_UNATTENDED=1 and the brief, references, or plan of a create run is still owed, and in every session refuses a write to .lapis/requirements/, .lapis/state/, .lapis/changes/, or .lapis/owner/ (records only lapis-design writes); other writes under .lapis/ and to other files pass, a person's session gets one `systemMessage`; a refusal of page code repeats at most 3 times for one step; version skew skips the guard.
@@ -161,7 +161,7 @@ What gets installed:
 - Hooks: `plugins/<plugin>/hooks/hooks.json` (lapis, lazuli only)
 - MCP server: `plugins/lazuli/.mcp.json`
 - Critic agent (Codex format): `dist/codex/agents/`
-- Session summary: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `SessionStart startup|resume|clear|compact`. Matchers are regular expressions; the fork alternative never matches here.
+- Session summary: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `SessionStart startup|resume|clear|compact`. Matchers are regular expressions; the fork alternative never matches here; prints nothing outside a lapis project (a `.lapis` folder at or above the working directory, within the git root); inside one it prints font inventory counts only, framed as data, with no family name or other string from a font file.
 - Separate critic: agent file that the install script copies, from `dist/codex/agents/`. Plugins cannot ship subagents; the installer copies the TOML file.
 - Exit gate: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `Stop`. `lapis-design-hook --plugin-version \<version> stop` continues the agent with the next step only when LAPIS_UNATTENDED=1 and says so in one line otherwise; the lapis plugin's hook needs trust like the lazuli one; Stop takes no matcher; version skew skips the gate.
 - Write guard: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `PreToolUse apply_patch`. The same hook as in Claude Code: Codex reports every file edit as `apply_patch` (its matchers also take Edit and Write) with the patch text in `tool_input.command`, and takes the same `permissionDecision: deny`; the lapis plugin's hook needs trust like the others.
@@ -264,7 +264,7 @@ What gets installed:
 - Extension package: `plugins/<plugin>/package.json` (lapis, lazuli only)
 - Session-start extension: `plugins/lazuli/extensions/session-start.ts`
 - Exit-gate extension: `plugins/lapis/extensions/exit-gate.ts`
-- Session summary: extension, from `plugins/lazuli/extensions/session-start.ts`, event `session_start`. omp does not run hooks/hooks.json; a marketplace install links the plugin's package.json into ~/.omp/plugins/node_modules, and its omp.extensions load after a restart.
+- Session summary: extension, from `plugins/lazuli/extensions/session-start.ts`, event `session_start`. omp does not run hooks/hooks.json; a marketplace install links the plugin's package.json into ~/.omp/plugins/node_modules, and its omp.extensions load after a restart; the extension adds nothing outside a lapis project (a `.lapis` folder at or above the working directory, within the git root), and inside one only font inventory counts, framed as data.
 - Separate critic: plugin agent, from `plugins/ultramarine/agents/`. Loaded as a task agent.
 - Exit gate: extension, from `plugins/lapis/extensions/exit-gate.ts`, event `session_stop`. Asks `lapis-design-hook --plugin-version \<version> stop` and answers `{ decision: block }`, only when LAPIS_UNATTENDED=1; the lapis plugin's package.json links the extension; version skew skips the gate.
 - Write guard: extension, from `plugins/lapis/extensions/exit-gate.ts`, event `tool_call`. The exit-gate extension also registers a `tool_call` handler for the write and edit tools; it asks `lapis-design-hook --plugin-version \<version> pre-write` and answers `{ block: true, reason }` for page code only when LAPIS_UNATTENDED=1, and in every session for a write to .lapis/requirements/, .lapis/state/, .lapis/changes/, or .lapis/owner/; a handler error or timeout blocks the tool in omp, so the extension answers within 20 seconds and treats any failure as no answer; version skew skips the guard.
@@ -339,7 +339,7 @@ What gets installed:
 - Skills: `dist/skills/<skill>/`
 - Session-start extension: `plugins/lazuli/extensions/session-start.ts`
 - Exit-gate extension: `plugins/lapis/extensions/exit-gate.ts`
-- Session summary: extension, from `plugins/lazuli/extensions/session-start.ts`, event `session_start`.
+- Session summary: extension, from `plugins/lazuli/extensions/session-start.ts`, event `session_start`. The extension adds nothing outside a lapis project (a `.lapis` folder at or above the working directory, within the git root), and inside one only font inventory counts, framed as data.
 - Separate critic: instructions only: the skills say what to run by hand. pi has no subagents; the skill asks for a fresh session as the critic.
 - Exit gate: extension, from `plugins/lapis/extensions/exit-gate.ts`, event `agent_before_settle`. Asks `lapis-design-hook --plugin-version \<version> stop` and continues the agent with a custom message and `continue: true`, only when LAPIS_UNATTENDED=1; version skew skips the gate.
 - Write guard: extension, from `plugins/lapis/extensions/exit-gate.ts`, event `tool_call`. The same `tool_call` handler as in Oh-My-Pi, answering `{ block: true, reason }` for page code only when LAPIS_UNATTENDED=1, and in every session for a write to .lapis/requirements/, .lapis/state/, .lapis/changes/, or .lapis/owner/.
@@ -405,7 +405,7 @@ What gets installed:
 
 - Skills: `dist/skills/<skill>/`
 - Hermes plugin: `plugins/hermes/lapis-lazuli/`
-- Session summary: Hermes plugin hook, from `plugins/hermes/lapis-lazuli/`, event `pre_llm_call when is_first_turn`. on_session_start ignores return values, so it cannot add context.
+- Session summary: Hermes plugin hook, from `plugins/hermes/lapis-lazuli/`, event `pre_llm_call when is_first_turn`. on_session_start ignores return values, so it cannot add context; the hook adds nothing outside a lapis project (a `.lapis` folder at or above the working directory, within the git root), and inside one only font inventory counts, framed as data.
 - Separate critic: instructions only: the skills say what to run by hand.
 - Exit gate: instructions only: the skills say what to run by hand. No stop event is used; the skills say to run `lapis-design next --task \<task>` until it says done.
 - Write guard: instructions only: the skills say what to run by hand. No pre-write event is used; the lapis skill's Done block states the order, and `lapis-design next` and `release check` find a page written before its brief by file times.

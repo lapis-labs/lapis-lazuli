@@ -9,10 +9,13 @@ exit-plan    Claude Code PermissionRequest on ExitPlanMode, inline in the lapis 
                - block present but cannot be checked        -> deny with the error
              It never approves on the user's behalf. Verify the decision JSON against the current
              Claude Code hooks documentation before shipping.
-session-start  SessionStart in the lazuli plugin's hooks/hooks.json (Claude Code, Codex) and the
-             session_start extension (pi, Oh-My-Pi). Prints the local font inventory summary as
-             context (`lazuli local fonts --summary`, without scanning or measuring), or one line
-             that says how to create the inventory. A failure prints nothing: the session must start.
+session-start  SessionStart in the lazuli plugin's hooks/hooks.json (Claude Code, Codex), the session_start
+             extension (pi, Oh-My-Pi), and Hermes's first turn. Prints nothing unless the event's `cwd` is in a
+             lapis project (a `.lapis` folder at or above it, within the git root): unrelated sessions get no
+             context. Inside one it prints the local font inventory summary as context (counts only, framed as
+             data, no family or other string read from a font file; `lazuli local fonts --summary`, without
+             scanning or measuring), or one line that says how to create the inventory. A failure prints nothing:
+             the session must start.
 stop         Stop in the lapis plugin's hooks/hooks.json (Claude Code, Codex), and the session_stop (Oh-My-Pi)
              and agent_before_settle (pi) handlers of the lapis plugin's exit-gate extension. The event JSON
              (`cwd`, `session_id`) names a project; with a plan under it and `LAPIS_UNATTENDED=1`, the gate
@@ -45,7 +48,7 @@ import hashlib
 import os
 import sys
 from pathlib import Path
-from typing import Callable, TextIO
+from typing import Callable, Mapping, TextIO
 
 from lapis_design import __version__
 
@@ -120,9 +123,33 @@ def exit_plan(stdin: TextIO, stdout: TextIO) -> int:
     return 0
 
 
-def session_start(stdin: TextIO, stdout: TextIO) -> int:
-    # stdin is left unread: the pi and Oh-My-Pi extension may start the command without an event
+def _lapis_project(cwd: Path, env: Mapping[str, str] = os.environ) -> bool:
+    """Whether a session in `cwd` is in a lapis project: a `.lapis` folder (its plans are inside it) in `cwd` or a
+    folder above it up to the git root, or in `$CLAUDE_PROJECT_DIR`. Without a git root only `cwd` itself counts, so a
+    `.lapis` in a home folder never claims every project below it. A `.lapis` that holds only `hooks/` (the folder
+    a version-skew notice makes anywhere it runs) is not a project."""
+    folders = [Path(env["CLAUDE_PROJECT_DIR"])] if env.get("CLAUDE_PROJECT_DIR") else []
     try:
+        cwd = cwd.resolve()
+        above = [cwd, *cwd.parents]
+        root = next((i for i, folder in enumerate(above) if (folder / ".git").exists()), 0)
+        folders += above[:root + 1]
+        return any({entry.name for entry in (folder / ".lapis").iterdir()} != {"hooks"}
+                   for folder in folders if (folder / ".lapis").is_dir())
+    except OSError:
+        return False
+
+
+def session_start(stdin: TextIO, stdout: TextIO) -> int:
+    # the pi and Oh-My-Pi extension may start the command without an event: then the process folder is the session's
+    try:
+        event = json.load(stdin) if not stdin.isatty() else {}
+    except (ValueError, OSError):
+        event = {}
+    cwd = event.get("cwd") if isinstance(event, dict) else None
+    try:
+        if not _lapis_project(Path(cwd if isinstance(cwd, str) and cwd else os.getcwd())):
+            return 0                 # unrelated work gets no context, and no file-derived text in it
         from lazuli.local import session_summary
 
         text = session_summary()

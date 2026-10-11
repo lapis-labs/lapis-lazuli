@@ -3,7 +3,8 @@
 On the first turn of a session, pre_llm_call runs `lapis-design-hook --plugin-version VERSION session-start`, the command the
 lazuli SessionStart hook runs in Claude Code and Codex, and returns what it prints as context for
 that turn's user message. on_session_start ignores return values, so the summary comes with the
-first turn instead. A missing CLI, a failure, a timeout, or empty output adds nothing.
+first turn instead. The hook prints nothing outside a lapis project, and inside one counts only. A missing CLI, a
+failure, a timeout, or empty output adds nothing.
 """
 from __future__ import annotations
 

@@ -98,7 +98,7 @@ harnesses:
       - run: [claude, plugin, list, --json]
         expect: "an enabled entry {plugin}@{catalog} with no errors"
       - manual: "In a session, run /lapis:lapis and check that the skill loads"
-    session_start: { via: plugin-hook, output: plugin-hooks, event: "SessionStart startup|resume|clear|compact|fork" }
+    session_start: { via: plugin-hook, output: plugin-hooks, event: "SessionStart startup|resume|clear|compact|fork", note: "prints nothing outside a lapis project (a `.lapis` folder at or above the working directory, within the git root); inside one it prints font inventory counts only, framed as data, with no family name or other string from a font file" }
     critic: { via: plugin-agent, output: claude-agents, note: "invoked as ultramarine:critic; the plan check runs from a hook inline in the lapis manifest" }
     exit_gate: { via: plugin-hook, output: plugin-hooks, event: Stop, note: "`lapis-design-hook --plugin-version <version> stop` continues the agent with the next step only when LAPIS_UNATTENDED=1 and says so in one line otherwise; at most 3 continues in a row for one step and 15 in a session; version skew skips the gate" }
     pre_write: { via: plugin-hook, output: plugin-hooks, event: "PreToolUse Write|Edit|MultiEdit", note: "`lapis-design-hook --plugin-version <version> pre-write` refuses a page source file's write with `permissionDecision: deny` only when LAPIS_UNATTENDED=1 and the brief, references, or plan of a create run is still owed, and in every session refuses a write to .lapis/requirements/, .lapis/state/, .lapis/changes/, or .lapis/owner/ (records only lapis-design writes); other writes under .lapis/ and to other files pass, a person's session gets one `systemMessage`; a refusal of page code repeats at most 3 times for one step; version skew skips the guard" }
@@ -157,7 +157,7 @@ harnesses:
       - manual: "For {plugin}, check that ~/.codex/agents/ulm-critic.toml exists and matches dist/codex/agents/ulm-critic.toml from {repo} at {ref}; a marketplace upgrade alone does not copy the critic file"
         plugins: [ultramarine]
       - manual: "In a new session, type $lapis:lps-ux and check that the skill is offered"
-    session_start: { via: plugin-hook, output: plugin-hooks, event: "SessionStart startup|resume|clear|compact", note: "matchers are regular expressions; the fork alternative never matches here" }
+    session_start: { via: plugin-hook, output: plugin-hooks, event: "SessionStart startup|resume|clear|compact", note: "matchers are regular expressions; the fork alternative never matches here; prints nothing outside a lapis project (a `.lapis` folder at or above the working directory, within the git root); inside one it prints font inventory counts only, framed as data, with no family name or other string from a font file" }
     critic: { via: agent-file, output: codex-agents, note: "plugins cannot ship subagents; the installer copies the TOML file" }
     exit_gate: { via: plugin-hook, output: plugin-hooks, event: Stop, note: "`lapis-design-hook --plugin-version <version> stop` continues the agent with the next step only when LAPIS_UNATTENDED=1 and says so in one line otherwise; the lapis plugin's hook needs trust like the lazuli one; Stop takes no matcher; version skew skips the gate" }
     pre_write: { via: plugin-hook, output: plugin-hooks, event: "PreToolUse apply_patch", note: "the same hook as in Claude Code: Codex reports every file edit as `apply_patch` (its matchers also take Edit and Write) with the patch text in `tool_input.command`, and takes the same `permissionDecision: deny`; the lapis plugin's hook needs trust like the others" }
@@ -222,7 +222,7 @@ harnesses:
       - run: [omp, plugin, list]
         expect: "{plugin}@{catalog} listed and enabled"
       - manual: "In a session, run /skill:lps-ux"
-    session_start: { via: extension, output: session-extension, event: session_start, note: "omp does not run hooks/hooks.json; a marketplace install links the plugin's package.json into ~/.omp/plugins/node_modules, and its omp.extensions load after a restart" }
+    session_start: { via: extension, output: session-extension, event: session_start, note: "omp does not run hooks/hooks.json; a marketplace install links the plugin's package.json into ~/.omp/plugins/node_modules, and its omp.extensions load after a restart; the extension adds nothing outside a lapis project (a `.lapis` folder at or above the working directory, within the git root), and inside one only font inventory counts, framed as data" }
     critic: { via: plugin-agent, output: claude-agents, note: "loaded as a task agent" }
     exit_gate: { via: extension, output: gate-extension, event: session_stop, note: "asks `lapis-design-hook --plugin-version <version> stop` and answers `{ decision: block }`, only when LAPIS_UNATTENDED=1; the lapis plugin's package.json links the extension; version skew skips the gate" }
     pre_write: { via: extension, output: gate-extension, event: tool_call, note: "the exit-gate extension also registers a `tool_call` handler for the write and edit tools; it asks `lapis-design-hook --plugin-version <version> pre-write` and answers `{ block: true, reason }` for page code only when LAPIS_UNATTENDED=1, and in every session for a write to .lapis/requirements/, .lapis/state/, .lapis/changes/, or .lapis/owner/; a handler error or timeout blocks the tool in omp, so the extension answers within 20 seconds and treats any failure as no answer; version skew skips the guard" }
@@ -270,7 +270,7 @@ harnesses:
       - run: [pi, list]
         expect: "the {repo} package is listed"
       - manual: "In a session, run /skill:lps-ux"
-    session_start: { via: extension, output: session-extension, event: session_start }
+    session_start: { via: extension, output: session-extension, event: session_start, note: "the extension adds nothing outside a lapis project (a `.lapis` folder at or above the working directory, within the git root), and inside one only font inventory counts, framed as data" }
     critic: { via: instructions, note: "pi has no subagents; the skill asks for a fresh session as the critic" }
     exit_gate: { via: extension, output: gate-extension, event: agent_before_settle, note: "asks `lapis-design-hook --plugin-version <version> stop` and continues the agent with a custom message and `continue: true`, only when LAPIS_UNATTENDED=1; version skew skips the gate" }
     pre_write: { via: extension, output: gate-extension, event: tool_call, note: "the same `tool_call` handler as in Oh-My-Pi, answering `{ block: true, reason }` for page code only when LAPIS_UNATTENDED=1, and in every session for a write to .lapis/requirements/, .lapis/state/, .lapis/changes/, or .lapis/owner/" }
@@ -321,7 +321,7 @@ harnesses:
       - run: [hermes, plugins, list]
         expect: "lapis-lazuli enabled"
       - manual: "In a session, run /lps-ux"
-    session_start: { via: hermes-plugin-hook, output: hermes-plugin, event: "pre_llm_call when is_first_turn", note: "on_session_start ignores return values, so it cannot add context" }
+    session_start: { via: hermes-plugin-hook, output: hermes-plugin, event: "pre_llm_call when is_first_turn", note: "on_session_start ignores return values, so it cannot add context; the hook adds nothing outside a lapis project (a `.lapis` folder at or above the working directory, within the git root), and inside one only font inventory counts, framed as data" }
     critic: { via: instructions }
     exit_gate: { via: instructions, note: "no stop event is used; the skills say to run `lapis-design next --task <task>` until it says done" }
     pre_write: { via: instructions, note: "no pre-write event is used; the lapis skill's Done block states the order, and `lapis-design next` and `release check` find a page written before its brief by file times" }

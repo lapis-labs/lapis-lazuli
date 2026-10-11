@@ -65,11 +65,14 @@ def test_exit_plan_runs_every_plan_layer_rule_without_heavy_modules(env, tmp_pat
 def test_session_start_summarizes_the_inventory_without_heavy_modules(env):
     build(env["user"] / "Gothic.ttf", family="Plain Gothic")
     assert lazuli_cli.main(["local", "fonts", "--json"]) == 0
+    (env["user"] / ".lapis").mkdir()                                               # the session is in a lapis project
     event = {"session_id": "s", "cwd": str(env["user"]), "hook_event_name": "SessionStart", "source": "startup"}
     report, out = run_hook("session-start", event)
     assert "lazuli: 1 font families in 1 files" in out
     assert "Latin without a CJK set: 1 families" in out and "unmeasured" not in out    # read at MEASURER_VERSION
     assert report == {"code": 0, "heavy": []}
+    report, out = run_hook("session-start", {**event, "cwd": str(env["system"])})  # outside one: nothing, as light
+    assert out == "" and report == {"code": 0, "heavy": []}
 
 
 def test_stop_answers_for_a_project_with_a_plan_without_heavy_modules(env, tmp_path, monkeypatch):

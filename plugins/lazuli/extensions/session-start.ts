@@ -5,8 +5,9 @@
  * SessionStart hook runs in Claude Code and Codex, and queues what it prints as context for the
  * next prompt. The host API is imported as a type only, so nothing is loaded at run time and the
  * same module works under pi and Oh-My-Pi, whose packages have different names; it uses only
- * `on("session_start")`, `exec`, and `sendMessage`, which both hosts provide. A missing CLI, a
- * failure, a timeout, or empty output adds nothing: the session always starts.
+ * `on("session_start")`, `exec`, and `sendMessage`, which both hosts provide. The hook prints nothing
+ * outside a lapis project, and inside one counts only. A missing CLI, a failure, a timeout, or empty
+ * output adds nothing: the session always starts.
  */
 import { spawn } from "node:child_process";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";

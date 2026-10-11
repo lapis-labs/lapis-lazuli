@@ -152,6 +152,12 @@ between minor versions; render extraction is v1 and the other contract formats a
   origin, naming, or third parties goes to the owner to confirm instead of passing through as fact.
 - The build packages the requirement record, integrity log, critic packet, and dispute schemas for the skills that use
   them, each listed in `index.yaml`.
+- The session-start hook (Claude Code, Codex, Oh-My-Pi, pi, Hermes) prints nothing unless the session's working directory is
+  in a lapis project: a `.lapis` folder at or above it, up to the git root (or in `$CLAUDE_PROJECT_DIR`; with no git root only
+  the folder itself counts, and a `.lapis` that holds only the version-skew notices' `hooks/` folder does not). Unrelated
+  sessions no longer get the font inventory summary or the "no font inventory yet" line. Inside a project the summary is
+  counts only, opens with a line that frames it as data, and its few labels (origins, catalog source names, the scan date)
+  are cut to plain ASCII, so no family name or other string read from a font file reaches the model's context.
 
 ### Fixed
 
