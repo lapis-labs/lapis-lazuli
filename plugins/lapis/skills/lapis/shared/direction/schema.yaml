@@ -2,15 +2,19 @@
 # Location: .lapis/direction/<task>.yaml in the project
 # What the run proposes to ask the owner before it plans: what each named style should DO (jobs, and the trend-kit
 # items it decodes to), how each core object is represented (2-3 options each), and what each signature element
-# carries. The owner's answers are not here: they go under `## Direction n` headings of the brief record
+# carries, plus, per type role the plan will set, the fixed question whether the owner has fonts they own but have not
+# installed. The owner's answers are not here: they go under `## Direction n` headings of the brief record
 # `.lapis/answers/<task>.md` as `[declared] K2 ticker band: drop — <their words>` items, which `requirements seal`
 # turns into rows the critic judges (`lapis-design direction` reads them; the grammar is in
 # `lapis/references/direction-conversation.md`). `lapis-design next` names `owner-direction` until every style, kit,
 # and object item has an owner answer (or `- Defaults accepted (direction n): "<their words>"`), and again after
-# `diverge` for the pick and the picked candidate's signature items.
+# `diverge` for the pick and the picked candidate's signature items. A type-role item `T<n>` has two fixed options (a: no,
+# only installed, open-licensed, and catalog fonts; b: yes, the owner names them, and `lazuli owned add` lists them as
+# candidates that need activation) and its question is `lapis_design.direction.OWNED_QUESTION`; `type_roles` is optional, so
+# a proposal without it stays valid.
 # `direction.proposal_problem` checks form, never quality: ids, option counts, that every `seen_in` names a reference
-# of the references record, that each object names a pool kind of `diverge/pools.yaml`, and that each default is an
-# option id (or `all` for an object).
+# of the references record, that each object names a pool kind of `diverge/pools.yaml`, that each default is an
+# option id (or `all` for an object), and that no type role is asked twice.
 
 $schema: https://json-schema.org/draft/2020-12/schema
 $id: https://github.com/lapis-labs/lapis-lazuli/schemas/direction.v0.json
@@ -81,6 +85,15 @@ properties:
               family: {type: string, pattern: "^[a-z][a-z0-9-]*$"}
               source: {type: string, minLength: 2}  # a reference id, a world material, or `own`
         default: {type: string, pattern: "^([a-e]|all)$"}
+  type_roles:                                       # optional: one fonts-owned question per type role the plan will set
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [id, role]
+      properties:
+        id: {type: string, pattern: "^T[1-9][0-9]?$"}
+        role: {type: string, pattern: "^[a-z][a-z0-9-]*$"}   # a role of the plan's type tokens, such as heading or body
   signature:                                        # elements the brief names; the roughs add their own in their cards
     type: array
     items:

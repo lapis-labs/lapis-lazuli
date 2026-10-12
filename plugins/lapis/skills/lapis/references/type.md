@@ -30,7 +30,8 @@ be found online, fetched from its official source, and bundled with its license 
 (`lazuli fetch "<family>" --into <folder>` for a Google Fonts family, the steps in `lzl-fonts` for another
 official release); an installed face whose license was verified may be bundled too. A commercial family
 needs the user's approval to license, and an Adobe face stays on the user's own Adobe account and web
-project: nothing is bought or activated for them. A font whose license is not found at first is
+project: nothing is bought for them, and a face is activated only by them, or by `lazuli adobe activate`
+after you asked ("May I activate <font> for comparison?") and they said yes in words you record and quote. A font whose license is not found at first is
 researched before it is judged (`lzl-fonts`, License research); one still unknown after that stays a
 candidate and does not ship.
 
@@ -87,7 +88,7 @@ Work down the rows. "Not checked" means only the report shows the work.
 | Decision | Plan field | Checked by |
 |---|---|---|
 | Character first: each role's job, the real text per locale, what the world materials suggest. A tide table needs aligned figures; a letterpress shop can take its voice from its proof sheets | `world_materials`, `brief.locales`, `brief.platform`, `claims.proposed` | not checked |
-| Candidates: installed families (`lazuli local fonts --summary`, and `--origin adobe-sync` for activated Adobe Fonts), catalog families (`lazuli search --script <code> --role <role>`, after `lazuli catalog sync` when `lazuli catalog status` shows none), and foundry or commercial faces named for exploration. At least one is a named face, whatever the delivery | `explorations[*].candidates` | `plan.uncompared-decision` reads two or more candidates, at least one not a generic family |
+| Candidates: installed families (`lazuli local fonts --summary`, and `--origin adobe-sync` for activated Adobe Fonts), names the owner said they own but have not installed (`lazuli owned list`; the direction conversation asks once per type role), Adobe Fonts neighbours of a face the brief or owner names (`lazuli adobe similar <PostScript name>` when the owner turned `lazuli adobe` on: names to take to the owner to install, not measured until installed), catalog families (`lazuli search --script <code> --role <role>`, after `lazuli catalog sync` when `lazuli catalog status` shows none), and foundry or commercial faces named for exploration. At least one is a named face, whatever the delivery | `explorations[*].candidates` | `plan.uncompared-decision` reads two or more candidates, at least one not a generic family |
 | For each open role group, set two or three candidates in the real copy of every locale (see Specimen below), read their measured facts (`why`, class, weights, scripts, delivery), and record the choice and why the runner-up lost | `explorations[*]`: `compared_on`, `chosen`, `runner_up_lost` | the same rule reads a `chosen` among the candidates, a specimen or render in `compared_on`, and a `runner_up_lost` |
 | Hangul and Latin: one face that draws both, or a Hangul face with a Latin companion as two entries | `tokens.type.roles[*].scripts` | `type.font-fallback` reads a rendered page for text drawn in a face other than the requested one. `scripts` also limits the neutral-grotesque region to Latin |
 | Record each choice: `role`, one `family` name, `weights`, `scripts`, `source` | `tokens.type.roles[*]` | the schema; `type.single-neutral-sans` reads whether two or more roles all name one family; `type.overused-neutral-grotesque`, `type.serif-luxury-display`, and `type.costume-monospace` read measured features, so they need the lazuli database |

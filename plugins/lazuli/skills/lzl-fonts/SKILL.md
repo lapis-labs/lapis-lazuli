@@ -1,6 +1,6 @@
 ---
 name: lzl-fonts
-description: Gives font facts with evidence - the local inventory, catalog labels, ranked candidates per role and script, license and delivery facts, Hangul, kana, and Han coverage and fallbacks - researches a font's license before judging it, fetches open-licensed families with their license text, and writes the fonts lock for a family already chosen. Use for "which fonts do I have", font candidates, font licenses and license research, downloading an open font, web font delivery, and lazuli lock.
+description: Gives font facts with evidence - the local inventory, catalog labels, ranked candidates per role and script, license and delivery facts, Hangul, kana, and Han coverage and fallbacks - researches a font's license before judging it, fetches open-licensed families with their license text, writes the fonts lock for a family already chosen, and finds Adobe Fonts neighbours through `lazuli adobe` once the owner turned it on. Use for "which fonts do I have", font candidates, font licenses and license research, downloading an open font, web font delivery, and lazuli lock.
 license: MIT AND CC-BY-4.0
 metadata:
   plugin: lazuli
@@ -21,8 +21,9 @@ plan. It locks only a family already chosen.
 - Commercial fonts need the user's approval to license. Adobe Fonts stay as `references/adobe-fonts.md`
   says: used through the user's Adobe account and web project, their files never copied, opened, parsed,
   or sent anywhere.
-- Never sign in, get around a paywall or a block, buy, or accept terms for the user; activate a font only
-  when the user asks for that font. For a `refused` or `browser-link` source, hand the user the link.
+- Never sign in, get around a paywall or a block, buy, or accept terms for the user. An Adobe Fonts face is
+  activated only by the owner, or by `lazuli adobe activate` after the owner said yes in words you can quote
+  (Adobe Fonts discovery, below). For a `refused` or `browser-link` source, hand the user the link.
   Every request keeps to the source registry, robots.txt, and a human pace; `lazuli fetch` does, and a
   download by hand does the same.
 - The lock never holds credentials, keys, account or payment data. Report only the families the
@@ -94,9 +95,48 @@ inferred from listings, labels, and origins. `--similar-to "<family>"` ranks ins
 measured distance, naming close and far features. The score only orders; return several candidates
 with their evidence.
 
+A name on the owned list (`lazuli owned add --from <file> --source adobe`, names only) that matches the query and is
+not installed is listed as a candidate that `needs activation`, with no scripts, class, or weights, because only a
+name is known. An installed family on the list says so in its evidence. Ask the owner for these names in the
+direction conversation (one question per type role: "Are there fonts you own but have not installed that I should
+consider?"); a filtered search leaves the names out and says how many.
+
 Fonts the user has activated are candidates like any other, Adobe Fonts included (origin `adobe-sync`,
 listed by `lazuli local fonts --origin adobe-sync`): recommend, compare, choose, and lock them. On the
 web an Adobe face is delivered through the user's own Adobe web project (`--delivery adobe-web-project`).
+
+## Adobe Fonts discovery - `lazuli adobe`
+
+Off until the owner runs `lazuli adobe enable` at a terminal (`lazuli adobe status` says what it needs); while it is off,
+every command refuses with that instruction, and you take Adobe candidates from the installed inventory, the owned list,
+and what the owner names. When it is on, `lazuli adobe` asks the owner's own Adobe Fonts integration for names: one call
+per command, roughly ten seconds and a long prompt each, so ask once with a list rather than font by font. What returns is
+the integration's catalog data, not lazuli's measurement: label it "Adobe Fonts connector" in an answer, keep it apart
+from `lazuli local fonts` values and catalog labels, and never use it as a class, a score, a lock fact, or a license fact.
+lazuli keeps a cleaned copy of each result in the user cache (provenance `adobe-connector`, with the time), outside the
+database; measurement, calibration, evaluation, and catalog labels never read it.
+
+| Need | Command | Notes |
+|---|---|---|
+| Neighbours of a face you know (a Garamond, a geometric sans, a Korean gothic) | `lazuli adobe similar <PostScript names> [--lang ko]` | The best discovery path: complete family, makers, and page for each result. `--lang` asks for a language the seed lacks |
+| A named family's PostScript names | `lazuli adobe search --name "<name>"` | A literal name search; `--limit` counts styles, so a family fills several rows |
+| Korean or Japanese candidates | `lazuli adobe search --name`, or `similar` to a known Hangul or kana face | Descriptive Hangul and kana searches ignore the words and rank by popularity; do not take them as a match |
+| Latin candidates by description | `lazuli adobe search "<words>" --hierarchy body --group Serif` | Reasonable for text serifs, weak for geometric or condensed sans: treat the rows as names to compare, then run `similar` on the best |
+| Language support, weight, library tier, makers of chosen faces | `lazuli adobe details <names>`; `styles` for a family's every style | No classification and no width exist in the data; installed faces are measured by lazuli as always |
+
+1. Discover with `similar` and name searches; shortlist two or three families per role.
+2. Give the shortlist to the owner to install or activate, or propose it: "May I
+   activate <font> for comparison?" Run `lazuli adobe activate --font <PostScript name> --basis "<their words>" --task <task>`
+   only after the owner answers yes in words that you record as a `[declared]` item of the brief record (or that sit in the
+   sealed requirement record) and name the font; `--basis` must be those words, exactly. `lazuli adobe kit --fonts ... --domains
+   ... --basis "..." --task <task>` publishes a web kit under their account on the same terms and also names each domain.
+   Without the words the command refuses and says why; nothing else in this skill activates, installs, or buys anything.
+3. Once a face is installed, `lazuli local fonts --origin adobe-sync` lists it and measures it through the operating system's
+   font interface, and `lazuli search` ranks it like any installed family. Lock it as an Adobe face (`--delivery
+   adobe-web-project`).
+
+Both commands report what the event stream of the call showed: a call other than the one named, or an extra one, is
+refused, and the report says the call may already have happened. `--json` gives each result with its provenance.
 
 ## Open fonts - find, fetch, bundle
 

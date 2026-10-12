@@ -16,8 +16,9 @@ it lists for lazuli's own requests. A page that loads its fonts from the user's 
 normal page: `render check` and `behavior check` do not block the page's own font requests, while
 `lazuli ref capture` and `lazuli read --render` do refuse these hosts. lazuli never opens those fonts'
 files: it lists them through the operating system's font API and measures the glyphs the system draws.
-The provider's record comes only from an official Adobe integration the user has already connected to
-this host, or from the user's own browser.
+The provider's record comes only from an official Adobe integration the user has already connected, reached
+either by `lazuli adobe` (the owner turned it on; Routes, 1) or by that host's own tools (Routes, 2), or from the
+user's own browser.
 
 ## What to look up
 
@@ -36,7 +37,13 @@ this host, or from the user's own browser.
 
 ## Routes
 
-1. **An Adobe integration connected to this host.** Hosts call it a connector, an app, or an
+1. **`lazuli adobe`, when the owner has turned it on** (`lazuli adobe status`). `lazuli adobe details <PostScript names>`
+   and `lazuli adobe styles <PostScript names>` ask the owner's own integration for exactly this record, one call per
+   command (about ten seconds), and print it labeled with its provenance; `--locale` takes the answer's locale. They need
+   no host tool, and the same command line works on every host. When it is off, the command says how the owner turns it on;
+   do not turn it on yourself, and fall back to route 2. The same command's `search` and `similar` are discovery: see
+   `SKILL.md`, Adobe Fonts discovery.
+2. **An Adobe integration connected to this host.** Hosts call it a connector, an app, or an
    integration, and differ in how the agent reaches its tools: some list them, others show them
    only through tool discovery or search. Search for the integration's font tools before deciding
    there are none. For this metadata lookup, use only its read tools:
@@ -51,7 +58,7 @@ this host, or from the user's own browser.
    font: it is for the faces lazuli listed. When the user asks for Adobe Fonts beyond what is
    activated, the integration's search or recommendation tools may suggest families; activate one
    only when the user asks for that font to be activated.
-2. **No such integration, or it is not connected.** Say that Adobe Fonts metadata is unavailable
+3. **No such integration, or it is not connected.** Say that Adobe Fonts metadata is unavailable
    here and answer from lazuli's own results. Give the user `https://fonts.adobe.com/` to open in
    their browser and search for the family. Never fill a value from memory or a guess, never fetch
    or scrape that site or any other Adobe address yourself, and never sign in or connect the
@@ -77,8 +84,13 @@ unavailable metadata for that face: say so, and do not retry in a loop or try an
   outlines, and measurements never leave the computer.
 - No access token, authorization header, or account detail goes into the answer, a log, a note, or a
   file.
-- lazuli stores none of what the integration returns, and it drops the Adobe faces it no longer
-  lists. Notes you keep yourself stay on this computer and are deleted once `--origin adobe-sync`
-  no longer lists the font or the subscription ends.
+- What `lazuli adobe` returns is kept: a cleaned copy of each result (names, makers, the integration's own language
+  list, weight, library tier, and its Adobe Fonts page; never its guidance text, markup, or the key in a preview link) in
+  `adobe/records.jsonl` of the user cache, with the provenance `adobe-connector` and the time, apart from the lazuli
+  database and never in a project. Measurement, calibration, evaluation, and catalog labels do not read it, and neither do
+  `lazuli local fonts`, `lazuli search --similar-to`, or `lazuli class`. Delete the `adobe` folder of the user cache to
+  remove it. lazuli stores nothing of what a host's own tool returns, and it drops the Adobe faces it no longer lists.
+  Notes you keep yourself stay on this computer and are deleted once `--origin adobe-sync` no longer lists the font or
+  the subscription ends.
 - None of these values is a license fact. License and delivery stay as `SKILL.md` says: a synced
   desktop font never ships as web files.

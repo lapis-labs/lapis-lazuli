@@ -5,7 +5,9 @@
 
 Fonts (the default type) come from the lazuli DB only; the command never scans or fetches. An installed
 family carries the catalog families its faces matched; a catalog family no installed face matched is its
-own candidate, merged across catalogs by normalized name. The user's own class of a family (`lazuli class`,
+own candidate, merged across catalogs by normalized name. A name on the owned list (`lazuli owned`) that is not
+installed is a candidate too when QUERY matches it, shown as `needs activation` with no scripts or classes (only a
+name is known); an installed family on the list says so in its evidence. The user's own class of a family (`lazuli class`,
 source `user`) replaces the catalogs' genre and subclass, and the evidence names it. QUERY matches,
 strongest first: a family or i18n name (equal, prefix, substring), a PostScript name, a catalog or user
 label (raw or mapped), a measured class, a foundry or designer. Filters:
@@ -55,7 +57,7 @@ from collections import defaultdict
 import yaml
 
 from lapis_design import shared_dir
-from lazuli import db, local, paths
+from lazuli import db, local, owned, paths
 from lazuli.catalog import labels, store
 from lazuli.lock import coverage_scripts, label_scripts
 from lazuli.scan import norm
@@ -494,6 +496,7 @@ def search_fonts(conn: sqlite3.Connection, args) -> tuple[list[dict], list[str]]
                 installed[family]["text_rows"].append(row)
     unmatched = [] if args.installed else [r for r in in_scope if (r["source"], r["source_key"]) not in matched]
     candidates = list(installed.values()) + list(_catalog_only(conn, unmatched, not args.query).values())
+    candidates += owned.candidates(conn, installed, candidates, args, notes)
 
     target = None
     if args.similar_to:
@@ -547,6 +550,8 @@ def search_fonts(conn: sqlite3.Connection, args) -> tuple[list[dict], list[str]]
         if cand["installed"]:
             evidence.append(f"installed ({', '.join(cand['origins'])}; {_faces(cand['faces'])})")
             strength += 0.05 if target is None else 0
+        if cand.get("owned"):
+            evidence.append(owned.evidence(cand["owned"], cand["installed"]))
         for c in cand["catalogs"][:3]:
             how = f", {c['method']}" if c.get("method") else ""
             evidence.append(f"listed in {c['source']} as {c['family']!r}{how}")
@@ -570,7 +575,7 @@ def search_fonts(conn: sqlite3.Connection, args) -> tuple[list[dict], list[str]]
 # ---------------------------------------------------------------- output
 
 PUBLIC_FIELDS = ("family", "names_i18n", "installed", "origins", "faces", "scripts", "classes", "genres",
-                 "license", "catalogs", "delivery", "score", "distance", "evidence")
+                 "license", "catalogs", "delivery", "owned", "score", "distance", "evidence")
 
 
 def _public(cand: dict) -> dict:
@@ -584,6 +589,7 @@ def _text(candidates: list[dict], args, notes: list[str]) -> str:
     lines = [f"{len(candidates)} font candidate{'s' if len(candidates) != 1 else ''} for {what}"]
     for i, c in enumerate(candidates, 1):
         where = (f"installed: {', '.join(c['origins'])}, {_faces(c['faces'])}" if c["installed"]
+                 else f"owned ({c['owned']['source']}): needs activation" if c.get("owned")
                  else "catalog: " + ", ".join(dict.fromkeys(s["source"] for s in c["catalogs"])))
         lines.append(f"{i:2}. {c['family']}  [{where}]  score {c['score']:.2f}")
         lines.append("    why: " + "; ".join(c["evidence"]))

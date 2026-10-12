@@ -2,14 +2,16 @@
 what each signature element carries, item by item, before the plan.
 
 The run writes a proposal, `.lapis/direction/<task>.yaml` (`shared/direction/schema.yaml`): per named style `S<n>` two or
-three jobs and the trend-kit items `K<n>` it decodes to today, per core object `O<n>` two or three representations, and
-per signature element the brief names `G<n>` what it carries. It asks the owner about every open item in one message
+three jobs and the trend-kit items `K<n>` it decodes to today, per core object `O<n>` two or three representations, per
+signature element the brief names `G<n>` what it carries, and per type role it expects `T<n>` the fixed question whether
+the owner has fonts they own but have not installed (`lazuli owned add` takes the names they give). It asks the owner about every open item in one message
 (`.lapis/questions/<task>.md`, first line `lapis-questions: direction`), and records the answers in the brief record
 `.lapis/answers/<task>.md` under `## Direction <n>` headings:
 
     - [declared] K2 ticker band: drop — "<owner words>"
     - [declared] O1 the comparison: a,c — "<owner words>"          (narrowed: `diverge` explores a and c)
     - [declared] S1 neo-brutalism: other — <their own words>
+    - [declared] T2 body: b — "<owner words>"                       (fonts owned and not installed: a no, b yes with names)
     - [declared] Pick: C2 — "<owner words>"                         (the second turn, after `diverge`)
     - [declared] C2.G1 crystal stone: a — "<owner words>"           (the second turn: the picked rough's signature)
     - Defaults accepted (direction 2): "<owner words>"              (untagged: every open item takes its default)
@@ -17,7 +19,7 @@ per signature element the brief names `G<n>` what it carries. It asks the owner 
 `items` reads the proposal and the answers and gives each item a state (`open`, `narrowed`, `decided`, `delegated`) and
 who gave it (`owner`, or `assumed` in an unattended run, which never waits and records `[assumed] ... Basis: ...`). The
 step `owner-direction` (`owed`) is owed while the proposal is missing or malformed or an item is open: at the first turn
-any style, kit, or object item; at the second turn, after the `diverge` seal, the pick or a signature item of the picked
+any style, kit, object, or type-role item; at the second turn, after the `diverge` seal, the pick or a signature item of the picked
 rough. A `direction` questions file waits only when it names every open item and at least one is open
 (`questions_problem`), so a turn cannot be a progress check-in. Every `[declared]` item stays a requirement row, except
 `Pick:`, which is the owner's decision, not a requirement.
@@ -39,16 +41,20 @@ from lapis_design import brief, diverge, gate, references, waiting
 STEP = "owner-direction"
 KIND = "direction"
 PICK_ID = "Pick"                       # the id the second turn's questions name for the pick
+OWNED_QUESTION = "Are there fonts you own but have not installed that I should consider?"
+OWNED_OPTIONS = ({"id": "a", "text": "No: only the fonts installed here, open-licensed families, and what the catalogs list"},
+                 {"id": "b", "text": "Yes: I will name them, and they go on the owned list (`lazuli owned add`) as candidates "
+                                     "that need activation"})
 
 _HEAD = re.compile(r"^direction\s+(\d+)\b", re.IGNORECASE)
-_ANSWER_ID = re.compile(r"^(?:(?P<cand>C\d+)\.)?(?P<id>[SKOG]\d+)\b", re.IGNORECASE)
+_ANSWER_ID = re.compile(r"^(?:(?P<cand>C\d+)\.)?(?P<id>[SKOGT]\d+)\b", re.IGNORECASE)
 _CHOICE = re.compile(r"\s*(?P<choice>keep|drop|default|other|all|[a-e](?:\s*,\s*[a-e])*)\b", re.IGNORECASE)
 _CHOICE_END = re.compile(r"\s*(?:$|[—–\"“(]|-\s)")   # what follows a choice when the name may hold colons: the end, a dash, or a quote
 _PICK = re.compile(r"^pick\s*:\s*(?P<cand>C\d+)\b", re.IGNORECASE)
 _DEFAULTS = re.compile(r"^defaults\s+accepted\s*\(\s*direction\s+(?P<turn>\d+)\s*\)\s*:\s*(?P<words>\S.*)$",
                        re.IGNORECASE | re.DOTALL)
 _LEAD = re.compile(r"^[\s*_`:\-–—]+")
-_ID = re.compile(r"^(?:C\d+\.)?[SKOG]\d+$")
+_ID = re.compile(r"^(?:C\d+\.)?[SKOGT]\d+$")
 
 
 def _answer(text: str) -> dict[str, str | None] | None:
@@ -129,11 +135,15 @@ def proposal_problem(root: Path, task: str) -> str | None:
     if found["task"] != task:
         return f"{where} is for task {found['task']!r}, not {task!r}"
     styles, objects, signature = found["styles"], found["objects"], found["signature"]
+    type_roles = found.get("type_roles") or []
     kit = [k for s in styles for k in s["kit"]]
     for label, ids in (("style", [s["id"] for s in styles]), ("kit", [k["id"] for k in kit]),
-                       ("object", [o["id"] for o in objects]), ("signature", [g["id"] for g in signature])):
+                       ("object", [o["id"] for o in objects]), ("signature", [g["id"] for g in signature]),
+                       ("type-role", [t["id"] for t in type_roles])):
         if dup := _duplicates(ids):
             return f"{where} repeats the {label} id {', '.join(dup)}"
+    if dup := _duplicates([t["role"] for t in type_roles]):
+        return f"{where} asks the fonts-owned question twice for the role {', '.join(dup)}"
     for item in (*styles, *objects, *signature):
         options = [o["id"] for o in item["options"]]
         if dup := _duplicates(options):
@@ -234,6 +244,9 @@ def _proposal_items(doc: dict[str, Any]) -> list[dict[str, Any]]:
         out.append({"id": obj["id"], "kind": "O", "label": obj["object"], "candidate": None, "object_kind": obj["kind"],
                     "options": [{"id": o["id"], "text": o["text"], "does": o["does"], "family": o["family"]}
                                 for o in obj["options"]], "default": obj["default"]})
+    for role in doc.get("type_roles") or ():
+        out.append({"id": role["id"], "kind": "T", "label": f"{role['role']}: {OWNED_QUESTION}", "candidate": None,
+                    "role": role["role"], "options": [dict(o) for o in OWNED_OPTIONS], "default": "a"})
     for sig in doc.get("signature") or ():
         out.append({"id": sig["id"], "kind": "G", "label": sig["element"], "candidate": None,
                     "options": [{"id": o["id"], "text": o["text"]} for o in sig["options"]], "default": sig["default"]})
@@ -377,7 +390,7 @@ def owed(root: Path, task: str, phase: int, env: Mapping[str, str] = os.environ)
     if phase == 1:
         if problem := proposal_problem(root, task):
             return _why(task, 1, f"the proposal is not in order: {problem}", unattended)
-        if found := [i for i in _open(root, task, env) if i["kind"] in "SKO"]:
+        if found := [i for i in _open(root, task, env) if i["kind"] in "SKOT"]:
             return _why(task, 1, f"{len(found)} items have no owner answer: {_names(found)}", unattended,
                         _unbased(root, task))
         return None
@@ -426,8 +439,9 @@ def _why(task: str, phase: int, reason: str, unattended: bool, unbased: list[str
     if phase == 1:
         what = (f"Write the proposal {proposal_file} (shared/direction/schema.yaml) from the owner's own words, the brief, and "
                 "the references: for each named style what it should DO here (two or three jobs) and the trend-kit items "
-                "it decodes to, for each core object two or three representations, and for each signature element the "
-                "brief names what it carries. ")
+                "it decodes to, for each core object two or three representations, for each signature element the "
+                "brief names what it carries, and for each type role you expect (heading, body, ...) one `T<n>` item that asks "
+                f"\"{OWNED_QUESTION}\". ")
     else:
         what = ("The `diverge` set is sealed: show the owner the contact sheet and ask for the pick and the picked rough's "
                 "signature items. Say per rough what its captures show and what its card claims beyond them (\"claimed, not "

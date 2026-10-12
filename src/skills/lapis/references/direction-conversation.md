@@ -8,6 +8,7 @@ vote on adjectives: every option is a job, a representation, or a carried meanin
 
 - When the turns happen: turn one after the references, turn two after `diverge`; more only while an answer opens something.
 - The three questions: what a named style does, how each core object is represented, what a signature element carries.
+- The fonts question: one per type role, whether the owner has fonts they own but have not installed.
 - The proposal: `.lapis/direction/<task>.yaml`, written before you ask.
 - Asking: one message per turn, in the owner's language, naming every open item.
 - Recording answers: `## Direction <n>` in the brief record, one line per item.
@@ -67,12 +68,24 @@ O1 what the skills change in an agent's work — a) one page fading into its oth
 G1 procedure animation — carries: a) which step is current and what it produced (default)  b) only the order
 ```
 
+## The fonts question
+
+One more item for every type role you expect the plan to set (`heading`, `body`, a mono role): `T<n>`, the same question each
+time, in the owner's language: **Are there fonts you own but have not installed that I should consider?** It has two fixed
+options, `a` no (only the fonts installed here, open-licensed families, and what the catalogs list) and `b` yes (the owner
+names them). Ask it in turn one with the others, and put the type roles into the proposal as `type_roles: [{id: T1, role: body}]`.
+
+When the owner answers `b` and names fonts, write the names, one per line, into a file outside `.lapis/` and run
+`lazuli owned add --from <file> --source adobe`. The names are all that is kept; `lazuli search "<name>"` then lists each as a
+candidate that needs activation. Installing or activating is the owner's act, or one you propose and they accept in words you can
+quote (`lzl-fonts`); until a font is installed it has no measurement, so it can be proposed but never ranked.
+
 ## The proposal
 
 Write `.lapis/direction/<task>.yaml` against `../shared/direction/schema.yaml` before you ask. The CLI checks form only: ids are
 unique and well formed, each style has two or three options and at least one kit item, every `seen_in` names a reference of
 the references record, each object names a pool kind of `../shared/diverge/pools.yaml` and has two or three options (each with
-`does` and `source`), and each default is an option id (`all` for an object). It never judges whether the options are good;
+`does` and `source`), each default is an option id (`all` for an object), and no type role is asked twice. It never judges whether the options are good;
 the owner and the critic do.
 
 ## Asking
@@ -94,6 +107,7 @@ one line per item, keeping what the file holds. The fact cap of the brief (six q
 ```text
 - [declared] K2 ticker band: drop — "<owner words>"
 - [declared] O1 the comparison: a,c — "<owner words>"           narrowed: diverge explores a and c
+- [declared] T2 body: b — "<owner words>"                        fonts owned and not installed: they name them; add them with `lazuli owned add`
 - [declared] S1 neo-brutalism: other — expose the record, but no borders on body text — "<owner words>"
 - [declared] Pick: C2 — "<owner words>"                          turn two only
 - [declared] C2.G1 crystal stone: a — "<owner words>"            turn two: the picked rough's signature item
