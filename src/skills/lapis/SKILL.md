@@ -127,8 +127,10 @@ A small edit inside an established system needs no plan. Say so and make the edi
    With nobody to ask, record `[assumed]` answers with their basis.
 7. Then make the rough first views (`references/diverge.md`): `next` names `diverge` until
    `lapis-design diverge start`, the roughs and their cards, `check`, and `seal` are done. The CLI draws each rough's
-   reference direction, core-object representation, and color allocation, so you cannot pick them; the owner picks one at
-   the second turn of the direction conversation, and the plan starts from that pick.
+   reference direction, core-object representation, color allocation, and hierarchy (what the first view carries against
+   later scenes), so you cannot pick them. Write one shared brief (`brief.yaml`) that settles the contradictions in the
+   instructions before the roughs are made; the owner picks one rough at the second turn of the direction conversation,
+   and the plan starts from that pick.
 
 For supplied design sources or a role transfer, read `shared/handoff/HANDOFF.md` → **Intake and authority**
 and **Projection annotations** before reconciling them; read **Export** and **Return and freshness** when

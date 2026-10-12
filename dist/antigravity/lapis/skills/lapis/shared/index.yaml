@@ -99,6 +99,10 @@ items:
   view: full
   path: diverge/card.schema.yaml
   summary: LapisLazuli diverge card schema — v0
+- id: diverge-brief
+  view: full
+  path: diverge/brief.schema.yaml
+  summary: LapisLazuli diverge brief schema — v0
 - id: gaps-record
   view: full
   path: gaps/schema.yaml

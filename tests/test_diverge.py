@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from diverge_support import card_for, rough_html, signature, write_render, write_rough
+from diverge_support import brief_for, card_for, rough_html, signature, write_brief, write_render, write_rough
 from lapis_design import direction, diverge, next_step, references
 from lapis_design.cli import main as cli_main
 from procedure_support import (BRIEF_RECORD, DEFAULTS_ACCEPTED, DIRECTION_PROPOSAL, TASK, load_skills, make_project,
@@ -209,7 +209,8 @@ def test_an_object_the_owner_decided_must_show_that_option_and_a_missing_rough_o
     make_all(run)
     assert diverge.check(run, TASK)["problems"] == []
     write_rough(run, TASK, "C2", objects=[{"id": "O1", "option": "a", "family": "ledger", "medium": "css-drawing",
-                                          "first_view_share": 0.3, "representation": "the log as ruled rows again"}])
+                                          "first_view_share": 0.3, "representation": "the log as ruled rows again",
+                                          "later": "the log comes back as its own scene below"}])
     assert "the owner decided O1 as option b (fader-overlay)" in " | ".join(diverge.check(run, TASK)["problems"])
     write_rough(run, TASK, "C2")
     (run / ".lapis/diverge" / TASK / "C3" / "index.html").unlink()
@@ -406,3 +407,81 @@ def test_check_measures_two_real_renders_and_writes_the_contact_sheet(run):
     with Image.open(state / "contact.png") as sheet:
         assert sheet.width > 1000 and sheet.height > 400
     assert sorted(diverge.seal(run, TASK)["candidates"]["C2"]["captures"]) == ["1440", "390"]
+
+
+# ---- 5. what the first view carries against the later scenes
+
+TWO_OBJECTS = {**PROPOSAL, "objects": [*PROPOSAL["objects"], {
+    "id": "O2", "object": "the steps of a firing", "kind": "process-sequence", "default": "all",
+    "options": [{"id": "a", "text": "the steps as stations on a map", "family": "procedure-map",
+                 "does": "see which step the kiln is at", "source": "own"},
+                {"id": "b", "text": "the run as a log the visitor scrubs", "family": "terminal-replay",
+                 "does": "scrub back through the run", "source": "own"}]}]}
+
+
+@pytest.fixture
+def two(run) -> Path:
+    save(run, f"direction/{TASK}.yaml", TWO_OBJECTS)
+    return run
+
+
+def problems(root: Path) -> str:
+    return " | ".join(diverge.check(root, TASK)["problems"])
+
+
+def test_each_rough_draws_a_hierarchy_stance_without_replacement_and_it_can_be_resampled(run):
+    start(run)
+    held = [standing(run)[c]["hierarchy"]["item"] for c in ("C1", "C2", "C3")]
+    assert len(set(held)) == 3
+    assert {e["id"] for e in diverge.pools()["hierarchy"]} >= set(held)
+    new = diverge.resample(run, TASK, "C1", "hierarchy", "this stance does not fit the kiln page")
+    assert new["slot"] == "hierarchy" and new["item"] not in held
+
+
+def test_an_object_may_own_none_of_the_first_view_when_the_card_records_its_later_scene(two):
+    start(two)
+    make_all(two)
+    got = card_for(two, TASK, "C1")
+    assert [o["first_view_share"] for o in got["objects"]] == [0.3, 0] and all(o["later"] for o in got["objects"])
+    assert problems(two) == ""
+    without = [{k: v for k, v in o.items() if k != "later"} for o in got["objects"]]
+    write_rough(two, TASK, "C1", objects=without)
+    assert "diverge/card.schema.yaml" in problems(two) and "later" in problems(two)
+
+
+def test_a_card_whose_first_view_carries_more_objects_than_its_hierarchy_allows_is_named(two):
+    start(two)
+    make_all(two)
+    drawn = standing(two)["C1"]["hierarchy"]["item"]
+    wide = [{**o, "first_view_share": 0.2} for o in card_for(two, TASK, "C1")["objects"]]
+    limit = {e["id"]: e["opening_objects"] for e in diverge.pools()["hierarchy"]}[drawn]
+    write_rough(two, TASK, "C1", objects=wide)
+    assert (f"draws the hierarchy {drawn}, whose first view carries {limit} core object" in problems(two)) == (limit < 2)
+    other = next(h for h in ("one-decisive-object", "object-led", "claim-led", "relation-pair") if h != drawn)
+    write_rough(two, TASK, "C1", hierarchy=other)
+    assert f"draws the hierarchy {drawn}" in problems(two)
+
+
+def test_a_shared_brief_is_required_and_cannot_ask_every_object_into_the_first_view_without_an_owner_answer(two):
+    start(two)
+    for candidate in diverge.candidate_ids(two, TASK):
+        write_rough(two, TASK, candidate)
+    diverge.brief_path(two, TASK).unlink()
+    assert "brief.yaml is missing" in problems(two)
+    rows = [{**r, "first_view": "required"} for r in brief_for(two, TASK)["objects"]]
+    write_brief(two, TASK, objects=rows)
+    assert "requires every core object in the first view" in problems(two)
+    write_brief(two, TASK, objects=[{**r, "demanded_by": "Z9"} for r in rows])
+    assert "no such item" in problems(two)
+    write_brief(two, TASK, objects=[{**rows[0]}, {**rows[1], "first_view": "allowed"}])
+    assert "requires every core object" not in problems(two)
+
+
+def test_a_card_that_disagrees_with_the_shared_brief_about_the_first_view_is_named(two):
+    start(two)
+    make_all(two)
+    rows = brief_for(two, TASK)["objects"]
+    write_brief(two, TASK, objects=[{**rows[0], "first_view": "later"}, rows[1]])
+    assert "C1 shows O1 in the first view; the shared brief puts it in a later scene" in problems(two)
+    write_brief(two, TASK, objects=[rows[0], {**rows[1], "first_view": "required"}])
+    assert "leaves O2 out of the first view; the shared brief requires it there" in problems(two)

@@ -1,0 +1,48 @@
+# LapisLazuli diverge brief schema — v0
+# Location: .lapis/diverge/<task>/brief.yaml. The one brief every rough worker receives. The maker writes it once, after
+# `diverge start` and before any rough is made: it states the opening's job, what each core object does there and later, and
+# which contradictions in the instructions (the brief record, the direction answers, this task's own wording) it resolved,
+# so that no worker has to resolve them again on its own and no two roughs inherit the same hidden contradiction.
+# `lapis-design diverge check` reads the cards against it. Provenance (real, illustrative, synthetic) is named once, where
+# it informs an example (`labels`), never as a tag repeated on each element of the page.
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/diverge-brief.v0.json
+title: LapisLazuli diverge brief
+type: object
+additionalProperties: false
+required: [version, opening, objects, resolved]
+properties:
+  version: {const: 0}
+  opening:
+    type: object
+    additionalProperties: false
+    required: [job, carries]
+    properties:
+      job: {type: string, minLength: 20}                 # what the first view is for, in a sentence
+      carries:
+        type: array
+        minItems: 2
+        uniqueItems: true
+        items: {enum: [identity, claim, decisive-object, primary-action]}
+  objects:                                               # one row per core object of the direction conversation
+    type: array
+    minItems: 1
+    items:
+      type: object
+      additionalProperties: false
+      required: [id, first_view, later]
+      properties:
+        id: {type: string, pattern: "^O[1-4]$"}
+        first_view: {enum: [required, allowed, later]}   # every rough shows it / the hierarchy draw decides / no rough does
+        later: {type: string, minLength: 12}             # the role and scene it has after the first view
+        demanded_by: {type: string, pattern: "^[A-Z][1-9][0-9]*$"}   # the owner's answer (item id) that requires it in the first view
+  resolved:                                              # contradictions found in the instructions and how this brief settles each; may be empty
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [conflict, as]
+      properties:
+        conflict: {type: string, minLength: 12}
+        as: {type: string, minLength: 12}
+  labels: {type: string, minLength: 12}              # where a real / illustrative / synthetic distinction informs an example, said once

@@ -4,7 +4,7 @@ $id: https://github.com/lapis-labs/lapis-lazuli/schemas/diverge-pools.v0.json
 title: LapisLazuli diverge pools
 type: object
 additionalProperties: false
-required: [version, observed_on, representation, color_allocation, distance]
+required: [version, observed_on, representation, color_allocation, hierarchy, distance]
 properties:
   version: {const: 0}
   observed_on: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
@@ -28,6 +28,13 @@ properties:
     type: array
     minItems: 5
     items: {$ref: "#/$defs/entry"}
+  hierarchy:
+    type: array
+    minItems: 4
+    items:
+      allOf:
+        - {$ref: "#/$defs/entry"}
+        - {type: object, required: [opening_objects]}
   distance:
     type: object
     additionalProperties: false
@@ -60,3 +67,4 @@ $defs:
     properties:
       id: {type: string, pattern: "^[a-z][a-z0-9-]*$"}
       text: {type: string, minLength: 8}
+      opening_objects: {type: integer, minimum: 1, maximum: 4}

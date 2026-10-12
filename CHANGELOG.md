@@ -158,6 +158,7 @@ between minor versions; render extraction is v1 and the other contract formats a
   sessions no longer get the font inventory summary or the "no font inventory yet" line. Inside a project the summary is
   counts only, opens with a line that frames it as data, and its few labels (origins, catalog source names, the scan date)
   are cut to plain ASCII, so no family name or other string read from a font file reaches the model's context.
+- Rough first views no longer have to carry every core object. `diverge` draws a hierarchy stance per rough (`one-decisive-object`, `object-led`, `claim-led`, `relation-pair`: what the first view carries against the later scenes, and at most how many objects it may show); a card names it (`hierarchy`) and records each object's role in a later scene (`later`, apart from `first_view_share`, which may be 0). The maker writes one shared brief once before the fan-out (`.lapis/diverge/<task>/brief.yaml`, `diverge/brief.schema.yaml`: the opening's job, each object's `first_view` of `required`, `allowed`, or `later`, and the contradictions it resolved); `diverge check` refuses a missing brief, one that requires every object in the first view with no owner answer in `demanded_by`, and a card that disagrees with it or carries more objects than its hierarchy allows. Provenance labels are said once, where they inform an example.
 
 ### Fixed
 

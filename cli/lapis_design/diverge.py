@@ -7,7 +7,9 @@ hash and OS entropy, recorded) and appends the draws to `draws.jsonl`, each `{id
 prev}` in a hash chain, before any card exists. Candidate *i* gets reference direction *i*, for each open core object a
 representation family drawn without replacement across candidates (first from the object's options of the direction
 conversation, narrowed or all, then from the pool of its kind in `shared/diverge/pools.yaml`), and one color allocation
-stance drawn without replacement. `resample` replaces one draw, twice per candidate at most, each with its reason;
+stance and one hierarchy stance (what the first view carries against the later scenes) drawn without replacement.
+The maker writes the shared rough brief (`brief.yaml`) once before the roughs; `check` reads the cards against it.
+`resample` replaces one draw, twice per candidate at most, each with its reason;
 `variant` adds a rough the owner asked for (`reason: owner`).
 
 The agent writes each rough as `.lapis/diverge/<task>/C<n>/index.html` with its card `card.yaml`
@@ -271,6 +273,12 @@ def _stances(rng: random.Random) -> list[str]:
     return deck
 
 
+def _hierarchies(rng: random.Random) -> list[str]:
+    deck = [e["id"] for e in pools()["hierarchy"]]
+    rng.shuffle(deck)
+    return deck
+
+
 def _draws_for(root: Path, task: str, entropy: str, candidate: str, number: int, letters: list[str],
                objects: list[dict[str, Any]], taken: Mapping[str, list[Any]], reason: str, extra: Mapping[str, Any]
                ) -> list[dict[str, Any]]:
@@ -301,6 +309,8 @@ def _draws_for(root: Path, task: str, entropy: str, candidate: str, number: int,
     stance = pick("color", _stances(_rng(entropy, task, "color")))
     out.append({"candidate": candidate, "slot": "color", "pool": "color_allocation", "item": stance, "reason": reason,
                 **extra})
+    stance = pick("hierarchy", _hierarchies(_rng(entropy, task, "hierarchy")))
+    out.append({"candidate": candidate, "slot": "hierarchy", "pool": "hierarchy", "item": stance, "reason": reason, **extra})
     return out
 
 
@@ -372,6 +382,9 @@ def resample(root: Path, task: str, candidate: str, slot: str, reason: str,
     elif slot == "color":
         deck = [{"item": s} for s in _stances(rng) if s not in taken.get("color", [])]
         pool, option = "color_allocation", None
+    elif slot == "hierarchy":
+        deck = [{"item": h} for h in _hierarchies(rng) if h not in taken.get("hierarchy", [])]
+        pool, option = "hierarchy", None
     else:
         obj = next((o for o in _objects(root, task, env) if o["id"] == slot and o["fixed"] is None), None)
         if obj is None:
@@ -381,7 +394,7 @@ def resample(root: Path, task: str, candidate: str, slot: str, reason: str,
         pool, option = None, None
     if not deck:
         raise DivergeError(f"every item of {slot} is already in use by a candidate: nothing is left to draw")
-    if slot in ("direction", "color"):
+    if slot in ("direction", "color", "hierarchy"):
         rng.shuffle(deck)
     chosen = deck[0]
     rec = {"candidate": candidate, "slot": slot, "pool": chosen.get("pool", pool), "item": chosen["item"],
@@ -461,6 +474,7 @@ def _card_problems(root: Path, task: str, candidate: str, slots: Mapping[str, Ma
     for ident in on_card:
         if ident not in {o["id"] for o in objects}:
             problems.append(f"{candidate}'s card shows {ident}, which is no core object of the direction conversation")
+    problems += _hierarchy_problems(candidate, slots, found, brief(root, task))
     roles = {c["role"] for c in found["color"]}
     if not {"field", "identity"} <= roles:
         problems.append(f"{candidate}'s color has no `field` and `identity` role with an area each")
@@ -469,6 +483,86 @@ def _card_problems(root: Path, task: str, candidate: str, slots: Mapping[str, Ma
         problems.append(f"{candidate}'s card repeats a signature id")
     if not (folder(root, task) / candidate / "index.html").is_file():
         problems.append(f"{where}/index.html is missing")
+    return problems
+
+
+def brief_path(root: Path, task: str) -> Path:
+    return folder(root, task) / "brief.yaml"
+
+
+def brief(root: Path, task: str) -> dict[str, Any] | None:
+    """The shared rough brief as a mapping, or None when it is missing or not a mapping."""
+    try:
+        found = yaml.safe_load(brief_path(root, task).read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError):
+        return None
+    return found if isinstance(found, dict) else None
+
+
+def _hierarchy_problems(candidate: str, slots: Mapping[str, Mapping[str, Any]], found: Mapping[str, Any],
+                        shared: Mapping[str, Any] | None) -> list[str]:
+    """The card's hierarchy against its draw and the pool's limit on objects in the opening, and its objects' shares
+    against the shared brief's `first_view` rows."""
+    problems = []
+    stance = {e["id"]: e for e in pools()["hierarchy"]}
+    draw = slots.get("hierarchy")
+    if found["hierarchy"] not in stance:
+        problems.append(f"{candidate}'s card names the hierarchy {found['hierarchy']}, which is none of: {', '.join(stance)}")
+    elif draw is not None and found["hierarchy"] != draw["item"]:
+        problems.append(f"{candidate} draws the hierarchy {draw['item']} (draw {draw['id']}) and its card says {found['hierarchy']}")
+    elif draw is not None:
+        opening = [o["id"] for o in found["objects"] if o["first_view_share"] > 0]
+        limit = stance[draw["item"]]["opening_objects"]
+        if len(opening) > limit:
+            problems.append(f"{candidate} draws the hierarchy {draw['item']}, whose first view carries {limit} core object"
+                            f"{'' if limit == 1 else 's'} at most, and its card gives {', '.join(opening)} a share of it: the rest "
+                            "play their part in a later scene (`first_view_share: 0` and `later`)")
+    rows = {r["id"]: r for r in (shared or {}).get("objects") or [] if isinstance(r, dict)}
+    for obj in found["objects"]:
+        row = rows.get(obj["id"])
+        if row is None:
+            continue
+        share = obj["first_view_share"]
+        if row.get("first_view") == "later" and share > 0:
+            problems.append(f"{candidate} shows {obj['id']} in the first view; the shared brief puts it in a later scene")
+        elif row.get("first_view") == "required" and share == 0:
+            problems.append(f"{candidate} leaves {obj['id']} out of the first view; the shared brief requires it there")
+    return problems
+
+
+def _brief_problems(root: Path, task: str, objects: list[dict[str, Any]], env: Mapping[str, str]) -> list[str]:
+    """What is wrong with the shared rough brief: missing, off its schema, not one row per core object, or asking every
+    core object into the first view with no owner answer that demands it."""
+    from jsonschema import Draft202012Validator
+
+    from lapis_design import direction
+
+    where = f".lapis/diverge/{task}/brief.yaml"
+    found = brief(root, task)
+    if found is None:
+        return [f"{where} is missing: write the shared rough brief once, before the roughs are made, and give it to every "
+                "rough worker unchanged (shared/diverge/brief.schema.yaml)"]
+    errors = sorted(Draft202012Validator(shared_yaml("diverge/brief.schema.yaml")).iter_errors(found),
+                    key=lambda e: (len(list(e.absolute_path)), e.message))
+    if errors:
+        first = errors[0]
+        return [f"{where} does not match diverge/brief.schema.yaml: {'/'.join(map(str, first.absolute_path)) or 'it'}: "
+                f"{first.message[:140]}"]
+    ids = [r["id"] for r in found["objects"]]
+    wanted = [o["id"] for o in objects]
+    problems = []
+    if sorted(ids) != sorted(wanted):
+        problems.append(f"{where} has rows for {', '.join(sorted(ids)) or 'no object'}; the core objects are {', '.join(wanted)}")
+    known = {item["id"] for item in direction.items(root, task, env)}
+    for row in found["objects"]:
+        if "demanded_by" in row and row["demanded_by"] not in known:
+            problems.append(f"{where}: {row['id']} says the owner's answer {row['demanded_by']} demands it in the first view, "
+                            "and the direction conversation has no such item")
+    required = [r for r in found["objects"] if r["first_view"] == "required"]
+    if len(wanted) > 1 and len(required) == len(found["objects"]) and not all("demanded_by" in r for r in required):
+        problems.append(f"{where} requires every core object in the first view, and no owner answer demands it: the opening "
+                        "carries identity or the claim, one decisive object, and the primary action; give the other objects "
+                        "`first_view: later` or `allowed` with the scene they play, or name the owner's answer in `demanded_by`")
     return problems
 
 
@@ -730,6 +824,7 @@ def check(root: Path, task: str, env: Mapping[str, str] = os.environ) -> dict[st
     standing = _candidate_set(root, task)
     ids = sorted(standing, key=lambda c: int(c[1:]))
     objects = _objects(root, task, env)
+    problems += _brief_problems(root, task, objects, env)
     for candidate in ids:
         problems += _card_problems(root, task, candidate, standing[candidate], letters, objects)
     first = [c for c in ids if not any(r.get("variant") for r in draw_records(root, task) if r.get("candidate") == c)]
@@ -840,7 +935,7 @@ def owed(root: Path, task: str, env: Mapping[str, str] = os.environ) -> str | No
     if seed(root, task) is None:
         return (f"The direction conversation is done, so make the rough first views: run `{command}` (three roughs; `--k` 2 to 4). "
                 "The CLI draws, for each rough, a different reference direction of the references record, a representation "
-                "family for each open core object, and a color allocation stance, and records the draws; you cannot choose "
+                "family for each open core object, a color allocation stance, and a hierarchy stance (what the first view carries against the later scenes), and records the draws; you cannot choose "
                 f"them (`resample` replaces one, twice per rough at most, with its reason). {_how(task)}")
     record = sealed(root, task)
     ids = candidate_ids(root, task)
@@ -856,13 +951,17 @@ def owed(root: Path, task: str, env: Mapping[str, str] = os.environ) -> str | No
 
 
 def _how(task: str) -> str:
-    return (f"Make each rough in a fresh context where the harness has one, seeing only the brief record, the direction "
+    return (f"First write the shared brief once, `.lapis/diverge/{task}/brief.yaml` (shared/diverge/brief.schema.yaml): the "
+            "opening's job, what each core object does in the first view and in a later scene, and the contradictions you "
+            "found in the instructions and how it settles them; give it to every worker unchanged. "
+            f"Make each rough in a fresh context where the harness has one, seeing only the brief record, the direction "
             f"answers, its own draws, and its reference direction's captures, never the other roughs: its first view at 1440 "
             f"and 390 as `.lapis/diverge/{task}/C<n>/index.html` with real or clearly synthetic content and the decisive "
             f"medium (diagram, control, image, or motion state) instead of a gray box, and its card `card.yaml` "
             f"(shared/diverge/card.schema.yaml) next to it. Render each: `lapis-design render check "
             f".lapis/diverge/{task}/C<n>/index.html --task {task}-C<n> --width 390 --width 1440`. The roughs differ in how "
-            "the core objects are represented and how color is allocated, not in decoration, order, or finish.")
+            "the core objects are represented, how color is allocated, and what the first view carries against the later "
+            "scenes, not in decoration, order, or finish.")
 
 
 def step(root: Path, task: str, reason: str) -> dict[str, Any]:

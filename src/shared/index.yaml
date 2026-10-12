@@ -324,10 +324,17 @@ items:
   - id: diverge-card
     kind: contract
     path: diverge/card.schema.yaml
-    note: v0; the card of one rough first view (reference direction, the draws it spends, core-object representations, color roles with their area, signature elements)
+    note: v0; the card of one rough first view (reference direction, the draws it spends, core-object representations with their later scene, the hierarchy drawn, color roles with their area, signature elements)
     consumers:
       lapis: full
       ultramarine: summary
+
+  - id: diverge-brief
+    kind: contract
+    path: diverge/brief.schema.yaml
+    note: v0; the one shared brief every rough worker receives (the opening's job, each core object's first-view status and later scene, the contradictions the maker resolved once)
+    consumers:
+      lapis: full
 
   - id: gaps-record
     kind: contract
