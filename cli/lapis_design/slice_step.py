@@ -4,15 +4,18 @@ In an attended create run (`LAPIS_UNATTENDED` unset) with no slice sealed in `.l
 the step `slice` as soon as the plan steps pass. The step asks for the first view plus the one section the brief puts
 first, captured at 390 and 1440, reviewed, and shown to the owner in questions of kind `approval`. Such questions that
 link no page, while no slice is sealed, return `slice` instead of waiting, and so does a shown page taller than
-`MAX_HEIGHT` px at 1440. Copy stays provisional until the owner has seen it rendered. The slice is one page: the choice
+`MAX_HEIGHT` px of content at 1440 (a pinned scene's empty scroll runway is dwell, not length: `render motion` measures it). Copy stays provisional until the owner has seen it rendered. The slice is one page: the choice
 among several roughs is made earlier, at the second direction turn.
 
 From the first time `next` names `slice` until the slice is sealed or skipped, the agent is held (`hold`, enforced by
 the pre-write hook in `order.py`): it may write only the files its slice page declares in `.lapis/drafts/<task>.yaml`
 (`direction: new`, with its `url` and `sources`, at most `MAX_FILES`). The slice must also reach the owner as a waiting
 `approval` question that links the page and carries the current owner block: it is overdue after `MINUTES` minutes or
-`WRITES` page writes since the clock started (`overdue`), and from then on every page write is refused until that
-question exists. The clock starts when `next` first names `slice` (`state.slice_since`), at every owner reply that asks
+`WRITES` page writes since the clock started (`overdue`: two independent triggers), and from then on every page write is
+refused until that question exists. Once either budget has fired the question never waits for a current review: `draft
+check` writes a minimal block, `next` lets the question wait, and the block's `## Not fully reviewed` section discloses
+what is not current (`unreviewed`). `state.slice_questions` records, per question, which budget fired first, when, when the
+question was asked, and the latency between (`observe_question`). The clock starts when `next` first names `slice` (`state.slice_since`), at every owner reply that asks
 for a revision, and at every answered set of questions of any kind (the log of `asks.py`). An untagged
 `- Slice skipped: "<owner words>"` line in the answers file lifts the hold and the step.
 
@@ -33,13 +36,13 @@ import json
 import os
 import posixpath
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
 import yaml
 
-from lapis_design import asks, draft, gaps, gate, integrity, order, requirements, waiting
+from lapis_design import asks, draft, gaps, gate, integrity, motion, order, requirements, waiting
 
 STEP = "slice"
 MAX_FILES = 12                 # files a slice page may declare [provisional: the next HITL measures it]
@@ -59,14 +62,16 @@ def text(task: str) -> str:
         "until the owner has seen the slice you may write only those files, and a write to any other page file is "
         f"refused. Serve it with `lapis-design preview start --task {task}` (a server that outlives this turn, so the "
         "owner's link is not dead when they open it) and capture it at 390 and "
-        f"1440, at most {MAX_HEIGHT:,} px tall at 1440. Run the critic on `lapis-design "
+        f"1440, at most {MAX_HEIGHT:,} px tall at 1440 (content: the empty scroll runway of a pinned scene, which "
+        "`lapis-design render motion` measures, is dwell and does not count). Run the critic on `lapis-design "
         f"critic packet`. Run `lapis-design draft check --task {task}`, which writes the owner block to "
         f".lapis/owner/{task}.md, with the capture files the owner can open without a server. Then ask for approval in "
         f".lapis/questions/{task}.md, whose first line is `lapis-questions: approval`, linking the page and pasting "
         f"the owner block unchanged, and stop, within {MINUTES} minutes or {WRITES} page writes: past either, every page "
         "write is refused until that question exists. Copy is provisional until the owner has seen it rendered. The "
         "block lists the open core findings and the decisions the owner did not make: put each core finding to them as "
-        "a decision. When the owner approves, record `approval: {state: approved}` in "
+        "a decision. Anything you delegate to build the slice carries the rules of `shared/review/worker-rules.md` "
+        "(`lapis-design worker check` reads a worker's transcript against them). When the owner approves, record `approval: {state: approved}` in "
         f"the plan and their acknowledgment of the gaps in the answers file, and run `lapis-design next --task {task}` "
         "again: it seals the slice. When they ask for changes, `next` names the next round.")
 
@@ -157,25 +162,29 @@ def _json(path: Path) -> Any:
         return None
 
 
-def height(root: Path, page: Mapping[str, Any]) -> int | None:
-    """The document height at 1440: the largest `rect.y + rect.h` among the boxes of the page's extracts."""
+def height(root: Path, task: str, page: Mapping[str, Any]) -> int | None:
+    """The document height at 1440 in px of content: the largest `rect.y + rect.h` among the boxes of the page's extracts,
+    less the empty scroll runway of its pinned scenes (`render motion` measures it, for the build the extract captured). A
+    scene that holds the screen for a long scroll is dwell, not length, so it does not count against `MAX_HEIGHT`."""
     review = page.get("review") if isinstance(page.get("review"), dict) else {}
-    bottoms = []
+    bottoms, build = [], None
     for name in review.get("extracts") or ():
-        for view in (_json(root / name) or {}).get("viewports") or ():
+        extract = _json(root / name) or {}
+        build = build or (extract.get("source") or {}).get("document_sha256")
+        for view in extract.get("viewports") or ():
             if isinstance(view, dict) and view.get("width") == 1440:
                 for box in view.get("boxes") or ():
                     rect = box.get("rect") if isinstance(box, dict) else None
                     if isinstance(rect, dict) and all(isinstance(rect.get(k), (int, float)) for k in ("y", "h")):
                         bottoms.append(rect["y"] + rect["h"])
-    return round(max(bottoms)) if bottoms else None
+    return max(round(max(bottoms)) - motion.runway(root, task, build), 0) if bottoms else None
 
 
 def tall(root: Path, task: str, shown: list[str]) -> str | None:
     """What `slice` says when a shown `direction: new` page is taller than `MAX_HEIGHT` px at 1440, else None: the slice is
     the first view and the one section the brief puts first, not the page."""
     for page in pages(root, task):
-        found = height(root, page) if page["url"] in shown and page.get("direction") == "new" else None
+        found = height(root, task, page) if page["url"] in shown and page.get("direction") == "new" else None
         if found is not None and found > MAX_HEIGHT:
             return (f"The page {page['url']} is {found:,} px tall at 1440, and a slice is at most {MAX_HEIGHT:,}: cut it to "
                     "the first view and the one section the brief puts first, capture it again, review it, and ask again. "
@@ -209,17 +218,73 @@ def clock_start(root: Path, task: str) -> datetime | None:
 
 
 def overdue(root: Path, task: str) -> str | None:
-    """Why the slice is overdue (`MINUTES` minutes or `WRITES` page writes since the clock started), or None."""
+    """Why the slice is overdue, or None. The two budgets are independent triggers, each its own: more than `MINUTES`
+    minutes of elapsed time since the clock started, and `WRITES` page writes since then. Either one is enough; when both
+    have fired the message names both."""
     start = clock_start(root, task)
     if start is None:
         return None
     minutes = (now() - start).total_seconds() / 60
     writes = order.slice_writes(root, task, _stamp(start))
-    if minutes > MINUTES:
-        return f"{int(minutes)} minutes since {_stamp(start)}"
+    found = []
     if writes >= WRITES:
-        return f"{writes} page writes since {_stamp(start)}"
-    return None
+        found.append(f"{writes} page writes since {_stamp(start)}")
+    if minutes > MINUTES:
+        found.append(f"{int(minutes)} minutes since {_stamp(start)}")
+    return " and ".join(found) or None
+
+
+def budget_fired(root: Path, task: str, env: Mapping[str, str] = os.environ) -> str | None:
+    """Why the slice budget has fired (`overdue`) while a slice is owed, whether or not the owner already has the question,
+    else None. A fired budget is what lets the owner see the slice before its review is current."""
+    from lapis_design.plan_check import read_plan
+
+    try:
+        plan = read_plan(root / ".lapis" / "plans" / f"{task}.yaml")
+    except (OSError, ValueError, yaml.YAMLError):
+        return None
+    return overdue(root, task) if owed(root, task, plan, env) else None
+
+
+def unreviewed(root: Path, task: str, env: Mapping[str, str] = os.environ) -> tuple[str, list[str]] | None:
+    """`(why the budget fired, the problems of the draft check)` when the budget has fired and the draft's review is not
+    current, else None. The owner block lists these, so the owner sees the slice with its defects disclosed."""
+    if (why := budget_fired(root, task, env)) is None:
+        return None
+    errors, _ = draft.check(root, task, asked=draft.links(root, task))
+    return (why, errors) if errors else None
+
+
+def _trigger_at(root: Path, task: str, start: datetime, asked: datetime) -> tuple[str | None, datetime | None]:
+    """Which budget fired first by `asked`, and when: the elapsed-time one at `start + MINUTES`, the write one when the
+    `WRITES`th page write went through. `(None, None)` when neither had fired by then."""
+    fired = []
+    if asked > start + timedelta(minutes=MINUTES):
+        fired.append(("minutes", start + timedelta(minutes=MINUTES)))
+    if (reached := _parse(order.slice_writes_reached(root, task, _stamp(start)))) is not None and reached <= asked:
+        fired.append(("writes", reached))
+    return min(fired, key=lambda item: item[1], default=(None, None))
+
+
+def observe_question(root: Path, task: str, found: Mapping[str, Any]) -> None:
+    """Record once, in `state.slice_questions`, how long the owner waited for the slice question `found`: the budget that
+    fired first, when, when the question was asked (the questions file's time), and the seconds between. Without a fired
+    budget the latency is 0. A state that cannot be written is left as it was."""
+    state = integrity.read_state(root, task) or {}
+    seen = dict(state.get("slice_questions") or {})
+    start = clock_start(root, task)
+    entry = next((e for e in asks.load(root, task)["sets"] if e["set"] == found["id"]), None)
+    asked = _parse((entry or {}).get("asked"))
+    if found["id"] in seen or start is None or asked is None:
+        return
+    trigger, at = _trigger_at(root, task, start, asked)
+    seen[found["id"]] = {"round": state.get("slice_rounds") or 1, "trigger": trigger,
+                         "trigger_at": _stamp(at) if at else None, "asked_at": _stamp(asked),
+                         "latency_s": round((asked - at).total_seconds()) if at else 0}
+    try:
+        integrity.mark_slice(root, task, slice_questions=seen)
+    except Exception:
+        pass
 
 
 def waiting_for_owner(root: Path, task: str) -> bool:
@@ -270,7 +335,7 @@ def _round(root: Path, task: str, answered: Mapping[str, Any], page: Mapping[str
     if state.get("slice_set") == answered["id"]:
         return rounds
     heights = dict(state.get("slice_heights") or {})
-    if (seen := height(root, page)) is not None:
+    if (seen := height(root, task, page)) is not None:
         heights[str(rounds)] = seen
     rounds += 1
     try:
@@ -302,7 +367,8 @@ def check(root: Path, task: str, plan: Any, env: Mapping[str, str] = os.environ)
         late = None if waiting_for_owner(root, task) else overdue(root, task)
         return (f"The slice is overdue ({late}): every page write is refused until the owner has the question. Ask now "
                 "with what is built, as the questions file of kind `approval` that links the page and pastes the owner "
-                "block, and stop. " if late else "") + text(task)       # nothing was asked yet, or the owner has not answered
+                "block, and stop. A review that is not current does not stop you: `lapis-design draft check` writes the block "
+                "anyway and the block discloses what is not current. " if late else "") + text(task)       # nothing was asked yet, or the owner has not answered
     shown = draft.links(root, task)
     if not shown:
         return ("The owner answered, but the questions link no rendered page, so no slice was shown. " + text(task))
@@ -337,7 +403,7 @@ def check(root: Path, task: str, plan: Any, env: Mapping[str, str] = os.environ)
                 f"{len(undecided)} core finding{'s' if len(undecided) != 1 else ''} open ({shown_ids}). A fresh critic report "
                 "that no longer lists one closes it; otherwise it is the owner's decision. Put it to them, and record their "
                 "answer as `- [declared] Ask finding-vs-decision: <rule id> — <their words>`, then run `next`.")
-    seen = height(root, chosen)
+    seen = height(root, task, chosen)
     if seen is not None:
         state = integrity.read_state(root, task) or {}
         try:

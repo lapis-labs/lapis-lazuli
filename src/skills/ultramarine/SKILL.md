@@ -56,6 +56,8 @@ claims until the actual integrated local surface is exercised and ordinary evide
 - When something can only be checked by crossing these limits, report it as not checked.
 - Never stop a process by pattern (`pkill`, `killall`, or a `pgrep` piped to `kill`): other work shares the machine.
   Stop only a process id a command recorded, such as the one in `.lapis/logs/<task>.<step>.pid`.
+- Every agent you delegate to (a rough worker, a critic, a builder) carries these two rules and the dispute rule: put the lines of
+  `shared/review/worker-rules.md` into its task verbatim. `lapis-design worker check` reads a subagent transcript against them.
 
 ## Modes
 

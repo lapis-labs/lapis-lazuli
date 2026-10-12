@@ -29,7 +29,8 @@ from urllib.parse import unquote, urlsplit
 
 import yaml
 
-from lapis_design import attempts, brief, critic_packet, direction, diverge, draft, gaps, gate, integrity, requirements, slice_step
+from lapis_design import (attempts, brief, critic_packet, direction, diverge, draft, gaps, gate, integrity, requirements,
+                          slice_step, workers)
 
 MARKER = "lapis-owner-block"
 LIST_MAX = 15
@@ -247,6 +248,7 @@ def _integrity(root: Path, task: str, sources: list[tuple[str, str]], error: str
     if order.tampered(root, task):
         out.append("- the order record `.lapis/order/" + task + ".json` was edited outside lapis-design: its page-write "
                    "counts are not trusted")
+    out += workers.lines(root, task)
     out.append(f"- {len(protected)} protected changes observed, {len(flagged)} listed here, {len(since)} since the slice.")
     out += lines
     if since:
@@ -355,7 +357,7 @@ def _shown(root: Path, task: str) -> list[str]:
     pages = _pages(root, task)
     for page in pages:
         widths = ", ".join(str(w) for w in page.get("widths") or ()) or "unknown widths"
-        height = slice_step.height(root, page)
+        height = slice_step.height(root, task, page)
         tall = f"{height:,} px" if height is not None else "not measured"
         out.append(f"- {page['url']} at {widths}; document height at 1440: {tall}")
         if captures := _captures(root, page):
@@ -374,6 +376,20 @@ def _shown(root: Path, task: str) -> list[str]:
     if said := slice_step.skipped(root, task):
         out.append(f"- Slice skipped by you: {_cut(said, 200)}")
     return out
+
+
+def _unreviewed(root: Path, task: str) -> list[str]:
+    """The slice shown before its review was current, because its budget ran out: why, and what the draft check says is
+    not current. No section while the review is current or the budget has not fired."""
+    found = slice_step.unreviewed(root, task)
+    if found is None:
+        return []
+    why, errors = found
+    return ["## Not fully reviewed",
+            f"- The slice budget ran out ({why}), so you see the slice before its review is current; nothing here is "
+            "approved by being shown.",
+            *[f"  - {_cut(error, 300)}" for error in errors[:5]],
+            *([f"  - and {len(errors) - 5} more"] if len(errors) > 5 else [])]
 
 
 def _roughs(root: Path, task: str) -> list[str]:
@@ -425,6 +441,7 @@ def _build(root: Path, task: str, result: Mapping[str, Any] | None) -> tuple[str
     sections = [
         [f"# Owner block: {task}"],
         _outcome(root, task, record, sources, decisions),
+        _unreviewed(root, task),
         _decisions(root, task, decisions, record),
         _gaps(found, done),
         _core_open(root, task),

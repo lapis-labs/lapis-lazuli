@@ -38,7 +38,7 @@ plugins:
     prefix: lps-
     description: Design direction, plans, and named defaults for new UI and redesigns
     skills: [lapis, lps-brief, lps-ux, lps-copy, lps-system]
-    hooks: [exit-plan, stop, pre-write]
+    hooks: [exit-plan, stop, pre-write, subagent-stop]
   - name: ultramarine
     prefix: ulm-
     description: Render checks, slop and rights review, and a separate critic
@@ -101,7 +101,8 @@ harnesses:
     session_start: { via: plugin-hook, output: plugin-hooks, event: "SessionStart startup|resume|clear|compact|fork", note: "prints nothing outside a lapis project (a `.lapis` folder at or above the working directory, within the git root); inside one it prints font inventory counts only, framed as data, with no family name or other string from a font file" }
     critic: { via: plugin-agent, output: claude-agents, note: "invoked as ultramarine:critic; the plan check runs from a hook inline in the lapis manifest" }
     exit_gate: { via: plugin-hook, output: plugin-hooks, event: Stop, note: "`lapis-design-hook --plugin-version <version> stop` continues the agent with the next step only when LAPIS_UNATTENDED=1 and says so in one line otherwise; at most 3 continues in a row for one step and 15 in a session; version skew skips the gate" }
-    pre_write: { via: plugin-hook, output: plugin-hooks, event: "PreToolUse Write|Edit|MultiEdit", note: "`lapis-design-hook --plugin-version <version> pre-write` refuses a page source file's write with `permissionDecision: deny` only when LAPIS_UNATTENDED=1 and the brief, references, or plan of a create run is still owed, and in every session refuses a write to .lapis/requirements/, .lapis/state/, .lapis/changes/, or .lapis/owner/ (records only lapis-design writes); other writes under .lapis/ and to other files pass, a person's session gets one `systemMessage`; a refusal of page code repeats at most 3 times for one step; version skew skips the guard" }
+    pre_write: { via: plugin-hook, output: plugin-hooks, event: "PreToolUse Write|Edit|MultiEdit|Bash", note: "`lapis-design-hook --plugin-version <version> pre-write` also receives `Bash` calls and refuses a shell command that stops a process by pattern (`pkill`, `killall`, a process finder piped into `kill`) in a project that has a plan, in subagents too (hooks fire in subagents with `agent_id`; not exercised here); it refuses a page source file's write with `permissionDecision: deny` only when LAPIS_UNATTENDED=1 and the brief, references, or plan of a create run is still owed, and in every session refuses a write to .lapis/requirements/, .lapis/state/, .lapis/changes/, or .lapis/owner/ (records only lapis-design writes); other writes under .lapis/ and to other files pass, a person's session gets one `systemMessage`; a refusal of page code repeats at most 3 times for one step; version skew skips the guard" }
+    subagent_stop: { via: plugin-hook, output: plugin-hooks, event: SubagentStop, note: "`lapis-design-hook --plugin-version <version> subagent-stop`, inline in the lapis Claude Code manifest, reads the subagent's own transcript (`agent_transcript_path`, per the Claude Code hooks reference) and records a kill by pattern or a tool call that touched the source of a check in `.lapis/state/<task>.workers.json`; it never blocks; no other harness gives the CLI a subagent transcript" }
     mcp: { via: plugin-mcp, output: plugin-mcp, note: "server plugin:lazuli:lapis-lazuli; the command is the CLI on PATH" }
     conflicts:
       - "Oh-My-Pi can load plugins from Claude Code's install registry; with both installed, skills load twice and dedupe by name"

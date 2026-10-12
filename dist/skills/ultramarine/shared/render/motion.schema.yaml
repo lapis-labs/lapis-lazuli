@@ -1,0 +1,79 @@
+# Motion evidence of a rendered page — v1; written by `lapis-design render motion`, never by hand.
+# Location: .lapis/renders/<task>.motion.json, with the files it names under .lapis/renders/<task>.motion/.
+# A still capture hides what a moving page does: a pinned scene is one frame in screens of empty scroll. For each locale
+# shown and each width (390 and 1440) this records a scripted-scroll playback (.webm, a fixed `px_per_s`), settled-state
+# screenshots at representative scroll positions, the same with prefers-reduced-motion, the pinned scenes measured as the
+# content they hold and the empty scroll runway around it, and the build's identity (`document_sha256`: the main document
+# as served, which `render check` records as `source.document_sha256`). `critic packet` reads it; `slice` counts a page's
+# height without the runway.
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/motion.v1.json
+title: LapisLazuli motion evidence
+type: object
+additionalProperties: false
+required: [version, task, source, meta, locales]
+properties:
+  version: {const: 1}
+  task: {type: string, minLength: 1}
+  source:
+    type: object
+    additionalProperties: false
+    required: [url]
+    properties:
+      url: {type: string, pattern: "^[^?#]*$"}
+  meta:
+    type: object
+    additionalProperties: false
+    required: [generated_at, px_per_s]
+    properties:
+      generated_at: {type: string}
+      px_per_s: {type: integer, minimum: 1}           # the speed of the scripted scroll; a scene's dwell is its runway over it
+  locales:
+    type: array
+    minItems: 1
+    items:
+      type: object
+      additionalProperties: false
+      required: [lang, widths]
+      properties:
+        lang: {type: string, minLength: 2}            # the locale this entry shows (BCP 47), or `und`
+        widths:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            additionalProperties: false
+            required: [width, document_sha256, scroll_height, scenes, recordings]
+            properties:
+              width: {enum: [390, 1440]}
+              document_sha256: {type: string, pattern: "^[0-9a-f]{64}$"}
+              scroll_height: {type: integer, minimum: 0}
+              scenes:                                  # pinned scenes: a sticky element or a pin-spacer child in a much taller container
+                type: array
+                items:
+                  type: object
+                  additionalProperties: false
+                  required: [id, selector, top, content_px, runway_px, text, viewports]
+                  properties:
+                    id: {type: string, pattern: "^S[1-9][0-9]*$"}
+                    selector: {type: string}
+                    top: {type: integer, minimum: 0}
+                    content_px: {type: integer, minimum: 0}   # what the scene holds on screen
+                    runway_px: {type: integer, minimum: 0}    # the empty scroll around it
+                    text: {type: string}
+                    viewports: {type: number, minimum: 0}     # the container's height in viewports
+              recordings:
+                type: array
+                minItems: 1
+                items:
+                  type: object
+                  additionalProperties: false
+                  required: [kind, width, path, sha256]
+                  properties:
+                    kind: {enum: [playback, settled, reduced]}
+                    width: {enum: [390, 1440]}
+                    path: {type: string, minLength: 1}
+                    sha256: {type: string, pattern: "^[0-9a-f]{64}$"}
+                    scroll_y: {type: integer, minimum: 0}     # stills: where the page was scrolled to
+                    seconds: {type: number, minimum: 0}       # playback: its length
+                    px_per_s: {type: integer, minimum: 0}     # playback: the speed it actually scrolled at

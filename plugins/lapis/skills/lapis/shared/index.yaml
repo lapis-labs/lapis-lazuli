@@ -19,6 +19,10 @@ items:
   path: review/disputes.schema.yaml
   summary: 'Disputes: findings the maker believes are wrong, filed for a fresh critic to re-judge; written
     by the maker.'
+- id: worker-rules
+  view: full
+  path: review/worker-rules.md
+  summary: Rules every delegated task carries
 - id: handoff-protocol
   view: full
   path: handoff/HANDOFF.md
@@ -99,6 +103,10 @@ items:
   view: full
   path: diverge/card.schema.yaml
   summary: LapisLazuli diverge card schema — v0
+- id: diverge-brief
+  view: full
+  path: diverge/brief.schema.yaml
+  summary: LapisLazuli diverge brief schema — v0
 - id: gaps-record
   view: full
   path: gaps/schema.yaml

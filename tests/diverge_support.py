@@ -79,6 +79,22 @@ def write_render(root: Path, task: str, candidate: str, stance: str, number: int
         os.utime(file, (later, later))
 
 
+def brief_for(root: Path, task: str, **changes) -> dict:
+    """The shared rough brief: every core object may open the page, and each has the scene it plays later."""
+    rows = [{"id": item["id"], "first_view": "allowed", "later": f"{item['label']} comes back in its own scene below"}
+            for item in direction.items(root, task, {"LAPIS_UNATTENDED": "1"}) if item["kind"] == "O"]
+    found = {"version": 0, "opening": {"job": "say who the kiln is, show the one decisive object, and offer the booking",
+                                       "carries": ["identity", "decisive-object", "primary-action"]},
+             "objects": rows, "resolved": []}
+    return {**found, **changes}
+
+
+def write_brief(root: Path, task: str, **changes) -> None:
+    path = diverge.brief_path(root, task)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(yaml.safe_dump(brief_for(root, task, **changes), sort_keys=False), encoding="utf-8")
+
+
 def card_for(root: Path, task: str, candidate: str, **changes) -> dict:
     """A card that agrees with the draws of `candidate` and with the owner's answers about each core object."""
     standing = diverge.effective(diverge.draw_records(root, task))[candidate]
@@ -93,13 +109,15 @@ def card_for(root: Path, task: str, candidate: str, **changes) -> dict:
             option = item["choice"][0]
             family = next(o["family"] for o in item["options"] if o["id"] == option)
         objects.append({"id": item["id"], **({"option": option} if option else {}), "family": family,
-                        "medium": "css-drawing", "first_view_share": 0.3,
-                        "representation": f"{item['label']} shown as {family}, with a control to try it"})
+                        "medium": "css-drawing", "first_view_share": 0.3 if not objects else 0,
+                        "representation": f"{item['label']} shown as {family}, with a control to try it",
+                        "later": f"{item['label']} comes back in its own scene below the first view"})
     _, oklch, area = STANCES[standing["color"]["item"]]
     color = [{"name": "field", "role": "field", "oklch": oklch, "area": area},
              {"name": "identity", "role": "identity", "oklch": SIGNAL[1], "area": SIGNAL[2]}]
     found = {"version": 0, "id": candidate, "direction": standing["direction"]["item"],
-             "draws": sorted((r["id"] for r in standing.values()), key=lambda d: int(d[1:])), "objects": objects,
+             "draws": sorted((r["id"] for r in standing.values()), key=lambda d: int(d[1:])),
+             "hierarchy": standing["hierarchy"]["item"], "objects": objects,
              "color": color, "signature": [], "made_in": "subagent"}
     return {**found, **changes}
 
@@ -114,6 +132,8 @@ def write_rough(root: Path, task: str, candidate: str, number: int | None = None
     number = int(candidate[1:]) if number is None else number
     folder = root / ".lapis" / "diverge" / task / candidate
     folder.mkdir(parents=True, exist_ok=True)
+    if not diverge.brief_path(root, task).is_file():
+        write_brief(root, task)
     (folder / "index.html").write_text(rough_html(number), encoding="utf-8")
     found = card_for(root, task, candidate, **changes)
     (folder / "card.yaml").write_text(yaml.safe_dump(found, sort_keys=False), encoding="utf-8")

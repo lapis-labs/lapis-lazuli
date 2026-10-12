@@ -7,6 +7,7 @@ Unboxed ancestors are skipped when assigning each box's nearest box parent.
 """
 from __future__ import annotations
 
+import hashlib
 import re
 import time
 from collections import Counter
@@ -383,7 +384,7 @@ class _Network:
 
 def capture(browser: Browser, url: str, config: dict, screenshot_path: Path, key: bytes, *,
             plan_signature: str | None = None, phone_task: dict | None = None,
-            check_document: Callable[[Page], None] | None = None) -> dict:
+            check_document: Callable[[Page], None] | None = None, identity: dict | None = None) -> dict:
     """Navigate once, settle and scroll, then capture a viewport while page/CDP remain live.
 
     `plan_signature` is the plan's `layout.signature`, used only as the unverified text fallback
@@ -402,7 +403,9 @@ def capture(browser: Browser, url: str, config: dict, screenshot_path: Path, key
         cdp = context.new_cdp_session(page)
         cdp.send("DOM.enable")
         cdp.send("CSS.enable")
-        page.goto(url, wait_until="networkidle")
+        response = page.goto(url, wait_until="networkidle")
+        if identity is not None and response is not None:      # the build: the main document as served
+            identity.setdefault("document_sha256", hashlib.sha256(response.body()).hexdigest())
         cdp.send("DOM.getDocument", {"depth": -1})
         view = RawView(config, page, cdp, {}, screenshot_path)
         page.wait_for_timeout(1000)

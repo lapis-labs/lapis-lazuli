@@ -21,8 +21,13 @@ HOOKS = {
     # as `apply_patch`, which its matchers also accept as Edit or Write. Both read the matcher as an alternation, and
     # a tool the hook has no page file for (an MCP tool that happens to match) gets no answer. The hook reads the
     # plan and the records, as the gate does, so it has a timeout of its own
-    "pre-write": {"event": "PreToolUse", "matcher": "Write|Edit|MultiEdit|apply_patch", "timeout": 30,
+    # (`Bash` joins the matcher: the same hook refuses a shell command that stops a process by pattern, in the main session
+    # and in subagents; a harness whose matcher has no such tool simply never sends it)
+    "pre-write": {"event": "PreToolUse", "matcher": "Write|Edit|MultiEdit|apply_patch|Bash", "timeout": 30,
                   "file": "shared"},
+    # SubagentStop has no Codex counterpart, so like `exit-plan` it is inline in the Claude Code manifest. It reads the
+    # subagent's own transcript, so the CLI can record a rule broken in delegated work
+    "subagent-stop": {"event": "SubagentStop", "matcher": None, "timeout": 30, "file": "claude"},
 }
 # The extension each hook has under pi and Oh-My-Pi, which have no hooks.json; the file is under the plugin's
 # extensions/ folder and its source is named by the output that emits it (install/harnesses.yaml). The exit-gate

@@ -70,6 +70,18 @@ $defs:
       slice_since: { $ref: "#/$defs/time" }           # when `next` first named `slice`, or when the owner's last reply asked for a revision: the start of the clock
       slice_rounds: { type: integer, minimum: 1 }     # slice rounds so far: 1 for the first showing, +1 for each reply that asked for a revision
       slice_set: { type: string }                     # the id of the answered questions set the last round was counted for
+      slice_questions:                                # per slice question set (its id): which budget fired first and how long the owner waited
+        type: object
+        additionalProperties:
+          type: object
+          additionalProperties: false
+          required: [round, trigger, trigger_at, asked_at, latency_s]
+          properties:
+            round: { type: integer, minimum: 1 }
+            trigger: { enum: [writes, minutes, null] }   # the page-write budget or the elapsed-time budget, whichever fired first by the time of the question; null when neither had
+            trigger_at: { oneOf: [{ $ref: "#/$defs/time" }, { type: "null" }] }
+            asked_at: { $ref: "#/$defs/time" }           # the time of the questions file
+            latency_s: { type: integer, minimum: 0 }     # seconds from the trigger to the question
       slice_heights:                                  # document height at 1440 of the page each round showed, by round number
         type: object
         additionalProperties: { type: integer, minimum: 0 }

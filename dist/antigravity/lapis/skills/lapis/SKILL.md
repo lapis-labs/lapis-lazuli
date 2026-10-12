@@ -130,8 +130,10 @@ A small edit inside an established system needs no plan. Say so and make the edi
    With nobody to ask, record `[assumed]` answers with their basis.
 7. Then make the rough first views (`references/diverge.md`): `next` names `diverge` until
    `lapis-design diverge start`, the roughs and their cards, `check`, and `seal` are done. The CLI draws each rough's
-   reference direction, core-object representation, and color allocation, so you cannot pick them; the owner picks one at
-   the second turn of the direction conversation, and the plan starts from that pick.
+   reference direction, core-object representation, color allocation, and hierarchy (what the first view carries against
+   later scenes), so you cannot pick them. Write one shared brief (`brief.yaml`) that settles the contradictions in the
+   instructions before the roughs are made; the owner picks one rough at the second turn of the direction conversation,
+   and the plan starts from that pick.
 
 For supplied design sources or a role transfer, read `shared/handoff/HANDOFF.md` → **Intake and authority**
 and **Projection annotations** before reconciling them; read **Export** and **Return and freshness** when
@@ -446,7 +448,7 @@ slice is one page, built from the pick the owner made at the direction turns.
    files) in `.lapis/drafts/<task>.yaml`. From the first time `next` names `slice` until the slice is sealed you may
    write only those files; any other page file is refused, and so is every page file when no page is declared.
 2. Build the first view and the one section the brief puts first, not the whole page, and capture both at 390 and
-   1440, at most 3,600 px tall at 1440 (a taller page comes back as `slice`). Serve the folder with
+   1440, at most 3,600 px of content at 1440, pinned scenes' empty scroll runway not counted (a taller page comes back as `slice`). Serve the folder with
    `lapis-design preview start --task <task>` and capture that address.
 3. Run the critic on `lapis-design critic packet` and `lapis-design draft check` (`ultramarine`'s
    `pre-show-review.md`). Open core findings no longer block the question: they go to the owner as decisions.
@@ -454,6 +456,10 @@ slice is one page, built from the pick the owner made at the direction turns.
    `.lapis/questions/<task>.md`, first line `lapis-questions: approval`, link the page, paste the owner block, put each
    open core finding to the owner as a decision, and say that copy is provisional until it has been seen rendered. Past
    either limit every page write is refused until that question exists; it is never refused to write under `.lapis/`.
+   The two limits are separate triggers (minutes, page writes); `state.slice_questions` records which fired first and
+   how long the question took. Once one has fired, do not finish the review first: `lapis-design draft check` writes a
+   minimal owner block even when the review is not current, the block's `## Not fully reviewed` section discloses what is
+   not, and `next` lets that question wait. The owner sees the slice with its defects named; the seal still needs the review.
 5. Record the owner's reply in `.lapis/answers/<task>.md` under its own heading, in their words. A plain approval is an
    untagged item (`- Approved the slice: <their words>`); feedback that changes what the owner wants is `[declared]`;
    their acknowledgment of the gaps is `- Gaps seen (lapis-owner-block <sha8>): "<their words>"`; their decision on an
@@ -540,6 +546,15 @@ both. A dispute does not clear the finding.
 
 Never stop a process by pattern (`pkill`, `killall`, or a `pgrep` piped to `kill`): other work shares the machine. Stop
 only a process id a command recorded, such as the one in `.lapis/logs/<task>.behavior.pid`.
+
+These two rules bind every agent you delegate to, not only you: a rough worker, a critic, and a builder start blank and
+have not read this skill. Put the lines of `shared/review/worker-rules.md` (**The rules**) into each delegated task
+verbatim; `lapis-design diverge` and `lapis-design critic packet` print them where they name a delegation. The CLI checks
+what it can: the pre-write hook refuses a shell command that kills by pattern, and for a subagent whose transcript it can
+read (`SubagentStop` in Claude Code, or a file you give `lapis-design worker check --task <task> --transcript <file>`) it
+records a kill by pattern and any tool call that touched a check's source, and the owner block lists them. It cannot see a
+harness that gives it no transcript, a read in the main session, or a kill hidden in a script; there the rule rests on the
+text above and on the critic's question to you, which you answer straight.
 
 All widths, all probes, the rights check, and fresh license lookups belong to the release gate
 (`ulm-release`), not to each iteration.

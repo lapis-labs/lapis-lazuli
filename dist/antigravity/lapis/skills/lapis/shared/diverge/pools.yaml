@@ -88,6 +88,17 @@ color_allocation:
   - { id: material-field, text: "the field is the subject's material (paper, glass, clay, metal) with its own texture of tone" }
   - { id: high-key-one-signal, text: "a pale field with one small vivid signal; today's default, so at most one candidate takes it" }
 
+# `hierarchy`: what the first view carries and what the later scenes carry. The page is a whole experience, the first
+# view is its opening: it states who and what (identity, the claim), shows the one decisive object, and holds the primary
+# action. It is not required to carry every core object; an object may own none of the first view (`first_view_share: 0`)
+# and play its part in a later scene. `opening_objects` is the most core objects a candidate with that stance may show in
+# the first view (share above 0); `diverge check` counts them on the card.
+hierarchy:
+  - { id: one-decisive-object, opening_objects: 1, text: "the opening holds the claim, the primary action, and the one object that decides the page; every other object plays its part in a later scene" }
+  - { id: object-led, opening_objects: 1, text: "one object owns most of the opening and the claim is a single line beside it; the rest of the page unfolds after it" }
+  - { id: claim-led, opening_objects: 1, text: "the claim and the action are the opening; the decisive object is only begun there, cropped at the fold, and finishes in the next scene" }
+  - { id: relation-pair, opening_objects: 2, text: "two objects in relation open the page next to the claim; every other object comes in a later scene" }
+
 distance:
   calibrated: true
   weights: { struct: 0.55, mass: 0.20, repr: 0.25 }

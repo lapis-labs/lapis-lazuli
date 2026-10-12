@@ -37,6 +37,14 @@ pre-write    PreToolUse on the file-edit tools in the lapis plugin's hooks/hooks
              `lapis-design` writes) is refused the same way, with no cap: it stops the agent's tool, not a person.
              On any failure of ours it prints nothing.
 
+             The same hook also receives `Bash` calls (`tool_name` Bash): a command that stops a process by pattern
+             (`pkill`, `killall`, a process finder piped into `kill`) is refused in a project that has a plan, in the
+             main session and in subagents (workers.py).
+subagent-stop  SubagentStop in the lapis plugin's Claude Code manifest. Reads the subagent's own transcript
+             (`agent_transcript_path`), records a kill by pattern or a tool call that touched the source of a check
+             (`lapis_design/lint`, `render`, `behavior_check`) in `.lapis/state/<task>.workers.json`, and prints one
+             `systemMessage` line; the owner block lists it. It never blocks (workers.py).
+
 Antigravity does not run these commands: its hooks.json calls `lapis-design antigravity-hook` (antigravity.py), which wraps
 the same bodies and prints only the answers Antigravity reads.
 """
@@ -183,11 +191,31 @@ def pre_write(stdin: TextIO, stdout: TextIO) -> int:
     except ValueError:
         event = {}
     try:
-        from lapis_design import order
+        from lapis_design import order, workers
 
-        out = order.decide(event if isinstance(event, dict) else {})
+        event = event if isinstance(event, dict) else {}
+        # a shell call is judged by the delegated-work rules (no kill by pattern); every other tool is a file edit
+        out = (workers.pre_bash(event) if str(event.get("tool_name")).lower() in ("bash", "shell", "local_shell")
+               else order.decide(event))
     except Exception as exc:        # a bug of ours never keeps an agent from writing
         print(f"lapis-design hook pre-write: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 0
+    if out:
+        print(json.dumps(out, ensure_ascii=False), file=stdout)
+    return 0
+
+
+def subagent_stop(stdin: TextIO, stdout: TextIO) -> int:
+    try:
+        event = json.load(stdin)
+    except ValueError:
+        event = {}
+    try:
+        from lapis_design import workers
+
+        out = workers.subagent_stop(event if isinstance(event, dict) else {})
+    except Exception as exc:        # reading a transcript never holds up a subagent
+        print(f"lapis-design hook subagent-stop: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 0
     if out:
         print(json.dumps(out, ensure_ascii=False), file=stdout)
@@ -199,6 +227,7 @@ HOOKS: dict[str, Callable[[TextIO, TextIO], int]] = {
     "session-start": session_start,
     "stop": stop,
     "pre-write": pre_write,
+    "subagent-stop": subagent_stop,
 }
 
 

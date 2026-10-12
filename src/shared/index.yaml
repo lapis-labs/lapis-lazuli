@@ -41,6 +41,14 @@ items:
       lps-brief: summary
       lps-copy: summary
 
+  - id: worker-rules
+    kind: contract
+    path: review/worker-rules.md
+    note: the rules every delegated task carries (no reading check source, process ids only), what the CLI checks of them, and what it cannot
+    consumers:
+      lapis: full
+      ultramarine: full
+
   - id: handoff-protocol
     kind: contract
     path: handoff/HANDOFF.md
@@ -119,6 +127,14 @@ items:
       lzl-research: full
       lapis: summary
       ulm-maintain: full
+
+  - id: render-motion
+    kind: contract
+    path: render/motion.schema.yaml
+    note: v1; the motion evidence of a rendered page (scripted-scroll playback, settled and reduced-motion captures at 390 and 1440 for each locale, pinned scenes with content and runway, build identity), recorded by `render motion` and read by the critic packet
+    consumers:
+      ultramarine: full
+      ulm-release: summary
 
   - id: behavior-session
     kind: contract
@@ -324,10 +340,17 @@ items:
   - id: diverge-card
     kind: contract
     path: diverge/card.schema.yaml
-    note: v0; the card of one rough first view (reference direction, the draws it spends, core-object representations, color roles with their area, signature elements)
+    note: v0; the card of one rough first view (reference direction, the draws it spends, core-object representations with their later scene, the hierarchy drawn, color roles with their area, signature elements)
     consumers:
       lapis: full
       ultramarine: summary
+
+  - id: diverge-brief
+    kind: contract
+    path: diverge/brief.schema.yaml
+    note: v0; the one shared brief every rough worker receives (the opening's job, each core object's first-view status and later scene, the contradictions the maker resolved once)
+    consumers:
+      lapis: full
 
   - id: gaps-record
     kind: contract

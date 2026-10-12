@@ -77,6 +77,7 @@ def _capture(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
     out = args.out
     screenshots = out.parent / f"{out.stem}.shots"
     guard = None
+    identity: dict = {}
     try:
         url = ours.canonical_start_url(args.url)
         plan = hosts.load_plan(hosts.plan_path(args.plan, args.task))
@@ -100,7 +101,8 @@ def _capture(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
                     if config["browser_chrome"]:
                         filename += "-chrome"
                     shot = screenshots / f"{filename}.png"
-                    vp = capture(guard, url, config, shot, key, plan_signature=signature, phone_task=phone_task)
+                    vp = capture(guard, url, config, shot, key, plan_signature=signature, phone_task=phone_task,
+                                 identity=identity)
                     guard.check()
                     vp["screenshot"] = shot.relative_to(out.parent).as_posix()
                     viewports.append(vp)
@@ -109,6 +111,8 @@ def _capture(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
         document = assemble(url, args.task, viewports, key, dark_theme=dark)
         if pin:
             document["source"]["addresses"] = list(pin.addresses)
+        if identity:
+            document["source"].update(identity)
         if problems := write_extract(document, out):
             for problem in problems:
                 print(f"render extract invalid: {problem}", file=sys.stderr)

@@ -5,13 +5,14 @@ matters, and the owner picks one before the plan exists. `lapis-design next` nam
 
 ## Sections
 
-- Place and who — when the step runs and who makes each rough.
-- What differs and what may not — representation, color allocation, reference direction; never decoration.
-- The commands — `start`, `resample`, `variant`, `check`, `seal`, `show`.
-- The rough and its card — what to make and what the card says.
-- Distances and the contact sheet — facts for the owner, not a score.
-- After the seal — turn two, the plan, and the slice.
-- Unattended — nobody to pick.
+- Place and who: when the step runs and who makes each rough.
+- What differs and what may not: representation, color allocation, hierarchy, reference direction; never decoration.
+- The shared brief: written once before the fan-out; what the first view carries and what comes later.
+- The commands: `start`, `resample`, `variant`, `check`, `seal`, `show`.
+- The rough and its card: what to make and what the card says.
+- Distances and the contact sheet: facts for the owner, not a score.
+- After the seal: turn two, the plan, and the slice.
+- Unattended: nobody to pick.
 
 ## Place and who
 
@@ -26,21 +27,45 @@ ten minutes a rough.
 
 ## What differs and what may not
 
-The roughs differ in three ways: how the open core objects are represented, how color is allocated (which color owns how much
-of the first view), and which reference direction each draws on. They may not differ only in decoration, order, or finish: a
+The roughs differ in how the open core objects are represented, how color is allocated (which color owns how much
+of the first view), what the first view carries against the later scenes (the hierarchy), and which reference direction each
+draws on. They may not differ only in decoration, order, or finish: a
 pair with the same markup structure and almost the same color mass is refused. Keep items the owner kept (`K`) only where they
 carry a job.
 
-A rough is the first view at 1440 and at 390, with the real headline and the core objects on real or clearly synthetic content.
-Keep the decisive medium (a diagram, a control, an image, a motion state) instead of a gray box: a flat rough hides exactly
-what the owner is choosing between.
+A rough is the first view at 1440 and at 390, with the real headline and the core object it opens with on real or clearly
+synthetic content. Keep the decisive medium (a diagram, a control, an image, a motion state) instead of a gray box: a flat
+rough hides exactly what the owner is choosing between.
+
+The first view is the opening of a page that unfolds in scenes, not a summary of every part. Its job is three things: who and
+what (identity, the claim), one decisive object, and the primary action. A core object that is not the decisive one owns none
+of it (`first_view_share: 0`) and plays its part later; the card says which part, in `later`, apart from its share of the
+first view. "Show the core at once" in an owner's answer means the core impression, not every comparison, procedure, and
+install step on one screen; read it that way unless the owner said they want the evidence in the first screen, and then name
+that answer in the brief (`demanded_by`).
+
+## The shared brief
+
+Before any rough worker starts, write `.lapis/diverge/<task>/brief.yaml` once (`../shared/diverge/brief.schema.yaml`) and give
+every worker that file unchanged. It holds the opening's job and what it carries, one row per core object (`first_view`:
+`required`, `allowed`, or `later`, and the scene it plays later), and `resolved`: each contradiction you found among the brief
+record, the direction answers, and your own instructions, with the way the brief settles it. Read those three sources against
+each other first (comparisons "lead the page" and a hero that holds three actions do not mean all of it in one screen). The
+workers do not resolve contradictions; they would resolve them three different ways, or all the same wrong way.
+`diverge check` refuses a missing or invalid brief, one that requires every core object in the first view with no owner answer
+in `demanded_by`, and a card whose first view disagrees with it (an object it puts later that the card shows, one it requires
+that the card leaves out) or carries more objects than its drawn hierarchy allows.
+
+Say where a real, illustrative, or synthetic distinction informs an example once (`labels`), where that example is. Do not
+put the label on every element of the rough: provenance tags repeated down the page become its subject.
 
 ## The commands
 
 `lapis-design diverge start --task <task> [--k 3]` writes the seed (the task's hash and OS entropy) and the draws before any card
 exists. The draws are the CLI's: you cannot choose them. Each candidate gets a reference direction, for each open core object a
 representation family (first from the options the owner left open at turn one, then from the object's kind in
-`../shared/diverge/pools.yaml`), and one color allocation stance. Families and stances are drawn without replacement across
+`../shared/diverge/pools.yaml`), one color allocation stance, and one hierarchy stance (`one-decisive-object`, `object-led`,
+`claim-led`, `relation-pair`: what the opening carries against the later scenes, and how many core objects it may carry). Families and stances are drawn without replacement across
 candidates; the pale default (`high-key-one-signal`) goes to at most one.
 
 `lapis-design diverge resample --task <task> --candidate C2 --slot O1 --reason "<why this draw does not fit the subject>"`
@@ -58,7 +83,7 @@ asked again after the set is sealed again.
 
 Write each rough as `.lapis/diverge/<task>/C<n>/index.html` and its card `.lapis/diverge/<task>/C<n>/card.yaml`
 (`../shared/diverge/card.schema.yaml`). The card names the direction it draws on, the draws it spends, the representation of each
-open core object (the family drawn, the medium, the share of the first view it owns, and what the visitor sees and can do), the
+open core object (the family drawn, the medium, the share of the first view it owns, which may be 0, what the visitor sees and can do, and its role in a later scene), the hierarchy drawn, the
 color roles of the plan's shape with the area each owns (a `field` and an `identity` role need one), and the signature elements
 the rough adds (what each carries, not how it looks). Render each rough narrow:
 

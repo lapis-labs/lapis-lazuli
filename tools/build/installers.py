@@ -58,7 +58,7 @@ VIA_LABELS = {
 }
 VIA_BY_HAND = "instructions only: the skills say what to run by hand"
 MECHANISMS = (("session_start", "Session summary"), ("critic", "Separate critic"), ("exit_gate", "Exit gate"),
-              ("pre_write", "Write guard"), ("mcp", "MCP"))
+              ("pre_write", "Write guard"), ("subagent_stop", "Subagent transcript"), ("mcp", "MCP"))
 SH_VARS = {"plugin": "LL_plugin", "skill": "LL_skill", "agent": "LL_agent", "sha": "LL_sha", "checkout": "LL_checkout"}
 PS_VARS = {"plugin": "$Plugin", "skill": "$Skill", "agent": "$Agent", "sha": "$script:Sha", "checkout": "$script:Checkout"}
 DOC_VARS = {"agent": "<agent>", "sha": "<commit>", "checkout": "<checkout>"}
@@ -760,6 +760,8 @@ class _Gen:
             extra = f" ({', '.join(only)} only)" if len(only) > 1 else ""
             L.append(f"- {FORMAT_LABELS[out['format']]}: `{self.output_path(out)}`{extra}")
         for key, label in MECHANISMS:
+            if key not in h:                    # a mechanism only some harnesses have
+                continue
             m = h[key]
             via = VIA_LABELS[m["via"]] if m.get("output") or m["via"] != "instructions" else VIA_BY_HAND
             text = f"- {label}: {via}"
