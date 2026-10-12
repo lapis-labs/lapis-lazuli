@@ -54,6 +54,19 @@ between minor versions; render extraction is v1 and the other contract formats a
   the roles that stay compact. New review rules `copy.role-collapse`, `copy.headline-budget`, and an unanchored-speaker
   lead; `copy.register-mix` reads the policy instead of one page-wide register. The critic judges wording as
   `review.wording`. `lps-copy` is restructured around each line's job.
+- `lazuli adobe` (`status`, `enable`, `disable`, `search`, `similar`, `details`, `styles`, `preview`, `activate`, `kit`): an
+  opt-in relay to the Adobe Fonts connector of the owner's own Codex. It stays off until the owner runs `lazuli adobe enable`
+  at a terminal. Read commands make one relay call each and keep a cleaned copy of the answer in the user cache (provenance
+  `adobe-connector`), outside the lazuli database. `activate` and `kit` refuse without `--basis`, which must be the owner's
+  words as the brief or requirement record holds them and must name the font (and the kit's domains), and they report from
+  the event stream that exactly that one connector call happened; a stream with another or an extra call is refused.
+  `lzl-fonts` uses `similar` and name searches when the relay is on and hands shortlists to the owner to install.
+- `lazuli owned add|list|remove`: fonts the owner has a right to use but has not installed, by name only. `lazuli search` shows
+  an owned name that matches the query as a candidate that needs activation (no scripts or classes; an installed family on the
+  list says so; a filtered search leaves the names out and says how many), and scores of other candidates do not change. The
+  direction proposal gains the optional `type_roles`: each role is an item `T<n>` asking once whether the owner has fonts for
+  that role that are not installed (no, or yes and the names), answered as a `[declared]` line and judged by the critic as a
+  requirement row.
 - Antigravity CLI (`agy`) is a harness, marked experimental. `dist/antigravity/<plugin>/` holds the three plugins as
   `agy plugin install` reads them: a `plugin.json`, the skills, the lapis plugin's `hooks.json` (the write guard as
   `PreToolUse` on the file-edit tools and the exit gate as `Stop`), the lazuli plugin's `mcp_config.json`, and the

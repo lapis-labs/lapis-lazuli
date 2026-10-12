@@ -4,7 +4,7 @@ task: kiln-shop-landing
 scope: reservation
 role: reviewer
 tool_version: 0.2.0
-plan_sha256: 2034cf5152043322a351a2ded66be2da19562c1474f894901aeae5ed79838395
+plan_sha256: 1b8e4c91bda3085a5c38bf5fc4e38792d9a9ec53ca0447d649992ea1b35f8358
 dependencies:
 - id: reservation-fonts
   path: src/shared/fonts/example.fonts.lock.json
@@ -17,8 +17,8 @@ dependencies:
   revision: synthetic-example
   sha256: 6f1e95062a62d3612f0db6b58c255771a37ac4b1f9d30aa2a05ad611091b336d
 approval_state: approved
-body_sha256: 8cbc0e0bdcfe3fe0b71ed8a164a55ec821036f3c36aca6ea9f113f9ec6730fc7
-handoff_id: 52be94820afc9043110ec83ae91882c79240109b1fe7e6a695da3a5a454b62af
+body_sha256: dac17267880c4c539b64a722f326f72cfb0996389007a6e098491352142529b2
+handoff_id: 8d9a79c9bc95fc8a274e5a7cb9deb440370bb55f65072b6d19cbd72debe7921b
 ```
 # Portable role handoff
 
@@ -173,8 +173,13 @@ Canonical address: /explorations
   candidates:
   - name: one ruled row per piece
     source: firing log sheet
+    images: []
   - name: a photo grid of piece cards
     source: generic
+    images:
+    - source: studio piece photos
+      role: product
+      reason: The actual glaze and silhouette let the buyer compare these pieces
   compared_on:
   - sketch
   chosen: one ruled row per piece
@@ -312,6 +317,7 @@ roles:
   - 0.97
   - 0.01
   - 85
+  area: canvas of every section outside the photographs, about 80% of the first view
 - name: ink
   role: foreground
   oklch:
@@ -332,6 +338,7 @@ roles:
   - 0.01
   - 60
   theme: dark
+  area: canvas of every section in the dark theme, about 80% of the first view
 relations:
 - near-monochrome
 themes:
@@ -379,6 +386,12 @@ radius:
     image: 0
 rule: Square image edges like the firing-log sheets; softer corners only on things
   you press
+media_contours:
+- token: --media-contour-detail
+  value: 0 32px 0 0
+  where: detail figure
+  reason: A single open corner anchors the kiln-position caption; narrow view returns
+    to square edges
 ```
 
 Canonical address: /tokens/surface
@@ -533,6 +546,14 @@ procedure:
   - reservation
   - log
   archetype: list-detail
+phone_task:
+  decision: Inspect a piece from this firing and its availability
+  first_result: '#works .piece:first-child'
+  before_result:
+  - firing identity
+  - piece selection
+  acceptance: The phone's first useful piece record shows glaze, price and availability
+    before optional log detail
 sections:
 - id: firing-log
   archetype: signature
@@ -565,7 +586,8 @@ Canonical address: /content
 ```yaml
 real_copy: true
 voice:
-  notes: The studio speaks to a visitor; the headline names the firing and is not a sentence.
+  notes: The studio speaks to a visitor; the headline names the firing and is not
+    a sentence.
   locales:
     ko:
       prose: haeyo
@@ -727,7 +749,7 @@ version: 0
 task: kiln-shop-landing
 scope: reservation
 role: reviewer
-plan_sha256: 2034cf5152043322a351a2ded66be2da19562c1474f894901aeae5ed79838395
+plan_sha256: 1b8e4c91bda3085a5c38bf5fc4e38792d9a9ec53ca0447d649992ea1b35f8358
 handoff_id: COPY_FROM_OUTBOUND_ENVELOPE
 ```
 
