@@ -124,6 +124,55 @@ def test_a_proposal_with_no_style_and_the_fixture_object_is_valid_and_a_style_le
     assert [i["id"] for i in direction.items(run, TASK, {})] == ["O1"]
 
 
+def test_a_type_role_item_asks_whether_the_owner_has_fonts_they_have_not_installed_and_a_proposal_without_one_stays_valid(run):
+    doc = proposal()
+    doc["type_roles"] = [{"id": "T1", "role": "heading"}, {"id": "T2", "role": "body"}]
+    save(run, f"direction/{TASK}.yaml", doc)
+    assert direction.proposal_problem(run, TASK) is None
+    items = {i["id"]: i for i in direction.items(run, TASK, {})}
+    assert items["T2"]["kind"] == "T" and items["T2"]["default"] == "a" and items["T2"]["state"] == "open"
+    assert items["T2"]["label"] == "body: Are there fonts you own but have not installed that I should consider?"
+    assert [o["id"] for o in items["T2"]["options"]] == ["a", "b"] and "lazuli owned add" in items["T2"]["options"][1]["text"]
+    for change, fragment in [(lambda d: d["type_roles"][1].update(role="heading"), "twice for the role heading"),
+                             (lambda d: d["type_roles"][1].update(id="T1"), "repeats the type-role id T1"),
+                             (lambda d: d["type_roles"][1].update(id="K9"), "id"),
+                             (lambda d: d["type_roles"][1].update(role="Body Text"), "role")]:
+        broken = proposal()
+        broken["type_roles"] = [{"id": "T1", "role": "heading"}, {"id": "T2", "role": "body"}]
+        change(broken)
+        save(run, f"direction/{TASK}.yaml", broken)
+        assert fragment in (direction.proposal_problem(run, TASK) or ""), fragment
+
+
+def test_the_first_turn_is_owed_until_each_type_role_has_an_owner_answer_and_the_question_is_named(run):
+    doc = proposal()
+    doc["type_roles"] = [{"id": "T1", "role": "heading"}, {"id": "T2", "role": "body"}]
+    save(run, f"direction/{TASK}.yaml", doc)
+    settled = ['- [declared] S1 neo-brutalism: a — "show the record"', '- [declared] K1 slabs: keep — "yes"',
+               '- [declared] K2 ticker band: drop — "no ticker"', '- [declared] O1 the log: b — "the fader one"']
+    answer(run, *settled)
+    why = next_step.evaluate(run, TASK)["step"]["why"]
+    assert next_step.evaluate(run, TASK)["step"]["id"] == "owner-direction"
+    assert "T1 heading: Are there fonts you own but have not installed that I should consider?" in why and "T2 body" in why
+    answer(run, *settled, '- [declared] T1 heading: a — "no, just what is installed"')
+    assert states(run)["T1"] == "decided" and states(run)["T2"] == "open" and step_of(run) == "owner-direction"
+    answer(run, *settled, '- [declared] T1 heading: a — "no, just what is installed"',
+           '- [declared] T2 body: b — "yes, I have Qqq Serif in my Adobe library"')
+    assert step_of(run) != "owner-direction"
+    found = {i["id"]: i for i in direction.items(run, TASK, {})}
+    assert (found["T2"]["choice"], found["T2"]["by"]) == (["b"], "owner")
+    answer(run, *settled, '- [declared] T1 heading: c — "x"', '- [declared] T2 body: all — "x"')
+    assert states(run)["T1"] == states(run)["T2"] == "open"                      # no such option
+    answer(run, '- Defaults accepted (direction 1): "no owned fonts, go with your defaults"')
+    assert states(run)["T1"] == "delegated" and {i["default"] for i in direction.items(run, TASK, {}) if i["kind"] == "T"} == {"a"}
+
+
+def test_a_type_role_answer_is_a_requirement_row_the_critic_judges(run):
+    answer(run, '- [declared] T2 body: b — "yes, I have Qqq Serif in my Adobe library"')
+    seal_requirements(run)
+    assert any(r["text"].startswith("T2 body: b") for r in requirements.rows(run, TASK))
+
+
 # ---- 2. the first turn
 
 def test_the_first_turn_is_owed_until_every_style_kit_and_object_item_has_an_owner_answer(run):
