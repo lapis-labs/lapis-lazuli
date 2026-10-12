@@ -23,7 +23,7 @@ import { spawn } from "node:child_process";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 const COMMAND = "lapis-design-hook";
-const VERSION_ARGS = ["--plugin-version", "0.2.0"];
+const VERSION_ARGS = ["--plugin-version", "0.3.0"];
 const STOP_ARGS = [...VERSION_ARGS, "stop"];
 const WRITE_ARGS = [...VERSION_ARGS, "pre-write"];
 const TIMEOUT_MS = 60_000; // the Stop hook's timeout in plugins/lapis/hooks/hooks.json

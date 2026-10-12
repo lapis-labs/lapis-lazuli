@@ -13,7 +13,7 @@ import { spawn } from "node:child_process";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 const COMMAND = "lapis-design-hook";
-const ARGS = ["--plugin-version", "0.2.0", "session-start"];
+const ARGS = ["--plugin-version", "0.3.0", "session-start"];
 const TIMEOUT_MS = 10_000; // the SessionStart hook's timeout in plugins/lazuli/hooks/hooks.json
 
 interface Context {

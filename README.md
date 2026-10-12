@@ -11,7 +11,7 @@ code exists, on a machine without a lazuli font database:
 
 ```console
 $ lapis-design plan check docs/examples/site-booking-en.yaml
-plan_check 0.2.0: 3 blocking, 11 total, 3 skipped: not judged
+plan_check 0.3.0: 3 blocking, 11 total, 3 skipped: not judged
   [BLOCK] plan.uncompared-decision explorations — 7 open decisions with no comparison recorded in explorations: type roles body; palette; layout; motion; direction; copy slots headline, cta
       fix: Record each open decision in explorations - two or more candidates with their sources, what they were compared on, the chosen one, and why the runner-up lost; a palette render also records each candidate's artifact and roles or token_file,…
   [BLOCK] copy.vague-cta content.key_copy[?slot=cta].text — "continue" (vague_cta) in the cta key copy: "Continue"
@@ -222,10 +222,10 @@ and the synthetic scope in [the example plan](src/shared/plan/example.plan.yaml)
 
 ## Status
 
-Early releases: contracts may change between releases. Render extraction is `version: 1`; the other
-contract formats are `version: 0`. See [CHANGELOG.md](CHANGELOG.md) for released and Unreleased changes.
-This README describes the current source snapshot, including Unreleased work; the install commands
-follow `release`, not `main`. Use that release's documentation for its available features.
+Early releases: contracts may change between releases. Render extraction, draft review, and reference
+hints are `version: 1`; the other contract formats are `version: 0`. See [CHANGELOG.md](CHANGELOG.md)
+for release changes. This README describes the current source snapshot; the install commands follow
+`release`, not `main`. Use that release's documentation for its available features.
 `lazuli setup` installs an optional font-style embedding model, and no model is published yet, so it
 exits 1 for now. CI runs the contract tests, the Chromium tests, and the optional CJK tests on
 Linux.

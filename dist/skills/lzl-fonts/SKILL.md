@@ -4,7 +4,7 @@ description: Gives font facts with evidence - the local inventory, catalog label
 license: MIT AND CC-BY-4.0
 metadata:
   plugin: lazuli
-  version: 0.2.0
+  version: 0.3.0
 ---
 
 # lzl-fonts

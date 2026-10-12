@@ -8,7 +8,7 @@ Claude Code, Codex, Oh-My-Pi 같은 하네스로 웹 화면을 만드는 개발�
 
 ```console
 $ lapis-design plan check docs/examples/site-booking-ko.yaml
-plan_check 0.2.0: 3 blocking, 11 total, 3 skipped: not judged
+plan_check 0.3.0: 3 blocking, 11 total, 3 skipped: not judged
   [BLOCK] plan.uncompared-decision explorations — 7 open decisions with no comparison recorded in explorations: type roles body; palette; layout; motion; direction; copy slots headline, cta
       fix: Record each open decision in explorations - two or more candidates with their sources, what they were compared on, the chosen one, and why the runner-up lost; a palette render also records each candidate's artifact and roles or token_file,…
   [BLOCK] copy.vague-cta content.key_copy[?slot=cta].text — "계속하기" (vague_cta) in the cta key copy: "계속하기"
@@ -137,7 +137,7 @@ lapis-design handoff check RETURN.md --against .lapis/handoffs/reservation.md \
 
 ## 상태
 
-초기 릴리스라 계약은 릴리스 사이에 바뀔 수 있어요. 렌더 추출은 `version: 1`, 나머지 계약 형식은 `version: 0`이에요. 릴리스된 변경과 Unreleased 변경은 [CHANGELOG.md](CHANGELOG.md)에서 구분해요. 이 README는 Unreleased 작업을 포함한 현재 소스 스냅샷을 설명하고, 설치 명령은 `main`이 아니라 `release`를 따라요. 설치할 릴리스에 어떤 기능이 있는지는 해당 릴리스의 문서에서 확인해요. `lazuli setup`은 선택 사항인 폰트 스타일 임베딩 모델을 설치하는 명령인데 공개된 모델이 아직 없어서 지금은 종료 코드 1로 끝나요. CI는 Linux에서 계약 테스트, Chromium 테스트, 선택 사항인 CJK 테스트를 돌려요.
+초기 릴리스라 계약은 릴리스 사이에 바뀔 수 있어요. 렌더 추출·초안 검토·참조 힌트는 `version: 1`, 나머지 계약 형식은 `version: 0`이에요. 릴리스 변경은 [CHANGELOG.md](CHANGELOG.md)에서 확인해요. 이 README는 현재 소스 스냅샷을 설명하고, 설치 명령은 `main`이 아니라 `release`를 따라요. 설치할 릴리스에 어떤 기능이 있는지는 해당 릴리스의 문서에서 확인해요. `lazuli setup`은 선택 사항인 폰트 스타일 임베딩 모델을 설치하는 명령인데 공개된 모델이 아직 없어서 지금은 종료 코드 1로 끝나요. CI는 Linux에서 계약 테스트, Chromium 테스트, 선택 사항인 CJK 테스트를 돌려요.
 
 스킬을 쓸 때 에이전트가 어떻게 일하는지 살펴보는 평가 도구(`tools/eval/`)가 있어요. 결과는 사례 기록이고 품질을 잰 수치가 아니에요. 방법은 [`docs/eval/`](docs/eval/README.md)에 있어요.
 
@@ -268,4 +268,4 @@ YAML과 코드의 주석·설명은 영어예요. 이관 지도만 한국어이�
 
 ### 버전 규칙
 
-렌더 추출은 `version: 1`(2026-09-25. v0로 만든 추출물이 아직 없어서 변환기는 두지 않았어요), 동작 세션·자산 원장·하네스 정의를 포함한 나머지 파일은 `version: 0`이에요. 폰트 잠금의 `license.web_embedding`은 `license.uses.web`으로 바뀌었어요(v0 초안 안의 변경이라 버전은 그대로). 필드를 바꾸면 버전을 올리고, `plan_check`가 옛 버전을 읽을 때 변환하거나 안내해요.
+렌더 추출·초안 검토·참조 힌트는 `version: 1`, 동작 세션·자산 원장·하네스 정의를 포함한 나머지 계약 형식은 `version: 0`이에요. 렌더 추출은 2026-09-25에 v1로 정했고 v0 추출물이 없어서 변환기는 두지 않았어요. 초안 검토의 v0 기록과 참조 힌트의 v0 기록은 현재 형식으로 다시 작성해야 해요. 폰트 잠금의 `license.web_embedding`은 `license.uses.web`으로 바뀌었어요(v0 초안 안의 변경이라 버전은 그대로). 필드를 바꾸면 버전을 올리고, `plan_check`가 옛 버전을 읽을 때 변환하거나 안내해요.

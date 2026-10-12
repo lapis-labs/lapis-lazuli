@@ -3,7 +3,7 @@ version: 0
 task: kiln-shop-landing
 scope: reservation
 role: reviewer
-tool_version: 0.2.0
+tool_version: 0.3.0
 plan_sha256: 1b8e4c91bda3085a5c38bf5fc4e38792d9a9ec53ca0447d649992ea1b35f8358
 dependencies:
 - id: reservation-fonts
@@ -18,7 +18,7 @@ dependencies:
   sha256: 6f1e95062a62d3612f0db6b58c255771a37ac4b1f9d30aa2a05ad611091b336d
 approval_state: approved
 body_sha256: dac17267880c4c539b64a722f326f72cfb0996389007a6e098491352142529b2
-handoff_id: 8d9a79c9bc95fc8a274e5a7cb9deb440370bb55f65072b6d19cbd72debe7921b
+handoff_id: 5209efbe9a7f7f202a00aab3381cf802de942bb9ff233a4c8716a7031ec37110
 ```
 # Portable role handoff
 

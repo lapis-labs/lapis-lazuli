@@ -3,9 +3,13 @@
 All notable changes are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/) once 1.0 is released. Before then, contracts may change
-between minor versions; render extraction is v1 and the other contract formats are v0.
+between minor versions; render extraction, draft review, and reference hints are v1, while the other
+contract formats are v0.
 
-## Unreleased
+## 0.3.0 (2026-10-11)
+
+Direction: the owner's words and choices stay visible from the brief through the rendered slice;
+rough directions are compared before the full build, and reviews stay tied to the inputs they judged.
 
 ### Added
 
@@ -93,13 +97,13 @@ between minor versions; render extraction is v1 and the other contract formats a
   An agent cannot drop or reword a row; an owner reply that quotes an id (`[declared] R3f2a1c: drop — <words>`) records a
   decision. `requirements show` lists the rows. `next` asks for the step `requirements` after the brief, page code waits
   for it in unattended runs, and keep evidence reads `evidence.brief` against the rows when a record exists.
-- The step `slice`: in an attended create run the owner approves a rendered first view and one core section (or picks one
-  of two or three candidates, or gives feedback) before the rest is built. `next` seals the approval in
-  `.lapis/state/<task>.json` once the questions were answered, `draft check` passes, one linked new-direction page is
-  chosen, and the plan says approved; protected changes after the seal are flagged `after_slice`. Approval questions
-  that link no page return `slice` instead of waiting. A plain approval of the slice is recorded as an untagged item,
-  because every `[declared]` item becomes a requirement row the critic must judge; only a reply that changes what the
-  owner wants is `[declared]`.
+- The step `slice`: in an attended create run the owner approves a rendered first view and one core section,
+  or gives feedback, before the rest is built. Direction candidates are chosen earlier, in `diverge`.
+  `next` seals the approval in `.lapis/state/<task>.json` once the questions were answered, `draft check`
+  passes, and the plan says approved; protected changes after the seal are flagged `after_slice`.
+  Approval questions that link no page return `slice` instead of waiting. A plain approval of the slice
+  is recorded as an untagged item, because every `[declared]` item becomes a requirement row the critic
+  must judge; only a reply that changes what the owner wants is `[declared]`.
 - `done` and every approval wait carry an owner block written by the CLI (`.lapis/owner/<task>.md`, last line
   `lapis-owner-block <sha8>`): requirement outcome, the owner's decisions, facts with their sources, changes behind the
   page, disputes, what was shown, and what did not run or is stale (including where a critic report does not hold against
@@ -155,16 +159,17 @@ between minor versions; render extraction is v1 and the other contract formats a
   disposition says. The critic reads the packet and only the files it lists, never the plan, answers, drafts, or
   questions.
 - The `lapis`, `lps-brief`, `lps-copy`, and `ultramarine` skills now teach the spec lock-in and the checks against
-  gaming. The order is brief, requirements, references, plan, then code; `lps-brief` seals the owner's own brief files
-  with `requirements seal --from`, and an owner's drop or narrowing of a requirement row is recorded as
-  `[declared] R…: drop — …`. In an attended create run, approval is asked on a rendered slice (the first view and one
-  section at 390 and 1440) instead of the plan summary; where the harness has a question tool the maker may show two or
-  three slice candidates that differ in composition or concept, and the owner's pick is recorded as
-  `[declared] Slice: <url> — …`. The maker pastes the owner block unchanged at `done` and at approval waits, runs the
-  critic on `critic packet` (a report counts only for its packet), files a finding it believes is wrong in
-  `.lapis/disputes/<task>.yaml` instead of reading the checker's source, and never stops a process by pattern (`pkill`,
-  `killall`). Copy stays provisional until the owner has seen it rendered, and a document's statement about history,
-  origin, naming, or third parties goes to the owner to confirm instead of passing through as fact.
+  gaming. The order is brief, requirements, references, owner direction and roughs, plan, then code;
+  `lps-brief` seals the owner's own brief files with `requirements seal --from`, and an owner's drop or
+  narrowing of a requirement row is recorded as `[declared] R…: drop — …`. In an attended create run,
+  approval is asked on one rendered slice (the first view and one section at 390 and 1440) instead of the
+  plan summary; the owner chooses among rough directions beforehand with `[declared] Pick: C<n>`.
+  The maker pastes the owner block unchanged at `done` and at approval waits, runs the critic on
+  `critic packet` (a report counts only for its packet), files a finding it believes is wrong in
+  `.lapis/disputes/<task>.yaml` instead of reading the checker's source, and never stops a process by
+  pattern (`pkill`, `killall`). Copy stays provisional until the owner has seen it rendered, and a
+  document's statement about history, origin, naming, or third parties goes to the owner to confirm
+  instead of passing through as fact.
 - The build packages the requirement record, integrity log, critic packet, and dispute schemas for the skills that use
   them, each listed in `index.yaml`.
 - The session-start hook (Claude Code, Codex, Oh-My-Pi, pi, Hermes) prints nothing unless the session's working directory is
@@ -178,6 +183,9 @@ between minor versions; render extraction is v1 and the other contract formats a
 
 ### Fixed
 
+- The generated POSIX installer includes its plugin-selection helper when a verification step needs
+  it. `--dry-run` no longer prints `pick: command not found` or drops the selected Codex critic-file
+  check; selecting only another plugin leaves that check out.
 - `lapis-design next --declined references --brief-line` accepts only a line about network access, lookups, downloads, or
   external material (or working only in the current folder). A line of the request about photos, layout, or motion no longer
   skips the references step, and a stored decline with such a line stops standing.
