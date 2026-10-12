@@ -202,7 +202,7 @@ def unseal_slice(root: Path, task: str = TASK) -> None:
 
 def refresh_critic(root: Path, at: int | None = None, *, task: str = TASK, extracts: list[str] | None = None,
                    lint: str | None = None, session: str | None = None, name: str | None = None,
-                   extra: dict | None = None) -> dict:
+                   extra: dict | None = None, motion: str | None = None) -> dict:
     """Rebuild the critic packet from the inputs as they are now, and write the critic report that names it and judges
     every row, change, and dispute in it, as a critic that did its job would. The defaults are the release inputs
     (`.lapis/critic/<task>.json` and `.packet.json`); a draft passes its narrow extracts and lint report and `name`.
@@ -212,7 +212,7 @@ def refresh_critic(root: Path, at: int | None = None, *, task: str = TASK, extra
         session = f".lapis/behavior/{task}.json"
     extracts = extracts or [f".lapis/renders/{task}.json"]
     data = critic_packet.build(root, task, {"extracts": extracts, "lint": lint or f".lapis/lint/{task}.json",
-                                            "session": session})
+                                            "session": session, "motion": motion})
     packet_path = root / ".lapis" / "critic" / f"{stem}.packet.json"
     packet_path.parent.mkdir(parents=True, exist_ok=True)
     packet_path.write_bytes(data)
@@ -225,6 +225,9 @@ def refresh_critic(root: Path, at: int | None = None, *, task: str = TASK, extra
                     for c in packet["changes"]],
         "disputes": [{"index": d["index"], "verdict": "finding-holds", "why": "the capture shows the finding",
                       "refs": []} for d in packet["disputes"]],
+        **({"motion": [{"scene": scene["id"], "content_held": "what the scene carries", "dwell": "ok",
+                        "why": "the capture shows it held", "refs": []} for scene in packet["motion"]["scenes"]]}
+           if "motion" in packet else {}),
         **(extra or {})}
     save(root, f"critic/{stem}.json", document)
     if at is not None:

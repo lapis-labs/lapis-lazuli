@@ -13,6 +13,7 @@ CHECKS = {
     ("plan", "check"): "lapis_design.plan_check",
     ("rights", "check"): "lapis_design.rights_check",
     ("render", "check"): "lapis_design.render",
+    ("render", "motion"): "lapis_design.motion",
     ("behavior", "check"): "lapis_design.behavior_check",
     ("stub", "serve"): "lapis_design.stub",
     ("slop", "lint"): "lapis_design.lint.cli",

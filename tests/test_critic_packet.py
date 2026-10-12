@@ -396,3 +396,108 @@ def test_plan_check_and_slop_lint_end_with_the_dispute_footer(project, capsys):
 def test_the_footer_stays_out_of_the_json_a_tool_reads(project, capsys):
     cli_main(["plan", "check", str(project / f".lapis/plans/{TASK}.yaml"), "--root", str(project), "--json"])
     assert summary.DISPUTE_FOOTER not in capsys.readouterr().out
+
+
+# ---- a page that moves: the packet carries the playback, the stills, the reduced-motion captures, and the build
+
+BUILD = "a" * 64
+MOTION = f".lapis/renders/{TASK}.motion.json"
+
+
+def moving(root: Path, *, langs=("en",), build: str = BUILD) -> None:
+    """The extract of a page that animates (and says which languages its text runs are in), from build `BUILD`."""
+    def change(doc):
+        doc["source"]["document_sha256"] = build
+        doc["viewports"][3]["boxes"] = [{"id": "b000000000001", "role": "section", "role_confidence": 1,
+                                        "rect": {"x": 0, "y": 0, "w": 1440, "h": 900},
+                                        "motion": {"animations": [{"properties": ["transform"], "duration_ms": 600,
+                                                                   "iterations": "infinite"}]}}]
+        doc["viewports"][3]["text"] = [{"text": "x", "lang": lang} for lang in langs]
+    update(root, f"renders/{TASK}.json", change)
+
+
+def recorded(root: Path, *, langs=("en",), build: str = BUILD, skip=(), scenes: bool = True) -> None:
+    """What `render motion` leaves for each locale in `langs`: the files, and the manifest naming them."""
+    entries = []
+    for lang in langs:
+        blocks = []
+        for width in (390, 1440):
+            rows = []
+            for kind in ("playback", "settled", "reduced"):
+                if (lang, width, kind) in skip:
+                    continue
+                path = root / f".lapis/renders/{TASK}.motion/{lang}-{width}-{kind}.bin"
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(f"{lang}{width}{kind}".encode())
+                rows.append({"kind": kind, "width": width, "path": path.relative_to(root).as_posix(),
+                             "sha256": critic_packet.digest(path.read_bytes()),
+                             **({"seconds": 6.0} if kind == "playback" else {"scroll_y": 0})})
+            blocks.append({"width": width, "document_sha256": build, "scroll_height": 5400,
+                           "scenes": [{"id": "S1", "selector": "div.pin", "top": 900, "content_px": 900, "runway_px": 1800,
+                                       "text": "the firing in three steps", "viewports": 3.0}] if scenes else [],
+                           "recordings": rows})
+        entries.append({"lang": lang, "widths": blocks})
+    save(root, "renders/" + f"{TASK}.motion.json", {"version": 1, "task": TASK, "source": {"url": "http://localhost/"},
+                                                    "meta": {"generated_at": "2026-10-12T00:00:00Z", "px_per_s": 600},
+                                                    "locales": entries})
+
+
+def refused(root: Path, **inputs) -> str:
+    with pytest.raises(critic_packet.PacketError) as caught:
+        critic_packet.build(root, TASK, {**INPUTS, **inputs})
+    return str(caught.value)
+
+
+def test_a_page_that_moves_needs_the_motion_evidence_and_a_still_page_does_not(project):
+    assert "motion" not in packet(project)
+    moving(project)
+    said = refused(project)
+    assert "the page moves" in said and f"lapis-design render motion <url> --task {TASK}" in said
+    recorded(project)
+    got = packet(project, motion=MOTION)
+    assert got["args"]["motion"] == MOTION
+    kinds = {r["kind"] for loc in got["motion"]["locales"] for w in loc["widths"] for r in w["recordings"]}
+    assert kinds == {"playback", "settled", "reduced"}
+    assert [(s["id"], s["content_px"], s["runway_px"], s["dwell_ms"]) for s in got["motion"]["scenes"]] == [
+        ("en-390-S1", 900, 1800, 3000), ("en-1440-S1", 900, 1800, 3000)]
+    assert sum(1 for i in got["inputs"] if i["kind"] == "motion") == 7                    # the manifest and six files
+
+
+@pytest.mark.parametrize("skip, said", [
+    ({("en", 390, "reduced")}, "lacks en reduced at 390"),
+    ({("en", 1440, "playback")}, "lacks en playback at 1440"),
+    ({("en", 1440, "settled")}, "lacks en settled at 1440")])
+def test_motion_evidence_without_the_playback_the_stills_or_the_reduced_motion_captures_is_refused(project, skip, said):
+    moving(project)
+    recorded(project, skip=skip)
+    assert said in refused(project, motion=MOTION)
+
+
+def test_a_recording_of_another_build_or_a_locale_that_was_not_recorded_is_refused(project):
+    moving(project)
+    recorded(project, build="b" * 64)
+    assert "of another build than the extracts" in refused(project, motion=MOTION)
+    moving(project, langs=("en", "ko"))
+    recorded(project)
+    assert "locale ko" in refused(project, motion=MOTION)
+    recorded(project, langs=("en", "ko"))
+    assert {loc["lang"] for loc in packet(project, motion=MOTION)["motion"]["locales"]} == {"en", "ko"}
+
+
+def test_an_extract_that_does_not_name_its_build_cannot_be_matched_to_a_recording(project):
+    moving(project)
+    update(project, f"renders/{TASK}.json", lambda d: d["source"].pop("document_sha256"))
+    recorded(project)
+    assert "run `lapis-design render check` again" in refused(project, motion=MOTION)
+
+
+def test_a_critic_report_must_judge_each_pinned_scene_and_a_recording_it_cites_must_exist(project):
+    moving(project)
+    recorded(project)
+    document = refresh_critic(project, motion=MOTION)
+    assert critic_packet.verify(project, project / REPORT) == []
+    edit(project, lambda d: d.update(motion=d["motion"][:1]))
+    assert any("`motion` has no entry for scene en-1440-S1" in line for line in critic_packet.verify(project, project / REPORT))
+    edit(project, lambda d: d.update(motion=document["motion"]))
+    edit(project, lambda d: d["motion"][0].update(refs=[".lapis/renders/no-such.webm"]))
+    assert any("no-such.webm is not a file" in line for line in critic_packet.verify(project, project / REPORT))

@@ -19,6 +19,7 @@ properties:
       extracts: { type: array, minItems: 1, items: { type: string, minLength: 1 } }   # render extracts, in the order given
       lint: { type: string, minLength: 1 }         # the lint report
       session: { type: string, minLength: 1 }      # the behavior session, when one was given
+      motion: { type: string, minLength: 1 }       # the motion evidence (render/motion.schema.yaml); a page that moves needs it
   requirements:                                    # the owner's rows, as the CLI copied them (requirements/schema.yaml)
     type: object
     additionalProperties: false
@@ -187,6 +188,35 @@ properties:
           card: { type: object }                   # the picked rough's card.yaml (diverge/card.schema.yaml)
           captures: { type: array, items: { type: string } }   # project-relative screenshots of the picked rough
       contact: { type: [string, "null"] }          # the contact sheet of the sealed roughs
+  motion:                                          # a page with motion: what was recorded of the shown build, never a flattened screenshot alone
+    type: object
+    additionalProperties: false
+    required: [manifest, px_per_s, locales, scenes]
+    properties:
+      manifest:
+        type: object
+        additionalProperties: false
+        required: [path, sha256]
+        properties:
+          path: { type: string }
+          sha256: { $ref: "#/$defs/digest" }
+      px_per_s: { type: integer, minimum: 1 }      # the speed of the scripted scroll, so dwell is runway over it
+      locales:                                     # each locale shown; for each width the playback, settled, and reduced-motion captures and the build identity
+        type: array
+        items: { type: object }
+      scenes:                                      # pinned scenes: what each holds on screen, the empty scroll runway around it, and its dwell
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [id, selector, text, content_px, runway_px, dwell_ms]
+          properties:
+            id: { type: string }                   # <lang>-<width>-S<n>
+            selector: { type: string }
+            text: { type: string }
+            content_px: { type: integer, minimum: 0 }
+            runway_px: { type: integer, minimum: 0 }
+            dwell_ms: { type: integer, minimum: 0 }
   gaps:                                            # the decisions the owner has not made, as the owner block lists them now (`gaps.py`)
     type: array
     items:
@@ -217,7 +247,7 @@ properties:
         kind:
           enum: [extract, screenshot, lint, session, requirement-source, product, design, context, taste,
                  references-record, reference-capture, reference-profile, exploration, direction-contact,
-                 direction-capture]
+                 direction-capture, motion]
         path: { type: string, minLength: 1 }       # relative to the project root, with `/`
         sha256: { $ref: "#/$defs/digest" }
   findings:                                        # the lint report's findings by index, without their `fix` text or waivers

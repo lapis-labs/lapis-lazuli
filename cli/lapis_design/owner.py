@@ -355,7 +355,7 @@ def _shown(root: Path, task: str) -> list[str]:
     pages = _pages(root, task)
     for page in pages:
         widths = ", ".join(str(w) for w in page.get("widths") or ()) or "unknown widths"
-        height = slice_step.height(root, page)
+        height = slice_step.height(root, task, page)
         tall = f"{height:,} px" if height is not None else "not measured"
         out.append(f"- {page['url']} at {widths}; document height at 1440: {tall}")
         if captures := _captures(root, page):

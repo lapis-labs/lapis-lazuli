@@ -43,6 +43,11 @@ items:
   view: full
   path: render/extract.schema.yaml
   summary: LapisLazuli render extraction / reference profile schema — v1 draft
+- id: render-motion
+  view: full
+  path: render/motion.schema.yaml
+  summary: Motion evidence of a rendered page — v1; written by `lapis-design render motion`, never by
+    hand.
 - id: behavior-session
   view: full
   path: behavior/session.schema.yaml

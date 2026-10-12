@@ -55,6 +55,7 @@ properties:
       url: { type: string, pattern: "^[^?#]*$" }      # page URL without query or fragment
       path: { type: string }
       task: { type: string }                          # the plan's task.id (for render)
+      document_sha256: { type: string, pattern: "^[0-9a-f]{64}$" }   # the main document as served at the first capture: the build's identity, which `render motion` records too
       addresses:                                      # resolved IPs only for a pinned own .test render
         type: array
         minItems: 1

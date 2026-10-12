@@ -124,6 +124,7 @@ between minor versions; render extraction is v1 and the other contract formats a
   id in its `Server` header, which is how `status` and `stop` know the recorded process (and never signal another
   that took its id); an earlier draft read the command line from `ps`, which cuts it at the terminal width, so `stop`
   left a server running on Linux CI.
+- Motion evidence for the critic. `lapis-design render motion <url> --task <task> [--lang <tag>]` records, for the build it opens at 390 and 1440, a scripted-scroll playback (`.webm`, 600 px/s), settled-state screenshots at representative scroll positions, the same with reduced motion, the pinned scenes as the content they hold and the empty scroll runway around them, and the build's identity (`render/motion.schema.yaml`; `render check` records `source.document_sha256` of the same main document). `critic packet` refuses a page that moves (an animation, a box that moves at rest, one hidden until scroll) without that evidence, without playback/settled/reduced captures at both widths for each locale its extracts show, or with a recording of another build, and carries a `motion` section; the critic judges each pinned scene by content and dwell (`motion` entries of its report) instead of by flattened page height. The slice height cap counts content: a pinned scene's empty scroll runway is not counted.
 
 ### Changed
 

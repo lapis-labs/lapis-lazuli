@@ -100,6 +100,19 @@ candidate names or section order. A reading/UI comparison does not approve a Han
 voice. Motion alternatives need actual playback of the same interaction and its control feedback,
 not only resting screenshots or a proposed timing number.
 
+## A page that moves: judge the motion, not the flattened page
+
+When the packet has a `motion` section, the page moves (an animation, a box that moves at rest, or one hidden until scroll)
+and the owner judges the playback, not a still. The packet lists, for each locale shown and at 390 and 1440, the scripted-scroll
+playback (`.webm`, at the packet's `px_per_s`), settled-state captures at representative scroll positions, the same with
+reduced motion, and the build identity, which the packet checked against the extracts. Open the playback and the stills
+before you judge motion; a file that exists but that you did not open does not count. A full-page screenshot or its height
+says nothing about a pinned scene: judge each pinned scene by what it holds on screen (`content_px`, `text`) and how long
+it holds it (`dwell_ms`, the scroll runway over the scroll speed), not by the height it adds to the page. Empty runway
+around a scene that carries little is a finding; a scene that carries a lot and is crossed in under a second is a finding
+too. Write one entry per scene in the report's `motion`. Check each reduced-motion capture for the same content as the
+settled one (what moved to a still must still be there) and each locale for text that no longer fits its scene.
+
 ## First: walk the visitor's tasks
 
 Before judging, act as the visitor. Derive one to three tasks from the plan's `brief` (`one_job`, the main flows) and the
@@ -258,6 +271,9 @@ Write one report in the findings format that `slop lint` also writes:
   (our captures or boxes). For example: `{reference: ".lapis/references/demo/museum/390.png", viewport: 390,
   would_choose_ours: "no", why: "Ours hides today's hours below two screens of art", refs:
   [".lapis/renders/demo.shots/390.png"]}`.
+- `motion` (one entry per pinned scene the packet's `motion.scenes` lists, exactly one each): `{scene, content_held, dwell,
+  why, refs}`, where `content_held` says what the scene carries on screen, `dwell` is `ok`, `too-short`, `too-long`, or
+  `unknown`, and `refs` are the playback or stills you opened.
 - `requirements`, `facts`, `disputes`, `changes`: one entry per row, fact, dispute, or change, as described above:
   `{id, state, refs, note?, left_by?}`, `{text, refs, source, quote}`, `{index, verdict, why, refs}`, and
   `{seq, verdict, rows, why}`. A report that leaves a row, a dispute, or a change out, names one the packet does not list,

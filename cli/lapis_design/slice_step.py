@@ -4,7 +4,7 @@ In an attended create run (`LAPIS_UNATTENDED` unset) with no slice sealed in `.l
 the step `slice` as soon as the plan steps pass. The step asks for the first view plus the one section the brief puts
 first, captured at 390 and 1440, reviewed, and shown to the owner in questions of kind `approval`. Such questions that
 link no page, while no slice is sealed, return `slice` instead of waiting, and so does a shown page taller than
-`MAX_HEIGHT` px at 1440. Copy stays provisional until the owner has seen it rendered. The slice is one page: the choice
+`MAX_HEIGHT` px of content at 1440 (a pinned scene's empty scroll runway is dwell, not length: `render motion` measures it). Copy stays provisional until the owner has seen it rendered. The slice is one page: the choice
 among several roughs is made earlier, at the second direction turn.
 
 From the first time `next` names `slice` until the slice is sealed or skipped, the agent is held (`hold`, enforced by
@@ -39,7 +39,7 @@ from typing import Any, Mapping
 
 import yaml
 
-from lapis_design import asks, draft, gaps, gate, integrity, order, requirements, waiting
+from lapis_design import asks, draft, gaps, gate, integrity, motion, order, requirements, waiting
 
 STEP = "slice"
 MAX_FILES = 12                 # files a slice page may declare [provisional: the next HITL measures it]
@@ -59,7 +59,8 @@ def text(task: str) -> str:
         "until the owner has seen the slice you may write only those files, and a write to any other page file is "
         f"refused. Serve it with `lapis-design preview start --task {task}` (a server that outlives this turn, so the "
         "owner's link is not dead when they open it) and capture it at 390 and "
-        f"1440, at most {MAX_HEIGHT:,} px tall at 1440. Run the critic on `lapis-design "
+        f"1440, at most {MAX_HEIGHT:,} px tall at 1440 (content: the empty scroll runway of a pinned scene, which "
+        "`lapis-design render motion` measures, is dwell and does not count). Run the critic on `lapis-design "
         f"critic packet`. Run `lapis-design draft check --task {task}`, which writes the owner block to "
         f".lapis/owner/{task}.md, with the capture files the owner can open without a server. Then ask for approval in "
         f".lapis/questions/{task}.md, whose first line is `lapis-questions: approval`, linking the page and pasting "
@@ -157,25 +158,29 @@ def _json(path: Path) -> Any:
         return None
 
 
-def height(root: Path, page: Mapping[str, Any]) -> int | None:
-    """The document height at 1440: the largest `rect.y + rect.h` among the boxes of the page's extracts."""
+def height(root: Path, task: str, page: Mapping[str, Any]) -> int | None:
+    """The document height at 1440 in px of content: the largest `rect.y + rect.h` among the boxes of the page's extracts,
+    less the empty scroll runway of its pinned scenes (`render motion` measures it, for the build the extract captured). A
+    scene that holds the screen for a long scroll is dwell, not length, so it does not count against `MAX_HEIGHT`."""
     review = page.get("review") if isinstance(page.get("review"), dict) else {}
-    bottoms = []
+    bottoms, build = [], None
     for name in review.get("extracts") or ():
-        for view in (_json(root / name) or {}).get("viewports") or ():
+        extract = _json(root / name) or {}
+        build = build or (extract.get("source") or {}).get("document_sha256")
+        for view in extract.get("viewports") or ():
             if isinstance(view, dict) and view.get("width") == 1440:
                 for box in view.get("boxes") or ():
                     rect = box.get("rect") if isinstance(box, dict) else None
                     if isinstance(rect, dict) and all(isinstance(rect.get(k), (int, float)) for k in ("y", "h")):
                         bottoms.append(rect["y"] + rect["h"])
-    return round(max(bottoms)) if bottoms else None
+    return max(round(max(bottoms)) - motion.runway(root, task, build), 0) if bottoms else None
 
 
 def tall(root: Path, task: str, shown: list[str]) -> str | None:
     """What `slice` says when a shown `direction: new` page is taller than `MAX_HEIGHT` px at 1440, else None: the slice is
     the first view and the one section the brief puts first, not the page."""
     for page in pages(root, task):
-        found = height(root, page) if page["url"] in shown and page.get("direction") == "new" else None
+        found = height(root, task, page) if page["url"] in shown and page.get("direction") == "new" else None
         if found is not None and found > MAX_HEIGHT:
             return (f"The page {page['url']} is {found:,} px tall at 1440, and a slice is at most {MAX_HEIGHT:,}: cut it to "
                     "the first view and the one section the brief puts first, capture it again, review it, and ask again. "
@@ -270,7 +275,7 @@ def _round(root: Path, task: str, answered: Mapping[str, Any], page: Mapping[str
     if state.get("slice_set") == answered["id"]:
         return rounds
     heights = dict(state.get("slice_heights") or {})
-    if (seen := height(root, page)) is not None:
+    if (seen := height(root, task, page)) is not None:
         heights[str(rounds)] = seen
     rounds += 1
     try:
@@ -337,7 +342,7 @@ def check(root: Path, task: str, plan: Any, env: Mapping[str, str] = os.environ)
                 f"{len(undecided)} core finding{'s' if len(undecided) != 1 else ''} open ({shown_ids}). A fresh critic report "
                 "that no longer lists one closes it; otherwise it is the owner's decision. Put it to them, and record their "
                 "answer as `- [declared] Ask finding-vs-decision: <rule id> — <their words>`, then run `next`.")
-    seen = height(root, chosen)
+    seen = height(root, task, chosen)
     if seen is not None:
         state = integrity.read_state(root, task) or {}
         try:

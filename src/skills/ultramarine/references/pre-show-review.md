@@ -55,7 +55,12 @@ version 1, which keeps only what the CLI and the critic can check.
 4. A new direction needs a critic that did not make the page. Build its packet from the shown captures and lint
    report, `lapis-design critic packet --task <task> --extract <extract> --lint <review.lint> --out
    .lapis/critic/<render-task>.packet.json` (repeat `--extract` per file), run the critic as `critic.md` says,
-   giving it that packet and the files it lists, and record `review.critic.report`. Dispose its findings too. If
+   giving it that packet and the files it lists, and record `review.critic.report`. A page that moves (an animation, a
+   box that moves at rest, or one hidden until scroll) needs its motion recorded from the same build first:
+   `lapis-design render motion <url> --task <task> [--lang <tag>]`, once for each locale shown, writes the scripted-scroll
+   playback, settled and reduced-motion captures at 390 and 1440, and the pinned scenes' content and runway
+   (`../shared/render/motion.schema.yaml`); the packet refuses a moving page without it, or with a recording of another
+   build, and the critic judges each pinned scene by content and dwell. Dispose its findings too. If
    none ran, the draft is not reviewed; report the missing prerequisite, never invent a pass. A small iteration
    needs no critic; one attached to it is checked the same way.
 

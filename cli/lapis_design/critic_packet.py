@@ -27,7 +27,7 @@ from pathlib import Path, PurePosixPath
 import yaml
 from jsonschema import Draft202012Validator
 
-from lapis_design import asks, direction, gaps, shared_dir
+from lapis_design import asks, direction, gaps, motion, shared_dir
 
 TASK = re.compile(r"[a-z0-9][a-z0-9-]{1,63}")
 # What the critic never reads: the maker's plan and records. The packet carries what it may know of them.
@@ -237,8 +237,97 @@ def _screenshots(root: Path, extract: Path) -> list[Path]:
     return shots
 
 
+MOTION_WIDTHS = (390, 1440)
+MOTION_KINDS = ("playback", "settled", "reduced")
+
+
+def _base(tag: object) -> str:
+    return str(tag or "").split("-")[0].lower()
+
+
+def _documents(extracts: list[Path]) -> list[dict]:
+    return [doc for path in extracts if isinstance(doc := _json(path, "the render extract"), dict)]
+
+
+def _moves(documents: list[dict]) -> bool:
+    """Whether a page of these extracts moves on its own or on scroll: a CSS animation, a box that moves at rest, or one
+    that is hidden until it scrolls into view (plain hover and focus transitions are not motion to show)."""
+    for doc in documents:
+        for view in _seq(doc.get("viewports")):
+            for box in _seq(_map(view).get("boxes")):
+                found = _map(_map(box).get("motion"))
+                if found.get("animations") or found.get("moves_at_rest") or found.get("hidden_until_scroll"):
+                    return True
+    return False
+
+
+def _shown_locales(documents: list[dict]) -> list[str]:
+    """The base languages the extracts' text runs declare, sorted; empty when none declares one."""
+    return sorted({_base(run.get("lang")) for doc in documents for view in _seq(doc.get("viewports"))
+                   for run in _seq(_map(view).get("text")) if isinstance(run, dict) and run.get("lang")} - {""})
+
+
+def _motion(root: Path, task: str, name: str | None, extracts: list[Path]) -> tuple[dict, list[Path]]:
+    """The packet's `motion` section and the files it lists, from the manifest `render motion` wrote (`name`). A page that
+    moves needs one: playback, settled, and reduced-motion captures at 390 and 1440 for each locale its extracts show,
+    recorded from the build the extracts captured. PacketError names what is missing and the command that records it."""
+    documents = _documents(extracts)
+    moves = _moves(documents)
+    command = f"lapis-design render motion <url> --task {task} [--lang <tag>]"
+    manifest = _inside(root, name) if name else None
+    if manifest is None:
+        if moves or name:
+            raise PacketError(f"the page moves (a CSS animation, a box that moves at rest, or one hidden until scroll) and the "
+                              f"packet has no motion evidence ({name or motion.manifest_path(root, task).relative_to(root).as_posix()}): "
+                              f"record it with `{command}`, once for each locale the owner is shown")
+        return {}, []
+    document = _json(manifest, "the motion evidence")
+    if problem := _first_error(_validator("render/motion.schema.yaml"), document):
+        raise PacketError(f"{_rel(root, manifest)} does not match render/motion.schema.yaml: {problem}")
+    if document["task"] != task:
+        raise PacketError(f"{_rel(root, manifest)} names task {document['task']!r}, not {task!r}")
+    wanted = _shown_locales(documents)
+    entries = {_base(e["lang"]): e for e in document["locales"]}
+    missing = [f"locale {tag}" for tag in wanted if tag not in entries and "und" not in entries]
+    identities = {src for doc in documents if isinstance(src := _map(doc.get("source")).get("document_sha256"), str)}
+    files: list[Path] = [manifest]
+    scenes: list[dict] = []
+    locales = []
+    for entry in sorted(document["locales"], key=lambda e: e["lang"]):
+        blocks = {b["width"]: b for b in entry["widths"]}
+        for width in MOTION_WIDTHS:
+            block = blocks.get(width)
+            if block is None:
+                missing.append(f"{entry['lang']} at {width}")
+                continue
+            kinds = {r["kind"] for r in block["recordings"]}
+            missing += [f"{entry['lang']} {kind} at {width}" for kind in MOTION_KINDS if kind not in kinds]
+            if not identities:
+                raise PacketError(f"{_rel(root, manifest)} cannot be tied to the build the extracts captured: they carry no "
+                                  "`source.document_sha256`; run `lapis-design render check` again, then record the motion")
+            if block["document_sha256"] not in identities:
+                raise PacketError(f"{_rel(root, manifest)}: the {entry['lang']} recording at {width} is of another build than "
+                                  "the extracts (the main document differs): run `render check` and "
+                                  f"`{command}` on the same build")
+            for row in block["recordings"]:
+                files.append(_file(root, row["path"], "a motion recording"))
+            for scene in block["scenes"]:
+                dwell = round(scene["runway_px"] * 1000 / document["meta"]["px_per_s"])
+                scenes.append({"id": f"{entry['lang']}-{width}-{scene['id']}", "selector": scene["selector"],
+                               "text": scene["text"], "content_px": scene["content_px"], "runway_px": scene["runway_px"],
+                               "dwell_ms": dwell})
+        locales.append({"lang": entry["lang"], "widths": [
+            {"width": b["width"], "document_sha256": b["document_sha256"], "scroll_height": b["scroll_height"],
+             "recordings": [{k: r[k] for k in ("kind", "path", "sha256", "scroll_y", "seconds") if k in r}
+                            for r in b["recordings"]]} for b in sorted(entry["widths"], key=lambda b: b["width"])]})
+    if missing:
+        raise PacketError(f"the motion evidence {_rel(root, manifest)} lacks {_names(missing, 6)}: record it with `{command}`")
+    return ({"manifest": {"path": _rel(root, manifest), "sha256": digest(manifest.read_bytes())},
+             "px_per_s": document["meta"]["px_per_s"], "locales": locales, "scenes": scenes}, files)
+
+
 def _listed(root: Path, task: str, plan: dict, record: dict | None, extracts: list[Path], lint: Path,
-            session: Path | None) -> list[dict]:
+            session: Path | None, motion_files: list[Path] = ()) -> list[dict]:
     """Every file the critic may read, once, with its digest. The first kind that names a file stands."""
     seen: dict[str, dict] = {}
 
@@ -260,6 +349,8 @@ def _listed(root: Path, task: str, plan: dict, record: dict | None, extracts: li
             add("screenshot", shot)
     add("lint", lint)
     add("session", session)
+    for path in motion_files:
+        add("motion", path)
     for source in _seq((record or {}).get("sources")):
         if _map(source).get("kind") == "owner-file":
             outside("requirement-source", source.get("path"))
@@ -363,15 +454,19 @@ def build(root: Path, task: str, inputs: dict) -> bytes:
     session_name = _named(root, inputs["session"], "the behavior session") if inputs.get("session") else None
     session = _inside(root, session_name) if session_name else None
     plan, record = _plan(root, task), _record(root, task)
+    motion_name = _named(root, inputs["motion"], "the motion evidence") if inputs.get("motion") else None
+    shown, motion_files = _motion(root, task, motion_name, extracts)
     document = {
         "version": 0, "task": task,
-        "args": _wrap(extracts=extract_names, lint=_rel(root, lint), session=session_name),
+        "args": _wrap(extracts=extract_names, lint=_rel(root, lint), session=session_name, motion=motion_name),
         "requirements": _requirements(record), "plan": _design(plan),
         "direction": direction.packet(root, task),
         "gaps": [_wrap(id=g["id"], area=g["area"], text=g["text"]) for g in gaps.compute(root, task)],
         "asks": [_wrap(trigger=a["trigger"], by=a["by"], said=a["said"]) for a in asks.recorded(root, task)],
-        "inputs": _listed(root, task, plan, record, extracts, lint, session),
+        "inputs": _listed(root, task, plan, record, extracts, lint, session, motion_files),
         "findings": _findings(root, lint), "changes": _changes(root, task), "disputes": _disputes(root, task)}
+    if shown:
+        document["motion"] = shown
     if problem := _first_error(_validator("review/critic-packet.schema.yaml"), document):
         raise PacketError(f"the packet does not match review/critic-packet.schema.yaml: {problem}")
     return (json.dumps(document, ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False) + "\n").encode("utf-8")
@@ -465,10 +560,11 @@ def _gaps(root: Path, packet: dict, report: dict) -> list[str]:
     judged("requirements", "id", rows, "")
     judged("changes", "seq", [change["seq"] for change in packet["changes"]], "change ")
     judged("disputes", "index", [dispute["index"] for dispute in packet["disputes"]], "dispute ")
+    judged("motion", "scene", [scene["id"] for scene in _map(packet.get("motion")).get("scenes", [])], "scene ")
     for change in entries("changes"):
         if unknown := [row for row in _seq(change.get("rows")) if row not in rows]:
             gaps.append(f"change {change.get('seq')} names {_names(unknown)}, which are not requirement rows of the packet")
-    refs = [ref for name in ("requirements", "facts", "disputes", "walkthroughs") for item in entries(name)
+    refs = [ref for name in ("requirements", "facts", "disputes", "walkthroughs", "motion") for item in entries(name)
             for ref in _seq(item.get("refs")) if isinstance(ref, str)]
     gaps += [problem for ref in dict.fromkeys(refs) if (problem := _ref_problem(root, ref))]
     listed = {item["path"] for item in packet["inputs"]}
@@ -554,6 +650,8 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design critic packet"
     ap.add_argument("--lint", help="the lint report (default: .lapis/lint/<task>.json)")
     ap.add_argument("--session", help="the behavior session (default: .lapis/behavior/<task>.json when it exists and "
                     "no --extract was given)")
+    ap.add_argument("--motion", help="the motion evidence `lapis-design render motion` wrote (default: "
+                    ".lapis/renders/<task>.motion.json when it exists); a page that moves needs it")
     ap.add_argument("--out", help="where to write the packet, under .lapis/critic/ (default: "
                     ".lapis/critic/<task>.packet.json)")
     args = ap.parse_args(argv)
@@ -570,9 +668,11 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design critic packet"
             raise PacketError("--out must be a .json file under .lapis/critic/")
         plan = _plan(root, args.task)
         _observe(root, args.task, plan)
+        motion_default = _rel(root, motion.manifest_path(root, args.task))
         session = args.session or (paths["session"] if not args.extract and (root / paths["session"]).is_file() else None)
         data = build(root, args.task, {"extracts": args.extract or [paths["extract"]],
-                                       "lint": args.lint or paths["lint"], "session": session})
+                                       "lint": args.lint or paths["lint"], "session": session,
+                                       "motion": args.motion or (motion_default if (root / motion_default).is_file() else None)})
         _write(out, data)
     except (PacketError, OSError) as exc:
         print(f"critic packet: {exc}", file=sys.stderr)

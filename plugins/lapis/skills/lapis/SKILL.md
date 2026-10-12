@@ -448,7 +448,7 @@ slice is one page, built from the pick the owner made at the direction turns.
    files) in `.lapis/drafts/<task>.yaml`. From the first time `next` names `slice` until the slice is sealed you may
    write only those files; any other page file is refused, and so is every page file when no page is declared.
 2. Build the first view and the one section the brief puts first, not the whole page, and capture both at 390 and
-   1440, at most 3,600 px tall at 1440 (a taller page comes back as `slice`). Serve the folder with
+   1440, at most 3,600 px of content at 1440, pinned scenes' empty scroll runway not counted (a taller page comes back as `slice`). Serve the folder with
    `lapis-design preview start --task <task>` and capture that address.
 3. Run the critic on `lapis-design critic packet` and `lapis-design draft check` (`ultramarine`'s
    `pre-show-review.md`). Open core findings no longer block the question: they go to the owner as decisions.

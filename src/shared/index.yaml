@@ -120,6 +120,14 @@ items:
       lapis: summary
       ulm-maintain: full
 
+  - id: render-motion
+    kind: contract
+    path: render/motion.schema.yaml
+    note: v1; the motion evidence of a rendered page (scripted-scroll playback, settled and reduced-motion captures at 390 and 1440 for each locale, pinned scenes with content and runway, build identity), recorded by `render motion` and read by the critic packet
+    consumers:
+      ultramarine: full
+      ulm-release: summary
+
   - id: behavior-session
     kind: contract
     path: behavior/session.schema.yaml

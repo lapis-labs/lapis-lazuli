@@ -190,6 +190,27 @@ def test_a_shown_page_taller_than_3600_px_at_1440_returns_slice_instead_of_waiti
     assert next_step.evaluate(project, TASK)["state"] == "waiting-for-user"
 
 
+def test_a_pinned_scenes_empty_scroll_runway_does_not_count_against_the_slice_height(project, checked):
+    build = "c" * 64
+    def shown(sha):
+        name = extract(project, 5400)
+        update(project, "renders/shown.json", lambda d: d["source"].update(document_sha256=sha))
+        return name
+    save(project, f"renders/{TASK}.motion.json", {
+        "version": 1, "task": TASK, "source": {"url": URL}, "meta": {"generated_at": "2026-10-12T00:00:00Z", "px_per_s": 600},
+        "locales": [{"lang": "en", "widths": [{"width": 1440, "document_sha256": build, "scroll_height": 5400, "recordings": [],
+                                               "scenes": [{"id": "S1", "selector": "div.pin", "top": 900, "content_px": 900,
+                                                           "runway_px": 1800, "text": "three steps", "viewports": 3.0}]}]}]})
+    declare(project, extracts=[shown(build)])
+    ask(project, f"Approve this slice? {URL}", 200)
+    assert next_step.evaluate(project, TASK)["state"] == "waiting-for-user"            # 5,400 px, 3,600 of them content
+    assert slice_step.height(project, TASK, slice_step.pages(project, TASK)[0]) == 3600
+    declare(project, extracts=[shown("d" * 64)])                                       # a recording of another build counts for nothing
+    ask(project, f"Approve this slice? {URL}", 210)
+    result = next_step.evaluate(project, TASK)
+    assert result["step"]["id"] == "slice" and "5,400 px tall at 1440" in result["step"]["why"]
+
+
 CORE = {"rule_id": "copy.fabricated-proof", "status": "open", "observed": "the page shows two invented customer quotes",
         "approval_impact": "core-product-explanation"}
 
