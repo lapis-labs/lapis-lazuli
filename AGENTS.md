@@ -58,6 +58,8 @@ uv run lapis-design requirements show --task demo                  # its rows, i
 uv run lapis-design preview start --task demo   # serve the project folder on 127.0.0.1 in a process that outlives the command -> .lapis/preview/demo.json; `preview status|stop --task demo`
 uv run lazuli local fonts --summary       # read-only font scan and measurement into the user cache
 uv run lazuli doctor
+uv run lazuli adobe status                 # the opt-in relay to the owner's Adobe Fonts connector through Codex (off until `lazuli adobe enable`)
+uv run lazuli owned add --from names.txt --source adobe   # fonts the owner has but has not installed, names only
 uv run lazuli catalog sync                 # snapshot catalogs at human pace into the user cache (asks nothing)
 uv run lazuli catalog status
 uv run lazuli search --script hang --role body --license open   # ranked font candidates with evidence
@@ -187,6 +189,17 @@ files beside it; the database file itself does not change.
   reads them (not legal advice; the Adobe Fonts site, noonnu as of 2026-09-26), gets a `REFUSED` adapter
   that sends nothing and gives links. That has nothing to do with recommending, choosing, or locking
   Adobe Fonts.
+- `lazuli adobe` sends no request of its own and opens no font file. It is off until the owner runs `lazuli adobe enable`
+  at a terminal (an agent cannot answer the prompt). Each command starts `codex exec` (user config ignored, read-only
+  sandbox, empty working root) with a prompt that names one connector tool and its exact arguments; the result is read from
+  the `--json` event stream, and a stream with any other connector call, an extra one, another action, or other arguments is
+  refused and its result unused. Results are cleaned field by field (`cli/lazuli/adobe/clean.py`) and kept only in the user
+  cache (`adobe/records.jsonl`, provenance `adobe-connector`), never in the lazuli database, a project, a test, a fixture, a
+  calibration, an evaluation, or a catalog label; a test fails when a measurement, calibration, evaluation, or label module
+  imports the package or the owned list. `activate` and `kit` refuse without `--basis`: the owner's words, found verbatim in a
+  `[declared]` item of the brief record or the requirement record, in a statement that names each font and domain
+  (`cli/lazuli/adobe/consent.py`); the agent proposes, the owner says yes in words that can be quoted, and the report says what
+  the stream showed. Fixtures for this code use invented fonts, never Adobe data.
 - `lazuli fetch` downloads font files only from the google/fonts repository, for a family the catalog
   lists under a license the lock has a kind for, through the same request layer (registry, robots.txt, the
   3 s pace, a stop on a block), and writes nothing unless every file passes its checks (the repository's
@@ -336,7 +349,9 @@ files beside it; the database file itself does not change.
   `owner-direction`, `diverge`, `plan`, `plan-fix`, or `plan-explorations` (three
   refusals for one step, then the write passes and is recorded in `.lapis/order/<task>.json`), and `release check`
   reports page code that came first as `release.procedure-order`, which `next` turns into the step `plan-order`.
-- `lazuli` lives in `cli/lazuli/`: `scan.py` (read-only inventory; `LAZULI_FONT_ROOTS` replaces the
+- `lazuli` lives in `cli/lazuli/`: `adobe/` (the opt-in relay above: `config`, `relay`, `clean`, `store`, `consent`, `cli`) and
+  `owned.py` (names of fonts the owner has but has not installed, shown by `search` as needing activation);
+  `scan.py` (read-only inventory; `LAZULI_FONT_ROOTS` replaces the
   roots and turns the Core Text listing off), `coretext.py` (Adobe Fonts through Core Text on macOS,
   never through their files), `measure.py` (PANOSE Latin and the CJK extension per `vocab/type.yaml`; bump
   `MEASURER_VERSION` when a measurement changes so faces are re-measured), `db/` (migrations), `local.py`

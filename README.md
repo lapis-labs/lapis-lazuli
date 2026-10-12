@@ -178,6 +178,13 @@ and the synthetic scope in [the example plan](src/shared/plan/example.plan.yaml)
   locking fonts, including licensed Adobe Fonts. `lazuli fetch` downloads one open-licensed Google
   Fonts family's files and license text from the `google/fonts` repository under the same rules, and
   writes nothing unless every file checks out.
+- **Reach Adobe by itself.** `lazuli adobe` is off until you turn it on at a terminal. Then it starts your own Codex
+  CLI, which calls the Adobe Fonts connector of your account with one named tool and its exact arguments, and lazuli
+  keeps a cleaned copy of what comes back (names and catalog facts, provenance `adobe-connector`) in your user cache,
+  apart from the lazuli database. The event stream proves that exactly that call happened, and a stream that shows
+  another is refused. Activating a font or publishing a web kit also needs your own words, quoted from the project's
+  brief or requirement record. No font file or glyph data is read or sent, and the results never feed measurement,
+  calibration, evaluation, or labels.
 - **Open Adobe Fonts files.** Fonts an Adobe Fonts subscription activates are listed through the
   operating system's font API on macOS (Core Text) and measured from glyphs the system draws; only
   derived numbers are kept, and the files are never opened. Windows has no such listing, so Adobe

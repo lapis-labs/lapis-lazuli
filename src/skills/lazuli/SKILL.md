@@ -34,7 +34,11 @@ a plan; when `.lapis/plans/<task>.yaml` exists, read it first.
   (`~/.cache/lazuli`). `LAZULI_DB` names another database. The same folder holds `sig.key`, the
   per-user key that signs reference text. The user's color records and classes, and that key,
   cannot be rebuilt by a rescan and resync (a new key makes earlier reference profiles
-  incomparable); never delete them unasked.
+  incomparable); never delete them unasked. Beside the database, never in it: `owned.json` (the names
+  of fonts the owner has but has not installed, `lazuli owned`) and the `adobe/` folder (`config.json`,
+  the owner's switch for `lazuli adobe`; `records.jsonl`, cleaned Adobe Fonts results with provenance
+  `adobe-connector`; `actions.jsonl`, each activation or kit with the owner's quoted words). No
+  measurement, calibration, evaluation, or label reads these.
 - **Project** `.lapis/`: lazuli writes only `fonts.lock.json` (`lazuli lock`,
   `shared/fonts/lock.schema.yaml`) and `refs/<slug>.json` (`lazuli ref`, validated against
   `shared/render/extract.schema.yaml`; an invalid profile is never written). `lazuli fetch` writes an
@@ -51,7 +55,9 @@ a plan; when `.lapis/plans/<task>.yaml` exists, read it first.
 ## Every request follows these rules
 
 One module reaches the network, and only when a command asks; `lazuli search`, `lazuli lock`, and
-`lazuli license` never do. The rules below hold for every request lazuli sends itself. What a captured
+`lazuli license` never do. `lazuli adobe`, once the owner turned it on, sends no request of its own: it starts the
+owner's own command-line agent runner with a prompt that names one Adobe Fonts integration tool and its exact arguments,
+and reads the result from that runner's event stream, refusing a stream that shows anything else. The rules below hold for every request lazuli sends itself. What a captured
 reference page embeds (images, stylesheets, fonts, frames) is checked against the registry only.
 
 - **Registry first** (`lazuli sources`; `shared/sources/registry.yaml`, fields in
@@ -101,6 +107,7 @@ Paths use the plan path grammar; `shared/plan/schema.yaml` holds the lookup fiel
 | `tokens.type.roles[*]` with `brief.platform` | `lazuli search --script <code> --role <role>`, plus `--delivery web` for `web`, `--delivery app` for `ios`, `android`, `desktop`, `embedded` | `lzl-fonts` |
 | `brief.locales`, `tokens.type.roles[*].scripts` | `--script`: `kore` Korean, `jpan` Japanese, `hans` or `hant` Chinese, or the plan's own code | `lzl-fonts` |
 | `tokens.type.roles[*].family` once chosen, `task.id` | `lazuli lock "<family>" --role <role> --task <task.id>` into `.lapis/fonts.lock.json`, the default `tokens.type.lock`; before it, `lazuli license "<family>"` for a license to research and `lazuli fetch "<family>" --into <folder>` for an open-licensed family's files | `lzl-fonts` |
+| `tokens.type.roles[*]`, Adobe Fonts candidates the owner may have or may install | `lazuli adobe similar <PostScript names>` and `search --name` (owner turned it on; names only), `lazuli owned list` | `lzl-fonts` |
 | `tokens.color.roles[*].system_code` | `lazuli color lookup <system> <code>`; `lazuli color record` for a value the user has | `lzl-color` |
 | `tokens.color.roles[*].oklch` near a standard | `lazuli search --type color "oklch(<L> <C> <H>)"`: nearest codes, never an identity | `lzl-color` |
 | `references[*]` by `kind`, with `rights` | `lazuli ref capture <url>`, `profile <image-or-url>`, or `system <path-or-url>`, with `--rights <rights>`; in the `references` step also `--task <task>` for study copies | `lzl-research` |
