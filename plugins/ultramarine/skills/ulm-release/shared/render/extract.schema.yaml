@@ -525,6 +525,7 @@ $defs:
       theme: { enum: [light, dark] }
       reduced_motion: { type: boolean }
       scroll_width: { type: number, minimum: 0 }      # document scroll width; above `width` means horizontal page scroll
+      web_fonts: { type: array, items: { type: string } }   # families of the @font-face fonts the page loaded; rights checks them against the fonts lock
       screenshot: { type: string }                    # not stored for reference-only captures
       text_sig: { type: string, pattern: "^[0-9a-f]{1024}$" }   # keyed MinHash of all visible text, 128 values
       boxes: { type: array, items: { $ref: "#/$defs/box" } }

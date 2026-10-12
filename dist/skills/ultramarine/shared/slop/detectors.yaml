@@ -357,7 +357,7 @@ detectors:
     input: "the asset ledger and fonts lock against the files under the scan roots (source) and our own render extracts (render); assets/CHECKS.md"
     params: { check: "coverage | license | use | expiry | attribution | notices | reserved-names | marks | generated | releases | mark-symbols" }
     output: "records that are missing, uses beyond the recorded grant, and recorded conditions that are not met; never a legal conclusion"
-    reads: [box.media, box.icon, text_run.text, text_run.box]
+    reads: [box.media, box.icon, text_run.text, text_run.box, text_run.font, viewport.web_fonts]
     reads_ledger: [asset.kind, asset.role, asset.origin, asset.files, asset.hosts, asset.phashes, asset.library, asset.rights, asset.use, asset.attribution, asset.notices, asset.notices_embedded, asset.modified, asset.releases, asset.mark, asset.generated]
     reads_lock: [fonts.source, fonts.license, fonts.delivery, fonts.files, fonts.modified, fonts.reserved_names, fonts.shipped_names, fonts.notices, fonts.notices_embedded]
     status: implemented

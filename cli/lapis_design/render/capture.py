@@ -481,8 +481,9 @@ def capture(browser: Browser, url: str, config: dict, screenshot_path: Path, key
                              "computed_style": b["style"]}
         texts = []
         run_locators = {}
-        web_fonts = set(page.evaluate("""() => [...document.fonts].filter(f => f.status === 'loaded')
-            .map(f => f.family.replace(/^["']|["']$/g, '').toLowerCase())"""))
+        loaded = page.evaluate("""() => [...document.fonts].filter(f => f.status === 'loaded')
+            .map(f => f.family.replace(/^["']|["']$/g, ''))""")
+        web_fonts = {name.lower() for name in loaded}
         for i, item in enumerate(data["runs"]):
             run = _run(item, raw_ids[item["box"]], i, cdp, backend, key, web_fonts)
             if run["chars"]:
@@ -496,6 +497,8 @@ def capture(browser: Browser, url: str, config: dict, screenshot_path: Path, key
               "browser_chrome": config["browser_chrome"], "dpr": 2,
               "theme": config["theme"], "reduced_motion": config["reduced_motion"],
               "scroll_width": round(data["scrollWidth"], 2), "boxes": boxes, "text": texts}
+        if loaded:
+            vp["web_fonts"] = sorted(set(loaded), key=str.lower)
         if texts:
             vp["text_sig"] = page_sig([(r["original"], script_of(r["original"]))
                                        for r in data["runs"] if r["original"].strip()], key)

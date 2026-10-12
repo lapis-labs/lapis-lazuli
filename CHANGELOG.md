@@ -168,6 +168,9 @@ between minor versions; render extraction is v1 and the other contract formats a
 - `lapis-design next --declined references --brief-line` accepts only a line about network access, lookups, downloads, or
   external material (or working only in the current folder). A line of the request about photos, layout, or motion no longer
   skips the references step, and a stored decline with such a line stops standing.
+- `rights.no-provenance` at render also flags a web font the page loaded (the new `viewport.web_fonts` of the render extract)
+  that has no fonts lock entry of that family; before, only a font file under the scan roots was checked, so a font
+  served by a stylesheet or a CDN went unrecorded.
 - A direction wait carries the owner block as an approval wait does: a `direction` questions file without the current
   `lapis-owner-block` line comes back as `owner-direction` with the paste step, and `next` returns `owner_block` for it.
 - A style or object name that holds a colon (`S1 neo-brutalism: bold and dynamic: a`) no longer hides the choice of a

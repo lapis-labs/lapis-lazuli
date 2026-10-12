@@ -398,3 +398,24 @@ def test_check_runs_everything(tmp_path):
     lock = example("fonts/example.fonts.lock.json")
     hits = check(ledger, lock, tmp_path, TODAY)
     assert {h["rule_id"] for h in hits} == {"rights.notice-missing"}   # notice files absent from an empty tree
+
+
+def render_with_fonts(web_fonts, runs=()):
+    return {"source": {"kind": "render", "url": "http://127.0.0.1:8000/"},
+            "viewports": [{"boxes": [], "text": list(runs), "web_fonts": web_fonts}]}
+
+
+def test_a_web_font_the_page_loaded_without_a_lock_entry_is_flagged():
+    run = {"id": "t1", "box": "hero", "text": "Hi", "font": {"requested": "Fraunces", "rendered": "Fraunces"}}
+    hits = check_render(render_with_fonts(["Fraunces"], [run]), {"assets": []}, {"fonts": []})
+    assert rules(hits) == ["rights.no-provenance"]
+    assert hits[0]["layer"] == "render" and hits[0]["subject"] == "hero" and "Fraunces" in hits[0]["observed"]
+    assert rules(check_render(render_with_fonts(["Fraunces"]), {"assets": []})) == ["rights.no-provenance"]  # no lock at all
+
+
+def test_a_web_font_with_a_lock_entry_or_none_loaded_is_not_flagged():
+    lock = {"fonts": [{"family": "fraunces"}]}
+    assert check_render(render_with_fonts(["Fraunces"]), {"assets": []}, lock) == []
+    assert check_render(render_with_fonts([]), {"assets": []}, lock) == []
+    assert check_render({"source": {"kind": "render", "url": "http://127.0.0.1:8000/"},
+                         "viewports": [{"boxes": [], "text": []}]}, {"assets": []}) == []

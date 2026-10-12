@@ -245,6 +245,7 @@ def test_web_fonts_are_named_by_their_font_face(browser, web_font_page: str, tmp
     assert fonts["Web font paragraph"]["rendered"] == "Brand Sans"
     assert fonts["Web font paragraph"]["fallback"] is False
     assert fonts["System font paragraph"]["rendered"] not in ("Brand Sans", "")
+    assert vp["web_fonts"] == ["Brand Sans"]                       # what the rights check compares with the fonts lock
 
 
 def test_page_that_rebuilds_itself_on_resize_is_captured_whole(browser, render_server: str, tmp_path: Path,

@@ -40,7 +40,9 @@ Globs are shell-style and repo-relative; `*` also crosses `/`.
   an entry must use `license: user-terms`, list `hosts`, and cover no files or library); and a
   box without a perceptual hash (video without a poster, for example) falls back to any entry's
   `hosts`. An icon box whose `library` is set must have a ledger entry with the same `library`
-  (case-insensitive). One hit per item or library per extract.
+  (case-insensitive). A web font the page loaded (`viewport.web_fonts`, the families of the loaded `@font-face`
+  fonts) must have a fonts lock entry with the same `family` (case-insensitive) or a ledger entry with that `library`;
+  the hit names the first text run that uses it. One hit per item, library, or font per extract.
 
 ## License — `rights.license-unknown`, `rights.license-hint-only`
 

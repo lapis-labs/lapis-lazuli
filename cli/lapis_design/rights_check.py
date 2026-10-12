@@ -283,8 +283,9 @@ def _symbol_allowed(text: str, pos: int, name: str, entries: list[dict]) -> bool
                and (e["mark"]["relationship"] == "own" or e["mark"]["authorization"] == "confirmed"))
 
 
-def check_render(extract: dict, ledger: dict | None) -> list[dict]:
-    """Remote media and icon libraries without a ledger entry; mark symbols without approved guidance.
+def check_render(extract: dict, ledger: dict | None, lock: dict | None = None) -> list[dict]:
+    """Remote media and icon libraries without a ledger entry; web fonts the page loaded without a fonts lock
+    entry (by family, or an icon library of the ledger); mark symbols without approved guidance.
     Only our own renders are checked; reference captures are skipped."""
     if (extract.get("source") or {}).get("kind") != "render":
         return []
@@ -296,6 +297,7 @@ def check_render(extract: dict, ledger: dict | None) -> list[dict]:
     fallback_hosts = {h for e in entries for h in e.get("hosts", [])}
     phashes = [p for e in entries for p in e.get("phashes", [])]
     libraries = {e["library"].casefold() for e in entries if e.get("library")}
+    locked = {e["family"].casefold() for e in (lock or {}).get("fonts", []) if e.get("family")}
     out, seen = [], set()
 
     def add(key: tuple, hit: dict) -> None:                        # one hit per subject across viewports
@@ -317,6 +319,13 @@ def check_render(extract: dict, ledger: dict | None) -> list[dict]:
             if icon.get("library") and icon["library"].casefold() not in libraries:
                 add(("library", icon["library"].casefold()), _hit("no-provenance", "render", box["id"],
                                                                   f"icons from {icon['library']} not in the asset ledger"))
+        for family in vp.get("web_fonts", []):
+            if family.casefold() in locked or family.casefold() in libraries:
+                continue
+            user = next((r for r in vp.get("text", []) if (r.get("font") or {}).get("rendered", "").casefold() == family.casefold()
+                         or (r.get("font") or {}).get("requested", "").casefold() == family.casefold()), None)
+            add(("font", family.casefold()), _hit("no-provenance", "render", (user or {}).get("box") or family,
+                                                  f"web font {family!r} loaded on the page has no fonts lock entry"))
         for run in vp.get("text", []):
             text = run.get("text", "")
             for ch, name in SYMBOLS.items():
@@ -339,7 +348,7 @@ def check(ledger: dict | None, lock: dict | None, root: Path | None, today: dt.d
     for f in (lock or {}).get("fonts", []):
         hits += check_font(f, root)
     for x in extracts or []:
-        hits += check_render(x, ledger)
+        hits += check_render(x, ledger, lock)
     return hits
 
 
