@@ -226,13 +226,16 @@ def main(argv=None, prog="lapis-design draft check") -> int:
     parser.add_argument("--root", type=Path, default=Path("."))
     parser.add_argument("--task", required=True)
     args = parser.parse_args(argv)
-    from lapis_design import integrity, owner
+    from lapis_design import integrity, owner, slice_step
 
     integrity.observe_task(args.root.resolve(), args.task, "draft check")    # before anything is computed from the plan
     errors, summaries = check(args.root.resolve(), args.task)
     report = {"task": args.task, "reviewed": not errors, "problems": errors, "pages": summaries}
-    if not errors:
+    minimal = bool(errors) and slice_step.budget_fired(args.root.resolve(), args.task) is not None
+    if minimal:                       # the slice budget fired: the owner sees the slice now, its defects disclosed in the block
+        report["minimal"] = True
+    if not errors or minimal:
         _, sha8 = owner.write(args.root.resolve(), args.task)             # the owner reads this block, not a summary
         report["owner_block"] = {"path": owner.path(Path("."), args.task).as_posix(), "marker": f"{owner.MARKER} {sha8}"}
     print(json.dumps(report, ensure_ascii=False, indent=2))
-    return 1 if errors else 0
+    return 1 if errors and not minimal else 0

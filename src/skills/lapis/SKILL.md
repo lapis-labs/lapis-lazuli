@@ -453,6 +453,10 @@ slice is one page, built from the pick the owner made at the direction turns.
    `.lapis/questions/<task>.md`, first line `lapis-questions: approval`, link the page, paste the owner block, put each
    open core finding to the owner as a decision, and say that copy is provisional until it has been seen rendered. Past
    either limit every page write is refused until that question exists; it is never refused to write under `.lapis/`.
+   The two limits are separate triggers (minutes, page writes); `state.slice_questions` records which fired first and
+   how long the question took. Once one has fired, do not finish the review first: `lapis-design draft check` writes a
+   minimal owner block even when the review is not current, the block's `## Not fully reviewed` section discloses what is
+   not, and `next` lets that question wait. The owner sees the slice with its defects named; the seal still needs the review.
 5. Record the owner's reply in `.lapis/answers/<task>.md` under its own heading, in their words. A plain approval is an
    untagged item (`- Approved the slice: <their words>`); feedback that changes what the owner wants is `[declared]`;
    their acknowledgment of the gaps is `- Gaps seen (lapis-owner-block <sha8>): "<their words>"`; their decision on an

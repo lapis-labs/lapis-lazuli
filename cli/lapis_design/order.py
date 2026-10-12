@@ -311,6 +311,14 @@ def slice_writes(root: Path, task: str, since: str) -> int:
     return count if isinstance(count, int) and not isinstance(count, bool) and count > 0 else 0
 
 
+def slice_writes_reached(root: Path, task: str, since: str) -> str | None:
+    """When the page write that made `slice_step.WRITES` went through while the clock that started at `since` ran, as the
+    hook stamped it, or None."""
+    found = load(root, task).get("slice_writes")
+    at = found.get("reached_at") if isinstance(found, Mapping) and found.get("since") == since else None
+    return at if isinstance(at, str) else None
+
+
 def _held_refusal(reason: str) -> dict[str, Any]:
     return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
                                    "permissionDecisionReason": reason}}
@@ -348,7 +356,10 @@ def _held(project: Path, task: str, written: list[str], env: Mapping[str, str]) 
         return _held_refusal(first + f"Build only the slice files declared in {drafts}; {outside[0]} is not one of them. " + ask)
     state = load(project, task)
     count = slice_writes(project, task, info["since"]) + 1
-    _save(project, task, {**state, "slice_writes": {"since": info["since"], "count": count}})
+    entry = {"since": info["since"], "count": count}
+    if (reached := slice_writes_reached(project, task, info["since"])) or count >= slice_step.WRITES:
+        entry["reached_at"] = reached or slice_step._stamp(slice_step.now())
+    _save(project, task, {**state, "slice_writes": entry})
     return None
 
 

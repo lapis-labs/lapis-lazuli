@@ -376,6 +376,20 @@ def _shown(root: Path, task: str) -> list[str]:
     return out
 
 
+def _unreviewed(root: Path, task: str) -> list[str]:
+    """The slice shown before its review was current, because its budget ran out: why, and what the draft check says is
+    not current. No section while the review is current or the budget has not fired."""
+    found = slice_step.unreviewed(root, task)
+    if found is None:
+        return []
+    why, errors = found
+    return ["## Not fully reviewed",
+            f"- The slice budget ran out ({why}), so you see the slice before its review is current; nothing here is "
+            "approved by being shown.",
+            *[f"  - {_cut(error, 300)}" for error in errors[:5]],
+            *([f"  - and {len(errors) - 5} more"] if len(errors) > 5 else [])]
+
+
 def _roughs(root: Path, task: str) -> list[str]:
     """The rough first views the owner picked among, sealed, and what changed in them after the seal (`diverge.py`); no
     section when the run made none."""
@@ -425,6 +439,7 @@ def _build(root: Path, task: str, result: Mapping[str, Any] | None) -> tuple[str
     sections = [
         [f"# Owner block: {task}"],
         _outcome(root, task, record, sources, decisions),
+        _unreviewed(root, task),
         _decisions(root, task, decisions, record),
         _gaps(found, done),
         _core_open(root, task),

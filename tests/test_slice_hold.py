@@ -134,6 +134,78 @@ def test_the_forty_first_page_write_is_refused_and_an_approval_question_with_the
     assert write(project) is None
 
 
+# ---- the write budget fires: a minimal block and question, defects disclosed, latency recorded
+
+def fired_by_writes(project) -> None:
+    """The slice declared, `next` has named it, and the 40 page writes went through: the budget has fired."""
+    declare(project)                                                                  # no review, so draft check has problems
+    step_of(project)
+    assert [write(project) for _ in range(40)] == [None] * 40
+    assert "40 page writes since" in refused(write(project))
+
+
+def test_before_the_budget_fires_a_stale_review_still_comes_back_as_the_review_step(project):
+    declare(project)
+    step_of(project)
+    ask(project, f"Approve this slice? {URL}", int(time.time()) + 5)
+    got = next_step.evaluate(project, TASK)
+    assert got["step"]["id"] == "draft-review" and "Before showing the draft" in got["step"]["why"]
+    assert "Not fully reviewed" not in owner.block(project, TASK)[0]
+
+
+def test_when_the_write_budget_fires_the_question_waits_with_a_block_that_discloses_the_missing_review(project):
+    fired_by_writes(project)
+    ask(project, f"Approve this slice? {URL}", int(time.time()) + 5)
+    got = next_step.evaluate(project, TASK)
+    assert got["state"] == "waiting-for-user" and got["step"]["id"] == "waiting-for-user"
+    text = got["owner_block"]
+    assert "## Not fully reviewed" in text and "40 page writes" in text and "draft review" in text
+    assert write(project) is None                                                      # the question lifts the hold
+
+
+def test_draft_check_writes_a_minimal_block_when_the_budget_fired_and_none_before(project, capsys):
+    declare(project)
+    step_of(project)
+    assert draft.main(["--root", str(project), "--task", TASK]) == 1
+    assert "owner_block" not in capsys.readouterr().out
+    fired_by_writes(project)
+    capsys.readouterr()
+    assert draft.main(["--root", str(project), "--task", TASK]) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["reviewed"] is False and report["minimal"] is True and report["problems"]
+    assert "## Not fully reviewed" in (project / report["owner_block"]["path"]).read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("trigger, minutes_in, asked_after", [("writes", 5, 14), ("minutes", 0, 70)])
+def test_the_latency_of_the_question_is_recorded_against_the_trigger_that_fired(project, monkeypatch, trigger, minutes_in,
+                                                                                asked_after):
+    declare(project)
+    step_of(project)
+    started = slice_step._parse(integrity.read_state(project, TASK)["slice_since"])
+    if trigger == "writes":
+        later(project, monkeypatch, minutes_in)
+        assert [write(project) for _ in range(40)] == [None] * 40
+    later(project, monkeypatch, asked_after)
+    ask(project, f"Approve this slice? {URL}", int(started.timestamp()) + asked_after * 60)
+    assert next_step.evaluate(project, TASK)["state"] == "waiting-for-user"
+    (row,) = integrity.read_state(project, TASK)["slice_questions"].values()
+    fired = started + timedelta(minutes=minutes_in if trigger == "writes" else 60)
+    assert row["trigger"] == trigger and row["trigger_at"] == slice_step._stamp(fired)
+    assert row["asked_at"] == slice_step._stamp(started + timedelta(minutes=asked_after))
+    assert row["latency_s"] == (asked_after - (minutes_in if trigger == "writes" else 60)) * 60
+
+
+def test_a_question_asked_before_any_trigger_fired_has_no_latency(project, checked, monkeypatch):
+    declare(project)
+    step_of(project)
+    started = slice_step._parse(integrity.read_state(project, TASK)["slice_since"])
+    ask(project, f"Approve this slice? {URL}", int(started.timestamp()) + 60)
+    later(project, monkeypatch, 1)
+    next_step.evaluate(project, TASK)
+    (row,) = (integrity.read_state(project, TASK) or {}).get("slice_questions", {}).values()
+    assert row["trigger"] is None and row["latency_s"] == 0
+
+
 def test_a_question_without_the_current_block_or_without_the_page_does_not_lift_it(project, monkeypatch):
     declare(project)
     step_of(project)                                                                 # `next` names the slice: the clock starts

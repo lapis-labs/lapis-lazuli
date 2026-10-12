@@ -272,6 +272,9 @@ def _evaluate(root: Path, task: str, page: str | None = None, integrity_error: s
         return {**result, "state": "needs-step", "step": asked, "reason": asked["why"]}
     if approval and (shown or draft.path(root, task).is_file()):
         errors, summaries = draft.check(root, task, asked=shown)
+        if errors and slice_step.budget_fired(root, task) is not None:
+            result["draft_defects"] = errors            # the owner block discloses them; a fired budget does not wait for a review
+            errors = []
         if errors:
             review = _step(draft.STEP, "Before showing the draft, review the exact page: " + _brief(errors)
                            + ". Record the review and summarize it, including unresolved findings, to the owner.",
@@ -304,9 +307,13 @@ def _evaluate(root: Path, task: str, page: str | None = None, integrity_error: s
             return {**result, "state": "needs-step", "step": serve, "reason": serve["why"]}
         if (cut := slice_step.tall(root, task, shown)) and slice_step.owed(root, task, _plan_or_none(root, task)):
             return {**result, "state": "needs-step", "step": slice_step.step(task, cut), "reason": cut}
+    if approval and slice_step.owed(root, task, _plan_or_none(root, task)):
+        slice_step.observe_question(root, task, found)
     wait = _step(waiting.STEP, waiting.why(task, found, step["id"]) +
                  (" Include the recorded draft review summary and every unresolved finding in that message."
-                  if result.get("draft_review") else ""))
+                  if result.get("draft_review") else "")
+                 + (" The slice budget ran out before its review was current: say so in that message, the owner block lists "
+                    "what is not current." if result.get("draft_defects") else ""))
     return {**result, "state": waiting.STEP, "step": wait, "then": step, "waiting": found, "reason": wait["why"]}
 
 

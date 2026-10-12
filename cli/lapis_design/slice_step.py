@@ -11,8 +11,11 @@ From the first time `next` names `slice` until the slice is sealed or skipped, t
 the pre-write hook in `order.py`): it may write only the files its slice page declares in `.lapis/drafts/<task>.yaml`
 (`direction: new`, with its `url` and `sources`, at most `MAX_FILES`). The slice must also reach the owner as a waiting
 `approval` question that links the page and carries the current owner block: it is overdue after `MINUTES` minutes or
-`WRITES` page writes since the clock started (`overdue`), and from then on every page write is refused until that
-question exists. The clock starts when `next` first names `slice` (`state.slice_since`), at every owner reply that asks
+`WRITES` page writes since the clock started (`overdue`: two independent triggers), and from then on every page write is
+refused until that question exists. Once either budget has fired the question never waits for a current review: `draft
+check` writes a minimal block, `next` lets the question wait, and the block's `## Not fully reviewed` section discloses
+what is not current (`unreviewed`). `state.slice_questions` records, per question, which budget fired first, when, when the
+question was asked, and the latency between (`observe_question`). The clock starts when `next` first names `slice` (`state.slice_since`), at every owner reply that asks
 for a revision, and at every answered set of questions of any kind (the log of `asks.py`). An untagged
 `- Slice skipped: "<owner words>"` line in the answers file lifts the hold and the step.
 
@@ -33,7 +36,7 @@ import json
 import os
 import posixpath
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -214,17 +217,73 @@ def clock_start(root: Path, task: str) -> datetime | None:
 
 
 def overdue(root: Path, task: str) -> str | None:
-    """Why the slice is overdue (`MINUTES` minutes or `WRITES` page writes since the clock started), or None."""
+    """Why the slice is overdue, or None. The two budgets are independent triggers, each its own: more than `MINUTES`
+    minutes of elapsed time since the clock started, and `WRITES` page writes since then. Either one is enough; when both
+    have fired the message names both."""
     start = clock_start(root, task)
     if start is None:
         return None
     minutes = (now() - start).total_seconds() / 60
     writes = order.slice_writes(root, task, _stamp(start))
-    if minutes > MINUTES:
-        return f"{int(minutes)} minutes since {_stamp(start)}"
+    found = []
     if writes >= WRITES:
-        return f"{writes} page writes since {_stamp(start)}"
-    return None
+        found.append(f"{writes} page writes since {_stamp(start)}")
+    if minutes > MINUTES:
+        found.append(f"{int(minutes)} minutes since {_stamp(start)}")
+    return " and ".join(found) or None
+
+
+def budget_fired(root: Path, task: str, env: Mapping[str, str] = os.environ) -> str | None:
+    """Why the slice budget has fired (`overdue`) while a slice is owed, whether or not the owner already has the question,
+    else None. A fired budget is what lets the owner see the slice before its review is current."""
+    from lapis_design.plan_check import read_plan
+
+    try:
+        plan = read_plan(root / ".lapis" / "plans" / f"{task}.yaml")
+    except (OSError, ValueError, yaml.YAMLError):
+        return None
+    return overdue(root, task) if owed(root, task, plan, env) else None
+
+
+def unreviewed(root: Path, task: str, env: Mapping[str, str] = os.environ) -> tuple[str, list[str]] | None:
+    """`(why the budget fired, the problems of the draft check)` when the budget has fired and the draft's review is not
+    current, else None. The owner block lists these, so the owner sees the slice with its defects disclosed."""
+    if (why := budget_fired(root, task, env)) is None:
+        return None
+    errors, _ = draft.check(root, task, asked=draft.links(root, task))
+    return (why, errors) if errors else None
+
+
+def _trigger_at(root: Path, task: str, start: datetime, asked: datetime) -> tuple[str | None, datetime | None]:
+    """Which budget fired first by `asked`, and when: the elapsed-time one at `start + MINUTES`, the write one when the
+    `WRITES`th page write went through. `(None, None)` when neither had fired by then."""
+    fired = []
+    if asked > start + timedelta(minutes=MINUTES):
+        fired.append(("minutes", start + timedelta(minutes=MINUTES)))
+    if (reached := _parse(order.slice_writes_reached(root, task, _stamp(start)))) is not None and reached <= asked:
+        fired.append(("writes", reached))
+    return min(fired, key=lambda item: item[1], default=(None, None))
+
+
+def observe_question(root: Path, task: str, found: Mapping[str, Any]) -> None:
+    """Record once, in `state.slice_questions`, how long the owner waited for the slice question `found`: the budget that
+    fired first, when, when the question was asked (the questions file's time), and the seconds between. Without a fired
+    budget the latency is 0. A state that cannot be written is left as it was."""
+    state = integrity.read_state(root, task) or {}
+    seen = dict(state.get("slice_questions") or {})
+    start = clock_start(root, task)
+    entry = next((e for e in asks.load(root, task)["sets"] if e["set"] == found["id"]), None)
+    asked = _parse((entry or {}).get("asked"))
+    if found["id"] in seen or start is None or asked is None:
+        return
+    trigger, at = _trigger_at(root, task, start, asked)
+    seen[found["id"]] = {"round": state.get("slice_rounds") or 1, "trigger": trigger,
+                         "trigger_at": _stamp(at) if at else None, "asked_at": _stamp(asked),
+                         "latency_s": round((asked - at).total_seconds()) if at else 0}
+    try:
+        integrity.mark_slice(root, task, slice_questions=seen)
+    except Exception:
+        pass
 
 
 def waiting_for_owner(root: Path, task: str) -> bool:
@@ -307,7 +366,8 @@ def check(root: Path, task: str, plan: Any, env: Mapping[str, str] = os.environ)
         late = None if waiting_for_owner(root, task) else overdue(root, task)
         return (f"The slice is overdue ({late}): every page write is refused until the owner has the question. Ask now "
                 "with what is built, as the questions file of kind `approval` that links the page and pastes the owner "
-                "block, and stop. " if late else "") + text(task)       # nothing was asked yet, or the owner has not answered
+                "block, and stop. A review that is not current does not stop you: `lapis-design draft check` writes the block "
+                "anyway and the block discloses what is not current. " if late else "") + text(task)       # nothing was asked yet, or the owner has not answered
     shown = draft.links(root, task)
     if not shown:
         return ("The owner answered, but the questions link no rendered page, so no slice was shown. " + text(task))
