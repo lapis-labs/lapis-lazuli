@@ -20,6 +20,7 @@ CHECKS = {
     ("release", "check"): "lapis_design.release_check",
     ("draft", "check"): "lapis_design.draft",
     ("critic", "packet"): "lapis_design.critic_packet",
+    ("worker", "check"): "lapis_design.workers",
     ("diverge", "start"): "lapis_design.diverge",
     ("diverge", "resample"): "lapis_design.diverge",
     ("diverge", "variant"): "lapis_design.diverge",

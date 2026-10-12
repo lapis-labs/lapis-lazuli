@@ -60,7 +60,10 @@ version 1, which keeps only what the CLI and the critic can check.
    `lapis-design render motion <url> --task <task> [--lang <tag>]`, once for each locale shown, writes the scripted-scroll
    playback, settled and reduced-motion captures at 390 and 1440, and the pinned scenes' content and runway
    (`../shared/render/motion.schema.yaml`); the packet refuses a moving page without it, or with a recording of another
-   build, and the critic judges each pinned scene by content and dwell. Dispose its findings too. If
+   build, and the critic judges each pinned scene by content and dwell. The critic's task carries the delegated-work rules
+   (`../shared/review/worker-rules.md`), which `critic packet` prints; run `lapis-design worker check --task <task>
+   --transcript <file>` on each delegated agent's transcript you can read, and tell the owner what you could not check.
+   Dispose its findings too. If
    none ran, the draft is not reviewed; report the missing prerequisite, never invent a pass. A small iteration
    needs no critic; one attached to it is checked the same way.
 

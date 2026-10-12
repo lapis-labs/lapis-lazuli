@@ -29,7 +29,8 @@ from urllib.parse import unquote, urlsplit
 
 import yaml
 
-from lapis_design import attempts, brief, critic_packet, direction, diverge, draft, gaps, gate, integrity, requirements, slice_step
+from lapis_design import (attempts, brief, critic_packet, direction, diverge, draft, gaps, gate, integrity, requirements,
+                          slice_step, workers)
 
 MARKER = "lapis-owner-block"
 LIST_MAX = 15
@@ -247,6 +248,7 @@ def _integrity(root: Path, task: str, sources: list[tuple[str, str]], error: str
     if order.tampered(root, task):
         out.append("- the order record `.lapis/order/" + task + ".json` was edited outside lapis-design: its page-write "
                    "counts are not trusted")
+    out += workers.lines(root, task)
     out.append(f"- {len(protected)} protected changes observed, {len(flagged)} listed here, {len(since)} since the slice.")
     out += lines
     if since:

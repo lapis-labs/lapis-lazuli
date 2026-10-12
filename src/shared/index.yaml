@@ -41,6 +41,14 @@ items:
       lps-brief: summary
       lps-copy: summary
 
+  - id: worker-rules
+    kind: contract
+    path: review/worker-rules.md
+    note: the rules every delegated task carries (no reading check source, process ids only), what the CLI checks of them, and what it cannot
+    consumers:
+      lapis: full
+      ultramarine: full
+
   - id: handoff-protocol
     kind: contract
     path: handoff/HANDOFF.md

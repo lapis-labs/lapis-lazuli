@@ -42,7 +42,7 @@ from typing import Any, Mapping
 
 import yaml
 
-from lapis_design import references, requirements, shared_dir
+from lapis_design import references, requirements, shared_dir, workers
 
 STEP = "diverge"
 MIN_K, MAX_K = 2, 4                    # roughs a `start` makes
@@ -961,7 +961,8 @@ def _how(task: str) -> str:
             f"(shared/diverge/card.schema.yaml) next to it. Render each: `lapis-design render check "
             f".lapis/diverge/{task}/C<n>/index.html --task {task}-C<n> --width 390 --width 1440`. The roughs differ in how "
             "the core objects are represented, how color is allocated, and what the first view carries against the later "
-            "scenes, not in decoration, order, or finish.")
+            "scenes, not in decoration, order, or finish. Put these lines into every worker's task verbatim "
+            "(`shared/review/worker-rules.md`):\n" + workers.rules())
 
 
 def step(root: Path, task: str, reason: str) -> dict[str, Any]:

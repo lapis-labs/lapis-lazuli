@@ -12,7 +12,7 @@ import yaml
 from PIL import Image
 
 import lapis_design
-from lapis_design import critic_packet, shared_dir, summary
+from lapis_design import critic_packet, shared_dir, summary, workers
 from lapis_design.cli import main as cli_main
 from procedure_support import TASK, make_project, refresh_critic, row_id, save, update, write_requirements
 
@@ -327,6 +327,7 @@ def test_the_command_observes_first_then_writes_the_packet_the_critic_report_nam
     sha = critic_packet.digest(file.read_bytes())
     assert f".lapis/critic/{TASK}.packet.json (sha256 {sha}): 2 requirement rows, 0 changes, 0 disputes" in out
     assert f"target.packet: {{path: .lapis/critic/{TASK}.packet.json, sha256: {sha}}}" in out
+    assert "shared/review/worker-rules.md" in out and all(line in out for line in workers.rules().splitlines())
     assert file.read_bytes() == critic_packet.build(project, TASK, INPUTS)
 
 

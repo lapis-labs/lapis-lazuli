@@ -94,6 +94,17 @@ candidate names or section order. A reading/UI comparison does not approve a Han
 voice. Motion alternatives need actual playback of the same interaction and its control feedback,
 not only resting screenshots or a proposed timing number.
 
+## Rules this task carries
+
+You have not read the root skill, so these are yours too (`../shared/review/worker-rules.md`):
+
+- Do not open the source of a check (`lapis_design/lint`, `lapis_design/render`, `lapis_design/behavior_check`) to argue with a finding. A finding you think is wrong goes in `.lapis/disputes/<task>.yaml`; the other critic or the owner judges it.
+- Stop a process only by a process id a command recorded; never by pattern (`pkill`, `killall`, `pgrep`/`pidof`/`lsof`/`ps` into `kill`).
+- Say in your last message which of these you could not keep.
+
+The CLI sees only the transcripts it is given, and the owner block, which you do not read, is where it lists what it found.
+So your last message is the one place that says whether you kept these rules.
+
 ## A page that moves: judge the motion, not the flattened page
 
 When the packet has a `motion` section, the page moves (an animation, a box that moves at rest, or one hidden until scroll)

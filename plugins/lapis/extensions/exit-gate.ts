@@ -28,7 +28,15 @@ const STOP_ARGS = [...VERSION_ARGS, "stop"];
 const WRITE_ARGS = [...VERSION_ARGS, "pre-write"];
 const TIMEOUT_MS = 60_000; // the Stop hook's timeout in plugins/lapis/hooks/hooks.json
 const WRITE_TIMEOUT_MS = 20_000; // inside the hosts' 30 second budget for a tool_call handler
-const WRITE_TOOLS: Record<string, true> = { write: true, edit: true, multiedit: true, multi_edit: true, ast_edit: true, apply_patch: true };
+const WRITE_TOOLS: Record<string, true> = {
+	write: true,
+	edit: true,
+	multiedit: true,
+	multi_edit: true,
+	ast_edit: true,
+	apply_patch: true,
+	bash: true, // the same hook refuses a shell command that stops a process by pattern (workers.py)
+};
 
 interface Answer {
 	decision?: string;

@@ -70,7 +70,8 @@ def text(task: str) -> str:
         f"the owner block unchanged, and stop, within {MINUTES} minutes or {WRITES} page writes: past either, every page "
         "write is refused until that question exists. Copy is provisional until the owner has seen it rendered. The "
         "block lists the open core findings and the decisions the owner did not make: put each core finding to them as "
-        "a decision. When the owner approves, record `approval: {state: approved}` in "
+        "a decision. Anything you delegate to build the slice carries the rules of `shared/review/worker-rules.md` "
+        "(`lapis-design worker check` reads a worker's transcript against them). When the owner approves, record `approval: {state: approved}` in "
         f"the plan and their acknowledgment of the gaps in the answers file, and run `lapis-design next --task {task}` "
         "again: it seals the slice. When they ask for changes, `next` names the next round.")
 

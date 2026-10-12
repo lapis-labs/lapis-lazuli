@@ -27,7 +27,7 @@ from pathlib import Path, PurePosixPath
 import yaml
 from jsonschema import Draft202012Validator
 
-from lapis_design import asks, direction, gaps, motion, shared_dir
+from lapis_design import asks, direction, gaps, motion, shared_dir, workers
 
 TASK = re.compile(r"[a-z0-9][a-z0-9-]{1,63}")
 # What the critic never reads: the maker's plan and records. The packet carries what it may know of them.
@@ -680,7 +680,10 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design critic packet"
     packet, shown = json.loads(data), _rel(root, out)
     print(f"critic packet: {shown} (sha256 {digest(data)}): {len(packet['requirements']['rows'])} requirement rows, "
           f"{len(packet['changes'])} changes, {len(packet['disputes'])} disputes, {len(packet['inputs'])} input files")
-    print("  give the critic this packet and the files it lists, nothing else; its report names it:")
+    print("  give the critic this packet and the files it lists, nothing else, and put these lines into its task verbatim "
+          "(shared/review/worker-rules.md):")
+    print("\n".join(f"    {line}" for line in workers.rules().splitlines()))
+    print("  its report names the packet:")
     print(f"  target.packet: {{path: {shown}, sha256: {digest(data)}}}")
     return 0
 

@@ -547,6 +547,15 @@ both. A dispute does not clear the finding.
 Never stop a process by pattern (`pkill`, `killall`, or a `pgrep` piped to `kill`): other work shares the machine. Stop
 only a process id a command recorded, such as the one in `.lapis/logs/<task>.behavior.pid`.
 
+These two rules bind every agent you delegate to, not only you: a rough worker, a critic, and a builder start blank and
+have not read this skill. Put the lines of `shared/review/worker-rules.md` (**The rules**) into each delegated task
+verbatim; `lapis-design diverge` and `lapis-design critic packet` print them where they name a delegation. The CLI checks
+what it can: the pre-write hook refuses a shell command that kills by pattern, and for a subagent whose transcript it can
+read (`SubagentStop` in Claude Code, or a file you give `lapis-design worker check --task <task> --transcript <file>`) it
+records a kill by pattern and any tool call that touched a check's source, and the owner block lists them. It cannot see a
+harness that gives it no transcript, a read in the main session, or a kill hidden in a script; there the rule rests on the
+text above and on the critic's question to you, which you answer straight.
+
 All widths, all probes, the rights check, and fresh license lookups belong to the release gate
 (`ulm-release`), not to each iteration.
 
