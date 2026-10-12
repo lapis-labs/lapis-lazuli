@@ -458,7 +458,7 @@ class _Gen:
         return _render(SH_TEMPLATE, values)
 
     def uses_among(self) -> bool:
-        return any(st.get("plugins") for h in self.harnesses for ph in ("install", "update", "uninstall")
+        return any(st.get("plugins") for h in self.harnesses for ph in ("install", "update", "uninstall", "verify")
                    for st in h.get(ph, []))
 
     # --- install.ps1 -------------------------------------------------------------------------------

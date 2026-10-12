@@ -197,6 +197,7 @@ def test_dry_run_runs_nothing_and_prints_the_filled_commands(doc, machine, shell
     m = machine()
     r = m.sh("--dry-run", shell=shell)
     assert r.returncode == 0, r.stdout + r.stderr
+    assert r.stderr == "", r.stderr
     assert m.calls(skip=()) == [] and m.home_files() == []
     every = [p["name"] for p in doc["plugins"]]
     assert printed(r.stdout) == expected(doc, {"claude-code", "codex"}, every)
@@ -208,6 +209,17 @@ def test_dry_run_runs_nothing_and_prints_the_filled_commands(doc, machine, shell
     assert f"would ask, then copy: https://raw.githubusercontent.com/lapis-labs/lapis-lazuli/release/" \
            f"dist/codex/agents/ulm-critic.toml -> {critic}" in r.stdout
     assert "Open /hooks in Codex" in r.stdout and "dry run: nothing was changed" in r.stdout
+
+
+@pytest.mark.parametrize("shell", SHELLS)
+@pytest.mark.parametrize("plugin", ["ultramarine", "lapis"])
+def test_dry_run_checks_only_the_selected_codex_critic_without_unknown_functions(machine, shell, plugin):
+    m = machine()
+    r = m.sh("--dry-run", "--harness", "codex", "--plugin", plugin, shell=shell)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert r.stderr == "", r.stderr
+    assert ("check that ~/.codex/agents/ulm-critic.toml exists" in r.stdout) == (plugin == "ultramarine")
+    assert m.calls(skip=()) == [] and m.home_files() == []
 
 
 def test_real_run_runs_the_same_commands_and_asks_before_copying(doc, machine):
@@ -557,6 +569,7 @@ def test_ps1_dry_run_prints_the_same_commands(doc, machine):
     before = m.pwsh_home()
     r = m.pwsh("--dry-run")
     assert r.returncode == 0, r.stdout + r.stderr
+    assert r.stderr == "", r.stderr
     assert m.calls(skip=()) == [] and m.home_files() == before
     assert printed(r.stdout) == expected(doc, {"claude-code", "codex"}, [p["name"] for p in doc["plugins"]])
     assert "would ask, then copy:" in r.stdout and "dry run: nothing was changed" in r.stdout

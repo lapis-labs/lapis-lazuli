@@ -88,6 +88,14 @@ skips_experimental() {
   [ "$LL_MODE" = install ] && [ -z "$LL_WANT_H" ] && in_list "$1" "$LL_EXPERIMENTAL"
 }
 
+# pick LIST: the selected plugins that are in LIST, in catalog order.
+pick() {
+  LL_picked=
+  for LL_p in $LL_PLUGINS; do
+    if in_list "$LL_p" "$1"; then LL_picked="${LL_picked:+$LL_picked }$LL_p"; fi
+  done
+  printf '%s' "$LL_picked"
+}
 selected() { in_list "$1" "$LL_PLUGINS"; }
 all_plugins() { [ "$LL_PLUGINS" = "$LL_ALL_PLUGINS" ]; }
 
