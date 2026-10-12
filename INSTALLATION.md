@@ -165,7 +165,7 @@ What gets installed:
 - Session summary: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `SessionStart startup|resume|clear|compact`. Matchers are regular expressions; the fork alternative never matches here; prints nothing outside a lapis project (a `.lapis` folder at or above the working directory, within the git root); inside one it prints font inventory counts only, framed as data, with no family name or other string from a font file.
 - Separate critic: agent file that the install script copies, from `dist/codex/agents/`. Plugins cannot ship subagents; the installer copies the TOML file.
 - Exit gate: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `Stop`. `lapis-design-hook --plugin-version \<version> stop` continues the agent with the next step only when LAPIS_UNATTENDED=1 and says so in one line otherwise; the lapis plugin's hook needs trust like the lazuli one; Stop takes no matcher; version skew skips the gate.
-- Write guard: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `PreToolUse apply_patch`. The same hook as in Claude Code: Codex reports every file edit as `apply_patch` (its matchers also take Edit and Write) with the patch text in `tool_input.command`, and takes the same `permissionDecision: deny`; the lapis plugin's hook needs trust like the others.
+- Write guard: plugin hook, from `plugins/<plugin>/hooks/hooks.json`, event `PreToolUse apply_patch`. The same hook as in Claude Code, which also takes `Bash` for shell commands (the matcher also reaches Codex's shell tool; verified 2026-10-13): Codex reports every file edit as `apply_patch` (its matchers also take Edit and Write) with the patch text in `tool_input.command`, and takes the same `permissionDecision: deny`; the lapis plugin's hook needs trust like the others.
 - MCP: plugin MCP configuration, from `plugins/lazuli/.mcp.json`.
 
 The harness also reads skills from: `.agents/skills (cwd up to the repo root)`, `~/.agents/skills`.
@@ -247,7 +247,6 @@ Remove `~/.codex/agents/ulm-critic.toml`. Only with the `ultramarine` plugin. Th
 
 - which shell runs hook commands on Windows (the command is a plain program on PATH, so any should do)
 - browser and cache access on this host with 0.159.3 have not been reproduced: in the 2026-10-01 pilot with 0.159.2, headless `codex exec` under `workspace-write` with approval `never` failed to start Chromium with `bootstrap_check_in org.chromium.Chromium.MachPortRendezvousServer: Permission denied (1100)`, so render, behavior, and critic checks did not run; the lazuli user cache was also inaccessible
-- that the plugin's hooks/hooks.json `PreToolUse` entry runs after an install and trust: the 2026-10-04 check (verified below) gave Codex the same matcher and command through `-c hooks.PreToolUse=...`, not through an installed plugin
 
 Sources (checked 2026-09-25): <https://developers.openai.com/plugins/build/plugins>, <https://learn.chatgpt.com/docs/hooks>, <https://developers.openai.com/codex/skills>, <https://developers.openai.com/codex/subagents>.
 

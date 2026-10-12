@@ -266,6 +266,9 @@ between minor versions; render extraction is v1 and the other contract formats a
 
 ### Documentation
 
+- Codex hook coverage verified: in `codex exec` 0.162.0 with the lapis plugin installed from a checkout, the plugin's `PreToolUse`
+  entry (matcher `Write|Edit|MultiEdit|apply_patch|Bash`) fires for shell commands and refuses `pkill -f ...`; the manifest
+  needs no other matcher name. `install/harnesses.yaml` records it as verified and drops the matching unverified line.
 - Refresh both README plan-check transcripts from the documented no-font-database examples.
   Remove stale rule/detector inventory totals, complete the lazuli command summary, and clarify
   open-font fetching, procedure completion, contract versions, and source-snapshot versus release scope.
