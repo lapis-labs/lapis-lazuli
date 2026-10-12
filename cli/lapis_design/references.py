@@ -30,7 +30,8 @@ A run with no network records that with `lapis-design next --unavailable referen
 
 A run whose user's words could forbid lookups during the work, with nobody to ask, declines the step instead with
 `lapis-design next --declined references --brief-line "<the line>"`. The line must be in what the run recorded of the
-request, the brief record or the plan's `brief.constraints` (`declined_problem`); `next` then counts the step done,
+request, the brief record or the plan's `brief.constraints` (`declined_problem`) and be about network access, lookups, or external material (a line about photos or motion is
+no ground); `next` then counts the step done,
 the plan's `explorations` compare candidates from local material, and the finished run and `release check` report
 that no reference was looked at and why (`declined`).
 
@@ -412,6 +413,15 @@ def request_texts(root: Path, task: str, plan: Any = None) -> list[str]:
     return found
 
 
+# What a line has to be about to decline the step: no network, lookups, downloads or outside material, or
+# working only in the current folder. A line about anything else (layout, photos, motion) is no ground.
+_GROUND = re.compile(
+    r"network|internet|online|offline|\bweb\b|website|url|https?|download|fetch|look[- ]?ups?|look\s+(?:it|them|things|anything)?\s*up"
+    r"|search(?:es|ing)?\b|brows(?:e|ing)|external|third[- ]party|\bcdn\b|remote|outside|\bapis?\b|request"
+    r"|(?:current|this|project|working)\s+(?:folder|directory|dir)\b|\blocal(?:ly)?\b|only\s+(?:in|from|with|inside)\b",
+    re.IGNORECASE)
+
+
 def declined_problem(line: str, root: Path, task: str, plan: Any = None) -> str | None:
     """Why `line` cannot decline the step, or None when it can: it has to be a line of the request as the run
     recorded it (verbatim, white space aside) in the brief record or the plan's `brief.constraints`. The check
@@ -420,7 +430,11 @@ def declined_problem(line: str, root: Path, task: str, plan: Any = None) -> str 
     if len(_WORD.findall(line)) < waiting.MIN_WORDS and len(line) < 8:
         return f"{line!r} is too short to be a line of the request; quote the whole line"
     if any(line in _squash(text) for text in request_texts(root, task, plan)):
-        return None
+        if _GROUND.search(line):
+            return None
+        return (f"{line!r} is a line of the request, but not about network access, lookups, or external material, "
+                "so it is no ground to skip the references. Quote the line that forbids them (for example 'no network "
+                "requests' or 'work only in the current folder'), or run the step")
     return (f"{line!r} is not in the brief record {waiting.answers_path(Path('.'), task).as_posix()} or in the plan's "
             "brief.constraints, so it is not recorded as the user's words. Copy the line of the request into the "
             "record's `## Found` section exactly as the user wrote it, then run this again; a line the request does "

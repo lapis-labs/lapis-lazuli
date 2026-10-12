@@ -165,6 +165,9 @@ between minor versions; render extraction is v1 and the other contract formats a
 
 ### Fixed
 
+- `lapis-design next --declined references --brief-line` accepts only a line about network access, lookups, downloads, or
+  external material (or working only in the current folder). A line of the request about photos, layout, or motion no longer
+  skips the references step, and a stored decline with such a line stops standing.
 - A direction wait carries the owner block as an approval wait does: a `direction` questions file without the current
   `lapis-owner-block` line comes back as `owner-direction` with the paste step, and `next` returns `owner_block` for it.
 - A style or object name that holds a colon (`S1 neo-brutalism: bold and dynamic: a`) no longer hides the choice of a

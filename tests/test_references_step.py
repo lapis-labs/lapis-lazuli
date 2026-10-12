@@ -10,6 +10,7 @@ import re
 from pathlib import Path
 
 import pytest
+import yaml
 
 from lapis_design import attempts, gate, hints, next_step, order, references
 from lapis_design.cli import main as cli_main
@@ -373,13 +374,45 @@ def test_white_space_and_wrapping_do_not_make_a_line_another_line(bare):
     assert step_of(bare) == "plan"
 
 
+def _plan_with_constraint(root: Path, line: str) -> None:
+    plan = root / f".lapis/plans/{TASK}.yaml"
+    data = yaml.safe_load(plan.read_text(encoding="utf-8"))
+    data["brief"]["constraints"].append(line)
+    plan.write_text(yaml.safe_dump(data, allow_unicode=True), encoding="utf-8")
+
+
 def test_a_line_of_the_plans_brief_constraints_is_the_request_too(tmp_path, monkeypatch):
     monkeypatch.setenv("LAZULI_DB", "")
     root = make_project(tmp_path)
     (root / f".lapis/references/{TASK}.md").unlink()
+    _plan_with_constraint(root, "Work only in the current folder")
     assert step_of(root) == "references"
-    assert decline(root, "Photos show pieces straight out of the kiln") == 0       # brief.constraints of the example plan
+    assert decline(root, "Work only in the current folder") == 0
     assert step_of(root) != "references"
+
+
+@pytest.mark.parametrize("line", [
+    "Photos show pieces straight out of the kiln",          # in the plan's brief.constraints, but about photos
+    "Feedback only without entrance animation",
+    "Most visits are on mobile",
+], ids=["photos", "motion", "mobile"])
+def test_a_line_of_the_request_that_is_not_about_the_network_cannot_decline_the_step(tmp_path, monkeypatch, capsys, line):
+    """A run declined the references with a line it found in the brief, but the line said nothing of lookups."""
+    monkeypatch.setenv("LAZULI_DB", "")
+    root = make_project(tmp_path)
+    (root / f".lapis/references/{TASK}.md").unlink()
+    assert decline(root, line) == 2
+    assert "not about network access, lookups, or external material" in capsys.readouterr().err
+    assert not declined_file(root).exists() and step_of(root) == "references"
+
+
+@pytest.mark.parametrize("line", [
+    "Work only in the current folder", "Do not look anything up", "No web requests", "The site must work offline",
+    "Do not download fonts or images", "No external services",
+], ids=["folder", "lookup", "web", "offline", "download", "external"])
+def test_the_lines_that_forbid_lookups_in_other_words_still_decline_the_step(bare, line):
+    with_line(bare, f"- The request says: {line}.\n")
+    assert decline(bare, line) == 0 and step_of(bare) == "plan"
 
 
 def test_the_option_needs_its_line_and_is_not_the_other_record(bare, capsys):
