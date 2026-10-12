@@ -23,6 +23,8 @@ COMMANDS = {
     ("read",): "lazuli.read",
     ("ref",): "lazuli.ref",
     ("setup",): "lazuli.setup",
+    ("adobe",): "lazuli.adobe.cli",
+    ("owned",): "lazuli.owned",
 }
 
 
@@ -50,6 +52,8 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("read", help="read one requested web page as Markdown, within its access policy")
     sub.add_parser("ref", help="reference profiles: `lazuli ref capture|profile|system`")
     sub.add_parser("setup", help="install an optional font style embedding model")
+    sub.add_parser("adobe", help="opt-in relay to your Adobe Fonts connector through Codex: `lazuli adobe search|similar|details|styles|preview|activate|kit`")
+    sub.add_parser("owned", help="names of fonts you own but have not installed: `lazuli owned add|list|remove`")
     ap.parse_args(argv)
     return 2
 
