@@ -137,9 +137,15 @@ class GuardedBrowser:
     def __init__(self, browser: Browser, policy: HostPolicy):
         self._browser, self.policy = browser, policy
         self.refused: Refused | None = None
+        self.origins: set[str] = set()          # every http(s) origin any page of the run asked for
 
     def new_context(self, **options) -> _GuardedContext:
         return _GuardedContext(self, self._browser.new_context(**options))
+
+    def saw(self, url: str) -> None:
+        parts = urlsplit(url)
+        if parts.scheme in ("http", "https") and parts.netloc:
+            self.origins.add(f"{parts.scheme}://{parts.netloc}")
 
     def check(self) -> None:
         if self.refused is not None:
@@ -202,6 +208,7 @@ class _GuardedContext:
 
     def __init__(self, guard: GuardedBrowser, context: BrowserContext):
         self._guard, self._context = guard, context
+        context.on("request", lambda request: guard.saw(request.url))
 
     def new_page(self) -> Page:
         page = self._context.new_page()

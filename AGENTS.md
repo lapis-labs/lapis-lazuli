@@ -46,6 +46,9 @@ uv run lapis-design behavior check http://127.0.0.1:8000/ --task demo --plan .la
 uv run lapis-design render check http://127.0.0.1:8000/ --task demo --width 390   # narrowed -> .lapis/renders/demo.narrow.json
 uv run lapis-design behavior check http://127.0.0.1:8000/ --task demo --stub .lapis/stub.yaml \
   --probe controls --box b0123456789ab    # narrowed -> .lapis/behavior/demo.narrow.json (--limit N caps boxes)
+uv run lapis-design render check site/index.html --task demo --changed-since .lapis/renders/demo.json   # a served file's result is stored per build and reused (--fresh runs again); only the widths a stylesheet change can reach, else all
+uv run lapis-design behavior check site/index.html --task demo --stub .lapis/stub.yaml \
+  --changed-since .lapis/behavior/demo.json   # only the contexts (m 390 px, d 1440 px) the change can reach, else both
 uv run lapis-design stub serve .lapis/stub.yaml --port 8787   # same stub over HTTP, for server-rendered apps
 uv run lapis-design slop lint --plan .lapis/plans/demo.yaml --extract .lapis/renders/demo.json \
   --session .lapis/behavior/demo.json -o .lapis/lint/demo.json   # every layer whose input is given

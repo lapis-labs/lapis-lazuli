@@ -10,9 +10,11 @@ working directory.
 Layers default to every layer whose input was given (plan, source, render, behavior), plus review
 in review mode when a plan or an extract was given.
 
-Output follows src/shared/slop/finding.schema.yaml with tool `slop_lint`. The printed result is a summary: the
-verdict line, every blocking finding with its fix, and the other findings by rule id; `-o OUT` writes the full
-report as JSON and `--json` prints it. A run narrowed by
+Output follows src/shared/slop/finding.schema.yaml with tool `slop_lint`. The printed result is a bounded summary: the
+verdict line, severity counts, the build and cache state, what is new, changed, or gone since the report last at `-o`,
+every blocking finding (by rule with its exact count and ids when there are many), and the other findings by rule id;
+`-o OUT` writes the full report as JSON and `--json` prints it. With `-o`, a run whose inputs (files read, rules, day,
+tool) are unchanged shows the report again without linting; `--fresh` lints again. A run narrowed by
 --layer or --rule belongs in .lapis/lint/<task>.narrow.json, not in the full report the release gate reads.
 When an optional CJK analyzer runs, `analyzers` names its locale and installed version.
 A source or corpus file that is a link resolving outside the folder it was found in is not read, and a
@@ -24,7 +26,7 @@ Usage:
   lapis-design slop lint [--rules RULES] [--plan PLAN] [--extract EXTRACT] [--session SESSION]
                          [--source DIR] [--ledger LEDGER] [--lock LOCK] [--ref PROFILE ...]
                          [--corpus DIR|FILE] [--lazuli-db DB] [--mode create|review]
-                         [--layer LAYER ...] [--rule ID ...] [-o OUT] [--json]
+                         [--layer LAYER ...] [--rule ID ...] [-o OUT] [--json] [--fresh]
 """
 from __future__ import annotations
 
@@ -32,8 +34,11 @@ import argparse
 import fnmatch
 import functools
 import json
+import os
 import sqlite3
 import sys
+import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 from dataclasses import replace
@@ -41,12 +46,12 @@ from dataclasses import replace
 import yaml
 from jsonschema import Draft202012Validator, FormatChecker
 
-from lapis_design import shared_dir
+from lapis_design import check_cache, check_summary, shared_dir
 from lapis_design.lint import engine
 from lapis_design.lint.types import Context
 from lapis_design.plan_check import (default_lazuli_db, default_lock, expansion_problem, non_string_key_paths,
                                      read_design_text, read_plan)
-from lapis_design.summary import DISPUTE_FOOTER, finding_lines, floor_lines, rest_lines, skipped_note
+from lapis_design.summary import DISPUTE_FOOTER, floor_lines, rest_lines, skipped_note
 
 SCHEMAS = {
     "rules": ("slop", "rules.schema.yaml"),
@@ -291,14 +296,16 @@ def _scope_line(scope: dict) -> str:
     return "  scope: " + "; ".join(parts)
 
 
-def _summary_lines(report: dict, out: Path | None) -> list[str]:
-    """The printed result: the verdict, the scope, each blocking finding with its fix, the others by rule id."""
+def _summary_lines(report: dict, out: Path | None, extra: Iterable[str] = ()) -> list[str]:
+    """The printed result: the verdict, the scope, `extra` (severity counts, the build and cache state, what changed since
+    the last report), each blocking finding with its fix, the others by rule id."""
     s, findings = report["summary"], report["findings"]
     lines = [f"slop_lint: {s['blocking']} blocking, {s['total']} findings{skipped_note(s)}"
              + (f" -> {out}" if out else "")]
     if report.get("scope"):
         lines.append(_scope_line(report["scope"]))
-    lines += finding_lines((f for f in findings if f["blocking"]), here=report["target"].get("plan"))
+    lines += extra
+    lines += check_summary.blocker_lines([f for f in findings if f["blocking"]], here=report["target"].get("plan"))
     lines += rest_lines(findings)
     if report.get("scope", {}).get("draft"):
         lines.append(f"  separately: {len(report['specimen_findings'])} specimen findings; "
@@ -306,6 +313,92 @@ def _summary_lines(report: dict, out: Path | None) -> list[str]:
     if findings and not out:
         lines.append("  every finding in full: --json, or -o PATH to write the report")
     return lines + floor_lines(s) + [DISPUTE_FOOTER]
+
+
+def _read_report(path: Path | None) -> dict | None:
+    try:
+        document = json.loads(path.read_text(encoding="utf-8")) if path else None
+    except (OSError, ValueError):
+        return None
+    return document if isinstance(document, dict) and isinstance(document.get("findings"), list) else None
+
+
+def _inputs_digest(args: argparse.Namespace) -> str | None:
+    """The hash of everything this run reads, or None when something cannot be hashed (a missing input, a source tree
+    too large to hash): the run then happens as it always did. Beyond the files it is handed it covers the files a
+    plan, ledger, or lock names (the design contract, a capture, an asset), the lazuli database's identity, the day
+    (a rights notice expires), the rules, the tool, and the installed CJK analyzers."""
+    try:
+        lock = default_lock(Path("."), args.lock)
+        files = {"plan": args.plan, "extract": args.extract, "session": args.session, "ledger": args.ledger,
+                 "lock": lock, "draft": args.draft, "rules": args.rules or shared_dir() / "slop" / "rules.yaml"}
+        parts: dict[str, Any] = {"rules_path": str(args.rules) if args.rules else None, "mode": args.mode,
+                                 "layers": sorted(args.layer or []), "rule": sorted(args.rule), "page": args.page}
+        for name, path in files.items():
+            if path is not None:
+                found = check_cache.file_sha256(path)
+                if found is None:
+                    return None
+                parts[name] = {"path": path.as_posix(), "sha256": found}
+        parts["refs"] = [{"path": p.as_posix(), "sha256": check_cache.file_sha256(p)} for p in args.ref]
+        if any(item["sha256"] is None for item in parts["refs"]):
+            return None
+        if args.corpus is not None:
+            found = (check_cache.folder_digest(args.corpus) if args.corpus.is_dir()
+                     else check_cache.file_sha256(args.corpus))
+            if found is None:
+                return None
+            parts["corpus"] = {"path": args.corpus.as_posix(), "sha256": found}
+        if args.source is not None:
+            found = check_cache.folder_digest(args.source, {"node_modules", "__pycache__"})
+            if found is None:
+                return None
+            parts["source"] = {"path": args.source.as_posix(), "sha256": found}
+        documents = []
+        for name in ("plan", "ledger", "lock"):
+            if name in parts:
+                documents.append(yaml.safe_load(Path(parts[name]["path"]).read_text(encoding="utf-8")))
+        bases = [Path("."), *([args.source] if args.source is not None else [])]
+        named = check_cache.referenced_files(documents, bases)
+        if named is None:
+            return None
+        parts["named_files"] = named
+        from lazuli import paths
+
+        database = args.lazuli_db or paths.db_path()
+        parts["lazuli_db"] = [[suffix, stat.st_size, stat.st_mtime_ns] for suffix in ("", "-wal", "-shm")
+                              if (stat := _stat(Path(f"{database}{suffix}"))) is not None]
+        from importlib import metadata
+
+        parts["analyzers"] = {name: _version(metadata, name) for name in ("kiwipiepy", "sudachipy", "rjieba")}
+    except (OSError, ValueError, yaml.YAMLError):
+        return None
+    return check_cache.inputs_digest(parts)
+
+
+def _stat(path: Path) -> os.stat_result | None:
+    try:
+        return path.stat()
+    except OSError:
+        return None
+
+
+def _version(metadata: Any, name: str) -> str | None:
+    try:
+        return metadata.version(name)
+    except metadata.PackageNotFoundError:
+        return None
+
+
+def _miss_state(args: argparse.Namespace, digest: str | None) -> tuple[str, str | None]:
+    """The cache outcome of a lint that ran: `miss` when its report was stored for reuse, else `off` and why."""
+    if not args.out:
+        return "off", "no -o: nothing is stored to reuse; give -o to reuse the report while the inputs are unchanged"
+    if digest is None:
+        return "off", "an input cannot be hashed (missing, or a tree too large)"
+    if args.fresh:
+        return "off", "--fresh"
+    return "miss", None
 
 
 def main(argv: list[str] | None = None, prog: str = "lapis-design slop lint") -> int:
@@ -335,28 +428,67 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design slop lint") ->
                          "which the release gate reads, so a run narrowed by --layer or --rule goes elsewhere)")
     ap.add_argument("--json", action="store_true",
                     help="print the full report as JSON instead of the summary")
+    ap.add_argument("--fresh", action="store_true",
+                    help="lint again even when the report at -o was written for these same inputs (the files read, the "
+                         "rules, the day, and the tool); by default that report is shown again and not rewritten from "
+                         "a new run")
     args = ap.parse_args(argv)
     if args.plan:                   # the plan is observed before anything is computed from it
         from lapis_design import integrity
 
         integrity.observe_plan(args.plan, "slop lint")
+    started = datetime.now(timezone.utc)
+    clock = time.monotonic()
+    info = check_summary.RunInfo(command=prog.removeprefix("lapis-design "),
+                                 scope="narrow" if (args.layer or args.rule or args.draft) else "full")
+    if info.scope == "narrow":
+        info.scope_note = "; ".join(part for part in (args.layer and "--layer " + ", ".join(args.layer),
+                                                       args.rule and "--rule " + ", ".join(args.rule),
+                                                       args.draft and "--draft") if part)
+    digest = _inputs_digest(args) if args.out else None
+    info.state_key = digest
+    previous = _read_report(args.out)
+    project = Path.cwd()
     try:
-        report = run(rules=args.rules, plan=args.plan, extract=args.extract, session=args.session,
-                     source=args.source, ledger=args.ledger, lock=args.lock, refs=args.ref, corpus=args.corpus,
-                     lazuli_db=args.lazuli_db, mode=args.mode, layers=args.layer, rule_ids=args.rule,
-                     draft=args.draft, page=args.page)
-        text = json.dumps(report, ensure_ascii=False, indent=2)
-        if args.out:
-            args.out.parent.mkdir(parents=True, exist_ok=True)
-            args.out.write_text(text + "\n", encoding="utf-8")
+        reuse = (digest is not None and not args.fresh and previous is not None
+                 and check_cache.lint_reusable(project, args.out, digest))
+        if reuse:
+            report = previous
+            text = args.out.read_text(encoding="utf-8").rstrip("\n")
+            args.out.write_text(text + "\n", encoding="utf-8")        # as a rerun would: the report is as new as its inputs
+            info.cache = "hit"
+        else:
+            report = run(rules=args.rules, plan=args.plan, extract=args.extract, session=args.session,
+                         source=args.source, ledger=args.ledger, lock=args.lock, refs=args.ref, corpus=args.corpus,
+                         lazuli_db=args.lazuli_db, mode=args.mode, layers=args.layer, rule_ids=args.rule,
+                         draft=args.draft, page=args.page)
+            text = json.dumps(report, ensure_ascii=False, indent=2)
+            if args.out:
+                args.out.parent.mkdir(parents=True, exist_ok=True)
+                args.out.write_text(text + "\n", encoding="utf-8")
+                if digest is not None:
+                    check_cache.lint_note(project, args.out, digest)
+            info.cache, info.reason = _miss_state(args, digest)
+            info.run_seconds = time.monotonic() - clock
     except (LintError, OSError) as exc:
         print(f"slop lint: {exc}", file=sys.stderr)
+        check_summary.record_run(info, task=None, started=started, exit_code=2, output_chars=0,
+                                 report_path=args.out)
         return 2
     s = report["summary"]
+    info.wall_seconds = time.monotonic() - clock
+    task = (report.get("target") or {}).get("task")
     if args.json:
         print(text)
+        printed = len(text) + 1
     else:
-        print("\n".join(_summary_lines(report, args.out)))
+        now_findings = report["findings"]
+        change = check_summary.delta(previous["findings"] if previous is not None else None, now_findings)
+        extra = [line for line in (check_summary.severity_line(now_findings), check_summary.state_line(info)) if line]
+        extra += check_summary.delta_lines(change, str(args.out)) if args.out else []
+        printed = check_summary.emit(_summary_lines(report, args.out, extra))
+    check_summary.record_run(info, task=task, started=started, exit_code=1 if s["blocking"] else 0,
+                             output_chars=printed, report_path=args.out)
     return 1 if s["blocking"] else 0
 
 

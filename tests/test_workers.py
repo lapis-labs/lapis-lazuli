@@ -142,6 +142,6 @@ def test_the_manifests_register_the_bash_matcher_in_the_shared_file_and_subagent
 
 def test_the_rules_are_the_lines_a_delegation_prints_and_each_delegation_prints_them(project):
     text = workers.rules()
-    assert text.count("\n- ") == 2 and "pkill" in text and ".lapis/disputes/<task>.yaml" in text and "lapis_design/lint" in text
+    assert text.count("\n- ") == 3 and "pkill" in text and ".lapis/disputes/<task>.yaml" in text and "lapis_design/lint" in text
     assert text in diverge._how(TASK)
     assert "worker-rules.md" in slice_step.text(TASK)

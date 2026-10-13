@@ -55,14 +55,14 @@ def test_a_narrowed_behavior_check_writes_beside_the_full_session_and_leaves_it_
 
 
 def test_the_printed_coverage_names_each_partial_and_skipped_probe_with_its_reason():
-    from lapis_design.behavior_check import _coverage_lines
+    from lapis_design.check_summary import coverage_lines
     coverage = [{"probe": "controls", "status": "ran", "contexts": ["m"]},
                 {"probe": "dialogs", "status": "not-applicable", "contexts": ["m"]},
                 {"probe": "flows", "status": "partial", "reason": "m/start-trial: abandoned (goal not reached)"},
                 {"probe": "pointer", "status": "partial", "reason": "m/start-trial: abandoned (goal not reached)"},
                 {"probe": "scroll", "status": "partial", "reason": "d/space: need 7083px remaining, have 3924px"},
                 {"probe": "motion", "status": "skipped", "reason": "not selected (--probe)"}]
-    assert _coverage_lines(coverage) == [
+    assert coverage_lines(coverage) == [
         "  coverage: 1 ran, 3 partial, 1 skipped, 1 not-applicable",
         "  partial flows, pointer — m/start-trial: abandoned (goal not reached)",
         "  partial scroll — d/space: need 7083px remaining, have 3924px",
@@ -104,4 +104,4 @@ def test_a_narrowed_run_may_name_any_other_file(project):
     result = behavior(project, "--probe", "console", "--context", "d", "--out", "mine/elsewhere.json")
     assert result.returncode == 0, result.stderr
     assert (project / "mine" / "elsewhere.json").is_file()
-    assert not (project / ".lapis").exists()
+    assert not (project / ".lapis" / "behavior").exists()      # only the cache and the telemetry are written under .lapis

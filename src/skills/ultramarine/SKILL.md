@@ -117,6 +117,29 @@ for a full one and never overwrites it.
    `--rule`, or run over a narrowed extract or session, takes `-o .lapis/lint/<task>.narrow.json`.
 4. **Critic**, below.
 
+**One run per build.** A check of a page the CLI serves (an HTML file's path, or a `preview start` address)
+hashes every file the browser loads, with the request (path and query, widths or contexts, plan signature, stub),
+and keeps the result under `.lapis/cache/checks/`. The same build and request again prints `cache hit` and
+copies the stored report to its path in a moment; a second identical call made while the first runs waits for it
+and prints `cache join`. A changed CSS, script, font, asset, query, stub, or tool is a `miss` and runs. `--fresh`
+runs it again, and an address the CLI does not serve has no identity (`cache off`). `slop lint -o PATH` shows the
+report at PATH again, without linting, while its inputs are unchanged. Run the full set once for a build and read
+the report; do not run a check again to see its result again.
+
+**Narrow while iterating, full once.** After an edit, `render check --changed-since .lapis/renders/<task>.json`
+and `behavior check --changed-since .lapis/behavior/<task>.json` run only the widths or contexts the change can
+reach: a stylesheet edit confined to `@media (min-width)` and `(max-width)` blocks narrows to those widths and
+writes the `.narrow.json`; a changed page, script, font, image, or a rule outside a width query runs everything
+and writes the full path. Shared CSS, type, color, and motion widen themselves; when a change reaches something
+the files do not show, run every width yourself. The release gate needs a full run of the final build.
+
+**Read the printed summary, not the report.** A check prints a few KB: the verdict and counts, the scope (full, or
+NARROW and how), what is new, changed, or gone since the previous report at the same path with finding ids, every
+blocker (by rule with its exact count, and its ids when there are many), skipped and partial probes with their
+reasons, the build and state keys with the cache outcome, and the report path. The raw extract, session, and
+report stay in their files; read the part you need, and use `--json` only when you need the whole report. A
+worker hands back the report path and that summary, never the pasted JSON or DOM.
+
 If a sandbox or permission prevents a check from starting Chromium or reading lazuli's user cache,
 ask the user for permission once; if refused or impossible, list the check as not run with the exact
 error. When the bundled browser cannot start and the host has its own way to view the page, view it

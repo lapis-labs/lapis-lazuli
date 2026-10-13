@@ -26,6 +26,28 @@ contract formats are v0.
   device width. Distances stay a fact on the contact sheet, never a quality score.
 - `diverge start`, `contract`, `resample`, `variant`, `check`, and `seal` append a line to `.lapis/telemetry/checks.jsonl`
   (local to the project, never uploaded).
+- `render check` and `behavior check` run the browser once per build and state. For a page the CLI serves (an HTML file, or a
+  folder `preview start` serves) they hash every file the browser loads, with the request, the plan signature, the stub, and the
+  tool, and keep the result in `.lapis/cache/checks/`: the same build and request again prints `cache hit` and copies the stored
+  report and screenshots to the report path; an identical call made while one runs waits for it and shares its result
+  (`cache join`); a changed stylesheet, script, font, asset, query, stub, or tool is a `cache miss` that runs; a page the CLI does
+  not serve, a page that asked another origin for anything, or a tree that changed during the run is `cache off`. `--fresh`
+  runs again and replaces the stored result. `slop lint -o PATH` shows the report at PATH again, without linting, while its
+  inputs, the rules, the day, and the tool are unchanged (`--fresh` lints again).
+- `render check --changed-since <full extract>` and `behavior check --changed-since <full session>` run only the widths or
+  contexts a change can reach, written beside the full report as `--width` and `--context` do: a stylesheet edit confined to
+  `@media (min-width)` and `(max-width)` blocks narrows to those widths (and runs nothing when it matches no capture width),
+  and a changed page, script, font, image, or any rule outside a width query, or anything that cannot be tied to a width, runs
+  every width and writes the full report. The release gate still reads only the full reports.
+- `render check`, `behavior check`, and `slop lint` print a bounded summary instead of the report: the verdict and counts, the
+  scope (full, or narrow and how), what is new, changed, or gone since the previous report at the same path with finding ids,
+  every blocker (by rule with its exact count, and its finding ids when there are many), every skipped or partial item with its
+  reason, the build and state keys with the cache outcome, and the report path. `worker check` prints counts and a few findings;
+  every one stays in `.lapis/state/<task>.workers.json`. The raw reports are unchanged, and `--json` and `-o` still give them whole.
+  The rules a delegated task carries gain one: return a report path and the printed summary, never the raw report.
+- `render check`, `behavior check`, `slop lint`, and `worker check` append a line to `.lapis/telemetry/checks.jsonl` (command,
+  task, build and state keys, scope, cache outcome, times, exit code, output size, report path; local to the project, never
+  uploaded).
 
 ## 0.3.0 (2026-10-11)
 

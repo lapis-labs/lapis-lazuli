@@ -16,11 +16,14 @@ import json
 import os
 import re
 import sys
+import time
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator, Mapping
 
-from lapis_design import shared_dir
+from lapis_design import shared_dir, telemetry
+from lapis_design.summary import clip
 
 _START = r"(?:^|[;&|(`]|\$\()\s*(?:(?:sudo|command|exec|nohup|time)\s+|env\s+(?:\S+=\S+\s+)*)*"
 _PATTERN_KILL = [
@@ -31,6 +34,7 @@ _PATTERN_KILL = [
 CHECKER_SOURCE = re.compile(r"lapis_design/(?:lint|render|behavior_check)(?:/|\b)")
 TASK = re.compile(r"[a-z0-9][a-z0-9-]{1,63}")
 _BASH = {"bash", "shell", "local_shell", "exec_command"}
+SHOWN = 5                    # findings `worker check` prints one by one; the count and the file hold every one
 
 
 def rules() -> str:
@@ -190,14 +194,26 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design worker check")
     if not args.transcript.is_file():
         print(f"worker check: {args.transcript} is not a file", file=sys.stderr)
         return 2
+    started, clock = datetime.now(timezone.utc), time.monotonic()
     found = scan(args.transcript)
-    new = record(args.root.resolve(), args.task, args.agent, args.transcript.name, found) if found else []
-    for item in found:
-        print(f"worker check: {item['kind']}: {item['evidence']}", file=sys.stderr)
-    print(f"worker check: {len(found)} finding{'s' if len(found) != 1 else ''} in {args.transcript.name}"
-          f" ({len(new)} new, recorded in {state_path(Path('.'), args.task).as_posix()})" if found
-          else f"worker check: nothing in {args.transcript.name} stops a process by pattern or touches check source "
-               "(only what the scanner reads: see shared/review/worker-rules.md)")
+    root = args.root.resolve()
+    new = record(root, args.task, args.agent, args.transcript.name, found) if found else []
+    kinds = ", ".join(f"{kind} ×{count}" for kind, count in Counter(item["kind"] for item in found).items())
+    for item in found[:SHOWN]:
+        print(f"worker check: {item['kind']}: {clip(item['evidence'], 160)}", file=sys.stderr)
+    if len(found) > SHOWN:
+        print(f"worker check: …and {len(found) - SHOWN} more of the {len(found)}; every command is in "
+              f"{state_path(Path('.'), args.task).as_posix()}", file=sys.stderr)
+    summary = (f"worker check: {len(found)} finding{'s' if len(found) != 1 else ''} in {args.transcript.name} ({kinds}; "
+               f"{len(new)} new, recorded in {state_path(Path('.'), args.task).as_posix()})" if found
+               else f"worker check: nothing in {args.transcript.name} stops a process by pattern or touches check source "
+                    "(only what the scanner reads: see shared/review/worker-rules.md)")
+    print(summary)
+    telemetry.record(root, command=prog.removeprefix("lapis-design "), task=args.task, build_id=None, state_key=None,
+                     scope="full", cache="off", started=telemetry.stamp(started), ended=telemetry.stamp(),
+                     exit=1 if found else 0, output_chars=len(summary) + 1,
+                     report_path=state_path(Path("."), args.task).as_posix() if found else None,
+                     cache_reason="a transcript is read once per call; nothing to reuse", run_seconds=time.monotonic() - clock)
     return 1 if found else 0
 
 

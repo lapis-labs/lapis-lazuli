@@ -46,21 +46,65 @@ def _segments(url_path: str) -> list[str]:
     return [segment for segment in re.split(r"[\\/]", url_path) if segment]
 
 
+def locate(root: Path, url_path: str) -> Path | None:
+    """The real path a request path names under `root`, or None when nothing is served there: the path does
+    not resolve, resolves outside the root once links are followed, or has a dotted name below it."""
+    try:
+        real = root.joinpath(*_segments(url_path)).resolve()
+    except (OSError, ValueError, RuntimeError):     # a NUL byte, a link loop
+        return None
+    if not real.is_relative_to(root) or any(part.startswith(".") for part in real.relative_to(root).parts):
+        return None
+    return real
+
+
+def served_files(root: Path) -> Iterator[tuple[str, Path]]:
+    """`(path relative to root, real file)` for every file the server answers a GET for, in a stable order: what a
+    page served from `root` can load. Links are followed as `locate` follows them, each folder once."""
+    root = root.resolve()
+    seen: set[Path] = set()
+    stack = [root]
+    while stack:
+        folder = stack.pop()
+        try:
+            real = folder.resolve()
+            names = sorted(entry.name for entry in os.scandir(folder))
+        except (OSError, ValueError, RuntimeError):
+            continue
+        if real in seen:
+            continue
+        seen.add(real)
+        for name in names:
+            if name.startswith("."):
+                continue
+            path = folder / name
+            relative = path.relative_to(root).as_posix()
+            found = locate(root, relative)
+            if found is None:
+                continue
+            if found.is_dir():
+                stack.append(path)
+            elif found.is_file():
+                yield relative, found
+
+
+def served_target(target: str) -> tuple[Path, str, str] | None:
+    """`(folder, file name, query)` when `target` names a local HTML file the checks serve; None for any other
+    target, and for a file that cannot be served."""
+    try:
+        found = _file_target(target)
+    except NotServable:
+        return None
+    return None if found is None else (found[0], found[1], found[2])
+
+
 class _Server(ThreadingHTTPServer):
     def __init__(self, root: Path, port: int = 0):
         super().__init__(("127.0.0.1", port), _Handler)
         self.root = root
 
     def locate(self, url_path: str) -> Path | None:
-        """The real path a request path names, or None when nothing is served there: the path does
-        not resolve, resolves outside the root once links are followed, or has a dotted name below it."""
-        try:
-            real = self.root.joinpath(*_segments(url_path)).resolve()
-        except (OSError, ValueError, RuntimeError):     # a NUL byte, a link loop
-            return None
-        if not real.is_relative_to(self.root) or any(part.startswith(".") for part in real.relative_to(self.root).parts):
-            return None
-        return real
+        return locate(self.root, url_path)
 
     def handle_error(self, request, client_address) -> None:
         if not isinstance(sys.exception(), ConnectionError):       # a page that navigates away drops its requests

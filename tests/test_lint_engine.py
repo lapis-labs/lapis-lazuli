@@ -499,7 +499,8 @@ def test_the_printed_result_says_what_was_skipped_and_why(tmp_path, capsys):
     assert lint_cli.main(["--rules", str(rules), "--plan", str(SHARED / "plan/example.plan.yaml"),
                           "-o", str(out)]) == 1
     assert json.loads(out.read_text(encoding="utf-8"))["summary"] == {"blocking": 1, "total": 3, "skipped": 2}
-    assert capsys.readouterr().out.splitlines() == [
+    lines = capsys.readouterr().out.splitlines()
+    assert [line for line in lines if not line.startswith(("  state ", "  since the previous"))] == [
         f"slop_lint: 1 blocking, 3 findings, 2 skipped: not judged -> {out}",
         f"  scope: layers plan; rules from {rules}",
         "  [BLOCK] layout.a hero outranks the task",
@@ -507,6 +508,7 @@ def test_the_printed_result_says_what_was_skipped_and_why(tmp_path, capsys):
         "  not judged (input): no extract given — layout.b",
         "  not judged (input): no lock given — layout.c",
         summary.DISPUTE_FOOTER]
+    assert any("cache miss" in line for line in lines) and any("none at this path to compare" in line for line in lines)
 
 
 def test_the_verdict_line_leaves_out_skipped_when_nothing_was_skipped(tmp_path, capsys):
