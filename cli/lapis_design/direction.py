@@ -444,8 +444,10 @@ def _why(task: str, phase: int, reason: str, unattended: bool, unbased: list[str
                 f"\"{OWNED_QUESTION}\". ")
     else:
         what = ("The `diverge` set is sealed: show the owner the contact sheet and ask for the pick and the picked rough's "
-                "signature items. Say per rough what its captures show and what its card claims beyond them (\"claimed, not "
-                "shown\"): the distances compare card family names, not captures. ")
+                "signature items. The owner summary's `Rough first views` section lists, per rough, the faces its headline and "
+                "body render in, the style items its elements carry and show, and the ones its card claims and no capture "
+                "shows (\"claimed, not shown\"): paste it into the question unchanged, and say per rough what else its card "
+                "claims beyond its captures, since the distances compare card family names, not captures. ")
     note = (f" ({len(unbased)} [assumed] items give no `Basis:` and do not count: {'; '.join(unbased[:2])})" if unbased else "")
     return (f"Direction conversation, turn {'one' if phase == 1 else 'two'}: {reason}{note}. {what}{how} Format and examples: {guide}.")
 

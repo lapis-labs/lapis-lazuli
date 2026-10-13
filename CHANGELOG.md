@@ -99,6 +99,36 @@ contract formats are v0.
   proposal's schema and the shape of the answers lines, and `references` its guide section. `requirements seal -h` lists what
   it reads and the decision lines. The `lapis` skill says the commands and the guides are the interface: do not import or read
   `lapis_design` source to learn a format.
+- **Breaking:** a rough carries the owner's declared words, and `diverge check` reads it (`rough_carries.py`; term lists and
+  thresholds in `rough_carry` of `diverge/pools.yaml`). A rough that passed every record could still ignore them: system-font
+  stacks where the owner asked for geometric sans and their installed trial faces, no animation where they asked for kinetic
+  type, none of the styles they answered at the first direction turn. Now:
+  - **Type.** The card names `type.headline.family` and `type.body.family` (the card schema gains `type` and `style`, both
+    required). The render extract's `font.rendered` of the `display` and `heading` runs (headline) and the `body` runs, at 1440
+    and 390, is read, not the CSS. `check` refuses a role that a system default paints (SF, `.SF NS`, Helvetica, Arial, Roboto,
+    Segoe UI, `system-ui` and the other generic keywords, the platform's Hangul and CJK system faces, Menlo and the like; more than
+    a quarter of the characters counts), a role whose rendered family is not the card's, and a family that is neither installed
+    (lazuli's inventory, `local_font`) nor in `.lapis/fonts.lock.json`. A card may choose a system face only by quoting, in
+    `system_asked_by`, an owner `[declared]` line that asks for it. When the owner named a typeface or a type class (the taste
+    file, a `[declared]` row, an answered style, an installed owner family), the card's `type.answers` says how its type answers
+    it; whether it fits stays the owner's.
+  - **Motion.** The shared brief gains `motion: none | required` (required), `motion_moves`, and `motion_still_by`.
+    `diverge contract` refuses `motion: none` while an owner `[declared]` row, the taste file's likes, feel, or fixed lines, an
+    answered style, a kept kit item, or a signature element they took matches the motion terms (ko, en, ja, zh), unless
+    `motion_still_by` quotes their `[declared]` line that asks for stillness. With `motion: required`, `check` refuses a rough
+    with no `lapis-design render motion` capture of its own, a capture older than its `index.html`, or one whose settled and
+    reduced-motion frames of a scroll position differ in under 0.1% of their pixels. The bound's "one representative motion
+    state" is now checkable. `CONTRACT` is 2, so a receipt from before does not hold.
+  - **Style answers.** For each style `S<n>` the owner answered and each kit item `K<n>` they kept, the card's `style` row names
+    a CSS `selector`, what the element `does`, and which captures `shown` it (1440, 390, or none). `check` refuses an answered item
+    the card leaves out, a dropped kit item it maps, a selector that matches nothing in the rough's markup (`rough_selectors.py`
+    reads the static markup; no script runs), and a capture it says shows an element whose text is not in that render. The owner
+    block's `Rough first views` section lists, per rough, the faces it renders in, the items its elements carry and show, and the
+    items the card claims and no capture shows; the turn-two pick question carries it.
+
+  Migration: roughs in progress need their cards updated (`type`, `style`) and their brief updated (`motion`, and
+  `motion_moves` when required), then `diverge contract` and `diverge check` again, and `render motion` per rough when the brief
+  requires motion. A card or brief without the new fields fails its schema with the field named.
 
 ## 0.3.0 (2026-10-11)
 

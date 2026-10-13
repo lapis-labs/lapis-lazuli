@@ -9,7 +9,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from diverge_support import brief_for, card_for, rough_html, signature, write_brief, write_render, write_rough
+from diverge_support import (FACES, brief_for, card_for, inventory, rough_html, signature, write_brief, write_motion, write_render,
+                             write_rough)
 from lapis_design import direction, diverge, next_step, references
 from lapis_design.cli import main as cli_main
 from procedure_support import (BRIEF_RECORD, DEFAULTS_ACCEPTED, DIRECTION_PROPOSAL, TASK, load_skills, make_project,
@@ -22,10 +23,10 @@ PROPOSAL = {**DIRECTION_PROPOSAL, "objects": [{**DIRECTION_PROPOSAL["objects"][0
 
 
 @pytest.fixture(autouse=True)
-def attended(monkeypatch):
+def attended(monkeypatch, tmp_path_factory):
     for name in ("LAPIS_UNATTENDED", "LAPIS_TASK", "CLAUDE_PROJECT_DIR"):
         monkeypatch.delenv(name, raising=False)
-    monkeypatch.setenv("LAZULI_DB", "")
+    monkeypatch.setenv("LAZULI_DB", str(inventory(tmp_path_factory.mktemp("inventory") / "lazuli.db", *FACES.values())))
 
 
 def conversation(root: Path, answers: str = DEFAULTS_ACCEPTED) -> None:
@@ -379,19 +380,36 @@ def test_the_commands_start_resample_check_seal_and_show_run_as_verbs_of_lapis_d
 
 # ---- 6. real renders (browser)
 
+def web_faces(folder: Path) -> str:
+    """`@font-face` rules that load the two families of `FACES` from data URLs (a font built in code), so the render reports
+    them by name on any platform."""
+    import base64
+
+    from synthetic_fonts import build
+
+    rules = []
+    for family in FACES.values():
+        data = base64.b64encode(build(folder / f"{family}.ttf", family=family).read_bytes()).decode("ascii")
+        rules.append(f"@font-face{{font-family:'{family}';src:url(data:font/ttf;base64,{data}) format('truetype')}}")
+    return "".join(rules)
+
+
 @pytest.mark.browser
-def test_check_measures_two_real_renders_and_writes_the_contact_sheet(run):
+def test_check_measures_two_real_renders_and_writes_the_contact_sheet(run, tmp_path_factory):
     from PIL import Image
 
     from narrow_support import run as run_cli
 
     start(run, 2)
-    pages = {"C1": "<!doctype html><html lang='en'><body style='margin:0;background:#2846c8'><main style='padding:60px'>"
-                   "<h1 style='color:#fff;font:700 64px sans-serif'>Firing log</h1><p style='color:#fff'>Ruled rows.</p>"
-                   "</main></body></html>",
-             "C2": "<!doctype html><html lang='en'><body style='margin:0;background:#12141c'><main style='display:grid;"
-                   "grid-template-columns:1fr 1fr;gap:40px;padding:60px'><h1 style='color:#eee;font:700 48px sans-serif'>"
-                   "Last month</h1><button style='height:48px'>Compare</button></main></body></html>"}
+    faces = f"<style>{web_faces(tmp_path_factory.mktemp('faces'))}h1{{font-family:'{FACES['headline']}',sans-serif}}" \
+            f"p{{font-family:'{FACES['body']}',sans-serif}}</style>"
+    pages = {"C1": f"<!doctype html><html lang='en'><head>{faces}</head><body style='margin:0;background:#2846c8'>"
+                   "<main style='padding:60px'><h1 style='color:#fff;font-size:64px'>Firing log</h1>"
+                   "<p style='color:#fff'>Ruled rows.</p></main></body></html>",
+             "C2": f"<!doctype html><html lang='en'><head>{faces}</head><body style='margin:0;background:#12141c'>"
+                   "<main style='display:grid;grid-template-columns:1fr 1fr;gap:40px;padding:60px'>"
+                   "<h1 style='color:#eee;font-size:48px'>Last month</h1><p style='color:#eee'>Ruled rows.</p>"
+                   "<button style='height:48px'>Compare</button></main></body></html>"}
     for candidate, html in pages.items():
         write_rough(run, TASK, candidate)
         (run / ".lapis/diverge" / TASK / candidate / "index.html").write_text(html, encoding="utf-8")

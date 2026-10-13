@@ -272,12 +272,16 @@ under `.lapis/state/diverge/<task>/`, a folder only `lapis-design` writes, befor
 (twice per candidate at most, each with its reason) and `variant` adds the rough an owner asked for (`reason: owner`). The agent
 writes the shared brief `.lapis/diverge/<task>/brief.yaml` once, and `lapis-design diverge contract --task <task>` checks it
 before any rough is made (the opening carries identity and the primary action, a process object is a later scene, the key copy
-has a headline and an action and opens no `copy.meta-text` finding, the phone has its own composition, and every open core
-object has a draw) and writes `contract.json`. The agent then writes `.lapis/diverge/<task>/C<n>/index.html` and `card.yaml`
+has a headline and an action and opens no `copy.meta-text` finding, the phone has its own composition, `motion` is not `none`
+against the owner's words that ask for motion, and every open core object has a draw) and writes `contract.json`. The agent then writes `.lapis/diverge/<task>/C<n>/index.html` and `card.yaml`
 (`diverge/card.schema.yaml`, naming the brief's `brief_sha256`) and renders each narrow
 (`render check ... --task <task>-C<n> --width 390 --width 1440`): a rough is the core composition, one representative motion
 state, and one phone state, and `diverge check` refuses a render at another device width, a full capture run, and a second
-page (`rough_bound` in `diverge/pools.yaml`); the slice brings the picked rough to every device width. `diverge check`
+page (`rough_bound` in `diverge/pools.yaml`); the slice brings the picked rough to every device width. A rough also carries the
+owner's declared words (`rough_carry` in `diverge/pools.yaml`): its card names the headline and body families (`type`), which the
+render's rendered fonts must bear out, in a family that is installed (lazuli's inventory) or locked and not a system default unless
+the card quotes the owner's `[declared]` line that asks for one; it maps each answered style item and kept kit item to an element
+of its markup (`style`); and when the brief says `motion: required`, its `render motion` capture shows change. `diverge check`
 reads each card against the brief, the draws, and the
 renders and writes `fingerprints.json`, `distances.json` (`0.55·struct + 0.20·mass + 0.25·repr`, weights calibrated in
 `diverge/pools.yaml`; reported, never gated, except that a pair with the same markup structure and a mass distance under

@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from diverge_support import complete, write_rough
+from diverge_support import FACES, complete, inventory, write_rough
 from lapis_design import critic_packet, direction, diverge, next_step, requirements
 from procedure_support import (BRIEF_RECORD, DIRECTION_PROPOSAL, TASK, ask, load_skills, make_project, record, save,
                                seal_requirements, write_references)
@@ -44,10 +44,10 @@ def proposal() -> dict:
 
 
 @pytest.fixture(autouse=True)
-def attended(monkeypatch):
+def attended(monkeypatch, tmp_path_factory):
     for name in ("LAPIS_UNATTENDED", "LAPIS_TASK", "CLAUDE_PROJECT_DIR"):
         monkeypatch.delenv(name, raising=False)
-    monkeypatch.setenv("LAZULI_DB", "")
+    monkeypatch.setenv("LAZULI_DB", str(inventory(tmp_path_factory.mktemp("inventory") / "lazuli.db", *FACES.values())))
 
 
 @pytest.fixture

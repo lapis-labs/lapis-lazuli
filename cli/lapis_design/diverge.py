@@ -26,6 +26,11 @@ folder only `lapis-design` writes (`order.CLI_OWNED`).
 A rough is bounded (`rough_bound` in the pools file): the core composition at 390 and 1440, one representative motion state,
 and one phone state, as the one page `index.html`. `check` refuses a render at another device width, a full capture run of a
 rough, and a second page in a rough's folder; the slice brings the picked rough to every device width and state.
+A rough also carries the owner's declared words (`rough_carries.py`): `check` reads the card's `type` against the render's
+rendered fonts (a system default is refused, and the family has to be installed or locked), its `style` against the markup
+(each answered style item and kept kit item names an element that exists), and, when the brief says `motion: required`,
+the rough's `render motion` capture for a change between its settled and its reduced-motion frames; `contract` refuses
+`motion: none` against the owner's motion words. This is what makes the one representative motion state checkable.
 
 The distance between two roughs is `0.55·d_struct + 0.20·d_mass + 0.25·d_repr` (weights in the pools file, calibrated over the E1b
 roughs against the owner's verdicts). `d_struct` is the IoU distance of the first view's occupancy by text, media, and control boxes on a
@@ -55,7 +60,7 @@ from lapis_design import references, requirements, shared_dir, workers
 STEP = "diverge"
 MIN_K, MAX_K = 2, 4                    # roughs a `start` makes
 DEFAULT_K = 2                          # roughs a `start` makes without `--k`; more come when the owner asks (`variant`)
-CONTRACT = 1                           # what `contract` checks, versioned: a receipt of another version no longer holds
+CONTRACT = 2                           # what `contract` checks, versioned: a receipt of another version no longer holds
 OPENING = ("identity", "primary-action")        # what the opening's hero carries
 DOWNSTREAM = "process-sequence"        # the kind of core object that is a later scene, not the hero
 MAX_TOTAL = 6                          # roughs of a task, owner-requested variants included
@@ -441,8 +446,13 @@ def variant(root: Path, task: str, words: str, env: Mapping[str, str] = os.envir
 
 # ---------------------------------------------------------------- the cards
 
+_MIGRATION = {"'type'": ": a card made before `type` and `style` needs both (diverge.md, \"The rough and its card\"), then `diverge check` again",
+              "'style'": ": a card made before `type` and `style` needs both (diverge.md, \"The rough and its card\"), then `diverge check` again",
+              "'motion'": ": a brief made before `motion` needs it (diverge.md, \"The shared brief\"), then `diverge contract` again"}
+
+
 def _card_problems(root: Path, task: str, candidate: str, slots: Mapping[str, Mapping[str, Any]],
-                   letters: list[str], objects: list[dict[str, Any]]) -> list[str]:
+                   letters: list[str], objects: list[dict[str, Any]], carry: Any) -> list[str]:
     from jsonschema import Draft202012Validator
 
     where = f".lapis/diverge/{task}/{candidate}"
@@ -453,7 +463,7 @@ def _card_problems(root: Path, task: str, candidate: str, slots: Mapping[str, Ma
     if errors:
         first = errors[0]
         return [f"{where}/card.yaml does not match diverge/card.schema.yaml: "
-                f"{'/'.join(map(str, first.absolute_path)) or 'it'}: {first.message[:140]}"]
+                f"{'/'.join(map(str, first.absolute_path)) or 'it'}: {first.message[:140]}{_MIGRATION.get(first.message.split(' ')[0], '')}"]
     problems = []
     if found["id"] != candidate:
         problems.append(f"{where}/card.yaml names itself {found['id']}")
@@ -501,6 +511,7 @@ def _card_problems(root: Path, task: str, candidate: str, slots: Mapping[str, Ma
     if not (folder(root, task) / candidate / "index.html").is_file():
         problems.append(f"{where}/index.html is missing")
     problems += _bound_problems(root, task, candidate)
+    problems += carry.card_problems(candidate, found)
     return problems
 
 
@@ -562,7 +573,7 @@ def _brief_shape(root: Path, task: str) -> tuple[dict[str, Any] | None, str | No
     if errors:
         first = errors[0]
         return None, (f"{where} does not match diverge/brief.schema.yaml: {'/'.join(map(str, first.absolute_path)) or 'it'}: "
-                      f"{first.message[:140]}")
+                      f"{first.message[:140]}{_MIGRATION.get(first.message.split(' ')[0], '')}")
     return found, None
 
 
@@ -646,6 +657,9 @@ def _shared_problems(root: Path, task: str, objects: list[dict[str, Any]], env: 
         if slot not in slots:
             problems.append(f"{where}: key_copy has no `{slot}`: the one copy every rough opens with holds the {what}")
     problems += _meta_text_problems(where, found["key_copy"])
+    from lapis_design import rough_carries
+
+    problems += rough_carries.contract_problems(root, task, found, env)
     standing = _candidate_set(root, task)
     for candidate in sorted(standing, key=lambda c: int(c[1:])):
         for obj in objects:
@@ -957,8 +971,11 @@ def check(root: Path, task: str, env: Mapping[str, str] = os.environ) -> dict[st
     if not shared and not contract_passed(root, task):
         problems.append(f"the shared contract was not checked on this brief: run `lapis-design diverge contract --task {task}`; "
                         "it passes before any rough worker starts, and prints the `brief_sha256` each card names")
+    from lapis_design import rough_carries
+
+    carry = rough_carries.Carry(root, task, env)
     for candidate in ids:
-        problems += _card_problems(root, task, candidate, standing[candidate], letters, objects)
+        problems += _card_problems(root, task, candidate, standing[candidate], letters, objects, carry)
     first = [c for c in ids if not any(r.get("variant") for r in draw_records(root, task) if r.get("candidate") == c)]
     drawn = [standing[c]["direction"]["item"] for c in first]
     if letters and len(set(drawn)) != len(drawn):
@@ -1059,6 +1076,9 @@ def owner_lines(root: Path, task: str) -> list[str]:
     lines = [f"- Rough first views sealed: {', '.join(sorted(record['candidates'], key=lambda c: int(c[1:])))} "
              f"(contact sheet {record['contact']['path']})"]
     lines += [f"- Rough {line}" for line in drift(root, task)]
+    from lapis_design import rough_carries
+
+    lines += rough_carries.owner_lines(root, task, sorted(record["candidates"], key=lambda c: int(c[1:])), os.environ)
     found = brief(root, task)
     if found is not None and contract_passed(root, task):
         lines.append(f"- Shared rough brief {brief_digest(root, task)}, checked before the roughs: the opening carries "
@@ -1100,7 +1120,8 @@ def _brief_how(task: str) -> str:
             "opening's job and what it carries (the hero is identity and the primary action; the process, the comparison, and "
             "the steps come in later scenes), what each core object does in the first view and in a later scene, the one "
             "headline and action every rough opens with (`key_copy`, free of meta text), how the phone opening is composed on "
-            "its own, and the contradictions you found in the instructions and how it settles them. Then run "
+            "its own, whether every rough has to move (`motion: required` with `motion_moves` when the owner's words ask for "
+            "motion, else `none`), and the contradictions you found in the instructions and how it settles them. Then run "
             f"`lapis-design diverge contract --task {task}`: it checks that brief and the draws once, before the roughs are "
             "made, and prints the `brief_sha256` each card names. Give every worker that brief unchanged.")
 
@@ -1112,9 +1133,14 @@ def _rough_how(task: str, digest: str | None) -> str:
             f"`.lapis/diverge/{task}/C<n>/index.html` with real or clearly synthetic content and the decisive medium (diagram, "
             f"control, image, or the one representative motion state) instead of a gray box, one phone state, and its card "
             f"`card.yaml` (shared/diverge/card.schema.yaml, `brief_sha256: {digest}`) next to it; no other device width, "
-            f"theme, page, or polish before the owner picks. Render each: `lapis-design render check "
+            f"theme, page, or polish before the owner picks. The rough carries the owner's own words: its headline and body "
+            "render in a family that is installed or locked, never a system default (the card's `type`, and how it answers "
+            "the families or type classes the owner named), each style item the owner answered and kit item they kept has "
+            "an element the card names by selector (`style`), and, when the brief requires motion, the rough moves. Render "
+            f"each: `lapis-design render check "
             f".lapis/diverge/{task}/C<n>/index.html --task {task}-C<n> --width 390 --width 1440`, once, and again only after "
-            "the rough changed. The roughs differ in how "
+            f"the rough changed; with motion required, also `lapis-design render motion .lapis/diverge/{task}/C<n>/index.html "
+            f"--task {task}-C<n>`. The roughs differ in how "
             "the core objects are represented, how color is allocated, and what the first view carries against the later "
             "scenes, not in decoration, order, or finish. Put these lines into every worker's task verbatim "
             "(`shared/review/worker-rules.md`):\n" + workers.rules())

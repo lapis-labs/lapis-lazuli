@@ -9,12 +9,18 @@
 # comes in a later scene, `key_copy` is the one headline and action every rough opens with and is read by the meta-text rule
 # (`copy.meta-text`), and `phone` says how the 390 first view is composed on its own. Provenance (real, illustrative, synthetic) is named once, where
 # it informs an example (`labels`), never as a tag repeated on each element of the page.
+# `motion` says whether every rough has to move: `required` when the owner's words ask for motion (a `[declared]` row, the
+# taste file, an answered style, kept kit item, or signature element: the term list is `rough_carry.motion` in
+# `diverge/pools.yaml`), else `none`. `diverge contract` refuses `none` while those words are there, unless
+# `motion_still_by` quotes the owner's `[declared]` line that asks for stillness. A `required` brief says what moves
+# (`motion_moves`), and `diverge check` then refuses a rough with no `lapis-design render motion` capture that shows change.
+# Breaking: `motion` is required; a brief written before it needs the field and a new `diverge contract`.
 $schema: https://json-schema.org/draft/2020-12/schema
 $id: https://github.com/lapis-labs/lapis-lazuli/schemas/diverge-brief.v0.json
 title: LapisLazuli diverge brief
 type: object
 additionalProperties: false
-required: [version, opening, objects, key_copy, phone, resolved]
+required: [version, opening, objects, key_copy, phone, motion, resolved]
 properties:
   version: {const: 0}
   opening:
@@ -57,6 +63,9 @@ properties:
     required: [composition]
     properties:
       composition: {type: string, minLength: 20}         # what the phone opening holds and what it trims or moves after the content it supports
+  motion: {enum: [none, required]}                       # whether every rough moves (see above)
+  motion_moves: {type: string, minLength: 20}            # what moves in the first view and what the visitor sees it do; required with `required`
+  motion_still_by: {type: string, minLength: 4}         # with `none` against the owner's motion words: the `[declared]` line, quoted, that asks for stillness
   resolved:                                              # contradictions found in the instructions and how this brief settles each; may be empty
     type: array
     items:
@@ -67,3 +76,6 @@ properties:
         conflict: {type: string, minLength: 12}
         as: {type: string, minLength: 12}
   labels: {type: string, minLength: 12}              # where a real / illustrative / synthetic distinction informs an example, said once
+allOf:
+  - if: {properties: {motion: {const: required}}, required: [motion]}
+    then: {required: [motion_moves]}

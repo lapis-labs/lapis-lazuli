@@ -6,13 +6,18 @@
 # `.lapis/state/diverge/<task>/draws.jsonl`), how each open core object is represented, the color roles with the area
 # each owns, and the signature elements it adds. `lapis-design diverge check` reads the card against the draws and the
 # renders; the picked card's `color` becomes the plan's `tokens.color.roles` unchanged. A card holds no reason for
-# choosing itself: the owner sees the contact sheet, not a defence.
+# choosing itself: the owner sees the contact sheet, not a defence. It does record what the owner's declared words were
+# answered with, in two places: `type` (the family of the headline and of the body, and how they answer the owner's named
+# families or type classes) and `style` (for each style item the owner answered, `S<n>`, and each kit item they kept, `K<n>`,
+# the element that carries it). `diverge check` reads `type` against the render's rendered fonts and `style` against the
+# rough's markup; see `diverge/pools.yaml` `rough_carry` for the system-face list and the term lists.
+# Breaking: `type` and `style` are required; a card made before them needs both and a new `diverge check`.
 $schema: https://json-schema.org/draft/2020-12/schema
 $id: https://github.com/lapis-labs/lapis-lazuli/schemas/diverge-card.v0.json
 title: LapisLazuli diverge card
 type: object
 additionalProperties: false
-required: [version, id, brief_sha256, direction, draws, hierarchy, objects, color, signature, made_in]
+required: [version, id, brief_sha256, direction, draws, hierarchy, objects, color, type, style, signature, made_in]
 properties:
   version: {const: 0}
   id: {type: string, pattern: "^C[1-9][0-9]?$"}
@@ -55,6 +60,28 @@ properties:
         area: {type: string, minLength: 8}              # where the color sits and about how much of the screen it owns
       if: {properties: {role: {enum: [field, identity]}}, required: [role]}
       then: {required: [area]}
+  type:                                                 # the faces the headline and the body render in, as the render must show them
+    type: object
+    additionalProperties: false
+    required: [headline, body]
+    properties:
+      headline: {$ref: "#/$defs/type_role"}             # the heading and display runs (`type_role` of the render extract)
+      body: {$ref: "#/$defs/type_role"}                 # the body runs
+      answers: {type: string, minLength: 20}            # how this choice answers the families or type classes the owner named; required when they named any (the taste file, a `[declared]` row, a direction answer)
+  style:                                                # one row per style item the owner answered at the first direction turn (`S<n>`) and kit item they kept (`K<n>`); [] when there is none
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [id, selector, does, shown]
+      properties:
+        id: {type: string, pattern: "^[SK][1-9][0-9]?$"}
+        selector: {type: string, minLength: 1}          # a CSS selector that matches an element of this rough's index.html (tag, #id, .class, [attr], :first-child, :nth-child(n), :not(), > + ~ and space)
+        does: {type: string, minLength: 12}             # what that element does to carry the item, in a line
+        shown:                                          # the captures that show it: [1440, 390], [1440], [390], or [] when the card claims it and neither capture shows it
+          type: array
+          uniqueItems: true
+          items: {enum: [1440, 390]}
   signature:                                            # elements this rough adds; the owner decides each at D2
     type: array
     items:
@@ -66,3 +93,11 @@ properties:
         element: {type: string, minLength: 2}
         carries: {type: string, minLength: 8}           # the information or job the element carries, not its look
   made_in: {enum: [subagent, main]}
+$defs:
+  type_role:
+    type: object
+    additionalProperties: false
+    required: [family]
+    properties:
+      family: {type: string, minLength: 2, pattern: "^[^,]+$"}   # one family name as the render reports it; never a stack
+      system_asked_by: {type: string, minLength: 4}     # only to choose a system face: the owner's `[declared]` line that asks for it, quoted

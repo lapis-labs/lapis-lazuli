@@ -37,7 +37,9 @@ Write them in the owner's language. Each item is one line plus its options, and 
 - `S<n>`: two or three **jobs** for the style on this subject, plus a default. A job says what the style does for the
   visitor ("borders show where one record ends and the next begins"). "Thick borders" is a look, not a job.
 - `K<n>`: one item per element of the **trend kit** the style decodes to today, each with `seen_in` (the reference ids
-  where you saw it), a default `keep` or `drop`, and a one-line reason. The owner keeps or drops each.
+  where you saw it), a default `keep` or `drop`, and a one-line reason. The owner keeps or drops each. Every style the owner
+  answers and every kit item they keep becomes a row each rough's card maps to an element of the rough (`diverge.md`, "What a
+  rough carries of the owner's words"), so a kit item that no element of a page could carry is one to propose as `drop`.
 
 **2. Core objects: how is each represented?** `O<n>` covers one to four core objects, taken from the world materials and
 the brief's one job. Each object has two or three representation options. Every option says what the visitor can do with it

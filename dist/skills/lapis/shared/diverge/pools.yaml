@@ -107,6 +107,48 @@ hierarchy:
 rough_bound:
   widths: [390, 1440]
 
+# `rough_carry`: what a rough has to carry of the owner's declared words, read by `diverge contract` and `diverge check`
+# (`cli/lapis_design/rough_carries.py`). All matching is lexical and a lead for the gate, never a judgment of fit: the owner
+# judges whether a face, a motion, or a style suits them. An ASCII term of four letters or more matches at a word start
+# (`motion` matches "motion-led", `animat` matches "animated", neither matches "emotion"), a shorter one matches the whole
+# word (`no`, `not`), and a term in another script matches as a substring; case is ignored.
+# `type`: the families a browser or an OS picks when nobody chose one (`system_defaults`; a CSS generic keyword from
+# `fonts/system-fonts.yaml` and a name that starts with a dot count too). A rough's headline and body must render in a
+# family that is not one of them (read from the render extract's `font.rendered`), unless the card quotes an owner
+# `[declared]` line with one of `system_asks`. `system_share` is the share of a role's characters a system default may paint
+# before the role counts as set in it. `words` are terms that name a typeface or a type class in the owner's words; when
+# any is found (or an installed family of the owner's inventory is named), the card says how its type answers them.
+# `motion`: terms that ask for motion (`words`) and for stillness (`still_words`). `diverge contract` refuses
+# `motion: none` while an owner `[declared]` row, the taste file, or an answered direction item (a style, a kept kit item, a
+# signature element) matches `words`, unless `motion_still_by` quotes a `[declared]` line with a `still_words` term. A
+# motion capture shows change when the settled and the reduced-motion capture of one scroll position differ in at least
+# `changed_share` of their pixels by more than `pixel_delta` (of 255) in any channel.
+rough_carry:
+  type:
+    system_defaults: [".SF NS", ".AppleSystemUIFont", "SF Pro", "SF Pro Text", "SF Pro Display", "SF Pro Rounded", "SF Mono",
+                      "SF Compact", "San Francisco", "Helvetica", "Helvetica Neue", "Arial", "Times", "Times New Roman",
+                      "Courier", "Courier New", "Menlo", "Monaco", "Consolas", "Lucida Grande", "Roboto", "Segoe UI",
+                      "Segoe UI Variable", "Apple SD Gothic Neo", "Apple Gothic", "Malgun Gothic", "Hiragino Sans",
+                      "Hiragino Kaku Gothic ProN", "Hiragino Kaku Gothic Pro", "Yu Gothic", "Meiryo", "PingFang SC",
+                      "PingFang TC", "PingFang HK", "Microsoft YaHei", "Microsoft JhengHei", "DejaVu Sans",
+                      "Liberation Sans", "Ubuntu", "Cantarell", "Droid Sans"]
+    system_share: 0.25
+    system_asks: ["system font", "system ui", "system-ui", "system typeface", "native font", "default font",
+                  "시스템 서체", "시스템 폰트", "시스템 글꼴", "시스템서체", "시스템폰트", "기본 서체", "기본 폰트", "기본 글꼴",
+                  "システムフォント", "システム書体", "デフォルトフォント", "標準フォント", "系统字体", "系統字體", "默认字体", "預設字體"]
+    words: [typeface, font, typograph, geometric, grotesk, grotesque, humanist, serif, sans, monospace, blackletter,
+            서체, 폰트, 글꼴, 타이포, 산세리프, 세리프, 고딕, 명조, 지오메트릭, 그로테스크, 고정폭, 모노스페이스,
+            フォント, 書体, タイポ, ゴシック, 明朝, セリフ, ジオメトリック, 字体, 字體, 无衬线, 無襯線, 衬线, 襯線]
+  motion:
+    words: [motion, animat, kinetic, parallax, scrollytelling, marquee,
+            모션, 움직, 애니메이션, 키네틱, 패럴랙스, 마퀴,
+            モーション, アニメ, 動き, 動く, キネティック, パララックス,
+            动画, 動畫, 动效, 動效, 动态效果, 動態效果]
+    still_words: ["no", "not", "without", "never", "avoid", "don't", "static", "still", "stop", 없이, 없는, 말고, 말아, 금지, 싫, 정적, 정지, 빼,
+                  なし, 不要, いらない, 避け, 静的, 静止, 无, 無, 禁止]
+    changed_share: 0.001
+    pixel_delta: 16
+
 distance:
   calibrated: true
   weights: { struct: 0.55, mass: 0.20, repr: 0.25 }

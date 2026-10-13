@@ -346,7 +346,10 @@ files beside it; the database file itself does not change.
   The direction conversation (`direction.py`: the proposal `.lapis/direction/<task>.yaml`, the owner's items under
   `## Direction <n>` in the brief record, `owner-direction` turns one and two) and the rough first views (`diverge.py`:
   CLI-owned draws, cards, distances, contact sheet, seal in `.lapis/state/diverge/<task>/`) sit between the references and
-  the plan; the pools and weights are `src/shared/diverge/pools.yaml`.
+  the plan; the pools and weights are `src/shared/diverge/pools.yaml`. What a rough carries of the owner's declared words
+  (the families its headline and body render in, a motion capture when the brief requires motion, an element for each answered
+  style item) is `rough_carries.py`, with `rough_selectors.py` matching a card's selectors against the rough's markup; its term
+  lists and thresholds are `rough_carry` in the pools file.
   The order brief, requirements, references, direction, plan, then code is `order.py`: `hook pre-write` refuses an
   unattended create run's write of a page source file while `next` names `brief`, `requirements`, `references`,
   `owner-direction`, `diverge`, `plan`, `plan-fix`, or `plan-explorations` (three
