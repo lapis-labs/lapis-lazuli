@@ -10,6 +10,12 @@ contract formats are v0.
 
 ### Changed
 
+- The direction questions are in plain words. A `direction` questions file does not wait when a line opens with an item id, when
+  an object option's family name stands outside parentheses, or when a distance number `diverge check` recorded for a pair of
+  roughs is shown next to a word for it or two rough ids (`direction.plain_problem`); `next` names the line. The numbers stay in
+  `distances.json` and the critic packet. `direction-conversation.md` and `diverge.md` say it, with a plain-words example, and
+  that an item with a single option is a statement, not a question (guide only: free text cannot be told a statement from a
+  question by its form).
 - The owner summary no longer holds defects of a build that does not exist. While nothing has been shown or built, as the
   CLI's own records say (the procedure is not `done`, no critic report, no page and no draft record, no slice budget fired),
   the summary has no `Defects of the build shown` section and no requirement row "not judged: no critic report yet" (direction

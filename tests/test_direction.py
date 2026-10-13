@@ -320,7 +320,7 @@ def test_a_direction_file_with_fifteen_items_waits_and_is_not_under_the_brief_ca
         {**proposal()["styles"][0], "kit": [{"id": f"K{n}", "item": f"kit item {n}", "seen_in": ["ref-1"],
                                              "default": "keep", "why": "seen"} for n in range(1, 14)]}]})
     ids = ["S1", *[f"K{n}" for n in range(1, 14)], "O1", "G1"]
-    questions = "".join(f"{n}. {i} — keep or drop?\n" for n, i in enumerate(ids, 1))
+    questions = "".join(f"{n}. Keep or drop this part? ({i})\n" for n, i in enumerate(ids, 1))
     record(run, "questions", "lapis-questions: direction\n" + questions, 200)
     unpasted = next_step.evaluate(run, TASK)                     # the owner block is the CLI's: the file must carry it
     assert unpasted["state"] == "needs-step" and unpasted["step"]["id"] == "owner-direction"
@@ -397,3 +397,71 @@ def test_the_critic_packet_resolves_the_chosen_option_to_its_text_and_leaves_the
     listed = {i["path"]: i["kind"] for i in data["inputs"]}
     assert listed[section["contact"]] == "direction-contact" and listed[section["pick"]["captures"][0]] == "direction-capture"
     assert "why" not in json.dumps(section) and "they can carry the three plugins" not in json.dumps(section)
+
+
+# ---- 6. the questions put each item in plain words
+
+PLAIN = ("What should the neo-brutalist look do for your visitors? (S1)\n"
+         "   a) expose the record: every block shows its raw text (default)\n"
+         "Keep or drop the full-bleed slabs? (K1) And the ticker band? (K2)\n"
+         "How should the page show the firing log? (O1)\n"
+         "   a) ruled rows (ledger)  b) a fader between versions (fader-overlay)  c) an annotated diff (annotated-diff)\n"
+         "What should the procedure animation tell the visitor? (G1)\n")
+
+
+def asked_with(run: Path, text: str) -> dict:
+    ask(run, text, 201, kind="direction")
+    return next_step.evaluate(run, TASK)
+
+
+def why_of(result: dict) -> str:
+    assert result["state"] == "needs-step" and result["step"]["id"] == "owner-direction", result["state"]
+    return result["step"]["why"]
+
+
+def test_questions_in_plain_words_with_ids_and_family_names_in_parentheses_wait(run):
+    result = asked_with(run, PLAIN)
+    assert (result["state"], result["then"]["id"]) == ("waiting-for-user", "owner-direction")
+    assert direction.questions_problem(run, TASK, {}) is None
+
+
+@pytest.mark.parametrize("line", ["S1 neo-brutalism: what should it do here?", "1. K2 ticker band: keep or drop?",
+                                  "- **O1** the firing log: pick one", "> G1, the animation: what does it carry?"])
+def test_a_line_that_opens_with_an_item_id_does_not_wait_and_names_the_line(run, line):
+    why = why_of(asked_with(run, f"{PLAIN}{line}\n"))
+    assert "do not wait: the line" in why and "opens with the item id" in why and "in plain words first" in why
+    assert "(for example `What should neo-brutalism do here? (S1)`)" in why
+
+
+def test_a_family_name_outside_parentheses_does_not_wait_and_inside_parentheses_does(run):
+    why = why_of(asked_with(run, f"{PLAIN}Option b is the fader-overlay version of the log.\n"))
+    assert "shows the family name fader-overlay outside parentheses" in why
+    assert asked_with(run, PLAIN)["state"] == "waiting-for-user"                  # the same name, in parentheses
+
+
+def test_a_recorded_distance_between_roughs_does_not_wait_but_the_same_number_elsewhere_does(run):
+    save(run, f"state/diverge/{TASK}/distances.json",
+         {"version": 0, "pairs": [{"a": "C1", "b": "C2", "total": 0.43, "struct": 0.51, "mass": 0.12, "repr": 0.33}]})
+    for line in ("The distance between the roughs is 0.43.", "C1 and C2 differ by .51 in structure",
+                 "C1 vs C2: total 0.43 (struct 0.51, mass 0.12, repr 0.33)"):
+        why = why_of(asked_with(run, f"{PLAIN}{line}\n"))
+        assert "shows the distance number" in why and "stay in the records and the critic packet" in why
+    assert (asked_with(run, f"{PLAIN}The slabs take 0.43 of the width at 1440.\n")["state"], ) == ("waiting-for-user",)
+    assert (asked_with(run, f"{PLAIN}The roughs differ in how the first view is laid out.\n")["state"], ) == ("waiting-for-user",)
+
+
+def test_with_no_recorded_distances_a_number_next_to_the_word_distance_is_the_runs_own_words(run):
+    assert asked_with(run, f"{PLAIN}The commute distance on the page is 0.43 of the route.\n")["state"] == "waiting-for-user"
+
+
+def test_after_the_seal_a_line_that_opens_with_a_roughs_signature_id_does_not_wait(run):
+    settled(run)
+    seal_diverge(run, {"C1": [{"id": "G1", "element": "crystal stone", "carries": "the three plugin names as facets"}],
+                       "C2": [{"id": "G1", "element": "fader strip", "carries": "which page is shown"}]})
+    opening = "Which rough do you pick (Pick), and do you want the crystal stone (C1.G1) and the fader strip (C2.G1)?\n"
+    ask(run, opening, 201, kind="direction")
+    assert "Pick" in direction.asked(run, TASK, {}) and direction.questions_problem(run, TASK, {}) is None
+    ask(run, f"{opening}C2.G1 fader strip: which page is shown\n", 202, kind="direction")
+    assert "opens with the item id C2.G1" in direction.questions_problem(run, TASK, {})
+    ask(run, f"{opening}Pick the rough you like best.\n", 203, kind="direction")
+    assert direction.questions_problem(run, TASK, {}) is None                    # `Pick` is a word, not an id

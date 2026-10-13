@@ -111,13 +111,13 @@ def test_the_direction_questions_of_a_korean_request_are_asked_in_korean(tmp_pat
     (root / ".lapis/fonts.lock.json").unlink()
     item = open_item(root)
     owner_file(root, KOREAN_REQUEST)
-    asked = " ".join(direction.asked(root, TASK))
-    ask(root, "Which of the options? " + item + asked + ". Why: it sets the opening. I assume the first option, a ledger.\n", 210,
+    assert direction.asked(root, TASK) == ["G1"]                 # `item` names it, in parentheses
+    ask(root, "Which of the options? " + item + "Why: it sets the opening. I assume the first option, a ledger.\n", 210,
         kind="direction")
     result = evaluated(root)
     assert result["state"] != "waiting-for-user"
     assert "do not wait: the owner's request is in Korean and the questions are in Latin script" in result["step"]["why"]
-    ask(root, "어느 쪽이 더 가까운가요? " + item + asked + " 이유: 첫 화면을 정해요. 첫 번째 안인 장부를 가정해요.\n", 220, kind="direction")
+    ask(root, "어느 쪽이 더 가까운가요? " + item + " 이유: 첫 화면을 정해요. 첫 번째 안인 장부를 가정해요.\n", 220, kind="direction")
     result = evaluated(root)
     assert (result["state"], result["waiting"]["kind"]) == ("waiting-for-user", "direction")
 

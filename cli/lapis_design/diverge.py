@@ -39,7 +39,7 @@ roughs against the owner's verdicts). `d_struct` is the IoU distance of the firs
 more, the share of dark pixels, the media box share, and the line-ink share; `d_repr` is the share of open core objects
 whose declared family differs. Only a pair with the same markup structure and a mass distance under the pools'
 `reject_mass_below` is refused, as differing in order or finish only. Every other number is reported, never gated, and
-is a fact on the contact sheet, not a quality score.
+is a fact of the records and the critic packet, not a quality score; the owner is told in words, not numbers (`direction.plain_problem`).
 """
 from __future__ import annotations
 
@@ -1153,6 +1153,16 @@ def _how(task: str) -> str:
 def step(root: Path, task: str, reason: str) -> dict[str, Any]:
     verb = ("start" if seed(root, task) is None else "contract" if not contract_passed(root, task) else "check")
     return {"id": STEP, "why": reason, "command": f"lapis-design diverge {verb} --task {task}"}
+
+
+def distance_numbers(root: Path, task: str) -> set[str]:
+    """The numbers `check` recorded as distances between the roughs (total, structure, mass, representation of each pair),
+    as the text `show` prints them in without a leading zero (`.43`). They are facts for the records and the critic packet,
+    not for the owner: `direction.plain_problem` looks for them in what the run asks."""
+    report = _json(state_dir(root, task) / "distances.json")
+    pairs = report.get("pairs") if isinstance(report, dict) else None
+    return {f"{float(p[key]):.2f}".removeprefix("0") for p in pairs or () if isinstance(p, dict)
+            for key in ("total", "struct", "mass", "repr") if isinstance(p.get(key), (int, float))}
 
 
 def show(root: Path, task: str, env: Mapping[str, str] = os.environ) -> str:

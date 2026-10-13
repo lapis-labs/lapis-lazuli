@@ -46,7 +46,7 @@ def open_item(root: Path) -> str:
     doc["signature"] = [{"id": "G1", "element": "procedure animation", "default": "a",
                          "options": [{"id": "a", "text": "which step is current"}, {"id": "b", "text": "only the order"}]}]
     save(root, f"direction/{TASK}.yaml", doc)
-    return "G1: what should the procedure animation carry?\n"
+    return "What should the procedure animation carry? (G1)\n"
 
 
 def numbered(count: int) -> str:

@@ -478,9 +478,45 @@ def step(task: str, reason: str) -> dict[str, Any]:
     return {"id": STEP, "why": reason, "command": None, "format": formats(task)}
 
 
+_OPENING = re.compile(r"^[\s>*_`#\-+]*(?:\d+[.)]\s+)?[\s*_`]*")          # a list mark, a quote, bold, or a number before a line's words
+_PAREN = re.compile(r"\([^()\n]*\)|（[^（）\n]*）")
+_DECIMAL = re.compile(r"(?<![\w.])(\d?\.\d{2})(?!\d)")
+_DISTANCE_WORD = re.compile(r"\b(?:distance|struct|mass|repr|total)\b|거리", re.IGNORECASE)
+
+
+def plain_problem(root: Path, task: str, text: str, env: Mapping[str, str] = os.environ) -> str | None:
+    """What the questions in `text` put before the owner that is not plain words, or None. The owner reads what the item
+    does first; its id and the family names of its options are the records' words and come second, in parentheses. Three
+    things are found from the records and refused: a line that opens with an item id, a family name of an object option
+    outside parentheses, and a number `diverge check` recorded as a distance between roughs next to a word for it or two
+    rough ids (the numbers stay in the records and the critic packet). That an item with a single option is a statement and
+    not a question is not checked: the questions are free text, and a statement cannot be told from a question by form."""
+    found = items(root, task, env)
+    ids = sorted({i["id"] for i in found if _ID.match(i["id"])}, key=len, reverse=True)
+    families = sorted({o["family"] for i in found for o in i["options"] if "-" in str(o.get("family") or "")}, key=len, reverse=True)
+    values = diverge.distance_numbers(root, task)
+    lead = re.compile("^(?:" + "|".join(map(re.escape, ids)) + r")(?![\w])") if ids else None
+    for line in text.splitlines():
+        words = _OPENING.sub("", line)
+        if lead and (opened := lead.match(words)):
+            return (f"the line `{_clean(line)[:60]}` opens with the item id {opened.group()}: say what the item asks in plain "
+                    f"words first and put the id after them, in parentheses (for example `What should neo-brutalism do here? "
+                    f"(S1)`)")
+        bare = _PAREN.sub(" ", line)
+        for family in families:
+            if re.search(r"(?<![\w-])" + re.escape(family) + r"(?![\w-])", bare):
+                return (f"the line `{_clean(line)[:60]}` shows the family name {family} outside parentheses: describe the option "
+                        "in plain words and put the family name after them, in parentheses")
+        if values and (numbers := [n for n in _DECIMAL.findall(line) if n.removeprefix("0") in values]) and (
+                _DISTANCE_WORD.search(line) or len(set(re.findall(r"\bC\d+\b", line))) >= 2):
+            return (f"the line `{_clean(line)[:60]}` shows the distance number {numbers[0]} between roughs: the numbers stay "
+                    "in the records and the critic packet; tell the owner how the roughs differ in words and show the contact sheet")
+    return None
+
+
 def questions_problem(root: Path, task: str, env: Mapping[str, str] = os.environ) -> str | None:
-    """Why the `direction` questions file does not wait, or None when it does: at least one item must be open, and the
-    file has to name every open item (`asked`)."""
+    """Why the `direction` questions file does not wait, or None when it does: at least one item must be open, the file
+    has to name every open item (`asked`), and it has to put the items in plain words (`plain_problem`)."""
     ids = asked(root, task, env)
     if not ids:
         return "no item of the direction conversation is open, so there is nothing to ask"
@@ -488,7 +524,7 @@ def questions_problem(root: Path, task: str, env: Mapping[str, str] = os.environ
     missing = [i for i in ids if not re.search(r"(?<![\w.])" + re.escape(i) + r"(?![\w])", text)]
     if missing:
         return f"it does not name the open items {', '.join(missing)}"
-    return None
+    return plain_problem(root, task, text, env)
 
 
 # ---------------------------------------------------------------- what the critic sees

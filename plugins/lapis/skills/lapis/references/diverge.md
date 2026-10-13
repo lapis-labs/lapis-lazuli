@@ -12,7 +12,7 @@ matters (two to four; the default is two), and the owner picks one before the pl
 - The commands: `start`, `contract`, `resample`, `variant`, `check`, `seal`, `show`.
 - The rough and its card: what to make, what the card says, and how much a rough may carry before the pick.
 - What a rough carries of the owner's words: its type, its motion, and its style answers, and why each is checked.
-- Distances and the contact sheet: facts for the owner, not a score.
+- Distances and the contact sheet: facts for the records and the critic, not for the owner and not a score.
 - After the seal: turn two, the plan, and the slice.
 - Unattended: nobody to pick.
 
@@ -198,7 +198,11 @@ the grunge texture, or the oversized headline on a named element, say so, and sh
 roughs is a weighted sum of how their first views are laid out (text, media, and control boxes on a grid, and the markup
 structure), how the color mass is allocated (the field's lightness and chroma, the share of vivid and of dark pixels, the media
 share, the line share), and how many core objects are represented differently. The weights (`diverge/pools.yaml`) were calibrated on the E1b roughs and the owner's verdicts there; structure leads. The
-numbers are facts shown next to the contact sheet; they are never a quality score, and there is no novelty target.
+numbers are facts for the records and the critic packet; they are never a quality score, and there is no novelty target.
+**Do not show them to the owner.** A number between two roughs tells a person nothing they can choose by; tell them in words how
+the roughs differ (what the first view carries, where the color sits, how the object is shown) and let the contact sheet show it.
+The direction questions are refused when a line carries a recorded distance next to a word for it or two rough ids
+(`direction-conversation.md`, "Asking").
 The representation part of a distance compares the card's family names; it does not read the captures, so it is no evidence
 that the captures show that difference.
 

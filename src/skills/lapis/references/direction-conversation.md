@@ -10,7 +10,7 @@ vote on adjectives: every option is a job, a representation, or a carried meanin
 - The three questions: what a named style does, how each core object is represented, what a signature element carries.
 - The fonts question: one per type role, whether the owner has fonts they own but have not installed.
 - The proposal: `.lapis/direction/<task>.yaml`, written before you ask.
-- Asking: one message per turn, in the owner's language, naming every open item.
+- Asking: one message per turn, in the owner's language and plain words, naming every open item by its id in parentheses.
 - Recording answers: `## Direction <n>` in the brief record, one line per item.
 - Unattended: nobody to ask: `[assumed]` with a basis, nothing waits.
 - What it is not: limits, so a turn never becomes a progress check-in.
@@ -29,7 +29,11 @@ vote on adjectives: every option is a job, a representation, or a carried meanin
 
 ## The three questions
 
-Write them in the owner's language. Each item is one line plus its options, and a default you would stand behind.
+Write them in the owner's language, in plain words. Each item opens with a sentence that says what it asks, as a person who has
+never seen this file would put it; its id (`S1`, `K2`, `C2.G1`) and the family name of an option (`time-dial`) are the
+records' words, so they come after the plain words, in parentheses, never first and never alone. Each item has its options and a
+default you would stand behind. Show the owner no distance number between roughs: those stay in `distances.json` and the critic
+packet. Say in words how the roughs differ, and show the contact sheet.
 
 **1. A named style: what should it DO here?** For every style named in the owner's words (the request, the taste answer, a
 `[declared]` row):
@@ -54,21 +58,31 @@ An example of turn one:
 
 ```text
 lapis-questions: direction
-Direction 1 — references: .lapis/references/<task>.sheet.png (directions A, B, C)
+First choices: the reference sheet is .lapis/references/<task>.sheet.png (directions A, B, C)
 
-S1 neo-brutalism — what should it do here?
+What should the neo-brutalist look do for your visitors? (S1)
    a) expose the record: every brief, plan and finding is a bordered block with its raw text (default)
    b) collision: display words and the stone image overlap and break the grid on purpose
    c) bare HTML: system type, underlined links, only real output as imagery
-   Today's kit, keep or drop each (seen in byooooob, dublab, gumroad):
-   K1 full-bleed slabs with drawn line fields — keep: they can carry the three plugins
-   K2 ticker band between slabs — drop: moves without carrying information
+   Today's parts of that look, keep or drop each (seen in byooooob, dublab, gumroad):
+   - full-bleed slabs with drawn line fields: keep, they can carry the three plugins (K1)
+   - a ticker band between slabs: drop, it moves without carrying information (K2)
 
-O1 what the skills change in an agent's work — a) one page fading into its other version under a fader
-   b) the same component stepping through brief → plan → check  c) an annotated diff   (default: try all three)
+How should the page show what the skills change in an agent's work? (O1)
+   a) one page fading into its other version under a fader (fader-compare)
+   b) the same component stepping through brief → plan → check (step-through)
+   c) an annotated diff (annotated-diff)   (default: try all three)
 
-G1 procedure animation — carries: a) which step is current and what it produced (default)  b) only the order
+What should the procedure animation tell the visitor? (G1)
+   a) which step is current and what it produced (default)  b) only the order
 ```
+
+**An item with one option is a statement, not a question.** A rough's own signature item (`C2.G1`) has the card's text as its
+only option, and a proposal item the brief leaves one reading for is the same: do not offer "a)" as a choice. State it and say
+what the owner can do: "The second rough's counter shows which step is current and what it produced; it stays unless you say
+otherwise. (C2.G1)". Silence or `Defaults accepted` takes it, and a different wish is `other`. The CLI cannot check this
+one: the questions are free text, and a statement cannot be told from a question by its form, so it is guide-only. A proposal
+item worth asking has two or three real options.
 
 ## The fonts question
 
@@ -92,8 +106,11 @@ the owner and the critic do.
 
 ## Asking
 
-- Write `.lapis/questions/<task>.md` with `lapis-questions: direction` on its first line, name every open item id in it, and
-  stop with it as your last message. A harness with a question tool may ask through it; the file is the record either way.
+- Write `.lapis/questions/<task>.md` with `lapis-questions: direction` on its first line, name every open item id in it (after the
+  plain words of its question, in parentheses), and stop with it as your last message. A harness with a question tool may ask
+  through it; the file is the record either way. The CLI refuses a file with a line that opens with an item id, a family name of
+  an option outside parentheses, or a distance number between roughs next to a word for it or two rough ids: the file does not wait
+  and `next` says which line.
 - Paste the owner summary `next` writes (`.lapis/owner/<task>.summary.md`, last line `lapis-owner-block <sha8>`) unchanged into
   the file, as at an approval: a direction file without the current summary comes back as `owner-direction`, with the paste step.
 - The file waits only when at least one item is open and every open id is named. Otherwise `next` names the step it would
