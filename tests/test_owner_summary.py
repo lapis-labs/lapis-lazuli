@@ -119,7 +119,8 @@ def test_what_the_owners_last_reply_changed_comes_first_after_the_decision(proje
     judge(project, [None, "met", "met", "met"])
     text = owner.deliver(project, TASK, {"kind": "approval"}).summary
     section = text.split("## Changed since your last word\n", 1)[1].split("\n\n", 1)[0]
-    assert f"- drop {first}: [declared] {first}: drop — the firing log is not for the first version" in section
+    assert section == '- you dropped: "Show the firing log on the first screen." (the firing log is not for the first version)'
+    assert first not in section                                                            # the row's words, not its id
     assert text.index("Decision:") < text.index("## Changed since your last word")
 
 

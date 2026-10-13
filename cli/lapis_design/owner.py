@@ -17,6 +17,11 @@ block is by link: the requirement outcome beyond the defects, the facts with the
 documents of the shown pages. `done` tells the agent to paste the summary ahead of its own summary. The summary is never
 shorter than the contract: a line it drops from `required` is a problem, not a saving.
 
+The summary's fixed text is in the owner's language (`owner_text.py`: English and Korean; the full block is English), and
+`Delivery.problems` compares against that text. Before anything has been shown or built (`_built`: not `done`, no critic
+report, no page or record in the draft record, no slice budget fired), the summary has no `Defects of the build shown` section,
+and requires none of its lines: there is no build to hold them against.
+
 Sections of the full block, in order: requirement outcome (counts, and up to 15 `partly`, `missing`, or left-out rows), the
 owner's own decisions, the decisions the owner has not made, the open core findings, the questions asked during the work,
 the fonts and their rights, the facts shown with their sources, integrity (protected changes, reactive keeps,
@@ -46,7 +51,7 @@ from urllib.parse import unquote, urlsplit
 import yaml
 
 from lapis_design import (attempts, brief, critic_packet, direction, diverge, draft, font_license, gaps, gate, integrity,
-                          requirements, slice_step, workers)
+                          owner_text, requirements, slice_step, workers)
 
 MARKER = "lapis-owner-block"
 LIST_MAX = 15
@@ -339,10 +344,11 @@ _UNCONFIRMED_CHANNELS = {"adobe-sync", "user-installed", "foundry-purchase", "op
 _OPEN_CHANNELS = {"open-source-other", "noonnu"}
 
 
-def font_facts(root: Path, task: str) -> list[str]:
+def font_facts(root: Path, task: str, lang: str = "en") -> list[str]:
     """One line per type role of the plan: the family, where it comes from, and what the fonts lock records of its license
     (`no fonts lock entry yet` before `lazuli lock` ran). A role whose license nobody confirmed is marked `needs your word`.
-    These are the rights facts the owner has to see."""
+    These are the rights facts the owner has to see. The fixed words are in `lang` (`owner_text.py`); the plan's and the
+    lock's values are as they are."""
     plan = gaps._plan(root, task)
     roles = ((plan.get("tokens") or {}).get("type") or {}).get("roles") or ()
     lock = _json(root / ".lapis" / "fonts.lock.json")
@@ -360,18 +366,19 @@ def font_facts(root: Path, task: str) -> list[str]:
         family = str(role["family"])
         entry = (next((e for e in entries if e.get("family") == family and e.get("role") == role["role"]), None)
                  or next((e for e in entries if e.get("family") == family), None))
-        source = candidates.get(family) or role.get("source") or "not said"
+        source = candidates.get(family) or role.get("source") or owner_text.say(lang, "font.unsaid")
         scripts = f" ({', '.join(map(str, role['scripts']))})" if role.get("scripts") else ""
         if entry is None:
-            lock_text, open_ = "no fonts lock entry yet, so no license is recorded", True
+            lock_text, open_ = owner_text.say(lang, "font.no-lock"), True
         else:
             state = font_license.state(entry)
             kind = (entry.get("license") or {}).get("kind", "unknown")
-            lock_text = f"fonts lock: channel {entry.get('source')}, license {kind} ({state})"
+            lock_text = owner_text.say(lang, "font.lock", channel=entry.get("source"), kind=kind, state=state)
             open_ = state in ("unknown", "unresearched") or (
                 entry.get("source") in _UNCONFIRMED_CHANNELS and not (state == "researched" and entry.get("source") in _OPEN_CHANNELS))
         open_ = open_ or str(source).startswith(("adobe", "commercial"))
-        out.append(f"{role['role']}{scripts}: {family} — source {source}; {lock_text}" + (" — needs your word" if open_ else ""))
+        out.append(owner_text.say(lang, "font.line", role=role["role"], scripts=scripts, family=family, source=source,
+                                  lock=lock_text) + (owner_text.say(lang, "font.needs") if open_ else ""))
     return out
 
 
@@ -463,17 +470,16 @@ def _shown(root: Path, task: str) -> list[str]:
     return out
 
 
-def _unreviewed(found: tuple[str, list[str]] | None) -> list[str]:
+def _unreviewed(found: tuple[str, list[str]] | None, lang: str = "en") -> list[str]:
     """The slice shown before its review was current, because its budget ran out: why, and what the draft check says is
     not current (`slice_step.unreviewed`). No section while the review is current or the budget has not fired."""
     if found is None:
         return []
     why, errors = found
     return ["## Not fully reviewed",
-            f"- The slice budget ran out ({why}), so you see the slice before its review is current; nothing here is "
-            "approved by being shown.",
-            *[f"  - {_cut(error, 300)}" for error in errors[:5]],
-            *([f"  - and {len(errors) - 5} more"] if len(errors) > 5 else [])]
+            owner_text.say(lang, "unreviewed.line", why=why),
+            *[owner_text.say(lang, "unreviewed.error", error=_cut(error, 300)) for error in errors[:5]],
+            *([owner_text.say(lang, "unreviewed.more", n=len(errors) - 5)] if len(errors) > 5 else [])]
 
 
 def _roughs(root: Path, task: str) -> list[str]:
@@ -490,13 +496,15 @@ def _faults(root: Path, record: dict | None, sources: list[tuple[str, str]]) -> 
             for _, report_path in sources if record is not None}
 
 
-def _fault_lines(sources: list[tuple[str, str]], faults: dict[str, list[str]]) -> list[str]:
+def _fault_lines(sources: list[tuple[str, str]], faults: dict[str, list[str]], lang: str = "en") -> list[str]:
     lines: list[str] = []
     for label, report_path in sources:
+        label = _label(label, lang)
         found = faults.get(report_path, [])
-        lines += [f"- {label}, critic report {report_path}: {_cut(problem, 300)}" for problem in found[:3]]
+        lines += [owner_text.say(lang, "fault.line", label=label, path=report_path, problem=_cut(problem, 300))
+                  for problem in found[:3]]
         if len(found) > 3:
-            lines.append(f"- {label}, critic report {report_path}: and {len(found) - 3} more gaps")
+            lines.append(owner_text.say(lang, "fault.more", label=label, path=report_path, n=len(found) - 3))
     return lines
 
 
@@ -539,10 +547,21 @@ class Delivery:
     required: tuple[tuple[str, str], ...]
     artifact: str
     gap_ids: tuple[str, ...]
+    language: str = "en"
 
     @property
     def marker(self) -> str:
         return f"{MARKER} {self.sha8}"
+
+    @property
+    def heading(self) -> str:
+        """The summary's first line, in the owner's language."""
+        return f"# {owner_text.say(self.language, 'title')}: {self.task}"
+
+    @property
+    def decision_label(self) -> str:
+        """The word the summary's one decision line starts with (`Decision`), in the owner's language."""
+        return owner_text.say(self.language, "decision.label")
 
     def pointer(self) -> dict:
         """Where the full block is, for a command's JSON: its path under the digest, the marker line, and its size in
@@ -553,13 +572,14 @@ class Delivery:
     def problems(self, text: str) -> list[str]:
         """What the questions in `text` lack of the delivery contract (empty when it is met): the current summary with its
         last line `lapis-owner-block <sha8>`, exactly one `Decision:` line, the path of the full block, and every line of
-        `required` unchanged. Nothing else of the full block is required in chat."""
+        `required` unchanged, all in the language the summary was written in. Nothing else of the full block is required
+        in chat."""
         if not carries(text, self.sha8):
             return [f"the questions do not carry the current owner summary: its last line `{self.marker}` is missing or out "
                     "of date"]
         lines = text.splitlines()
         end = max(i for i, line in enumerate(lines) if line.strip() == self.marker)
-        heading = f"# Owner summary: {self.task}"
+        heading = self.heading
         starts = [i for i in range(end) if lines[i].strip() == heading]
         if not starts:
             return [f"the questions carry `{self.marker}` but not the owner summary above it (`{heading}`): paste "
@@ -567,8 +587,9 @@ class Delivery:
         inside = lines[starts[-1]:end + 1]
         region = " ".join(" ".join(inside).split())
         found: list[str] = []
-        if (asks := sum(line.startswith("Decision:") for line in inside)) != 1:
-            found.append(f"the owner summary carries exactly one `Decision:` line, and this one has {asks}")
+        label = f"{self.decision_label}:"
+        if (asks := sum(line.startswith(label) for line in inside)) != 1:
+            found.append(f"the owner summary carries exactly one `{label}` line, and this one has {asks}")
         if self.artifact not in region:
             found.append(f"the owner summary names the full block ({self.artifact}) and its digest; this one does not")
         if missing := [(what, line) for what, line in self.required if " ".join(line.split()) not in region]:
@@ -578,8 +599,17 @@ class Delivery:
         return found
 
 
+def _label(label: str, lang: str) -> str:
+    """The label `_sources` gives a critic report (what it judged), in `lang`."""
+    if label == "the whole page":
+        return owner_text.say(lang, "label.whole")
+    if label.startswith("the page "):
+        return owner_text.say(lang, "label.page", url=label.removeprefix("the page "))
+    return label
+
+
 def _states(root: Path, record: dict | None, sources: list[tuple[str, str]], decisions: list[dict],
-            why: str) -> list[str]:
+            why: str, lang: str = "en") -> list[str]:
     """The requirement outcome as the summary carries it: per critic report the counts, each row `missing` or not judged
     with its words, and the rows `partly` by id. A report that cannot be read, or no report, says the rows are not judged."""
     if record is None:
@@ -588,74 +618,104 @@ def _states(root: Path, record: dict | None, sources: list[tuple[str, str]], dec
     rows = [r for r in record["rows"] if r["id"] not in dropped]
     if not rows:
         return []
+    say = owner_text.say
     if not sources:
-        return [f"- {len(rows)} requirement rows not judged: {why}."]
+        return [say(lang, "req.no-report", n=len(rows), why=why)]
     out: list[str] = []
     for label, report_path in sources:
+        label = _label(label, lang)
         report = _report(root, report_path)
         if not isinstance(report, dict):
-            out.append(f"- {label}: the critic report {report_path} cannot be read; {len(rows)} requirement rows not judged.")
+            out.append(say(lang, "req.unreadable", label=label, path=report_path, n=len(rows)))
             continue
         judged = {r["id"]: r for r in report.get("requirements") or () if isinstance(r, dict) and "id" in r}
         by_state = {state: [r for r in rows if judged.get(r["id"], {}).get("state") == state] for state in STATES}
         open_rows = [r for r in rows if r["id"] not in judged]
-        parts = [f"{state} {len(found)}" for state, found in by_state.items() if found] + (
-            [f"not judged {len(open_rows)}"] if open_rows else [])
-        out.append(f"- requirements, {label}: {', '.join(parts) or 'none judged'} of {len(rows)}")
-        out += [f"- missing {r['id']} \"{_cut(r['text'])}\"" for r in by_state["missing"]]
-        out += [f"- not judged {r['id']} \"{_cut(r['text'])}\"" for r in open_rows]
+        parts = [f"{say(lang, 'state.' + state)} {len(found)}" for state, found in by_state.items() if found] + (
+            [f"{say(lang, 'state.not-judged')} {len(open_rows)}"] if open_rows else [])
+        out.append(say(lang, "req.counts", label=label, parts=", ".join(parts) or say(lang, "req.none-judged-counts"),
+                       total=len(rows)))
+        out += [say(lang, "req.row", state=say(lang, "state.missing"), id=r["id"], text=_cut(r["text"]))
+                for r in by_state["missing"]]
+        out += [say(lang, "req.row", state=say(lang, "state.not-judged"), id=r["id"], text=_cut(r["text"]))
+                for r in open_rows]
         if by_state["partly"]:
-            out.append(f"- partly: {', '.join(r['id'] for r in by_state['partly'])}")
+            out.append(say(lang, "req.partly", ids=", ".join(r["id"] for r in by_state["partly"])))
     return out
 
 
-def _changed(root: Path, task: str, decisions: list[dict]) -> list[str]:
-    """What changed since the owner's last word: the decisions their last reply made (the answers file's last section),
-    the requirement rows that changed in the record, and the protected values changed since they approved the slice."""
+_OWN_WORDS = re.compile(r"\b(?:drop|narrow)\b\s*(?:—|–|--|-)\s*(\S.*)$", re.DOTALL)
+
+
+def _row_text(record: dict | None, row_id: str) -> str:
+    """The words of requirement row `row_id`, from the record's rows or, for a row that left it, its history."""
+    for entry in [*((record or {}).get("rows") or ()), *((record or {}).get("removed") or ())]:
+        if entry.get("id") == row_id:
+            return _cut(entry["text"])
+    return row_id
+
+
+def _changed(root: Path, task: str, decisions: list[dict], record: dict | None, lang: str = "en") -> list[str]:
+    """What changed since the owner's last word, in their terms: the decisions their last reply made (the answers file's
+    last section) by the row's words and theirs, the requirement rows that were added or left the record by their text
+    (no line when more than three changed: the full block lists them), and the protected values changed since they
+    approved the slice."""
+    say = owner_text.say
     try:
         answers = (root / ".lapis" / "answers" / f"{task}.md").read_text(encoding="utf-8", errors="replace")
     except OSError:
         answers = ""
     heads = [i + 1 for i, line in enumerate(answers.splitlines()) if line.lstrip().startswith("#")]
     start = heads[-1] if heads else 1
-    out = [f"- {d['decision']} {d['row']}: {_cut(d['quote'], 160)}" for d in decisions
-           if d["at"]["path"].endswith(f"{task}.md") and d["at"]["line"] >= start]
+    out = []
+    for d in decisions:
+        if d["at"]["path"].endswith(f"{task}.md") and d["at"]["line"] >= start:
+            said = _OWN_WORDS.search(d["quote"])
+            words = _cut((said.group(1) if said else d["quote"]).strip().strip("\"“”").strip(), 160)
+            out.append(say(lang, f"changed.{d['decision']}", row=_row_text(record, d["row"]), words=words))
     rows = integrity.changes(root, task)
-    changed_rows = [r for r in rows if r.get("kind") == "requirements"]
-    out += ([f"- requirement record: {r['pointer'].removeprefix('/requirements/')} "
-             f"{_cut(r.get('before') or '', 60)!r} -> {_cut(r.get('after') or '', 60)!r}" for r in changed_rows]
-            if len(changed_rows) <= 3 else
-            [f"- requirement record: {len(changed_rows)} rows added or changed (the full block lists them)"])
-    out += [f"- changed since you approved the slice: {r['pointer']}"
+    changed_rows = [r for r in rows if r.get("kind") == "requirements"
+                    and not str(r.get("pointer", "")).startswith("/requirements/owner_decisions/")]
+    if len(changed_rows) <= 3:
+        out += [say(lang, "changed.added", text=_cut(r["after"], 100)) if r.get("after")
+                else say(lang, "changed.removed", text=_cut(r.get("before") or "", 100)) for r in changed_rows]
+    out += [say(lang, "changed.slice", pointer=r["pointer"])
             for r in rows if r.get("kind") == "protected" and r.get("after_slice")]
-    return out[:8] + ([f"- and {len(out) - 8} more in the full block"] if len(out) > 8 else [])
+    return out[:8] + ([say(lang, "changed.more", n=len(out) - 8)] if len(out) > 8 else [])
 
 
-def _shown_lines(root: Path, task: str) -> list[str]:
+def _shown_lines(root: Path, task: str, lang: str = "en") -> list[str]:
+    say = owner_text.say
     out = []
     for page in _pages(root, task):
-        widths = ", ".join(str(w) for w in page.get("widths") or ()) or "unknown widths"
-        line = f"- {page['url']} at {widths}"
+        widths = ", ".join(str(w) for w in page.get("widths") or ())
+        line = say(lang, "shown.page", url=page["url"], widths=widths) if widths else say(lang, "shown.page-unknown", url=page["url"])
         if captures := _captures(root, page):
-            line += f"; captures, which open without a server: {', '.join(captures)}"
+            line += say(lang, "shown.captures", captures=", ".join(captures))
         if static := _static(root, page):
-            line += f"; the page as a file: {static}"
+            line += say(lang, "shown.file", file=static)
         out.append(line)
-    out += [f"- supporting evidence ({e['kind']}) {e['path']}, sha256 {e['sha256'][:12]}: {_cut(e['claim'], 160)}"
+    out += [say(lang, "shown.support", kind=e["kind"], path=e["path"], sha=e["sha256"][:12], claim=_cut(e["claim"], 160))
             for e in draft.supporting(root, task)]
     return out
 
 
-def _decision(kind: str | None, done: bool, gaps_open: int, core_open: int) -> str:
+def _decision(kind: str | None, done: bool, gaps_open: int, core_open: int, lang: str = "en") -> str:
     """The one thing the summary asks the owner for."""
+    say = owner_text.say
     if done:
-        return "accept this result, or name what to fix first."
-    settles = [f"the {n} {what} above" for n, what in ((gaps_open, "decisions you have not made"),
-                                                      (core_open, "open core findings")) if n]
-    tail = f"; your answer also settles {' and '.join(settles)}." if settles else "."
-    if kind == "direction":
-        return "pick or change what the direction items name" + tail
-    return "approve this build or say what to change" + tail
+        return say(lang, "decision.done")
+    settles = [say(lang, key, n=n) for n, key in ((gaps_open, "settles.gaps"), (core_open, "settles.core")) if n]
+    ask = "decision.direction" if kind == "direction" else "decision.approval"
+    return say(lang, ask + ".settles", what=say(lang, "settles.join").join(settles)) if settles else say(lang, ask)
+
+
+def _built(root: Path, task: str, done: bool, sources: list[tuple[str, str]], unreviewed: Any) -> bool:
+    """Whether anything has been shown or built, as the CLI's own records say (never the agent's word): the procedure is
+    done, a critic report is named, the draft record holds a page or exists at all, or the slice budget ran out with the
+    review not current. Before that (direction turns, the roughs before the pick) the summary has no build to hold defects
+    against."""
+    return bool(done or sources or unreviewed is not None or draft.path(root, task).is_file() or _pages(root, task))
 
 
 def _build(root: Path, task: str, result: Mapping[str, Any] | None) -> Delivery:
@@ -699,28 +759,34 @@ def _build(root: Path, task: str, result: Mapping[str, Any] | None) -> Delivery:
         required.extend((what, line) for line in lines)
         return lines
 
+    lang = owner_text.language(root, task)
+    say = owner_text.say
     attention = need("core gap", [f"- {g['text']}" for g in found])
-    why = f"requirements not judged: {note['reason']}" if (note := attempts.read(root, task, "critic")) else "no critic report yet"
-    defects = need("core defect", [f"- {rule_id}: {observed}" for rule_id, observed in core])
-    defects += need("core defect", [line.strip() for line in _unreviewed(unreviewed)[1:]] if unreviewed else [])
-    defects += need("core defect", _fault_lines(sources, faults))
-    defects += need("core defect", _states(root, record, sources, decisions, why))
-    changed = _changed(root, task, decisions)
-    shown = _shown_lines(root, task)
+    built = _built(root, task, done, sources, unreviewed)
+    defects: list[str] = []
+    if built:
+        why = (say(lang, "why.note", reason=note["reason"]) if (note := attempts.read(root, task, "critic"))
+               else say(lang, "why.none"))
+        defects = need("core defect", [f"- {rule_id}: {observed}" for rule_id, observed in core])
+        defects += need("core defect", [line.strip() for line in _unreviewed(unreviewed, lang)[1:]] if unreviewed else [])
+        defects += need("core defect", _fault_lines(sources, faults, lang))
+        defects += need("core defect", _states(root, record, sources, decisions, why, lang))
+    changed = _changed(root, task, decisions, record, lang)
+    shown = _shown_lines(root, task, lang)
     unattended = done and gate.is_unattended()
     summary = [
-        [f"# Owner summary: {task}"],
-        [f"Decision: {_decision(result.get('kind'), done, len(found), len(core))}"],
-        ["## Changed since your last word", *changed] if changed else [],
-        ["## Decisions made without you" if unattended else "## Decisions you have not made", *attention] if attention else [],
-        ["## Defects of the build shown", *(defects or ["- none open."])],
-        ["## Release", *need("release", [f"- {result['verdict']}"])] if done else [],
-        ["## Fonts and rights", *need("font fact", [f"- {line}" for line in fonts])] if fonts else [],
-        ["## Shown", *shown] if shown else [],
-        [f"Full block: {artifact} ({len(text)} characters: the requirement outcome row by row, the facts with their sources, "
-         "integrity, disputes, and what did not run).", f"{MARKER} {sha8}"]]
+        [f"# {say(lang, 'title')}: {task}"],
+        [f"{say(lang, 'decision.label')}: {_decision(result.get('kind'), done, len(found), len(core), lang)}"],
+        [f"## {say(lang, 'heading.changed')}", *changed] if changed else [],
+        [f"## {say(lang, 'heading.gaps.unattended' if unattended else 'heading.gaps')}", *attention] if attention else [],
+        [f"## {say(lang, 'heading.defects')}", *(defects or [say(lang, 'none.open')])] if built else [],
+        [f"## {say(lang, 'heading.release')}", *need("release", [f"- {result['verdict']}"])] if done else [],
+        [f"## {say(lang, 'heading.fonts')}", *need("font fact", [f"- {line}" for line in font_facts(root, task, lang)])]
+        if fonts else [],
+        [f"## {say(lang, 'heading.shown')}", *shown] if shown else [],
+        [say(lang, "full.block", artifact=artifact, chars=len(text)), f"{MARKER} {sha8}"]]
     return Delivery(task=task, block=text, sha8=sha8, summary="\n\n".join("\n".join(lines) for lines in summary if lines) + "\n",
-                    required=tuple(required), artifact=artifact, gap_ids=tuple(g["id"] for g in found))
+                    required=tuple(required), artifact=artifact, gap_ids=tuple(g["id"] for g in found), language=lang)
 
 
 def block(root: Path, task: str, result: Mapping[str, Any] | None = None) -> tuple[str, str]:

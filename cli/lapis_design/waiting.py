@@ -31,16 +31,19 @@ import re
 from pathlib import Path
 from typing import Any, Mapping
 
+from lapis_design import owner_text    # stdlib only, and imports nothing of ours at load
+
 STEP = "waiting-for-user"
 CAP = {"plan": 2, "approval": 1}      # sets of questions the gate lets pass, by whether a plan exists
 KINDS = ("brief", "direction", "approval", "ask")
 CAPPED = ("brief", "approval")        # the kinds the gate counts against CAP
 ATTENDED_ONLY = ("direction", "ask")  # an unattended run answers these itself and never waits on them
 MIN_WORDS = 2
-ENV = "LAPIS_UNATTENDED"              # the variable `gate.is_unattended` reads; this module imports nothing of ours
+ENV = "LAPIS_UNATTENDED"              # the variable `gate.is_unattended` reads; this module imports only `owner_text`, which imports nothing of ours at load
 _LIST_MARK = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+")
 _WORD = re.compile(r"[^\W_]+")        # a run of letters or digits of any script
-_BLOCK = re.compile(r"^# Owner (?:block|summary): .*?^lapis-owner-block [0-9a-f]{8}[ \t]*$", re.MULTILINE | re.DOTALL)
+_BLOCK = re.compile(r"^# (?:Owner block|" + "|".join(map(re.escape, owner_text.TITLES)) + r"): .*?^lapis-owner-block [0-9a-f]{8}[ \t]*$",
+                    re.MULTILINE | re.DOTALL)
 _KIND = re.compile(r"^[ \t]*lapis-questions:[ \t]*(\S*)[ \t]*$", re.MULTILINE)
 _MARKER = re.compile(r"^lapis-owner-block ([0-9a-f]{8})[ \t]*$", re.MULTILINE)
 

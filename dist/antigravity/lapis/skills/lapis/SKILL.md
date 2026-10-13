@@ -36,10 +36,12 @@ metadata:
   sources, protected changes, disputes, and what did not run) and returns the owner summary (`--json`: `owner_summary`;
   `owner_block` holds the block's path, digest, and size). The summary, also `.lapis/owner/<task>.summary.md`, is what the
   owner reads in chat: one `Decision:` line, what the owner's last reply changed, every decision you have not made, every
-  defect of the build shown (open core findings, what is not reviewed, requirement rows missing or not judged), every font
-  role with its source and license, what was shown, and the full block's path and digest, ending in a
-  `lapis-owner-block <sha8>` line. Paste the summary unchanged ahead of your own summary at `done`, and into the questions
-  file of an approval or direction ask. A file that lacks the current summary, drops one of its lines, has no single
+  defect of the build shown (open core findings, what is not reviewed, requirement rows missing or not judged; the section is
+  left out while nothing has been shown or built, as the CLI's records say), every font role with its source and license, what
+  was shown, and the full block's path and digest, ending in a `lapis-owner-block <sha8>` line. Paste the summary unchanged ahead of your own summary at `done`, and into the questions
+  file of an approval or direction ask. The CLI writes the summary's fixed text (headings, the decision line) in the owner's
+  language (English or Korean; Japanese and Chinese owners get English), so the `Decision:` line may read `결정:`: paste it as
+  it is. A file that lacks the current summary, drops one of its lines, has no single
   `Decision:` line, or does not name the full block comes back as `draft-review` (`owner-direction` for direction) with what
   is missing; the full block itself is read by link, never pasted. Never edit, shorten, or write the summary yourself. It
   lists `## Decisions you have not made`: what you filled in that the owner never decided (style, objects, signature, color

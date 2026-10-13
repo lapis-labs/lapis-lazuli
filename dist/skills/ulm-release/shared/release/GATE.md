@@ -403,6 +403,17 @@ unchanged; text around the summary is the run's own and is not checked, and `don
 unchanged ahead of its own. `draft check` writes the block and the summary too when the review holds. A pasted summary or
 block is not counted as words or links of the questions.
 
+The summary's fixed text (its heading `# Owner summary: <task>`, the section headings, the `Decision:` line, the fixed phrases
+around what a record says, the full-block line) is written in the owner's language, which `owner_language.py` infers from the
+request: English, or Korean (해요체) for a clearly Korean request; Japanese and Chinese requests get the English text, a known
+limit. The check compares against that text, so a Korean summary is pasted as written (its `결정:` line, its Korean headings)
+and one line dropped is still refused. What a record says (a row, a finding, a rule id, a path, a gap line, the release
+verdict) is copied as it is. The full block stays English. While nothing has been shown or built, as the CLI's own records say
+(no critic report, no page in the draft record, no draft record, no slice budget fired, not `done`), the summary has no
+`Defects of the build shown` section and no requirement row is reported as not judged: there is no build to hold them against.
+"What changed since your last word" names the decisions the owner's reply made and the requirement rows added or removed by
+their text (none of them when more than three rows moved: the full block lists them), never a count of rows.
+
 The block's section `## Decisions you have not made` is the gap list (`gaps.py`). Which decisions were the owner's is a
 fact the records hold, so the CLI computes it rather than the critic: an area (style, objects, signature, color, layout,
 motion, type per role, copy per locale) is the owner's when the answers file holds a `[declared]` item for it

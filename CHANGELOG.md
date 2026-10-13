@@ -10,6 +10,23 @@ contract formats are v0.
 
 ### Changed
 
+- The owner summary no longer holds defects of a build that does not exist. While nothing has been shown or built, as the
+  CLI's own records say (the procedure is not `done`, no critic report, no page and no draft record, no slice budget fired),
+  the summary has no `Defects of the build shown` section and no requirement row "not judged: no critic report yet" (direction
+  turns, the roughs before the pick). The questions file is no longer held to those lines; a link in the questions is the
+  agent's word and builds nothing. Once a page is in the draft record or a critic report exists, the section and its required
+  lines are as before. The full block is unchanged.
+- `Changed since your last word` is in the owner's terms. A decision the owner's last reply made is named by the row's words
+  and theirs (`you dropped: "..." (...)`, not `drop R3f2a1c: [declared] R3f2a1c: ...`), and requirement rows added or removed
+  are named by their text (up to three; with more, the summary leaves them out and the full block lists them). It never says
+  `requirement record: N rows added or changed`.
+- The owner summary's fixed text is written in the owner's language: its heading, section headings, the `Decision:` line, the
+  fixed phrases around what a record says (requirement states, font license lines, shown pages), and the full-block line. A
+  small catalog (`cli/lapis_design/owner_text.py`) has English and Korean (해요체); the language is the one
+  `owner_language.py` infers from the request. Japanese and Chinese owners get English (a known limit). `Delivery.problems`
+  compares against the text of that language, so a Korean summary is pasted as written and a dropped required line is still
+  refused. What a record says (rows, findings, rule ids, paths, the gap lines `gaps.py` writes, the critic-packet check messages,
+  the release verdict) is copied as written, and the full block stays English.
 - The worker-rules scan reads more than three folders. `workers.scan` (and `lapis-design worker check`, and the
   `SubagentStop` hook) now finds a tool call that read the source of any `lapis_design` module: a path under
   `lapis_design/`, a listing of the installed package folder, `from lapis_design import ...`, `import lapis_design`,
