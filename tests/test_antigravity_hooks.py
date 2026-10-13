@@ -20,7 +20,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools" / "build"))
 
 import manifests  # noqa: E402
-from lapis_design import __version__, antigravity, gate  # noqa: E402
+from lapis_design import __version__, antigravity, gate, owner  # noqa: E402
+from procedure_support import TASK, make_project  # noqa: E402
 
 PRE_FIELDS = {"decision", "reason", "permissionOverrides", "overwrite"}      # what PreToolUse answers may carry
 STOP_FIELDS = {"decision", "reason"}
@@ -209,6 +210,92 @@ def test_the_documented_stop_reason_is_continued_too(tmp_path):
     site = project(tmp_path)
     out = answer(hook(tmp_path, "stop", stop_event(site, "model_stop"), env={"LAPIS_UNATTENDED": "1"}), STOP_FIELDS)
     assert out["decision"] == "continue"
+
+
+# --- the Stop hook reads the transcript for the worker rules (it only records) -------------------
+
+FIXTURE = Path(__file__).resolve().parent / "fixtures" / "antigravity" / "transcript_full.jsonl"
+
+
+@pytest.fixture
+def planned(tmp_path, monkeypatch) -> Path:
+    """A project with a plan (the task is `TASK`), as the hook's workspace."""
+    for name in ("LAPIS_UNATTENDED", "LAPIS_TASK", "CLAUDE_PROJECT_DIR"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("LAZULI_DB", "")
+    return make_project(tmp_path)
+
+
+def agy_stop(site: Path, first: dict = PERSON, conversation: str = "c-1", reason: str = "NO_TOOL_CALL") -> dict:
+    """A Stop event whose transcript is the fixture (the shape of a real `transcript_full.jsonl`) opening with `first`."""
+    event = stop_event(site, reason, conversation=conversation)
+    rows = FIXTURE.read_text(encoding="utf-8").splitlines()
+    Path(event["transcriptPath"]).write_text("\n".join([json.dumps(first), *rows[1:]]) + "\n", encoding="utf-8")
+    return event
+
+
+def recorded(site: Path) -> dict:
+    return json.loads((site / f".lapis/state/{TASK}.workers.json").read_text(encoding="utf-8"))
+
+
+def test_a_stop_records_what_the_persons_session_read_and_the_owner_block_shows_it(planned):
+    done = hook(planned.parent, "stop", agy_stop(planned), env={"LAPIS_TASK": TASK})
+    silent(done)                                                                  # recording never answers, never blocks
+    log = recorded(planned)
+    assert {f["agent"] for f in log["findings"]} == {"the Antigravity session"}
+    assert {f["transcript"] for f in log["findings"]} == {"c-1/transcript_full.jsonl"}
+    assert {(f["module"], f["how"]) for f in log["findings"] if f["kind"] == "checker-source"} == {
+        ("brief", "getsource"), ("next_step", "import"), ("requirements", "import"), ("lapis_design", "package-dir"),
+        ("direction", "path"), ("owner", "import")}
+    assert [f["kind"] for f in log["findings"]].count("pattern-kill") == 1
+    assert "limits" not in log
+    text, _ = owner.block(planned, TASK)
+    assert "- worker rules: the Antigravity session read the source of `lapis-design`" in text
+    assert "(module brief, direction, lapis_design, next_step, owner, requirements;" in text
+    assert "- worker rules: the Antigravity session stopped a process by pattern" in text
+    before = (planned / f".lapis/state/{TASK}.workers.json").read_text(encoding="utf-8")
+    silent(hook(planned.parent, "stop", agy_stop(planned), env={"LAPIS_TASK": TASK}))      # the next Stop adds nothing twice
+    assert (planned / f".lapis/state/{TASK}.workers.json").read_text(encoding="utf-8") == before
+    assert "the Antigravity session broke a worker rule" in done.stderr
+
+
+def test_a_subagents_stop_is_recorded_under_its_own_name_and_is_still_never_continued(planned):
+    event = agy_stop(planned, first=PARENT, conversation="2fac6f67-aaaa-bbbb")
+    silent(hook(planned.parent, "stop", event, env={"LAPIS_TASK": TASK, "LAPIS_UNATTENDED": "1"}))
+    log = recorded(planned)
+    assert {f["agent"] for f in log["findings"]} == {"an Antigravity subagent 2fac6f67"}
+    assert "- worker rules: an Antigravity subagent 2fac6f67 read the source" in owner.block(planned, TASK)[0]
+
+
+def test_a_stop_that_ended_the_run_another_way_is_read_too(planned):
+    silent(hook(planned.parent, "stop", agy_stop(planned, reason="error"), env={"LAPIS_TASK": TASK}))
+    assert recorded(planned)["findings"]
+
+
+@pytest.mark.parametrize("how, reason", [("missing-file", "could not be read"), ("no-path", "named no transcript"),
+                                          ("not-json", "holds no JSON row")])
+def test_a_transcript_that_cannot_be_read_is_recorded_as_a_limit_and_the_hook_still_exits_zero(planned, how, reason):
+    event = agy_stop(planned)
+    path = Path(event["transcriptPath"])
+    if how == "missing-file":
+        path.unlink()
+    elif how == "no-path":
+        del event["transcriptPath"]
+    else:
+        path.write_text("oops\n", encoding="utf-8")
+    silent(hook(planned.parent, "stop", event, env={"LAPIS_TASK": TASK}))
+    log = recorded(planned)
+    assert log["findings"] == [] and [(i["agent"], reason in i["reason"]) for i in log["limits"]] == [
+        ("an Antigravity conversation c-1", True)]                                # nothing could tell whose it was
+    silent(hook(planned.parent, "stop", event, env={"LAPIS_TASK": TASK}))
+    assert len(recorded(planned)["limits"]) == 1                                  # once per reason
+    assert f"- worker rules: not checked for an Antigravity conversation c-1: the " in owner.block(planned, TASK)[0]
+
+
+def test_a_stop_in_a_project_without_a_plan_records_nothing(tmp_path):
+    site = project(tmp_path)
+    silent(hook(tmp_path, "stop", agy_stop(site)))
+    assert not (site / ".lapis/state").exists()
 
 
 def test_version_skew_prints_nothing_to_stdout_and_one_line_to_stderr_once_per_conversation(tmp_path):

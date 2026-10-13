@@ -5,6 +5,7 @@ from __future__ import annotations
 import io
 import json
 import sys
+from collections import Counter
 from pathlib import Path
 
 import pytest
@@ -96,15 +97,16 @@ def test_worker_check_records_the_findings_once_and_the_owner_block_lists_them(p
     record = json.loads((project / f".lapis/state/{TASK}.workers.json").read_text(encoding="utf-8"))
     assert len(record["findings"]) == 3 and {f["agent"] for f in record["findings"]} == {"rough worker C2"}
     text, _ = owner.block(project, TASK)
-    assert "- delegated work: rough worker C2 stopped a process by pattern" in text
-    assert "- delegated work: rough worker C2 opened or listed the source of a check" in text and "2 times" in text
+    assert "- worker rules: rough worker C2 stopped a process by pattern" in text
+    assert "- worker rules: rough worker C2 read the source of `lapis-design`" in text and "2 times" in text
+    assert "(module behavior_check, lint; path ×2)" in text
     clean = transcript(tmp_path / ".", ("Bash", {"command": "ls"}))
     assert cli_main(["worker", "check", "--task", TASK, "--root", str(project), "--transcript", str(clean)]) == 0
     assert "nothing in agent-abc.jsonl" in capsys.readouterr().out
 
 
 def test_the_block_of_a_run_without_findings_says_nothing_of_workers(project):
-    assert "delegated work" not in owner.block(project, TASK)[0]
+    assert "worker rules" not in owner.block(project, TASK)[0]
 
 
 def test_subagent_stop_reads_the_subagents_own_transcript_and_records_what_it_found(project, tmp_path):
@@ -142,6 +144,77 @@ def test_the_manifests_register_the_bash_matcher_in_the_shared_file_and_subagent
 
 def test_the_rules_are_the_lines_a_delegation_prints_and_each_delegation_prints_them(project):
     text = workers.rules()
-    assert text.count("\n- ") == 3 and "pkill" in text and ".lapis/disputes/<task>.yaml" in text and "lapis_design/lint" in text
+    assert text.count("\n- ") == 3 and "pkill" in text and ".lapis/disputes/<task>.yaml" in text and "lapis_design/" in text and "inspect.getsource" in text
     assert text in diverge._how(TASK)
     assert "worker-rules.md" in slice_step.text(TASK)
+
+
+# --- every way of reading the source of lapis-design, and none of running it ----------------------
+
+AGY = ROOT / "tests" / "fixtures" / "antigravity" / "transcript_full.jsonl"
+MODULES = sorted(p.stem if p.suffix else p.name for p in Path(workers.__file__).parent.iterdir()
+                 if (p.suffix == ".py" and p.stem != "__init__") or (p.is_dir() and (p / "__init__.py").exists()))
+
+
+def reads(text: str) -> set[tuple[str, str]]:
+    return {(r["module"], r["how"]) for r in workers.source_reads(text)}
+
+
+def test_an_antigravity_transcript_that_reads_lapis_design_source_in_every_way_is_found_with_the_module_and_how():
+    found = workers.scan(AGY)
+    assert {(f["module"], f["how"]) for f in found if f["kind"] == "checker-source"} == {
+        ("brief", "getsource"), ("next_step", "import"), ("requirements", "import"), ("lapis_design", "package-dir"),
+        ("direction", "path"), ("owner", "import")}
+    by_tool = {(f["tool"], f["module"]): f for f in found if f["kind"] == "checker-source"}
+    assert "inspect.getsource(brief)" in by_tool[("run_command", "brief")]["evidence"]
+    assert by_tool[("view_file", "direction")]["evidence"].endswith("lapis_design/direction.py")
+    assert by_tool[("write_to_file", "owner")]["how"] == "import"        # a script that imports it counts when it is written
+    kills = [f for f in found if f["kind"] == "pattern-kill"]
+    assert [(f["tool"], f["evidence"]) for f in kills] == [("run_command", 'pkill -f "render check"')]   # on a second line
+
+
+@pytest.mark.parametrize("command", [
+    "lapis-design next --task demo --json", "lapis-design --help", "lapis-design next --help", "lapis-design skill loaded --help",
+    "lazuli --help", "lazuli ls", "python3 -m lapis_design.cli next --task demo", "uv run --no-sync python -m lapis_design.workers",
+    "head -n 5 $(which lapis-design)", "/Users/a/.local/share/uv/tools/lapis-design/bin/python build.py",
+    "cat /Users/a/.gemini/config/plugins/lapis/skills/lapis/SKILL.md", "cat site-packages/lapis_design-0.3.0.dist-info/METADATA",
+    "echo the lapis_design package"])
+def test_running_the_cli_or_reading_its_guides_is_not_reading_its_source(command):
+    assert workers.source_reads(command) == []
+    assert workers.scan_rows([{"tool_calls": [{"name": "run_command", "args": {"CommandLine": command}}]}]) == []
+
+
+@pytest.mark.parametrize("module", MODULES)
+def test_every_internal_module_is_found_by_import_by_path_and_by_getsource(module):
+    assert reads(f"python -c 'from lapis_design import {module}'") == {(module, "import")}
+    assert reads(f"python -c 'from lapis_design.{module} import x'") == {(module, "import")}
+    assert reads(f"python -c 'import lapis_design.{module} as m; print(m)'") == {(module, "import")}
+    assert reads(f"python -c 'import inspect, lapis_design.{module} as m; inspect.getsource(m)'") == {(module, "getsource")}
+    assert reads(f"cat /usr/lib/python3/site-packages/lapis_design/{module}.py") == {(module, "path")}
+
+
+@pytest.mark.parametrize("text, expected", [
+    ("import lapis_design", {("lapis_design", "import")}),
+    ("import os, lapis_design.brief", {("brief", "import")}),
+    ("from lapis_design import brief, waiting as w", {("brief", "import"), ("waiting", "import")}),
+    ("from lapis_design import (\n  brief,\n)", {("lapis_design", "import")}),
+    ("python -c \"import lapis_design; print(lapis_design.__file__)\"", {("lapis_design", "getsource")}),
+    ("python -c \"import lapis_design; lapis_design.brief.problem\"", {("lapis_design", "import"), ("brief", "import")}),
+    ("importlib.import_module('lapis_design.brief')", {("brief", "import")}),
+    ("ls ~/.local/share/uv/tools/lapis-design/lib/python3.13/site-packages/lapis_design", {("lapis_design", "package-dir")}),
+    ("grep -rn x site-packages/lapis_design/", {("lapis_design", "package-dir")}),
+    ("cat cli/lapis_design/behavior_check/session.py", {("behavior_check", "path")}),
+    ("cat cli/lapis_design/lint/rules.py cli/lapis_design/render/extract.py", {("lint", "path"), ("render", "path")}),
+])
+def test_the_ways_a_call_reads_source_are_named(text, expected):
+    assert reads(text) == expected
+
+
+def test_worker_check_on_an_antigravity_transcript_counts_the_findings_with_module_and_how(project, capsys):
+    args = ["worker", "check", "--task", TASK, "--root", str(project), "--transcript", str(AGY), "--agent", "agy worker"]
+    assert cli_main(args) == 1
+    assert "checker-source (getsource, brief)" in capsys.readouterr().err
+    recorded = json.loads((project / f".lapis/state/{TASK}.workers.json").read_text(encoding="utf-8"))["findings"]
+    assert Counter(f["kind"] for f in recorded) == {"checker-source": 6, "pattern-kill": 1}
+    text, _ = owner.block(project, TASK)
+    assert "module brief, direction, lapis_design, next_step, owner, requirements; getsource ×1, import ×3, package-dir ×1, path ×1" in text

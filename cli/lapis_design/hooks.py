@@ -42,11 +42,12 @@ pre-write    PreToolUse on the file-edit tools in the lapis plugin's hooks/hooks
              main session and in subagents (workers.py).
 subagent-stop  SubagentStop in the lapis plugin's Claude Code manifest. Reads the subagent's own transcript
              (`agent_transcript_path`), records a kill by pattern or a tool call that touched the source of a check
-             (`lapis_design/lint`, `render`, `behavior_check`) in `.lapis/state/<task>.workers.json`, and prints one
+             (a path, listing, import, or `inspect.getsource` of any `lapis_design` module) in `.lapis/state/<task>.workers.json`, and prints one
              `systemMessage` line; the owner block lists it. It never blocks (workers.py).
 
 Antigravity does not run these commands: its hooks.json calls `lapis-design antigravity-hook` (antigravity.py), which wraps
-the same bodies and prints only the answers Antigravity reads.
+the same bodies and prints only the answers Antigravity reads. Its `stop` hook also reads the conversation's transcript for the
+worker rules, in the person's session and in a subagent, and records as `subagent-stop` does (it never blocks).
 """
 from __future__ import annotations
 

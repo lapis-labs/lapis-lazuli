@@ -10,6 +10,20 @@ contract formats are v0.
 
 ### Changed
 
+- The worker-rules scan reads more than three folders. `workers.scan` (and `lapis-design worker check`, and the
+  `SubagentStop` hook) now finds a tool call that read the source of any `lapis_design` module: a path under
+  `lapis_design/`, a listing of the installed package folder, `from lapis_design import ...`, `import lapis_design`,
+  `lapis_design.<module>` or `importlib.import_module("lapis_design.<module>")` in a `python -c` or a script, and
+  `inspect.getsource` (also `getfile`, `__file__`) of it. Each finding names the module and the way (`path`, `package-dir`,
+  `import`, `getsource`), and the owner block line lists them. `lapis-design ...`, `lazuli ...`, `--help`, `python -m
+  lapis_design...`, and reading the installed skill guides are not source reads. The scan also reads Antigravity's
+  `run_command` (`CommandLine`) for a kill by pattern, including on a later line of the command.
+- Antigravity's Stop hook reads the conversation's `transcriptPath` for the worker rules, in the person's session and in a
+  subagent (the first row's `source` tells them apart), and records what it finds in `.lapis/state/<task>.workers.json` as
+  `SubagentStop` does for Claude Code. It only records, never blocks or changes the gate's answer. A Stop that names no
+  transcript, or one that cannot be read or holds no JSON row, is recorded as a limit in the same file, and the owner block says
+  it was not checked. `worker-rules.md` and the install docs no longer list Antigravity as not checked; Codex and Hermes still
+  are. The owner block's worker lines now start with `worker rules:` (they said `delegated work:`), since a session is read too.
 - `lapis-design diverge start` draws two roughs by default (`--k` still takes 2 to 4); a third rough or a variant comes when
   the owner asks (`variant`), and `resample` is unchanged. The owner can still take parts of two roughs in the pick.
 - The shared brief of the roughs is checked once before the roughs are made: `lapis-design diverge contract --task <task>`

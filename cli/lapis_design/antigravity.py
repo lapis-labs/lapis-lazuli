@@ -19,6 +19,9 @@ stop           Stop. A continuation is `{"decision": "continue", "reason": ...}`
                system message from its parent where the person's conversation opens with their message (checked
                2026-10-06). Continuing a subagent, the critic included, with the procedure's next step would derail
                it, so a transcript that cannot be read is answered with nothing too.
+               Every Stop, the person's conversation and a subagent's alike, also has its transcript read for the worker
+               rules (`workers.scan_session`): what it finds, or that the transcript could not be read, goes to
+               `.lapis/state/<task>.workers.json` and the owner block, in a project that has a plan. It only records.
 
 There is no session-start hook: Antigravity has no such event, and the one place that could carry a summary, PreInvocation's
 `injectSteps` `ephemeralMessage`, reaches the model for a few steps only (checked 2026-10-06: gone after three tool calls),
@@ -88,15 +91,44 @@ def pre_write_event(raw: Mapping[str, Any]) -> dict[str, Any] | None:
             "tool_input": {"file_path": target}}
 
 
-def _person_started(raw: Mapping[str, Any]) -> bool:
-    """Whether the conversation's first step is the person's own message (`source` USER_EXPLICIT); a subagent's is a
-    system message from its parent."""
+def _first_source(raw: Mapping[str, Any]) -> str | None:
+    """The `source` of the conversation's first step: USER_EXPLICIT for the person's own message, SYSTEM for a subagent's
+    message from its parent; None when the transcript cannot be read."""
     try:
         with open(raw["transcriptPath"], encoding="utf-8") as f:
             first = json.loads(f.readline())
     except (KeyError, TypeError, OSError, ValueError):
-        return False
-    return isinstance(first, dict) and first.get("source") == "USER_EXPLICIT"
+        return None
+    return first.get("source") if isinstance(first, dict) and isinstance(first.get("source"), str) else None
+
+
+def _person_started(raw: Mapping[str, Any]) -> bool:
+    """Whether the conversation's first step is the person's own message (`source` USER_EXPLICIT); a subagent's is a
+    system message from its parent."""
+    return _first_source(raw) == "USER_EXPLICIT"
+
+
+def scan_stop(raw: Mapping[str, Any], env: Mapping[str, str] = os.environ) -> str | None:
+    """Record, for any Stop, what the conversation's transcript shows of the worker rules (workers.py), in the project that
+    has a plan, as the main session or as a subagent (told apart by the first row's `source`, as `_person_started` does). The conversation need not have
+    chosen to stop: the transcript is read as it stands. Returns the line for stderr, None when nothing new was recorded.
+    A transcript that cannot be read is recorded as a limit. Never answers: Antigravity gets nothing from it."""
+    from lapis_design import gate
+
+    cwd = _project(raw)
+    project = gate.find_project(Path(cwd), env) if cwd else None
+    if project is None:                 # unrelated work pays for nothing else: next_step and workers load the checks' parsers
+        return None
+    from lapis_design import next_step, workers
+
+    task = next_step.resolve_task(project, env.get("LAPIS_TASK")) or gate.folder_task(project)
+    if not workers.TASK.fullmatch(task):
+        return None
+    session = _session(raw)
+    source = _first_source(raw)
+    agent = ("the Antigravity session" if source == "USER_EXPLICIT" else
+             f"an Antigravity {'conversation' if source is None else 'subagent'} {session[:8]}".rstrip())
+    return workers.scan_session(project, task, agent, session, raw.get("transcriptPath"))
 
 
 def stop_event(raw: Mapping[str, Any]) -> dict[str, Any] | None:
@@ -132,6 +164,12 @@ def run(name: str, stdin: TextIO, stdout: TextIO, bodies: Mapping[str, Body]) ->
     exits non-zero stops Antigravity's tool call, so every failure of ours prints nothing."""
     try:
         raw = json.load(stdin)
+        if name == "stop" and isinstance(raw, dict):
+            try:
+                if line := scan_stop(raw):
+                    print(line, file=sys.stderr)
+            except Exception as exc:        # recording what a worker did never keeps the gate from answering
+                print(f"lapis-design hook {name} (antigravity): {type(exc).__name__}: {exc}", file=sys.stderr)
         event = EVENTS[name](raw) if isinstance(raw, dict) else None
         if event is None:
             return 0
