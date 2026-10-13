@@ -2,10 +2,10 @@
 
 ## Sections
 
-- Presentation — bind every shown page to its source, render task, and affected widths.
-- Evidence — observe the exact draft, dispose its findings, and have a fresh critic judge it, without a release rerun.
-- Critic packet — what the critic is given, what makes its report count for this draft, and when a delta review is enough.
-- Owner report — the summary the CLI writes for the owner, the full block it links, not a summary of your own.
+- Presentation: bind every shown page to its source, render task, and affected widths.
+- Evidence: observe the exact draft, dispose its findings, and have a fresh critic judge it, without a release rerun.
+- Critic packet: what the critic is given, what makes its report count for this draft, and when a delta review is enough.
+- Owner report: the summary the CLI writes for the owner, the full block it links, not a summary of your own.
 
 ## Presentation
 

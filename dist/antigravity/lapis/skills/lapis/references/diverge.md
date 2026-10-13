@@ -8,7 +8,7 @@ matters (two to four; the default is two), and the owner picks one before the pl
 
 - Place and who: when the step runs and who makes each rough.
 - What differs and what may not: representation, color allocation, hierarchy, reference direction; never decoration.
-- The shared brief and its contract: written once and checked once before the fan-out; what the first view carries and what comes later.
+- The shared brief: written once and checked once by `diverge contract` before the fan-out; what the first view carries and what comes later.
 - The commands: `start`, `contract`, `resample`, `variant`, `check`, `seal`, `show`.
 - The rough and its card: what to make, what the card says, and how much a rough may carry before the pick.
 - Distances and the contact sheet: facts for the owner, not a score.
