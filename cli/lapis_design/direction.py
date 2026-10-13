@@ -471,7 +471,8 @@ def formats(task: str) -> list[dict[str, str]]:
              "guide": "the lapis skill's references/direction-conversation.md, section \"The proposal\""},
             {"file": waiting.answers_path(Path("."), task).as_posix(), "skeleton": ANSWERS_SKELETON,
              "guide": "the lapis skill's references/direction-conversation.md, section \"Recording answers\"; "
-                      "the owner's words in their language, kept as said"}]
+                      "the owner's words in their language, kept as said",
+             "command": f"lapis-design answers skeleton --task {task}"}]
 
 
 def step(task: str, reason: str) -> dict[str, Any]:

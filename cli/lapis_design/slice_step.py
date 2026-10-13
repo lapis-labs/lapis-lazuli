@@ -413,7 +413,8 @@ def check(root: Path, task: str, plan: Any, env: Mapping[str, str] = os.environ)
         return ("The slice cannot be sealed: the critic's report still has "
                 f"{len(undecided)} core finding{'s' if len(undecided) != 1 else ''} open ({shown_ids}). A fresh critic report "
                 "that no longer lists one closes it; otherwise it is the owner's decision. Put it to them, and record their "
-                "answer as `- [declared] Ask finding-vs-decision: <rule id> — <their words>`, then run `next`.")
+                "answer as `- [declared] Ask finding-vs-decision: <rule id> — <their words>` (`lapis-design answers skeleton "
+                f"--task {task}` lists the rows, with nothing answered), then run `next`.")
     seen = height(root, task, chosen)
     if seen is not None:
         state = integrity.read_state(root, task) or {}

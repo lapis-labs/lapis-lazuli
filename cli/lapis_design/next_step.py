@@ -216,6 +216,22 @@ def _step(step_id: str, why: str, command: str | None = None, schema: Path | Non
             **({"format": format} if format else {})}
 
 
+def _plan_format(task: str) -> list[dict[str, str]]:
+    """The format of the plan: a skeleton from its schema, whole or one section, and the example."""
+    return [{"file": f".lapis/plans/{task}.yaml", "guide": f"the example plan {shared_dir() / 'plan/example.plan.yaml'} is "
+             "filled in end to end; every section is in the schema",
+             "command": f"lapis-design plan skeleton --task {task} [--section NAME]"}]
+
+
+def _draft_format(task: str) -> list[dict[str, str]]:
+    """The format of the pre-show review record, and of the dispositions each report's open findings need."""
+    guide = "the ultramarine skill's references/pre-show-review.md, the record's steps"
+    return [{"file": draft.path(Path("."), task).as_posix(), "guide": guide,
+             "command": f"lapis-design draft skeleton --task {task}"},
+            {"file": draft.path(Path("."), task).as_posix() + " (review.handled)", "guide": guide,
+             "command": "lapis-design critic dispositions --skeleton --report <the report the page's review names>"}]
+
+
 def _requirements_step(task: str, reason: str) -> dict:
     return _step(requirements.STEP, requirements.why(task, reason), f"lapis-design requirements seal --task {task}")
 
@@ -283,7 +299,8 @@ def _evaluate(root: Path, task: str, page: str | None = None, integrity_error: s
         if errors:
             review = _step(draft.STEP, "Before showing the draft, review the exact page: " + _brief(errors)
                            + ". Record the review and summarize it, including unresolved findings, to the owner.",
-                           f"lapis-design draft check --task {task}", shared_dir() / "release/draft.schema.yaml")
+                           f"lapis-design draft check --task {task}", shared_dir() / "release/draft.schema.yaml",
+                           _draft_format(task))
             return {**result, "state": "needs-step", "step": review, "reason": review["why"], "draft_review": summaries}
         result["draft_review"] = summaries
     if step is None:
@@ -416,16 +433,18 @@ def _steps(root: Path, task: str, page: str | None, integrity_error: str | None 
                      "and the candidates' sources), and a keep or reject on every default that applies.")
         return state(_step("plan", f"Write the plan at {plan_rel} before any code or check, and cite {cited} The "
                            f"schema is below and an example is {shared / 'plan/example.plan.yaml'}. "
-                           "Then run the command to see what blocks.", check, shared / "plan" / "schema.yaml"), False)
+                           "Then run the command to see what blocks.", check, shared / "plan" / "schema.yaml",
+                           _plan_format(task)), False)
     except (OSError, ValueError, yaml.YAMLError) as exc:
         hint = (" Fix the YAML at that position (quote a string that holds `?`, `:`, `#`, or `,` inside `{ }` or "
                 "`[ ]`, or write the mapping in block style), then run the command." if isinstance(exc, yaml.YAMLError)
                 else "")
         return state(_step("plan-fix", f"{plan_rel} cannot be read: {yaml_reason(exc)}.{hint}", check,
-                           shared / "plan" / "schema.yaml"), False)
+                           shared / "plan" / "schema.yaml", _plan_format(task)), False)
     if isinstance(plan, PlanOverLimit) or not isinstance(plan, dict):
         why = plan.problem if isinstance(plan, PlanOverLimit) else "the plan is not a mapping"
-        return state(_step("plan-fix", f"{plan_rel}: {why}", check, shared / "plan" / "schema.yaml"), False)
+        return state(_step("plan-fix", f"{plan_rel}: {why}", check, shared / "plan" / "schema.yaml",
+                           _plan_format(task)), False)
     if plan.get("mode") == "create":
         if owed := brief.owed(root, task, planned=True):
             return state(_step(brief.STEP, owed, format=brief.formats(task)), False)
@@ -459,7 +478,7 @@ def _steps(root: Path, task: str, page: str | None, integrity_error: str | None 
     if schema_findings := [f for f in from_plan if f["rule_id"].startswith("schema.")]:
         return state(_step("plan-fix", "The plan does not match its schema: "
                            + _brief([_finding_line(f) for f in schema_findings]), check,
-                           shared / "plan" / "schema.yaml"), interactive)
+                           shared / "plan" / "schema.yaml", _plan_format(task)), interactive)
     if interactive and not plan.get("flows"):
         return state(_step("plan-flows", "The page has controls (a button, an input, or a dialog) and the plan lists "
                            "no `flows`. Record each real flow with its goal, its start route, and how it ends: "
@@ -652,6 +671,8 @@ def _format_lines(formats: list[dict[str, str]]) -> list[str]:
         lines.append(f"  format of {entry['file']}: {entry['guide']}")
         if entry.get("schema"):
             lines.append(f"    schema: {entry['schema']}")
+        if entry.get("command"):
+            lines.append(f"    skeleton: run `{entry['command']}`; it fails its check until you fill it, and fills no judgment")
         if entry.get("skeleton"):
             lines.append("    skeleton (replace every <...>; the shape, not text to copy):")
             lines += [f"      {row}".rstrip() for row in entry["skeleton"].splitlines()]

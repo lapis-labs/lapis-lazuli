@@ -26,6 +26,18 @@ contract formats are v0.
 - The critic packet lists a task's extract record (input kind `source-extracts`, and each source inside the project as
   `extract-source`) and refuses to build while the record is malformed, holds a field the schema does not know, names a
   maker's record, differs from its source, or is stale, so the critic reads grounded facts only.
+- Typed record skeletons, made from the schema the record is checked against, for the records a run writes by hand and
+  loops on: `lapis-design plan skeleton [--task T] [--mode M] [--section NAME]` (the keys the schema requires, those a mode
+  adds, or one whole section), `draft skeleton --task T` (the pre-show review record, one page per link the questions show,
+  with the address filled in), `critic dispositions --skeleton --report FILE` (one `review.handled` entry per open finding of
+  the report, with its number; a finding that is not open is named in a comment and needs none), and `answers skeleton --task T`
+  (the direction items still open with the choices each takes, the pick once every item stands, and an open core finding).
+  A skeleton parses as the record's shape and fails the record's own check until it is filled: every value is `null`, a list
+  that must hold something holds one template item, and nothing a judgment is written, neither `fixed` nor `justified-keep`
+  nor a reason, nor `[declared]` (the answer rows carry `[TAG]`, which counts as no answer and as no requirement row), nor the
+  owner's words. `next` names the command at the steps that have the run write these records (`plan`, `plan-fix`,
+  `draft-review`, `owner-direction`), the draft check names the dispositions command when open findings have none, and the
+  skeletons write no telemetry line, since they check nothing.
 
 ### Changed
 

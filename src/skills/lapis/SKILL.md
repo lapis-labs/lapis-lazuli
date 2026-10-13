@@ -13,7 +13,11 @@ license: MIT AND CC-BY-4.0
   repeat; a plan, a check, or a page that merely looks finished is not done.
 - The `lapis-design` commands and the guides are the interface: a step that has you write a record prints its format (the
   guide and section, and a skeleton or the schema). Never import or read the source of `lapis_design` (`inspect.getsource`,
-  its files) to learn a record's format or what a check reads; if a check seems wrong, dispute it.
+  its files) to learn a record's format or what a check reads; if a check seems wrong, dispute it. Four records have a
+  skeleton made from their schema: `lapis-design plan skeleton --task <task> [--mode M] [--section NAME]`, `draft skeleton
+  --task <task>`, `critic dispositions --skeleton --report <file>` (one entry per open finding of that report), and
+  `answers skeleton --task <task>` (the answer rows still open). A skeleton holds the shape and the allowed values, never a
+  disposition, a reason, a `[declared]` tag, or the owner's words: one submitted unfilled fails its check.
 - A missing or invalid input, a plan blocker, and a timeout are not done: that step comes back. Only a failure of the
   environment, such as a browser that cannot start, counts, and the tool records it itself.
 - The release gate may say the work does not ship. Report that verdict; it is not a step to repeat, and never a reason

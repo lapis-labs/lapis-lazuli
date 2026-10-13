@@ -143,6 +143,9 @@ or goes on with `—`, `–`, a quote, or `- `. Each `[declared]`
 item becomes a requirement row the critic judges (`K2 …: drop` is `met` when no ticker is shown); `Pick:` and the untagged
 line are the owner's decisions and are listed in the owner block, not rows. The critic reads the options by their texts, not
 by their letters. Record only what the owner said: never write a `[declared]` line for a reply they did not give.
+`lapis-design answers skeleton --task <task>` lists the rows still open (each item with the choices it takes, the pick once
+every item stands, and an open core finding) with `[TAG]` where the tag goes and no choice; you write `[declared]`, the
+choice, and their words only for what they answered, and a row left as printed counts for nothing.
 
 ## Unattended
 

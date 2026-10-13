@@ -54,6 +54,8 @@ uv run lapis-design slop lint --plan .lapis/plans/demo.yaml --extract .lapis/ren
   --session .lapis/behavior/demo.json -o .lapis/lint/demo.json   # every layer whose input is given
 # a lint run narrowed by --layer or --rule goes to -o .lapis/lint/demo.narrow.json
 uv run lapis-design critic packet --task demo   # the fixed inputs a critic report is judged against -> .lapis/critic/demo.packet.json; the report names it in target.packet
+uv run lapis-design critic dispositions --skeleton --report .lapis/critic/demo.json   # one review.handled entry per open finding, disposition/reason/refs empty; fails `draft check` until filled
+uv run lapis-design plan skeleton --task demo --mode create [--section tokens]   # the plan's shape from its schema; also `draft skeleton --task demo`, `answers skeleton --task demo`
 uv run lapis-design release check --task demo   # the release gate (src/shared/release/GATE.md) -> .lapis/release/demo.json
 uv run lapis-design next --task demo           # the one step still to take (--json for tools); see GATE.md, Failure records
 uv run lapis-design requirements seal --task demo --from brief.md   # the owner's brief files and [declared] answers -> .lapis/requirements/demo.json

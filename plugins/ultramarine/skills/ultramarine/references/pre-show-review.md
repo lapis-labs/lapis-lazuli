@@ -56,7 +56,11 @@ shown page as before. A file edited after the review makes the review and the cr
    Review the page's findings against its actual captures. For each `open` finding (a `fixed` or `waived` one the check
    itself closed needs no entry; a skipped one is not checked) write a `handled` entry with its report path, zero-based
    `finding` index, `disposition` (`fixed`, `justified-keep`, or `unresolved`), reason, and capture/box/source `refs`.
-   `draft check` lists every open finding still without one in a single message, with the entry to add. The reason is for
+   `draft check` lists every open finding still without one in a single message, with the entry to add, and
+   `lapis-design critic dispositions --skeleton --report <report path as the review names it>` prints one entry per open
+   finding with its number and `disposition`, `reason`, and `refs` empty: you fill them from what you observed, the command
+   decides none, and an entry left empty fails `draft check`. `lapis-design draft skeleton --task <task>` prints the whole
+   record, one page per link the questions show. The reason is for
    the owner: the critic never sees it. A finding you believe is wrong goes in
    `.lapis/disputes/<task>.yaml` (`../shared/review/disputes.schema.yaml`) instead of into the disposition or
    the page's markup; the critic re-judges it on the captures, the owner sees both, and a dispute does not

@@ -240,7 +240,8 @@ def check(root: Path, task: str, *, asked: list[str] | None = None) -> tuple[lis
                                      f"disposition: {shown}. Add to `review.handled` of this page in {path(Path('.'), task)}, "
                                      f"one entry per finding: {{report: {name}, finding: <number>, disposition: "
                                      "fixed|justified-keep|unresolved, reason: <for the owner, 8+ characters>, refs: "
-                                     "[<a file that shows it>]}")
+                                     "[<a file that shows it>]}. `lapis-design critic dispositions --skeleton --report "
+                                     f"{name}` prints these entries with the findings' numbers and nothing decided")
                 for i, finding in enumerate(report["findings"]):
                     if finding["status"] == "skipped":
                         dispositions.append({"rule_id": finding["rule_id"], "disposition": "not-checked", "reason": finding["observed"]})
