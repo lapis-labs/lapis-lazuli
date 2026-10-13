@@ -9,6 +9,7 @@ it can afterwards (see **What is checked, and what is not**).
 
 - Do not open the source of a check (`lapis_design/lint`, `lapis_design/render`, `lapis_design/behavior_check`) to argue with a finding or to make a page pass it. Put a finding you believe is wrong in `.lapis/disputes/<task>.yaml` (`shared/review/disputes.schema.yaml`): a critic re-judges it on the captures, the owner sees both, and a dispute does not clear it.
 - Stop a process only by a process id a command recorded (such as the one in `.lapis/logs/<task>.<step>.pid`). Never stop one by pattern: no `pkill`, no `killall`, no `pgrep`, `pidof`, `lsof`, or `ps` piped or substituted into `kill`, with or without `-f`. Other work shares the machine, and a pattern reaches it.
+- Return check results as the report's path and the summary the check printed (verdict, scope, counts, new and changed findings with ids, blockers, limits, build id), never the raw extract, session, report, DOM, or log pasted into a message. Leave the raw files where the check wrote them, and run a check once per build: a repeat of the same build prints `cache hit` and adds nothing.
 - Say in your last message which of these you could not keep, and why.
 
 ## What is checked, and what is not

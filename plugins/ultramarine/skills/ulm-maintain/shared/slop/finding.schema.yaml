@@ -218,6 +218,7 @@ $defs:
           type: { enum: [plan, source, image, runtime, measurement, review, not-verified] }
           refs: { type: array, items: { type: string } }
       status: { enum: [open, fixed, waived, skipped] }
+      supersedes: { type: integer, minimum: 0 }      # critic report on a delta packet (review/critic-delta-packet.schema.yaml): the index of the prior report's finding this one re-judges
       skip_cause:                                    # why a skipped finding was not judged; slop lint sets it on every skipped finding
         enum:
           - input                                    # an input, field, list value, or detector the check needs is missing or failed

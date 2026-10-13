@@ -14,6 +14,11 @@ items:
   path: review/critic-packet.schema.yaml
   summary: 'Critic packet: the fixed inputs one critic report is judged against; written by `lapis-design
     critic packet`, never by hand.'
+- id: critic-delta-packet
+  view: full
+  path: review/critic-delta-packet.schema.yaml
+  summary: 'Critic delta packet: what a critic judges after the owner''s rows changed on a shown build
+    a full critic report already judged;'
 - id: review-disputes
   view: full
   path: review/disputes.schema.yaml

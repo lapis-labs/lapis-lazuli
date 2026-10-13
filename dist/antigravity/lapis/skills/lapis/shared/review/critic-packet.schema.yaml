@@ -20,6 +20,25 @@ properties:
       lint: { type: string, minLength: 1 }         # the lint report
       session: { type: string, minLength: 1 }      # the behavior session, when one was given
       motion: { type: string, minLength: 1 }       # the motion evidence (render/motion.schema.yaml); a page that moves needs it
+  rules:                                           # the worker rules the critic was given verbatim (shared/review/worker-rules.md); a delta follows a packet with the same digest
+    type: object
+    additionalProperties: false
+    required: [sha256]
+    properties:
+      sha256: { $ref: "#/$defs/digest" }
+  supporting:                                      # evidence the maker declared for the shown page (specimen, reference capture, ?query variant): shown to the critic, never a page under review
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [kind, link, path, sha256, claim]
+      properties:
+        kind: { enum: [specimen, reference-capture, query-variant] }
+        link: { type: string }                     # the address as the questions show it
+        path: { type: string }                     # the file that carries the claim, also listed in `inputs`
+        sha256: { $ref: "#/$defs/digest" }
+        claim: { type: string }                    # what the maker says the file shows; judge it against the file
+        page: { type: string }                     # the shown page a ?query variant belongs to
   requirements:                                    # the owner's rows, as the CLI copied them (requirements/schema.yaml)
     type: object
     additionalProperties: false
@@ -247,7 +266,7 @@ properties:
         kind:
           enum: [extract, screenshot, lint, session, requirement-source, product, design, context, taste,
                  references-record, reference-capture, reference-profile, exploration, direction-contact,
-                 direction-capture, motion]
+                 direction-capture, motion, supporting-evidence]
         path: { type: string, minLength: 1 }       # relative to the project root, with `/`
         sha256: { $ref: "#/$defs/digest" }
   findings:                                        # the lint report's findings by index, without their `fix` text or waivers

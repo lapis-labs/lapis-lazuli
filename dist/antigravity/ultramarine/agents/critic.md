@@ -53,9 +53,32 @@ The packet holds:
 - `changes`: edits to protected plan fields that were reactive, touched a finding that was open, or came after the
   owner approved the slice, each with `pointer`, `before`, `after`, and `related_open`
 - `disputes`: findings the maker believes are wrong, with `report`, `rule_id`, `location`, and `observed`
+- `supporting`: evidence the maker declared for the shown page, `{kind, link, path, sha256, claim, page?}` (`specimen`,
+  `reference-capture`, or `query-variant` of the shown page), each file also in `inputs` as `supporting-evidence`. It is not
+  a page under review and not a requirement: open the file and judge the claim against it. A claim the file does not show
+  is a finding, and a file the packet does not list is not yours to read
 
 If the packet lists no render extract, or the lint report it names is missing, say which and stop; ask for `lapis-design render
 check` and `lapis-design slop lint`, then a new `lapis-design critic packet`.
+
+## A delta packet
+
+A packet with `kind: delta` follows a report of yours on a full packet (`prior`: its path and digest, and its packet's). Only
+the owner's rows changed on the same shown build, and the delta lists just those: `requirements.changed` (new or changed
+rows, with the owner's words; `ids` is every row now), `requirements.owner_decisions`, `changes.changed`, `disputes.changed`,
+the decided `gaps` and `asks` that came with them (context), `supporting.changed`, and `prior_findings`, the findings of the
+prior report the changes affect with their prior `index`. `unchanged` holds digests of what did not change; the files you may
+read are those the prior packet lists, as `inputs`, and you read them only as far as the delta needs. Read the prior report
+and its packet for context.
+
+Judge exactly what the delta lists, with the same entries as in a full report (`requirements`, `changes`, `disputes`, and
+the visitor walk or comparison only where a changed row needs one), and no entry for a row, change, or dispute it does not
+list. Re-judge each `prior_findings` entry: write a finding with `supersedes: <its index>` and the same `rule_id`. An entry
+marked `rejudge: true` is an open core finding of the prior report: re-judge it on the captures as at first, and keep it
+`status: open` with the same `approval_impact` unless the changed rows now show real product output that resolves it, in
+which case it is `fixed`. Any other finding you add has no `supersedes`. Your report names the delta packet in
+`target.packet`. The CLI reads your report with the prior one as one review. A delta never replaces a full review: the
+release's critic judges its own full packet, and a changed capture, state, locale, plan, or rules is a full packet too.
 
 ## Order of authority
 

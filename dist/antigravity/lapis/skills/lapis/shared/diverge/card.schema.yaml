@@ -1,6 +1,8 @@
 # LapisLazuli diverge card schema — v0
 # Location: .lapis/diverge/<task>/C<n>/card.yaml, next to the rough's index.html
-# What one rough first view is (the opening of a page that unfolds in scenes; it is not asked to carry every object): the reference direction it draws on, the draws it spends (the CLI made them,
+# What one rough first view is (the opening of a page that unfolds in scenes; it is not asked to carry every object). A rough
+# is bounded: the core composition at 390 and 1440, one representative motion state, and one phone state, as the one page
+# `index.html`; every other device width and each further state wait for the owner's pick (`rough_bound` in `diverge/pools.yaml`). The card names the reference direction it draws on, the draws it spends (the CLI made them,
 # `.lapis/state/diverge/<task>/draws.jsonl`), how each open core object is represented, the color roles with the area
 # each owns, and the signature elements it adds. `lapis-design diverge check` reads the card against the draws and the
 # renders; the picked card's `color` becomes the plan's `tokens.color.roles` unchanged. A card holds no reason for
@@ -10,10 +12,11 @@ $id: https://github.com/lapis-labs/lapis-lazuli/schemas/diverge-card.v0.json
 title: LapisLazuli diverge card
 type: object
 additionalProperties: false
-required: [version, id, direction, draws, hierarchy, objects, color, signature, made_in]
+required: [version, id, brief_sha256, direction, draws, hierarchy, objects, color, signature, made_in]
 properties:
   version: {const: 0}
   id: {type: string, pattern: "^C[1-9][0-9]?$"}
+  brief_sha256: {type: string, pattern: "^[0-9a-f]{12}$"}   # the shared brief this rough was made from: the one `lapis-design diverge contract` printed after it passed
   direction: {type: string, pattern: "^([A-E]|none)$"}   # the references record's direction (`none` when it has none)
   draws: {type: array, minItems: 1, items: {type: string, pattern: "^d[1-9][0-9]*$"}}
   hierarchy: {type: string, pattern: "^[a-z][a-z0-9-]*$"}   # the stance drawn for what the first view carries (`diverge/pools.yaml` hierarchy)

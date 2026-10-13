@@ -1,0 +1,221 @@
+# Critic delta packet: what a critic judges after the owner's rows changed on a shown build a full critic report already judged;
+# written by `lapis-design critic packet --task T --prior REPORT`, never by hand.
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/critic-delta-packet.v0.json
+title: LapisLazuli critic delta packet
+# `.lapis/critic/<task>.delta.packet.json` (or the `--out` path under `.lapis/critic/`), deterministic JSON like the full
+# packet (review/critic-packet.schema.yaml). A report on it counts only for a caller that allows delta (the pre-show review
+# and the slice seal): there `lapis-design critic packet` rebuilds the delta from `prior` and the project, and the report is
+# accepted with the prior report as one review of the whole when
+#   - the prior report judged its own full packet completely and is byte-for-byte what `prior.report.sha256` names;
+#   - the captures, lint report, plan, direction, motion evidence, and worker rules are what the prior packet had
+#     (`unchanged` holds their digests, not their content: the files the prior packet lists are the evidence);
+#   - the report judges every row in `requirements.changed`, every change in `changes.changed`, every dispute in
+#     `disputes.changed`, and re-judges every `prior_findings` entry with `rejudge: true` by a finding whose `supersedes` is
+#     that entry's `index` (still open as a core finding, or fixed).
+# Anything else (a changed capture, state, locale, plan field, or the worker rules) needs a full packet. The release's critic
+# is always a full independent review: a delta, or a report that follows one, never counts there.
+type: object
+additionalProperties: false
+required: [version, kind, task, args, rules, prior, unchanged, requirements, changes, disputes, gaps, asks, supporting, prior_findings]
+properties:
+  version: { const: 0 }
+  kind: { const: delta }
+  task: { type: string, pattern: "^[a-z0-9][a-z0-9-]{1,63}$" }
+  args:                                            # the prior packet's arguments: the same shown build
+    type: object
+    additionalProperties: false
+    required: [extracts, lint]
+    properties:
+      extracts: { type: array, minItems: 1, items: { type: string, minLength: 1 } }
+      lint: { type: string, minLength: 1 }
+      session: { type: string, minLength: 1 }
+      motion: { type: string, minLength: 1 }
+  rules:
+    type: object
+    additionalProperties: false
+    required: [sha256]
+    properties:
+      sha256: { $ref: "#/$defs/digest" }           # the worker rules, the same as the prior packet's
+  prior:
+    type: object
+    additionalProperties: false
+    required: [report, packet]
+    properties:
+      report: { $ref: "#/$defs/file" }             # the prior critic report and the digest of its bytes
+      packet: { $ref: "#/$defs/file" }             # the full packet that report names
+  unchanged:                                       # evidence the prior packet lists, by digest of its section; not attached again
+    type: object
+    additionalProperties: false
+    required: [inputs, sections]
+    properties:
+      inputs:
+        type: object
+        additionalProperties: false
+        required: [count, sha256]
+        properties:
+          count: { type: integer, minimum: 0 }     # files the critic may read, as the prior packet lists them
+          sha256: { $ref: "#/$defs/digest" }       # of that list with each file's digest
+      sections:                                    # plan, direction, findings (the lint report's), motion, supporting
+        type: object
+        additionalProperties: { $ref: "#/$defs/digest" }
+  requirements:
+    type: object
+    additionalProperties: false
+    required: [sha256, ids, sources, removed, changed, owner_decisions]
+    properties:
+      sha256: { $ref: "#/$defs/digest" }           # of the rows and owner decisions as the full packet lists them now
+      ids: { type: array, items: { $ref: "#/$defs/row_id" } }   # every row now, in order; the whole report covers exactly these
+      sources:                                     # the owner's own files the rows come from, as the full packet lists them now (they may have changed with the rows)
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [kind, path, sha256]
+          properties:
+            kind: { const: requirement-source }
+            path: { type: string, minLength: 1 }
+            sha256: { $ref: "#/$defs/digest" }
+      removed: { type: array, items: { $ref: "#/$defs/row_id" } }   # rows of the prior packet that are gone
+      changed:                                     # the new rows, and the rows whose text, section, or owner decision changed: the critic judges exactly these
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [id, text, change]
+          properties:
+            id: { $ref: "#/$defs/row_id" }
+            section: { type: string }
+            text: { type: string, minLength: 1 }
+            change: { enum: [new, changed] }
+      owner_decisions:                             # the owner's `drop` or `narrow` of a changed row, and any new one
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [row, decision, quote]
+          properties:
+            row: { $ref: "#/$defs/row_id" }
+            decision: { enum: [drop, narrow] }
+            quote: { type: string }
+  changes:
+    type: object
+    additionalProperties: false
+    required: [seqs, changed]
+    properties:
+      seqs: { type: array, items: { type: integer, minimum: 0 } }   # every change row now
+      changed: { type: array, items: { $ref: "#/$defs/change" } }   # the new and the altered rows: judged
+  disputes:
+    type: object
+    additionalProperties: false
+    required: [total, changed, carried]
+    properties:
+      total: { type: integer, minimum: 0 }
+      changed:                                     # the disputes the prior packet did not list: judged
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [index, report, rule_id, observed]
+          properties:
+            index: { type: integer, minimum: 0 }   # the index in the full packet now
+            report: { type: string }
+            rule_id: { type: string }
+            location: { type: object }
+            observed: { type: string }
+      carried:                                     # a dispute of the prior packet that is still filed: its prior index and its index now
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [from, to]
+          properties:
+            from: { type: integer, minimum: 0 }
+            to: { type: integer, minimum: 0 }
+  gaps:                                            # the owner's decided gaps that came with the rows: context, not judged
+    type: object
+    additionalProperties: false
+    required: [changed, removed]
+    properties:
+      changed:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [id, area, text]
+          properties:
+            id: { type: string }
+            area: { enum: [style, objects, signature, color, layout, motion, type, copy] }
+            text: { type: string }
+      removed: { type: array, items: { type: string } }
+  asks:
+    type: object
+    additionalProperties: false
+    required: [changed]
+    properties:
+      changed:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [trigger, by, said]
+          properties:
+            trigger: { type: string }
+            by: { enum: [owner, run] }
+            said: { type: string }
+  supporting:                                      # evidence the maker declared since the prior packet (shown to the critic as in a full packet); not judged one by one
+    type: object
+    additionalProperties: false
+    required: [changed, removed]
+    properties:
+      changed:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [kind, link, path, sha256, claim]
+          properties:
+            kind: { enum: [specimen, reference-capture, query-variant] }
+            link: { type: string }
+            path: { type: string }
+            sha256: { $ref: "#/$defs/digest" }
+            claim: { type: string }
+            page: { type: string }
+      removed: { type: array, items: { type: string } }   # paths of the prior packet's evidence that are no longer declared
+  prior_findings:                                  # findings of the prior report the changed rows affect, and every open core finding
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [index, rule_id, observed, status, rejudge, why]
+      properties:
+        index: { type: integer, minimum: 0 }       # the finding's index in the prior report, the number `supersedes` names
+        rule_id: { type: string }
+        observed: { type: string }
+        status: { type: string }
+        approval_impact: { enum: [core-product-explanation, ordinary, null] }
+        rejudge: { type: boolean }                 # an open core finding: the report must re-judge it
+        why: { type: array, items: { type: string } }
+$defs:
+  digest: { type: string, pattern: "^[0-9a-f]{64}$" }
+  row_id: { type: string, pattern: "^R[0-9a-f]{6,8}$" }
+  file:
+    type: object
+    additionalProperties: false
+    required: [path, sha256]
+    properties:
+      path: { type: string, minLength: 1 }
+      sha256: { $ref: "#/$defs/digest" }
+  change:
+    type: object
+    additionalProperties: false
+    required: [seq, kind, pointer, before, after, related_open, reactive, after_slice]
+    properties:
+      seq: { type: integer, minimum: 0 }
+      kind: { type: string }
+      pointer: { type: string }
+      before: {}
+      after: {}
+      related_open: { type: array, items: { type: string } }
+      reactive: { type: boolean }
+      after_slice: { type: boolean }

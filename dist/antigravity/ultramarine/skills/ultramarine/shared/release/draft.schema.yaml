@@ -12,6 +12,18 @@ required: [version, task, pages]
 properties:
   version: {const: 1}
   task: {type: string, pattern: '^[a-z0-9][a-z0-9-]+$'}
+  supporting:                                    # links the questions show as evidence for a page, not as a page to approve
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [kind, link, path, claim]
+      properties:
+        kind: {enum: [specimen, reference-capture, query-variant]}   # a ?query variant is evidence only for the shown page it names in `page`
+        link: {type: string, minLength: 1}       # the address as the questions show it
+        path: {type: string, minLength: 1}       # the project file that carries the claim; `draft check` records its hash, the critic packet lists it
+        claim: {type: string, minLength: 8}      # what the file shows, for the critic to check against it
+        page: {type: string, minLength: 3}       # the url of a page of this record; required for a ?query variant
   pages:
     type: array
     minItems: 1

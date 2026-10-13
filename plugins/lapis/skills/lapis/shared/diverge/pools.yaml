@@ -99,6 +99,14 @@ hierarchy:
   - { id: claim-led, opening_objects: 1, text: "the claim and the action are the opening; the decisive object is only begun there, cropped at the fold, and finishes in the next scene" }
   - { id: relation-pair, opening_objects: 2, text: "two objects in relation open the page next to the claim; every other object comes in a later scene" }
 
+# `rough_bound`: what a rough is, so that polishing stays small before the owner's pick. A rough is the core composition at
+# `widths` (the phone and the desktop first view), one representative motion state, and one phone state, written as the one
+# page `index.html` with its `card.yaml`. `diverge check` refuses a render of a rough at any other device width, a full capture
+# run of a rough (every width and theme), and a second page in a rough's folder. The slice brings the picked rough up to
+# every device width and state after the pick.
+rough_bound:
+  widths: [390, 1440]
+
 distance:
   calibrated: true
   weights: { struct: 0.55, mass: 0.20, repr: 0.25 }

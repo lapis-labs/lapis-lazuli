@@ -92,10 +92,14 @@ the owner and the critic do.
 
 - Write `.lapis/questions/<task>.md` with `lapis-questions: direction` on its first line, name every open item id in it, and
   stop with it as your last message. A harness with a question tool may ask through it; the file is the record either way.
-- Paste the owner block `next` writes (`.lapis/owner/<task>.md`, last line `lapis-owner-block <sha8>`) unchanged into the
-  file, as at an approval: a direction file without the current line comes back as `owner-direction`, with the paste step.
+- Paste the owner summary `next` writes (`.lapis/owner/<task>.summary.md`, last line `lapis-owner-block <sha8>`) unchanged into
+  the file, as at an approval: a direction file without the current summary comes back as `owner-direction`, with the paste step.
 - The file waits only when at least one item is open and every open id is named. Otherwise `next` names the step it would
   name, so a turn cannot be a check-in.
+- End the turn-one message with two short lines the CLI cannot read, so a wrong reading comes back before the roughs are made
+  and not after: how you read their words about the opening (for example "show the core at once" is the core impression and
+  one decisive object, not every step on one screen), and that the phone opening is composed on its own. The shared brief of
+  `diverge` (`diverge.md`) then carries the same reading, and `diverge contract` checks the parts it can.
 - Do not write a line such as `Round 3 of 3.` in the message or the answers: the brief reads it as a third brief round.
 
 ## Recording answers
