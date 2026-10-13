@@ -50,7 +50,7 @@ from urllib.parse import unquote, urlsplit
 
 import yaml
 
-from lapis_design import (attempts, brief, critic_packet, direction, diverge, draft, font_license, gaps, gate, integrity,
+from lapis_design import (attempts, brief, checks, critic_packet, direction, diverge, draft, font_license, gaps, gate, integrity,
                           owner_text, requirements, slice_step, workers)
 
 MARKER = "lapis-owner-block"
@@ -508,10 +508,22 @@ def _fault_lines(sources: list[tuple[str, str]], faults: dict[str, list[str]], l
     return lines
 
 
+def _unfinished(root: Path, task: str, lang: str = "en") -> list[str]:
+    """One line for each check that has not finished for the build shown: a render or behavior check that runs now, and one
+    with no stored result for the build of a page shown (`checks.unfinished`). A check is never called done here; the lines
+    carry no clock that moves, only when the run started, so the summary changes when a run ends and not while it goes on."""
+    say = owner_text.say
+    state = checks.unfinished(root, task)
+    return [say(lang, "checks.running", kind=say(lang, f"checks.kind.{row['kind']}"), since=checks.clock(row["started"]),
+                out=row["out"]) for row in state["running"]] + [
+        say(lang, "checks.not-run", kind=say(lang, f"checks.kind.{row['kind']}"), url=row["url"], build=row["build_id"])
+        for row in state["not_run"]]
+
+
 def _not_run(root: Path, task: str, record: dict | None, sources: list[tuple[str, str]], done: bool,
              faults: dict[str, list[str]]) -> list[str]:
     out = ["## Not run, or stale"]
-    lines: list[str] = []
+    lines: list[str] = _unfinished(root, task)
     for step in ("render", "behavior", "critic", "release", "references"):
         if skipped := attempts.read(root, task, step):
             lines.append(f"- {step}: {skipped.get('reason') or skipped.get('brief_line') or skipped.get('kind', 'not run')}")
@@ -771,6 +783,7 @@ def _build(root: Path, task: str, result: Mapping[str, Any] | None) -> Delivery:
         defects += need("core defect", [line.strip() for line in _unreviewed(unreviewed, lang)[1:]] if unreviewed else [])
         defects += need("core defect", _fault_lines(sources, faults, lang))
         defects += need("core defect", _states(root, record, sources, decisions, why, lang))
+    unfinished = need("check not finished", _unfinished(root, task, lang)) if built else []
     changed = _changed(root, task, decisions, record, lang)
     shown = _shown_lines(root, task, lang)
     unattended = done and gate.is_unattended()
@@ -780,6 +793,7 @@ def _build(root: Path, task: str, result: Mapping[str, Any] | None) -> Delivery:
         [f"## {say(lang, 'heading.changed')}", *changed] if changed else [],
         [f"## {say(lang, 'heading.gaps.unattended' if unattended else 'heading.gaps')}", *attention] if attention else [],
         [f"## {say(lang, 'heading.defects')}", *(defects or [say(lang, 'none.open')])] if built else [],
+        [f"## {say(lang, 'heading.checks')}", *unfinished] if unfinished else [],
         [f"## {say(lang, 'heading.release')}", *need("release", [f"- {result['verdict']}"])] if done else [],
         [f"## {say(lang, 'heading.fonts')}", *need("font fact", [f"- {line}" for line in font_facts(root, task, lang)])]
         if fonts else [],

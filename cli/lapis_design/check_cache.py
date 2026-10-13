@@ -511,14 +511,62 @@ class _Lease:
         self.path.unlink(missing_ok=True)
 
 
-def _try_lock(path: Path) -> _Lease | None:
+def _try_lock(path: Path, info: dict | None = None) -> _Lease | None:
     try:
         descriptor = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
     except FileExistsError:
         return None
     with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
-        handle.write(json.dumps({"pid": os.getpid(), "started": time.time()}))
+        handle.write(json.dumps({**(info or {}), "pid": os.getpid(), "started": time.time()}))
     return _Lease(path)
+
+
+def _out_name(project: Path, out: Path) -> str:
+    """`out` as a path under `project` when it is one, else as given: how a lock names the report its run writes."""
+    try:
+        return (out if out.is_absolute() else Path.cwd() / out).resolve().relative_to(project.resolve()).as_posix()
+    except (OSError, ValueError):
+        return out.as_posix()
+
+
+def running(project: Path) -> list[dict]:
+    """The browser checks running now, one per lock with a live holder, oldest first: `{kind, build_id, state_key, out,
+    pid, started}` (`started` is epoch seconds). A lock whose holder is gone, and one not yet written, is not listed.
+    This is how a checkpoint and `next` tell a check that has not finished from one that has."""
+    found = []
+    for lock in sorted((_root(project) / "locks").glob("*.lock")):
+        if _stale(lock):
+            continue
+        try:
+            holder = json.loads(lock.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(holder, dict) and holder.get("kind") and holder.get("out"):
+            found.append({k: holder.get(k) for k in ("kind", "build_id", "state_key", "out", "pid", "started")})
+    return sorted(found, key=lambda row: row["started"] or 0)
+
+
+def is_full(meta: dict) -> bool:
+    """Whether a stored entry is a run of every width (render) or of both contexts and every probe (behavior): the run a
+    release reads, not a narrowed one."""
+    selection = meta.get("selection") or {}
+    if meta.get("kind") == "render":
+        return sorted(selection.get("widths") or []) == sorted(WIDTHS)
+    if meta.get("kind") == "behavior":
+        return (sorted(selection.get("contexts") or []) == ["d", "m"] and not selection.get("probes")
+                and not selection.get("boxes") and selection.get("limit") is None)
+    return False
+
+
+def stored_full(project: Path, kind: str, build_id: str, out_name: str) -> dict | None:
+    """The newest stored full run of `kind` that wrote a report named `out_name` for the build `build_id`, or None."""
+    best = None
+    for entry in sorted((_root(project)).glob(f"{kind}-*")):
+        meta = _load_meta(entry)
+        if (meta and meta.get("build_id") == build_id and meta.get("out_name") == out_name and is_full(meta)
+                and (best is None or (meta.get("created") or "") > (best.get("created") or ""))):
+            best = meta
+    return best
 
 
 # ---------------------------------------------------------------- one run per key
@@ -533,6 +581,19 @@ class Outcome:
     waited: float = 0.0
     build_id: str | None = None
     state_key: str | None = None
+
+
+def _announce_join(kind: str, lock: Path) -> None:
+    """One line on stderr when a check finds the identical run in progress and waits for it, so the caller knows it did
+    not start a second run and that the result comes when that one ends."""
+    try:
+        started = float(json.loads(lock.read_text(encoding="utf-8")).get("started"))
+        since = time.strftime("%H:%M:%S", time.localtime(started))
+        when = f" (started {since}, {int(time.time() - started)} s ago)"
+    except (OSError, ValueError, TypeError, AttributeError):
+        when = ""
+    print(f"{kind} check: the identical run is still going{when}; waiting for it and sharing its result, not starting "
+          "another.", file=sys.stderr)
 
 
 def run(project: Path, key: Key | None, *, out: Path, shots: Path | None, fresh: bool,
@@ -563,10 +624,13 @@ def run(project: Path, key: Key | None, *, out: Path, shots: Path | None, fresh:
     lock.parent.mkdir(parents=True, exist_ok=True)
     waited_from = time.monotonic()
     waited = False
+    info = {"kind": key.kind, "build_id": key.build_id, "state_key": key.state_key, "out": _out_name(project, out)}
     while True:
-        lease = _try_lock(lock)
+        lease = _try_lock(lock, info)
         if lease is not None:
             break
+        if not waited and not fresh and not _stale(lock):
+            _announce_join(key.kind, lock)
         waited = True
         if _stale(lock):
             _break(lock)

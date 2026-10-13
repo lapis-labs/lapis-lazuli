@@ -60,6 +60,13 @@ EN: dict[str, str] = {
     "why.none": "no critic report yet",
     "fault.line": "- {label}, critic report {path}: {problem}",
     "fault.more": "- {label}, critic report {path}: and {n} more gaps",
+    "heading.checks": "Checks not finished for the build shown",
+    "checks.kind.render": "render",
+    "checks.kind.behavior": "behavior",
+    "checks.running": "- {kind} check: still running since {since} (report {out}); it has not finished, so its result is not "
+                      "in this summary.",
+    "checks.not-run": "- {kind} check: no result for the build shown ({url}, build {build}); it has not been run for this "
+                      "build.",
     "unreviewed.line": "- The slice budget ran out ({why}), so you see the slice before its review is current; nothing here "
                        "is approved by being shown.",
     "unreviewed.error": "  - {error}",
@@ -121,6 +128,12 @@ KO: dict[str, str] = {
     "why.none": "아직 비평 보고서가 없어요",
     "fault.line": "- {label}, 비평 보고서 {path}: {problem}",
     "fault.more": "- {label}, 비평 보고서 {path}: 그 밖에 {n}개 더",
+    "heading.checks": "끝나지 않은 검사",
+    "checks.kind.render": "화면 캡처(render)",
+    "checks.kind.behavior": "동작(behavior)",
+    "checks.running": "- {kind} 검사가 {since}부터 아직 돌고 있어요(보고서 {out}). 끝나지 않아서 이 요약에는 결과가 없어요.",
+    "checks.not-run": "- {kind} 검사: 보여 드린 화면({url}, 빌드 {build})에 대한 결과가 없어요. 이 빌드에는 아직 돌리지 "
+                      "않았어요.",
     "unreviewed.line": "- 슬라이스 시간 한도가 지나서({why}) 검토가 끝나기 전의 슬라이스를 보여 드려요. 보여 드렸다고 해서 "
                        "승인된 것은 아니에요.",
     "unreviewed.error": "  - {error}",

@@ -31,16 +31,14 @@ import argparse
 import json
 import os
 import shlex
-import subprocess
 import sys
-import time
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
 
 import yaml
 
-from lapis_design import (asks, attempts, brief, critic_packet, direction, diverge, draft, gaps, gate, owner,
+from lapis_design import (asks, attempts, brief, checks, critic_packet, direction, diverge, draft, gaps, gate, owner,
                           owner_language, preview, references, release_check, requirements, shared_dir, slice_step,
                           taste, waiting)
 from lapis_design.lint.cli import problems
@@ -50,7 +48,6 @@ from lapis_design.summary import NOT_JUDGED
 PAGES = ("index.html", "dist/index.html", "build/index.html", "public/index.html", "out/index.html")
 CONTROLS = {"button", "input", "select", "textarea", "details", "dialog", "form"}
 CONTROL_ROLES = {"button", "input", "dialog"}      # extract box roles of a page a visitor can act on
-JOB_MAX_AGE_S = 2 * 3600                           # a background run older than this is not assumed alive
 # the plan check's findings that name a step of their own; every other blocker is a plan fix
 PLAN_STEPS = {"font.no-lock": "fonts-lock", "plan.uncompared-decision": "plan-explorations"}
 # release.input-missing / input-stale, by the file the finding names: the step that makes it again
@@ -177,37 +174,6 @@ def _stub_problem(path: Path) -> str | None:
     return None
 
 
-def job_running(root: Path, task: str, step: str = "behavior") -> bool:
-    """Whether the background run of `step` that the step's command started is still going.
-
-    The command writes `.lapis/logs/<task>.<step>.pid`. The run is over when its report or its failure
-    record is newer than that file, when the process is gone or a zombie, or when the file is older than
-    two hours, since a process id can be reused."""
-    pidfile = root / ".lapis" / "logs" / f"{task}.{step}.pid"
-    try:
-        started = pidfile.stat().st_mtime
-        pid = int(pidfile.read_text(encoding="utf-8").strip())
-    except (OSError, ValueError):
-        return False
-    if os.name == "nt" or pid <= 0 or time.time() - started > JOB_MAX_AGE_S:
-        return False
-    outputs = [release_check.input_paths(root, task)["session"], attempts.path(root, task, step)]
-    if any(p.is_file() and p.stat().st_mtime >= started for p in outputs):
-        return False
-    try:
-        os.kill(pid, 0)
-    except PermissionError:
-        return True
-    except OSError:
-        return False
-    try:
-        state = subprocess.run(["ps", "-o", "stat=", "-p", str(pid)], capture_output=True, text=True,
-                               timeout=5).stdout.strip()
-    except (OSError, subprocess.SubprocessError):
-        return True
-    return not state.startswith("Z")
-
-
 def _step(step_id: str, why: str, command: str | None = None, schema: Path | None = None,
           format: list[dict[str, str]] | None = None) -> dict:
     """A step; `format` lists the files it has the run write, each with the guide that holds its shape and a skeleton or
@@ -230,6 +196,7 @@ def _draft_format(task: str) -> list[dict[str, str]]:
              "command": f"lapis-design draft skeleton --task {task}"},
             {"file": draft.path(Path("."), task).as_posix() + " (review.handled)", "guide": guide,
              "command": "lapis-design critic dispositions --skeleton --report <the report the page's review names>"}]
+
 
 
 def _requirements_step(task: str, reason: str) -> dict:
@@ -261,7 +228,10 @@ def evaluate(root: Path, task: str, page: str | None = None) -> dict:
 
     root = root.resolve()
     observed = integrity.observe_task(root, task, "next")
-    return skill_load.apply(root, task, _evaluate(root, task, page, observed["error"]))
+    result = skill_load.apply(root, task, _evaluate(root, task, page, observed["error"]))
+    if "checks_unfinished" not in result and (live := checks.running(root, task)):
+        result["checks_unfinished"] = {"running": live, "not_run": []}      # a step never hides a check that has not finished
+    return result
 
 
 def _evaluate(root: Path, task: str, page: str | None = None, integrity_error: str | None = None) -> dict:
@@ -314,6 +284,8 @@ def _evaluate(root: Path, task: str, page: str | None = None, integrity_error: s
         delivery = owner.deliver(root, task, {"integrity_error": integrity_error, "kind": kind})
         result["owner_summary"] = delivery.summary
         result["owner_block"] = delivery.pointer()
+        if (live := checks.unfinished(root, task)) and (live["running"] or live["not_run"]):
+            result["checks_unfinished"] = live         # the summary says so too: a running check is not a finished one
         if problems := delivery.problems(_read_text(root / found["questions"])):
             paste = _step(draft.STEP if approval else direction.STEP,
                           f"The questions for the owner must carry the owner summary that lapis-design wrote "
@@ -572,22 +544,31 @@ def _steps(root: Path, task: str, page: str | None, integrity_error: str | None 
                            shared / "assets" / "ledger.schema.yaml"), interactive)
 
     log = f".lapis/logs/{task}.behavior.log"
+    wait = f"lapis-design checks wait --task {task}"
     if "render" in need:
+        if (live := checks.running_report(root, task, "render")) is not None:
+            return state(_step("render-wait", f"The render check (started {checks.clock(live['started'])}) is still running, "
+                               "so it has not finished and nothing it would report is known yet. Run the command: it returns "
+                               "when the run ends, with its end reported once, or after 55 s with exit 3, and then you run "
+                               "it again. Do not start another render check, and do not call the page captured: the same "
+                               "check asked again while it runs only joins it.", wait), interactive)
         return state(_step("render", "Capture every width (320, 390, 768, 1440 px, and dark where the page has a dark "
                            f"theme). A run narrowed by `--width` writes {task}.narrow.json and never counts.",
                            f"lapis-design render check {target} --task {task}"), interactive)
-    if interactive and not recorded["behavior"] and job_running(root, task):
-        return state(_step("behavior-wait", "The behavior check is still running in the background. Wait for it, then "
-                           f"run `lapis-design next --task {task}` again; do not start a second run, and do not stop "
-                           "while it runs.", f"sleep 60; tail -n 3 {log}"), interactive)
+    if interactive and not recorded["behavior"] and (live := checks.running_report(root, task, "behavior")) is not None:
+        return state(_step("behavior-wait", f"The behavior check (started {checks.clock(live['started'])}) is still running, "
+                           "so it has not finished and its result is not known. Run the command: it returns when the run "
+                           "ends, with its end reported once, or after 55 s with exit 3, and then you run it again; then "
+                           f"run `lapis-design next --task {task}`. Do not start a second run (the same check asked again "
+                           "while it runs only joins it), and do not stop while it runs.", wait), interactive)
     if "behavior" in need:
         launch = (f"mkdir -p .lapis/logs && nohup lapis-design behavior check {target} --task {task} --plan {plan_rel} "
                   f"--stub .lapis/stub.yaml > {log} 2>&1 < /dev/null & echo $! > .lapis/logs/{task}.behavior.pid")
         return state(_step("behavior", "Run the full behavior check in the background, since it takes minutes and a "
-                           f"tool call that waits for it can time out: run the command, then poll with `sleep 60; tail "
-                           f"-n 3 {log}` until the report exists, and run `lapis-design next --task {task}`. If a "
-                           f"run ended with no report, read {log}. A run narrowed by `--probe`, `--context`, `--box`, "
-                           "or `--limit` never counts.", launch), interactive)
+                           f"tool call that waits for it can time out: run the command, then `{wait}` until it exits 0 "
+                           "(it prints the run's end once, and exits 3 after 55 s with the run still going), and run "
+                           f"`lapis-design next --task {task}`. If a run ended with no report, read {log}. A run narrowed "
+                           "by `--probe`, `--context`, `--box`, or `--limit` never counts.", launch), interactive)
     if "lint" in need:
         refs = "".join(f" --ref {shlex.quote(str(ref['profile']))}" for ref in plan.get("references") or ()
                        if isinstance(ref, dict) and ref.get("profile"))
@@ -692,6 +673,8 @@ def _text(result: dict) -> str:
         lines.append(f"  schema: {step['schema']}")
     lines.append(f"  why: {step['why']}")
     lines += _format_lines(step.get("format") or [])
+    lines += [f"  not finished: {row}" for row in checks.disclosure_lines(result.get("checks_unfinished") or
+                                                                           {"running": [], "not_run": []})]
     return "\n".join(lines) + shown
 
 

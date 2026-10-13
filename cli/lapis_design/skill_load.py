@@ -80,7 +80,7 @@ def needed(root: Path, task: str, result: dict) -> tuple[str, ...]:
         primary += ["lps-copy", "lps-system"]
     elif step == "fonts-lock":
         primary += ["lps-system"]
-    elif step in ("draft-review", "slice", "render", "behavior", "behavior-wait", "lint", "critic", "release", "done") or result.get("draft_review"):
+    elif step in ("draft-review", "slice", "render", "render-wait", "behavior", "behavior-wait", "lint", "critic", "release", "done") or result.get("draft_review"):
         primary += ["ultramarine"]
     # Reaching a later phase cannot erase the load owed for copy/tokens already written in the plan.
     from lapis_design.plan_check import read_plan

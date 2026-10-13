@@ -45,6 +45,8 @@ CHECKS = {
     ("preview", "start"): "lapis_design.preview",
     ("preview", "stop"): "lapis_design.preview",
     ("preview", "status"): "lapis_design.preview",
+    ("checks", "status"): "lapis_design.checks",
+    ("checks", "wait"): "lapis_design.checks",
 }
 
 

@@ -390,7 +390,9 @@ block: exactly one `Decision:` line (what the owner settles with one answer); wh
 decision the owner has not made (`gaps.py`), each as the block lists it; every defect of the build shown, which is each open
 core finding (the critic's, as the block lists it), what the slice's review does not cover when its budget ran out, each
 critic report that does not hold against its packet, and each requirement row that is missing or not judged, with the rows
-that are partly met by id and the counts; every type role of the plan with its family, its source, and what the fonts lock
+that are partly met by id and the counts; every check that has not finished for the build shown (a render or behavior check
+that runs now, with when it started, or one with no stored result for the build of a page shown, as the block lists it;
+the summary never calls it done, and has no such section when none is open); every type role of the plan with its family, its source, and what the fonts lock
 records of its license (a role whose license nobody confirmed is marked as needing the owner's word; before `lazuli lock`
 there is no lock entry and the line says so); the pages shown with their captures and supporting evidence; and the path of
 the full block with its size. By link only: the requirement outcome row by row beyond the defects, the facts with their
@@ -398,7 +400,7 @@ sources, the integrity section, the disputes, the questions asked during the wor
 the release verdict as one more line of the summary. The check (`Delivery.problems`) holds the file to that contract
 rather than to the full text: a wait whose questions lack the current summary is `draft-review` ("paste the owner summary";
 `owner-direction` for a direction file) with what is missing, which is a second or missing `Decision:` line, a missing path of
-the full block, or any core gap, core defect, font fact, or release line the summary lists and the file does not hold
+the full block, or any core gap, core defect, unfinished check, font fact, or release line the summary lists and the file does not hold
 unchanged; text around the summary is the run's own and is not checked, and `done` tells the agent to paste the summary
 unchanged ahead of its own. `draft check` writes the block and the summary too when the review holds. A pasted summary or
 block is not counted as words or links of the questions.

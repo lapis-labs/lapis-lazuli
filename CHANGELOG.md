@@ -38,9 +38,28 @@ contract formats are v0.
   owner's words. `next` names the command at the steps that have the run write these records (`plan`, `plan-fix`,
   `draft-review`, `owner-direction`), the draft check names the dispositions command when open findings have none, and the
   skeletons write no telemetry line, since they check nothing.
+- `lapis-design checks wait|status --task T`: a long render or behavior check reports its end once. What runs now is read from
+  the locks the checks hold (`check_cache.running`: a lock now names its kind, build, report, and holder) and from the
+  process id a background launch recorded. `wait` returns when the checks end, prints a finished background run's summary once
+  (how long it ran, then what it printed, cut at 3,000 characters; a second call names the report and prints nothing again), or
+  exits 3 after `--timeout` seconds (default 55) with a check still going; it writes a telemetry line. `status` lists the
+  running checks and the checks with no result for the build shown. The same check asked again while it runs already joined
+  the run; it now says so on stderr (`the identical run is still going ... waiting for it and sharing its result, not
+  starting another`).
+- A checkpoint says what has not finished. The owner summary has a section `Checks not finished for the build shown` (and the
+  full block's `Not run, or stale` lists the same) with each render or behavior check that runs now (and when it started) and
+  each page shown, this CLI serves, whose build has no stored render result for its widths (or no stored behavior result when its
+  behavior changed): the summary never calls them done, the questions must carry the lines (`Delivery.problems`), the section
+  is left out when none is open or nothing is built, and `next --json` carries them as `checks_unfinished`. The summary changes
+  when a check starts or ends, not while it runs.
 
 ### Changed
 
+- `next` waits for a running render check (new step `render-wait`) as it did for a behavior check, from the locks as well as
+  the recorded process id, and both name `lapis-design checks wait --task T` instead of `sleep 60; tail -n 3 <log>`, so a long
+  check is waited for in one call per minute and a second run is not started. `job_running` moved from `next_step` to `checks`.
+- Contract (`src/shared/release/GATE.md`, the delivery contract): the owner summary lists every check that has not finished for
+  the build shown, and the questions must hold those lines unchanged.
 - The owner summary no longer holds defects of a build that does not exist. While nothing has been shown or built, as the
   CLI's own records say (the procedure is not `done`, no critic report, no page and no draft record, no slice budget fired),
   the summary has no `Defects of the build shown` section and no requirement row "not judged: no critic report yet" (direction
