@@ -103,6 +103,9 @@ def continuation(result: dict[str, Any], first: bool, relayed: bool = False) -> 
     if step.get("schema"):
         parts.append(f"Schema: {step['schema']}")
     parts.append(step["why"])
+    if step.get("format"):
+        parts.append(f"The format of the file this step has you write (a skeleton or schema, and the guide section) is in "
+                     f"`lapis-design next --task {task}`; never import or read lapis_design's source to learn it.")
     if step["id"] == "references":
         parts.append(f"A missing or invalid record is not done: write it, or, when the user's words forbid lookups during "
                      f"the work and nobody can be asked, decline the step with their line as the step says, then run "

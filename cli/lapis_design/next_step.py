@@ -208,8 +208,12 @@ def job_running(root: Path, task: str, step: str = "behavior") -> bool:
     return not state.startswith("Z")
 
 
-def _step(step_id: str, why: str, command: str | None = None, schema: Path | None = None) -> dict:
-    return {"id": step_id, "why": why, "command": command, **({"schema": str(schema)} if schema else {})}
+def _step(step_id: str, why: str, command: str | None = None, schema: Path | None = None,
+          format: list[dict[str, str]] | None = None) -> dict:
+    """A step; `format` lists the files it has the run write, each with the guide that holds its shape and a skeleton or
+    schema to start from, so no run reads the CLI's source to learn a record's format."""
+    return {"id": step_id, "why": why, "command": command, **({"schema": str(schema)} if schema else {}),
+            **({"format": format} if format else {})}
 
 
 def _requirements_step(task: str, reason: str) -> dict:
@@ -285,7 +289,7 @@ def _evaluate(root: Path, task: str, page: str | None = None, integrity_error: s
     if step is None:
         return result
     if kind == "brief" and (over := brief.questions_problem(root, task)):
-        cut = _step(brief.STEP, brief.over_why(task, over))
+        cut = _step(brief.STEP, brief.over_why(task, over), format=brief.formats(task))
         return {**result, "step": cut, "reason": cut["why"]}
     if unfit := _unfit(root, task, kind, step["id"], _raised(step)):
         return _prefixed(result, f"The questions in {found['questions']} (kind {kind}) do not wait: {unfit}.")
@@ -318,7 +322,8 @@ def _evaluate(root: Path, task: str, page: str | None = None, integrity_error: s
                  (" Include the recorded draft review summary and every unresolved finding in that message."
                   if result.get("draft_review") else "")
                  + (" The slice budget ran out before its review was current: say so in that message, the owner block lists "
-                    "what is not current." if result.get("draft_defects") else ""))
+                    "what is not current." if result.get("draft_defects") else ""),
+                 format=brief.formats(task, questions=False) if kind == "brief" else None)
     return {**result, "state": waiting.STEP, "step": wait, "then": step, "waiting": found, "reason": wait["why"]}
 
 
@@ -386,11 +391,11 @@ def _steps(root: Path, task: str, page: str | None, integrity_error: str | None 
         plan = read_plan(paths["plan"])
     except FileNotFoundError:
         if owed := brief.owed(root, task, planned=False):
-            return state(_step(brief.STEP, owed), False)
+            return state(_step(brief.STEP, owed, format=brief.formats(task)), False)
         if reason := requirements.owed(root, task):
             return state(_requirements_step(task, reason), False)
         if found := _references_owed(root, task):
-            return state(_step(references.STEP, references.why(task, found, planned=False)), False)
+            return state(_step(references.STEP, references.why(task, found, planned=False), format=references.formats(task)), False)
         if owed := direction.owed(root, task, 1):
             return state(direction.step(task, owed), False)
         if owed := diverge.owed(root, task):
@@ -423,11 +428,11 @@ def _steps(root: Path, task: str, page: str | None, integrity_error: str | None 
         return state(_step("plan-fix", f"{plan_rel}: {why}", check, shared / "plan" / "schema.yaml"), False)
     if plan.get("mode") == "create":
         if owed := brief.owed(root, task, planned=True):
-            return state(_step(brief.STEP, owed), False)
+            return state(_step(brief.STEP, owed, format=brief.formats(task)), False)
         if reason := requirements.owed(root, task):
             return state(_requirements_step(task, reason), False)
         if found := _references_owed(root, task, plan):
-            return state(_step(references.STEP, references.why(task, found, planned=True)), False)
+            return state(_step(references.STEP, references.why(task, found, planned=True), format=references.formats(task)), False)
         if owed := direction.owed(root, task, 1):
             return state(direction.step(task, owed), False)
         if owed := diverge.owed(root, task):
@@ -639,6 +644,20 @@ def _steps(root: Path, task: str, page: str | None, integrity_error: str | None 
             "owner_summary": delivery.summary, "owner_block": delivery.pointer()}
 
 
+def _format_lines(formats: list[dict[str, str]]) -> list[str]:
+    """The format of each file a step has the run write, for the text of `next`: where it is, which guide section holds
+    its shape, and the skeleton (every `<...>` is filled in) or the schema to write it against."""
+    lines: list[str] = []
+    for entry in formats:
+        lines.append(f"  format of {entry['file']}: {entry['guide']}")
+        if entry.get("schema"):
+            lines.append(f"    schema: {entry['schema']}")
+        if entry.get("skeleton"):
+            lines.append("    skeleton (replace every <...>; the shape, not text to copy):")
+            lines += [f"      {row}".rstrip() for row in entry["skeleton"].splitlines()]
+    return lines
+
+
 def _text(result: dict) -> str:
     step = result["step"]
     shown = f"\n\n{result['owner_summary'].rstrip()}" if result.get("owner_summary") and (
@@ -651,11 +670,15 @@ def _text(result: dict) -> str:
     if step.get("schema"):
         lines.append(f"  schema: {step['schema']}")
     lines.append(f"  why: {step['why']}")
+    lines += _format_lines(step.get("format") or [])
     return "\n".join(lines) + shown
 
 
 def main(argv: list[str] | None = None, prog: str = "lapis-design next") -> int:
-    ap = argparse.ArgumentParser(prog=prog, description=__doc__.split("\n")[0], allow_abbrev=False)
+    ap = argparse.ArgumentParser(prog=prog, description=__doc__.split("\n")[0], allow_abbrev=False,
+                                 epilog="A step that has you write a record (brief, references, owner-direction) prints "
+                                 "the record's format: the guide and its section, and a skeleton or the schema. The "
+                                 "commands and the guides are the interface; never read lapis_design's source for a format.")
     ap.add_argument("--task", help="the plan's task id (default: $LAPIS_TASK, else the newest plan under --root)")
     ap.add_argument("--root", type=Path, default=Path("."), help="the project folder (default: .)")
     ap.add_argument("--url", help="the page the render and behavior commands name: an HTML file or an address on a "

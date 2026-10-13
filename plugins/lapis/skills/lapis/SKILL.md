@@ -14,6 +14,9 @@ metadata:
 
 - Done is when `lapis-design next --task <task>` says done. Run it before you report, do the one step it names, and
   repeat; a plan, a check, or a page that merely looks finished is not done.
+- The `lapis-design` commands and the guides are the interface: a step that has you write a record prints its format (the
+  guide and section, and a skeleton or the schema). Never import or read the source of `lapis_design` (`inspect.getsource`,
+  its files) to learn a record's format or what a check reads; if a check seems wrong, dispute it.
 - A missing or invalid input, a plan blocker, and a timeout are not done: that step comes back. Only a failure of the
   environment, such as a browser that cannot start, counts, and the tool records it itself.
 - The release gate may say the work does not ship. Report that verdict; it is not a step to repeat, and never a reason

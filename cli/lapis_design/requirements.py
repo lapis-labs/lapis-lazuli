@@ -493,9 +493,22 @@ def _show(doc: dict) -> str:
     return "\n".join(lines)
 
 
+EPILOG = """What it reads, and the record's format (the lps-brief skill's references/record.md, section "Requirements and
+owner decisions"; the record is shared/requirements/schema.yaml, and only this command writes it):
+  --from FILE   a project file outside .lapis/ that the owner wrote as their brief: UTF-8, 200 KB at most. Each list item,
+                table row, fenced code block, and run of prose lines is one row with an id such as R3f2a1c.
+  the answers   every top-level `- [declared] ...` item of .lapis/answers/<task>.md is a row; `[known]`, `[assumed]`, and
+                `[open]` items are not.
+  a decision    the owner's reply that quotes a row's id, written under the heading of the approval ask:
+                  - [declared] R3f2a1c: drop - <the owner's words>
+                  - [declared] R9b40de: narrow - <the owner's words>
+Never write .lapis/requirements/<task>.json by hand; `show` lists its rows."""
+
+
 def main(argv: list[str] | None = None, prog: str = "lapis-design requirements seal") -> int:
     verb = prog.rsplit(" ", 1)[-1]
-    ap = argparse.ArgumentParser(prog=prog, allow_abbrev=False, description=__doc__.split("\n")[0])
+    ap = argparse.ArgumentParser(prog=prog, allow_abbrev=False, description=__doc__.split("\n")[0], epilog=EPILOG,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--task", help="the plan's task id (default: $LAPIS_TASK, else the newest plan under --root)")
     ap.add_argument("--root", type=Path, default=Path("."), help="the project folder (default: .)")
     if verb == "seal":

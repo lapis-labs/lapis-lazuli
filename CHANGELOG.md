@@ -80,6 +80,11 @@ contract formats are v0.
   template a shape to fill. When the CLI holds the request (the requirement record's rows or the brief record's `[declared]`
   items) in Hangul, kana, or Han script, `next` sends back a `brief` or `direction` questions file that is mostly Latin text,
   with the reason, instead of waiting. A request with no clear script, or none the CLI holds, is not checked.
+- Steps that have the run write a record print its format, in `next` (text and `--json` `step.format`) and in the gate's
+  continuation: `brief` gives the brief record's and the questions file's skeletons and guide sections, `owner-direction` the
+  proposal's schema and the shape of the answers lines, and `references` its guide section. `requirements seal -h` lists what
+  it reads and the decision lines. The `lapis` skill says the commands and the guides are the interface: do not import or read
+  `lapis_design` source to learn a format.
 
 ## 0.3.0 (2026-10-11)
 

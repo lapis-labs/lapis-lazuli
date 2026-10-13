@@ -456,6 +456,13 @@ def declined(root: Path, task: str, plan: Any = None) -> dict[str, Any] | None:
     return found if declined_problem(found["brief_line"], root, task, plan) is None else None
 
 
+def formats(task: str) -> list[dict[str, str]]:
+    """The format of the file the `references` step has the run write, as `file` and `guide`: the guide holds a record
+    to start from, and the checks above decide whether it is enough."""
+    return [{"file": record_path(Path("."), task).as_posix(),
+             "guide": "the lzl-research skill's references/exploration.md, section \"4. Write the record\""}]
+
+
 def why(task: str, found: list[str], planned: bool) -> str:
     """What the `references` step tells the run to do. `planned` says a plan already exists without the record."""
     record = record_path(Path("."), task).as_posix()

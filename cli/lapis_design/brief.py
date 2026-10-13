@@ -40,6 +40,53 @@ _ROUND = re.compile(r"\bround\s*(\d+)", re.IGNORECASE)
 _ROUND_LINE = re.compile(r"^\W*round\s+(\d+)\s+of\s+\d+", re.IGNORECASE | re.MULTILINE)   # "Round 2 of 2."
 _NUMBERED = re.compile(r"^\s{0,3}\**Q?\d+[.):]\**\s+\S", re.IGNORECASE)                 # a numbered question
 
+RECORD_SKELETON = """\
+# Brief: <task title>
+
+Round 1 of 2. How it was answered: <a person in the session | relayed by an operator | nobody to ask>
+
+## Found
+
+- <fact> - <path, or URL and date> (confirmed)
+- Not found: <what you looked for and could not find>
+- Taste: .lapis/taste.md | not given
+
+## Answers
+
+- [declared] Q1 <question> - <the answer, in the user's words>. Basis: the request.
+- [known] Q2 <question> - <the answer>. Basis: <path or URL>.
+- [assumed] Q3 <question> - <the answer you chose>. Basis: <why this one, and what you looked at>.
+- [open] Q4 <question> - <no default fits>; the page says nothing about it.
+"""
+QUESTIONS_SKELETON = """\
+lapis-questions: brief
+
+<one line in the owner's language: what you took from the request and the folder, with sources; correct anything wrong>
+
+<heading: Found>
+- <fact> (<path or URL>)
+- <not found: what you looked for and could not find>
+
+<heading: Questions, and how to answer: by number, "skip" keeps your default>
+1. <question>
+   <label: Why>: <what the answer changes in the page>
+   <label: If you skip it, I assume>: <the default>
+"""
+
+
+def formats(task: str, questions: bool = True) -> list[dict[str, str]]:
+    """The formats of the files the `brief` step has the run write, as `file`, `guide`, `skeleton`: the brief record
+    (the skeleton passes `problem` as it stands, with its `<...>` parts filled in or not) and, unless `questions` is
+    False, the questions file of the round. The skeleton of the questions shows a shape; every word of it, the
+    headings and labels too, is written in the owner's language."""
+    record = {"file": waiting.answers_path(Path("."), task).as_posix(),
+              "guide": "the lps-brief skill's references/record.md, section \"Shape\"", "skeleton": RECORD_SKELETON}
+    asked = {"file": waiting.questions_path(Path("."), task).as_posix(),
+             "guide": "the lps-brief skill's references/questions.md, sections \"Shape of a question\" and \"The message\"; "
+                      "write it in the owner's language, never copy the template's English",
+             "skeleton": QUESTIONS_SKELETON}
+    return [record, asked] if questions else [record]
+
 
 def _name(title: str) -> str:
     """A heading's first word in lower case ("" for a heading with no word)."""

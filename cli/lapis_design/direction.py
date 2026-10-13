@@ -36,7 +36,7 @@ from typing import Any, Mapping
 
 import yaml
 
-from lapis_design import brief, diverge, gate, references, waiting
+from lapis_design import brief, diverge, gate, references, shared_dir, waiting
 
 STEP = "owner-direction"
 KIND = "direction"
@@ -450,8 +450,30 @@ def _why(task: str, phase: int, reason: str, unattended: bool, unbased: list[str
     return (f"Direction conversation, turn {'one' if phase == 1 else 'two'}: {reason}{note}. {what}{how} Format and examples: {guide}.")
 
 
+ANSWERS_SKELETON = """\
+## Direction 1
+
+- [declared] S1 <style name>: <option letter, keep, drop, default, or other> — "<the owner's words>"
+- [declared] O1 <object name>: <option letters, as a,c> — "<the owner's words>"
+- [declared] T1 <type role>: <a or b> — "<the owner's words>"
+- [declared] Pick: C<n> — "<the owner's words>"
+- Defaults accepted (direction 1): "<the owner's words>"
+"""
+
+
+def formats(task: str) -> list[dict[str, str]]:
+    """The formats of the files the `owner-direction` step has the run write, as `file`, `guide`, `skeleton` or `schema`:
+    the proposal (its schema) and the owner's answers in the brief record (a shape of the lines: `Pick:` only at turn
+    two, the untagged line instead of the item lines when the owner takes every default)."""
+    return [{"file": path(Path("."), task).as_posix(), "schema": str(shared_dir() / "direction" / "schema.yaml"),
+             "guide": "the lapis skill's references/direction-conversation.md, section \"The proposal\""},
+            {"file": waiting.answers_path(Path("."), task).as_posix(), "skeleton": ANSWERS_SKELETON,
+             "guide": "the lapis skill's references/direction-conversation.md, section \"Recording answers\"; "
+                      "the owner's words in their language, kept as said"}]
+
+
 def step(task: str, reason: str) -> dict[str, Any]:
-    return {"id": STEP, "why": reason, "command": None}
+    return {"id": STEP, "why": reason, "command": None, "format": formats(task)}
 
 
 def questions_problem(root: Path, task: str, env: Mapping[str, str] = os.environ) -> str | None:

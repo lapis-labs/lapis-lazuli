@@ -48,7 +48,8 @@ Seeded `.lapis/plans/<task>.yaml` with brief, context, claims, and world_materia
 <a seed for DESIGN.md as described below, or why none>
 ```
 
-Each item starts with its tag.
+`lapis-design next --task <task>` prints this record's skeleton, and the questions file's, at the step `brief`; read the
+skeleton there and never the CLI's source. Each item starts with its tag.
 
 | Tag | Means | Goes to the plan's |
 |---|---|---|
