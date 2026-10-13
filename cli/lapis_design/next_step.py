@@ -264,7 +264,7 @@ def _evaluate(root: Path, task: str, page: str | None = None, integrity_error: s
         return _marked(root, task, result)
     kind = found["kind"]
     approval = kind == "approval"
-    shown = draft.links(root, task) if approval else []
+    shown = draft.shown(root, task) if approval else []
     if approval and not shown and step is not None and slice_step.owed(root, task, _plan_or_none(root, task)):
         if step["id"] == slice_step.STEP:                    # approval questions with no rendered page ask for the slice
             return result
@@ -289,20 +289,24 @@ def _evaluate(root: Path, task: str, page: str | None = None, integrity_error: s
     if unfit := _unfit(root, task, kind, step["id"], _raised(step)):
         return _prefixed(result, f"The questions in {found['questions']} (kind {kind}) do not wait: {unfit}.")
     if approval or kind == direction.KIND:
-        block, sha8 = owner.write(root, task, {"integrity_error": integrity_error})
-        result["owner_block"] = block
-        if not owner.carries(_read_text(root / found["questions"]), sha8):
+        delivery = owner.deliver(root, task, {"integrity_error": integrity_error, "kind": kind})
+        result["owner_summary"] = delivery.summary
+        result["owner_block"] = delivery.pointer()
+        if problems := delivery.problems(_read_text(root / found["questions"])):
             paste = _step(draft.STEP if approval else direction.STEP,
-                          f"The questions for the owner must carry the owner block that lapis-design wrote "
-                          f"from the files: paste .lapis/owner/{task}.md into {found['questions']} unchanged, so that "
-                          f"its last line `{owner.MARKER} {sha8}` is in the file, and stop with the questions as your "
-                          "last message. A block that is missing, or out of date because a record it reports changed "
-                          f"since, does not count; run `lapis-design {'draft check' if approval else 'next'} --task {task}` "
-                          "after changing one.",
+                          f"The questions for the owner must carry the owner summary that lapis-design wrote "
+                          f"from the files: paste .lapis/owner/{task}.summary.md into {found['questions']} unchanged (it is "
+                          f"in `owner_summary`), so that its last line `{delivery.marker}` is in the file, and stop with "
+                          "the questions as your last message. The summary holds the one decision it asks, every decision "
+                          "the owner has not made, every defect of the build shown, every font role with its license, and "
+                          f"the path and digest of the full block ({delivery.artifact}), which the owner reads by link. "
+                          f"Now: {'; '.join(problems)}. A summary that is missing, or out of date because a record it "
+                          f"reports changed since, does not count; run `lapis-design {'draft check' if approval else 'next'} "
+                          f"--task {task}` after changing one.",
                           f"lapis-design {'draft check' if approval else 'next'} --task {task}")
             return {**result, "state": "needs-step", "step": paste, "reason": paste["why"]}
     if approval:
-        if dead := preview.unreachable(shown):
+        if dead := preview.unreachable(draft.links(root, task)):
             serve = _step(draft.STEP, preview.why(task, dead), preview.command(task, dead))
             return {**result, "state": "needs-step", "step": serve, "reason": serve["why"]}
         if (cut := slice_step.tall(root, task, shown)) and slice_step.owed(root, task, _plan_or_none(root, task)):
@@ -625,15 +629,16 @@ def _steps(root: Path, task: str, page: str | None, integrity_error: str | None 
     reason = (f"The procedure is complete; {verdict}.{looked}{floor}{taste.done(root, task, plan)} Report that verdict, "
               "the checks that did not run and why, and what remains for the user. Passing the gate is not required "
               "to stop, and a pass says nothing about whether the page is good.")
-    block, sha8 = owner.write(root, task, {"verdict": verdict, "integrity_error": integrity_error})
-    return {**state(None, interactive, f"{reason} Paste the owner block unchanged ahead of your own summary: it is in "
-                    f"`owner_block` and in .lapis/owner/{task}.md, and its last line is `{owner.MARKER} {sha8}`."),
-            "owner_block": block}
+    delivery = owner.deliver(root, task, {"verdict": verdict, "integrity_error": integrity_error})
+    return {**state(None, interactive, f"{reason} Paste the owner summary unchanged ahead of your own summary: it is in "
+                    f"`owner_summary` and in .lapis/owner/{task}.summary.md, and its last line is `{delivery.marker}`. "
+                    f"The full block is {delivery.artifact}."),
+            "owner_summary": delivery.summary, "owner_block": delivery.pointer()}
 
 
 def _text(result: dict) -> str:
     step = result["step"]
-    shown = f"\n\n{result['owner_block'].rstrip()}" if result.get("owner_block") and (
+    shown = f"\n\n{result['owner_summary'].rstrip()}" if result.get("owner_summary") and (
         not step or step["id"] == draft.STEP) else ""
     if not step:
         return f"next: done ({result['task']})\n  {result['reason']}{shown}"

@@ -10,10 +10,10 @@ among several roughs is made earlier, at the second direction turn.
 From the first time `next` names `slice` until the slice is sealed or skipped, the agent is held (`hold`, enforced by
 the pre-write hook in `order.py`): it may write only the files its slice page declares in `.lapis/drafts/<task>.yaml`
 (`direction: new`, with its `url` and `sources`, at most `MAX_FILES`). The slice must also reach the owner as a waiting
-`approval` question that links the page and carries the current owner block: it is overdue after `MINUTES` minutes or
+`approval` question that links the page and carries the current owner summary: it is overdue after `MINUTES` minutes or
 `WRITES` page writes since the clock started (`overdue`: two independent triggers), and from then on every page write is
 refused until that question exists. Once either budget has fired the question never waits for a current review: `draft
-check` writes a minimal block, `next` lets the question wait, and the block's `## Not fully reviewed` section discloses
+check` writes a minimal block and summary, `next` lets the question wait, and the block's `## Not fully reviewed` section discloses
 what is not current (`unreviewed`). `state.slice_questions` records, per question, which budget fired first, when, when the
 question was asked, and the latency between (`observe_question`). The clock starts when `next` first names `slice` (`state.slice_since`), at every owner reply that asks
 for a revision, and at every answered set of questions of any kind (the log of `asks.py`). An untagged
@@ -21,7 +21,7 @@ for a revision, and at every answered set of questions of any kind (the log of `
 
 `check` seals when all of these hold: the questions were asked and answered (the answers file is newer than the
 questions file), `draft check` passes for what they link, one linked `direction: new` page is the slice, the plan says
-`approval: {state: approved}`, the owner acknowledged the gaps the questions' owner block listed (`gaps.py`), and every
+`approval: {state: approved}`, the owner acknowledged the gaps the questions' owner summary listed (`gaps.py`), and every
 core finding the critic left open is closed by a fresh critic report or decided by the owner
 (`- [declared] Ask finding-vs-decision: <rule id> — <their words>`). An answered but unapproved slice starts the next
 round (`state.slice_rounds`): the hold and the clock go on. The seal is `state.slice` (`integrity.seal_slice`): the
@@ -42,7 +42,7 @@ from typing import Any, Mapping
 
 import yaml
 
-from lapis_design import asks, draft, gaps, gate, integrity, motion, order, requirements, waiting
+from lapis_design import asks, draft, gaps, gate, integrity, motion, order, requirements, telemetry, waiting
 
 STEP = "slice"
 MAX_FILES = 12                 # files a slice page may declare [provisional: the next HITL measures it]
@@ -65,11 +65,12 @@ def text(task: str) -> str:
         f"1440, at most {MAX_HEIGHT:,} px tall at 1440 (content: the empty scroll runway of a pinned scene, which "
         "`lapis-design render motion` measures, is dwell and does not count). Run the critic on `lapis-design "
         f"critic packet`. Run `lapis-design draft check --task {task}`, which writes the owner block to "
-        f".lapis/owner/{task}.md, with the capture files the owner can open without a server. Then ask for approval in "
-        f".lapis/questions/{task}.md, whose first line is `lapis-questions: approval`, linking the page and pasting "
-        f"the owner block unchanged, and stop, within {MINUTES} minutes or {WRITES} page writes: past either, every page "
+        f".lapis/owner/{task}.md and the owner summary to .lapis/owner/{task}.summary.md, with the capture files the "
+        f"owner can open without a server. Then ask for approval in .lapis/questions/{task}.md, whose first line is "
+        f"`lapis-questions: approval`, linking the page and pasting the owner summary unchanged, and stop, within "
+        f"{MINUTES} minutes or {WRITES} page writes: past either, every page "
         "write is refused until that question exists. Copy is provisional until the owner has seen it rendered. The "
-        "block lists the open core findings and the decisions the owner did not make: put each core finding to them as "
+        "summary lists the open core findings and the decisions the owner did not make: put each core finding to them as "
         "a decision. Anything you delegate to build the slice carries the rules of `shared/review/worker-rules.md` "
         "(`lapis-design worker check` reads a worker's transcript against them). When the owner approves, record `approval: {state: approved}` in "
         f"the plan and their acknowledgment of the gaps in the answers file, and run `lapis-design next --task {task}` "
@@ -146,6 +147,16 @@ def _packet(root: Path, page: Mapping[str, Any]) -> str | None:
     except (OSError, ValueError, KeyError, TypeError):
         return None
     return found if isinstance(found, str) else None
+
+
+def _critic_scope(root: Path, page: Mapping[str, Any]) -> str:
+    """`delta` when the page's critic report judged a delta packet (`critic_packet.py`), else `full`."""
+    try:
+        report = json.loads((root / critic_report(page)).read_text(encoding="utf-8"))
+        packet = json.loads((root / report["target"]["packet"]["path"]).read_text(encoding="utf-8"))
+    except (OSError, ValueError, KeyError, TypeError):
+        return "full"
+    return "delta" if isinstance(packet, dict) and packet.get("kind") == "delta" else "full"
 
 
 def _read(path: Path) -> str:
@@ -251,7 +262,7 @@ def unreviewed(root: Path, task: str, env: Mapping[str, str] = os.environ) -> tu
     current, else None. The owner block lists these, so the owner sees the slice with its defects disclosed."""
     if (why := budget_fired(root, task, env)) is None:
         return None
-    errors, _ = draft.check(root, task, asked=draft.links(root, task))
+    errors, _ = draft.check(root, task, asked=draft.shown(root, task))
     return (why, errors) if errors else None
 
 
@@ -289,16 +300,16 @@ def observe_question(root: Path, task: str, found: Mapping[str, Any]) -> None:
 
 def waiting_for_owner(root: Path, task: str) -> bool:
     """Whether the slice has reached the owner as a waiting question: questions of kind `approval`, not yet answered,
-    that link a `direction: new` page of the draft record and carry the current owner block."""
+    that link a `direction: new` page of the draft record and carry the current owner summary (the delivery contract)."""
     from lapis_design import owner
 
     current = waiting.current(root, task)
     if current is None or current["kind"] != "approval" or current["answered"]:
         return False
-    shown = set(draft.links(root, task))
+    shown = set(draft.shown(root, task))
     if not any(p["url"] in shown and p.get("direction") == "new" for p in pages(root, task)):
         return False
-    return waiting.carried(current["text"]) == owner.block(root, task)[1]
+    return not owner.delivery(root, task, {"kind": "approval"}).problems(current["text"])
 
 
 def hold(root: Path, task: str, plan: Any, env: Mapping[str, str] = os.environ) -> dict | None:
@@ -369,7 +380,7 @@ def check(root: Path, task: str, plan: Any, env: Mapping[str, str] = os.environ)
                 "with what is built, as the questions file of kind `approval` that links the page and pastes the owner "
                 "block, and stop. A review that is not current does not stop you: `lapis-design draft check` writes the block "
                 "anyway and the block discloses what is not current. " if late else "") + text(task)       # nothing was asked yet, or the owner has not answered
-    shown = draft.links(root, task)
+    shown = draft.shown(root, task)
     if not shown:
         return ("The owner answered, but the questions link no rendered page, so no slice was shown. " + text(task))
     candidates = [p for p in pages(root, task) if p["url"] in shown and p.get("direction") == "new"]
@@ -418,4 +429,7 @@ def check(root: Path, task: str, plan: Any, env: Mapping[str, str] = os.environ)
         integrity.seal_slice(root, task, row)
     except Exception as exc:                               # the seal is recorded or the step stays; a run goes on
         return f"The slice could not be recorded: {type(exc).__name__}: {exc}. Run `lapis-design next --task {task}` again."
+    now = telemetry.stamp()
+    telemetry.record(root, command="slice seal", task=task, scope=_critic_scope(root, chosen), cache="off", started=now,
+                     ended=now, exit=0, output_chars=0, report_path=critic_report(chosen), packet_sha256=row["packet_sha256"])
     return None

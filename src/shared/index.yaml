@@ -31,6 +31,14 @@ items:
       lps-brief: summary
       lps-copy: summary
 
+  - id: critic-delta-packet
+    kind: contract
+    path: review/critic-delta-packet.schema.yaml
+    note: v0; what a critic judges after only the owner's rows changed on a shown build a full report already judged (the changed rows, the prior findings they affect, the prior report's digest, and the unchanged evidence by digest); never accepted for the release's critic
+    consumers:
+      lapis: summary
+      ultramarine: full
+
   - id: review-disputes
     kind: contract
     path: review/disputes.schema.yaml

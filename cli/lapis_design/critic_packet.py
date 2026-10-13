@@ -10,10 +10,19 @@ packet from the arguments recorded in it, so a changed input (a capture, the lin
 field the packet carries, a change row) makes the report stale, and it checks that the report judges every row,
 change, and dispute of the packet and cites only files and quotes that exist. That proves which inputs were declared,
 never what the critic actually read or that it was independent.
+
+A delta packet (`lapis-design critic packet --task T --prior REPORT`) follows a report that judged a full packet. When only
+the owner's rows changed on the same shown build (requirement rows, change rows, disputes, and the owner-decided gaps
+and asks that come with them), it carries the new and changed rows, the prior report's findings those rows affect (every
+open core finding among them), the digest of the prior report, and the unchanged evidence by digest. `check` accepts a
+report on it as full coverage with the prior report only for a caller that allows delta (the pre-show review and the
+slice seal); the release's critic is always a full independent review. Anything but owner rows (a capture, the lint
+report, the plan, the direction, the worker rules, the packet format) forces a full packet.
 """
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 import os
@@ -27,7 +36,7 @@ from pathlib import Path, PurePosixPath
 import yaml
 from jsonschema import Draft202012Validator
 
-from lapis_design import asks, direction, gaps, motion, shared_dir, workers
+from lapis_design import asks, direction, draft, gaps, motion, shared_dir, telemetry, workers
 
 TASK = re.compile(r"[a-z0-9][a-z0-9-]{1,63}")
 # What the critic never reads: the maker's plan and records. The packet carries what it may know of them.
@@ -39,6 +48,9 @@ FILE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".json", ".ht
                  ".yaml", ".yml", ".mp4", ".webm"}
 FACT_SOURCE = re.compile(r"(?P<path>[^#]+)#L(?P<first>\d+)(?:-L?(?P<last>\d+))?")
 STALE = "critic report was made from another packet"
+# What a delta packet may differ in from the full packet it follows: the owner's rows, with the owner's own answers
+# (decided gaps, asks) that come with them. Everything else is evidence, and a change in it needs a full review.
+ROW_SECTIONS = ("requirements", "changes", "disputes", "gaps", "asks", "supporting")
 
 
 class PacketError(ValueError):
@@ -327,7 +339,7 @@ def _motion(root: Path, task: str, name: str | None, extracts: list[Path]) -> tu
 
 
 def _listed(root: Path, task: str, plan: dict, record: dict | None, extracts: list[Path], lint: Path,
-            session: Path | None, motion_files: list[Path] = ()) -> list[dict]:
+            session: Path | None, motion_files: list[Path] = (), supporting: list[Path] = ()) -> list[dict]:
     """Every file the critic may read, once, with its digest. The first kind that names a file stands."""
     seen: dict[str, dict] = {}
 
@@ -351,6 +363,8 @@ def _listed(root: Path, task: str, plan: dict, record: dict | None, extracts: li
     add("session", session)
     for path in motion_files:
         add("motion", path)
+    for path in supporting:
+        add("supporting-evidence", path)
     for source in _seq((record or {}).get("sources")):
         if _map(source).get("kind") == "owner-file":
             outside("requirement-source", source.get("path"))
@@ -456,19 +470,32 @@ def build(root: Path, task: str, inputs: dict) -> bytes:
     plan, record = _plan(root, task), _record(root, task)
     motion_name = _named(root, inputs["motion"], "the motion evidence") if inputs.get("motion") else None
     shown, motion_files = _motion(root, task, motion_name, extracts)
+    support = []
+    for entry in draft.supporting_for(root, task, extract_names):
+        file = _inside(root, entry["path"])
+        if file is not None and not _hidden(_rel(root, file)):
+            support.append((file, _wrap(kind=entry["kind"], link=entry["link"], path=_rel(root, file),
+                                        sha256=digest(file.read_bytes()), claim=entry["claim"], page=entry.get("page"))))
     document = {
         "version": 0, "task": task,
         "args": _wrap(extracts=extract_names, lint=_rel(root, lint), session=session_name, motion=motion_name),
+        "rules": {"sha256": digest(workers.rules().encode("utf-8"))},
         "requirements": _requirements(record), "plan": _design(plan),
         "direction": direction.packet(root, task),
         "gaps": [_wrap(id=g["id"], area=g["area"], text=g["text"]) for g in gaps.compute(root, task)],
         "asks": [_wrap(trigger=a["trigger"], by=a["by"], said=a["said"]) for a in asks.recorded(root, task)],
-        "inputs": _listed(root, task, plan, record, extracts, lint, session, motion_files),
+        "inputs": _listed(root, task, plan, record, extracts, lint, session, motion_files, [f for f, _ in support]),
         "findings": _findings(root, lint), "changes": _changes(root, task), "disputes": _disputes(root, task)}
     if shown:
         document["motion"] = shown
+    if support:
+        document["supporting"] = [entry for _, entry in support]
     if problem := _first_error(_validator("review/critic-packet.schema.yaml"), document):
         raise PacketError(f"the packet does not match review/critic-packet.schema.yaml: {problem}")
+    return _dump(document)
+
+
+def _dump(document: dict) -> bytes:
     return (json.dumps(document, ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False) + "\n").encode("utf-8")
 
 
@@ -501,6 +528,8 @@ def _moved(old: dict, new: dict) -> str:
         elif key == "plan":
             parts.append("plan " + _names(sorted(k for k in set(old["plan"]) | set(new["plan"])
                                                 if old["plan"].get(k) != new["plan"].get(k))))
+        elif key == "rules":
+            parts.append("the worker rules")
         else:
             parts.append(key)
     return "; ".join(parts)
@@ -541,41 +570,85 @@ def _fact_problem(root: Path, index: int, fact: dict, listed: set[str]) -> str |
     return None
 
 
-def _gaps(root: Path, packet: dict, report: dict) -> list[str]:
+def _entries(report: dict, name: str) -> list[dict]:
+    return [item for item in _seq(report.get(name)) if isinstance(item, dict)]
+
+
+def _covers(gaps: list[str], report: dict, name: str, key: str, wanted: list, label: str) -> None:
+    """Add to `gaps` what the report's `name` entries (one per `key` value) leave out, add, or repeat against `wanted`."""
+    seen = [value for item in _entries(report, name) if isinstance(value := item.get(key), (str, int))]
+    if missing := [item for item in wanted if item not in seen]:
+        gaps.append(f"`{name}` has no entry for {_names([label + str(m) for m in missing])}")
+    if unknown := [item for item in dict.fromkeys(seen) if item not in wanted]:
+        gaps.append(f"`{name}` names {_names([label + str(u) for u in unknown])}, which the packet does not list")
+    if repeated := [item for item in dict.fromkeys(seen) if item in wanted and seen.count(item) > 1]:
+        gaps.append(f"`{name}` judges {_names([label + str(r) for r in repeated])} more than once")
+
+
+def _cited(root: Path, report: dict, rows: list[str], listed: set[str]) -> list[str]:
+    """What the report cites that is not there: a change that names a row the packet does not list, a file-like ref that is
+    no readable file, a fact whose source is not a listed file or whose quote is not in the lines it cites."""
     gaps: list[str] = []
-
-    def entries(name: str) -> list[dict]:
-        return [item for item in _seq(report.get(name)) if isinstance(item, dict)]
-
-    def judged(name: str, key: str, wanted: list, label: str) -> None:
-        seen = [value for item in entries(name) if isinstance(value := item.get(key), (str, int))]
-        if missing := [item for item in wanted if item not in seen]:
-            gaps.append(f"`{name}` has no entry for {_names([label + str(m) for m in missing])}")
-        if unknown := [item for item in dict.fromkeys(seen) if item not in wanted]:
-            gaps.append(f"`{name}` names {_names([label + str(u) for u in unknown])}, which the packet does not list")
-        if repeated := [item for item in dict.fromkeys(seen) if item in wanted and seen.count(item) > 1]:
-            gaps.append(f"`{name}` judges {_names([label + str(r) for r in repeated])} more than once")
-
-    rows = [row["id"] for row in packet["requirements"]["rows"]]
-    judged("requirements", "id", rows, "")
-    judged("changes", "seq", [change["seq"] for change in packet["changes"]], "change ")
-    judged("disputes", "index", [dispute["index"] for dispute in packet["disputes"]], "dispute ")
-    judged("motion", "scene", [scene["id"] for scene in _map(packet.get("motion")).get("scenes", [])], "scene ")
-    for change in entries("changes"):
+    for change in _entries(report, "changes"):
         if unknown := [row for row in _seq(change.get("rows")) if row not in rows]:
             gaps.append(f"change {change.get('seq')} names {_names(unknown)}, which are not requirement rows of the packet")
-    refs = [ref for name in ("requirements", "facts", "disputes", "walkthroughs", "motion") for item in entries(name)
+    refs = [ref for name in ("requirements", "facts", "disputes", "walkthroughs", "motion") for item in _entries(report, name)
             for ref in _seq(item.get("refs")) if isinstance(ref, str)]
     gaps += [problem for ref in dict.fromkeys(refs) if (problem := _ref_problem(root, ref))]
-    listed = {item["path"] for item in packet["inputs"]}
     gaps += [problem for index, fact in enumerate(_seq(report.get("facts")))
              if isinstance(fact, dict) and (problem := _fact_problem(root, index, fact, listed))]
     return gaps
 
 
-def check(root: Path, report_path: Path | str) -> Verdict:
+def _gaps(root: Path, packet: dict, report: dict) -> list[str]:
+    gaps: list[str] = []
+    rows = [row["id"] for row in packet["requirements"]["rows"]]
+    _covers(gaps, report, "requirements", "id", rows, "")
+    _covers(gaps, report, "changes", "seq", [change["seq"] for change in packet["changes"]], "change ")
+    _covers(gaps, report, "disputes", "index", [dispute["index"] for dispute in packet["disputes"]], "dispute ")
+    _covers(gaps, report, "motion", "scene", [scene["id"] for scene in _map(packet.get("motion")).get("scenes", [])], "scene ")
+    return gaps + _cited(root, report, rows, {item["path"] for item in packet["inputs"]})
+
+
+def _delta_gaps(root: Path, packet: dict, report: dict, listed: set[str]) -> list[str]:
+    """What a report on a delta packet leaves out: a changed or new row, change, or dispute it does not judge, an open core
+    finding of the prior report it does not re-judge (a finding of the report with `supersedes` the prior finding's index,
+    still open and still core, or fixed), or a judgment of what the delta does not list."""
+    gaps: list[str] = []
+    _covers(gaps, report, "requirements", "id", [row["id"] for row in packet["requirements"]["changed"]], "")
+    _covers(gaps, report, "changes", "seq", [change["seq"] for change in packet["changes"]["changed"]], "change ")
+    _covers(gaps, report, "disputes", "index", [dispute["index"] for dispute in packet["disputes"]["changed"]], "dispute ")
+    _covers(gaps, report, "motion", "scene", [], "scene ")
+    prior = {item["index"]: item for item in packet["prior_findings"]}
+    redone = [(item["supersedes"], item) for item in _entries(report, "findings") if isinstance(item.get("supersedes"), int)]
+    seen = [index for index, _ in redone]
+    if missing := [index for index, item in prior.items() if item["rejudge"] and index not in seen]:
+        gaps.append(f"`findings` does not re-judge the open core finding {_names([f'{i} ({prior[i]['rule_id']})' for i in missing])}: "
+                    "write a finding with `supersedes` its index, still open as a core finding, or fixed")
+    if unknown := [index for index in dict.fromkeys(seen) if index not in prior]:
+        gaps.append(f"`findings` supersedes {_names(unknown)}, which the packet does not list")
+    if repeated := [index for index in dict.fromkeys(seen) if index in prior and seen.count(index) > 1]:
+        gaps.append(f"`findings` re-judges {_names(repeated)} more than once")
+    for index, item in redone:
+        if index not in prior:
+            continue
+        if item.get("rule_id") != prior[index]["rule_id"]:
+            gaps.append(f"finding {index} is re-judged as {item.get('rule_id')}, not as {prior[index]['rule_id']}")
+        elif prior[index]["rejudge"]:
+            status = item.get("status")
+            if status not in ("open", "fixed"):
+                gaps.append(f"the open core finding {index} is re-judged as {status!r}; a delta review leaves it open or fixed")
+            elif status == "open" and not draft.is_core({"status": "open", "rule_id": item.get("rule_id"),
+                                                          "approval_impact": item.get("approval_impact")}):
+                gaps.append(f"the open core finding {index} is re-judged open but not core; a delta review keeps it core or fixes it")
+    return gaps + _cited(root, report, packet["requirements"]["ids"], listed)
+
+
+def check(root: Path, report_path: Path | str, *, allow_delta: bool = False) -> Verdict:
     """Compare the critic report at `report_path` (a path this process can open) with the packet it names and the
-    project as it is now. Never raises for a bad report or packet: each fault is a line of the verdict."""
+    project as it is now. Never raises for a bad report or packet: each fault is a line of the verdict. A report on a
+    delta packet counts only when `allow_delta` (the pre-show review, the slice seal); the release's critic never takes
+    one."""
     root = root.resolve()
     verdict = Verdict()
     try:
@@ -599,6 +672,8 @@ def check(root: Path, report_path: Path | str) -> Verdict:
         return verdict
     try:
         packet = json.loads(data)
+        if _is_delta(packet):
+            return _check_delta(root, verdict, packet, data, _map(report), allow_delta)
         if problem := _first_error(_validator("review/critic-packet.schema.yaml"), packet):
             raise PacketError(f"the packet is not valid: {problem}")
         rebuilt = build(root, packet["task"], packet["args"])
@@ -607,16 +682,250 @@ def check(root: Path, report_path: Path | str) -> Verdict:
         return verdict
     verdict.packet = packet
     if rebuilt != data:
+        hint = ""
+        if allow_delta and delta(root, packet["task"], str(report_path)).document is not None:
+            hint = (f" Only the owner's rows changed on the same shown build, so a delta review is enough: `lapis-design critic "
+                    f"packet --task {packet['task']} --prior {_rel(root, Path(report_path).resolve())} --out "
+                    f".lapis/critic/<name>.delta.packet.json`.")
         verdict.stale.append(f"{STALE}: {_moved(packet, json.loads(rebuilt))} changed since; rebuild it with "
-                             f"`lapis-design critic packet --task {packet['task']}` and run the critic on the new one")
+                             f"`lapis-design critic packet --task {packet['task']}` and run the critic on the new one.{hint}")
         return verdict
     verdict.gaps = _gaps(root, packet, _map(report))
     return verdict
 
 
-def verify(root: Path, report_path: Path | str) -> list[str]:
+def _check_delta(root: Path, verdict: Verdict, packet: dict, data: bytes, report: dict, allow_delta: bool) -> Verdict:
+    """`check` for a report whose packet is a delta: the prior report is as it was, the delta is what the project now
+    gives, and the report judges everything the delta lists."""
+    if not allow_delta:
+        verdict.stale.append(f"{STALE}: it judges a delta packet, and a delta review never counts where a full independent "
+                             f"review is required (the release's critic); run `lapis-design critic packet --task "
+                             f"{packet.get('task', '<task>')}` without --prior and have a fresh critic judge that packet")
+        return verdict
+    try:
+        if problem := _first_error(_validator("review/critic-delta-packet.schema.yaml"), packet):
+            raise PacketError(f"the delta packet is not valid: {problem}")
+        prior = packet["prior"]["report"]
+        file = _inside(root, prior["path"])
+        if file is None or digest(file.read_bytes()) != prior["sha256"]:
+            verdict.stale.append(f"{STALE}: the prior report {prior['path']} is not the one the delta packet named "
+                                 f"({prior['sha256'][:12]}); a changed prior report is no review. Run a full review: "
+                                 f"`lapis-design critic packet --task {packet['task']}`")
+            return verdict
+        found = delta(root, packet["task"], prior["path"])
+    except (ValueError, OSError) as exc:
+        verdict.stale.append(f"{STALE}: it cannot be rebuilt now ({exc})")
+        return verdict
+    verdict.packet = packet
+    if found.document is None:
+        verdict.stale.append(f"{STALE}: it can no longer be a delta ({'; '.join(found.reasons)}); a full review is needed: "
+                             f"`lapis-design critic packet --task {packet['task']}`")
+        return verdict
+    if _dump(found.document) != data:
+        verdict.stale.append(f"{STALE}: {_moved(packet, found.document)} changed since; rebuild it with `lapis-design critic "
+                             f"packet --task {packet['task']} --prior {prior['path']}` and run the critic on the new one")
+        return verdict
+    verdict.gaps = _delta_gaps(root, packet, report, {item["path"] for item in found.full["inputs"]})
+    return verdict
+
+
+def verify(root: Path, report_path: Path | str, *, allow_delta: bool = False) -> list[str]:
     """The faults of a critic report against its packet and the project, empty when it holds."""
-    return check(root, report_path).problems
+    return check(root, report_path, allow_delta=allow_delta).problems
+
+
+def _is_delta(packet: object) -> bool:
+    return isinstance(packet, dict) and packet.get("kind") == "delta"
+
+
+def _canonical(value: object) -> str:
+    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def _decisions(packet: dict) -> dict[str, list]:
+    found: dict[str, list] = {}
+    for item in packet["requirements"]["owner_decisions"]:
+        found.setdefault(item["row"], []).append((item["decision"], item["quote"]))
+    return {row: sorted(items) for row, items in found.items()}
+
+
+def _dispute_key(dispute: dict) -> str:
+    return _canonical([dispute.get("report"), dispute.get("rule_id"), dispute.get("location"), dispute.get("observed")])
+
+
+@dataclass
+class Delta:
+    """What `delta` found: the delta packet's document, with the full packet the project gives now (`full`, and its size in
+    characters), or the reasons a full review is needed instead."""
+    document: dict | None = None
+    full: dict | None = None
+    full_chars: int = 0
+    reasons: list[str] = field(default_factory=list)
+
+
+def delta(root: Path, task: str, prior_report: object) -> Delta:
+    """The delta packet for `task` after the critic report `prior_report` (a path), or the reasons there is none. A delta
+    exists only when that report judged a full packet completely, its bytes and its packet's are as the report named them,
+    and the packet the project gives now for the same arguments differs from the prior one in owner rows alone: the
+    captures, the lint report, the plan, the direction, the motion evidence, and the worker rules are the same."""
+    root = root.resolve()
+    out = Delta()
+
+    def refuse(reason: str) -> Delta:
+        out.reasons.append(reason)
+        return out
+
+    file = _inside(root, prior_report)
+    if file is None:
+        return refuse(f"the prior report {prior_report} is not a file in the project")
+    try:
+        body = file.read_bytes()
+        report = json.loads(body)
+    except (OSError, ValueError) as exc:
+        return refuse(f"the prior report cannot be read ({exc})")
+    named = _map(_map(report).get("target")).get("packet")
+    if not (isinstance(named, dict) and isinstance(named.get("path"), str) and isinstance(named.get("sha256"), str)):
+        return refuse("the prior report names no packet")
+    packet_file = _inside(root, named["path"])
+    if packet_file is None:
+        return refuse(f"the prior packet {named['path']} is not a file in the project")
+    data = packet_file.read_bytes()
+    if digest(data) != named["sha256"]:
+        return refuse("the prior packet was rebuilt after its report named it")
+    try:
+        old = json.loads(data)
+    except ValueError as exc:
+        return refuse(f"the prior packet cannot be read ({exc})")
+    if _is_delta(old):
+        return refuse("the prior report judges a delta packet; a delta follows a full independent review, never another delta")
+    if problem := _first_error(_validator("review/critic-packet.schema.yaml"), old):
+        return refuse(f"the prior packet is not a valid full packet: {problem}")
+    if old["task"] != task:
+        return refuse(f"the prior packet is of task {old['task']}, not {task}")
+    if "rules" not in old:
+        return refuse("the prior packet carries no digest of the worker rules, so what its critic was told cannot be compared")
+    if faults := _gaps(root, old, _map(report)):
+        return refuse(f"the prior report does not judge its own packet ({faults[0]})")
+    try:
+        full = build(root, task, old["args"])
+    except PacketError as exc:
+        return refuse(f"the packet for the same shown build cannot be built now: {exc}")
+    new = json.loads(full)
+    if new["requirements"]["sha256"] is None:
+        return refuse("the task has no requirement record, so there are no owner rows to review")
+    held_old, held_new = ({**{k: v for k, v in p.items() if k not in ROW_SECTIONS},
+                           "inputs": [i for i in p["inputs"] if i["kind"] not in ("requirement-source", "supporting-evidence")]}
+                          for p in (old, new))
+    if held_old != held_new:
+        return refuse(f"more than the owner's rows changed since the prior review ({_moved(held_old, held_new)})")
+    if old == new:
+        return refuse("nothing changed since the prior review; its report still holds")
+    rows_before = {row["id"]: row for row in old["requirements"]["rows"]}
+    decided_before, decided_now = _decisions(old), _decisions(new)
+    changed = []
+    for row in new["requirements"]["rows"]:
+        before = rows_before.get(row["id"])
+        if before is None:
+            changed.append({**row, "change": "new"})
+        elif before != row or decided_before.get(row["id"]) != decided_now.get(row["id"]):
+            changed.append({**row, "change": "changed"})
+    ids = [row["id"] for row in new["requirements"]["rows"]]
+    changed_ids = {row["id"] for row in changed}
+    known = {(d["row"], d["decision"], d["quote"]) for d in old["requirements"]["owner_decisions"]}
+    changes_before = {change["seq"]: change for change in old["changes"]}
+    changes = [change for change in new["changes"] if changes_before.get(change["seq"]) != change]
+    disputes_before = {_dispute_key(d): d["index"] for d in old["disputes"]}
+    disputes = [d for d in new["disputes"] if _dispute_key(d) not in disputes_before]
+    gaps_before = {g["id"]: g for g in old["gaps"]}
+    related = {rule for change in changes for rule in change["related_open"]} | {d["rule_id"] for d in disputes}
+    affected = []
+    for index, finding in enumerate(_seq(_map(report).get("findings"))):
+        if not isinstance(finding, dict):
+            continue
+        stated = {"status": finding.get("status"), "rule_id": finding.get("rule_id"),
+                  "approval_impact": finding.get("approval_impact")}
+        core = stated["status"] == "open" and draft.is_core(stated)
+        why = ["an open core finding"] if core else []
+        if stated["status"] == "open":
+            if stated["rule_id"] in related:
+                why.append("a changed change row or dispute names its rule")
+            if named_rows := sorted(row for row in changed_ids if row in _canonical(finding)):
+                why.append(f"it names {', '.join(named_rows)}")
+        if why:
+            affected.append(_wrap(index=index, rule_id=str(stated["rule_id"] or ""), observed=str(finding.get("observed") or ""),
+                                  status=str(stated["status"] or ""), approval_impact=stated["approval_impact"],
+                                  rejudge=core, why=why))
+    out.full, out.full_chars = new, len(full)
+    out.document = {
+        "version": 0, "kind": "delta", "task": task, "args": new["args"], "rules": new["rules"],
+        "prior": {"report": {"path": _rel(root, file), "sha256": digest(body)},
+                  "packet": {"path": _rel(root, packet_file), "sha256": named["sha256"]}},
+        "unchanged": {"inputs": {"count": len(held_new["inputs"]),
+                                 "sha256": digest(_canonical(held_new["inputs"]).encode("utf-8"))},
+                      "sections": {key: digest(_canonical(new[key]).encode("utf-8"))
+                                   for key in ("plan", "direction", "findings", "motion") if key in new}},
+        "requirements": {"sha256": new["requirements"]["sha256"], "ids": ids, "sources": [
+                             i for i in new["inputs"] if i["kind"] == "requirement-source"],
+                         "removed": sorted(set(rows_before) - set(ids)), "changed": changed,
+                         "owner_decisions": [d for d in new["requirements"]["owner_decisions"]
+                                             if d["row"] in changed_ids or (d["row"], d["decision"], d["quote"]) not in known]},
+        "changes": {"seqs": [change["seq"] for change in new["changes"]], "changed": changes},
+        "disputes": {"total": len(new["disputes"]), "changed": disputes,
+                     "carried": [{"from": disputes_before[key], "to": d["index"]} for d in new["disputes"]
+                                 if (key := _dispute_key(d)) in disputes_before]},
+        "gaps": {"changed": [g for g in new["gaps"] if gaps_before.get(g["id"]) != g],
+                 "removed": sorted(set(gaps_before) - {g["id"] for g in new["gaps"]})},
+        "asks": {"changed": [a for a in new["asks"] if a not in old["asks"]]},
+        "supporting": {"changed": [s for s in new.get("supporting", []) if s not in old.get("supporting", [])],
+                       "removed": sorted({s["path"] for s in old.get("supporting", [])}
+                                         - {s["path"] for s in new.get("supporting", [])})},
+        "prior_findings": affected}
+    return out
+
+
+def effective(root: Path, report_path: Path | str) -> dict | None:
+    """The report on a delta packet completed with the prior report it follows, as one report that judges every row, change,
+    and dispute of the project now: the prior report's judgments of what did not change, the delta report's of what did,
+    and the prior findings with the delta report's re-judgments in place of the ones they supersede. None when the report
+    is not on a delta packet or the prior cannot be read; `check` is what says whether it counts."""
+    root = root.resolve()
+    try:
+        report = json.loads(Path(report_path).read_text(encoding="utf-8"))
+        packet = json.loads(_inside(root, report["target"]["packet"]["path"]).read_bytes())
+        if not _is_delta(packet):
+            return None
+        prior = json.loads(_inside(root, packet["prior"]["report"]["path"]).read_text(encoding="utf-8"))
+        return _merge(prior, report, packet)
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return None
+
+
+def _merge(prior: dict, report: dict, packet: dict) -> dict:
+    merged = copy.deepcopy(prior)
+    merged["target"] = copy.deepcopy(report["target"])
+
+    def pick(name: str, key: str, wanted: list) -> list:
+        mine = {item[key]: item for item in _entries(report, name) if key in item}
+        before = {item[key]: item for item in _entries(prior, name) if key in item}
+        return [copy.deepcopy(mine.get(value) or before[value]) for value in wanted if value in mine or value in before]
+
+    merged["requirements"] = pick("requirements", "id", packet["requirements"]["ids"])
+    merged["changes"] = pick("changes", "seq", packet["changes"]["seqs"])
+    carried = {step["from"]: step["to"] for step in packet["disputes"]["carried"]}
+    merged["disputes"] = [{**copy.deepcopy(item), "index": carried[item["index"]]} for item in _entries(prior, "disputes")
+                          if item.get("index") in carried] + copy.deepcopy(_entries(report, "disputes"))
+    redone = {item["supersedes"]: item for item in _entries(report, "findings") if isinstance(item.get("supersedes"), int)}
+    merged["findings"] = [{k: v for k, v in (redone.get(index) or item).items() if k != "supersedes"}
+                          for index, item in enumerate(_seq(prior.get("findings"))) if isinstance(item, dict)]
+    merged["findings"] += [copy.deepcopy(item) for item in _entries(report, "findings") if not isinstance(item.get("supersedes"), int)]
+    for name in ("facts", "walkthroughs", "comparisons", "motion"):
+        found = copy.deepcopy(_entries(prior, name))
+        found += [item for item in copy.deepcopy(_entries(report, name)) if item not in found]
+        if found:
+            merged[name] = found
+    merged["summary"] = {**_map(prior.get("summary")), "blocking": sum(bool(f.get("blocking")) for f in merged["findings"]),
+                         "total": len(merged["findings"])}
+    return merged
 
 
 def _write(path: Path, data: bytes) -> None:
@@ -652,40 +961,76 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design critic packet"
                     "no --extract was given)")
     ap.add_argument("--motion", help="the motion evidence `lapis-design render motion` wrote (default: "
                     ".lapis/renders/<task>.motion.json when it exists); a page that moves needs it")
+    ap.add_argument("--prior", help="a critic report on a full packet of the same shown build: write a delta packet "
+                    "(the owner's changed rows, and the prior findings they affect) instead of a full one. Only the owner's "
+                    "rows may have changed since; the captures and arguments are the prior packet's, so none are given. "
+                    "A delta never counts for the release's critic")
     ap.add_argument("--out", help="where to write the packet, under .lapis/critic/ (default: "
-                    ".lapis/critic/<task>.packet.json)")
+                    ".lapis/critic/<task>.packet.json, or <task>.delta.packet.json with --prior)")
     args = ap.parse_args(argv)
     if not TASK.fullmatch(args.task):
         ap.error("--task must be a plan task id (lowercase letters, digits, and hyphens)")
+    if args.prior and (args.extract or args.lint or args.session or args.motion):
+        ap.error("--prior takes the arguments of the prior packet: do not give --extract, --lint, --session, or --motion")
     root = args.root.resolve()
+    started = telemetry.stamp()
+
+    def done(code: int, text: str, *, path: str | None = None, data: bytes = b"") -> int:
+        (sys.stdout if code == 0 else sys.stderr).write(text)
+        telemetry.record(root, command="critic packet", task=args.task, scope="delta" if args.prior else "full",
+                         cache="off", started=started, ended=telemetry.stamp(), exit=code,
+                         output_chars=len(text) if code == 0 else 0, report_path=path,
+                         packet_chars=len(data), packet_sha256=digest(data) if data else None)
+        return code
+
     try:
         from lapis_design import release_check
 
         paths = {name: _rel(root, path) for name, path in release_check.input_paths(root, args.task).items()}
-        out = (root / (args.out or paths["packet"])).resolve()
+        default = paths["packet"].replace(".packet.json", ".delta.packet.json") if args.prior else paths["packet"]
+        out = (root / (args.out or default)).resolve()
         if not out.is_relative_to((root / ".lapis" / "critic").resolve()) or not out.is_relative_to(root) \
                 or out.suffix != ".json":
             raise PacketError("--out must be a .json file under .lapis/critic/")
         plan = _plan(root, args.task)
         _observe(root, args.task, plan)
-        motion_default = _rel(root, motion.manifest_path(root, args.task))
-        session = args.session or (paths["session"] if not args.extract and (root / paths["session"]).is_file() else None)
-        data = build(root, args.task, {"extracts": args.extract or [paths["extract"]],
-                                       "lint": args.lint or paths["lint"], "session": session,
-                                       "motion": args.motion or (motion_default if (root / motion_default).is_file() else None)})
+        found = None
+        if args.prior:
+            found = delta(root, args.task, args.prior)
+            if found.document is None:
+                raise PacketError("no delta review is possible, so the review is a full independent one "
+                                  f"(`lapis-design critic packet --task {args.task}` without --prior): " + "; ".join(found.reasons))
+            data = _dump(found.document)
+        else:
+            motion_default = _rel(root, motion.manifest_path(root, args.task))
+            session = args.session or (paths["session"] if not args.extract and (root / paths["session"]).is_file() else None)
+            data = build(root, args.task, {"extracts": args.extract or [paths["extract"]],
+                                           "lint": args.lint or paths["lint"], "session": session,
+                                           "motion": args.motion or (motion_default if (root / motion_default).is_file() else None)})
         _write(out, data)
     except (PacketError, OSError) as exc:
-        print(f"critic packet: {exc}", file=sys.stderr)
-        return 2
+        return done(2, f"critic packet: {exc}\n")
     packet, shown = json.loads(data), _rel(root, out)
-    print(f"critic packet: {shown} (sha256 {digest(data)}): {len(packet['requirements']['rows'])} requirement rows, "
-          f"{len(packet['changes'])} changes, {len(packet['disputes'])} disputes, {len(packet['inputs'])} input files")
-    print("  give the critic this packet and the files it lists, nothing else, and put these lines into its task verbatim "
-          "(shared/review/worker-rules.md):")
-    print("\n".join(f"    {line}" for line in workers.rules().splitlines()))
-    print("  its report names the packet:")
-    print(f"  target.packet: {{path: {shown}, sha256: {digest(data)}}}")
-    return 0
+    if found is not None:
+        ask = packet["requirements"]
+        lines = [f"critic packet (delta): {shown} (sha256 {digest(data)}): {len(ask['changed'])} of {len(ask['ids'])} "
+                 f"requirement rows, {len(packet['changes']['changed'])} changes, {len(packet['disputes']['changed'])} disputes "
+                 f"to judge; {sum(item['rejudge'] for item in packet['prior_findings'])} open core findings and "
+                 f"{sum(not item['rejudge'] for item in packet['prior_findings'])} other prior findings to re-judge; "
+                 f"{len(data)} characters against {found.full_chars} for the full packet",
+                 f"  prior report {packet['prior']['report']['path']} (sha256 {packet['prior']['report']['sha256']}) and its "
+                 f"packet {packet['prior']['packet']['path']} stay unchanged; give the critic this delta, the prior report and "
+                 "packet, and the files the prior packet lists, nothing else. It judges only what the delta lists, and writes a "
+                 "finding with `supersedes` for each prior finding it re-judges",
+                 "  put these lines into its task verbatim (shared/review/worker-rules.md):"]
+    else:
+        lines = [f"critic packet: {shown} (sha256 {digest(data)}): {len(packet['requirements']['rows'])} requirement rows, "
+                 f"{len(packet['changes'])} changes, {len(packet['disputes'])} disputes, {len(packet['inputs'])} input files",
+                 "  give the critic this packet and the files it lists, nothing else, and put these lines into its task verbatim "
+                 "(shared/review/worker-rules.md):"]
+    lines += [f"    {line}" for line in workers.rules().splitlines()]
+    lines += ["  its report names the packet:", f"  target.packet: {{path: {shown}, sha256: {digest(data)}}}"]
+    return done(0, "\n".join(lines) + "\n", path=shown, data=data)
 
 
 if __name__ == "__main__":

@@ -362,11 +362,16 @@ def test_the_command_defaults_to_the_release_inputs_and_a_draft_names_its_own(pr
     ["--lint", ".lapis/lint/missing.json"],
 ])
 def test_the_command_refuses_what_it_cannot_build_from_and_writes_nothing(project, observed, args, capsys):
-    files = {p: p.read_bytes() for p in project.rglob("*") if p.is_file()}
+    def files():
+        return {p: p.read_bytes() for p in project.rglob("*") if p.is_file() and "telemetry" not in p.parts}
+
+    before = files()
     assert run(project, *args) == 2
     assert capsys.readouterr().err.startswith("critic packet: ")
-    assert {p: p.read_bytes() for p in project.rglob("*") if p.is_file()} == files
+    assert files() == before
     assert not (project.parent / "outside.json").exists()
+    line = json.loads((project / ".lapis/telemetry/checks.jsonl").read_text().splitlines()[-1])
+    assert (line["command"], line["exit"], line["scope"], line["output_chars"]) == ("critic packet", 2, "full", 0)
 
 
 def test_a_dispute_file_that_does_not_match_its_schema_stops_the_packet(project, observed, capsys):

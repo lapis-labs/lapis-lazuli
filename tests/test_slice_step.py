@@ -185,6 +185,19 @@ def test_the_seal_records_the_digests_of_what_the_owner_saw_and_said(project, ch
     assert integrity.read_state(project, TASK)["slice"] == found
 
 
+@pytest.mark.parametrize("packet, scope", [(None, "full"), ({"kind": "delta"}, "delta")])
+def test_the_seal_is_recorded_with_the_scope_of_the_critic_review_it_rests_on(project, checked, packet, scope):
+    draft_pages(project, (URL, "new"))
+    if packet:
+        save(project, "critic/packet.json", packet)
+    ask(project, f"Approve this slice? {URL}", 200)
+    reply(project, "- [declared] The first view is right.", 210)
+    approve(project)
+    next_step.evaluate(project, TASK)
+    line = json.loads((project / ".lapis/telemetry/checks.jsonl").read_text().splitlines()[-1])
+    assert (line["command"], line["scope"], line["exit"], line["task"]) == ("slice seal", scope, 0, TASK)
+
+
 def test_nothing_is_sealed_while_the_questions_are_unanswered_or_the_answers_are_older(project, checked):
     draft_pages(project, (URL, "new"))
     approve(project)
