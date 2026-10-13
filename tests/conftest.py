@@ -61,6 +61,17 @@ def no_installed_fonts(tmp_path_factory, monkeypatch):
     monkeypatch.setenv("LAZULI_FONT_ROOTS", f"user={empty}")
 
 
+@pytest.fixture(autouse=True)
+def repo_telemetry_stays_out_of_the_repo(tmp_path, monkeypatch):
+    """A check run in-process from the repository folder would append to the repository's own
+    `.lapis/telemetry/checks.jsonl`; it goes to a scratch file instead. A test that runs from a folder of its own
+    still gets that folder's log."""
+    from lapis_design import telemetry
+
+    real, repo, scratch = telemetry.log_path, Path(__file__).resolve().parents[1], tmp_path / "telemetry.jsonl"
+    monkeypatch.setattr(telemetry, "log_path", lambda root: scratch if Path(root).resolve() == repo else real(root))
+
+
 @pytest.fixture
 def real_previews():
     """Asked for by a test that serves a page itself and wants `preview.answers` to mean what it says."""
