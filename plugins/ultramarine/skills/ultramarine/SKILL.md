@@ -141,7 +141,9 @@ NARROW and how), what is new, changed, or gone since the previous report at the 
 blocker (by rule with its exact count, and its ids when there are many), skipped and partial probes with their
 reasons, the build and state keys with the cache outcome, and the report path. The raw extract, session, and
 report stay in their files; read the part you need, and use `--json` only when you need the whole report. A
-worker hands back the report path and that summary, never the pasted JSON or DOM.
+worker hands back the report path and that summary, never the pasted JSON or DOM. Read the task's recorded extracts
+(`lapis-design extract show --task <task>`) before a document you have read already; open the source at the extract's lines
+when a claim matters, and treat one reported stale as unread.
 
 If a sandbox or permission prevents a check from starting Chromium or reading lazuli's user cache,
 ask the user for permission once; if refused or impossible, list the check as not run with the exact

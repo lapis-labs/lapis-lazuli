@@ -24,6 +24,10 @@ items:
   view: full
   path: render/DERIVED.md
   summary: Measured and derived values in the render extract (v1)
+- id: extract-record
+  view: summary
+  path: extracts/schema.yaml
+  summary: LapisLazuli extract record schema — v0
 - id: sources-registry
   view: full
   path: sources/registry.yaml

@@ -266,7 +266,7 @@ properties:
         kind:
           enum: [extract, screenshot, lint, session, requirement-source, product, design, context, taste,
                  references-record, reference-capture, reference-profile, exploration, direction-contact,
-                 direction-capture, motion, supporting-evidence]
+                 direction-capture, motion, supporting-evidence, source-extracts, extract-source]
         path: { type: string, minLength: 1 }       # relative to the project root, with `/`
         sha256: { $ref: "#/$defs/digest" }
   findings:                                        # the lint report's findings by index, without their `fix` text or waivers

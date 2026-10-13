@@ -37,6 +37,7 @@ import yaml
 from jsonschema import Draft202012Validator
 
 from lapis_design import asks, direction, draft, gaps, motion, shared_dir, telemetry, workers
+from lapis_design import extracts as source_extracts
 
 TASK = re.compile(r"[a-z0-9][a-z0-9-]{1,63}")
 # What the critic never reads: the maker's plan and records. The packet carries what it may know of them.
@@ -343,12 +344,13 @@ def _listed(root: Path, task: str, plan: dict, record: dict | None, extracts: li
     """Every file the critic may read, once, with its digest. The first kind that names a file stands."""
     seen: dict[str, dict] = {}
 
-    def add(kind: str, path: Path | None) -> None:
+    def add(kind: str, path: Path | None) -> bool | None:
         if path is None:
-            return
+            return None
         rel = _rel(root, path)
         if rel not in seen and not _hidden(rel):
             seen[rel] = {"kind": kind, "path": rel, "sha256": digest(path.read_bytes())}
+        return rel in seen
 
     def outside(kind: str, name: object) -> None:
         if isinstance(name, str) and (path := _inside(root, name)) and not _rel(root, path).startswith(".lapis/"):
@@ -375,6 +377,9 @@ def _listed(root: Path, task: str, plan: dict, record: dict | None, extracts: li
         outside("context", name)
     add("taste", _inside(root, ".lapis/taste.md"))
     add("references-record", _inside(root, f".lapis/references/{task}.md"))
+    if add("source-extracts", _inside(root, f".lapis/extracts/{task}.json")):
+        for item in source_extracts.load(root, task)["extracts"]:      # the originals, so a claim can be opened at its lines
+            outside("extract-source", item["source"]["path"])
     for path in sorted((root / ".lapis" / "references" / task).rglob("*")):
         add("reference-capture", _inside(root, str(path)))
     for reference in _seq(plan.get("references")):
@@ -468,6 +473,10 @@ def build(root: Path, task: str, inputs: dict) -> bytes:
     session_name = _named(root, inputs["session"], "the behavior session") if inputs.get("session") else None
     session = _inside(root, session_name) if session_name else None
     plan, record = _plan(root, task), _record(root, task)
+    if held := source_extracts.verify(root, task):         # the critic reads only grounded facts that still hold (extracts.py)
+        raise PacketError(f"the extract record .lapis/extracts/{task}.json cannot go to a critic: {'; '.join(held[:3])}"
+                          + (f" (and {len(held) - 3} more)" if len(held) > 3 else "")
+                          + f"; run `lapis-design extract check --task {task}`, then `extract drop --stale` or re-record")
     motion_name = _named(root, inputs["motion"], "the motion evidence") if inputs.get("motion") else None
     shown, motion_files = _motion(root, task, motion_name, extracts)
     support = []

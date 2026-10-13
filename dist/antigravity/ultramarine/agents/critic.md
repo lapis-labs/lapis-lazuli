@@ -49,6 +49,11 @@ The packet holds:
 - `inputs`: every file you may read, as `{kind, path, sha256}`: the render extracts and their screenshots, the behavior
   session, the lint report, the reference record and its study captures, the exploration artifacts and captures, the
   user's taste, and the product and contract documents. A file that is not listed is not yours to read
+- `inputs` may also list the task's `source-extracts` record (`.lapis/extracts/<task>.json`): short excerpts of documents, each
+  the source's own lines with its path, line range, and sha256 (the CLI copied them; none is a maker's summary), and each
+  source inside the project as `extract-source`. An extract is a way to find the passage, not the source: open the
+  `extract-source` at the lines before you rest a finding on a claim; one whose source the packet does not list (a file outside
+  the project) is a lead, not a fact you may cite
 - `findings`: the lint report's findings by `index`, with `rule_id`, `layer`, `observed`, `location`, and `status`
 - `changes`: edits to protected plan fields that were reactive, touched a finding that was open, or came after the
   owner approved the slice, each with `pointer`, `before`, `after`, and `related_open`

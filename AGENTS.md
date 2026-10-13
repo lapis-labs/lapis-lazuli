@@ -58,6 +58,8 @@ uv run lapis-design release check --task demo   # the release gate (src/shared/r
 uv run lapis-design next --task demo           # the one step still to take (--json for tools); see GATE.md, Failure records
 uv run lapis-design requirements seal --task demo --from brief.md   # the owner's brief files and [declared] answers -> .lapis/requirements/demo.json
 uv run lapis-design requirements show --task demo                  # its rows, ids first
+uv run lapis-design extract add --task demo --source BRIEF.md --heading "Pickup"   # a sourced excerpt (the source's own lines, its sha256, its locator) -> .lapis/extracts/demo.json; `--lines A-B` instead; a URL page adds --url --captured --rights
+uv run lapis-design extract show --task demo     # what a worker reads instead of the whole document; a stale extract (source changed) prints no text and exits 1; `extract check`, `extract drop --stale`
 uv run lapis-design preview start --task demo   # serve the project folder on 127.0.0.1 in a process that outlives the command -> .lapis/preview/demo.json; `preview status|stop --task demo`
 uv run lazuli local fonts --summary       # read-only font scan and measurement into the user cache
 uv run lazuli doctor
@@ -287,6 +289,8 @@ files beside it; the database file itself does not change.
   `lapis-design critic packet` writes deterministic JSON (the requirement rows, the plan's design fields without the
   maker's reasons, a digest of every file the critic may read, the lint findings, the reactive or open-finding change
   rows, and the disputes without their reasons), and a critic report counts only for the packet its `target.packet` names.
+  A task's extract record (`cli/lapis_design/extracts.py`, `src/shared/extracts/schema.yaml`) is listed in it with its sources, and
+  the packet is refused while the record is malformed, stale, altered, or names a maker's record.
   `release check` (`release.input-stale`, `release.critic-missing`), `draft check`, and the owner block's "Not run, or
   stale" section all read `critic_packet.check`, which rebuilds the packet from the arguments the file records and compares
   bytes, never modification times; a project without a requirement record reads no packet. Draft review is version 1
@@ -298,7 +302,7 @@ files beside it; the database file itself does not change.
   `.lapis/changes/<task>.jsonl`, with the rule ids open on that input (a rule's `detect.plan.path` and its detector's
   `reads_plan` in `slop/detectors.yaml`, a `defaults` id, a flow id). A change is surfaced, never forbidden. `observe` never
   raises: a failure prints one stderr line and the command goes on. Only `lapis-design` writes `.lapis/requirements/`,
-  `.lapis/state/`, `.lapis/changes/`, `.lapis/owner/`, and `.lapis/order/` (a keyed digest in the order record finds any other write, `order.tampered`): `hook pre-write` refuses an edit tool's write to them in every
+  `.lapis/state/`, `.lapis/changes/`, `.lapis/owner/`, `.lapis/order/`, and `.lapis/extracts/` (a keyed digest in the order record finds any other write, `order.tampered`): `hook pre-write` refuses an edit tool's write to them in every
   session (`order.CLI_OWNED`), and a shell write shows up as an `integrity` row. A detector that reads a plan field
   declares it in `reads_plan`, or a change to that field never names the rule.
 - `next` lives in `cli/lapis_design/next_step.py`: `lapis-design next --task demo [--json]` runs `release_check.run(...,

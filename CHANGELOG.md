@@ -8,6 +8,25 @@ contract formats are v0.
 
 ## Unreleased
 
+### Added
+
+- `lapis-design extract add|show|check|drop`: a run records short, sourced excerpts of a document once, and workers read them
+  instead of the whole brief, README, install notes, license text, or references record. `add` cuts the excerpt out of the
+  source file itself (`--lines A-B`, or `--heading` for a Markdown section) and records it in `.lapis/extracts/<task>.json`
+  (`src/shared/extracts/schema.yaml`, new, v0) with the source path, the sha256 of the source, the line range, and for a page
+  taken from a URL the address, capture date, and the owner's rights (`own` or `licensed`; a reference-only page keeps no copy, so
+  it is refused). An extract with no locator, over 4,000 characters, of a non-text or linked file, or of a maker's record the
+  critic never reads (plan, answers, drafts, questions, disputes, direction) is refused, and the record has no field for a
+  summary or an opinion. `show` prints the extracts that still hold with their source and lines and the characters read against
+  the whole sources; an extract whose source changed or vanished, or whose text no longer matches its lines, is stale: `show`
+  prints no text for it, says why, and exits 1, `check` reports it, and `drop --stale` removes it (adding the same lines again
+  replaces the extract). The record is written only by the CLI (`order.CLI_OWNED` now holds `.lapis/extracts/`), each command
+  writes a telemetry line with the characters read, and the worker rules, `lapis` and `ultramarine` skills, and the critic agent
+  tell workers to read extracts first and to open the source at its lines when a claim matters.
+- The critic packet lists a task's extract record (input kind `source-extracts`, and each source inside the project as
+  `extract-source`) and refuses to build while the record is malformed, holds a field the schema does not know, names a
+  maker's record, differs from its source, or is stale, so the critic reads grounded facts only.
+
 ### Changed
 
 - The owner summary no longer holds defects of a build that does not exist. While nothing has been shown or built, as the

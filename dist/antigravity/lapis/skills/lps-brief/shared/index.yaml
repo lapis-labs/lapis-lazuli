@@ -38,6 +38,10 @@ items:
   view: summary
   path: requirements/schema.yaml
   summary: LapisLazuli requirement record schema — v0
+- id: extract-record
+  view: summary
+  path: extracts/schema.yaml
+  summary: LapisLazuli extract record schema — v0
 - id: direction-proposal
   view: summary
   path: direction/schema.yaml

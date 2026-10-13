@@ -321,6 +321,16 @@ items:
       lps-brief: summary
       lps-copy: summary
 
+  - id: extract-record
+    kind: contract
+    path: extracts/schema.yaml
+    note: v0; grounded excerpts of a document (source path, source sha256, line range, the source's own lines, and for a URL the capture date), written by `lapis-design extract add`, read instead of the whole document while the hash holds, never carrying a maker's opinion
+    consumers:
+      lapis: full
+      ultramarine: full
+      lzl-research: summary
+      lps-brief: summary
+
   - id: direction-proposal
     kind: contract
     path: direction/schema.yaml

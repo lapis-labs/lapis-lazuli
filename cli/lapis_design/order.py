@@ -33,7 +33,7 @@ block), every page write is refused, with no cap: an agent held here has one way
 file-edit tools are held, as below.
 
 Before that, in every session and whatever step `next` names, a write to a record only `lapis-design` writes
-(`CLI_OWNED`: `.lapis/requirements/`, `.lapis/state/`, `.lapis/changes/`, `.lapis/owner/`, `.lapis/order/`) is refused, once per tool
+(`CLI_OWNED`: `.lapis/requirements/`, `.lapis/state/`, `.lapis/changes/`, `.lapis/owner/`, `.lapis/order/`, `.lapis/extracts/`) is refused, once per tool
 call and with no cap. That stops the agent's tool, not a person. A write through the shell is not prevented; the change
 log notices it (`integrity.py`: the log or the state no longer matches) and the owner sees the row.
 
@@ -56,9 +56,9 @@ EXISTING = "existing-code"           # the `source` of the candidate that stands
 ORDER_STEPS = ("brief", "references", "plan")        # the records a page write can come before
 BEFORE_CODE = (*ORDER_STEPS, "requirements", "owner-direction", "diverge", "plan-fix", "plan-explorations")    # steps after which page code may start
 CAP = 3                              # refusals of one step; then the write goes through and is recorded
-# the folders of `.lapis/` that only `lapis-design` writes (integrity.py, requirements.py, owner.py); a write to one
+# the folders of `.lapis/` that only `lapis-design` writes (integrity.py, requirements.py, owner.py, extracts.py); a write to one
 # is refused in every session, since the CLI computes what is in them and a hand edit would not be trusted
-CLI_OWNED = (".lapis/requirements", ".lapis/state", ".lapis/changes", ".lapis/owner", ".lapis/order")
+CLI_OWNED = (".lapis/requirements", ".lapis/state", ".lapis/changes", ".lapis/owner", ".lapis/order", ".lapis/extracts")
 
 # the suffixes the source layer of the lint reads (lint/detectors/source.py), in the folders it walks
 PAGE_SUFFIXES = {".css", ".scss", ".sass", ".less", ".styl", ".pcss", ".postcss", ".html", ".htm", ".vue",
@@ -297,9 +297,9 @@ def _lapis_folder(start: Path, env: Mapping[str, str]) -> Path | None:
 
 def _owned_refusal(rel: str) -> dict[str, Any]:
     reason = (f"LapisLazuli refuses this write: {rel} is a record only `lapis-design` writes (`.lapis/requirements/`, "
-              "`.lapis/state/`, `.lapis/changes/`, `.lapis/owner/`, `.lapis/order/`). A write to it by any other route is found "
+              "`.lapis/state/`, `.lapis/changes/`, `.lapis/owner/`, `.lapis/order/`, `.lapis/extracts/`). A write to it by any other route is found "
               "afterwards and shown to the owner as an integrity change. Run the command that makes the record "
-              "(`lapis-design requirements seal`, `lapis-design next`), and tell the owner when it holds something wrong.")
+              "(`lapis-design requirements seal`, `lapis-design extract add`, `lapis-design next`), and tell the owner when it holds something wrong.")
     return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
                                    "permissionDecisionReason": reason}}
 

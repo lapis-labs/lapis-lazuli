@@ -1,0 +1,54 @@
+# LapisLazuli extract record schema — v0
+# Location: .lapis/extracts/<task>.json in the project
+# Grounded excerpts of documents, written only by `lapis-design extract add`. The CLI cuts each excerpt out of the source file
+# itself, so `text` is the source's own lines (never a worker's wording), and it records where they are and which bytes
+# they came from. There is no field for a summary, a reason, a rating, or any other opinion, and `additionalProperties` is
+# closed everywhere so that a record carrying one is refused by `extract show|check` and by the critic packet.
+# A worker reads `lapis-design extract show` instead of the whole document while an extract holds. It holds while the
+# source's bytes hash to `source.sha256` and its lines `locator.start`-`locator.end` are `text`; otherwise it is stale and
+# the CLI says so and shows no text. The original is always the source at its locator. The record holds no times, so its
+# bytes are reproducible and the critic packet lists it by digest.
+# Never a source: the maker's records the critic does not read (.lapis/plans, answers, drafts, questions, disputes, direction)
+# and this record itself; a source whose rights are `reference-only` (no copy is kept).
+
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/extracts.v0.json
+title: LapisLazuli extract record
+type: object
+additionalProperties: false
+required: [version, task, extracts]
+properties:
+  version: {const: 0}
+  task: {type: string, pattern: "^[a-z0-9][a-z0-9-]{1,63}$"}
+  extracts:
+    type: array
+    maxItems: 200
+    items:
+      type: object
+      additionalProperties: false
+      required: [id, source, locator, text]
+      properties:
+        id: {type: string, pattern: "^X[0-9a-f]{8}$"}   # "X" plus 8 hex digits of the SHA-256 of the source path and lines: the same lines of one source are one extract
+        source:
+          type: object
+          additionalProperties: false
+          required: [path, sha256]
+          properties:
+            path: {type: string, minLength: 1}           # project-relative with `/`, or the absolute path of a file outside the project
+            sha256: {type: string, pattern: "^[0-9a-f]{64}$"}   # of the source's bytes when the extract was recorded
+            url: {type: string, pattern: "^https?://\\S+$"}     # the page the source file was taken from, when it was
+            captured: {type: string, pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"}   # the date it was captured
+            rights: {enum: [own, licensed]}             # what the owner gave the page; a reference-only page is never extracted
+          dependentRequired:
+            url: [captured, rights]
+            captured: [url, rights]
+            rights: [url, captured]
+        locator:                                         # where the original is: lines of the source, 1-based, inclusive
+          type: object
+          additionalProperties: false
+          required: [start, end]
+          properties:
+            start: {type: integer, minimum: 1}
+            end: {type: integer, minimum: 1}
+            heading: {type: string, minLength: 1}       # the Markdown heading the lines were found by, when `--heading` gave them
+        text: {type: string, minLength: 1, maxLength: 4000, pattern: "\\S"}   # the source's lines, joined with \n

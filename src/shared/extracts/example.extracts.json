@@ -1,0 +1,27 @@
+{
+  "version": 0,
+  "task": "demo",
+  "extracts": [
+    {
+      "id": "Xa1b2c3d4",
+      "source": {
+        "path": "BRIEF.md",
+        "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+      },
+      "locator": {"start": 3, "end": 4, "heading": "Audience"},
+      "text": "Visitors are people who bought a ceramic piece last year.\nThey open the page on a phone, mostly on Sundays."
+    },
+    {
+      "id": "Xe5f6a7b8",
+      "source": {
+        "path": ".lapis/references/demo/atelier-notes.txt",
+        "sha256": "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
+        "url": "https://example.com/atelier",
+        "captured": "2026-10-14",
+        "rights": "licensed"
+      },
+      "locator": {"start": 12, "end": 12},
+      "text": "Every piece is signed and numbered on its base."
+    }
+  ]
+}

@@ -576,6 +576,14 @@ source (a path under it, an import, `inspect.getsource`), and the owner block li
 it no transcript (Codex, Hermes), a read in the main session of a harness other than Antigravity, or a kill hidden in a
 script; there the rule rests on the text above and on the critic's question to you, which you answer straight.
 
+A document every worker would read again (the brief, the README, install notes, license text, the references record) is read
+once into extracts: `lapis-design extract add --task <task> --source <path> --lines A-B` (or `--heading "<section>"`; for a page
+taken from a URL also `--url`, `--captured`, and `--rights`) copies the source's own lines with its sha256 and locator into
+`.lapis/extracts/<task>.json` (`shared/extracts/schema.yaml`), and a worker reads `lapis-design extract show --task <task>`
+before the whole document. An extract is a pointer: the worker opens the source at its lines when a claim matters, and
+`show` names an extract whose source changed and prints no text for it. An extract holds facts, never your evaluation or the
+owner's taste in your words; the critic packet lists the record and is refused while an extract is stale.
+
 All widths, all probes, the rights check, and fresh license lookups belong to the release gate
 (`ulm-release`), not to each iteration.
 
