@@ -10,12 +10,6 @@ contract formats are v0.
 
 ### Changed
 
-- The direction questions are in plain words. A `direction` questions file does not wait when a line opens with an item id, when
-  an object option's family name stands outside parentheses, or when a distance number `diverge check` recorded for a pair of
-  roughs is shown next to a word for it or two rough ids (`direction.plain_problem`); `next` names the line. The numbers stay in
-  `distances.json` and the critic packet. `direction-conversation.md` and `diverge.md` say it, with a plain-words example, and
-  that an item with a single option is a statement, not a question (guide only: free text cannot be told a statement from a
-  question by its form).
 - The owner summary no longer holds defects of a build that does not exist. While nothing has been shown or built, as the
   CLI's own records say (the procedure is not `done`, no critic report, no page and no draft record, no slice budget fired),
   the summary has no `Defects of the build shown` section and no requirement row "not judged: no critic report yet" (direction
@@ -33,6 +27,14 @@ contract formats are v0.
   compares against the text of that language, so a Korean summary is pasted as written and a dropped required line is still
   refused. What a record says (rows, findings, rule ids, paths, the gap lines `gaps.py` writes, the critic-packet check messages,
   the release verdict) is copied as written, and the full block stays English.
+- The direction questions are in plain words. A `direction` questions file does not wait when a line opens with an item id, when
+  an object option's family name stands outside parentheses, or when a distance number `diverge check` recorded for a pair of
+  roughs is shown next to a word for it or two rough ids (`direction.plain_problem`); `next` names the line. The numbers stay in
+  `distances.json` and the critic packet. `direction-conversation.md` and `diverge.md` say it, with a plain-words example, and
+  that an item with a single option is a statement, not a question (guide only: free text cannot be told a statement from a
+  question by its form).
+- `asks.md`, "Pausing": on Antigravity a long command runs as a background task, so wait for it (check its status) instead of
+  ending the turn with a status message to the owner.
 - The worker-rules scan reads more than three folders. `workers.scan` (and `lapis-design worker check`, and the
   `SubagentStop` hook) now finds a tool call that read the source of any `lapis_design` module: a path under
   `lapis_design/`, a listing of the installed package folder, `from lapis_design import ...`, `import lapis_design`,

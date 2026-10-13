@@ -60,6 +60,8 @@ The questions file is the record in every harness; a question tool only changes 
   run `next`.
 - Without one: stop with the file's text as your last message. `next` says `waiting-for-user`, and an attended exit gate
   only prints a notice.
+- Antigravity: a long command runs as a background task. Wait for it (check its status) instead of ending the turn with a
+  status message to the owner; stop only with a questions file that waits.
 
 ## Answers
 
