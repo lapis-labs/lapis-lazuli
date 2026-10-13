@@ -261,19 +261,26 @@ owner's decision and no row). In an attended run an `[assumed]` answer does not 
 records `[assumed] ... Basis: ...` items instead. Questions of kind `direction` wait only when at least one item is open and
 the file names every open item id, and they are not under the brief's cap on questions.
 
-`diverge` comes after the first turn of the direction conversation, on the same terms: the run makes two to four rough first
-views (three by default) that differ in how the open core objects are represented and how color is allocated, each on a
+`diverge` comes after the first turn of the direction conversation, on the same terms: the run makes two rough first
+views by default (two to four) that differ in how the open core objects are represented and how color is allocated, each on a
 different lettered direction of the references record. `lapis-design diverge start --task <task>` writes `seed.json` (the
 task's hash and OS entropy) and the draws `draws.jsonl` (`{id, candidate, slot, pool, item, reason, prev}` in a hash chain)
 under `.lapis/state/diverge/<task>/`, a folder only `lapis-design` writes, before any card exists; `resample` replaces one draw
 (twice per candidate at most, each with its reason) and `variant` adds the rough an owner asked for (`reason: owner`). The agent
-writes `.lapis/diverge/<task>/C<n>/index.html` and `card.yaml` (`diverge/card.schema.yaml`) and renders each narrow
-(`render check ... --task <task>-C<n> --width 390 --width 1440`). `diverge check` reads each card against the draws and the
+writes the shared brief `.lapis/diverge/<task>/brief.yaml` once, and `lapis-design diverge contract --task <task>` checks it
+before any rough is made (the opening carries identity and the primary action, a process object is a later scene, the key copy
+has a headline and an action and opens no `copy.meta-text` finding, the phone has its own composition, and every open core
+object has a draw) and writes `contract.json`. The agent then writes `.lapis/diverge/<task>/C<n>/index.html` and `card.yaml`
+(`diverge/card.schema.yaml`, naming the brief's `brief_sha256`) and renders each narrow
+(`render check ... --task <task>-C<n> --width 390 --width 1440`): a rough is the core composition, one representative motion
+state, and one phone state, and `diverge check` refuses a render at another device width, a full capture run, and a second
+page (`rough_bound` in `diverge/pools.yaml`); the slice brings the picked rough to every device width. `diverge check`
+reads each card against the brief, the draws, and the
 renders and writes `fingerprints.json`, `distances.json` (`0.55·struct + 0.20·mass + 0.25·repr`, weights calibrated in
 `diverge/pools.yaml`; reported, never gated, except that a pair with the same markup structure and a mass distance under
 `reject_mass_below` is refused as differing in order or finish only) and `contact.png`; `diverge seal` writes `seal.json` with
 the digests of the cards, roughs, captures, and draws. The step is owed until `seal.json` holds every drawn candidate and the
-current draws. An edit after the seal shows in `diverge check` and in the owner block. The slice then shows one page, built from
+current draws. An edit after the seal, or a change to the shared brief, shows in `diverge check` and in the owner block. The slice then shows one page, built from
 the owner's pick (`[declared] Pick: C<n>`, the second turn of the direction conversation).
 
 `plan-order` comes after the plan's own blockers and before the fonts lock: a blocking `release.procedure-order` (an

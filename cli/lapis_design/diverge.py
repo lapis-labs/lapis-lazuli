@@ -1,14 +1,18 @@
 """`diverge`: rough first views that differ in the core objects' representation and in color allocation.
 
 Between the first and the second turn of the direction conversation (`direction.py`) a create run makes K rough first
-views (`start`, three by default; two to four), each on a different reference direction of the references record
+views (`start`, two by default; two to four), each on a different reference direction of the references record
 (`references.directions`). The CLI owns the randomness, so the agent cannot pick: `start` writes `seed.json` (the task's
 hash and OS entropy, recorded) and appends the draws to `draws.jsonl`, each `{id, candidate, slot, pool, item, reason,
 prev}` in a hash chain, before any card exists. Candidate *i* gets reference direction *i*, for each open core object a
 representation family drawn without replacement across candidates (first from the object's options of the direction
 conversation, narrowed or all, then from the pool of its kind in `shared/diverge/pools.yaml`), and one color allocation
 stance and one hierarchy stance (what the first view carries against the later scenes) drawn without replacement.
-The maker writes the shared rough brief (`brief.yaml`) once before the roughs; `check` reads the cards against it.
+The maker writes the shared rough brief (`brief.yaml`) once, and `contract` checks it once before any rough is made: the
+hero (identity and the primary action) apart from the process that comes later, one headline and action that the meta-text
+rule reads, the phone as its own composition, and a draw for each core object's representation. It writes `contract.json`
+and prints the `brief_sha256` each card names; `check` refuses cards of another brief and a set whose contract was not
+checked. `check` reads the cards against the brief and the draws.
 `resample` replaces one draw, twice per candidate at most, each with its reason;
 `variant` adds a rough the owner asked for (`reason: owner`).
 
@@ -18,6 +22,10 @@ The agent writes each rough as `.lapis/diverge/<task>/C<n>/index.html` with its 
 `distances.json`, and `contact.png`; `seal` records the digests of cards, roughs, captures, and draws in `seal.json`,
 and `next` names `diverge` until it exists. Everything the CLI writes is under `.lapis/state/diverge/<task>/`, a
 folder only `lapis-design` writes (`order.CLI_OWNED`).
+
+A rough is bounded (`rough_bound` in the pools file): the core composition at 390 and 1440, one representative motion state,
+and one phone state, as the one page `index.html`. `check` refuses a render at another device width, a full capture run of a
+rough, and a second page in a rough's folder; the slice brings the picked rough to every device width and state.
 
 The distance between two roughs is `0.55·d_struct + 0.20·d_mass + 0.25·d_repr` (weights in the pools file, calibrated over the E1b
 roughs against the owner's verdicts). `d_struct` is the IoU distance of the first view's occupancy by text, media, and control boxes on a
@@ -46,6 +54,10 @@ from lapis_design import references, requirements, shared_dir, workers
 
 STEP = "diverge"
 MIN_K, MAX_K = 2, 4                    # roughs a `start` makes
+DEFAULT_K = 2                          # roughs a `start` makes without `--k`; more come when the owner asks (`variant`)
+CONTRACT = 1                           # what `contract` checks, versioned: a receipt of another version no longer holds
+OPENING = ("identity", "primary-action")        # what the opening's hero carries
+DOWNSTREAM = "process-sequence"        # the kind of core object that is a later scene, not the hero
 MAX_TOTAL = 6                          # roughs of a task, owner-requested variants included
 RESAMPLES = 2                          # draws an agent may replace per candidate
 VIEWS = {1440: (1440, 900), 390: (390, 844)}     # the first view at each width
@@ -323,7 +335,7 @@ def _held(records: list[dict[str, Any]]) -> dict[str, list[Any]]:
     return held
 
 
-def start(root: Path, task: str, k: int = 3, entropy: str | None = None,
+def start(root: Path, task: str, k: int = DEFAULT_K, entropy: str | None = None,
           env: Mapping[str, str] = os.environ) -> list[dict[str, Any]]:
     """Draw the roughs of `task`: write the seed and the draws of `k` candidates. `entropy` is for tests; a run gets OS
     entropy, and cannot start again once the seed is written. Returns the draws."""
@@ -333,7 +345,7 @@ def start(root: Path, task: str, k: int = 3, entropy: str | None = None,
         raise DivergeError("the roughs were already drawn for this task; `diverge resample` replaces one draw and "
                            "`diverge variant` adds the rough an owner asked for")
     if not MIN_K <= k <= MAX_K:
-        raise DivergeError(f"K is {k}; a run makes {MIN_K} to {MAX_K} roughs (three by default)")
+        raise DivergeError(f"K is {k}; a run makes {MIN_K} to {MAX_K} roughs (two by default; the owner asks for more)")
     if owed := direction.owed(root, task, 1, env):
         raise DivergeError(f"the direction conversation is not finished, so there is nothing to draw on: {owed}")
     letters = references.direction_letters(root, task)
@@ -445,6 +457,11 @@ def _card_problems(root: Path, task: str, candidate: str, slots: Mapping[str, Ma
     problems = []
     if found["id"] != candidate:
         problems.append(f"{where}/card.yaml names itself {found['id']}")
+    want = brief_digest(root, task)
+    if want is not None and found["brief_sha256"] != want:
+        problems.append(f"{candidate}'s card says it was made from brief {found['brief_sha256']}, and the shared brief is "
+                        f"{want} now: make the rough from the current brief (`lapis-design diverge contract --task {task}` "
+                        "prints its digest), or put the digest in the card once a change to the brief did not touch the rough")
     drawn = slots["direction"]["item"]
     if found["direction"] != drawn:
         problems.append(f"{candidate} draws on direction {drawn} (draw {slots['direction']['id']}) and its card says "
@@ -483,6 +500,7 @@ def _card_problems(root: Path, task: str, candidate: str, slots: Mapping[str, Ma
         problems.append(f"{candidate}'s card repeats a signature id")
     if not (folder(root, task) / candidate / "index.html").is_file():
         problems.append(f"{where}/index.html is missing")
+    problems += _bound_problems(root, task, candidate)
     return problems
 
 
@@ -530,24 +548,33 @@ def _hierarchy_problems(candidate: str, slots: Mapping[str, Mapping[str, Any]], 
     return problems
 
 
-def _brief_problems(root: Path, task: str, objects: list[dict[str, Any]], env: Mapping[str, str]) -> list[str]:
-    """What is wrong with the shared rough brief: missing, off its schema, not one row per core object, or asking every
-    core object into the first view with no owner answer that demands it."""
+def _brief_shape(root: Path, task: str) -> tuple[dict[str, Any] | None, str | None]:
+    """The shared rough brief, or why it cannot be read as one: `(brief, None)` or `(None, problem)`."""
     from jsonschema import Draft202012Validator
-
-    from lapis_design import direction
 
     where = f".lapis/diverge/{task}/brief.yaml"
     found = brief(root, task)
     if found is None:
-        return [f"{where} is missing: write the shared rough brief once, before the roughs are made, and give it to every "
-                "rough worker unchanged (shared/diverge/brief.schema.yaml)"]
+        return None, (f"{where} is missing: write the shared rough brief once, before the roughs are made, and give it to every "
+                      "rough worker unchanged (shared/diverge/brief.schema.yaml)")
     errors = sorted(Draft202012Validator(shared_yaml("diverge/brief.schema.yaml")).iter_errors(found),
                     key=lambda e: (len(list(e.absolute_path)), e.message))
     if errors:
         first = errors[0]
-        return [f"{where} does not match diverge/brief.schema.yaml: {'/'.join(map(str, first.absolute_path)) or 'it'}: "
-                f"{first.message[:140]}"]
+        return None, (f"{where} does not match diverge/brief.schema.yaml: {'/'.join(map(str, first.absolute_path)) or 'it'}: "
+                      f"{first.message[:140]}")
+    return found, None
+
+
+def _brief_problems(root: Path, task: str, objects: list[dict[str, Any]], env: Mapping[str, str]) -> list[str]:
+    """What is wrong with the shared rough brief: missing, off its schema, not one row per core object, or asking every
+    core object into the first view with no owner answer that demands it."""
+    from lapis_design import direction
+
+    where = f".lapis/diverge/{task}/brief.yaml"
+    found, shape = _brief_shape(root, task)
+    if shape is not None:
+        return [shape]
     ids = [r["id"] for r in found["objects"]]
     wanted = [o["id"] for o in objects]
     problems = []
@@ -563,6 +590,108 @@ def _brief_problems(root: Path, task: str, objects: list[dict[str, Any]], env: M
         problems.append(f"{where} requires every core object in the first view, and no owner answer demands it: the opening "
                         "carries identity or the claim, one decisive object, and the primary action; give the other objects "
                         "`first_view: later` or `allowed` with the scene they play, or name the owner's answer in `demanded_by`")
+    return problems
+
+
+def brief_digest(root: Path, task: str) -> str | None:
+    """The first twelve hex digits of the shared brief's SHA-256: what each card names as the brief it was made from."""
+    full = _digest(brief_path(root, task))
+    return full[:12] if full else None
+
+
+def contract_path(root: Path, task: str) -> Path:
+    return state_dir(root, task) / "contract.json"
+
+
+def contract_passed(root: Path, task: str) -> bool:
+    """Whether `contract` passed on the brief as it is now."""
+    record = _json(contract_path(root, task))
+    full = _digest(brief_path(root, task))
+    return (isinstance(record, dict) and record.get("passed") is True and record.get("version") == CONTRACT
+            and full is not None and record.get("brief_sha256") == full)
+
+
+def _meta_text_problems(where: str, copy: list[dict[str, Any]]) -> list[str]:
+    """The meta-text rule (`copy.meta-text`, plan layer) over the shared key copy: the findings it opens, as problems."""
+    from lapis_design.lint import engine
+    from lapis_design.lint.types import Context
+
+    ctx = Context(rules=shared_yaml("slop/rules.yaml"), plan={"content": {"key_copy": copy}})
+    return [f"{where}: key_copy is meta text ({found['observed']}): every rough would open with it; give them the copy of the "
+            "subject, and leave out how the page was made and that it is a demo" for found in
+            engine.lint(ctx, ["plan"], ["copy.meta-text"]) if found["status"] == "open"]
+
+
+def _shared_problems(root: Path, task: str, objects: list[dict[str, Any]], env: Mapping[str, str]) -> list[str]:
+    """What every rough inherits and nobody should resolve alone: the brief (`_brief_problems`), the hero apart from the
+    downstream process, the headline and action copy free of meta text, the phone composed on its own, and a draw for the
+    representation of each open core object of each rough."""
+    problems = _brief_problems(root, task, objects, env)
+    found, shape = _brief_shape(root, task)
+    if shape is not None:
+        return problems
+    where = f".lapis/diverge/{task}/brief.yaml"
+    carries = set(found["opening"]["carries"])
+    if absent := [c for c in OPENING if c not in carries]:
+        problems.append(f"{where}: the opening carries {', '.join(sorted(carries))} and leaves out {', '.join(absent)}: the hero "
+                        "is who and what (`identity`) and the one thing to do (`primary-action`); the process, the comparison, "
+                        "and the steps come in later scenes")
+    kinds = {o["id"]: o["kind"] for o in objects}
+    for row in found["objects"]:
+        if row["first_view"] == "required" and kinds.get(row["id"]) == DOWNSTREAM and "demanded_by" not in row:
+            problems.append(f"{where}: {row['id']} is a process ({DOWNSTREAM}) and the brief requires it in the first view with "
+                            "no owner answer in `demanded_by`: the hero is identity and the action; the process is a later scene")
+    slots = {c["slot"] for c in found["key_copy"]}
+    for slot, what in (("headline", "identity"), ("cta", "primary action")):
+        if slot not in slots:
+            problems.append(f"{where}: key_copy has no `{slot}`: the one copy every rough opens with holds the {what}")
+    problems += _meta_text_problems(where, found["key_copy"])
+    standing = _candidate_set(root, task)
+    for candidate in sorted(standing, key=lambda c: int(c[1:])):
+        for obj in objects:
+            if obj["fixed"] is None and obj["id"] not in standing[candidate]:
+                problems.append(f"{candidate} has no draw for {obj['id']} ({obj['label']}), the slot of that object's "
+                                "representation: the direction conversation changed after `diverge start`")
+    return problems
+
+
+def contract(root: Path, task: str, env: Mapping[str, str] = os.environ) -> dict[str, Any]:
+    """Check the shared contract once, before the roughs fan out, and write `contract.json` (what `check` reads). `{"problems",
+    "brief_sha256"}`: the digest each card names, None while the brief is unreadable."""
+    if seed(root, task) is None:
+        return {"problems": [f"nothing was drawn yet: run `lapis-design diverge start --task {task}` first, so each rough has "
+                             "its slots to fill"], "brief_sha256": None}
+    if (broken := chain_problem(root, task)) is not None:
+        return {"problems": [broken], "brief_sha256": None}
+    problems = _shared_problems(root, task, _objects(root, task, env), env)
+    full = _digest(brief_path(root, task))
+    _write(contract_path(root, task), _dump({"version": CONTRACT, "task": task, "passed": not problems,
+                                              "brief_sha256": full, "problems": problems}))
+    return {"problems": problems, "brief_sha256": full[:12] if full else None}
+
+
+def _bound_problems(root: Path, task: str, candidate: str) -> list[str]:
+    """What a rough carries beyond its bound (`rough_bound` in the pools file): a render at another device width, a full
+    capture run (every width and theme), and a page besides its `index.html`."""
+    allowed = pools()["rough_bound"]["widths"]
+    problems = []
+    command = f"`lapis-design render check .lapis/diverge/{task}/{candidate}/index.html --task {task}-{candidate} " + \
+              " ".join(f"--width {w}" for w in allowed) + "`"
+    extract = _json(extract_path(root, task, candidate))
+    views = (extract.get("viewports") if isinstance(extract, dict) else None) or ()
+    if beyond := sorted({v["width"] for v in views if isinstance(v, dict) and isinstance(v.get("width"), int)} - set(allowed)):
+        problems.append(f"{candidate} is captured at {', '.join(map(str, beyond))}: a rough is its first view at "
+                        f"{' and '.join(map(str, allowed))} only, and the other device widths come with the slice after the pick; "
+                        f"capture it again with {command}")
+    full = root / ".lapis" / "renders" / f"{task}-{candidate}.json"
+    if full.is_file():
+        problems.append(f"{_rel(root, full)} is a full capture run of {candidate}: a rough is captured at "
+                        f"{' and '.join(map(str, allowed))} only (`.narrow.json`); remove it and capture with {command}")
+    base = folder(root, task) / candidate
+    pages = sorted(p.relative_to(base).as_posix() for p in base.rglob("*") if p.suffix in (".html", ".htm") and p != base / "index.html")
+    if pages:
+        problems.append(f"{candidate} holds more than its one page `index.html` ({', '.join(pages[:3])}): further states wait for "
+                        "the owner's pick; show the one representative motion state and the phone state in `index.html`")
     return problems
 
 
@@ -824,7 +953,10 @@ def check(root: Path, task: str, env: Mapping[str, str] = os.environ) -> dict[st
     standing = _candidate_set(root, task)
     ids = sorted(standing, key=lambda c: int(c[1:]))
     objects = _objects(root, task, env)
-    problems += _brief_problems(root, task, objects, env)
+    problems += (shared := _shared_problems(root, task, objects, env))
+    if not shared and not contract_passed(root, task):
+        problems.append(f"the shared contract was not checked on this brief: run `lapis-design diverge contract --task {task}`; "
+                        "it passes before any rough worker starts, and prints the `brief_sha256` each card names")
     for candidate in ids:
         problems += _card_problems(root, task, candidate, standing[candidate], letters, objects)
     first = [c for c in ids if not any(r.get("variant") for r in draw_records(root, task) if r.get("candidate") == c)]
@@ -887,6 +1019,7 @@ def seal(root: Path, task: str, env: Mapping[str, str] = os.environ) -> dict[str
     before = sealed(root, task)
     record = {"version": 0, "task": task,
               "d1_turns": before["d1_turns"] if before and isinstance(before.get("d1_turns"), int) else direction.turns(root, task),
+              "brief_sha256": _digest(brief_path(root, task)),
               "draws_sha256": _digest(state / "draws.jsonl"), "fingerprints_sha256": _digest(state / "fingerprints.json"),
               "distances_sha256": _digest(state / "distances.json"),
               "contact": {"path": _rel(root, state / "contact.png"), "sha256": _digest(state / "contact.png")},
@@ -912,6 +1045,8 @@ def drift(root: Path, task: str) -> list[str]:
             found.append(f"{candidate}: {', '.join(changed)} changed after the seal")
     if _digest(state_dir(root, task) / "draws.jsonl") != record.get("draws_sha256"):
         found.append("the draws changed after the seal")
+    if "brief_sha256" in record and _digest(brief_path(root, task)) != record["brief_sha256"]:
+        found.append("the shared brief changed after the seal")
     return found
 
 
@@ -923,7 +1058,13 @@ def owner_lines(root: Path, task: str) -> list[str]:
         return []
     lines = [f"- Rough first views sealed: {', '.join(sorted(record['candidates'], key=lambda c: int(c[1:])))} "
              f"(contact sheet {record['contact']['path']})"]
-    return lines + [f"- Rough {line}" for line in drift(root, task)]
+    lines += [f"- Rough {line}" for line in drift(root, task)]
+    found = brief(root, task)
+    if found is not None and contract_passed(root, task):
+        lines.append(f"- Shared rough brief {brief_digest(root, task)}, checked before the roughs: the opening carries "
+                     f"{', '.join(found['opening']['carries'])}; the phone opening is composed on its own "
+                     f"({found['phone']['composition']})")
+    return lines
 
 
 # ---------------------------------------------------------------- what is owed
@@ -933,40 +1074,58 @@ def owed(root: Path, task: str, env: Mapping[str, str] = os.environ) -> str | No
     exist, and the seal holds every candidate and these draws."""
     command = f"lapis-design diverge start --task {task}"
     if seed(root, task) is None:
-        return (f"The direction conversation is done, so make the rough first views: run `{command}` (three roughs; `--k` 2 to 4). "
+        return (f"The direction conversation is done, so make the rough first views: run `{command}` (two roughs by default, `--k` 2 to 4; "
+                "when the owner asks for another, `lapis-design diverge variant` adds it). "
                 "The CLI draws, for each rough, a different reference direction of the references record, a representation "
                 "family for each open core object, a color allocation stance, and a hierarchy stance (what the first view carries against the later scenes), and records the draws; you cannot choose "
                 f"them (`resample` replaces one, twice per rough at most, with its reason). {_how(task)}")
     record = sealed(root, task)
     ids = candidate_ids(root, task)
     if record is None or set(record["candidates"]) != set(ids) or record.get("draws_sha256") != _digest(state_dir(root, task) / "draws.jsonl"):
+        if not contract_passed(root, task):
+            return (f"The rough first views {', '.join(ids)} are drawn, and their shared contract has not passed. "
+                    f"{_brief_how(task)} Make no rough before it passes.")
         missing = [c for c in ids if not (folder(root, task) / c / "card.yaml").is_file() or not (folder(root, task) / c / "index.html").is_file()
                    or not extract_path(root, task, c).is_file()]
         left = f" Still missing a card, a rough, or a render: {', '.join(missing)}." if missing else ""
         what = "Seal the set again" if record else "Seal the set"
-        return (f"The rough first views {', '.join(ids)} are drawn but not sealed.{left} {_how(task)} Then run "
+        return (f"The rough first views {', '.join(ids)} are drawn but not sealed.{left} {_rough_how(task, brief_digest(root, task))} Then run "
                 f"`lapis-design diverge check --task {task}` (it reads the cards against the draws and the renders and writes "
                 f"the contact sheet) and `lapis-design diverge seal --task {task}`. {what} before you ask the owner to pick.")
     return None
 
 
-def _how(task: str) -> str:
+def _brief_how(task: str) -> str:
     return (f"First write the shared brief once, `.lapis/diverge/{task}/brief.yaml` (shared/diverge/brief.schema.yaml): the "
-            "opening's job, what each core object does in the first view and in a later scene, and the contradictions you "
-            "found in the instructions and how it settles them; give it to every worker unchanged. "
-            f"Make each rough in a fresh context where the harness has one, seeing only the brief record, the direction "
-            f"answers, its own draws, and its reference direction's captures, never the other roughs: its first view at 1440 "
-            f"and 390 as `.lapis/diverge/{task}/C<n>/index.html` with real or clearly synthetic content and the decisive "
-            f"medium (diagram, control, image, or motion state) instead of a gray box, and its card `card.yaml` "
-            f"(shared/diverge/card.schema.yaml) next to it. Render each: `lapis-design render check "
-            f".lapis/diverge/{task}/C<n>/index.html --task {task}-C<n> --width 390 --width 1440`. The roughs differ in how "
+            "opening's job and what it carries (the hero is identity and the primary action; the process, the comparison, and "
+            "the steps come in later scenes), what each core object does in the first view and in a later scene, the one "
+            "headline and action every rough opens with (`key_copy`, free of meta text), how the phone opening is composed on "
+            "its own, and the contradictions you found in the instructions and how it settles them. Then run "
+            f"`lapis-design diverge contract --task {task}`: it checks that brief and the draws once, before the roughs are "
+            "made, and prints the `brief_sha256` each card names. Give every worker that brief unchanged.")
+
+
+def _rough_how(task: str, digest: str | None) -> str:
+    return (f"Make each rough from the brief `{digest}` in a fresh context where the harness has one, seeing only the brief "
+            f"record, the shared brief, the direction answers, its own draws, and its reference direction's captures, never the "
+            f"other roughs. A rough is bounded: its first view at 1440 and 390 as the one page "
+            f"`.lapis/diverge/{task}/C<n>/index.html` with real or clearly synthetic content and the decisive medium (diagram, "
+            f"control, image, or the one representative motion state) instead of a gray box, one phone state, and its card "
+            f"`card.yaml` (shared/diverge/card.schema.yaml, `brief_sha256: {digest}`) next to it; no other device width, "
+            f"theme, page, or polish before the owner picks. Render each: `lapis-design render check "
+            f".lapis/diverge/{task}/C<n>/index.html --task {task}-C<n> --width 390 --width 1440`, once, and again only after "
+            "the rough changed. The roughs differ in how "
             "the core objects are represented, how color is allocated, and what the first view carries against the later "
             "scenes, not in decoration, order, or finish. Put these lines into every worker's task verbatim "
             "(`shared/review/worker-rules.md`):\n" + workers.rules())
 
 
+def _how(task: str) -> str:
+    return f"{_brief_how(task)} After the contract passes: {_rough_how(task, '<brief_sha256>')}"
+
+
 def step(root: Path, task: str, reason: str) -> dict[str, Any]:
-    verb = "check" if seed(root, task) is not None else "start"
+    verb = ("start" if seed(root, task) is None else "contract" if not contract_passed(root, task) else "check")
     return {"id": STEP, "why": reason, "command": f"lapis-design diverge {verb} --task {task}"}
 
 
@@ -996,13 +1155,19 @@ def show(root: Path, task: str, env: Mapping[str, str] = os.environ) -> str:
     return "\n".join(lines)
 
 
+MEASURED = {"start": "narrow", "resample": "narrow", "variant": "narrow", "contract": "narrow", "check": "full", "seal": "full"}
+
+
 def main(argv: list[str] | None = None, prog: str = "lapis-design diverge start") -> int:
+    from lapis_design import telemetry
+
     verb = prog.rsplit(" ", 1)[-1]
     ap = argparse.ArgumentParser(prog=prog, allow_abbrev=False, description=__doc__.split("\n")[0])
     ap.add_argument("--task", required=True, help="the task id")
     ap.add_argument("--root", type=Path, default=Path("."), help="the project folder (default: the current one)")
     if verb == "start":
-        ap.add_argument("--k", type=int, default=3, help=f"roughs to make, {MIN_K} to {MAX_K} (default 3)")
+        ap.add_argument("--k", type=int, default=DEFAULT_K,
+                        help=f"roughs to make, {MIN_K} to {MAX_K} (default {DEFAULT_K}; the owner asks for more with `variant`)")
     if verb == "resample":
         ap.add_argument("--candidate", required=True, help="the rough, for example C2")
         ap.add_argument("--slot", required=True, help="direction, color, or a core object id such as O1")
@@ -1011,34 +1176,65 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design diverge start"
         ap.add_argument("--words", required=True, help="what the owner asked for, in their words")
     args = ap.parse_args(argv)
     root = args.root.resolve()
+    started = telemetry.stamp()
+    printed = 0
+
+    def say(text: str) -> None:
+        nonlocal printed
+        printed += len(text) + 1
+        print(text)
+
+    code, report, key = 0, None, None
     try:
         if verb == "start":
             draws = start(root, args.task, args.k)
-            print(show(root, args.task))
-            print(f"{len(draws)} draws recorded in {_rel(root, state_dir(root, args.task) / 'draws.jsonl')}")
+            say(show(root, args.task))
+            say(f"{len(draws)} draws recorded in {_rel(root, state_dir(root, args.task) / 'draws.jsonl')}")
+            say(f"next: write the shared brief, then `lapis-design diverge contract --task {args.task}`; make no rough before it passes")
+            report = _rel(root, state_dir(root, args.task) / "draws.jsonl")
         elif verb == "resample":
             rec = resample(root, args.task, args.candidate, args.slot, args.reason)
-            print(f"{rec['id']}: {rec['candidate']} {rec['slot']} is now {rec['item']} (replaces {rec['replaces']})")
+            say(f"{rec['id']}: {rec['candidate']} {rec['slot']} is now {rec['item']} (replaces {rec['replaces']})")
+            report = _rel(root, state_dir(root, args.task) / "draws.jsonl")
         elif verb == "variant":
             draws = variant(root, args.task, args.words)
-            print(f"{draws[0]['candidate']} added for the owner; make it, render it, then check and seal again")
-            print(show(root, args.task))
+            say(f"{draws[0]['candidate']} added for the owner; make it, render it, then check and seal again")
+            say(show(root, args.task))
+            report = _rel(root, state_dir(root, args.task) / "draws.jsonl")
+        elif verb == "contract":
+            found = contract(root, args.task)
+            for problem in found["problems"]:
+                print(f"diverge contract: {problem}", file=sys.stderr)
+            key = found["brief_sha256"]
+            if found["problems"]:
+                code = 1
+            else:
+                say(f"the shared contract passes: brief_sha256 {found['brief_sha256']}. Give every rough worker the brief "
+                    "unchanged, and have each card name that digest as `brief_sha256`.")
+            report = _rel(root, contract_path(root, args.task)) if contract_path(root, args.task).is_file() else None
         elif verb == "check":
             found = check(root, args.task)
             for problem in found["problems"]:
                 print(f"diverge check: {problem}", file=sys.stderr)
             if found["problems"]:
-                return 1
-            print(show(root, args.task))
+                code = 1
+            else:
+                say(show(root, args.task))
+                report = _rel(root, state_dir(root, args.task) / "distances.json")
         elif verb == "seal":
             record = seal(root, args.task)
-            print(f"sealed {', '.join(record['candidates'])}; contact sheet {record['contact']['path']}")
+            say(f"sealed {', '.join(record['candidates'])}; contact sheet {record['contact']['path']}")
+            report = _rel(root, state_dir(root, args.task) / "seal.json")
         else:
-            print(show(root, args.task))
+            say(show(root, args.task))
     except DivergeError as exc:
         print(f"diverge {verb}: {exc}", file=sys.stderr)
-        return 2
-    return 0
+        code = 2
+    if verb in MEASURED:
+        telemetry.record(root, command=f"diverge {verb}", task=args.task, build_id=None, state_key=key, scope=MEASURED[verb],
+                         cache="off", started=started, ended=telemetry.stamp(), exit=code, output_chars=printed,
+                         report_path=report)
+    return code
 
 
 if __name__ == "__main__":

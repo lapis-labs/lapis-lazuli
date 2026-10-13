@@ -485,3 +485,111 @@ def test_a_card_that_disagrees_with_the_shared_brief_about_the_first_view_is_nam
     assert "C1 shows O1 in the first view; the shared brief puts it in a later scene" in problems(two)
     write_brief(two, TASK, objects=[rows[0], {**rows[1], "first_view": "required"}])
     assert "leaves O2 out of the first view; the shared brief requires it there" in problems(two)
+
+
+# ---- 7. two roughs by default, the shared contract before the fan-out, and the bound of a rough
+
+def write_brief_file(root: Path, **changes) -> None:
+    """The shared brief as the maker writes it, before `diverge contract` has read it."""
+    path = diverge.brief_path(root, TASK)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(yaml.safe_dump(brief_for(root, TASK, **changes), sort_keys=False), encoding="utf-8")
+
+
+def test_start_draws_two_roughs_without_k_and_a_third_comes_when_the_owner_asks(run, capsys):
+    base = ["--task", TASK, "--root", str(run)]
+    assert cli_main(["diverge", "start", *base]) == 0
+    assert "2 roughs" in capsys.readouterr().out
+    assert diverge.candidate_ids(run, TASK) == ["C1", "C2"] and diverge.seed(run, TASK)["k"] == 2
+    lines = [json.loads(line) for line in (run / ".lapis/telemetry/checks.jsonl").read_text(encoding="utf-8").splitlines()]
+    assert [(r["command"], r["scope"], r["exit"]) for r in lines] == [("diverge start", "narrow", 0)]
+    diverge.resample(run, TASK, "C1", "color", "this stance does not fit the kiln")
+    assert {d["candidate"] for d in diverge.variant(run, TASK, "a bolder opening")} == {"C3"}
+    assert diverge.candidate_ids(run, TASK) == ["C1", "C2", "C3"]
+
+
+def test_the_fan_out_is_refused_until_the_shared_contract_passes_and_allowed_after(two, capsys):
+    base = ["--task", TASK, "--root", str(two)]
+    start(two, 2)
+    assert diverge.step(two, TASK, "")["command"] == f"lapis-design diverge contract --task {TASK}"
+    assert "diverge contract" in diverge.owed(two, TASK) and "Make no rough before it passes" in diverge.owed(two, TASK)
+    assert cli_main(["diverge", "contract", *base]) == 1 and "brief.yaml is missing" in capsys.readouterr().err
+    rows = brief_for(two, TASK)["objects"]
+    write_brief_file(two, opening={"job": "say who the kiln is, show the object, and the booking",
+                                   "carries": ["claim", "decisive-object"]},
+                     objects=[rows[0], {**rows[1], "first_view": "required"}],
+                     key_copy=[{"slot": "headline", "text": "Demo data: this is a design rough, not a real kiln"},
+                               {"slot": "subhead", "text": "Twenty-four pieces"}])
+    found = diverge.contract(two, TASK)
+    joined = " | ".join(found["problems"])
+    assert "leaves out identity, primary-action" in joined
+    assert "O2 is a process (process-sequence) and the brief requires it in the first view" in joined
+    assert "key_copy has no `cta`" in joined and "key_copy is meta text" in joined
+    assert not diverge.contract_passed(two, TASK)
+    assert json.loads(diverge.contract_path(two, TASK).read_text(encoding="utf-8"))["passed"] is False
+    write_brief_file(two, phone={"composition": "short"})                     # the phone composition is part of the contract
+    assert "diverge/brief.schema.yaml" in " | ".join(diverge.contract(two, TASK)["problems"])
+    write_brief_file(two)
+    assert cli_main(["diverge", "contract", *base]) == 0
+    digest = diverge.brief_digest(two, TASK)
+    assert f"brief_sha256 {digest}" in capsys.readouterr().out and diverge.contract_passed(two, TASK)
+    assert diverge.step(two, TASK, "")["command"] == f"lapis-design diverge check --task {TASK}"
+    assert digest in diverge.owed(two, TASK) and "Make no rough before it passes" not in diverge.owed(two, TASK)
+    make_all(two)
+    assert problems(two) == ""
+    assert len(diverge.seal(two, TASK)["candidates"]) == 2
+    steps = [json.loads(line)["command"] for line in (two / ".lapis/telemetry/checks.jsonl").read_text(encoding="utf-8").splitlines()]
+    assert steps.count("diverge contract") == 2 and steps.count("diverge check") == 0      # CLI runs only; the API calls write none
+
+
+def test_roughs_made_before_the_contract_ran_or_from_another_brief_are_refused(two):
+    start(two, 2)
+    write_brief_file(two)
+    make_all(two)                                         # the fan-out came first
+    assert "the shared contract was not checked on this brief" in problems(two)
+    with pytest.raises(diverge.DivergeError, match="cannot be sealed"):
+        diverge.seal(two, TASK)
+    assert diverge.contract(two, TASK)["problems"] == [] and problems(two) == ""
+    write_brief_file(two, resolved=[{"conflict": "show the core at once against the hero", "as": "the core impression, not every step"}])
+    refused = problems(two)
+    assert "the shared contract was not checked on this brief" in refused and "made from brief" in refused
+    assert diverge.contract(two, TASK)["problems"] == []
+    assert "made from brief" in problems(two) and "was not checked" not in problems(two)
+    for candidate in ("C1", "C2"):                        # a brief change that left the rough alone: the card takes the new digest
+        card = yaml.safe_load((diverge.folder(two, TASK) / candidate / "card.yaml").read_text(encoding="utf-8"))
+        card["brief_sha256"] = diverge.brief_digest(two, TASK)
+        (diverge.folder(two, TASK) / candidate / "card.yaml").write_text(yaml.safe_dump(card, sort_keys=False), encoding="utf-8")
+    assert problems(two) == ""
+
+
+def test_a_rough_beyond_its_bound_is_refused_until_it_is_a_first_view_at_390_and_1440(two):
+    start(two, 2)
+    make_all(two)
+    assert problems(two) == ""
+    base = diverge.folder(two, TASK) / "C1"
+    extract = diverge.extract_path(two, TASK, "C1")
+    document = json.loads(extract.read_text(encoding="utf-8"))
+    extract.write_text(json.dumps({**document, "viewports": [*document["viewports"], {**document["viewports"][0], "width": 768}]}),
+                       encoding="utf-8")
+    assert "C1 is captured at 768: a rough is its first view at 390 and 1440 only" in problems(two)
+    write_render(two, TASK, "C1", standing(two)["C1"]["color"]["item"], 1)
+    assert problems(two) == ""
+    full = two / ".lapis/renders" / f"{TASK}-C1.json"
+    full.write_text("{}", encoding="utf-8")
+    assert f"{full.relative_to(two).as_posix()} is a full capture run of C1" in problems(two)
+    full.unlink()
+    (base / "state-2.html").write_text("<!doctype html><title>second state</title>", encoding="utf-8")
+    assert "C1 holds more than its one page `index.html` (state-2.html)" in problems(two)
+    (base / "state-2.html").unlink()
+    assert problems(two) == ""
+
+
+def test_the_owner_block_shows_the_shared_contract_the_roughs_were_made_from(two):
+    start(two, 2)
+    make_all(two)
+    assert not [line for line in diverge.owner_lines(two, TASK) if "Shared rough brief" in line]
+    diverge.seal(two, TASK)
+    line = next(line for line in diverge.owner_lines(two, TASK) if line.startswith("- Shared rough brief"))
+    assert diverge.brief_digest(two, TASK) in line and "identity, decisive-object, primary-action" in line and "cropped piece" in line
+    write_brief_file(two, resolved=[{"conflict": "show the core at once against the hero", "as": "the core impression, not every step"}])
+    assert "- Rough the shared brief changed after the seal" in diverge.owner_lines(two, TASK)

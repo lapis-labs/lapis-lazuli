@@ -126,11 +126,14 @@ A small edit inside an established system needs no plan. Say so and make the edi
    (`lapis-questions: direction`), record the answers under `## Direction <n>`, and never decode a named style alone.
    With nobody to ask, record `[assumed]` answers with their basis.
 7. Then make the rough first views (`references/diverge.md`): `next` names `diverge` until
-   `lapis-design diverge start`, the roughs and their cards, `check`, and `seal` are done. The CLI draws each rough's
+   `lapis-design diverge start` (two roughs; the owner asks for more), the shared brief, `diverge contract`, the roughs and
+   their cards, `check`, and `seal` are done. The CLI draws each rough's
    reference direction, core-object representation, color allocation, and hierarchy (what the first view carries against
    later scenes), so you cannot pick them. Write one shared brief (`brief.yaml`) that settles the contradictions in the
-   instructions before the roughs are made; the owner picks one rough at the second turn of the direction conversation,
-   and the plan starts from that pick.
+   instructions, and run `diverge contract` on it before any rough is made: the hero (identity and the action) apart from the
+   process, one headline and action free of meta text, the phone composed on its own. A rough is the core composition at 390
+   and 1440 with one motion state and one phone state; the other device widths come with the slice. The owner picks one rough
+   at the second turn of the direction conversation, and the plan starts from that pick.
 
 For supplied design sources or a role transfer, read `shared/handoff/HANDOFF.md` → **Intake and authority**
 and **Projection annotations** before reconciling them; read **Export** and **Return and freshness** when

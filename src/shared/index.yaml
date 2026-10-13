@@ -325,7 +325,7 @@ items:
   - id: diverge-pools
     kind: data
     path: diverge/pools.yaml
-    note: v0; the representation families by kind of core object and the color-allocation stances `lapis-design diverge` draws from, and its provisional distance weights
+    note: v0; the representation families by kind of core object and the color-allocation stances `lapis-design diverge` draws from, the bound of a rough (`rough_bound`), and its provisional distance weights
     consumers:
       lapis: full
       ultramarine: summary
@@ -340,7 +340,7 @@ items:
   - id: diverge-card
     kind: contract
     path: diverge/card.schema.yaml
-    note: v0; the card of one rough first view (reference direction, the draws it spends, core-object representations with their later scene, the hierarchy drawn, color roles with their area, signature elements)
+    note: v0; the card of one rough first view (the shared brief it was made from, reference direction, the draws it spends, core-object representations with their later scene, the hierarchy drawn, color roles with their area, signature elements)
     consumers:
       lapis: full
       ultramarine: summary
@@ -348,7 +348,7 @@ items:
   - id: diverge-brief
     kind: contract
     path: diverge/brief.schema.yaml
-    note: v0; the one shared brief every rough worker receives (the opening's job, each core object's first-view status and later scene, the contradictions the maker resolved once)
+    note: v0; the one shared brief every rough worker receives, checked once by `diverge contract` before the fan-out (the opening's job and what it carries, each core object's first-view status and later scene, the headline and action copy, the phone composition, the contradictions the maker resolved once)
     consumers:
       lapis: full
 

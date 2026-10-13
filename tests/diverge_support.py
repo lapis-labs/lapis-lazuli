@@ -85,14 +85,20 @@ def brief_for(root: Path, task: str, **changes) -> dict:
             for item in direction.items(root, task, {"LAPIS_UNATTENDED": "1"}) if item["kind"] == "O"]
     found = {"version": 0, "opening": {"job": "say who the kiln is, show the one decisive object, and offer the booking",
                                        "carries": ["identity", "decisive-object", "primary-action"]},
-             "objects": rows, "resolved": []}
+             "objects": rows,
+             "key_copy": [{"slot": "headline", "text": "Twenty-four pieces from this firing"},
+                          {"slot": "cta", "text": "Reserve a piece"}],
+             "phone": {"composition": "the headline, the one reserve button, and a cropped piece; the object follows the copy"},
+             "resolved": []}
     return {**found, **changes}
 
 
 def write_brief(root: Path, task: str, **changes) -> None:
+    """The shared brief, and the contract check that has to pass on it before the roughs are made."""
     path = diverge.brief_path(root, task)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(yaml.safe_dump(brief_for(root, task, **changes), sort_keys=False), encoding="utf-8")
+    diverge.contract(root, task)
 
 
 def card_for(root: Path, task: str, candidate: str, **changes) -> dict:
@@ -115,7 +121,8 @@ def card_for(root: Path, task: str, candidate: str, **changes) -> dict:
     _, oklch, area = STANCES[standing["color"]["item"]]
     color = [{"name": "field", "role": "field", "oklch": oklch, "area": area},
              {"name": "identity", "role": "identity", "oklch": SIGNAL[1], "area": SIGNAL[2]}]
-    found = {"version": 0, "id": candidate, "direction": standing["direction"]["item"],
+    found = {"version": 0, "id": candidate, "brief_sha256": diverge.brief_digest(root, task) or "0" * 12,
+             "direction": standing["direction"]["item"],
              "draws": sorted((r["id"] for r in standing.values()), key=lambda d: int(d[1:])),
              "hierarchy": standing["hierarchy"]["item"], "objects": objects,
              "color": color, "signature": [], "made_in": "subagent"}

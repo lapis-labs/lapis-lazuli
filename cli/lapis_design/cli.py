@@ -24,6 +24,7 @@ CHECKS = {
     ("diverge", "start"): "lapis_design.diverge",
     ("diverge", "resample"): "lapis_design.diverge",
     ("diverge", "variant"): "lapis_design.diverge",
+    ("diverge", "contract"): "lapis_design.diverge",
     ("diverge", "check"): "lapis_design.diverge",
     ("diverge", "seal"): "lapis_design.diverge",
     ("diverge", "show"): "lapis_design.diverge",

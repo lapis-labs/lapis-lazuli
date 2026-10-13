@@ -6,6 +6,27 @@ All notable changes are recorded here. The format follows
 between minor versions; render extraction, draft review, and reference hints are v1, while the other
 contract formats are v0.
 
+## Unreleased
+
+### Changed
+
+- `lapis-design diverge start` draws two roughs by default (`--k` still takes 2 to 4); a third rough or a variant comes when
+  the owner asks (`variant`), and `resample` is unchanged. The owner can still take parts of two roughs in the pick.
+- The shared brief of the roughs is checked once before the roughs are made: `lapis-design diverge contract --task <task>`
+  refuses a brief whose opening does not carry identity and the primary action, that requires a process object in the first
+  view with no owner answer, whose headline and action copy opens a `copy.meta-text` finding, or that has no phone
+  composition (`brief.schema.yaml` gains `key_copy` and `phone`), and a rough set with no draw for an open core object. It
+  writes `.lapis/state/diverge/<task>/contract.json` and prints the `brief_sha256` that each card now names
+  (`card.schema.yaml`); `diverge check` and `seal` refuse a set whose contract has not passed on the brief as it is, or a card
+  made from another brief. The owner block shows the brief's digest, what the opening carries, and the phone composition,
+  and a change to the brief after the seal.
+- A rough has a bound (`rough_bound` in `diverge/pools.yaml`): the core composition at 390 and 1440, one representative
+  motion state, and one phone state, as the one page `index.html`. `diverge check` refuses a render of a rough at another
+  device width, a full capture run of a rough, and a second page in its folder; the slice brings the picked rough to every
+  device width. Distances stay a fact on the contact sheet, never a quality score.
+- `diverge start`, `contract`, `resample`, `variant`, `check`, and `seal` append a line to `.lapis/telemetry/checks.jsonl`
+  (local to the project, never uploaded).
+
 ## 0.3.0 (2026-10-11)
 
 Direction: the owner's words and choices stay visible from the brief through the rendered slice;
