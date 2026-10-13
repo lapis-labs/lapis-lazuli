@@ -41,7 +41,8 @@ from typing import Any
 import yaml
 
 from lapis_design import (asks, attempts, brief, critic_packet, direction, diverge, draft, gaps, gate, owner,
-                          preview, references, release_check, requirements, shared_dir, slice_step, taste, waiting)
+                          owner_language, preview, references, release_check, requirements, shared_dir, slice_step,
+                          taste, waiting)
 from lapis_design.lint.cli import problems
 from lapis_design.plan_check import PlanOverLimit, read_plan, yaml_reason
 from lapis_design.summary import NOT_JUDGED
@@ -353,7 +354,9 @@ def _unfit(root: Path, task: str, kind: str, then: str, exempt: tuple[str, ...] 
         return (asks.shape_problem(_read_text(waiting.questions_path(root, task)))
                 or asks.checkpoint_problem(root, task, then, exempt))
     if kind == "direction":
-        return direction.questions_problem(root, task)
+        return direction.questions_problem(root, task) or owner_language.problem(root, task)
+    if kind == "brief":
+        return owner_language.problem(root, task)
     return None
 
 

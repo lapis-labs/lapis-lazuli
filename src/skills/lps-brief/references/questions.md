@@ -1,5 +1,14 @@
 # Choosing and asking the questions
 
+## Language
+
+Ask in the owner's language, the one their request is written in: the questions, the findings, the headings, the
+`Why:` and `If you skip it, I assume:` labels, and your reply. The English template below is a shape to fill, not text
+to copy; a Korean request never gets "Before I plan, here is what I took". Paths, URLs, names, and code stay as they are.
+The record's own headings and tags (`## Found`, `[declared]`) stay as `record.md` shows them. When the CLI holds the
+request (the owner's brief files or earlier `[declared]` answers) in Hangul, kana, or Han script and the questions file is
+plainly Latin text, `next` sends it back to be written again.
+
 A round is one message of at most six questions, ordered by how much the answer changes the page. The
 list below is a starting order. Re-rank it for the task: a question the project or a lookup already
 answered is gone, and one whose answer would only move a value (a color, a radius) is not asked.

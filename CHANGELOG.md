@@ -76,6 +76,10 @@ contract formats are v0.
   still a problem, a link that is not declared is a shown page as before, and the review is stale once an evidence file changes.
 - `critic packet` and the slice seal append a line to `.lapis/telemetry/checks.jsonl` with the scope (`full` or `delta`) and
   the size of the packet.
+- The brief questions are asked in the owner's language. `lps-brief/references/questions.md` now says so and calls its English
+  template a shape to fill. When the CLI holds the request (the requirement record's rows or the brief record's `[declared]`
+  items) in Hangul, kana, or Han script, `next` sends back a `brief` or `direction` questions file that is mostly Latin text,
+  with the reason, instead of waiting. A request with no clear script, or none the CLI holds, is not checked.
 
 ## 0.3.0 (2026-10-11)
 

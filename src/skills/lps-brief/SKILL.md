@@ -54,6 +54,7 @@ reply says so (`references/record.md`, Requirements and owner decisions).
 3. **Choose the questions** (`references/questions.md`). List what is still open, rank it by how much the
    answer would change the page, and keep the top six at most. Drop what a source answered and what changes
    nothing. Each question gives its reason and the default you will assume if it goes unanswered.
+   Write them, and your reply, in the owner's language (`references/questions.md`, "Language").
    Include one compact taste question in round one, inside that cap, unless `.lapis/taste.md` already has
    user-given items; reuse those across tasks (`references/record.md`, "Project taste").
 4. **Ask, by who can answer.** Read the `LAPIS_UNATTENDED` environment variable; a headless one-shot run is not
