@@ -56,6 +56,9 @@ reports record the paths they read as given and the gate resolves them against `
   (`target.packet`: `path` and `sha256` of the packet file, `review/critic-packet.schema.yaml`). The gate rebuilds the packet
   from the arguments the file records (`lapis-design critic packet` writes it from the render extract, lint report, and
   behavior session above by default), by file contents, never by modification time, and reads the report against it.
+  The release's critic is always a full independent review of a full packet: a report on a delta packet
+  (`review/critic-delta-packet.schema.yaml`, which the pre-show review and the slice seal accept after an owner's reply
+  changed only requirement rows) is `release.input-stale`, whatever it judges, and so is a report that follows one.
   Without a record, the critic report is read as it always was.
 
 ## Output
@@ -367,15 +370,33 @@ name the step the files call for, as without questions. Without `--task`, `next`
 counted questions file, counted answers file, or counted references record.
 
 `done` and every wait on approval or direction questions carry the owner block (`owner.py`), which `next` writes to
-`.lapis/owner/<task>.md` and returns as `owner_block`. It lists the requirement outcome, the owner's decisions, the
+`.lapis/owner/<task>.md` and, once per digest and never changed afterwards, to `.lapis/owner/<task>.<sha8>.md`. It lists the
+requirement outcome, the owner's decisions, the decisions the owner has not made, the fonts and their rights, the
 facts shown with their sources, what changed behind the page, the disputes, what was shown (each page's address, widths,
-document height at 1440, the capture files of those widths, and, for a plain static page, the HTML file that opens
-without a server), and what did not run or is
+document height at 1440, the capture files of those widths, the supporting evidence declared for it, and, for a plain
+static page, the HTML file that opens without a server), and what did not run or is
 stale (the checks recorded as not run, and each place a critic report does not hold against its packet, as `critic
-packet`'s check finds it), and
-ends with the line `lapis-owner-block <sha8>`, the digest of its body. The questions file has to contain that line: a
-wait whose questions lack the current line is `draft-review` ("paste the owner block"; `owner-direction` for a direction file), and `done` tells the agent to
-paste the block unchanged ahead of its own summary. `draft check` writes the block too when the review holds. A pasted
+packet`'s check finds it), and ends with the line `lapis-owner-block <sha8>`, the digest of its body. The block is the
+record, and long; the chat does not carry it.
+
+The delivery contract: what the chat carries is the owner summary, which `next` returns as `owner_summary` and writes to
+`.lapis/owner/<task>.summary.md` (`owner_block` in the JSON holds the block's path, digest, and size). It is mandatory in
+chat, as one block that starts at `# Owner summary: <task>` and ends at the line `lapis-owner-block <sha8>` of the current
+block: exactly one `Decision:` line (what the owner settles with one answer); what the owner's last reply changed; every
+decision the owner has not made (`gaps.py`), each as the block lists it; every defect of the build shown, which is each open
+core finding (the critic's, as the block lists it), what the slice's review does not cover when its budget ran out, each
+critic report that does not hold against its packet, and each requirement row that is missing or not judged, with the rows
+that are partly met by id and the counts; every type role of the plan with its family, its source, and what the fonts lock
+records of its license (a role whose license nobody confirmed is marked as needing the owner's word; before `lazuli lock`
+there is no lock entry and the line says so); the pages shown with their captures and supporting evidence; and the path of
+the full block with its size. By link only: the requirement outcome row by row beyond the defects, the facts with their
+sources, the integrity section, the disputes, the questions asked during the work, and what did not run. `done` carries
+the release verdict as one more line of the summary. The check (`Delivery.problems`) holds the file to that contract
+rather than to the full text: a wait whose questions lack the current summary is `draft-review` ("paste the owner summary";
+`owner-direction` for a direction file) with what is missing, which is a second or missing `Decision:` line, a missing path of
+the full block, or any core gap, core defect, font fact, or release line the summary lists and the file does not hold
+unchanged; text around the summary is the run's own and is not checked, and `done` tells the agent to paste the summary
+unchanged ahead of its own. `draft check` writes the block and the summary too when the review holds. A pasted summary or
 block is not counted as words or links of the questions.
 
 The block's section `## Decisions you have not made` is the gap list (`gaps.py`). Which decisions were the owner's is a
@@ -429,8 +450,26 @@ records and accepts the report only when the bytes match; when the report judges
 dispute once; when every file-like ref exists and every `facts[].quote` is in the lines it cites; and, for a new
 direction, when it has a `walkthroughs` entry at every shown width. That shows which inputs the critic was given, not
 what it read or whether it was independent. The critic's walkthroughs, requirement states, and facts replace the
-maker's own walks and claim map. The owner's message carries the owner block `draft check` writes to
-`.lapis/owner/<task>.md`, not a summary the maker wrote.
+maker's own walks and claim map. The owner's message carries the owner summary `draft check` writes to
+`.lapis/owner/<task>.summary.md` (the full block is by link), not a summary the maker wrote.
+
+After an owner's reply that changed only the owner's rows (requirement rows, change rows, disputes, and the owner-decided
+gaps and asks that come with them) on the same shown build, `lapis-design critic packet --task <task> --prior <report>
+--out .lapis/critic/<name>.delta.packet.json` writes a delta packet instead of a full one
+(`review/critic-delta-packet.schema.yaml`), and `draft check` accepts the critic's report on it together with the prior
+report as one review of the whole when: the prior report is a full report that judged its own packet completely and is
+unaltered (its digest is in the delta); the captures, extracts, lint report, plan, direction, motion evidence, and worker
+rules are those of the prior packet; the report judges every new or changed row, change, and dispute the delta lists; and
+every open core finding of the prior report is re-judged by a finding that supersedes it, still open as a core finding or
+fixed. A delta never follows a delta. Anything else forces a full packet, and the command says what changed.
+
+Supporting evidence. A local link in the questions is a shown page that needs its own review unless the draft record
+declares it in `supporting`: `{kind: specimen | reference-capture | query-variant, link, path, claim, page?}`. `draft check`
+reads the file at `path` (it must exist, must not be a source of a shown page, and must be older than the record), records
+its hash, and the critic packet lists the file and the claim to the critic. A ?query variant is evidence only for the page
+it names in `page`, and only when its link is that page's address with a query and its capture is newer than the page's
+sources. A declared link that is a page of the record is a problem: a page, or an alternate direction or state presented
+for approval, is still reviewed. Links that are not declared keep the rule above.
 
 Core product-explanation findings (`approval_impact: core-product-explanation`, including
 `review.world-materials` unless the critic explicitly marks it ordinary) block pre-show approval while the critic report

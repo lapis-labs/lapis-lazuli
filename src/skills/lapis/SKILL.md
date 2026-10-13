@@ -25,16 +25,22 @@ license: MIT AND CC-BY-4.0
   as your last message: `next` says `waiting-for-user` and the exit gate lets that stop pass. A file with no kind does
   not wait. Record the replies in `.lapis/answers/<task>.md`, the brief record: keep what it holds, add replies under
   their own headings, cite it in the plan (`context.other`), and run `next` again.
-- At `done` and at every approval or direction wait, `next` returns an owner block (`--json`: `owner_block`) and writes it to
-  `.lapis/owner/<task>.md`: the requirement states, the owner's decisions, the facts shown with their sources, protected
-  changes, disputes, and what did not run. It ends in a `lapis-owner-block <sha8>` line. Paste it unchanged ahead of your
-  own summary at `done`, and into the questions file of an approval or direction ask (an ask without the current line comes
-  back as `draft-review`, or as `owner-direction` for direction). Never edit, shorten, or write it yourself. It lists `## Decisions you have not made`: what you filled
-  in that the owner never decided (style, objects, signature, color and where each color sits, layout, motion, type,
-  copy). Nothing is sealed or approved until the owner's reply acknowledges that block by its digest, as the untagged
-  line `- Gaps seen (lapis-owner-block <sha8>): "<their words>"`, or decides the items (`- [declared] color: <what they
-  decided>`, `layout:`, `motion:`, `signature:`, `type <role>:`); a plan approved without it comes back as
-  `approval-gaps`.
+- At `done` and at every approval or direction wait, `next` writes the owner block to `.lapis/owner/<task>.md` (kept as shown
+  under `.lapis/owner/<task>.<sha8>.md`: the requirement states row by row, the owner's decisions, the facts shown with their
+  sources, protected changes, disputes, and what did not run) and returns the owner summary (`--json`: `owner_summary`;
+  `owner_block` holds the block's path, digest, and size). The summary, also `.lapis/owner/<task>.summary.md`, is what the
+  owner reads in chat: one `Decision:` line, what the owner's last reply changed, every decision you have not made, every
+  defect of the build shown (open core findings, what is not reviewed, requirement rows missing or not judged), every font
+  role with its source and license, what was shown, and the full block's path and digest, ending in a
+  `lapis-owner-block <sha8>` line. Paste the summary unchanged ahead of your own summary at `done`, and into the questions
+  file of an approval or direction ask. A file that lacks the current summary, drops one of its lines, has no single
+  `Decision:` line, or does not name the full block comes back as `draft-review` (`owner-direction` for direction) with what
+  is missing; the full block itself is read by link, never pasted. Never edit, shorten, or write the summary yourself. It
+  lists `## Decisions you have not made`: what you filled in that the owner never decided (style, objects, signature, color
+  and where each color sits, layout, motion, type, copy). Nothing is sealed or approved until the owner's reply acknowledges
+  that summary by its digest, as the untagged line `- Gaps seen (lapis-owner-block <sha8>): "<their words>"`, or decides the
+  items (`- [declared] color: <what they decided>`, `layout:`, `motion:`, `signature:`, `type <role>:`); a plan approved
+  without it comes back as `approval-gaps`.
 - Report whether taste was given and cited, not given (the direction is your own reading), or unrecorded;
   `.lapis/taste.md` and `direction.taste` are described in `lps-brief`'s record guide.
 - Follow the user's words. When they forbid network use, lookups, or downloads during the work and nobody can be
@@ -451,14 +457,17 @@ slice is one page, built from the pick the owner made at the direction turns.
    1440, at most 3,600 px of content at 1440, pinned scenes' empty scroll runway not counted (a taller page comes back as `slice`). Serve the folder with
    `lapis-design preview start --task <task>` and capture that address.
 3. Run the critic on `lapis-design critic packet` and `lapis-design draft check` (`ultramarine`'s
-   `pre-show-review.md`). Open core findings no longer block the question: they go to the owner as decisions.
+   `pre-show-review.md`). Open core findings no longer block the question: they go to the owner as decisions. A link in the
+   question to a specimen, a reference capture, or a ?query variant of the shown page is evidence, not a page to approve:
+   declare it in `supporting` of the draft record (`pre-show-review.md`) and it is listed to the critic instead of reviewed
+   as a page.
 4. Ask within 60 minutes or 40 page writes of `next` naming `slice` (or of the owner's last reply): write
-   `.lapis/questions/<task>.md`, first line `lapis-questions: approval`, link the page, paste the owner block, put each
+   `.lapis/questions/<task>.md`, first line `lapis-questions: approval`, link the page, paste the owner summary, put each
    open core finding to the owner as a decision, and say that copy is provisional until it has been seen rendered. Past
    either limit every page write is refused until that question exists; it is never refused to write under `.lapis/`.
    The two limits are separate triggers (minutes, page writes); `state.slice_questions` records which fired first and
    how long the question took. Once one has fired, do not finish the review first: `lapis-design draft check` writes a
-   minimal owner block even when the review is not current, the block's `## Not fully reviewed` section discloses what is
+   minimal owner block and summary even when the review is not current, the summary's defects section discloses what is
    not, and `next` lets that question wait. The owner sees the slice with its defects named; the seal still needs the review.
 5. Record the owner's reply in `.lapis/answers/<task>.md` under its own heading, in their words. A plain approval is an
    untagged item (`- Approved the slice: <their words>`); feedback that changes what the owner wants is `[declared]`;
@@ -468,11 +477,13 @@ slice is one page, built from the pick the owner made at the direction turns.
 6. A reply that rejects the composition or the core-object representation is a direction reply: go back to the second
    direction turn instead of rebuilding the slice blind. A reply that changes a value, copy, or a component is a slice
    revision: `next` names round 2 (and so on), the hold and the clock go on, revise within the declared files and ask
-   again. There is no round limit.
+   again. There is no round limit. When a reply only changes the owner's requirement rows on the same shown build, the
+   critic re-reviews the delta (`lapis-design critic packet --task <task> --prior <report>`); a changed capture, plan,
+   direction, or implementation needs a full review (`pre-show-review.md`).
 7. Record `approval: {state: approved}` only when the owner approved, then run `next`, which seals the slice. The seal
    keeps the page, digests of what was shown, and the protected values, so the owner block lists later protected
-   changes as changed since the owner approved. A new critic report or draft record makes the pasted block's marker
-   stale: run `lapis-design draft check` and paste the block again.
+   changes as changed since the owner approved. A new critic report or draft record makes the pasted summary's marker
+   stale: run `lapis-design draft check` and paste the summary again.
 
 ## Implement
 
@@ -593,6 +604,6 @@ without an API still gets a minimal stub: `version`, `clock`, empty `routes`, `c
 
 ## Reporting
 
-Start with the owner block `next` returned at done, unchanged. Then tell the user the Design Read, the signature, each
+Start with the owner summary `next` returned at done, unchanged. Then tell the user the Design Read, the signature, each
 rejected default with the route taken, the checks that ran with their results, and the checks that did not run. Keep
 planning notes, rule ids, and check output out of the interface itself.

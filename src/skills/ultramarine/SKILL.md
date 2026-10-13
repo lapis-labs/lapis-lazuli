@@ -80,11 +80,11 @@ claims until the actual integrated local surface is exercised and ordinary evide
 | critic report | `.lapis/critic/<task>.json` |
 | critic packet | `.lapis/critic/<task>.packet.json` |
 | disputes | `.lapis/disputes/<task>.yaml` |
-| requirement record, change log, owner block | `.lapis/requirements/<task>.json`, `.lapis/changes/<task>.jsonl`, `.lapis/owner/<task>.md` |
+| requirement record, change log, owner block and summary | `.lapis/requirements/<task>.json`, `.lapis/changes/<task>.jsonl`, `.lapis/owner/<task>.md` and `.lapis/owner/<task>.summary.md` |
 | fonts lock, asset ledger | `.lapis/fonts.lock.json`, `.lapis/assets.ledger.json` |
 | reference profiles | `.lapis/refs/<slug>.json` |
 
-The CLI writes the packet, the requirement record, the change log, and the owner block, and nobody edits them by
+The CLI writes the packet, the requirement record, the change log, and the owner block and summary, and nobody edits them by
 hand: a hand edit is detected and shown to the owner.
 
 Every report follows `shared/slop/finding.schema.yaml`.
@@ -183,7 +183,9 @@ lists, nothing else (`references/critic.md`).
   independent review ran.
 - The report names its packet in `target.packet` and counts only for that one. Change a capture, the lint report,
   a requirement row, a design field, or a protected change and it is stale: build the packet again and rerun the
-  critic. `next` sends the run back to `critic` until the report matches the current packet.
+  critic. `next` sends the run back to `critic` until the report matches the current packet. After an owner's reply that only changes requirement rows on
+  the same shown build, a delta packet (`critic packet --task <task> --prior <report>`) lets the critic judge just those
+  rows and the findings they affect (`references/pre-show-review.md`); the release's critic is always a full review.
 - The report judges every requirement row (`requirements`), lists the facts the page asserts with their sources
   (`facts`), re-judges each disputed finding (`disputes`), and gives a verdict on each listed change (`changes`).
 - A critic that cannot write files returns its report as JSON; save it to
@@ -228,4 +230,4 @@ choices from the critic; what was not checked (widths, themes, probes, layers, s
 why; and the next step, another loop or the release gate (`ulm-release`). Leave rule text and
 raw output in the report files.
 
-When `next` returned an owner block, paste it unchanged ahead of the report; it is the CLI's account, not yours.
+When `next` returned an owner summary, paste it unchanged ahead of the report; it is the CLI's account, not yours.

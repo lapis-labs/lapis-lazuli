@@ -48,6 +48,34 @@ contract formats are v0.
 - `render check`, `behavior check`, `slop lint`, and `worker check` append a line to `.lapis/telemetry/checks.jsonl` (command,
   task, build and state keys, scope, cache outcome, times, exit code, output size, report path; local to the project, never
   uploaded).
+- After an owner's reply that only changes the owner's rows on a shown build a full critic report already judged, the critic
+  reviews a delta: `lapis-design critic packet --task <task> --prior <report> --out .lapis/critic/<name>.delta.packet.json`
+  writes the new and changed requirement rows, change rows, and disputes, the prior findings they affect (every open core
+  finding among them), the digest of the prior report, and the unchanged evidence by digest
+  (`review/critic-delta-packet.schema.yaml`). The pre-show review and the slice seal accept the critic's report on it with the
+  prior report as one review of the whole when every listed row is judged, every open core finding is re-judged by a
+  finding that `supersedes` it (still open as a core finding, or fixed), the prior report is unaltered, and the captures,
+  lint report, plan, direction, motion evidence, and worker rules are the prior packet's. Anything else (a screenshot, a
+  state, a locale, the plan or direction, the implementation, the rules) makes the command refuse and name what changed: a
+  full review. A delta never follows a delta, and the release's critic never takes one (`release.input-stale`). A stale
+  report tells the maker when a delta would do. Full packets now record the digest of the worker rules, so a report made
+  before this release needs a full review once.
+- The owner block is the record, not the chat. `next` and `draft check` write it as before to `.lapis/owner/<task>.md` and keep each
+  one as shown at `.lapis/owner/<task>.<sha8>.md`, and write an owner summary to `.lapis/owner/<task>.summary.md` (`next`
+  returns it as `owner_summary`; `owner_block` is now the full block's path, digest, and size). The summary is what an
+  approval or direction question and `done` carry: one `Decision:` line, what the owner's last reply changed, every decision
+  the owner has not made, every defect of the shown build (open core findings, what is not reviewed, requirement rows missing
+  or not judged), every font role with its source and license (a role whose license nobody confirmed says it needs the
+  owner's word), what was shown, and the full block's path and digest. A questions file that drops one of those lines, asks
+  twice, or does not name the full block goes back to `draft-review` (`owner-direction`) with what is missing; the rest of
+  the block is read by link. The full block gains a `Fonts and rights` section and lists the supporting evidence of a page.
+- A link in an approval question to a specimen, a reference capture, or a `?query` variant of the shown page no longer needs
+  its own page review when the draft record declares it in `supporting` (`kind`, `link`, `path`, `claim`, and `page` for a
+  variant). `draft check` records the file's hash, the critic packet lists the file and the claim to the critic, and the owner
+  block names it. A declared link that is a page of the record, a source of a shown page, or a file that is not there is
+  still a problem, a link that is not declared is a shown page as before, and the review is stale once an evidence file changes.
+- `critic packet` and the slice seal append a line to `.lapis/telemetry/checks.jsonl` with the scope (`full` or `delta`) and
+  the size of the packet.
 
 ## 0.3.0 (2026-10-11)
 
