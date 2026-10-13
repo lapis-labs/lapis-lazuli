@@ -431,7 +431,7 @@ def _why(task: str, phase: int, reason: str, unattended: bool, unbased: list[str
                "every open item id and attaching "
                + (f"the contact sheet `.lapis/state/diverge/{task}/contact.png`" if phase == 2 else
                   f"the reference sheet (`lapis-design references sheet --task {task}`)")
-               + f", paste the owner block `lapis-design next --task {task}` writes to .lapis/owner/{task}.md into it unchanged, "
+               + f", paste the owner summary `lapis-design next --task {task}` writes to .lapis/owner/{task}.summary.md into it unchanged, "
                "and stop with it as your last message; no fixed number of turns, but each turn needs an open item. "
                f"Record the answers in {answers} under `{turn}` as `- [declared] <id> <name>: <choice> — \"<their words>\"`"
                + (", the pick as `- [declared] Pick: C<n> — \"<their words>\"`, " if phase == 2 else ", ")

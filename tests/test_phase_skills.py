@@ -153,14 +153,14 @@ OWED = [
      r"A plain approval is an untagged item \(`- Approved the slice: <their words>`\)"),
     ("the record guide keeps approval out of the rows", "lps-brief", "references/record.md",
      r"Record an owner's plain approval \(\"looks right, go on\"\) as an untagged item"),
-    ("a stale owner block is pasted again", "lapis", "SKILL.md",
-     r"makes the pasted block's marker\s+stale: run `lapis-design draft check` and paste the block again"),
-    # the owner block
-    ("lapis pastes the owner block unchanged", "lapis", "SKILL.md",
-     r"`lapis-owner-block <sha8>` line\. Paste it unchanged ahead of your own summary at `done`, and into the questions file"),
+    ("a stale owner summary is pasted again", "lapis", "SKILL.md",
+     r"makes the pasted summary's marker\s+stale: run `lapis-design draft check` and paste the summary again"),
+    # the owner block and summary
+    ("lapis pastes the owner summary unchanged", "lapis", "SKILL.md",
+     r"`lapis-owner-block <sha8>` line\. Paste the summary unchanged ahead of your own summary at `done`, and into the questions\s+file"),
     ("lapis never writes the block or the CLI records", "lapis", "SKILL.md",
      r"`lapis-design` alone writes `\.lapis/requirements/`, `state/`, `changes/`, and `owner/`"),
-    ("ultramarine pastes the owner block unchanged", "ultramarine", "SKILL.md", r"paste it unchanged ahead of the report"),
+    ("ultramarine pastes the owner summary unchanged", "ultramarine", "SKILL.md", r"paste it unchanged ahead of the report"),
     # the critic and the disputes
     ("lapis builds the critic's input with the packet", "lapis", "SKILL.md", r"`lapis-design critic packet --task <task>`"),
     ("ultramarine runs the critic on the packet", "ultramarine", "SKILL.md",

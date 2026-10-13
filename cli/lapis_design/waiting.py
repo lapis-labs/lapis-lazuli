@@ -40,7 +40,7 @@ MIN_WORDS = 2
 ENV = "LAPIS_UNATTENDED"              # the variable `gate.is_unattended` reads; this module imports nothing of ours
 _LIST_MARK = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+")
 _WORD = re.compile(r"[^\W_]+")        # a run of letters or digits of any script
-_BLOCK = re.compile(r"^# Owner block: .*?^lapis-owner-block [0-9a-f]{8}[ \t]*$", re.MULTILINE | re.DOTALL)
+_BLOCK = re.compile(r"^# Owner (?:block|summary): .*?^lapis-owner-block [0-9a-f]{8}[ \t]*$", re.MULTILINE | re.DOTALL)
 _KIND = re.compile(r"^[ \t]*lapis-questions:[ \t]*(\S*)[ \t]*$", re.MULTILINE)
 _MARKER = re.compile(r"^lapis-owner-block ([0-9a-f]{8})[ \t]*$", re.MULTILINE)
 
@@ -54,13 +54,13 @@ def answers_path(root: Path, task: str) -> Path:
 
 
 def question_text(text: str) -> str:
-    """`text` without a pasted owner block (`owner.py`): the block is the CLI's, not the run's question, so its words
-    and the addresses it names are neither words nor links of the questions."""
+    """`text` without a pasted owner block or owner summary (`owner.py`): they are the CLI's, not the run's question, so
+    their words and the addresses they name are neither words nor links of the questions."""
     return _BLOCK.sub("", text)
 
 
 def carried(text: str) -> str | None:
-    """The digest on the last `lapis-owner-block <sha8>` line of `text`: the owner block a questions file carries."""
+    """The digest on the last `lapis-owner-block <sha8>` line of `text`: the owner block or summary a questions file carries."""
     found = _MARKER.findall(text)
     return found[-1] if found else None
 

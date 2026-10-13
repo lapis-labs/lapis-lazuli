@@ -54,9 +54,9 @@ def judge(root: Path, states: list[str | None], **more) -> None:
                                                  for rid, state in zip(ids(root), states) if state], **more})
 
 
-# ---- 4. the marker an approval wait has to carry
+# ---- 4. the summary an approval wait has to carry
 
-def test_a_wait_whose_questions_lack_the_current_block_line_is_sent_back_to_paste_it(project):
+def test_a_wait_whose_questions_lack_the_current_summary_is_sent_back_to_paste_it(project):
     seal = project / f".lapis/state/{TASK}.json"
     assert seal.is_file()
     record(project, "questions", "lapis-questions: approval\nWhich headline do you prefer?", 200)
@@ -65,51 +65,55 @@ def test_a_wait_whose_questions_lack_the_current_block_line_is_sent_back_to_past
     block = (project / f".lapis/owner/{TASK}.md").read_text(encoding="utf-8")
     last = block.splitlines()[-1]
     assert last.startswith("lapis-owner-block ") and len(last.split()[1]) == 8
-    assert result["owner_block"] == block
+    assert (project / result["owner_block"]["path"]).read_text(encoding="utf-8") == block      # kept under its digest
+    assert result["owner_block"]["path"] == f".lapis/owner/{TASK}.{last.split()[1]}.md" and result["owner_block"]["chars"] == len(block)
+    summary = (project / f".lapis/owner/{TASK}.summary.md").read_text(encoding="utf-8")
+    assert result["owner_summary"] == summary and summary.splitlines()[-1] == last and len(summary) < len(block)
     why = result["step"]["why"]
-    assert f"paste .lapis/owner/{TASK}.md into .lapis/questions/{TASK}.md unchanged" in why and f"`{last}`" in why
+    assert f"paste .lapis/owner/{TASK}.summary.md into .lapis/questions/{TASK}.md unchanged" in why and f"`{last}`" in why
     assert result["step"]["command"] == f"lapis-design draft check --task {TASK}"
 
 
-def test_pasting_the_block_ends_it_and_a_block_that_has_gone_out_of_date_does_not_count(project):
+def test_pasting_the_summary_ends_it_and_a_summary_that_has_gone_out_of_date_does_not_count(project):
     record(project, "questions", "lapis-questions: approval\nWhich headline do you prefer?", 200)
-    block = next_step.evaluate(project, TASK)["owner_block"]
-    record(project, "questions", f"lapis-questions: approval\nWhich headline do you prefer?\n\n{block}", 200)
+    summary = next_step.evaluate(project, TASK)["owner_summary"]
+    record(project, "questions", f"lapis-questions: approval\nWhich headline do you prefer?\n\n{summary}", 200)
     result = next_step.evaluate(project, TASK)
     assert (result["state"], result["then"]["id"]) == ("waiting-for-user", "critic")
-    assert result["owner_block"] == block
+    assert result["owner_summary"] == summary
     judge(project, ["met", "partly", None, None])                        # a record the block reports has changed
     stale = next_step.evaluate(project, TASK)
-    assert stale["step"]["id"] == "draft-review" and stale["owner_block"] != block
-    assert owner.carries(f"Which headline?\n{block}", owner.block(project, TASK)[1]) is False
+    assert stale["step"]["id"] == "draft-review" and stale["owner_summary"] != summary
+    assert owner.carries(f"Which headline?\n{summary}", owner.block(project, TASK)[1]) is False
 
 
 def test_an_unattended_run_is_continued_with_the_paste_and_a_plan_phase_question_needs_no_block(project, tmp_path_factory):
     record(project, "questions", "lapis-questions: approval\nWhich headline do you prefer?", 200)
     answer = gate.stop_output(project, "s1", unattended=True, task=TASK)
     assert answer["decision"] == "block" and "Next step: draft-review." in answer["reason"]
-    assert f"paste .lapis/owner/{TASK}.md" in answer["reason"]
+    assert f"paste .lapis/owner/{TASK}.summary.md" in answer["reason"]
     bare = tmp_path_factory.mktemp("bare")
     ask(bare, "1. Who visits the kiln shop page?\n2. Is the monthly firing date fixed?\n", 200)
     assert next_step.evaluate(bare, TASK)["state"] == "waiting-for-user"
 
 
-def test_a_questions_file_that_holds_only_the_block_asks_nothing_and_links_nothing(project):
+def test_a_questions_file_that_holds_only_the_summary_asks_nothing_and_links_nothing(project):
     record(project, "questions", "lapis-questions: approval\nWhich headline do you prefer?", 200)
-    block = next_step.evaluate(project, TASK)["owner_block"]
+    summary = next_step.evaluate(project, TASK)["owner_summary"]
     save(project, f"drafts/{TASK}.yaml", {"version": 0, "task": TASK, "pages": [
         {"url": PAGE, "direction": "new", "widths": [390, 1440], "review": {"extracts": []}}]})
-    shown, _ = owner.write(project, TASK)                      # the block now names the page it shows
-    assert PAGE in shown
-    only = project / f".lapis/questions/{TASK}.md"
-    only.write_text(shown, encoding="utf-8")
-    assert waiting.counts(only) is False and waiting.words(shown) == 0
+    delivery = owner.deliver(project, TASK)                    # the block now names the page it shows
+    assert PAGE in delivery.block and PAGE in delivery.summary
     from lapis_design import draft
 
-    only.write_text(f"Which headline do you prefer? {PAGE}\n\n{shown}", encoding="utf-8")
-    assert draft.links(project, TASK) == [PAGE]
-    only.write_text(f"Which headline do you prefer?\n\n{shown}", encoding="utf-8")
-    assert draft.links(project, TASK) == [] and block
+    for shown in (delivery.block, delivery.summary):
+        only = project / f".lapis/questions/{TASK}.md"
+        only.write_text(shown, encoding="utf-8")
+        assert waiting.counts(only) is False and waiting.words(shown) == 0
+        only.write_text(f"Which headline do you prefer? {PAGE}\n\n{shown}", encoding="utf-8")
+        assert draft.links(project, TASK) == [PAGE]
+        only.write_text(f"Which headline do you prefer?\n\n{shown}", encoding="utf-8")
+        assert draft.links(project, TASK) == [] and summary
 
 
 # ---- 5. done and the critic's coverage of every row
@@ -136,9 +140,10 @@ def test_a_recorded_unavailable_critic_still_allows_done_and_the_block_says_the_
     assert finish(project, "--static") == 1                       # release.critic-missing is still blocking
     result = next_step.evaluate(project, TASK)
     assert result["state"] == "done"
-    block = result["owner_block"]
+    block = (project / result["owner_block"]["path"]).read_text(encoding="utf-8")
     assert "- 4 rows. requirements not judged: this harness cannot start a separate context." in block
     assert "- critic: this harness cannot start a separate context" in block
+    assert "- 4 requirement rows not judged: requirements not judged: this harness cannot start a separate context." in result["owner_summary"]
 
 
 def test_done_carries_the_block_and_tells_the_agent_to_paste_it_ahead_of_its_own_summary(project, capsys):
@@ -147,15 +152,18 @@ def test_done_carries_the_block_and_tells_the_agent_to_paste_it_ahead_of_its_own
     finish(project, "--static")
     result = next_step.evaluate(project, TASK)
     block = (project / f".lapis/owner/{TASK}.md").read_text(encoding="utf-8")
-    assert result["owner_block"] == block and "## Release\n- the release gate's report has" in block
-    assert "Paste the owner block unchanged ahead of your own summary" in result["reason"]
+    assert result["owner_block"]["path"] == f".lapis/owner/{TASK}.{block.splitlines()[-1].split()[1]}.md"
+    assert "## Release\n- the release gate's report has" in block
+    assert "- the release gate's report has" in result["owner_summary"] and "Decision: accept this result" in result["owner_summary"]
+    assert "Paste the owner summary unchanged ahead of your own summary" in result["reason"]
     assert f"`{block.splitlines()[-1]}`" in result["reason"]
     capsys.readouterr()
     assert cli_main(["next", "--task", TASK, "--root", str(project)]) == 0
     printed = capsys.readouterr().out
     assert printed.startswith(f"next: done ({TASK})") and printed.rstrip().endswith(block.splitlines()[-1])
     assert cli_main(["next", "--task", TASK, "--root", str(project), "--json"]) == 0
-    assert json.loads(capsys.readouterr().out)["owner_block"] == block
+    printed_json = json.loads(capsys.readouterr().out)
+    assert printed_json["owner_summary"] == result["owner_summary"] and printed_json["owner_block"]["chars"] == len(block)
 
 
 def test_a_task_with_no_requirement_record_keeps_its_old_done(tmp_path, monkeypatch):
@@ -169,7 +177,7 @@ def test_a_task_with_no_requirement_record_keeps_its_old_done(tmp_path, monkeypa
     finish(root, "--static")
     result = next_step.evaluate(root, TASK)
     assert result["state"] == "done"
-    assert "no requirement record for this task" in result["owner_block"]
+    assert "no requirement record for this task" in (root / result["owner_block"]["path"]).read_text(encoding="utf-8")
 
 
 # ---- 6. what the block holds
@@ -262,9 +270,12 @@ def test_the_block_is_deterministic_and_written_whole_to_the_owner_file(rich):
     assert first == again and first == owner.block(project, TASK, {"verdict": verdict})
     target = project / f".lapis/owner/{TASK}.md"
     assert target.read_text(encoding="utf-8") == first[0]
-    assert [p.name for p in target.parent.iterdir()] == [f"{TASK}.md"]           # no half-written file is left beside it
+    kept = target.parent / f"{TASK}.{first[1]}.md"
+    assert sorted(p.name for p in target.parent.iterdir()) == sorted([f"{TASK}.md", kept.name, f"{TASK}.summary.md"])   # no half-written file
+    assert kept.read_text(encoding="utf-8") == first[0]                          # the block as shown is kept under its digest
     judge(project, ["met", "met", "met", "met"])
     assert owner.write(project, TASK, {"verdict": verdict})[1] != first[1]       # any change a record reports changes it
+    assert kept.read_text(encoding="utf-8") == first[0] and target.read_text(encoding="utf-8") != first[0]   # and never rewrites it
     assert owner.write(project, TASK, {"verdict": verdict, "integrity_error": "OSError: disk full"})[0].count(
         "- integrity not recorded: OSError: disk full") == 1
 

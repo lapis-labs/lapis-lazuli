@@ -61,7 +61,7 @@ def test_a_write_to_an_undeclared_page_file_is_refused_and_a_declared_file_and_a
     why = refused(write(project, "pricing.html"))
     assert "task kiln-shop-landing has an unsealed slice" in why and "pricing.html is not one of them" in why
     assert f"Build only the slice files declared in .lapis/drafts/{TASK}.yaml" in why
-    assert "a questions file of kind `approval`" in why and "owner block" in why
+    assert "a questions file of kind `approval`" in why and "owner summary" in why
     assert write(project, ".lapis/specimens/rough.html") is None and write(project, "notes.md") is None
     assert write(project, "pricing.html") is not None                           # no cap: it refuses again
 
@@ -134,6 +134,23 @@ def test_the_forty_first_page_write_is_refused_and_an_approval_question_with_the
     assert write(project) is None
 
 
+def test_a_question_that_carries_only_the_marker_or_drops_a_summary_line_does_not_lift_the_hold(project):
+    declare(project)
+    assert [write(project) for _ in range(40)] == [None] * 40
+    assert "40 page writes since" in refused(write(project))
+    now = int(time.time())
+    summary = owner.deliver(project, TASK, {"kind": "approval"}).summary
+    marker = summary.splitlines()[-1]
+    record(project, "questions", f"lapis-questions: approval\nApprove this slice? {URL}\n{marker}\n", now + 5)
+    assert refused(write(project))                                                     # the line alone is not the summary
+    gap = next(line for line in summary.splitlines() if line.startswith("- color:"))
+    record(project, "questions", f"lapis-questions: approval\nApprove this slice? {URL}\n\n{summary.replace(gap + chr(10), '')}",
+           now + 6)
+    assert refused(write(project))                                                     # a core gap dropped from it
+    record(project, "questions", f"lapis-questions: approval\nApprove this slice? {URL}\n\n{summary}", now + 7)
+    assert write(project) is None
+
+
 # ---- the write budget fires: a minimal block and question, defects disclosed, latency recorded
 
 def fired_by_writes(project) -> None:
@@ -158,8 +175,9 @@ def test_when_the_write_budget_fires_the_question_waits_with_a_block_that_disclo
     ask(project, f"Approve this slice? {URL}", int(time.time()) + 5)
     got = next_step.evaluate(project, TASK)
     assert got["state"] == "waiting-for-user" and got["step"]["id"] == "waiting-for-user"
-    text = got["owner_block"]
-    assert "## Not fully reviewed" in text and "40 page writes" in text and "draft review" in text
+    summary, block = got["owner_summary"], (project / got["owner_block"]["path"]).read_text(encoding="utf-8")
+    assert "## Not fully reviewed" in block and "40 page writes" in block and "draft review" in block
+    assert "The slice budget ran out (40 page writes" in summary and "draft review" in summary    # the chat carries it too
     assert write(project) is None                                                      # the question lifts the hold
 
 
@@ -296,9 +314,13 @@ def test_an_open_core_finding_no_longer_blocks_the_wait_and_the_block_lists_it_f
     ask(project, f"Approve this slice? {URL}", 200)
     result = next_step.evaluate(project, TASK)
     assert result["state"] == "waiting-for-user"
+    block = (project / result["owner_block"]["path"]).read_text(encoding="utf-8")
     assert ("## Open core findings: your decision\nThe critic's report still holds these open. Say what to do about each"
-            in result["owner_block"])
-    assert "- copy.fabricated-proof: the page shows two invented customer quotes" in result["owner_block"]
+            in block)
+    line = "- copy.fabricated-proof: the page shows two invented customer quotes"
+    summary = result["owner_summary"]
+    assert line in block and line in summary and "## Defects of the build shown" in summary
+    assert "also settles the 1 open core findings above" in summary or "open core findings above" in summary
 
 
 def test_a_core_finding_open_stops_the_seal_until_a_fresh_critic_closes_it_or_the_owner_decides_it(project, checked):

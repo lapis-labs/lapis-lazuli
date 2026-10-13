@@ -303,7 +303,7 @@ def record(root: Path, folder: str, text: str, at: int, task: str = TASK) -> Pat
 
 def ask(root: Path, text: str, at: int, task: str = TASK, kind: str | None = None) -> Path:
     """The questions the run wrote for its user, marked with their kind: `brief` before a plan exists, `approval` after
-    (the default), or the kind given. Approval and direction questions carry the owner block, as the run pastes it."""
+    (the default), or the kind given. Approval and direction questions carry the owner summary, as the run pastes it."""
     planned = (root / ".lapis" / "plans" / f"{task}.yaml").is_file()
     kind = kind or ("approval" if planned else "brief")
     text = f"lapis-questions: {kind}\n{text}" if text else text
@@ -312,8 +312,8 @@ def ask(root: Path, text: str, at: int, task: str = TASK, kind: str | None = Non
         from lapis_design import integrity, owner
 
         integrity.observe_task(root, task, "test")
-        block, _ = owner.write(root, task)
-        record(root, "questions", f"{text}\n\n{block}", at, task)
+        delivery = owner.deliver(root, task, {"kind": kind})
+        record(root, "questions", f"{text}\n\n{delivery.summary}", at, task)
     return path
 
 

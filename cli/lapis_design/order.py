@@ -340,8 +340,8 @@ def _held(project: Path, task: str, written: list[str], env: Mapping[str, str]) 
     drafts = f".lapis/drafts/{task}.yaml"
     first = (f"LapisLazuli refuses this write: {written[0]} is page code, and task {task} has an unsealed slice. ")
     ask = ("To build further, first ask the owner the slice question: a questions file of kind `approval` "
-           f"(`lapis-questions: approval` on its first line) that links the slice page and carries the owner block "
-           f"(`.lapis/owner/{task}.md`, pasted unchanged); files under .lapis/ are never refused.")
+           f"(`lapis-questions: approval` on its first line) that links the slice page and carries the owner summary "
+           f"(`.lapis/owner/{task}.summary.md`, pasted unchanged); files under .lapis/ are never refused.")
     if not info["pages"]:
         return _held_refusal(first + f"Declare the slice page first: a `direction: new` page in {drafts} with its `url` and "
                              f"`sources`, at most {slice_step.MAX_FILES} files, then build only those files. " + ask)

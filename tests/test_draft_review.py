@@ -322,7 +322,8 @@ def test_a_draft_check_that_passes_writes_the_owner_block_and_names_its_marker(p
     printed = json.loads(capsys.readouterr().out)
     block = (project / f".lapis/owner/{TASK}.md").read_text(encoding="utf-8")
     assert printed["reviewed"] is True and printed["owner_block"] == {
-        "path": f".lapis/owner/{TASK}.md", "marker": block.splitlines()[-1]}
+        "path": f".lapis/owner/{TASK}.{block.splitlines()[-1].split()[1]}.md", "marker": block.splitlines()[-1],
+        "chars": len(block), "summary": f".lapis/owner/{TASK}.summary.md"}
     assert block.splitlines()[-1].startswith("lapis-owner-block ")
 
 

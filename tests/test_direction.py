@@ -328,7 +328,8 @@ def test_a_direction_file_with_fifteen_items_waits_and_is_not_under_the_brief_ca
     ask(run, questions, 201, kind="direction")
     result = next_step.evaluate(run, TASK)
     assert (result["state"], result["then"]["id"]) == ("waiting-for-user", "owner-direction")
-    assert result["waiting"]["kind"] == "direction" and result["owner_block"].startswith(f"# Owner block: {TASK}")
+    assert result["waiting"]["kind"] == "direction" and result["owner_summary"].startswith(f"# Owner summary: {TASK}")
+    assert "Decision: pick or change what the direction items name" in result["owner_summary"]
 
 
 def test_a_style_name_with_colons_does_not_hide_the_choice(run):

@@ -127,7 +127,7 @@ def why(task: str, dead: list[str]) -> str:
             + " not answer HTTP 200 now, so the owner would open a dead link. Serve the page so the server outlives "
             f"this turn with `{command(task, dead)}` (it detaches the server, records it in .lapis/preview/{task}.json, "
             f"and prints the address; `lapis-design preview stop --task {task}` ends it), or start your own server the "
-            f"same way, then run `lapis-design next --task {task}` again. The pasted owner block lists the capture "
+            f"same way, then run `lapis-design next --task {task}` again. The pasted owner summary lists the capture "
             "files, which need no server.")
 
 
