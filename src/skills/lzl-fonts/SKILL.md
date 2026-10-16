@@ -70,6 +70,11 @@ plan. It locks only a family already chosen.
 - `sync` refreshes expired snapshots (`google-fonts`, `fontsource`, `fontshare`, `anshim`) and the
   bundled `system-table` (`shared/fonts/system-fonts.yaml`, no network); `--force` ignores
   freshness. A failed source is skipped until named with `--source`.
+- `anshim` reads the Gongu license pages (KOGL type 1 or OFL) and two tabs of its free-font board: 민간 무료글꼴 정보,
+  whose entries carry usage conditions written as free text, and 인기글꼴TOP20. A family from the board is
+  `custom-free`: free of charge under the listing's own words, kept verbatim in the evidence with the page it was read on,
+  never mapped to the OFL or any named license, never an open license (`--license open` leaves it out). Read the words
+  against the planned use before relying on them. A family on the chart is `familiar`.
 - `remap` re-applies the mapping rules to the responses a snapshot source kept, with no request and the
   fetch date unchanged (`google-fonts` only for now): run it once after an update that stores more of what
   a source sends, such as the popularity fields.

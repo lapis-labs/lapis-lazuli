@@ -81,7 +81,7 @@ CATALOG_SOURCES = {"google-fonts": "google-fonts", "fontsource": "fontsource", "
                    "anshim": "open-source-other", "system-table": "system"}
 DEFAULT_DELIVERY = {"system": "system-only", "adobe-sync": "adobe-web-project", "google-fonts": "google-fonts-api"}
 
-# Catalog license ids (catalog/labels.py) with a lock kind; UFL-1.0 and free-other have none
+# Catalog license ids (catalog/labels.py) with a lock kind; UFL-1.0, free-other, and custom-free have none
 LICENSE_KINDS = {"OFL-1.1": "ofl", "Apache-2.0": "apache", "KOGL-1": "kogl-1", "system": "system"}
 SUBSCRIPTION_CATALOGS = frozenset({"sandoll"})          # their `commercial` label is the subscription's license
 LICENSE_TEXT_URLS = {"ofl": "https://openfontlicense.org", "apache": "https://www.apache.org/licenses/LICENSE-2.0"}

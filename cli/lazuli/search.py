@@ -172,6 +172,18 @@ def _license(resolved: list[dict]) -> dict | None:
     return {"id": lic["mapped"], "raw": lic["raw"], "source": lic["source"], "source_class": "catalog-summary"}
 
 
+def _license_evidence(cand: dict) -> str:
+    """The license line of a candidate's evidence. A `custom-free` license is a listing's own free-text conditions,
+    so the text itself is the evidence, verbatim, with the page it was read on."""
+    lic = cand["license"]
+    if lic["id"] != "custom-free":
+        return f"license {lic['id'] or repr(lic['raw'])} ({lic['source']} summary, a hint)"
+    page = next((c["details"]["conditions_url"] for c in cand["catalogs"]
+                 if c["source"] == lic["source"] and (c.get("details") or {}).get("conditions_url")), None)
+    return (f"license custom-free: the {lic['source']} listing's conditions, verbatim: " + " / ".join(lic["raw"].splitlines())
+            + (f" ({page})" if page else "") + "; free of charge, not an open license")
+
+
 def _genres(resolved: list[dict]) -> list[str]:
     return list(dict.fromkeys(lb["mapped"] for lb in resolved if lb["kind"] in ("genre", "subclass") and lb["mapped"]))
 
@@ -211,7 +223,7 @@ def _installed(conn: sqlite3.Connection) -> dict[str, dict]:
 def _catalog_rows(conn: sqlite3.Connection) -> dict[tuple[str, str], dict]:
     return {(r["source"], r["source_key"]): dict(r) for r in conn.execute("""
         SELECT s.name AS source, s.priority, cf.source_id, cf.source_key, cf.family, cf.names_i18n_json,
-               cf.foundry, cf.designers_json, cf.url, cf.signals_json
+               cf.foundry, cf.designers_json, cf.url, cf.signals_json, cf.details_json
         FROM catalog_family cf JOIN source s ON s.id = cf.source_id""")}
 
 
@@ -592,6 +604,7 @@ def search_fonts(conn: sqlite3.Connection, args) -> tuple[list[dict], list[str]]
     for key, families in matched.items():
         for family in families & installed.keys() if key in rows else ():
             by_installed[family].append(rows[key])
+    details_by = {(r["source"], r["family"]): json.loads(r["details_json"]) for r in rows.values() if r["details_json"]}
     if args.query:
         keys = {(r["source"], r["source_key"]) for r in store.search(conn, args.query, limit=CATALOG_HITS)}
         in_scope = [rows[k] for k in keys if k in rows]
@@ -662,9 +675,11 @@ def search_fonts(conn: sqlite3.Connection, args) -> tuple[list[dict], list[str]]
         for c in cand["catalogs"][:3]:
             how = f", {c['method']}" if c.get("method") else ""
             evidence.append(f"listed in {c['source']} as {c['family']!r}{how}")
+        for c in cand["catalogs"]:
+            if details := details_by.get((c["source"], c["family"])):
+                c["details"] = details
         if cand["license"] and args.license != "open":
-            lic = cand["license"]
-            evidence.append(f"license {lic['id'] or repr(lic['raw'])} ({lic['source']} summary, a hint)")
+            evidence.append(_license_evidence(cand))
         own = by_installed.get(cand["family"], []) if cand["installed"] else []
         cand["familiarity"] = familiarity.of(own + cand["text_rows"], [cand["family"], *cand["names_i18n"].values()])
         cand["rank"] = strength                        # uncapped, so bonuses still order capped scores

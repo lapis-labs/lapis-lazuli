@@ -21,7 +21,7 @@ LATIN_GENRES = frozenset(g["id"] for g in _VOCAB["latin_genres"])              #
 HANGUL_CLASSES = frozenset(c["id"] for c in _VOCAB["hangul_classes"])            # bu-ri, min-bu-ri, display, hand
 SUBCLASSES = frozenset(f"{c['id']}.{s['id']}" for c in _VOCAB["hangul_classes"] for s in c.get("subclasses", ()))
 GENRES = LATIN_GENRES | HANGUL_CLASSES
-# OFL-1.1, Apache-2.0, KOGL-1, UFL-1.0, commercial, free-other, and system (usable only where the device has it)
+# OFL-1.1, Apache-2.0, KOGL-1, UFL-1.0, commercial, free-other, custom-free, and system (usable only where the device has it)
 LICENSES = frozenset(entry["id"] for entry in _VOCAB["license_ids"])
 
 # Korean class names as used by Korean catalogs (부리, 둥근 민부리, ...) -> class or class.subclass id

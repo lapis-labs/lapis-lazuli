@@ -54,6 +54,10 @@ class CatalogFamily:
     #   is_noto, is_brand_font      booleans the source sets
     # A key a source does not state is absent: an absent popularity is unknown familiarity, never obscurity.
     signals: dict = field(default_factory=dict)
+    # Facts a search shows beside the candidate, as the source states them; each key is optional:
+    #   conditions_url   the page that holds the family's usage conditions text (a license label's raw text)
+    #   description, homepage, download_url, download_kind ("release-asset" | "archive"), repository, license_source
+    details: dict = field(default_factory=dict)
 
     @classmethod
     def from_dict(cls, data: dict) -> CatalogFamily:
@@ -98,12 +102,14 @@ def source_id(conn: sqlite3.Connection, name: str) -> int | None:
 
 def _insert_family(conn: sqlite3.Connection, sid: int, family: CatalogFamily) -> None:
     conn.execute("""INSERT INTO catalog_family (source_id, source_key, family, family_norm, names_i18n_json,
-                      foundry, designers_json, license, url, signals_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                      foundry, designers_json, license, url, signals_json, details_json)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                  (sid, family.source_key, family.family, norm(family.family) or "",
                   json.dumps(family.names_i18n, ensure_ascii=False) if family.names_i18n else None,
                   family.foundry, json.dumps(family.designers, ensure_ascii=False) if family.designers else None,
                   family.license, family.url,
-                  json.dumps(family.signals, ensure_ascii=False, sort_keys=True) if family.signals else None))
+                  json.dumps(family.signals, ensure_ascii=False, sort_keys=True) if family.signals else None,
+                  json.dumps(family.details, ensure_ascii=False, sort_keys=True) if family.details else None))
     conn.executemany("INSERT OR IGNORE INTO catalog_font (source_id, source_key, postscript_name, style, weight) "
                      "VALUES (?, ?, ?, ?, ?)",
                      [(sid, family.source_key, f.postscript_name, f.style, f.weight) for f in family.fonts])

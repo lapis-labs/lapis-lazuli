@@ -61,6 +61,15 @@ contract formats are v0.
   of the first two under a heading per tier. A family Fontsource, Fontshare, or 안심글꼴 lists takes the rank of the Google Fonts
   family its name matches; with none it is `unknown`, never less-known. The type guide, `lapis` step 7, and `lzl-fonts`: the two
   or three candidates compared include at least one familiar and at least one less-known face unless the brief fixes the face.
+- `lazuli catalog sync` for `anshim` also reads two tabs of the Gongu free-font board (`B0000018`; robots.txt and the terms
+  re-read 2026-10-16, 13 requests at 3 s): 민간 무료글꼴 정보 (its pager followed, at most 20 pages) and 인기글꼴TOP20. A board
+  entry's usage conditions are free text, so its family is license `custom-free` with the text kept verbatim as the license
+  label's raw value and the page it was read on in the new `catalog_family.details_json` (migration 0007); the text is never mapped
+  to the OFL or any named license, `--license open` leaves it out, and `lazuli search` prints it verbatim as the license
+  evidence. A chart position becomes a `chart` popularity signal (familiar; absence from the chart says nothing). A family named in
+  Hangul gets a `script:hang` label derived from the name, so `--script hang` reaches the 안심글꼴 families. Contract
+  (`src/shared/vocab/type.yaml`): license id `custom-free` is new; (`src/shared/sources/registry.yaml`): the `anshim` entry's
+  `good_for`, `checked_at` (2026-10-16), and `note` describe the board.
 
 ### Changed
 

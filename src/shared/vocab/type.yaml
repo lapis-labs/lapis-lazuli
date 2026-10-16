@@ -241,6 +241,7 @@ license_ids:
   - { id: UFL-1.0, note: "SPDX identifier" }
   - { id: commercial, note: "sold or subscribed under the source's own terms" }
   - { id: free-other, note: "free of charge under the source's own terms, not an open license" }
+  - { id: custom-free, note: "free of charge under usage conditions the maker or a listing wrote in free text; the catalog keeps that text verbatim as the label's raw value and never maps it to a named license; not an open license" }
   - { id: system, note: "ships with an operating system; usable only where the device has it (fonts/system-fonts.yaml)" }
 
 # Name heuristics used as a weak labeling function (never as the only signal)

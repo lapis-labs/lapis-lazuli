@@ -58,11 +58,12 @@ sources:
     name: 안심글꼴 (Gongu, Korea Copyright Commission)
     url: https://gongu.copyright.or.kr/
     type: [font]
-    good_for: Korean fonts cleared for use, with the license per font (KOGL type 1 or OFL)
+    good_for: Korean fonts cleared for use, with the license per font (KOGL type 1 or OFL), the free-font board's usage conditions kept verbatim as `custom-free`, and the 인기글꼴 TOP20 chart
     access: adapter
     adapter: anshim
     terms_url: https://gongu.copyright.or.kr/gongu/main/contents.do?menuNo=200174
-    checked_at: "2026-09-26"
+    checked_at: "2026-10-16"
+    note: robots.txt disallows only /upload/ and the my-page path for lazuli, so the free-font board (B0000018) is open to it; the terms forbid a member to copy the site's information for another purpose or give it to a third party, so what lazuli reads stays in the user's own cache
 
   - id: sandoll-cloud
     name: Sandoll Cloud (산돌구름)
