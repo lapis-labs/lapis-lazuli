@@ -135,6 +135,11 @@ Label each claim **confirmed** (you read the supporting text; give the URL and d
 (a snippet, a summary, a source named elsewhere). Reposts of one work are one source. Never invent
 quotations, page numbers, counts, or percentages.
 
+When you write up earlier audits or a worker's findings, each claim keeps the grade its source gave it: observed here,
+reported elsewhere (the owner, a user, another product, version, or date), inferred (a cause no experiment separated),
+or not reproduced. A summary never raises a grade or widens a scope, and takes the weakest grade of the findings
+behind a claim; the owner's statements stay the owner's until reproduced.
+
 For study planning or interpretation of supplied, authorized user evidence, read `references/user-studies.md`.
 
 ## Competitive and comparative analysis

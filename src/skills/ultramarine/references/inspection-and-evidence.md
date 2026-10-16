@@ -188,6 +188,9 @@ only repeat it.
   the code looks consistent with it.
 - That one number stands in for the decision: a contrast ratio covers one pair, and a finding count
   is not a quality grade.
+- That a summary holds more than the audit behind it. Each claim keeps its grade (observed here, reported
+  elsewhere, inferred, not reproduced) and its scope: "no h1" is not "no landmarks" when a `<main>` was seen, and
+  the owner's "every time" is the owner's until reproduced.
 
 ## Rules to read
 

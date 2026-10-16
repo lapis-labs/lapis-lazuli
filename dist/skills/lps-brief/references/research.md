@@ -55,6 +55,26 @@ quotation, count, or percentage. Reposts of one source are one source.
 
 Keep it bounded: a few reads, chosen by the open areas, and stop when they are covered.
 
+### A summary keeps the grade of its source
+
+When you write up earlier findings (a session's audits, a worker's report, a research note), each claim keeps the
+evidence grade its source gave it. The grades, in plain words:
+
+- **observed here**: seen in this product, in this state; the audit says where.
+- **reported elsewhere**: the owner, a user, a forum, a wiki, or another product or version said it. It stays a
+  report, with who said it.
+- **inferred**: follows from what was observed but was not tested. A cause (the data model, a legacy stack) is
+  inferred until an experiment told it apart from the alternatives.
+- **not reproduced**: reported or expected, and no try showed it, or none was made.
+
+A summary never raises a grade and never widens a scope. "No `<h1>` or `<h2>`" does not become "no landmarks"
+while a `<main>` exists. One screen that showed an upsell is not "a popup every time", and the owner's "every time"
+stays the owner's statement until it is reproduced (in the record it is `[declared]`, never `[known]`). A figure
+that was estimated keeps its "about" and its method, a saved account state is not the default, and a report about
+another product or version is not the state of this one. A claim built from several findings takes the weakest of
+their grades. When the audit gives no grade, go back to it before writing the claim; if it is still unclear, write
+the claim as inferred.
+
 ### What stops a lookup
 
 - The request forbids network use, lookups, or downloads, and nobody can be asked: follow it. Write

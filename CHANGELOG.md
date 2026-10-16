@@ -224,6 +224,10 @@ contract formats are v0.
   folded); a keep that names none, or a strip it does not name, stays open with the reason. Migration: a plan that kept
   `decision-metadata` adds `evidence: { strings: [...] }` with the strips it keeps as the page shows them. `Hit` gains an
   optional `text`, and `default_verdict` and `keep_evidence.gap` take it.
+- Research summaries (`lps-brief` research guide, `lzl-research`, the inspection guide of `ultramarine`): each claim keeps the
+  evidence grade its source audit gave it (observed here, reported elsewhere, inferred, not reproduced) and its scope; a
+  summary never raises a grade, takes the weakest grade of the findings behind a claim, and keeps the owner's statements as the
+  owner's until reproduced. Guide only; no new tags.
 
 ## 0.3.0 (2026-10-11)
 
