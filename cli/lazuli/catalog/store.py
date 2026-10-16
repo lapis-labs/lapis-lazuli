@@ -44,6 +44,16 @@ class CatalogFamily:
     url: str | None = None
     fonts: list[CatalogFont] = field(default_factory=list)
     labels: list[CatalogLabel] = field(default_factory=list)
+    # What the catalog says about how familiar or new the family is, from the source's own data:
+    #   popularity       a rank where a LOWER number is MORE popular (Google Fonts: 2 is Roboto)
+    #   popularity_kind  "rank": every family of the source has one, so a high number means less known;
+    #                    "chart": only the top N are listed, so being listed says familiar and absence says nothing
+    #   popularity_list  the chart's name, for a chart
+    #   trending         the source's trending rank (lower is more trending)
+    #   date_added, last_modified   YYYY-MM-DD
+    #   is_noto, is_brand_font      booleans the source sets
+    # A key a source does not state is absent: an absent popularity is unknown familiarity, never obscurity.
+    signals: dict = field(default_factory=dict)
 
     @classmethod
     def from_dict(cls, data: dict) -> CatalogFamily:
@@ -88,11 +98,12 @@ def source_id(conn: sqlite3.Connection, name: str) -> int | None:
 
 def _insert_family(conn: sqlite3.Connection, sid: int, family: CatalogFamily) -> None:
     conn.execute("""INSERT INTO catalog_family (source_id, source_key, family, family_norm, names_i18n_json,
-                      foundry, designers_json, license, url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                      foundry, designers_json, license, url, signals_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                  (sid, family.source_key, family.family, norm(family.family) or "",
                   json.dumps(family.names_i18n, ensure_ascii=False) if family.names_i18n else None,
                   family.foundry, json.dumps(family.designers, ensure_ascii=False) if family.designers else None,
-                  family.license, family.url))
+                  family.license, family.url,
+                  json.dumps(family.signals, ensure_ascii=False, sort_keys=True) if family.signals else None))
     conn.executemany("INSERT OR IGNORE INTO catalog_font (source_id, source_key, postscript_name, style, weight) "
                      "VALUES (?, ?, ?, ?, ?)",
                      [(sid, family.source_key, f.postscript_name, f.style, f.weight) for f in family.fonts])
@@ -120,8 +131,13 @@ def rebuild_search(conn: sqlite3.Connection) -> None:
         FROM catalog_family cf""")
 
 
-def replace_snapshot(conn: sqlite3.Connection, module, families: list[CatalogFamily]) -> int:
-    """Replace every family, font, and label of the module's source in one transaction; returns the count."""
+def replace_snapshot(conn: sqlite3.Connection, module, families: list[CatalogFamily], *,
+                     fetched_at: str | None = None) -> int:
+    """Replace every family, font, and label of the module's source in one transaction; returns the count.
+
+    `fetched_at` keeps an earlier fetch date (a re-map of kept responses sends no request, so the snapshot
+    is no fresher than before); by default the snapshot is dated now.
+    """
     keys = [f.source_key for f in families]
     if len(set(keys)) != len(keys):
         raise ValueError(f"{module.NAME}: duplicate source_key in the snapshot")
@@ -131,7 +147,7 @@ def replace_snapshot(conn: sqlite3.Connection, module, families: list[CatalogFam
         for family in families:
             _insert_family(conn, sid, family)
         rebuild_search(conn)
-        conn.execute("UPDATE source SET fetched_at = ?, status = 'ok' WHERE id = ?", (_iso(now()), sid))
+        conn.execute("UPDATE source SET fetched_at = ?, status = 'ok' WHERE id = ?", (fetched_at or _iso(now()), sid))
         set_meta(conn, f"status_reason.{module.NAME}", None)
     return len(families)
 

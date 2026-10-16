@@ -28,6 +28,12 @@ subclass (Sans, Serif, Slab, Script, Monospace, Display, Theme, Not text), feel 
 (Purpose, Special use, Seasonal), or property (Quality) labels with the tag's weight, `mapped` null:
 the type vocabulary has no Latin subclasses or feels, and a Latin tag such as /Sans/Rounded says
 nothing sound about a family's Hangul. Subsets become `script:<ISO 15924>` property labels.
+
+Signals (`CatalogFamily.signals`): the listing's `popularity` and `trending` (ranks over the whole listing, so a
+lower number is more popular or more trending; checked 2026-10-16 on the kept response: Roboto 2, Open Sans 3,
+Inter 5, Lobster 143, Gowun Batang 547), `dateAdded`, `lastModified`, `isNoto`, and `isBrandFont`. `defaultSort`
+and `size` are not kept. `from_raw` re-maps the kept responses, so a database synced before the signals were
+stored gets them from `lazuli catalog remap` without a request.
 """
 from __future__ import annotations
 
@@ -37,7 +43,7 @@ import json
 import re
 from collections import defaultdict
 
-from lazuli.catalog import labels
+from lazuli.catalog import labels, store
 from lazuli.catalog.net import Fetcher
 from lazuli.catalog.store import CatalogFamily, CatalogLabel
 
@@ -205,11 +211,31 @@ def _genre_labels(entry: dict) -> list[CatalogLabel]:
     return out
 
 
+def _signals(entry: dict) -> dict:
+    """The listing's familiarity and age fields, as `CatalogFamily.signals`. `popularity` is a rank over the
+    whole listing (Roboto is 2), so a lower number is more popular; a field the entry lacks stays out."""
+    out: dict = {}
+    for field in ("popularity", "trending"):
+        value = entry.get(field)
+        if isinstance(value, int) and not isinstance(value, bool):
+            out[field] = value
+    if "popularity" in out:
+        out["popularity_kind"] = "rank"
+    for field, key in (("dateAdded", "date_added"), ("lastModified", "last_modified")):
+        if isinstance(entry.get(field), str) and entry[field]:
+            out[key] = entry[field]
+    for field, key in (("isNoto", "is_noto"), ("isBrandFont", "is_brand_font")):
+        if isinstance(entry.get(field), bool):
+            out[key] = entry[field]
+    return out
+
+
 def _family(entry: dict, tags, licenses: dict[str, str | None]) -> CatalogFamily:
     name = entry["family"]
     directory = licenses.get(_slug(name))
     family = CatalogFamily(source_key=name, family=name, designers=list(entry.get("designers") or ()),
-                           license=LICENSE_DIRS.get(directory), url=SPECIMEN_URL.format(name.replace(" ", "+")))
+                           license=LICENSE_DIRS.get(directory), url=SPECIMEN_URL.format(name.replace(" ", "+")),
+                           signals=_signals(entry))
     family.labels += _genre_labels(entry)
     family.labels += _tag_labels(tags)
     family.labels += subset_labels(entry.get("subsets") or ())
@@ -240,3 +266,13 @@ def fetch(fetcher: Fetcher) -> list[CatalogFamily]:
                                     store_as=f"trees/{directory}").json()
              for directory in LICENSE_DIRS}
     return families_from(listing, tags_csv, trees)
+
+
+def from_raw(conn) -> list[CatalogFamily] | None:
+    """The snapshot re-mapped from the kept responses (no request), or None when one of them is missing."""
+    listing = store.load_raw(conn, NAME, "metadata/fonts")
+    tags_csv = store.load_raw(conn, NAME, "tags/all/families.csv")
+    trees = {d: store.load_raw(conn, NAME, f"trees/{d}") for d in LICENSE_DIRS}
+    if listing is None or tags_csv is None or any(tree is None for tree in trees.values()):
+        return None
+    return families_from(listing.decode(), tags_csv.decode(), {d: json.loads(t) for d, t in trees.items()})

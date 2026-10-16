@@ -40,11 +40,22 @@ label (raw or mapped), a measured class, a foundry or designer. Filters:
                contrast, square spread), each scaled to a typical step and compared on the face nearest a
                regular weight; a target feature the other family lacks counts one step. Catalog-only
                families have no measurements and are left out.
+  --by-familiarity  list familiar and less-known candidates side by side: half of `--limit` (rounded up) for each
+               tier, a tier with fewer candidates giving its slots to the others, grouped under a heading per
+               tier. A candidate's familiarity is a tier plus its basis, whether or not this option is given (JSON
+               `familiarity`): `familiar` is the top quarter of a catalog's ranked popularity (Google Fonts
+               `popularity`, where a LOWER number is MORE popular) or a place on a chart such as 안심글꼴's
+               인기글꼴 TOP20; `less-known` is a ranked family below that. A family whose own catalog states
+               no popularity (Fontsource, Fontshare, 안심글꼴, GitHub) takes the rank of the one Google Fonts family
+               its name matches; with none, it is `unknown`: no catalog says how familiar it is, which is not
+               the same as obscure, so it is never listed as less-known. Among less-known candidates of equal
+               rank the less popular comes first.
 Exit codes: 0 searched (even with no candidates); 2 usage or missing input.
 """
 from __future__ import annotations
 
 import argparse
+import bisect
 import functools
 import importlib
 import json
@@ -71,6 +82,8 @@ NON_TEXT_CLASSES = frozenset({"display", "hand", "symbol", "decorative"})
 TEXT_ROLES = frozenset({"body", "ui", "data", "caption"})
 DISPLAY_ROLES = frozenset({"display", "heading"})
 ROLES = ("display", "heading", "body", "ui", "data", "code", "caption")
+FAMILIAR_SHARE = 0.25               # the top quarter of a catalog's ranked families is familiar
+TIERS = ("familiar", "less-known", "unknown")
 # ISO 15924 composites and the plan codes they stand for (a family needs every part)
 COMPOSITE_SCRIPTS = {"kore": ("hang",), "jpan": ("kana", "hani"), "hans": ("hani",), "hant": ("hani",),
                      "hrkt": ("kana",)}
@@ -198,7 +211,7 @@ def _installed(conn: sqlite3.Connection) -> dict[str, dict]:
 def _catalog_rows(conn: sqlite3.Connection) -> dict[tuple[str, str], dict]:
     return {(r["source"], r["source_key"]): dict(r) for r in conn.execute("""
         SELECT s.name AS source, s.priority, cf.source_id, cf.source_key, cf.family, cf.names_i18n_json,
-               cf.foundry, cf.designers_json, cf.url
+               cf.foundry, cf.designers_json, cf.url, cf.signals_json
         FROM catalog_family cf JOIN source s ON s.id = cf.source_id""")}
 
 
@@ -472,6 +485,95 @@ def _similarity_evidence(target: str, d: float, diffs, missing: list[str], mine:
             + (f"; not measured here: {', '.join(missing)}" if missing else ""))
 
 
+# ---------------------------------------------------------------- familiarity
+
+TIER_HEADINGS = {"familiar": "familiar (top quarter of a catalog's popularity ranking, or on a chart)",
+                 "less-known": "less-known (ranked below the top quarter)",
+                 "unknown": "unknown familiarity (no synced catalog says how familiar they are; not the same as obscure)"}
+
+
+def _row_signals(row: dict) -> dict:
+    return json.loads(row.get("signals_json") or "{}")
+
+
+def _row_names(row: dict) -> list[str]:
+    return [n for n in [row["family"], *json.loads(row["names_i18n_json"] or "{}").values()] if n]
+
+
+class Familiarity:
+    """How familiar a family is, from the popularity the catalogs state (`CatalogFamily.signals`).
+
+    A `rank` source (Google Fonts) gives every family a number where lower is more popular; the top
+    FAMILIAR_SHARE of its ranked families, by position, is familiar and the rest less-known. A `chart`
+    source lists only its top N, so a listed family is familiar and an unlisted one says nothing. A family
+    whose own rows state nothing takes the verdict of the one ranked catalog family its name matches
+    (several matches say nothing). No verdict is `unknown`, never less-known.
+    """
+
+    def __init__(self, rows):
+        self.ranks: dict[str, list[int]] = defaultdict(list)
+        self.by_name: dict[str, dict[tuple[str, str], dict]] = defaultdict(dict)
+        for row in rows:
+            signals = _row_signals(row)
+            if signals.get("popularity_kind") == "rank" and isinstance(signals.get("popularity"), int):
+                self.ranks[row["source"]].append(signals["popularity"])
+                for name in _row_names(row):
+                    if key := norm(name):
+                        self.by_name[key][(row["source"], row["source_key"])] = row
+        for ranks in self.ranks.values():
+            ranks.sort()
+
+    def _verdict(self, row: dict, via: str = "") -> dict | None:
+        signals = _row_signals(row)
+        popularity, source = signals.get("popularity"), row["source"]
+        if not isinstance(popularity, int):
+            return None
+        if signals.get("popularity_kind") == "chart":
+            return {"tier": "familiar", "source": source, "rank": popularity,
+                    "basis": f"{via}{source} {signals.get('popularity_list') or 'chart'} no. {popularity}"}
+        if signals.get("popularity_kind") != "rank":
+            return None
+        ranks = self.ranks[source]
+        position = bisect.bisect_left(ranks, popularity) + 1
+        tier = "familiar" if position / len(ranks) <= FAMILIAR_SHARE else "less-known"
+        return {"tier": tier, "source": source, "rank": popularity, "position": position, "of": len(ranks),
+                "basis": f"{via}{source} popularity {popularity} (position {position} of {len(ranks)})"}
+
+    def of(self, rows: list[dict], names: list[str]) -> dict:
+        """{"tier", and for a known tier "basis", "source", "rank", and for a rank "position" and "of"} from the
+        candidate's own catalog rows, else from the ranked family its names match."""
+        found = [v for row in rows if (v := self._verdict(row))]
+        if not found:
+            matches: dict[tuple[str, str], dict] = {}
+            for name in [*names, *(n for row in rows for n in _row_names(row))]:
+                if key := norm(name):
+                    matches.update(self.by_name.get(key, {}))
+            if len(matches) == 1:
+                (row,) = matches.values()
+                found = [self._verdict(row, f"by name, {row['family']!r}: ")]
+        if not found:
+            return {"tier": "unknown"}
+        return min(found, key=lambda v: (TIERS.index(v["tier"]), v.get("position", 0)))
+
+
+def _balanced(out: list[dict], limit: int) -> list[dict]:
+    """`limit` candidates with familiar and less-known ones side by side (`--by-familiarity`): half the slots
+    (the odd one to familiar) for each, a tier with fewer candidates giving its slots to less-known, then
+    familiar, then unknown. Candidates keep their rank order inside a tier, except that among less-known ones
+    of equal rank the less popular comes first."""
+    tiers = {t: [c for c in out if c["familiarity"]["tier"] == t] for t in TIERS}
+    tiers["less-known"].sort(key=lambda c: (c.get("distance", 0), -round(c["rank"], 3),
+                                            -c["familiarity"].get("position", 0)))
+    take = {"familiar": min(len(tiers["familiar"]), -(-limit // 2)),
+            "less-known": min(len(tiers["less-known"]), limit // 2), "unknown": 0}
+    free = limit - sum(take.values())
+    for tier in ("less-known", "familiar", "unknown"):
+        extra = min(free, len(tiers[tier]) - take[tier])
+        take[tier] += extra
+        free -= extra
+    return [c for tier in TIERS for c in tiers[tier][:take[tier]]]
+
+
 def search_fonts(conn: sqlite3.Connection, args) -> tuple[list[dict], list[str]]:
     notes = []
     installed = _installed(conn)
@@ -485,6 +587,11 @@ def search_fonts(conn: sqlite3.Connection, args) -> tuple[list[dict], list[str]]
                              JOIN source s ON s.id = m.source_id JOIN local_font lf ON lf.id = m.local_font_id
                              WHERE lf.family IS NOT NULL"""):
         matched[(r["source"], r["source_key"])].add(r["family"])
+    familiarity = Familiarity(rows.values())
+    by_installed: dict[str, list[dict]] = defaultdict(list)    # an installed family's matched catalog rows
+    for key, families in matched.items():
+        for family in families & installed.keys() if key in rows else ():
+            by_installed[family].append(rows[key])
     if args.query:
         keys = {(r["source"], r["source_key"]) for r in store.search(conn, args.query, limit=CATALOG_HITS)}
         in_scope = [rows[k] for k in keys if k in rows]
@@ -558,6 +665,8 @@ def search_fonts(conn: sqlite3.Connection, args) -> tuple[list[dict], list[str]]
         if cand["license"] and args.license != "open":
             lic = cand["license"]
             evidence.append(f"license {lic['id'] or repr(lic['raw'])} ({lic['source']} summary, a hint)")
+        own = by_installed.get(cand["family"], []) if cand["installed"] else []
+        cand["familiarity"] = familiarity.of(own + cand["text_rows"], [cand["family"], *cand["names_i18n"].values()])
         cand["rank"] = strength                        # uncapped, so bonuses still order capped scores
         cand["score"] = round(max(0.0, min(strength, 1.0)), 3)
         cand["evidence"] = list(dict.fromkeys(evidence))
@@ -566,7 +675,10 @@ def search_fonts(conn: sqlite3.Connection, args) -> tuple[list[dict], list[str]]
     out.sort(key=lambda c: (c.get("distance", 0), -c["rank"], not c["installed"],
                             min((priority.get(s["source"], 99) for s in c["catalogs"]), default=99),
                             c["family"].casefold()))
-    shown = out[:args.limit]
+    shown = _balanced(out, args.limit) if args.by_familiarity else out[:args.limit]
+    if args.by_familiarity:
+        counts = ", ".join(f"{t} {sum(c['familiarity']['tier'] == t for c in out)}" for t in TIERS)
+        notes.append(f"familiarity of all {len(out)} matches: {counts}")
     if len(out) > len(shown):
         notes.append(f"{len(out) - len(shown)} more candidates match; --limit {len(out)} lists them")
     return shown, notes
@@ -575,7 +687,11 @@ def search_fonts(conn: sqlite3.Connection, args) -> tuple[list[dict], list[str]]
 # ---------------------------------------------------------------- output
 
 PUBLIC_FIELDS = ("family", "names_i18n", "installed", "origins", "faces", "scripts", "classes", "genres",
-                 "license", "catalogs", "delivery", "owned", "score", "distance", "evidence")
+                 "license", "catalogs", "delivery", "familiarity", "owned", "score", "distance", "evidence")
+
+
+def _familiarity_fact(familiarity: dict) -> str:
+    return f"familiarity {familiarity['tier']}" + (f" ({familiarity['basis']})" if "basis" in familiarity else "")
 
 
 def _public(cand: dict) -> dict:
@@ -591,9 +707,11 @@ def _text(candidates: list[dict], args, notes: list[str]) -> str:
         where = (f"installed: {', '.join(c['origins'])}, {_faces(c['faces'])}" if c["installed"]
                  else f"owned ({c['owned']['source']}): needs activation" if c.get("owned")
                  else "catalog: " + ", ".join(dict.fromkeys(s["source"] for s in c["catalogs"])))
+        if args.by_familiarity and (i == 1 or c["familiarity"]["tier"] != candidates[i - 2]["familiarity"]["tier"]):
+            lines.append(TIER_HEADINGS[c["familiarity"]["tier"]])
         lines.append(f"{i:2}. {c['family']}  [{where}]  score {c['score']:.2f}")
         lines.append("    why: " + "; ".join(c["evidence"]))
-        facts = []
+        facts = [_familiarity_fact(c["familiarity"])]
         if c["scripts"]:
             facts.append("scripts " + ", ".join(c["scripts"]))
         for use in ("web", "app"):
@@ -621,6 +739,9 @@ def _parser(prog: str) -> argparse.ArgumentParser:
     ap.add_argument("--similar-to", metavar="FAMILY", help="rank installed families by measured-feature distance")
     ap.add_argument("--limit", type=int, default=DEFAULT_LIMIT, metavar="N",
                     help=f"candidates to list (default {DEFAULT_LIMIT}); a note says how many more match")
+    ap.add_argument("--by-familiarity", action="store_true",
+                    help="list familiar and less-known candidates side by side (half of --limit each); a family no "
+                         "catalog ranks is listed apart as unknown, never as less-known")
     ap.add_argument("--json", action="store_true", help="machine output")
     return ap
 
@@ -637,6 +758,8 @@ def main(argv: list[str] | None = None, prog: str = "lazuli search") -> int:
     args = ap.parse_args(rest)
     if args.limit < 1:
         ap.error("--limit must be at least 1")
+    if args.by_familiarity and args.limit < 2:
+        ap.error("--by-familiarity needs --limit 2 or more: one slot cannot show familiar and less-known side by side")
     if args.script:
         try:
             script_parts(args.script)
@@ -656,7 +779,7 @@ def main(argv: list[str] | None = None, prog: str = "lazuli search") -> int:
         conn.close()
     if args.json:
         filters = {k: getattr(args, k) for k in ("script", "role", "category", "license", "delivery", "installed",
-                                                 "similar_to", "limit")}
+                                                 "similar_to", "by_familiarity", "limit")}
         json.dump({"type": "font", "query": args.query, "filters": filters,
                    "candidates": [_public(c) for c in candidates], "notes": notes},
                   sys.stdout, ensure_ascii=False, indent=1)

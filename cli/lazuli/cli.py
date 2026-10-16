@@ -39,7 +39,7 @@ def main(argv: list[str] | None = None) -> int:
     local = sub.add_parser("local", help="what is installed on this computer")
     local.add_subparsers(dest="what", required=True).add_parser(
         "fonts", help="scan (read-only), measure, and list local fonts (see `lazuli local fonts -h`)")
-    sub.add_parser("catalog", help="font catalogs: `lazuli catalog sync|lookup|status` (see `lazuli catalog -h`)")
+    sub.add_parser("catalog", help="font catalogs: `lazuli catalog sync|remap|lookup|status` (see `lazuli catalog -h`)")
     sub.add_parser("doctor", help="check that this computer can run the CLI")
     sub.add_parser("class", help="record your own class for a font: `lazuli class set|list|remove` (outranks catalogs)")
     sub.add_parser("lock", help="pin a chosen font's source, license, and delivery in .lapis/fonts.lock.json")

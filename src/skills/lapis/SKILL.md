@@ -340,8 +340,8 @@ choosing one:
    commercial foundries, and Adobe Fonts are all candidates to explore and brainstorm with; an
    open-licensed family may be fetched and bundled, and a commercial license or an Adobe activation goes
    to the user. Before settling a role, run at least one search without `--installed` and compare installed and
-   catalog candidates side by side; `references/type.md` gives the rule and what to tell the owner when
-   `lazuli adobe` is off.
+   catalog candidates side by side, with at least one less-known face beside the familiar ones
+   (`--by-familiarity`); `references/type.md` gives the rule and what to tell the owner when `lazuli adobe` is off.
 3. Specimen: set two or three candidates, at least one a named face, in the page's real copy (title,
    paragraph, control, figures, every locale) on a throwaway page under `.lapis/specimens/`, and look
    at it: `lapis-design render check .lapis/specimens/<task>.html --task <task>-specimen --width 390`

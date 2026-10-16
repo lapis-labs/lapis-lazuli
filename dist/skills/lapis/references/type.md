@@ -97,10 +97,15 @@ Work down the rows. "Not checked" means only the report shows the work.
 | No database: set `LAZULI_DB` to a writable path, run `lazuli local fonts` and `lazuli catalog sync`, then `lazuli search --license open --delivery web`, and lock a family the user or `DESIGN.md` names with `--source`, `--delivery`, `--postscript`. With nothing to name, use `system-ui`, add one `claims.unresolved` line, report it first, and ask the user to name a face or to fix the platform's own face in the brief (`fixed_by: brief`) | `claims.unresolved` | `plan.uncompared-decision` and the finding below stay open until then |
 
 **Look beyond what is installed.** Before settling a role, run at least one search without `--installed`
-(`lazuli search --script <code> --role <role> --license open`) and put installed and catalog candidates side
-by side in the two or three you compare; `--installed` alone only re-checks faces that are already here. It is
-one search, not a walk through every catalog, and a snapshot that `lazuli catalog status` shows fresh needs no
-sync. A role the brief or the contract fixes needs none. When the owner asks about Adobe Fonts and
+(`lazuli search --script <code> --role <role> --license open --by-familiarity`) and put installed and catalog
+candidates side by side in the two or three you compare; `--installed` alone only re-checks faces that are
+already here. Keep the familiar candidates and always place at least one less-known one beside them: the famous
+faces are not wrong, but choosing only from them is too narrow. The two or three you compare include at least
+one familiar and at least one less-known candidate, unless the brief fixes the face. Each result's `familiarity`
+says which it is, and `--by-familiarity` lists both kinds in one search. `unknown` is not less-known: no synced
+catalog says how familiar that family is, so it may be a candidate, but it does not fill the less-known place.
+It is one search, not a walk through every catalog, and a snapshot that `lazuli catalog status` shows fresh
+needs no sync. A role the brief or the contract fixes needs none. When the owner asks about Adobe Fonts and
 `lazuli adobe status` says off, tell the owner in one line that it is off and that `lazuli adobe enable`, run by
 the owner in a terminal, turns it on; then go on with the installed, owned, and named faces. Nothing checks
 this: a candidate's `source` in `explorations` is your own label, so a check could count labels, not searches.

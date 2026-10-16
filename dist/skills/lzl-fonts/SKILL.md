@@ -73,6 +73,9 @@ plan. It locks only a family already chosen.
 - `sync` refreshes expired snapshots (`google-fonts`, `fontsource`, `fontshare`, `anshim`) and the
   bundled `system-table` (`shared/fonts/system-fonts.yaml`, no network); `--force` ignores
   freshness. A failed source is skipped until named with `--source`.
+- `remap` re-applies the mapping rules to the responses a snapshot source kept, with no request and the
+  fetch date unchanged (`google-fonts` only for now): run it once after an update that stores more of what
+  a source sends, such as the popularity fields.
 - `lookup` asks the on-request `sandoll`, at its stated crawl delay, about installed families no
   snapshot matched (`--family` or `--unmatched`). `status` shows freshness and state.
 - Sources whose terms forbid tools, as lazuli reads them (not legal advice), send nothing: `adobe-cjk` is
@@ -96,9 +99,19 @@ measured distance, naming close and far features. The score only orders; return 
 with their evidence.
 
 `--installed` keeps only faces already on this machine: right for an inventory question, not for choosing. Before a
-type role is settled, run at least one search without it (for example `--script <code> --role <role> --license open`)
-and compare installed and catalog candidates side by side, two or three in all; that is one search, not a walk
-through every catalog, and a snapshot that `lazuli catalog status` shows fresh needs no sync.
+type role is settled, run at least one search without it (for example
+`--script <code> --role <role> --license open --by-familiarity`) and compare installed and catalog candidates side
+by side, two or three in all; that is one search, not a walk through every catalog, and a snapshot that
+`lazuli catalog status` shows fresh needs no sync.
+
+Familiarity: every candidate says whether it is `familiar` (the top quarter of a catalog's popularity ranking, where
+Google Fonts' `popularity` is a rank and a LOWER number is MORE popular), `less-known` (ranked below that), or
+`unknown`. A family Fontsource, Fontshare, or 안심글꼴 lists takes the rank of the Google Fonts family its name
+matches; with none, no catalog says how familiar it is, and that is not the same as obscure, so it is never
+listed as less-known. `--by-familiarity` lists familiar and less-known candidates side by side (half of `--limit`
+each, the least popular of the less-known first), under a heading per tier. Keep the familiar candidates and always
+place at least one less-known one beside them in the two or three you compare, unless the brief fixes the face; an
+`unknown` family may be a candidate but does not fill the less-known place.
 
 Whether two faces look alike is not read from a role-size specimen or from `--similar-to`'s distance. Draw the same
 text at the same weight at 96 px or more, view a crop at native resolution (not a downscaled full page), and name

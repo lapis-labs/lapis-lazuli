@@ -1,8 +1,11 @@
-"""`lazuli catalog sync|lookup|status`: font catalogs, requested only on command and cached only locally.
+"""`lazuli catalog sync|remap|lookup|status`: font catalogs, requested only on command and cached only locally.
 
 sync     snapshot and bundled sources whose ttl expired (all of them with --force); a source that fails
          keeps its previous rows and is marked failed with the reason. A failed source is not requested
          again by a plain `sync`; name it with --source (or use --force) to try again.
+remap    re-apply the mapping rules to the responses a snapshot source kept, with no request: rows get fields the
+         mapping learned after the last sync (the fetch date stays as it was). A source with no kept responses
+         says so and waits for a sync.
 lookup   on-request sources, only for installed families no snapshot or bundled source matched; fresh
          cached answers are reused. The plan (requests and time at the source's pace) is shown first,
          and more than 10 requests need confirmation unless --yes. A block stops the source and marks
@@ -113,6 +116,28 @@ def sync(conn, names: list[str] | None, *, force: bool) -> int:
     if synced:
         _report_match(conn)
     return 1 if failed else 0
+
+
+def remap(conn, names: list[str] | None) -> int:
+    """Rebuild each snapshot source's rows from its kept responses; sends nothing."""
+    known = {m.NAME: m for m in catalog.SOURCES if hasattr(m, "from_raw")}
+    for name in names or ():
+        if name not in known:
+            print(f"{name!r} cannot be re-mapped; sources that can: {', '.join(known)}", file=sys.stderr)
+            return 2
+    changed = 0
+    for module in (m for m in known.values() if not names or m.NAME in names):
+        families = module.from_raw(conn)
+        row = _source_row(conn, module.NAME)
+        if families is None or row is None:
+            print(f"{module.NAME}: no kept responses to re-map; run `lazuli catalog sync --source {module.NAME}`")
+            continue
+        count = store.replace_snapshot(conn, module, families, fetched_at=row["fetched_at"])
+        print(f"{module.NAME}: {count} families re-mapped from kept responses, 0 requests")
+        changed += 1
+    if changed:
+        _report_match(conn)
+    return 0
 
 
 def _disable(conn, module, reason: str) -> None:
@@ -260,6 +285,8 @@ def main(argv: list[str] | None = None, prog: str = "lazuli catalog") -> int:
     p_sync = sub.add_parser("sync", help="refresh snapshot and bundled catalogs whose ttl expired")
     p_sync.add_argument("--source", nargs="+", action="extend", metavar="NAME", help="only these sources")
     p_sync.add_argument("--force", action="store_true", help="sync even when the ttl has not expired")
+    p_remap = sub.add_parser("remap", help="re-apply the mapping to kept responses, with no request")
+    p_remap.add_argument("--source", nargs="+", action="extend", metavar="NAME", help="only these sources")
     p_lookup = sub.add_parser("lookup", help="ask on-request catalogs about installed families no snapshot matched")
     p_lookup.add_argument("--source", metavar="NAME", help="one lookup source (noonnu or sandoll); default: all")
     which = p_lookup.add_mutually_exclusive_group(required=True)
@@ -273,6 +300,8 @@ def main(argv: list[str] | None = None, prog: str = "lazuli catalog") -> int:
     try:
         if args.command == "sync":
             return sync(conn, args.source, force=args.force)
+        if args.command == "remap":
+            return remap(conn, args.source)
         if args.command == "lookup":
             return lookup(conn, args.source, args.family, limit=args.limit, yes=args.yes)
         return status(conn)

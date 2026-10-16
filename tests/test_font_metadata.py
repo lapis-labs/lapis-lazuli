@@ -173,7 +173,7 @@ def test_migration_0005_refreshes_both_origins_without_discarding_user_or_measur
     conn.commit()
     conn.close()
     with db.connect(database) as conn:
-        assert conn.execute("PRAGMA user_version").fetchone()[0] == 5
+        assert conn.execute("PRAGMA user_version").fetchone()[0] == db.latest_version()
         assert conn.execute("SELECT value FROM meta WHERE key = 'inventory_fingerprint'").fetchone() is None
         result = scan.scan(conn)
         assert (result.updated, result.added, result.removed, result.unreadable) == (2, 0, 0, [])

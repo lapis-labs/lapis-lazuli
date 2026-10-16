@@ -52,6 +52,15 @@ contract formats are v0.
   behavior changed): the summary never calls them done, the questions must carry the lines (`Delivery.problems`), the section
   is left out when none is open or nothing is built, and `next --json` carries them as `checks_unfinished`. The summary changes
   when a check starts or ends, not while it runs.
+- `lazuli search` tells how familiar each candidate is and can list familiar and less-known ones side by side. The Google Fonts
+  snapshot now stores the listing's `popularity` and `trending` ranks (a smaller number is more popular: Roboto is 2),
+  `dateAdded`, `lastModified`, `isNoto`, and `isBrandFont` (`catalog_family.signals_json`, migration 0006); a database synced
+  earlier gets them with no request from the new `lazuli catalog remap`, which re-applies the mapping to the kept responses and
+  leaves the fetch date alone. Every result carries `familiarity` (`familiar`: the top quarter of a catalog's ranking by position,
+  or on a chart; `less-known`: ranked below that; `unknown`) with its basis, and `--by-familiarity` lists half of `--limit` of each
+  of the first two under a heading per tier. A family Fontsource, Fontshare, or 안심글꼴 lists takes the rank of the Google Fonts
+  family its name matches; with none it is `unknown`, never less-known. The type guide, `lapis` step 7, and `lzl-fonts`: the two
+  or three candidates compared include at least one familiar and at least one less-known face unless the brief fixes the face.
 
 ### Changed
 
