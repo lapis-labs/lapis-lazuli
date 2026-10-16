@@ -28,6 +28,10 @@ Alternatives a case may list:
   {plan: PATH, has | lacks | present | min}   no citation: the plan itself says it. `has` holds when any
                listed value is among the values at PATH, `lacks` when none is (and PATH has a value),
                `present` when PATH has a value, `min` when a number at PATH is at least that
+  strings      `evidence.strings` lists the strings the keep keeps, as the page shows them; a finding about
+               one string (`Hit.text`) is waived only when that string is among them (compared after Unicode
+               compatibility folding, case folding, and whitespace collapsing), so a keep covers the lines it
+               names and not the ones beside them. A finding with no string of its own needs only a non-empty list.
 
 It judges that the evidence exists where the plan says it does, never that it supports the case; the
 critic reads the reason against the page.
@@ -52,6 +56,7 @@ CITED = {
     "composition": "the chosen candidate of a rendered layout comparison in explorations",
     "palette": "the chosen candidate of a traced, rendered palette comparison in explorations",
     "asset": "the id of an asset in the asset ledger",
+    "strings": "the strings the keep keeps, as the page shows them",
 }
 
 
@@ -65,22 +70,25 @@ class Sources:
     actual_roles: list[dict] | None = None
 
 
-def gap(case: dict, entry: dict, sources: Sources) -> str | None:
-    """Why `entry` (a defaults keep) does not back `case`, or None when it does or the case lists no evidence."""
+def gap(case: dict, entry: dict, sources: Sources, text: str | None = None) -> str | None:
+    """Why `entry` (a defaults keep) does not back `case`, or None when it does or the case lists no evidence.
+    `text` is the visible string the finding is about, when it has one (what `strings` is judged against)."""
     alternatives = case.get("evidence")
     if not isinstance(alternatives, list):
         return None
     cited = entry.get("evidence") if isinstance(entry.get("evidence"), dict) else {}
     reasons = []
     for alternative in alternatives:
-        reason = _holds(alternative, cited, sources)
+        reason = _holds(alternative, cited, sources, text)
         if reason is None:
             return None
         reasons.append(reason)
     return f"keep_when {case.get('id')!r} needs evidence the keep does not have: " + "; or ".join(reasons)
 
 
-def _holds(alternative: Any, cited: dict, sources: Sources) -> str | None:
+def _holds(alternative: Any, cited: dict, sources: Sources, text: str | None) -> str | None:
+    if alternative == "strings":
+        return _strings(cited.get("strings"), text)
     if isinstance(alternative, str):
         return _CHECKS[alternative](cited.get(alternative), sources)
     if "asset" in alternative:
@@ -94,6 +102,15 @@ def _norm(text: Any) -> str:
 
 def _missing(kind: str) -> str:
     return f"evidence.{kind} ({CITED[kind]}) is missing"
+
+
+def _strings(cite: Any, text: str | None) -> str | None:
+    kept = [s for s in cite if isinstance(s, str) and _norm(s)] if isinstance(cite, list) else []
+    if not kept:
+        return "strings: " + _missing("strings")
+    if text is None or _norm(text) in {_norm(s) for s in kept}:
+        return None
+    return f"strings: {text!r} is not among the kept strings ({'; '.join(map(repr, kept))})"
 
 
 def _design(cite: Any, sources: Sources) -> str | None:

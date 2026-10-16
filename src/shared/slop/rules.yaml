@@ -35,6 +35,9 @@
 #                      traced inputs, candidate artifacts/values and matched captures
 #                  { asset: { kind, origin, role } }   the keep cites a ledger asset that this task uses and
 #                      whose listed fields have one of the listed values
+#                  strings   the keep names, in its `evidence.strings`, the strings it keeps, as the page shows them; the
+#                      check waives a finding about one string (a metadata strip, an ambient status line) only when
+#                      that string is among them, so a keep never covers the lines near the ones it names
 #                  { plan: PATH, has | lacks | present | min }   the plan itself says it; no citation
 #                Adding a case is a contract change: give it the evidence a plan can hold, or `none`. The
 #                check judges that the evidence exists where the plan says it does, never that it supports
@@ -3494,7 +3497,7 @@ rules:
     why: A middle-dot strip gains prominence without changing a task; when short items echo the page's heading vocabulary rather than a decision record, it repeats the topic as ornament
     better: Remove topic echoes; keep route, date, direction, units, artist, year, material, dimensions, chart scope, source, and byline records beside the object they qualify
     keep_when:
-      - { id: decision-metadata, when: "real metadata the user filters or decides by", evidence: none }
+      - { id: decision-metadata, when: "real metadata the user filters or decides by, each kept string named in the keep's evidence, so an explanation beside it is judged on its own", evidence: [strings] }
     waiver: { scope: value }
     verify: review
     provenance:

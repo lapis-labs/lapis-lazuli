@@ -88,6 +88,11 @@ After a draft, read the page as if no conversation with the owner existed.
 - **Headline.** State its proposition, keep the subject, object, scope, and certainty, and move the
   explanation to the deck beside it. A word that only restates the sentence goes; a meaning never does.
 - **Terms.** Keep a term the visitor needs (finding, critic, world material) and explain it at the right depth.
+- **Necessity.** For each string alone: if it is removed, what can the reader no longer decide or do, and does the
+  element beside it already say it? A string that changes no decision or repeats its neighbour goes; one that
+  explains how a figure is made keeps the part the reader acts on and moves the method behind a disclosure. A keep
+  is per string, never because its group looked like metadata (`references/interface-copy.md`, Decide what the
+  screen must show).
 
 ## Write key copy - `content.key_copy`
 

@@ -1821,8 +1821,10 @@ rules:
     chart scope, source, and byline records beside the object they qualify
   keep_when:
   - id: decision-metadata
-    when: real metadata the user filters or decides by
-    evidence: none
+    when: real metadata the user filters or decides by, each kept string named in the keep's evidence,
+      so an explanation beside it is judged on its own
+    evidence:
+    - strings
 - id: copy.placeholder-content
   why: Placeholder names and companies hide edge cases and the product's voice
   better: Use representative, clearly synthetic content matched to the domain, including long and local

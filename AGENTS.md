@@ -124,7 +124,7 @@ files beside it; the database file itself does not change.
   `defaults` keep names one as `keep_when`, and `plan check` and `slop lint` waive a finding only for an id
   of that rule, so renaming or removing an id breaks the plans that name it: treat it like a rule ID. A rule
   that lists no case takes no keep. A case on a rule that takes a keep lists `evidence`: the alternatives a
-  plan can hold for its premise (`design`, `brief`, `material`, `source`, `exploration`, an `asset`, or a
+  plan can hold for its premise (`design`, `brief`, `material`, `source`, `exploration`, an `asset`, the `strings` it keeps, or a
   `plan` condition), any one of which backs the keep, or `none` when nothing a plan, a design contract, or
   the asset ledger holds can show it. The check waives only when the keep carries that evidence, so a new
   case states what a plan can hold, or `none`; the legend in `src/shared/slop/rules.yaml` defines each kind.

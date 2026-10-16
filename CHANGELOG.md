@@ -214,6 +214,16 @@ contract formats are v0.
   owner asks about Adobe Fonts and `lazuli adobe status` says off, tell the owner in one line that it is off and that
   `lazuli adobe enable`, run by the owner in a terminal, turns it on. Guide only: a candidate's `source` in `explorations` is the
   agent's own label, so a check could count labels, not searches.
+- Copy: a per-string necessity test (if this string is removed, what can the reader no longer decide or do, and does the
+  element beside it already say it?) in `lps-copy` (Writing pass and the interface-copy guide) and in the critic's wording
+  step, which also judges a choice screen that lacks what tells items apart.
+- Contract (`src/shared/slop/rules.yaml`, `src/shared/slop/rules.schema.yaml`, `src/shared/plan/schema.yaml`): the
+  `decision-metadata` case of `copy.decorative-metadata` lists the evidence `strings` instead of `none`. A `defaults` keep
+  names the strings it keeps in `evidence.strings` (new optional field, plan version unchanged), and the render finding about a
+  metadata strip or an ambient status line is waived only when that string is among them (Unicode, case, and whitespace
+  folded); a keep that names none, or a strip it does not name, stays open with the reason. Migration: a plan that kept
+  `decision-metadata` adds `evidence: { strings: [...] }` with the strips it keeps as the page shows them. `Hit` gains an
+  optional `text`, and `default_verdict` and `keep_evidence.gap` take it.
 
 ## 0.3.0 (2026-10-11)
 

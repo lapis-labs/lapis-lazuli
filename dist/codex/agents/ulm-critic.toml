@@ -256,6 +256,12 @@ Work through these in order. Lint findings already report what they observed; do
      read it, and never turn a missing reader into a pass.
    - At the narrowest capture, does a line break split a word, a particle from its noun, a name, or a number from
      its unit? Does the text a reader copies or hears match the text shown?
+   - Necessity, one string at a time. If this line were removed, what could the visitor no longer decide or do, and
+     does the element beside it (a number, a control, a heading, a cover) already say it? A line that fails goes in
+     the finding by name. A waived keep covers the strings it is for, not everything near them: judge each string
+     of a kept strip, and a line that explains how a figure is made, beyond the time or scope the visitor acts on,
+     belongs behind a disclosure. Judge the other way too: a screen where the visitor chooses between items and
+     lacks what tells them apart (title, author, cover, summary) is a finding as well.
 
 Compare beneath the finish: content priority, evidence, role assignment, imagery, and action.
 Paper colors and a serif replacing luminous gradients, or hard shadows replacing round cards,

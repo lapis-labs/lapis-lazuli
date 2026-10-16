@@ -1270,6 +1270,45 @@ def test_ambient_status_in_rows_with_different_text_run_counts_remains_a_hit():
     assert "20°c" in observed(lint("copy.decorative-metadata", extract=doc(("hero", rows))))
 
 
+# ---------------------------------------------------------------- a decision-metadata keep names its strings
+
+KEPT = "Seoul · Est. 2024 · Open daily"
+OTHER = "Sculpture · Installation · Space"
+
+
+def metadata_findings(keep: dict | None):
+    """The decorative-metadata findings of a page with two metadata strips, under a plan whose defaults hold `keep`."""
+    from lapis_design.lint.engine import lint as findings
+
+    p = plan()
+    if keep is not None:
+        p["defaults"].append({"id": "copy.decorative-metadata", "decision": "keep", "basis": "brief",
+                              "keep_when": "decision-metadata", "reason": "The owner filters the list by these facts",
+                              **keep})
+    assert [e.message for e in PLAN.iter_errors(p)] == []
+    extract = doc(("hero", [r(KEPT, "caption"), r(OTHER, "caption")]))
+    result = findings(Context(rules=RULES, extract=extract, plan=p), ["render"], ["copy.decorative-metadata"])
+    return {("kept" if KEPT in f["observed"] else "other"): f for f in result if "metadata strip" in f["observed"]}
+
+
+def test_a_decision_metadata_keep_that_names_no_strings_waives_nothing():
+    found = metadata_findings({})
+    assert [f["status"] for f in found.values()] == ["open", "open"]
+    assert "evidence.strings" in found["kept"]["context"]["basis"]
+
+
+def test_a_decision_metadata_keep_waives_only_the_strings_it_names():
+    found = metadata_findings({"evidence": {"strings": [KEPT]}})
+    assert found["kept"]["status"] == "waived"
+    assert found["other"]["status"] == "open"
+    assert "not among the kept strings" in found["other"]["context"]["basis"]
+
+
+def test_the_kept_strings_match_the_page_text_in_any_spacing_and_case():
+    found = metadata_findings({"evidence": {"strings": ["  seoul · EST. 2024 ·  open daily "]}})
+    assert found["kept"]["status"] == "waived"
+
+
 # ---------------------------------------------------------------- name-swap and counterfactual
 
 def test_name_swap_flags_key_copy_with_no_anchor():

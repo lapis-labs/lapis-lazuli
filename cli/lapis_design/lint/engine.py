@@ -379,7 +379,8 @@ class _Run:
         f["evidence"] = {"type": hit.evidence, **({"refs": list(hit.refs)} if hit.refs else {})}
         decision = self.decisions.get(rule["id"])
         waived, unfit = plan_check.default_verdict(rule, decision,
-                                                  self.render_evidence if layer == "render" else self.evidence)
+                                                  self.render_evidence if layer == "render" else self.evidence,
+                                                  hit.text)
         if waived:
             f["context"] = {"verdict": "earned", "basis": f"plan defaults entry ({decision.get('basis')}, {decision.get('keep_when')})"}
             f.update(blocking=False, status="waived",

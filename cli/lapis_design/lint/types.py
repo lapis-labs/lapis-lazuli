@@ -29,6 +29,7 @@ class Hit:
     distance: float | None = None                   # typicality or reference distance, when used
     conditions: frozenset[str] = frozenset()        # severity.adjust `when` texts this hit satisfies
     consequence: str | None = None                  # effect on the user, when the detector knows it
+    text: str | None = None                         # the visible string the finding is about, which a keep can name (keep_evidence `strings`)
 
 
 @dataclass

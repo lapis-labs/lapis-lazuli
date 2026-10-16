@@ -263,7 +263,9 @@ that see it. Rules marked * are statistical or lexical leads; the critic judges 
   Keep one required fictional-data or privacy/non-delivery notice and recovery explanations that name the
   problem, what was preserved, and how to continue. Do not remove source/byline lines or decision-relevant units.
   For a dot-separated strip, ask what changes in the visitor's decision if it goes. `조각 · 설치 · 공간` and
-  `FORM · SPACE · STILLNESS` repeat the page topic; remove them or justify a real filter with `decision-metadata`.
+  `FORM · SPACE · STILLNESS` repeat the page topic; remove them or justify a real filter with `decision-metadata`,
+  which names the kept strings in the keep's `evidence.strings`: the keep covers those strings, and a line beside
+  them (a method note, an explanation) is judged on its own.
   Route/date/direction, chart scope and units, artwork artist/year/material/dimensions, and source/byline records
   qualify facts rather than decorate a topic. Keep those facts beside the object they describe.
 - **Exceptions.** A consequential disclosure the visitor needs where they decide (a simulated payment, a form that

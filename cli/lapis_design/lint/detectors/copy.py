@@ -2116,7 +2116,8 @@ def _table_matches(segs: list[_Seg], table: dict[str, list[re.Pattern]], unjudge
 
 def _table_hits(segs: list[_Seg], table: dict[str, list[re.Pattern]], what: str, evidence: str,
                 unjudged: set[str], *, whole_run: bool = False) -> list[Hit]:
-    return [Hit(observed=f'{what} "{matched}" in the {s.where}: "{_clip(s.text)}"', location=dict(s.loc), evidence=evidence)
+    return [Hit(observed=f'{what} "{matched}" in the {s.where}: "{_clip(s.text)}"', location=dict(s.loc), evidence=evidence,
+                text=s.text)
             for s, matched in _table_matches(segs, table, unjudged, whole_run=whole_run)]
 
 
@@ -2353,7 +2354,7 @@ def meta_text(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
             echo = _topic_echo(page, text, runs, headings)
             hits.append(Hit(observed=f'{"topic-echo " if echo else ""}metadata strip in the {runs[0].where}: "{_clip(text)}"',
                             location=dict(runs[0].loc), evidence=evidence, refs=[r.loc["path"] for r in runs],
-                            conditions=frozenset({_TOPIC_ECHO}) if echo else frozenset()))
+                            conditions=frozenset({_TOPIC_ECHO}) if echo else frozenset(), text=text))
     if page is not None and "ambient-status" in usable:
         ambient = [s for s in segs if s.role not in ("body", "heading", "display") and _tokens(s.text) <= 12]
         ambient = _ambient_outside_records(page, ambient)

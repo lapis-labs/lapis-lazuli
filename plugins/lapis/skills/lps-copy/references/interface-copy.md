@@ -133,6 +133,16 @@ stays true when the subject is swapped carries none of it.
   (`copy.meta-text`).
 - **A repeated slogan gives nothing to decide with.** Cut it, or replace it with the fact: a time, a price, a place,
   a state.
+- **Test each string for necessity, one at a time.** Take a string alone and ask: if it is removed, what decision or
+  action can the reader no longer make? Does the element beside it (a number, a control, a heading, a cover) already
+  say it? No answer to the first, or a yes to the second, and the string goes. `지금 여기 · 62%` beside a marked
+  position says the position twice, so `62%` stays. A large `어젯밤 멈춘 문장에서 다시` above a button that reads
+  `48화 62%부터 읽기` restates the button; its space goes to what tells works apart (title, author, cover, summary).
+  A stats headline such as `오늘 올라온 연재 312편` that leads to no action decides nothing. The test cuts what a string
+  repeats, not what a decision needs: where the reader chooses between works, more of what tells them apart is the
+  point, and a line that was the one fact the choice hangs on stays. A line that explains how a figure is made
+  (`약 10분마다 다시 셈 · 같은 독자의 반복 조회는 1회로 셈 · 19세 작품 제외 · 14:20 기준`) keeps the part the reader
+  acts on (`14:20 기준`) and moves the method behind a disclosure for those who ask.
 
 ## Labels, buttons, and fields
 

@@ -404,6 +404,7 @@ properties:
             composition: { type: string, minLength: 1 } # the chosen candidate of a layout comparison in explorations that was rendered
             palette: { type: string, minLength: 1 }     # chosen palette with traced inputs and matched render evidence
             asset: { type: string, pattern: "^[a-z0-9][a-z0-9-]*$" }   # the id of an asset in .lapis/assets.ledger.json that this task uses
+            strings: { type: array, minItems: 1, items: { type: string, minLength: 1 } }   # the strings the keep keeps, as the page shows them; a finding about a string not listed here stays open
         reason: { type: string, minLength: 8 }
 
   sources:

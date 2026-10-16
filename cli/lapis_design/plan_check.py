@@ -565,11 +565,12 @@ def keep_ids(rule: dict) -> list[str]:
     return [case["id"] for case in rule.get("keep_when") or [] if isinstance(case, dict) and "id" in case]
 
 
-def default_verdict(rule: dict, decision: dict | None, sources: Any) -> tuple[bool, str | None]:
+def default_verdict(rule: dict, decision: dict | None, sources: Any, text: str | None = None) -> tuple[bool, str | None]:
     """Whether a plan's `defaults` entry waives a hit of `rule`, and why an entry that cannot does not apply.
     A rule that is a requirement or whose waiver scope is none takes no entry. A keep waives only when the
     entry names one of the ids the rule lists as `keep_when` and, when that case lists evidence, carries
-    evidence that holds in `sources` (keep_evidence.Sources: the plan, the asset ledger, the design text); a
+    evidence that holds in `sources` (keep_evidence.Sources: the plan, the asset ledger, the design text);
+    `text`, the visible string the hit is about, is what a case that wants `strings` is judged against; a
     rule that lists no case takes no keep. A reject, or no entry, is (False, None): the finding stays as it was."""
     if not decision:
         return False, None
@@ -584,7 +585,7 @@ def default_verdict(rule: dict, decision: dict | None, sources: Any) -> tuple[bo
         from lapis_design import keep_evidence   # imports this module's resolve, so not at load time
 
         case = next(c for c in rule["keep_when"] if isinstance(c, dict) and c.get("id") == named)
-        missing = keep_evidence.gap(case, decision, sources)
+        missing = keep_evidence.gap(case, decision, sources, text)
         return (False, missing) if missing else (True, None)
     if not ids:
         return False, f"{name} lists no keep_when case, so no keep fits it"
