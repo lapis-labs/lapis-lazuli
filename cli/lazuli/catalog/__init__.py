@@ -6,7 +6,7 @@ module has NAME, KIND (snapshot | lookup | bundled), PRIORITY, TTL_DAYS, MIN_INT
 """
 from __future__ import annotations
 
-from lazuli.catalog import (adobe_cjk, anshim, fontshare, fontsource, google_fonts, noonnu, sandoll,
+from lazuli.catalog import (adobe_cjk, anshim, fontshare, fontsource, github_foundries, google_fonts, noonnu, sandoll,
                             system_table)
 
-SOURCES = (google_fonts, fontsource, fontshare, adobe_cjk, anshim, system_table, noonnu, sandoll)
+SOURCES = (google_fonts, fontsource, fontshare, github_foundries, adobe_cjk, anshim, system_table, noonnu, sandoll)

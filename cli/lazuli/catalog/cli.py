@@ -251,7 +251,7 @@ def lookup(conn, source: str | None, family: str | None, *, limit: int | None, y
 
 
 def status(conn) -> int:
-    print(f"{'source':14} {'kind':9} {'prio':>4}  {'fetched':10}  {'ttl':24} {'families':>8}  status")
+    print(f"{'source':16} {'kind':9} {'prio':>4}  {'fetched':10}  {'ttl':24} {'families':>8}  status")
     for module in catalog.SOURCES:
         row = _source_row(conn, module.NAME)
         fetched = _fetched(row)
@@ -270,7 +270,7 @@ def status(conn) -> int:
         state = row["status"] if row else "never"
         if row is not None and (why := store.reason(conn, module.NAME)):
             state += f": {why}"
-        print(f"{module.NAME:14} {module.KIND:9} {module.PRIORITY:>4}  {fetched.date().isoformat() if fetched else '-':10}  "
+        print(f"{module.NAME:16} {module.KIND:9} {module.PRIORITY:>4}  {fetched.date().isoformat() if fetched else '-':10}  "
               f"{ttl:24} {count:>8}  {state}")
     print(YOON_DESIGN)
     faces = conn.execute("SELECT COUNT(*) FROM local_font").fetchone()[0]

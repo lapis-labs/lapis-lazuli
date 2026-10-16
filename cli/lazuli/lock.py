@@ -78,7 +78,7 @@ SCRIPT_COVERAGE = (("latn", "latin", 52), ("grek", "greek", 48), ("cyrl", "cyril
 ORIGIN_SOURCES = {"adobe-sync": "adobe-sync", "system": "system", "user": "user-installed"}   # ties: first wins
 CATALOG_SOURCES = {"google-fonts": "google-fonts", "fontsource": "fontsource", "fontshare": "fontshare",
                    "noonnu": "noonnu", "sandoll": "sandoll", "adobe-cjk": "adobe-sync",
-                   "anshim": "open-source-other", "system-table": "system"}
+                   "anshim": "open-source-other", "github-foundries": "open-source-other", "system-table": "system"}
 DEFAULT_DELIVERY = {"system": "system-only", "adobe-sync": "adobe-web-project", "google-fonts": "google-fonts-api"}
 
 # Catalog license ids (catalog/labels.py) with a lock kind; UFL-1.0, free-other, and custom-free have none

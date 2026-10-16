@@ -1,0 +1,47 @@
+[
+ {
+  "name": "LxgwTestKai",
+  "full_name": "lxgw/LxgwTestKai",
+  "fork": false,
+  "archived": false,
+  "disabled": false,
+  "description": "A Chinese handwriting-style font",
+  "homepage": "",
+  "html_url": "https://github.com/lxgw/LxgwTestKai",
+  "license": {
+   "key": "ofl-1.1",
+   "name": "OFL-1.1",
+   "spdx_id": "OFL-1.1",
+   "url": null
+  },
+  "topics": [
+   "chinese",
+   "font"
+  ],
+  "default_branch": "main",
+  "created_at": "2021-03-04T10:00:00Z",
+  "pushed_at": "2026-05-06T10:00:00Z",
+  "stargazers_count": 500
+ },
+ {
+  "name": "lxgw-note-sans",
+  "full_name": "lxgw/lxgw-note-sans",
+  "fork": false,
+  "archived": false,
+  "disabled": false,
+  "description": "A sans font for notes",
+  "homepage": "",
+  "html_url": "https://github.com/lxgw/lxgw-note-sans",
+  "license": {
+   "key": "ofl-1.1",
+   "name": "OFL-1.1",
+   "spdx_id": "OFL-1.1",
+   "url": null
+  },
+  "topics": [],
+  "default_branch": "main",
+  "created_at": "2021-03-04T10:00:00Z",
+  "pushed_at": "2026-05-06T10:00:00Z",
+  "stargazers_count": 50
+ }
+]

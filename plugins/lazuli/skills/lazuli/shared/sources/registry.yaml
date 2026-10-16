@@ -65,6 +65,133 @@ sources:
     checked_at: "2026-10-16"
     note: robots.txt disallows only /upload/ and the my-page path for lazuli, so the free-font board (B0000018) is open to it; the terms forbid a member to copy the site's information for another purpose or give it to a third party, so what lazuli reads stays in the user's own cache
 
+  # GitHub foundry accounts: the github-foundries adapter snapshots each account's public repositories through the
+  # unauthenticated REST API (60 requests an hour), one repository list per account. The account is the url's path;
+  # `scripts` is what the survey of 2026-10-16 says the account's families cover, and `releases` marks accounts that
+  # ship their font packages as release assets. Each repository states its own license; the adapter records it as found.
+  - id: github-velvetyne
+    name: Velvetyne
+    url: https://github.com/velvetyne
+    type: [font]
+    good_for: experimental open-license Latin families from the foundry's font repositories
+    access: adapter
+    adapter: github-foundries
+    terms_url: https://docs.github.com/en/site-policy/github-terms/github-terms-of-service
+    scripts: [latn]
+    releases: true
+    checked_at: "2026-10-16"
+
+  - id: github-collletttivo
+    name: Collletttivo
+    url: https://github.com/collletttivo
+    type: [font]
+    good_for: experimental and display Latin families from the Italian collective's font repositories
+    access: adapter
+    adapter: github-foundries
+    terms_url: https://docs.github.com/en/site-policy/github-terms/github-terms-of-service
+    scripts: [latn]
+    releases: false
+    checked_at: "2026-10-16"
+    note: its website's robots.txt names AI crawlers it turns away; lazuli reads only the GitHub account, never the website
+
+  - id: github-theleagueof
+    name: The League of Moveable Type
+    url: https://github.com/theleagueof
+    type: [font]
+    good_for: open-license text and display Latin families from the League's font repositories
+    access: adapter
+    adapter: github-foundries
+    terms_url: https://docs.github.com/en/site-policy/github-terms/github-terms-of-service
+    scripts: [latn]
+    releases: false
+    checked_at: "2026-10-16"
+    note: the repositories name their license file OFL.md, which GitHub often reports as NOASSERTION; the adapter reads the file name then
+
+  - id: github-omnibus-type
+    name: Omnibus-Type
+    url: https://github.com/Omnibus-Type
+    type: [font]
+    good_for: contemporary text and variable Latin families that are also published through Google Fonts
+    access: adapter
+    adapter: github-foundries
+    terms_url: https://docs.github.com/en/site-policy/github-terms/github-terms-of-service
+    scripts: [latn]
+    releases: false
+    checked_at: "2026-10-16"
+
+  - id: github-jenskutilek
+    name: Jens Kutilek
+    url: https://github.com/jenskutilek
+    type: [font]
+    good_for: experimental and revival Latin families; each repository states its own license (MIT, OFL, and others)
+    access: adapter
+    adapter: github-foundries
+    terms_url: https://docs.github.com/en/site-policy/github-terms/github-terms-of-service
+    scripts: [latn]
+    releases: false
+    checked_at: "2026-10-16"
+
+  - id: github-lxgw
+    name: LXGW (霞鹜)
+    url: https://github.com/lxgw
+    type: [font]
+    good_for: open-license Han text, handwriting, and Ming families (Simplified and Traditional)
+    access: adapter
+    adapter: github-foundries
+    terms_url: https://docs.github.com/en/site-policy/github-terms/github-terms-of-service
+    scripts: [hani]
+    releases: true
+    checked_at: "2026-10-16"
+
+  - id: github-atelier-anchor
+    name: Atelier Anchor
+    url: https://github.com/atelier-anchor
+    type: [font]
+    good_for: open-license Han display families such as Smiley Sans
+    access: adapter
+    adapter: github-foundries
+    terms_url: https://docs.github.com/en/site-policy/github-terms/github-terms-of-service
+    scripts: [hani]
+    releases: true
+    checked_at: "2026-10-16"
+
+  - id: github-yuru7
+    name: yuru7
+    url: https://github.com/yuru7
+    type: [font]
+    good_for: Japanese and Latin composite families for code and UI (HackGen, UDEV Gothic, PlemolJP, and others)
+    access: adapter
+    adapter: github-foundries
+    terms_url: https://docs.github.com/en/site-policy/github-terms/github-terms-of-service
+    scripts: [latn, jpan]
+    releases: true
+    checked_at: "2026-10-16"
+
+  - id: github-spoqa
+    name: Spoqa
+    url: https://github.com/spoqa
+    type: [font]
+    good_for: Korean and Latin sans families (Spoqa Han Sans) under the OFL
+    access: adapter
+    adapter: github-foundries
+    terms_url: https://docs.github.com/en/site-policy/github-terms/github-terms-of-service
+    scripts: [hang, latn]
+    releases: false
+    checked_at: "2026-10-16"
+
+  - id: github-orioncactus
+    name: orioncactus
+    url: https://github.com/orioncactus
+    type: [font]
+    good_for: Korean and Latin sans families (Pretendard) under the OFL
+    access: adapter
+    adapter: github-foundries
+    terms_url: https://docs.github.com/en/site-policy/github-terms/github-terms-of-service
+    scripts: [hang, latn]
+    releases: true
+    checked_at: "2026-10-16"
+    note: GitHub reports the repository's license as NOASSERTION although its LICENSE file holds the OFL 1.1 text; the adapter reads the file's text
+
   - id: sandoll-cloud
     name: Sandoll Cloud (산돌구름)
     url: https://www.sandollcloud.com/

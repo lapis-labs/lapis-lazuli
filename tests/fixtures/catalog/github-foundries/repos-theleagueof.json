@@ -1,0 +1,107 @@
+[
+ {
+  "name": "quill-gothic",
+  "full_name": "theleagueof/quill-gothic",
+  "fork": false,
+  "archived": false,
+  "disabled": false,
+  "description": "A condensed gothic typeface",
+  "homepage": "",
+  "html_url": "https://github.com/theleagueof/quill-gothic",
+  "license": {
+   "key": "noassertion",
+   "name": "NOASSERTION",
+   "spdx_id": "NOASSERTION",
+   "url": null
+  },
+  "topics": [],
+  "default_branch": "main",
+  "created_at": "2021-03-04T10:00:00Z",
+  "pushed_at": "2026-05-06T10:00:00Z",
+  "stargazers_count": 70
+ },
+ {
+  "name": "bold-text",
+  "full_name": "theleagueof/bold-text",
+  "fork": false,
+  "archived": false,
+  "disabled": false,
+  "description": "A bold text font",
+  "homepage": "",
+  "html_url": "https://github.com/theleagueof/bold-text",
+  "license": {
+   "key": "noassertion",
+   "name": "NOASSERTION",
+   "spdx_id": "NOASSERTION",
+   "url": null
+  },
+  "topics": [],
+  "default_branch": "main",
+  "created_at": "2021-03-04T10:00:00Z",
+  "pushed_at": "2026-05-06T10:00:00Z",
+  "stargazers_count": 30
+ },
+ {
+  "name": "custom-face",
+  "full_name": "theleagueof/custom-face",
+  "fork": false,
+  "archived": false,
+  "disabled": false,
+  "description": "A display font under its own terms",
+  "homepage": "",
+  "html_url": "https://github.com/theleagueof/custom-face",
+  "license": {
+   "key": "noassertion",
+   "name": "NOASSERTION",
+   "spdx_id": "NOASSERTION",
+   "url": null
+  },
+  "topics": [],
+  "default_branch": "main",
+  "created_at": "2021-03-04T10:00:00Z",
+  "pushed_at": "2026-05-06T10:00:00Z",
+  "stargazers_count": 20
+ },
+ {
+  "name": "lost-face",
+  "full_name": "theleagueof/lost-face",
+  "fork": false,
+  "archived": false,
+  "disabled": false,
+  "description": "A font whose license file went missing",
+  "homepage": "",
+  "html_url": "https://github.com/theleagueof/lost-face",
+  "license": {
+   "key": "noassertion",
+   "name": "NOASSERTION",
+   "spdx_id": "NOASSERTION",
+   "url": null
+  },
+  "topics": [],
+  "default_branch": "main",
+  "created_at": "2021-03-04T10:00:00Z",
+  "pushed_at": "2026-05-06T10:00:00Z",
+  "stargazers_count": 3
+ },
+ {
+  "name": "licenses",
+  "full_name": "theleagueof/licenses",
+  "fork": false,
+  "archived": false,
+  "disabled": false,
+  "description": "Open font license texts",
+  "homepage": "",
+  "html_url": "https://github.com/theleagueof/licenses",
+  "license": {
+   "key": "noassertion",
+   "name": "NOASSERTION",
+   "spdx_id": "NOASSERTION",
+   "url": null
+  },
+  "topics": [],
+  "default_branch": "main",
+  "created_at": "2021-03-04T10:00:00Z",
+  "pushed_at": "2026-05-06T10:00:00Z",
+  "stargazers_count": 0
+ }
+]

@@ -683,6 +683,10 @@ def search_fonts(conn: sqlite3.Connection, args) -> tuple[list[dict], list[str]]
         for c in cand["catalogs"]:
             if details := details_by.get((c["source"], c["family"])):
                 c["details"] = details
+                if details.get("license_source"):
+                    evidence.append(f"license source, {c['source']}: {details['license_source']}")
+                if details.get("download_url"):
+                    evidence.append(f"download, {c['source']}: {details['download_url']} ({details['download_kind']})")
         if cand["license"] and args.license != "open":
             evidence.append(_license_evidence(cand))
         own = by_installed.get(cand["family"], []) if cand["installed"] else []

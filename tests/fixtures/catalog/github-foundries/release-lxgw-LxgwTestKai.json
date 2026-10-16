@@ -1,0 +1,16 @@
+{
+ "tag_name": "v1.2.0",
+ "html_url": "https://github.com/lxgw/LxgwTestKai/releases/tag/v1.2.0",
+ "assets": [
+  {
+   "name": "LxgwTestKai.ttf",
+   "browser_download_url": "https://downloads.example.test/LxgwTestKai.ttf",
+   "size": 100
+  },
+  {
+   "name": "LxgwTestKai-v1.2.0.zip",
+   "browser_download_url": "https://downloads.example.test/LxgwTestKai-v1.2.0.zip",
+   "size": 200
+  }
+ ]
+}

@@ -9,7 +9,10 @@ Rules (binding for every source):
   last request on each key. Last-request times are kept per process and, with a database, in `meta`
   so the pace also holds across runs.
 - 401, 403, 429, a CAPTCHA or bot-challenge page, and a sign-in page raise Blocked; the caller marks
-  the source failed and never retries around it. Other HTTP errors raise FetchError.
+  the source failed and never retries around it. Other HTTP errors raise FetchError. A 403 or 429 that
+  carries `x-ratelimit-remaining: 0` is the source's own request quota used up, not a refusal of tools:
+  it raises RateLimited (not Blocked) with the time the quota resets, and the adapter decides whether
+  to wait.
 - Redirects are followed by hand (at most five): before each hop the source registry and that host's
   robots.txt decide whether the request may be sent. Refused/browser-link hosts, blocked paths, and
   credential-bearing redirect URLs are never requested.
@@ -28,6 +31,7 @@ import urllib.parse
 import urllib.request
 import urllib.robotparser
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Callable
 
 from lapis_design import __version__
@@ -71,6 +75,16 @@ class FetchError(Exception):
         super().__init__(f"HTTP {status} from {url}")
         self.url = url
         self.status = status
+
+
+class RateLimited(Exception):
+    """The source's own request quota is used up (a 403 or 429 with `x-ratelimit-remaining: 0`)."""
+
+    def __init__(self, url: str, reset: float | None):
+        when = datetime.fromtimestamp(reset, timezone.utc).strftime("%H:%M:%S UTC") if reset else "an unknown time"
+        super().__init__(f"the request quota at {url} is used up; it resets at {when}")
+        self.url = url
+        self.reset = reset                  # epoch seconds, or None when the response did not say
 
 
 @dataclass
@@ -366,6 +380,15 @@ _PASSWORD_INPUT = re.compile(rb"<input[^>]+type=[\"']?password", re.I)
 _SIGN_IN_TITLE = re.compile(rb"<title>[^<]*(log ?in|sign ?in|\xeb\xa1\x9c\xea\xb7\xb8\xec\x9d\xb8)", re.I)  # 로그인
 
 
+def rate_limit(response: Response) -> RateLimited | None:
+    """RateLimited when a 403 or 429 says the source's own request quota is used up
+    (`x-ratelimit-remaining: 0`, with `x-ratelimit-reset` in epoch seconds), else None."""
+    if response.status not in (403, 429) or response.headers.get("x-ratelimit-remaining") != "0":
+        return None
+    reset = response.headers.get("x-ratelimit-reset", "")
+    return RateLimited(response.url, float(reset) if reset.isdigit() else None)
+
+
 def blocked_reason(response: Response) -> str | None:
     """Why a response means the source refuses tools, or None."""
     if response.status in (401, 403, 429):
@@ -470,6 +493,8 @@ class Fetcher:
                 raise Blocked(f"robots.txt redirect limit ({MAX_REDIRECTS}) reached; next link not sent: {next_url}")
             current = next_url
         parser = urllib.robotparser.RobotFileParser(robots_url)
+        if (limited := rate_limit(response)) is not None:
+            raise limited
         if response.status in (401, 403, 429):
             raise Blocked(f"robots.txt at {origin} answered {response.status}; the site does not allow tools")
         if response.status >= 500:
@@ -523,6 +548,8 @@ class Fetcher:
                     raise Blocked(f"redirect limit ({MAX_REDIRECTS}) reached; next link not sent: {next_url}")
                 url = next_url
                 continue
+            if (limited := rate_limit(response)) is not None:
+                raise limited
             if (reason := blocked_reason(response)) is not None:
                 raise Blocked(reason)
             if response.status >= 400:

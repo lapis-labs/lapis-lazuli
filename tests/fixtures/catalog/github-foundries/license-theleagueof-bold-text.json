@@ -1,0 +1,14 @@
+{
+ "name": "LICENSE",
+ "path": "LICENSE",
+ "sha": "0000000000000000000000000000000000000000",
+ "size": 89,
+ "encoding": "base64",
+ "content": "Q29weXJpZ2h0IDIwMjYgVGhlIEV4YW1wbGUgQXV0aG9ycwoKU0lMIE9QRU4gRk9OVCBMSUNFTlNF\nIFZlcnNpb24gMS4xIC0gMjYgRmVicnVhcnkgMjAwNwo=\n",
+ "license": {
+  "key": "other",
+  "name": "Other",
+  "spdx_id": "NOASSERTION",
+  "url": null
+ }
+}

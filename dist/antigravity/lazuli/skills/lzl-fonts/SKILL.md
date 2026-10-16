@@ -70,16 +70,26 @@ plan. It locks only a family already chosen.
 
 ## Catalogs - `lazuli catalog`
 
-- `sync` refreshes expired snapshots (`google-fonts`, `fontsource`, `fontshare`, `anshim`) and the
+- `sync` refreshes expired snapshots (`google-fonts`, `fontsource`, `fontshare`, `github-foundries`, `anshim`) and the
   bundled `system-table` (`shared/fonts/system-fonts.yaml`, no network); `--force` ignores
   freshness. A failed source is skipped until named with `--source`.
+- `github-foundries` reads the font repositories of the independent foundries' GitHub accounts that the registry lists (one
+  `github-<account>` entry each in `shared/sources/registry.yaml`) through GitHub's unauthenticated API, which allows
+  60 requests an hour: a full run is about 10 lists, one license file for each repository GitHub reports as
+  NOASSERTION, and at most 12 release lookups while the quota lasts; a used-up quota waits for the reset when it is
+  two minutes away and otherwise stops the sync with the previous rows kept. A family's license is the SPDX id the
+  repository states, else its license file (the name `OFL.md` or `OFL.txt`, or a `LICENSE` whose text is the SIL Open
+  Font License 1.1), else none; the evidence says where it was read, and nothing is open unless one of those says so.
+  The evidence also gives the download address (a release package, else the repository archive). The catalog has no
+  popularity, so these families are `unknown` in familiarity. Scripts come from the repository's text or the
+  registry's hint for the account, labeled which.
 - `anshim` reads the Gongu license pages (KOGL type 1 or OFL) and two tabs of its free-font board: 민간 무료글꼴 정보,
   whose entries carry usage conditions written as free text, and 인기글꼴TOP20. A family from the board is
   `custom-free`: free of charge under the listing's own words, kept verbatim in the evidence with the page it was read on,
   never mapped to the OFL or any named license, never an open license (`--license open` leaves it out). Read the words
   against the planned use before relying on them. A family on the chart is `familiar`.
 - `remap` re-applies the mapping rules to the responses a snapshot source kept, with no request and the
-  fetch date unchanged (`google-fonts` only for now): run it once after an update that stores more of what
+  fetch date unchanged (`google-fonts` and `github-foundries`): run it once after an update that stores more of what
   a source sends, such as the popularity fields.
 - `lookup` asks the on-request `sandoll`, at its stated crawl delay, about installed families no
   snapshot matched (`--family` or `--unmatched`). `status` shows freshness and state.

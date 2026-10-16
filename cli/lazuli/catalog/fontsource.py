@@ -35,18 +35,11 @@ LIST_URL = "https://api.fontsource.org/v1/fonts"
 FAMILY_URL = "https://fontsource.org/fonts/{}"
 
 _CATEGORY = {"sans-serif": "sans", "serif": "serif", "display": "display", "handwriting": "hand", "monospace": "mono"}
-_FREE_SPDX = frozenset({"cc0-1.0", "mit", "unlicense"})       # permissive, but none of the named licenses
-
-
-def _license(raw: str | None) -> str | None:
-    if not raw:
-        return None
-    return labels.map_license(raw) or ("free-other" if raw.lower() in _FREE_SPDX else None)
 
 
 def _family(entry: dict) -> CatalogFamily:
     raw_license = entry.get("license")
-    mapped_license = _license(raw_license)
+    mapped_license = labels.map_spdx(raw_license)
     family = CatalogFamily(source_key=entry["id"], family=entry["family"],
                            license=mapped_license or raw_license, url=FAMILY_URL.format(entry["id"]))
     if category := entry.get("category"):

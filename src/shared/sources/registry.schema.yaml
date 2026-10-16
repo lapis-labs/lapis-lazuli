@@ -62,6 +62,12 @@ $defs:
       color_system: { enum: [pantone, ral-classic, ral-design-plus, ncs, munsell, hlc, freetone] }   # vocab/color.yaml systems
       checked_at: { type: string, format: date, pattern: "^\\d{4}-\\d{2}-\\d{2}$" }
       note: { type: string, minLength: 1 }
+      scripts:                                  # github-foundries only: the scripts the account's families cover (plan codes or composites such as jpan)
+        type: array
+        minItems: 1
+        uniqueItems: true
+        items: { type: string, pattern: "^[a-z]{4}$" }
+      releases: { type: boolean }               # github-foundries only: the account publishes font packages as release assets, so the adapter asks for each family's latest release when its request budget allows
     allOf:
       - if: { properties: { access: { const: adapter } } }
         then: { required: [adapter] }
@@ -71,3 +77,5 @@ $defs:
         then: { required: [reason] }
       - if: { properties: { access: { enum: [read, browser-link] } } }
         then: { not: { required: [adapter] } }
+      - if: { not: { properties: { adapter: { const: github-foundries } }, required: [adapter] } }
+        then: { not: { anyOf: [ { required: [scripts] }, { required: [releases] } ] } }

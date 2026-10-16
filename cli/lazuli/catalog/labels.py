@@ -66,6 +66,17 @@ def map_license(raw: str | None) -> str | None:
     return None
 
 
+FREE_SPDX = frozenset({"cc0-1.0", "mit", "unlicense"})        # permissive, but none of the named licenses
+
+
+def map_spdx(spdx: str | None) -> str | None:
+    """The license id for an SPDX id a catalog or repository states: a named open license, `free-other` for a
+    permissive one that is none of them (CC0-1.0, MIT, Unlicense), else None (the SPDX id stays as raw text)."""
+    if not spdx:
+        return None
+    return map_license(spdx) or ("free-other" if spdx.lower() in FREE_SPDX else None)
+
+
 def license_label(raw: str) -> CatalogLabel:
     return CatalogLabel("license", raw, map_license(raw))
 

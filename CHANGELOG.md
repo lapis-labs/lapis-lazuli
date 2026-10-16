@@ -71,6 +71,19 @@ contract formats are v0.
   Hangul gets a `script:hang` label derived from the name, so `--script hang` reaches the 안심글꼴 families. Contract
   (`src/shared/vocab/type.yaml`): license id `custom-free` is new; (`src/shared/sources/registry.yaml`): the `anshim` entry's
   `good_for`, `checked_at` (2026-10-16), and `note` describe the board.
+- `lazuli catalog sync --source github-foundries`: a snapshot of the font repositories of ten GitHub accounts the registry lists
+  (`velvetyne`, `collletttivo`, `theleagueof`, `Omnibus-Type`, `jenskutilek`, `lxgw`, `atelier-anchor`, `yuru7`, `spoqa`,
+  `orioncactus`), through the unauthenticated GitHub API at the 3 s pace: one list per account, one license file for each
+  repository GitHub reports as NOASSERTION, and up to 12 latest-release lookups while the 60-an-hour quota leaves 5 spare. A
+  family's license is its SPDX id, else its license file's name (`OFL.md`, `OFL.txt`) or, for a `LICENSE`, its text when that is
+  the SIL Open Font License 1.1, else none; `details` records where it was read, the description, homepage, and a download
+  address (a release package or the repository archive), and the evidence of `lazuli search` shows the license source and the
+  download. MIT, CC0-1.0, and Unlicense map to `free-other` and any other SPDX id stays raw text, so only an SPDX id or license
+  file that says OFL makes a family open. A 403 or 429 that reports the quota used up (`x-ratelimit-remaining: 0`) is now
+  `net.RateLimited`, not a block: the sync waits for a reset within two minutes and otherwise stops with the previous rows kept.
+  `lazuli catalog remap` also re-maps this source from its kept responses. Contract (`src/shared/sources/registry.yaml`): ten
+  `github-<account>` entries with adapter `github-foundries`, and (`registry.schema.yaml`) the optional `scripts` and `releases`
+  fields, which only that adapter may carry; Fontsource's SPDX mapping moved to `labels.map_spdx`, unchanged.
 
 ### Changed
 
