@@ -106,6 +106,12 @@ bundled and locked); otherwise compare it on `lazuli search` evidence and let `c
 cover only what was drawn. Capture it with `lapis-design render check .lapis/specimens/<task>.html
 --task <task>-specimen --width 390` and view the screenshots beside the extract at size.
 
+A specimen at the role's size judges fit for that role, not likeness. A claim that two faces look alike, or that
+one can stand in for the other, needs the same text at the same weight drawn at 96 px or more and viewed at
+native resolution (a crop of the capture, not a downscaled full page), and the claim names the size it was judged
+at: "close at 13-40 px, clearly different at 96 px". 96 px is a working minimum from one session, not a validated
+threshold; go larger when the faces still look alike there.
+
 Before changing a face over a complaint, sort it into one of five conditions.
 
 | Condition | Where the response goes | Checked by |

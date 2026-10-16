@@ -92,6 +92,11 @@ inferred from listings, labels, and origins. `--similar-to "<family>"` ranks ins
 measured distance, naming close and far features. The score only orders; return several candidates
 with their evidence.
 
+Whether two faces look alike is not read from a role-size specimen or from `--similar-to`'s distance. Draw the same
+text at the same weight at 96 px or more, view a crop at native resolution (not a downscaled full page), and name
+the size the claim was judged at. A specimen at the role's size judges fit for that role. 96 px is a working minimum
+from one session, not a validated threshold.
+
 A name on the owned list (`lazuli owned add --from <file> --source adobe`, names only) that matches the query and is
 not installed is listed as a candidate that `needs activation`, with no scripts, class, or weights, because only a
 name is known. An installed family on the list says so in its evidence. Ask the owner for these names in the

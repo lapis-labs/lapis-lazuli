@@ -204,6 +204,11 @@ contract formats are v0.
   Migration: roughs in progress need their cards updated (`type`, `style`) and their brief updated (`motion`, and
   `motion_moves` when required), then `diverge contract` and `diverge check` again, and `render motion` per rough when the brief
   requires motion. A card or brief without the new fields fails its schema with the field named.
+- Type guide and `lzl-fonts`: a specimen at the role's size judges fit for that role; a claim that two faces look alike, or
+  that one can stand in for another, needs the same text at the same weight drawn at 96 px or more and viewed as a crop at
+  native resolution, and names the size it was judged at (96 px is a working minimum, not a validated threshold). `lapis` and
+  `ultramarine` (Reporting): when a worker's or the critic's finding goes to the owner it keeps its qualifier, so "close" never
+  becomes "no difference". Guide only.
 
 ## 0.3.0 (2026-10-11)
 

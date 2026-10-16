@@ -343,7 +343,8 @@ choosing one:
 3. Specimen: set two or three candidates, at least one a named face, in the page's real copy (title,
    paragraph, control, figures, every locale) on a throwaway page under `.lapis/specimens/`, and look
    at it: `lapis-design render check .lapis/specimens/<task>.html --task <task>-specimen --width 390`
-   leaves screenshots beside its extract.
+   leaves screenshots beside its extract. That shows fit at the role's size; a claim that two faces look alike
+   or can stand in for each other needs the same text at 96 px or more, viewed as a crop (`references/type.md`).
 4. Record the comparison in `explorations`; lock each chosen named face with
    `lazuli lock "<family>" --role <role> --task <task>`, which records source, license, and delivery path.
    Files that ship are fetched from the family's official source with their license text
@@ -625,3 +626,6 @@ without an API still gets a minimal stub: `version`, `clock`, empty `routes`, `c
 Start with the owner summary `next` returned at done, unchanged. Then tell the user the Design Read, the signature, each
 rejected default with the route taken, the checks that ran with their results, and the checks that did not run. Keep
 planning notes, rule ids, and check output out of the interface itself.
+
+When you pass a worker's finding to the owner, keep the worker's qualifier: "close" never becomes "no difference", "not
+reproduced" never becomes "confirmed", and the size, state, or scope the worker named goes along with it.

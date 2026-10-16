@@ -236,3 +236,6 @@ why; and the next step, another loop or the release gate (`ulm-release`). Leave 
 raw output in the report files.
 
 When `next` returned an owner summary, paste it unchanged ahead of the report; it is the CLI's account, not yours.
+
+When you pass a worker's or the critic's finding to the owner, keep its qualifier: "close" never becomes "no
+difference", "not reproduced" never becomes "confirmed", and the size, state, or scope it named goes along with it.
