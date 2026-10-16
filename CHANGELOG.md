@@ -209,6 +209,11 @@ contract formats are v0.
   native resolution, and names the size it was judged at (96 px is a working minimum, not a validated threshold). `lapis` and
   `ultramarine` (Reporting): when a worker's or the critic's finding goes to the owner it keeps its qualifier, so "close" never
   becomes "no difference". Guide only.
+- Type roles: before a role is settled, run at least one `lazuli search` without `--installed` and compare installed and catalog
+  candidates side by side (`lapis` step 7, the type guide, `lzl-fonts`); one search, not a walk through every catalog. When the
+  owner asks about Adobe Fonts and `lazuli adobe status` says off, tell the owner in one line that it is off and that
+  `lazuli adobe enable`, run by the owner in a terminal, turns it on. Guide only: a candidate's `source` in `explorations` is the
+  agent's own label, so a check could count labels, not searches.
 
 ## 0.3.0 (2026-10-11)
 

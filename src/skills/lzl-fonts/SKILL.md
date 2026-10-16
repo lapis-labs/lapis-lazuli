@@ -92,6 +92,11 @@ inferred from listings, labels, and origins. `--similar-to "<family>"` ranks ins
 measured distance, naming close and far features. The score only orders; return several candidates
 with their evidence.
 
+`--installed` keeps only faces already on this machine: right for an inventory question, not for choosing. Before a
+type role is settled, run at least one search without it (for example `--script <code> --role <role> --license open`)
+and compare installed and catalog candidates side by side, two or three in all; that is one search, not a walk
+through every catalog, and a snapshot that `lazuli catalog status` shows fresh needs no sync.
+
 Whether two faces look alike is not read from a role-size specimen or from `--similar-to`'s distance. Draw the same
 text at the same weight at 96 px or more, view a crop at native resolution (not a downscaled full page), and name
 the size the claim was judged at. A specimen at the role's size judges fit for that role. 96 px is a working minimum
@@ -117,6 +122,10 @@ the integration's catalog data, not lazuli's measurement: label it "Adobe Fonts 
 from `lazuli local fonts` values and catalog labels, and never use it as a class, a score, a lock fact, or a license fact.
 lazuli keeps a cleaned copy of each result in the user cache (provenance `adobe-connector`, with the time), outside the
 database; measurement, calibration, evaluation, and catalog labels never read it.
+
+When the owner asks about Adobe Fonts and `lazuli adobe status` says off, tell the owner in one line that it is off and
+that `lazuli adobe enable`, run by the owner in a terminal, turns it on; a status you saw and did not report leaves
+the owner thinking the search was done.
 
 | Need | Command | Notes |
 |---|---|---|

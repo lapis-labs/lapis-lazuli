@@ -96,6 +96,15 @@ Work down the rows. "Not checked" means only the report shows the work.
 | An intended `system-ui` (an operate screen, a tight budget, email) is a candidate like any other: it wins by comparison on each platform in `brief.platform`, against a named face | `explorations` (`chosen: system-ui`); `defaults`: `type.overused-neutral-grotesque`, `keep`, `keep_when: won-comparison`, `evidence: { exploration: system-ui }`, a `basis`, and a `reason` naming the platforms seen | the generic-family finding below; the keep waives only when a complete comparison in `explorations` chose that face for a role that uses it |
 | No database: set `LAZULI_DB` to a writable path, run `lazuli local fonts` and `lazuli catalog sync`, then `lazuli search --license open --delivery web`, and lock a family the user or `DESIGN.md` names with `--source`, `--delivery`, `--postscript`. With nothing to name, use `system-ui`, add one `claims.unresolved` line, report it first, and ask the user to name a face or to fix the platform's own face in the brief (`fixed_by: brief`) | `claims.unresolved` | `plan.uncompared-decision` and the finding below stay open until then |
 
+**Look beyond what is installed.** Before settling a role, run at least one search without `--installed`
+(`lazuli search --script <code> --role <role> --license open`) and put installed and catalog candidates side
+by side in the two or three you compare; `--installed` alone only re-checks faces that are already here. It is
+one search, not a walk through every catalog, and a snapshot that `lazuli catalog status` shows fresh needs no
+sync. A role the brief or the contract fixes needs none. When the owner asks about Adobe Fonts and
+`lazuli adobe status` says off, tell the owner in one line that it is off and that `lazuli adobe enable`, run by
+the owner in a terminal, turns it on; then go on with the installed, owned, and named faces. Nothing checks
+this: a candidate's `source` in `explorations` is your own label, so a check could count labels, not searches.
+
 **Specimen.** One throwaway page per task under `.lapis/specimens/`, never shipped. For each
 candidate, one column with the page's own title, a real paragraph, a control, an error line, and the
 figures, in every locale of `brief.locales`, at the sizes the roles will use; keep the system face or
