@@ -57,6 +57,8 @@ class CatalogFamily:
     # Facts a search shows beside the candidate, as the source states them; each key is optional:
     #   conditions_url   the page that holds the family's usage conditions text (a license label's raw text)
     #   description, homepage, download_url, download_kind ("release-asset" | "archive"), repository, license_source
+    #   primary_script   the lowercase ISO 15924 code of the script the family is designed for, when the source says
+    #                    (Google Fonts `primaryScript`); absent says nothing, never "Latin"
     details: dict = field(default_factory=dict)
 
     @classmethod

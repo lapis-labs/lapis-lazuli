@@ -126,6 +126,15 @@ the less-known first), under a heading per tier. Keep the familiar candidates an
 place at least one less-known one beside them in the two or three you compare, unless the brief fixes the face; an
 `unknown` family may be a candidate but does not fill the less-known place.
 
+Breadth: `--script` counts a family only for the script it is designed for (Google Fonts `primaryScript`, or a full
+measured Hangul, kana, Han, or Thai set), so an Indic-, Thai-, or Korean-first family that merely has a Latin subset
+is not a Latin candidate; a note says how many were left out, and `--secondary-scripts` lists them. Equal scores are
+ordered by role-fit keys (display class, heaviest weight, Google's expressive and quality tag weights, number of
+weights), then popularity, and only last by name. Without `--installed`, uninstalled catalog families keep a share of
+the list (a quarter of `--limit`; with `--by-familiarity` at least one per tier, and the unknown slots go to catalog
+families one catalog at a time), and each row says `installed` or `catalog, not installed`. A database synced before
+primary scripts were kept needs `lazuli catalog remap --source google-fonts` once (no request).
+
 Whether two faces look alike is not read from a role-size specimen or from `--similar-to`'s distance. Draw the same
 text at the same weight at 96 px or more, view a crop at native resolution (not a downscaled full page), and name
 the size the claim was judged at. A specimen at the role's size judges fit for that role. 96 px is a working minimum

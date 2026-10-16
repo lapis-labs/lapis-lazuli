@@ -281,4 +281,4 @@ def test_families_flow_into_search_labeled_with_their_source_and_license_provena
 
     assert search.main(["quill", "--limit", "5"]) == 0
     text = capsys.readouterr().out
-    assert "catalog: github-foundries" in text and "license source, github-foundries: license file OFL.md" in text
+    assert "catalog, not installed: github-foundries" in text and "license source, github-foundries: license file OFL.md" in text

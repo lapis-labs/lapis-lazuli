@@ -16,6 +16,12 @@ label (raw or mapped), a measured class, a foundry or designer. Filters:
                hant = hani, hrkt = kana (a family needs every part). Other codes are refused (exit 2).
                Installed families by coverage (`lazuli.lock.coverage_scripts`), catalog families by their
                `script:` labels, whose composites expand the same way.
+               A family counts only for a script it is designed for, its primary script: Google Fonts states one for
+               families whose own script is not Latin (`primaryScript`, kept as `details.primary_script`; a Thai, Gujarati,
+               or Korean-first family that merely has a Latin subset is no Latin candidate), and installed faces that
+               cover a full Hangul, kana, Han, or Thai set count as made for those scripts. A family with no such
+               statement counts for every script it covers. A note says how many families the rule left out.
+  --secondary-scripts  count a family for --script when it merely covers the script, though its primary script is another.
   --role       code needs a monospaced family; body, ui, data, and caption leave out families whose catalog
                or user classes are only display or hand, or, without such classes, whose measured kind is
                symbol (a `hand` kind from a name hint only warns); display and heading keep every family.
@@ -29,6 +35,12 @@ label (raw or mapped), a measured class, a foundry or designer. Filters:
                  nothing, so they never outrank a known regular face.
                  display, heading: a face of weight 600 or more, or bold measured strokes, +0.03; heavy
                  weights are never penalized.
+               Equal scores are ordered by role-fit keys, best first, with the name only the last key. display: a catalog
+               or user class of display, the heaviest known weight, the strongest `/Expressive/` tag weight (Google Fonts,
+               0-100), the number of known weights; heading: the heaviest weight, the mean of the `/Quality/` Drawing,
+               Spacing, and Wordspace tag weights, the number of weights; body, ui, data, caption: that quality mean, the
+               number of weights. Then the more popular family (the less popular one among less-known), installed before
+               catalog, the catalog's priority, and the name. Each result's evidence names the keys it has.
   --category   a genre or class (serif, sans, slab, mono, display, hand, bu-ri, min-bu-ri) or a subclass
                (min-bu-ri.rounded), from catalog labels, user classes, or measurement
   --license    open: OFL-1.1, Apache-2.0, UFL-1.0, or KOGL-1 by the catalog license label (a hint)
@@ -52,6 +64,11 @@ label (raw or mapped), a measured class, a foundry or designer. Filters:
                catalog says how familiar it is, which is not the same as obscure, so it is never listed as
                less-known, and it has a share of its own so that catalogs with no popularity still reach the list.
                Among less-known candidates of equal rank the less popular comes first.
+               Without --installed, uninstalled catalog families keep a share of the list: in each tier of two or more
+               slots at least one when one matches; the unknown slots go to catalog families before installed ones,
+               one catalog at a time (each catalog's best first, so GitHub foundries or 안심글꼴 reach a short list);
+               without --by-familiarity a quarter of --limit (rounded down) is kept for them. Installed families fill
+               the rest, and `--installed` lists installed families only, as before.
 Exit codes: 0 searched (even with no candidates); 2 usage or missing input.
 """
 from __future__ import annotations
@@ -60,12 +77,13 @@ import argparse
 import bisect
 import functools
 import importlib
+import itertools
 import json
 import math
 import re
 import sqlite3
 import sys
-from collections import defaultdict
+from collections import Counter, defaultdict
 
 import yaml
 
@@ -111,6 +129,12 @@ FIT_REGULAR, FIT_NO_REGULAR, FIT_CLASSED = 0.10, -0.15, -0.10
 FIT_PER_WEIGHT, FIT_WEIGHTS_MAX = 0.01, 0.04
 FIT_BOLD = 0.03                     # display and heading: a bold or heavier face is available
 _WGHT_AXIS = re.compile(r"wght\s+(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)")
+
+# Primary script and tie-breaking (see --script and --role in the module doc)
+PRIMARY_PARTS = {**COMPOSITE_SCRIPTS, "hira": ("kana",)}     # Google Fonts' codes; Hira is a Japanese-first family's kana
+NATIVE_FIRST = ("hang", "kana", "hani", "thai")              # a full measured set marks a face made for the script
+TAG_QUALITY = ("/Quality/Drawing", "/Quality/Spacing", "/Quality/Wordspace")
+NO_POSITION = 10 ** 9                                        # popularity position of a family no catalog ranks
 
 
 # ---------------------------------------------------------------- dispatch
@@ -179,7 +203,7 @@ def _license_evidence(cand: dict) -> str:
     so the text itself is the evidence, verbatim, with the page it was read on."""
     lic = cand["license"]
     if lic["id"] != "custom-free":
-        return f"license {lic['id'] or repr(lic['raw'])} ({lic['source']} summary, a hint)"
+        return f"license {lic['id'] or repr(lic['raw'])} ({lic['source']} summary, a hint; confirm the original)"
     page = next((c["details"]["conditions_url"] for c in cand["catalogs"]
                  if c["source"] == lic["source"] and (c.get("details") or {}).get("conditions_url")), None)
     return (f"license custom-free: the {lic['source']} listing's conditions, verbatim: " + " / ".join(lic["raw"].splitlines())
@@ -337,7 +361,17 @@ def _filters(cand: dict, args) -> tuple[bool, list[str]]:
             return False, why
         code = args.script.lower()
         shown = code if parts == (code,) else f"{code} = {' + '.join(parts)}"
-        why.append(f"script {shown} (" + ("installed coverage" if cand["installed"] else "catalog subsets") + ")")
+        how = "installed coverage" if cand["installed"] else "catalog subsets"
+        if primary := cand.get("primary"):
+            own = f"{', '.join(primary['codes'])} ({primary['basis']})"
+            if set(parts) <= primary["scripts"]:
+                how += f"; primary script {own}"
+            elif args.secondary_scripts:
+                how += f"; secondary: its primary script is {own}"
+            else:
+                cand["off_primary"] = True
+                return False, why
+        why.append(f"script {shown} ({how})")
     user = _user_classed(cand)
     labeled = "user class" if user else "catalog"
     if args.category:
@@ -401,15 +435,76 @@ def _stroke(face: dict) -> str | None:
     return (face.get("panose") or {}).get("weight")
 
 
-def role_fit(cand: dict, role: str) -> tuple[float, list[str]]:
-    """How the family's known weights suit the role: a score adjustment and its evidence (module doc, --role)."""
-    if role not in TEXT_ROLES and role not in DISPLAY_ROLES:
-        return 0.0, []
+def _known_weights(cand: dict) -> tuple[list, list, set, dict, list]:
+    """(measured faces, upright ones, installed upright weight classes, catalog weights, all known weights sorted)."""
     faces = cand["measured"]
     upright = [f for f in faces if not f.get("metrics", {}).get("italic")]
     installed = {w for f in upright if (w := f.get("metrics", {}).get("weight_class"))}
     catalog = catalog_weights(cand["labels"])
-    weights = sorted(installed | set(catalog))
+    return faces, upright, installed, catalog, sorted(installed | set(catalog))
+
+
+def _row_details(row: dict) -> dict:
+    return json.loads(row.get("details_json") or "{}")
+
+
+def _primary(cand: dict, rows: list[dict]) -> dict | None:
+    """The script(s) the family is designed for, {"codes", "scripts" (with composites' parts), "basis"}, or None when
+    nothing says: a catalog's own statement first, else an installed face with a full Hangul, kana, Han, or Thai set."""
+    stated: dict[str, str] = {}
+    for row in rows:
+        if code := _row_details(row).get("primary_script"):
+            stated.setdefault(code, row["source"])
+    if stated:
+        scripts = {part for code in stated for part in (code, *PRIMARY_PARTS.get(code, ()))}
+        return {"codes": list(stated), "scripts": scripts,
+                "basis": f"{', '.join(dict.fromkeys(stated.values()))} primaryScript"}
+    if cand["installed"] and (native := [s for s in cand["scripts"] if s in NATIVE_FIRST]):
+        return {"codes": native, "scripts": set(native), "basis": f"measured: full {', '.join(native)} coverage"}
+    return None
+
+
+def tag_weights(conn: sqlite3.Connection) -> dict[tuple[int, str], dict[str, float]]:
+    """{(source_id, source_key): {tag: weight}} of the Google Fonts /Expressive and /Quality tags (0-100), the
+    largest over a tag's axis positions."""
+    out: dict[tuple[int, str], dict[str, float]] = defaultdict(dict)
+    for r in conn.execute("SELECT source_id, source_key, raw, weight FROM catalog_label WHERE weight IS NOT NULL "
+                          "AND (raw LIKE '/Expressive/%' OR raw LIKE '/Quality/%')"):
+        tag, mine = r["raw"].split(" ", 1)[0], out[(r["source_id"], r["source_key"])]
+        mine[tag] = max(mine.get(tag, 0.0), r["weight"])
+    return out
+
+
+def role_fit_key(cand: dict, role: str, tags: dict) -> tuple[tuple, list[str]]:
+    """(keys, evidence): the role-fit keys that order equal scores, larger first (module doc, --role)."""
+    if role not in TEXT_ROLES and role not in DISPLAY_ROLES:
+        return (), []
+    weights = _known_weights(cand)[4]
+    mine: dict[str, float] = {}
+    for row in cand["rows"]:
+        for tag, weight in tags.get((row["source_id"], row["source_key"]), {}).items():
+            mine[tag] = max(mine.get(tag, 0.0), weight)
+    expressive = max((w for t, w in mine.items() if t.startswith("/Expressive/")), default=0.0)
+    quality = [mine[t] for t in TAG_QUALITY if t in mine]
+    quality = sum(quality) / len(quality) if quality else 0.0
+    heaviest, count = (max(weights) if weights else 0), len(weights)
+    classed = int(role == "display" and "display" in {g.split(".", 1)[0] for g in cand["genres"]})
+    named = {"display class": (classed, "display class" if classed else ""),
+             "heaviest weight": (heaviest // 100, f"heaviest weight {heaviest}" if heaviest else ""),
+             "expressive tag": (expressive, f"expressive tag {expressive:g}" if expressive else ""),
+             "quality tags": (quality, f"quality tags {quality:.0f}" if quality else ""),
+             "weights": (count, f"{count} weights" if count else "")}
+    order = {"display": ("display class", "heaviest weight", "expressive tag", "weights"),
+             "heading": ("heaviest weight", "quality tags", "weights")}.get(role, ("quality tags", "weights"))
+    shown = [named[name][1] for name in order if named[name][1]]
+    return tuple(named[name][0] for name in order), ([f"tie-break keys: {', '.join(shown)}"] if shown else [])
+
+
+def role_fit(cand: dict, role: str) -> tuple[float, list[str]]:
+    """How the family's known weights suit the role: a score adjustment and its evidence (module doc, --role)."""
+    if role not in TEXT_ROLES and role not in DISPLAY_ROLES:
+        return 0.0, []
+    faces, upright, installed, catalog, weights = _known_weights(cand)
     if role in DISPLAY_ROLES:
         if bold := [w for w in weights if w >= 600]:
             return FIT_BOLD, [f"role {role}: bold face available ({_span(bold)})"]
@@ -570,15 +665,59 @@ class Familiarity:
         return min(found, key=lambda v: (TIERS.index(v["tier"]), v.get("position", 0)))
 
 
+def _is_catalog(cand: dict) -> bool:
+    return not cand["installed"] and not cand.get("owned")
+
+
+def _popularity(cand: dict) -> int:
+    """Position in the popularity ranking, smaller is more popular; a chart family counts as the most popular and a
+    family no catalog ranks as the least."""
+    familiarity = cand["familiarity"]
+    return familiarity.get("position", 0 if familiarity["tier"] == "familiar" else NO_POSITION)
+
+
+def _order(cand: dict, less_popular_first: bool = False) -> tuple:
+    """The sort key: distance, score, role-fit keys (larger first), popularity, installed before catalog, the catalog's
+    priority, and the name last."""
+    popularity = _popularity(cand)
+    return (cand.get("distance", 0), -round(cand["rank"], 3), *(-key for key in cand["fit"]),
+            -popularity if less_popular_first else popularity, not cand["installed"], cand["order_priority"],
+            cand["family"].casefold())
+
+
+def _with_catalog(pool: list[dict], take: int, want: int) -> list[dict]:
+    """The first `take` of the ranked POOL, with at least `want` uninstalled catalog candidates: the best ones beyond
+    the first `take` replace the lowest installed ones, and the pool's order is kept."""
+    chosen = list(range(min(take, len(pool))))
+    have = sum(_is_catalog(pool[i]) for i in chosen)
+    extra = [i for i in range(len(chosen), len(pool)) if _is_catalog(pool[i])][:max(0, want - have)]
+    drop = [i for i in reversed(chosen) if not _is_catalog(pool[i])][:len(extra)]
+    return [pool[i] for i in sorted((set(chosen) - set(drop)) | set(extra))]
+
+
+def _spread(pool: list[dict]) -> list[dict]:
+    """POOL with the uninstalled catalog candidates first, one catalog at a time (each catalog's best first, the
+    catalogs in the order of their best), then the installed ones, so that a catalog with few or weaker candidates
+    still reaches a short list."""
+    by_catalog: dict[str, list[dict]] = defaultdict(list)
+    for cand in pool:
+        if _is_catalog(cand):
+            by_catalog[cand["catalogs"][0]["source"]].append(cand)
+    spread = [c for round_ in itertools.zip_longest(*by_catalog.values()) for c in round_ if c is not None]
+    return spread + [c for c in pool if not _is_catalog(c)]
+
+
 def _balanced(out: list[dict], limit: int) -> list[dict]:
     """`limit` candidates with familiar and less-known ones side by side, and some no catalog ranks
     (`--by-familiarity`): a quarter of the slots (rounded down) for unknown ones, then half of the rest for each
     of the other two (the odd one to familiar); a tier with fewer candidates gives its slots to less-known, then
     familiar, then unknown. Candidates keep their rank order inside a tier, except that among less-known ones of
-    equal rank the less popular comes first."""
+    equal rank the less popular comes first. A tier of two or more slots holds at least one uninstalled catalog
+    candidate when one matches, and the unknown slots go to catalog candidates before installed ones, one catalog at
+    a time."""
     tiers = {t: [c for c in out if c["familiarity"]["tier"] == t] for t in TIERS}
-    tiers["less-known"].sort(key=lambda c: (c.get("distance", 0), -round(c["rank"], 3),
-                                            -c["familiarity"].get("position", 0)))
+    tiers["less-known"].sort(key=lambda c: _order(c, less_popular_first=True))
+    tiers["unknown"] = _spread(tiers["unknown"])
     unknown = min(len(tiers["unknown"]), limit // 4)
     rest = limit - unknown
     take = {"familiar": min(len(tiers["familiar"]), -(-rest // 2)), "less-known": min(len(tiers["less-known"]), rest // 2),
@@ -588,7 +727,7 @@ def _balanced(out: list[dict], limit: int) -> list[dict]:
         extra = min(free, len(tiers[tier]) - take[tier])
         take[tier] += extra
         free -= extra
-    return [c for tier in TIERS for c in tiers[tier][:take[tier]]]
+    return [c for tier in TIERS for c in _with_catalog(tiers[tier], take[tier], 1 if take[tier] >= 2 else 0)]
 
 
 def search_fonts(conn: sqlite3.Connection, args) -> tuple[list[dict], list[str]]:
@@ -639,8 +778,17 @@ def search_fonts(conn: sqlite3.Connection, args) -> tuple[list[dict], list[str]]
             notes.append("catalog-only families have no measurements and are left out of --similar-to")
 
     out = []
+    priority = {name: p for name, p in conn.execute("SELECT name, priority FROM source")}
+    loose = argparse.Namespace(**{**vars(args), "secondary_scripts": True})
+    off_primary: Counter = Counter()
+    tags = tag_weights(conn) if args.role else {}
     for cand in candidates:
         cand["delivery"] = _delivery(cand)
+        own = by_installed.get(cand["family"], []) if cand["installed"] else []
+        cand["rows"] = own + cand["text_rows"]                 # the catalog rows that speak for the candidate
+        cand["primary"] = _primary(cand, cand["rows"])
+        if cand["primary"]:
+            cand["primary_scripts"] = cand["primary"]["codes"]
         evidence: list[str] = []
         if args.query:
             strength, text = _text_match(args.query, cand)
@@ -653,12 +801,17 @@ def search_fonts(conn: sqlite3.Connection, args) -> tuple[list[dict], list[str]]
             strength = 0.5
         passes, why = _filters(cand, args)
         if not passes:
+            if cand.pop("off_primary", False) and _filters(cand, loose)[0]:
+                off_primary["/".join(cand["primary"]["codes"])] += 1
             continue
         evidence += why
+        cand["fit"] = ()
         if args.role:                                  # under --similar-to, distance alone ranks
             fit, fit_why = role_fit(cand, args.role)
             strength += fit
             evidence += fit_why
+            cand["fit"], tie_why = role_fit_key(cand, args.role, tags)
+            evidence += tie_why
         if target is not None:
             if cand is target or not cand["installed"]:
                 continue
@@ -689,17 +842,22 @@ def search_fonts(conn: sqlite3.Connection, args) -> tuple[list[dict], list[str]]
                     evidence.append(f"download, {c['source']}: {details['download_url']} ({details['download_kind']})")
         if cand["license"] and args.license != "open":
             evidence.append(_license_evidence(cand))
-        own = by_installed.get(cand["family"], []) if cand["installed"] else []
-        cand["familiarity"] = familiarity.of(own + cand["text_rows"], [cand["family"], *cand["names_i18n"].values()])
+        cand["familiarity"] = familiarity.of(cand["rows"], [cand["family"], *cand["names_i18n"].values()])
         cand["rank"] = strength                        # uncapped, so bonuses still order capped scores
         cand["score"] = round(max(0.0, min(strength, 1.0)), 3)
         cand["evidence"] = list(dict.fromkeys(evidence))
+        cand["order_priority"] = min((priority.get(s["source"], 99) for s in cand["catalogs"]), default=99)
         out.append(cand)
-    priority = {name: p for name, p in conn.execute("SELECT name, priority FROM source")}
-    out.sort(key=lambda c: (c.get("distance", 0), -c["rank"], not c["installed"],
-                            min((priority.get(s["source"], 99) for s in c["catalogs"]), default=99),
-                            c["family"].casefold()))
-    shown = _balanced(out, args.limit) if args.by_familiarity else out[:args.limit]
+    out.sort(key=_order)
+    shown = _balanced(out, args.limit) if args.by_familiarity else _with_catalog(out, args.limit, args.limit // 4)
+    if off_primary:
+        left = ", ".join(f"{code} {n}" for code, n in off_primary.most_common(6))
+        notes.append(f"{sum(off_primary.values())} families cover {args.script} but are left out: it is not their "
+                     f"primary script (primary: {left}); --secondary-scripts lists them")
+    google = [r for r in rows.values() if r["source"] == "google-fonts"]
+    if args.script and google and not any("primary_script" in _row_details(r) for r in google):
+        notes.append("the Google Fonts rows carry no primary script yet, so --script counts every family that covers "
+                     "it; `lazuli catalog remap --source google-fonts` adds it with no request")
     if args.by_familiarity:
         counts = ", ".join(f"{t} {sum(c['familiarity']['tier'] == t for c in out)}" for t in TIERS)
         notes.append(f"familiarity of all {len(out)} matches: {counts}")
@@ -710,8 +868,8 @@ def search_fonts(conn: sqlite3.Connection, args) -> tuple[list[dict], list[str]]
 
 # ---------------------------------------------------------------- output
 
-PUBLIC_FIELDS = ("family", "names_i18n", "installed", "origins", "faces", "scripts", "classes", "genres",
-                 "license", "catalogs", "delivery", "familiarity", "owned", "score", "distance", "evidence")
+PUBLIC_FIELDS = ("family", "names_i18n", "installed", "origins", "faces", "scripts", "primary_scripts", "classes",
+                 "genres", "license", "catalogs", "delivery", "familiarity", "owned", "score", "distance", "evidence")
 
 
 def _familiarity_fact(familiarity: dict) -> str:
@@ -730,7 +888,7 @@ def _text(candidates: list[dict], args, notes: list[str]) -> str:
     for i, c in enumerate(candidates, 1):
         where = (f"installed: {', '.join(c['origins'])}, {_faces(c['faces'])}" if c["installed"]
                  else f"owned ({c['owned']['source']}): needs activation" if c.get("owned")
-                 else "catalog: " + ", ".join(dict.fromkeys(s["source"] for s in c["catalogs"])))
+                 else "catalog, not installed: " + ", ".join(dict.fromkeys(s["source"] for s in c["catalogs"])))
         if args.by_familiarity and (i == 1 or c["familiarity"]["tier"] != candidates[i - 2]["familiarity"]["tier"]):
             lines.append(TIER_HEADINGS[c["familiarity"]["tier"]])
         lines.append(f"{i:2}. {c['family']}  [{where}]  score {c['score']:.2f}")
@@ -738,6 +896,8 @@ def _text(candidates: list[dict], args, notes: list[str]) -> str:
         facts = [_familiarity_fact(c["familiarity"])]
         if c["scripts"]:
             facts.append("scripts " + ", ".join(c["scripts"]))
+        if c.get("primary_scripts"):
+            facts.append("primary script " + ", ".join(c["primary_scripts"]))
         for use in ("web", "app"):
             if c["delivery"][use]:
                 facts.append(f"{use} " + ", ".join(c["delivery"][use]))
@@ -760,6 +920,9 @@ def _parser(prog: str) -> argparse.ArgumentParser:
     ap.add_argument("--license", choices=("open", "any"), default="any")
     ap.add_argument("--delivery", choices=("web", "app"), help="only families with a known delivery path there")
     ap.add_argument("--installed", action="store_true", help="installed families only")
+    ap.add_argument("--secondary-scripts", action="store_true",
+                    help="count a family for --script when it merely covers the script, though its primary script "
+                         "(Google Fonts primaryScript, or a full measured CJK or Thai set) is another")
     ap.add_argument("--similar-to", metavar="FAMILY", help="rank installed families by measured-feature distance")
     ap.add_argument("--limit", type=int, default=DEFAULT_LIMIT, metavar="N",
                     help=f"candidates to list (default {DEFAULT_LIMIT}); a note says how many more match")
@@ -804,7 +967,7 @@ def main(argv: list[str] | None = None, prog: str = "lazuli search") -> int:
         conn.close()
     if args.json:
         filters = {k: getattr(args, k) for k in ("script", "role", "category", "license", "delivery", "installed",
-                                                 "similar_to", "by_familiarity", "limit")}
+                                                 "secondary_scripts", "similar_to", "by_familiarity", "limit")}
         json.dump({"type": "font", "query": args.query, "filters": filters,
                    "candidates": [_public(c) for c in candidates], "notes": notes},
                   sys.stdout, ensure_ascii=False, indent=1)

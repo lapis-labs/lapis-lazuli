@@ -62,6 +62,23 @@ contract formats are v0.
   under a heading per tier. A family Fontsource, Fontshare, or 안심글꼴 lists takes the rank of the Google Fonts
   family its name matches; with none it is `unknown`, never less-known. The type guide, `lapis` step 7, and `lzl-fonts`: the two
   or three candidates compared include at least one familiar and at least one less-known face unless the brief fixes the face.
+- `lazuli search` makes breadth reachable. `--script` now counts a family only for a script it is designed for: the Google Fonts
+  snapshot keeps the listing's `primaryScript` as `details.primary_script` (a lowercase ISO 15924 code, only where Google states
+  one), and an installed family with no such statement counts as made for Hangul, kana, Han, or Thai when its faces cover the
+  full set. So Baloo Bhai 2 (Gujarati), Bai Jamjuree and Srisakdi (Thai), and BIZ UDMincho (Japanese) no longer rank for a
+  Latin display request, a note names how many were left out and for which scripts, and the new `--secondary-scripts` counts
+  them anyway (the evidence then says "secondary"). A family with no statement counts for every script it covers, as before. A
+  database synced earlier gets the field from `lazuli catalog remap --source google-fonts` (no request; the search says so when
+  it is missing). Equal scores are no longer left to the alphabet: the keys are, for display, a catalog or user class of display,
+  the heaviest known weight, the strongest `/Expressive/` tag weight, and the number of weights; for heading, the heaviest
+  weight, the mean `/Quality/` tag weight, and the number of weights; for body, ui, data, and caption, the quality mean and the
+  number of weights; then popularity, installed before catalog, the catalog's priority, and the name. Without `--installed`,
+  uninstalled catalog families keep a share of the list (a quarter of `--limit`; with `--by-familiarity` at least one in each tier
+  of two or more slots, and the unknown slots go to catalog families one catalog at a time before installed ones, so GitHub
+  foundries and 안심글꼴 reach a short list); `--installed` is unchanged. A result's place reads `installed: ...` or `catalog,
+  not installed: ...`, and every license line says to confirm the original. On a copy of the owner's database the example
+  `--script latn --role display --license open --by-familiarity --limit 12` went from twelve installed families that all scored
+  0.58 to a list with five uninstalled catalog families (Google Fonts, Fontsource, Fontshare, and a GitHub foundry among them).
 - `lazuli catalog sync` for `anshim` also reads two tabs of the Gongu free-font board (`B0000018`; robots.txt and the terms
   re-read 2026-10-16, 13 requests at 3 s): 민간 무료글꼴 정보 (its pager followed, at most 20 pages) and 인기글꼴TOP20. A board
   entry's usage conditions are free text, so its family is license `custom-free` with the text kept verbatim as the license
