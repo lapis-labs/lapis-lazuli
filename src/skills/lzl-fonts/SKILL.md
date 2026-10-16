@@ -110,8 +110,9 @@ Familiarity: every candidate says whether it is `familiar` (the top quarter of a
 Google Fonts' `popularity` is a rank and a LOWER number is MORE popular), `less-known` (ranked below that), or
 `unknown`. A family Fontsource, Fontshare, or 안심글꼴 lists takes the rank of the Google Fonts family its name
 matches; with none, no catalog says how familiar it is, and that is not the same as obscure, so it is never
-listed as less-known. `--by-familiarity` lists familiar and less-known candidates side by side (half of `--limit`
-each, the least popular of the less-known first), under a heading per tier. Keep the familiar candidates and always
+listed as less-known. `--by-familiarity` lists familiar and less-known candidates side by side, with a quarter of
+`--limit` kept for the unranked ones so that catalogs with no popularity still reach the list (the least popular of
+the less-known first), under a heading per tier. Keep the familiar candidates and always
 place at least one less-known one beside them in the two or three you compare, unless the brief fixes the face; an
 `unknown` family may be a candidate but does not fill the less-known place.
 

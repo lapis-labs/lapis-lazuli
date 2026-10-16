@@ -40,16 +40,18 @@ label (raw or mapped), a measured class, a foundry or designer. Filters:
                contrast, square spread), each scaled to a typical step and compared on the face nearest a
                regular weight; a target feature the other family lacks counts one step. Catalog-only
                families have no measurements and are left out.
-  --by-familiarity  list familiar and less-known candidates side by side: half of `--limit` (rounded up) for each
-               tier, a tier with fewer candidates giving its slots to the others, grouped under a heading per
-               tier. A candidate's familiarity is a tier plus its basis, whether or not this option is given (JSON
-               `familiarity`): `familiar` is the top quarter of a catalog's ranked popularity (Google Fonts
-               `popularity`, where a LOWER number is MORE popular) or a place on a chart such as 안심글꼴's
-               인기글꼴 TOP20; `less-known` is a ranked family below that. A family whose own catalog states
-               no popularity (Fontsource, Fontshare, 안심글꼴, GitHub) takes the rank of the one Google Fonts family
-               its name matches; with none, it is `unknown`: no catalog says how familiar it is, which is not
-               the same as obscure, so it is never listed as less-known. Among less-known candidates of equal
-               rank the less popular comes first.
+  --by-familiarity  list familiar and less-known candidates side by side, and some that no catalog ranks: a quarter
+               of `--limit` (rounded down) for the unknown ones, then half of the rest for each of the other two
+               tiers (familiar takes the odd one), a tier with fewer candidates giving its slots to less-known,
+               then familiar, then unknown, grouped under a heading per tier. A candidate's familiarity is a tier
+               plus its basis, whether or not this option is given (JSON `familiarity`): `familiar` is the top
+               quarter of a catalog's ranked popularity (Google Fonts `popularity`, where a LOWER number is MORE
+               popular) or a place on a chart such as 안심글꼴's 인기글꼴 TOP20; `less-known` is a ranked family
+               below that. A family whose own catalog states no popularity (Fontsource, Fontshare, 안심글꼴, GitHub)
+               takes the rank of the one Google Fonts family its name matches; with none, it is `unknown`: no
+               catalog says how familiar it is, which is not the same as obscure, so it is never listed as
+               less-known, and it has a share of its own so that catalogs with no popularity still reach the list.
+               Among less-known candidates of equal rank the less popular comes first.
 Exit codes: 0 searched (even with no candidates); 2 usage or missing input.
 """
 from __future__ import annotations
@@ -549,7 +551,7 @@ class Familiarity:
         position = bisect.bisect_left(ranks, popularity) + 1
         tier = "familiar" if position / len(ranks) <= FAMILIAR_SHARE else "less-known"
         return {"tier": tier, "source": source, "rank": popularity, "position": position, "of": len(ranks),
-                "basis": f"{via}{source} popularity {popularity} (position {position} of {len(ranks)})"}
+                "basis": f"{via}{source} popularity {popularity}, position {position} of {len(ranks)}"}
 
     def of(self, rows: list[dict], names: list[str]) -> dict:
         """{"tier", and for a known tier "basis", "source", "rank", and for a rank "position" and "of"} from the
@@ -569,15 +571,18 @@ class Familiarity:
 
 
 def _balanced(out: list[dict], limit: int) -> list[dict]:
-    """`limit` candidates with familiar and less-known ones side by side (`--by-familiarity`): half the slots
-    (the odd one to familiar) for each, a tier with fewer candidates giving its slots to less-known, then
-    familiar, then unknown. Candidates keep their rank order inside a tier, except that among less-known ones
-    of equal rank the less popular comes first."""
+    """`limit` candidates with familiar and less-known ones side by side, and some no catalog ranks
+    (`--by-familiarity`): a quarter of the slots (rounded down) for unknown ones, then half of the rest for each
+    of the other two (the odd one to familiar); a tier with fewer candidates gives its slots to less-known, then
+    familiar, then unknown. Candidates keep their rank order inside a tier, except that among less-known ones of
+    equal rank the less popular comes first."""
     tiers = {t: [c for c in out if c["familiarity"]["tier"] == t] for t in TIERS}
     tiers["less-known"].sort(key=lambda c: (c.get("distance", 0), -round(c["rank"], 3),
                                             -c["familiarity"].get("position", 0)))
-    take = {"familiar": min(len(tiers["familiar"]), -(-limit // 2)),
-            "less-known": min(len(tiers["less-known"]), limit // 2), "unknown": 0}
+    unknown = min(len(tiers["unknown"]), limit // 4)
+    rest = limit - unknown
+    take = {"familiar": min(len(tiers["familiar"]), -(-rest // 2)), "less-known": min(len(tiers["less-known"]), rest // 2),
+            "unknown": unknown}
     free = limit - sum(take.values())
     for tier in ("less-known", "familiar", "unknown"):
         extra = min(free, len(tiers[tier]) - take[tier])
@@ -755,8 +760,9 @@ def _parser(prog: str) -> argparse.ArgumentParser:
     ap.add_argument("--limit", type=int, default=DEFAULT_LIMIT, metavar="N",
                     help=f"candidates to list (default {DEFAULT_LIMIT}); a note says how many more match")
     ap.add_argument("--by-familiarity", action="store_true",
-                    help="list familiar and less-known candidates side by side (half of --limit each); a family no "
-                         "catalog ranks is listed apart as unknown, never as less-known")
+                    help="list familiar and less-known candidates side by side, and some no catalog ranks (a quarter "
+                         "of --limit unknown, the rest split between the two); an unranked family is listed apart as "
+                         "unknown, never as less-known")
     ap.add_argument("--json", action="store_true", help="machine output")
     return ap
 

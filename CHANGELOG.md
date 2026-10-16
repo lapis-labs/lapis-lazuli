@@ -57,8 +57,9 @@ contract formats are v0.
   `dateAdded`, `lastModified`, `isNoto`, and `isBrandFont` (`catalog_family.signals_json`, migration 0006); a database synced
   earlier gets them with no request from the new `lazuli catalog remap`, which re-applies the mapping to the kept responses and
   leaves the fetch date alone. Every result carries `familiarity` (`familiar`: the top quarter of a catalog's ranking by position,
-  or on a chart; `less-known`: ranked below that; `unknown`) with its basis, and `--by-familiarity` lists half of `--limit` of each
-  of the first two under a heading per tier. A family Fontsource, Fontshare, or 안심글꼴 lists takes the rank of the Google Fonts
+  or on a chart; `less-known`: ranked below that; `unknown`) with its basis, and `--by-familiarity` lists familiar and less-known
+  ones side by side, with a quarter of `--limit` kept for unknown ones so that catalogs with no popularity still reach the list,
+  under a heading per tier. A family Fontsource, Fontshare, or 안심글꼴 lists takes the rank of the Google Fonts
   family its name matches; with none it is `unknown`, never less-known. The type guide, `lapis` step 7, and `lzl-fonts`: the two
   or three candidates compared include at least one familiar and at least one less-known face unless the brief fixes the face.
 - `lazuli catalog sync` for `anshim` also reads two tabs of the Gongu free-font board (`B0000018`; robots.txt and the terms

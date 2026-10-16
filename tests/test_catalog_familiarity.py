@@ -136,7 +136,7 @@ def test_the_top_quarter_of_the_ranking_is_familiar_by_position_and_the_rest_les
     by_name = {c["family"]: c["familiarity"] for c in result["candidates"]}
     assert [n for n, f in by_name.items() if f["tier"] == "familiar"] == [f"Sample {x}" for x in "ABCD"]
     assert by_name["Sample D"] == {"tier": "familiar", "source": "google-fonts", "rank": 8, "position": 4, "of": 17,
-                                   "basis": "google-fonts popularity 8 (position 4 of 17)"}
+                                   "basis": "google-fonts popularity 8, position 4 of 17"}
     assert by_name["Sample E"]["tier"] == "less-known" and by_name["Sample E"]["rank"] == 13
     assert by_name["Sample P"]["position"] == 16 and by_name["Sample P"]["tier"] == "less-known"
 
@@ -145,11 +145,15 @@ def test_by_familiarity_puts_a_less_known_candidate_beside_the_familiar_ones(cat
     plain = ran(capsys, "--script", "latn", "--limit", "4")
     assert set(tiers(plain).values()) == {"familiar"}               # the ordinary order lists only well-known faces
     mixed = ran(capsys, "--script", "latn", "--limit", "4", "--by-familiarity")
-    # half the slots each: the two most popular familiar, and of the less-known the least popular first
+    # a quarter of the slots for an unranked family, half the rest each for the others (the odd one familiar): the most
+    # popular familiar, then the least popular less-known
     assert list(tiers(mixed).items()) == [("Sample A", "familiar"), ("Sample B", "familiar"),
-                                          ("Sample P", "less-known"), ("Sample O", "less-known")]
+                                          ("Sample P", "less-known"), ("Mystery Grotesk", "unknown")]
     assert any(n.startswith("familiarity of all") and "familiar 4, less-known 12, unknown 1" in n
                for n in mixed["notes"])
+    wide = ran(capsys, "--script", "latn", "--limit", "8", "--by-familiarity")      # 1 unknown, then 4 familiar and 3 less-known
+    assert list(tiers(wide)) == ["Sample A", "Sample B", "Sample C", "Sample D", "Sample P", "Sample O", "Sample N",
+                                 "Mystery Grotesk"]
 
 
 def test_a_family_in_two_catalogs_takes_the_rank_the_other_one_states(catalogs, capsys):
@@ -174,7 +178,7 @@ def test_text_output_groups_by_tier_and_says_unknown_is_not_obscure(catalogs, ca
     out = capsys.readouterr().out
     assert out.index("familiar (top quarter") < out.index("less-known (ranked below") < out.index("unknown familiarity")
     assert "not the same as obscure" in out
-    assert "familiarity less-known (google-fonts popularity 3000 (position 17 of 17))" in out
+    assert "familiarity less-known (google-fonts popularity 3000, position 17 of 17)" in out
 
 
 def test_by_familiarity_needs_two_slots(catalogs, capsys):
