@@ -30,6 +30,7 @@ class Hit:
     conditions: frozenset[str] = frozenset()        # severity.adjust `when` texts this hit satisfies
     consequence: str | None = None                  # effect on the user, when the detector knows it
     text: str | None = None                         # the visible string the finding is about, which a keep can name (keep_evidence `strings`)
+    items: tuple[str, ...] = ()                     # guideline checklist items (`<guideline>/<item>`) the hit is evidence for, when the detector reads them from the plan
 
 
 @dataclass

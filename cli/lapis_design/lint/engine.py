@@ -34,7 +34,7 @@ from typing import Iterable, Mapping
 
 import yaml
 
-from lapis_design import __version__, plan_check, shared_dir
+from lapis_design import __version__, guidelines, plan_check, shared_dir
 from lapis_design.keep_evidence import Sources
 from lapis_design.lint import detectors
 from lapis_design.lint.types import DETECTORS, Context, Hit, Result
@@ -221,6 +221,7 @@ class _Run:
         self.probes = probes
         rules = [r for r in ctx.rules.get("rules") or [] if isinstance(r, dict) and "id" in r]
         self.by_id = {r["id"]: r for r in rules}
+        self.item_names = guidelines.rule_items(ctx.plan) if isinstance(ctx.plan, dict) else {}   # rule id -> the guideline items its findings are evidence for
         defaults = (ctx.plan or {}).get("defaults") or []
         self.decisions = {d["id"]: d for d in defaults if isinstance(d, dict) and "id" in d}
         self.evidence = Sources(ctx.plan or {}, ctx.ledger, ctx.design_text, ctx.project_root)
@@ -347,6 +348,8 @@ class _Run:
         if location:
             f["location"] = dict(location)
         f["observed"] = observed
+        if names := self.item_names.get(rule["id"]):
+            f["guideline_items"] = list(dict.fromkeys(names))
         return f
 
     def skipped(self, rule: dict, layer: str, reason: str, location: dict | None = None,
@@ -366,6 +369,8 @@ class _Run:
                 review = adjust.get("review", review)
                 break
         f = self._base(rule, layer, review, hit.observed, hit.location)
+        if hit.items:
+            f["guideline_items"] = list(dict.fromkeys([*f.get("guideline_items", ()), *hit.items]))
         f["severity"]["create"] = create
         consequence = hit.consequence or rule.get("why")
         if consequence:

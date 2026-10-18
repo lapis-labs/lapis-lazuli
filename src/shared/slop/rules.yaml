@@ -2026,6 +2026,25 @@ rules:
       - { kind: method, source: "wcag22#2.5.8" }
       - { kind: method, source: "skill:assets/accessibility-cheatsheet.md#platform-floors" }
 
+  # A target smaller than the minimum a design guideline sets for it. The thresholds are the plan's guidelines' own (src/shared/guidelines/,
+  # `check: target-size`), each in its unit (pt, dp, epx, CSS px) and converted to CSS px by guidelines/units.yaml; a finding names the item.
+  # The WCAG 24 CSS px minimum has its own rule above, and its findings name `wcag-2.2/target-size-min` through the item's `rules`.
+  - id: guideline.target-size
+    class: quality
+    domain: guideline
+    layers: [render]
+    severity: { create: warn, review: P2 }
+    detect:
+      render: { detector: guideline-target-size, params: { roles: [button, link, input] } }
+    why: A pointer target is smaller than the size a design guideline the plan follows asks for, so it is easy to miss, and the guideline's behavior row is at best partly met
+    better: Give the target the size the item asks for, by padding the control so its hit area reaches it, or say in the plan why this surface departs from the guideline
+    waiver: { scope: none }
+    verify: static
+    provenance:
+      - { kind: method, source: "guidelines/apple-hig.yaml#target-size" }
+      - { kind: method, source: "guidelines/material-3.yaml#target-size" }
+      - { kind: method, source: "guidelines/fluent-2.yaml#target-size-touchable" }
+
   # =============================================================== ux
 
   - id: ux.routine-modal

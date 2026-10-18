@@ -68,6 +68,9 @@ def place(finding: dict, here: str | None = None) -> str:
 def _item(finding: dict, here: str | None) -> str:
     where = place(finding, here)
     text = clip(finding["observed"], OBSERVED_CAP)
+    named = finding.get("guideline_items") or []
+    if named and not finding["observed"].startswith(named[0]):          # a finding of a rule that measures guideline items says which
+        text += f" (guideline {'items' if len(named) > 1 else 'item'}: {', '.join(named)})"
     return text if not where or text.startswith(where) else f"{where} — {text}"
 
 

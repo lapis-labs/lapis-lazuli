@@ -148,7 +148,7 @@ $defs:
     properties:
       id: { $ref: "#/$defs/rule_id" }
       class: { enum: [requirement, quality, default, contract] }
-      domain: { enum: [type, color, layout, surface, component, motion, copy, imagery, code, system, ux, reference, rights, plan] }
+      domain: { enum: [type, color, layout, surface, component, motion, copy, imagery, code, system, ux, reference, rights, plan, guideline] }
       layers:
         type: array
         minItems: 1

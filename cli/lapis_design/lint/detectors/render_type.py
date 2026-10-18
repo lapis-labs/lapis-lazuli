@@ -21,7 +21,7 @@ import re
 from dataclasses import dataclass, field, replace
 from typing import Any, Callable, Iterable
 
-from lapis_design import system_fonts
+from lapis_design import guidelines, system_fonts
 from lapis_design.lint.detectors.font_regions import definitions, describe, faces, judge_face, pick, region_list
 from lapis_design.lint.types import Context, Hit, Result, detector
 from lapis_design.render.color import contrast_ratio, delta_e_ok, oklab, to_oklch
@@ -1174,6 +1174,58 @@ def target_size(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
                 evidence="not-verified" if twin else "measurement",
                 refs=[box["id"], *(o["id"] for o in touching)][:REF_LIMIT]))
     return finish(hits)
+
+
+def _length(value: float, unit: str) -> str:
+    """A threshold as its guideline gives it, with the CSS px it stands for in a web prototype and the factor used, so the unit is never dropped."""
+    px = guidelines.css_px(value, unit)
+    if unit == "css-px" or px is None:
+        return f"{value:g} {'CSS px' if unit == 'css-px' else unit}"
+    return f"{value:g} {unit} = {px:g} CSS px (1 {unit} : {px / value:g} CSS px for a web prototype, guidelines/units.yaml)"
+
+
+@detector("guideline-target-size", layers=("render",))
+def guideline_target_size(ctx: Context, det: dict, rule: dict, layer: str) -> Result:
+    """A target smaller than the minimum of a checklist item of a guideline the plan names. Each item keeps its own unit and
+    viewports; the finding names the item (`<guideline>/<item>`), the size found in CSS px, and what the item asks in its unit."""
+    if not isinstance(ctx.plan, dict):
+        return Result(skipped="no plan given: the guidelines it names set the thresholds")
+    items = guidelines.checks(ctx.plan, "target-size")
+    if not items:
+        return Result()
+    all_views, missing = views(ctx, rule)
+    if missing:
+        return Result(skipped=missing)
+    roles = set((det.get("params") or {}).get("roles") or CONTROLS)
+    hits = Hits()
+    unjudged: list[str] = []
+    for item in items:
+        threshold = item["threshold"]
+        minimum = guidelines.css_px(threshold["value"], threshold["unit"])
+        if minimum is None:
+            unjudged.append(f"{item['ref']} gives its size in {threshold['unit']}, which is no length")
+            continue
+        unless = threshold.get("unless") or {}
+        alt = (guidelines.css_px(unless["width_min"], threshold["unit"]), guidelines.css_px(unless["height_min"], threshold["unit"])) if unless else None
+        seen = [v for v in layout_views(all_views) if item["viewports"] is None or v.width in item["viewports"]]
+        if not seen:
+            unjudged.append(f"{item['ref']} reads the {', '.join(map(str, item['viewports']))} px capture, which the extract does not hold")
+            continue
+        asks = _length(threshold["value"], threshold["unit"])
+        if alt:
+            asks += f", or {_length(unless['width_min'], threshold['unit'])} wide and {_length(unless['height_min'], threshold['unit'])} tall"
+        for view in seen:
+            for box in view.boxes.values():
+                if not is_target(box, roles) or inline_link(view, box) or native_unstyled(box):
+                    continue
+                width, height = box["rect"]["w"], box["rect"]["h"]
+                if (width >= minimum and height >= minimum) or (alt and width >= alt[0] and height >= alt[1]):
+                    continue
+                name = box_name(view, box["id"])
+                hits.add((item["ref"], box["id"]), view, Hit(
+                    observed=f"{item['ref']}: {box.get('role')} {quote(name or box.get('role'), 24)} is {width:.0f} x {height:.0f} CSS px; the item asks at least {asks}",
+                    location=view.location(box["id"]), evidence="measurement", refs=[box["id"]], items=(item["ref"],)))
+    return finish(hits, unjudged)
 
 
 OVERFLOW_CHECKS = ("page-horizontal-scroll", "clipped-text", "overlapping-controls", "dynamic-viewport-clip")
