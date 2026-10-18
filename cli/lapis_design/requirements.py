@@ -590,8 +590,10 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design requirements s
 
     integrity.observe_task(root, task, "requirements seal", extra=changes)
     doc = record(root, task)
+    guideline = doc.get("guideline_rows") or []
     print(f"requirements: sealed {len(doc['rows'])} rows for {task} from "
-          f"{', '.join(s['path'] for s in doc['sources'])} -> {record_path(root, task).relative_to(root).as_posix()}"
+          f"{', '.join(s['path'] for s in doc['sources'] if s['kind'] != 'guideline')} -> {record_path(root, task).relative_to(root).as_posix()}"
+          + (f"; {len(guideline)} guideline rows from the plan's guidelines, which are not the owner's words" if guideline else "")
           + (f"; {len(changes)} changes since the last seal" if changes else ""))
     return 0
 

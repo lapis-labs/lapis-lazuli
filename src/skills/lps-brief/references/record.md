@@ -117,6 +117,10 @@ format is the `requirements-record` item in `../shared/index.yaml`. Only `lapis-
 - **Approval is not a requirement.** Every other top-level `[declared]` item, under any heading, becomes a row that the
   critic must judge before `done`. Record an owner's plain approval ("looks right, go on") as an untagged item
   (`- Approved the slice: <the owner's words>`), and tag `[declared]` only a reply that says what the owner wants.
+- **Guideline rows are not the owner's.** Once the plan lists design guidelines (`brief.guidelines`), the record also holds their
+  behavior items as `guideline_rows` (`G:<guideline>/<item>`), from our checklists. They are rebuilt from the plan, an owner's reply
+  never quotes one, and the critic judges them like the rest; the guideline the owner names in their words is a `[declared]` row of
+  their own and is listed in the plan with that row (the plan-writing step of the `lapis` skill).
 
 ## Project taste
 

@@ -231,6 +231,13 @@ record, as one row with an id; `integrity.observe` reads the sources again on ev
 reworded unseen. An owner reply that quotes an id (`[declared] R3f2a1c: drop — <words>`) is copied to
 `owner_decisions`. Once a record exists, a critic report has to judge every row (`requirements[]`) before `done`, or the
 critic has to be recorded as unavailable, and the owner block says the requirements were not judged.
+Rows that are not the owner's words follow theirs: when the plan lists design guidelines (`brief.guidelines`), each behavior
+checklist item that applies to its platforms is a `guideline_rows` entry (`G:<guideline>/<item>`, `shared/guidelines/`), and
+the critic has to judge those too, with the same states. `plan check` suggests the guidelines a brief calls for
+(`guideline.suggested-missing`, a warning for web's WCAG 2.2) and blocks a plan that omits a guideline an owner row names
+(`guideline.declared-missing`) or states a `visual` other than the owner's answer (`guideline.visual-drift`); the lint reports
+`guideline.target-size` against each guideline's own minimum and names the guideline item in every finding of a rule that
+measures one (`guideline_items`).
 
 `references` comes next, the same way: a run with no plan file, or a plan in `mode: create`, whose
 `.lapis/references/<task>.md` is not a references record gets it after the brief, and a redesign or repair plan never

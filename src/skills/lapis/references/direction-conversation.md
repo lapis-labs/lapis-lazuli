@@ -11,6 +11,7 @@ vote on adjectives: every option is a job, a representation, or a carried meanin
 - The fonts question: one per type role, whether the owner has fonts they own but have not installed.
 - The proposal: `.lapis/direction/<task>.yaml`, written before you ask.
 - Asking: one message per turn, in the owner's language and plain words, naming every open item by its id in parentheses.
+- The guideline question: one per design guideline the plan will name, how closely the look follows it (the behavior is followed whatever they say).
 - Recording answers: `## Direction <n>` in the brief record, one line per item.
 - Unattended: nobody to ask: `[assumed]` with a basis, nothing waits.
 - What it is not: limits, so a turn never becomes a progress check-in.
@@ -125,6 +126,19 @@ the owner and the critic do.
 
 Put the owner's replies in the brief record `.lapis/answers/<task>.md`, under `## Direction 1`, `## Direction 2`, and so on,
 one line per item, keeping what the file holds. The fact cap of the brief (six questions a round, two rounds) counts only
+## The guideline question
+
+One more item for every design guideline the plan will name in `brief.guidelines` that has a look of its own (`V<n>`; not WCAG 2.2,
+which has none): **how closely should the look follow it?** The question is worded by the CLI in plain words and says that how
+things behave is followed whichever the owner picks. It has three fixed options: `a` follow its look, `b` use it as a reference and
+depart where this design has a reason (the default), `c` leave its look aside. Ask it in turn one with the others and put the
+guidelines into the proposal as `guidelines: [{id: V1, guideline: apple-hig}]` (an `other` guideline adds its `name`); the ids
+to list are the ones `plan check` will suggest for the brief, with the platforms in `platforms.md`, "Guidelines".
+
+The answer is the plan's `brief.guidelines[].visual` (`follow`, `consult`, `none`), and `plan check` refuses a plan that says
+otherwise. The owner's own reply is a requirement row like any `[declared]` item; the guideline's behavior items are rows too, but
+from our checklist, not from the owner.
+
 `## Answers` headings and does not apply here.
 
 ```text
@@ -152,6 +166,7 @@ choice, and their words only for what they answered, and a row left as printed c
 With nobody to ask (`LAPIS_UNATTENDED=1`), nothing waits. Answer each open item yourself under `## Direction <n>`:
 `- [assumed] K2 ticker band: drop — Basis: <why, from the brief and the references>`, and the pick as
 `- [assumed] Pick: C2 — Basis: <why>`. An `[assumed]` line with no `Basis:` does not count. The owner block at `done` lists
+- [declared] V1 Apple's Human Interface Guidelines: b — "<owner words>"   how closely the look follows a guideline: a follow, b use it as a reference, c leave its look aside
 every decision made without the owner.
 
 ## What it is not
