@@ -307,6 +307,8 @@ def add(root: Path, task: str, source: str, *, lines: str | None = None, heading
             raise ExtractError("--lines is A-B or A (1-based, inclusive)")
         start = int(match.group(1))
         end = int(match.group(2) or start)
+    if heading is None and end < start:
+        raise ExtractError(f"lines {start}-{end} run backwards: give --lines A-B with A at most B")
     if start < 1 or end < start or end > len(text_lines):
         raise ExtractError(f"lines {start}-{end} are not within {name}, which has {len(text_lines)} lines")
     text = excerpt(text_lines, start, end)
@@ -458,8 +460,9 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design extract show")
             return done(1 if extra["stale"] else 0, render(found))
         out = [f"extract check: {extra['extracts'] - extra['stale']} of {extra['extracts']} extracts hold"]
         out += [f"  {_stale_line(s)}" for s in found if s.state != FRESH]
-        out.append(f"  reading them costs {extra['extract_chars']:,} characters instead of {extra['source_chars']:,} for "
-                   f"{extra['sources']} whole sources")
+        if extra["extracts"] != extra["stale"]:                            # nothing that holds, nothing to cost
+            out.append(f"  reading them costs {extra['extract_chars']:,} characters instead of {extra['source_chars']:,} for "
+                       f"{extra['sources']} whole sources")
         return done(1 if extra["stale"] else 0, "\n".join(out) + "\n")
     except ExtractError as exc:
         return done(2, f"extract {verb}: {exc}\n")

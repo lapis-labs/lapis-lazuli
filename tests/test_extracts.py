@@ -110,6 +110,17 @@ def test_a_changed_source_makes_the_extract_stale_and_the_cli_says_so(project, c
     assert run(project, "check") == 0
 
 
+def test_a_backwards_line_range_says_so_and_a_check_of_only_stale_extracts_prints_no_cost(project, capsys):
+    assert run(project, "add", "--source", "BRIEF.md", "--lines", "5-2") == 2
+    assert "lines 5-2 run backwards: give --lines A-B with A at most B" in capsys.readouterr().err
+    assert run(project, "add", "--source", "BRIEF.md", "--lines", "8") == 0
+    (project / "BRIEF.md").write_text(BRIEF.replace("Saturdays", "Fridays"), encoding="utf-8")
+    capsys.readouterr()
+    assert run(project, "check") == 1
+    check = capsys.readouterr().out
+    assert "0 of 1 extracts hold" in check and "STALE" in check and "reading them costs" not in check
+
+
 def test_a_source_that_is_gone_is_reported_not_skipped(project, capsys):
     assert run(project, "add", "--source", "BRIEF.md", "--lines", "8") == 0
     (project / "BRIEF.md").unlink()
