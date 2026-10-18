@@ -582,7 +582,7 @@ def _steps(root: Path, task: str, page: str | None, integrity_error: str | None 
                            f"-o .lapis/lint/{task}.json"), interactive)
     if "critic" in need:
         packet = critic_packet.has_record(root, task)
-        rows = requirements.rows(root, task)
+        rows = requirements.all_rows(root, task)
         counted = (f"{len(rows)} rows, {len(requirements.uncovered(root, task, _json(paths['critic'])))} not judged yet"
                    if rows else "")
         owed = [f["observed"] for f in findings if f["rule_id"] in ("release.critic-missing", "release.input-stale")

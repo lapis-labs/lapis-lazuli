@@ -97,7 +97,7 @@ def test_the_owner_block_reads_the_delta_as_one_report_and_the_summary_counts_ev
     record = reviewed(project)
     delta_for(project, record)
     delivery = owner.deliver(project, TASK, {"kind": "approval"})
-    rows = json.loads((project / DELTA_PACKET).read_text())["requirements"]["ids"]
+    rows = [i for i in json.loads((project / DELTA_PACKET).read_text())["requirements"]["ids"] if not i.startswith("G:")]   # the summary counts the owner's rows
     assert f"requirements, the page http://127.0.0.1:4173/system.html?lang=ko: " in delivery.summary
     assert f"of {len(rows)}" in delivery.summary and "partly" in delivery.summary
     assert "does not judge" not in delivery.block and "critic report was made from another packet" not in delivery.block

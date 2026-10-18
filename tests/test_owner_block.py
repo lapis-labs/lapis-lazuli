@@ -50,8 +50,11 @@ def ids(root: Path) -> list[str]:
 def judge(root: Path, states: list[str | None], **more) -> None:
     """The critic report with a judgement of each row (`None` leaves the row out), as a critic that read the packet
     writes it: it names the packet built from the inputs as they are now."""
+    from lapis_design import requirements
+
+    guideline = [{"id": row["id"], "state": "met", "refs": []} for row in requirements.guideline_rows(root, TASK)]   # not the owner's rows: always judged
     refresh_critic(root, extra={"requirements": [{"id": rid, "state": state, "refs": []}
-                                                 for rid, state in zip(ids(root), states) if state], **more})
+                                                 for rid, state in zip(ids(root), states) if state] + guideline, **more})
 
 
 # ---- 4. the summary an approval wait has to carry

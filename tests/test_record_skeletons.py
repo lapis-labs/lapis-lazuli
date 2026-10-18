@@ -84,7 +84,9 @@ def test_a_plan_section_skeleton_shows_every_key_the_section_names_and_nothing_e
     document = yaml.safe_load(skeleton.plan("kiln-shop", "brief"))
     assert list(document) == ["brief"]
     assert set(document["brief"]) == set(schema("plan/schema.yaml")["properties"]["brief"]["properties"])
-    assert all(value is None or value == [None] or value == [] for value in document["brief"].values())
+    shown = {key: value for key, value in document["brief"].items() if key != "guidelines"}
+    assert all(value is None or value == [None] or value == [] for value in shown.values())
+    assert [sorted(item) for item in document["brief"]["guidelines"]] == [["basis", "id", "platforms", "route"]]     # a list shows one item to repeat
     with pytest.raises(KeyError):
         skeleton.plan(None, "no-such-section")
 
