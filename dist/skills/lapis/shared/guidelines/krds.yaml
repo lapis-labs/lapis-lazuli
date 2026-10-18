@@ -12,8 +12,14 @@ visual_layer: true
 platforms: [web]
 checked_at: "2026-10-18"
 route:
-  used: { kind: official-docs, ref: "https://www.krds.go.kr/html/site/index.html", note: "the component and service-pattern pages named in the items, read on checked_at; the Context7 index of the site holds 4 snippets and was not used for the items" }
-  alternative: { kind: owner-saved, ref: "the KRDS PDF guide (August 2025), the HTML Component Kit (https://github.com/KRDS-uiux/krds-uiux), or pages the owner saved" }
+  context7:
+    library_id: "/im6705/krds-markdown"
+    snippets: 427
+    resolved_on: "2026-10-21"
+    origin: third-party
+    note: "A third-party conversion of the KRDS guide to markdown, not the Ministry's own copy. KRDS is KOGL Type 1, so a copy is allowed with attribution, but it may lag or alter the official guide: check any claim that matters against the official site or the PDF guide before relying on it. The official site's own Context7 index, /websites/krds_go_kr_html_site_index, holds only 4 snippets."
+  official: { kind: official-docs, ref: "https://www.krds.go.kr/html/site/index.html", note: "the component and service-pattern pages named in the items; also the KRDS PDF guide (August 2025), the HTML Component Kit (https://github.com/KRDS-uiux/krds-uiux), or pages the owner saved" }
+  written_from: "the official component and service-pattern pages named in the items, read on checked_at; the Context7 index of the official site was not used for the items"
 license:
   summary: All KRDS materials are provided under KOGL Type 1, which allows commercial and non-commercial use and modified or derivative works when the source is credited. These items are rewritten in our own words.
   attribution: "This file uses the Government-wide UI/UX Design System (KRDS, Korea Design System) created by the Ministry of the Interior and Safety in 2024 and released under KOGL Type 1; the materials can be downloaded free of charge from https://www.krds.go.kr. The items here are our own wording and are not the KRDS text."

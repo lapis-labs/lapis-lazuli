@@ -1,15 +1,17 @@
 """Design guidelines: the behavior checklists in `shared/guidelines/`, the plan's `brief.guidelines`, and what follows from them.
 
 A plan names the guidelines its work follows (`brief.guidelines`: the guideline, the platforms it covers, whether the owner
-wants its look followed, consulted, or left, and the route its documents were read by). The behavior layer of each is a
+wants its look followed, consulted, or left, and the route its documents are read by). The behavior layer of each is a
 checklist in our own words (`shared/guidelines/<id>.yaml`, `guideline.schema.yaml`); the visual layer is the owner's choice
 and has no checklist. This module reads the files and answers four questions for the rest of the CLI:
 
-- `suggest(brief)`: which guidelines the brief's platform, locale, and words call for (the defaults `plan check` offers);
+- `suggest(brief)`: which guidelines the brief's platform, locale, and product frame call for (the defaults `plan check` offers);
 - `rows(plan)`: the checklist items of the plan's guidelines as requirement rows from a lapis source (`requirements.py`
   keeps them next to the owner's rows, and the critic judges each);
 - `rule_items(plan)`: which existing lint rules measure which item, so a finding of such a rule names the item;
-- `css_px(value, unit)`: a threshold's length in CSS px by the mapping in `shared/guidelines/units.yaml`.
+- `css_px(value, unit)`: a threshold's length in CSS px by the mapping in `shared/guidelines/units.yaml`;
+- `route(guideline)`: where a maker reads the guideline's documents, Context7 with the recorded library id first and the
+  official source when none is recorded.
 
 Stdlib only until a file is read: the stop hook reaches `requirements`, which reaches this lazily.
 """
@@ -27,6 +29,7 @@ VISUAL = ("follow", "consult", "none")
 DEFAULT_VISUAL = "consult"                  # an entry with no `visual` reads as this
 ROW_PREFIX = "G:"                           # a guideline row's id is `G:<guideline>/<item>`
 ROW_ID = re.compile(r"^G:[a-z0-9.-]+/[a-z0-9-]+$")
+PUBLIC_SERVICE_FRAME = "public-service"     # the `brief.product_frame` the owner states outright for a public service
 
 # What names a guideline in the owner's words. Narrow on purpose: a bare "material" or "seed" is not a guideline.
 _ALIASES = {
@@ -41,9 +44,6 @@ _ALIASES = {
 # A name ends at a letter or digit of the Latin alphabet, not at Hangul: "KRDS를" names KRDS where `\b` would not see it.
 _NAMED = {gid: re.compile(r"(?<![A-Za-z0-9])(?:" + "|".join(patterns) + r")(?![A-Za-z0-9])", re.IGNORECASE)
           for gid, patterns in _ALIASES.items()}
-_PUBLIC_SERVICE = re.compile(
-    r"정부|공공|행정|민원|지자체|시청|구청|군청|도청|부처|\bgovernment\b|\bgov\b|public[\s-]service|public[\s-]sector|\bmunicipal|\bministry\b"
-    r"|city\s+hall|civil\s+service|\.go\.kr", re.IGNORECASE)
 _OS = {"windows": re.compile(r"\bwindows\b|윈도우", re.IGNORECASE),
        "other": re.compile(r"\bmac(?:os)?\b|\blinux\b|\bubuntu\b|\bchromeos\b|맥\s*os|맥북|리눅스", re.IGNORECASE)}
 
@@ -226,17 +226,17 @@ def desktop_os(brief: dict) -> str | None:
 
 
 def public_service(brief: dict) -> bool:
-    """Whether the brief reads as a Korean public service: Korean among its locales and a word of government in what it says.
-    `product_frame` has no value for it, so the words decide."""
+    """Whether the owner said this is a public service (`brief.product_frame`) and Korean is among the brief's locales. KRDS is
+    the Korean government's system, so a public service in another language alone is not taken to be Korean: no words are guessed."""
     locales = [str(x).lower() for x in brief.get("locales") or ()]
-    return any(x == "ko" or x.startswith("ko-") for x in locales) and bool(_PUBLIC_SERVICE.search(_words(brief)))
+    return brief.get("product_frame") == PUBLIC_SERVICE_FRAME and any(x == "ko" or x.startswith("ko-") for x in locales)
 
 
 def suggest(brief: Any) -> tuple[list[dict], list[str]]:
     """The defaults the brief calls for, and the questions it leaves: (`[{id, platforms, why}]`, `[question]`).
-    ios gives apple-hig, android material-3, web wcag-2.2 (always), desktop on Windows fluent-2, a Korean public service krds.
-    A desktop whose operating system the brief does not name is a question, not a guess. `product_frame` is not a signal
-    for any of them."""
+    ios gives apple-hig, android material-3, web wcag-2.2 (always), desktop on Windows fluent-2, the `public-service` product
+    frame with a Korean locale krds. A desktop whose operating system the brief does not name is a question, not a guess.
+    No other product frame is a signal, and no word of the brief says public service: the owner states the frame."""
     if not isinstance(brief, dict):
         return [], []
     platform = [p for p in brief.get("platform") or () if isinstance(p, str)]
@@ -258,7 +258,7 @@ def suggest(brief: Any) -> tuple[list[dict], list[str]]:
     if public_service(brief):
         covered = [p for p in platform if p in ("web", "ios", "android")] or ["web"]
         found.append({"id": "krds", "platforms": ["web"] if "web" in covered else covered,
-                      "why": "the brief reads as a Korean public service: Korean locale and a word of government in its subject, job, audience, or constraints"})
+                      "why": "the brief's product frame is public-service and its locales include Korean"})
     return found, questions
 
 
@@ -267,9 +267,20 @@ def named(text: str) -> list[str]:
     return [gid for gid in IDS if _NAMED[gid].search(text)]
 
 
+def route(guideline: str) -> dict:
+    """Where a maker reads the guideline's documents, as the plan's `route` entry (`{kind, ref}`): Context7 with its library id
+    when the file records one, else the official source. No file for the name gives `{kind: official-docs, ref: "?"}`."""
+    doc = load(guideline)
+    if not doc:
+        return {"kind": "official-docs", "ref": "?"}
+    context7 = doc["route"].get("context7")
+    if context7:
+        return {"kind": "context7", "ref": context7["library_id"]}
+    official = doc["route"]["official"]
+    return {"kind": official["kind"], "ref": official["ref"]}
+
+
 def default_entry(guideline: str, platforms: Iterable[str], basis: str = "suggested") -> dict:
-    """An entry the plan can hold for a guideline of `IDS`, with the route this file was read by."""
-    doc = load(guideline) or {}
-    route = (doc.get("route") or {}).get("used") or {"kind": "official-docs", "ref": "?"}
+    """An entry the plan can hold for a guideline of `IDS`, with the route a maker reads its documents by."""
     return {"id": guideline, "platforms": list(platforms), "basis": basis, "visual": DEFAULT_VISUAL if has_visual_layer(guideline) else "none",
-            "route": {"kind": route["kind"], "ref": route["ref"]}}
+            "route": route(guideline)}

@@ -540,6 +540,19 @@ still apply. Classify by the surface's task, not the company: a developer tool's
 - Inventory is a grid for recognizable item art and a list or table for compared statistics. A store
   shows price, quantity, recurrence, and scope beside the purchase action.
 
+### `public-service`
+
+- Set because the owner said this is a public service, not guessed from the subject. The screen archetype still comes from each
+  screen's task: eligibility and guidance read like `docs`, an application is a `form`, a status lookup an `entity-detail`.
+- The first view answers whether the visitor qualifies, what to bring, where to apply, and by when, with the service named in
+  the visitor's words, not the agency's organization chart.
+- A step that asks for proof of identity declares `requires: [identity]` with a reason and gives people without the supported
+  device another path (`lps-ux`, forms and recovery).
+- Fees, deadlines, legal names, and eligibility rules come from the agency: plan a slot and an `unresolved` claim, never an
+  invented figure.
+- The behavior floor comes through `brief.guidelines` (KRDS with a Korean locale, and WCAG 2.2 on the web); the frame sets no
+  look. A staff-side casework screen is `internal-tools` with this frame carried as a constraint.
+
 ### `forms-onboarding-checkout`
 
 The screen archetype is `form`, `checkout`, `onboarding`, or `auth`, and those entries hold the

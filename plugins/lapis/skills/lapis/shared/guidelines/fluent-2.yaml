@@ -12,8 +12,9 @@ visual_layer: true
 platforms: [desktop, web]
 checked_at: "2026-10-18"
 route:
-  used: { kind: context7, ref: "/websites/fluent2_microsoft_design", note: "queried by section topic on checked_at; the Windows Learn pages were read directly (robots.txt allows it) on the same day" }
-  alternative: { kind: official-docs, ref: "https://fluent2.microsoft.design and https://learn.microsoft.com/en-us/windows/apps/design/" }
+  context7: { library_id: "/websites/fluent2_microsoft_design", snippets: 818, resolved_on: "2026-10-21" }
+  official: { kind: official-docs, ref: "https://fluent2.microsoft.design and https://learn.microsoft.com/en-us/windows/apps/design/", note: "the Windows apps documents are on Microsoft Learn, which the Context7 index of Fluent 2 does not hold" }
+  written_from: "the Context7 index of Fluent 2, queried by section topic on checked_at; the Windows Learn pages were read directly (robots.txt allows it) on the same day"
 license:
   summary: The Fluent 2 site states no content license and Microsoft's general terms restrict copying, so these items are paraphrases with links. The Windows apps documents on Microsoft Learn (MicrosoftDocs/windows-dev-docs) are CC BY 4.0 for text.
   attribution: "Windows app design items paraphrase Microsoft Learn documents (https://learn.microsoft.com/en-us/windows/apps/design/), Copyright © Microsoft, text licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/); changes: summarized in our own words. Fluent 2 items paraphrase https://fluent2.microsoft.design."

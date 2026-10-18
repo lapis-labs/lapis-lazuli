@@ -6,6 +6,36 @@ All notable changes are recorded here. The format follows
 between minor versions; render extraction, draft review, and reference hints are v1, while the other
 contract formats are v0.
 
+## Unreleased
+
+### Changed
+
+- **Breaking:** a Korean public service is recognized by an explicit value, not by guessing words. The plan's `brief.product_frame`
+  gains `public-service` (a service run for a government body or public agency, set only when the owner says so), and `plan check`
+  suggests KRDS (`guideline.suggested-missing`, information) when the frame is `public-service` and a locale is Korean (`ko` or
+  `ko-*`). A public service with no Korean locale gets no KRDS: KRDS is the Korean government's system. The keyword detection
+  (a Korean locale plus government words in the subject, job, audience, or constraints) is removed: those words alone suggest
+  nothing now. `lps-brief` lets the owner say it plainly: the request that calls the service a public service sets the frame
+  (`[declared]`), and when the subject could be one and nothing says so, one plain question asks it (`questions.md`, "The product
+  frame"). Guides: `lapis` (plan step 1, the starting-mode table, `archetypes.md` frame block, `platforms.md`), `lps-brief`
+  (`SKILL.md`, `questions.md`, `record.md`). Contract: `src/shared/plan/schema.yaml` (`product_frame` enum).
+- **Breaking:** guideline routes are Context7 first, the official source second. In `src/shared/guidelines/<id>.yaml`, `route`
+  is now `{context7?, official, written_from}` instead of `{used, alternative}`: `context7` holds the library id the Context7 MCP is
+  queried with (`library_id`, `snippets`, `resolved_on`, optional `origin: third-party` with a required `note`, optional `lags`),
+  `official` is the second route, `written_from` says what the items were read from. Ids resolved on 2026-10-21: apple-hig
+  `/websites/developer_apple_design_human-interface-guidelines` (2,550 snippets), material-3 `/websites/m3_material_io` (4,154),
+  fluent-2 `/websites/fluent2_microsoft_design` (818), wcag-2.2 `/websites/w3_tr_wcag22` (215), daangn-seed
+  `/llmstxt/seed-design_io_react_llms-full_txt`, krds `/im6705/krds-markdown` (427, marked third-party: someone else's markdown
+  conversion of the KOGL Type 1 guide, to be checked against the official site or PDF for any claim that matters). Toss TDS has no
+  Context7 index and keeps its official route. The default `route` of a plan entry (`guidelines.default_entry`,
+  `guidelines.route`) is `kind: context7` with the recorded id, else the official route. The guide says: read with the Context7 MCP
+  when the harness has it, fall back to the official route when it is absent or the index lacks the topic, never fetch Apple's
+  pages by program, query by topic and section name (never by OS version or "what's new") and treat a miss as "not found by this
+  query", and tell the owner an index may be out of date, with a refresh requested from the library's page while signed in, only
+  where a file marks it as lagging. Only the HIG's newest section (Live Activities limited-width layouts, 2026-10-13) is marked;
+  the other 2026 sections the HIG file lists are in the index and not yet written as items. Contract:
+  `src/shared/guidelines/guideline.schema.yaml`.
+
 ## 0.4.0 (2026-10-18)
 
 Direction: references say what the page takes and leaves, and roughs carry the owner's type, motion,

@@ -302,7 +302,9 @@ files beside it; the database file itself does not change.
 - Design guidelines live in `src/shared/guidelines/` (one file per guideline, `guideline.schema.yaml`; thresholds keep their unit and
   `units.yaml` maps it to CSS px) and are read by `cli/lapis_design/guidelines.py`: the plan's `brief.guidelines` gives requirement
   rows (`guideline_rows` of the requirement record, kept apart from the owner's rows), `plan check` suggestions, and the items the
-  lint names in findings (`guideline_items`; `guideline.target-size`). Files are our wording of the sources, never copies.
+  lint names in findings (`guideline_items`; `guideline.target-size`). Files are our wording of the sources, never copies. A file's
+  `route` is Context7 first (`context7.library_id`), official second; `guidelines.default_entry` gives the plan's route from it. KRDS is
+  suggested only for the owner's `product_frame: public-service` with a Korean locale, never from words in the brief.
 - The change log lives in `cli/lapis_design/integrity.py` (shapes: `src/shared/integrity/schema.yaml`): every command that reads the
   plan (`plan check`, `slop lint --plan`, `next`, `draft check`, `release check`, `handoff export`) calls `integrity.observe`
   first, which snapshots the protected plan pointers (`PROTECTED`) and appends one hash-chained row per change to

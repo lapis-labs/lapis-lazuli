@@ -78,13 +78,68 @@ def test_items_name_rules_that_exist_and_their_source_in_their_own_words(gid):
         assert set(item["platforms"]) <= set(doc["platforms"]), f"{gid}/{item['id']} reaches past the file's platforms"
 
 
-@pytest.mark.parametrize("gid", CHECKLISTS)
-def test_every_file_records_when_and_by_which_route_it_was_read_and_how_to_read_it_without_that_route(gid):
+# Resolved in Context7 on 2026-10-21 (the owner's list): the library id each guideline is read by, and how much the index held.
+CONTEXT7 = {"apple-hig": ("/websites/developer_apple_design_human-interface-guidelines", 2550),
+            "material-3": ("/websites/m3_material_io", 4154),
+            "fluent-2": ("/websites/fluent2_microsoft_design", 818),
+            "wcag-2.2": ("/websites/w3_tr_wcag22", 215),
+            "daangn-seed": ("/llmstxt/seed-design_io_react_llms-full_txt", None),
+            "krds": ("/im6705/krds-markdown", 427)}
+
+
+@pytest.mark.parametrize("gid", guidelines.IDS)
+def test_every_file_records_when_it_was_read_what_from_and_the_official_source_to_check_or_fall_back_to(gid):
     doc = guidelines.load(gid)
     assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", doc["checked_at"])
-    assert doc["route"]["used"]["kind"] in ("context7", "official-docs", "repo", "owner-saved")
-    assert doc["route"]["alternative"]["kind"] in ("context7", "official-docs", "repo", "owner-saved")
-    assert doc["route"]["used"] != doc["route"]["alternative"]
+    assert doc["route"]["written_from"]
+    assert doc["route"]["official"]["kind"] in ("official-docs", "repo", "owner-saved") and doc["route"]["official"]["ref"]
+
+
+@pytest.mark.parametrize("gid", guidelines.IDS)
+def test_the_context7_library_id_is_the_recorded_one_and_a_guideline_with_no_index_records_none(gid):
+    held = guidelines.load(gid)["route"].get("context7")
+    if gid not in CONTEXT7:
+        assert held is None                         # toss-tds: Context7 holds no official TDS index
+        return
+    library_id, snippets = CONTEXT7[gid]
+    assert held["library_id"] == library_id
+    assert held.get("snippets") == snippets         # SEED's llms-full.txt index has no snippet count recorded
+    assert held["resolved_on"] == "2026-10-21"
+
+
+def test_the_wcag_id_is_the_index_that_holds_the_text_not_the_one_snippet_one():
+    held = guidelines.load("wcag-2.2")["route"]["context7"]
+    assert held["library_id"] == "/websites/w3_tr_wcag22" and "/websites/w3_wai_wcag22" in held["note"]
+
+
+def test_the_krds_context7_route_is_marked_third_party_and_points_at_the_official_source_for_any_claim_that_matters():
+    route = guidelines.load("krds")["route"]
+    assert route["context7"]["origin"] == "third-party"
+    assert "official" in route["context7"]["note"] and "PDF" in route["context7"]["note"] and "/websites/krds_go_kr_html_site_index" in route["context7"]["note"]
+    assert route["official"]["ref"] == "https://www.krds.go.kr/html/site/index.html" and "PDF" in route["official"]["note"]
+    assert all(guidelines.load(g)["route"].get("context7", {}).get("origin", "official") == "official" for g in CONTEXT7 if g != "krds")
+
+
+def test_only_the_hig_index_is_marked_as_lagging_and_the_file_lists_what_it_lacks():
+    lagging = [g for g in guidelines.IDS if "lags" in guidelines.load(g)["route"].get("context7", {})]
+    assert lagging == ["apple-hig"]
+    assert "Live Activities" in guidelines.load("apple-hig")["route"]["context7"]["lags"]       # only the newest change may be missing
+
+
+def test_the_schema_refuses_a_malformed_library_id_and_a_third_party_route_with_no_note():
+    doc = guidelines.load("krds")
+    bad = copy.deepcopy(doc)
+    bad["route"]["context7"]["library_id"] = "krds-markdown"
+    assert any("library_id" in p for p in guidelines.validate(bad))
+    bad = copy.deepcopy(doc)
+    del bad["route"]["context7"]["note"]
+    assert any("note" in p for p in guidelines.validate(bad))
+    bad = copy.deepcopy(doc)
+    bad["route"]["official"]["kind"] = "context7"
+    assert any("context7" in p for p in guidelines.validate(bad))
+    bad = copy.deepcopy(doc)
+    del bad["route"]["official"]
+    assert any("official" in p for p in guidelines.validate(bad))
 
 
 def test_licenses_that_ask_for_attribution_have_their_line_in_the_file():
@@ -100,9 +155,8 @@ def test_the_hig_file_names_the_2026_changes_its_index_does_not_hold_and_how_to_
     text = " ".join(doc["not_covered"])
     for changed in ("Menus", "Tab bars", "Generative AI", "iPhone Duo", "Live Activities"):
         assert changed in text
-    assert doc["route"]["used"] == {"kind": "context7", "ref": "/websites/developer_apple_design_human-interface-guidelines",
-                                    "note": doc["route"]["used"]["note"]}
-    assert doc["route"]["alternative"]["kind"] == "owner-saved" and "no fetcher" in doc["route"]["alternative"]["ref"]
+    assert doc["route"]["context7"]["library_id"] == "/websites/developer_apple_design_human-interface-guidelines"
+    assert doc["route"]["official"]["kind"] == "owner-saved" and "no fetcher" in doc["route"]["official"]["ref"]
     assert any("automated fetching" in f for f in doc["license"]["forbids"])
 
 

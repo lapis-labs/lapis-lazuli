@@ -11,8 +11,9 @@ visual_layer: true
 platforms: [web, ios, android]
 checked_at: "2026-10-18"
 route:
-  used: { kind: context7, ref: "/llmstxt/seed-design_io_react_llms-full_txt", note: "the official React llms-full.txt index" }
-  alternative: { kind: repo, ref: "https://github.com/daangn/seed-design", note: "the docs sources under docs/content/react on the dev branch, Apache 2.0" }
+  context7: { library_id: "/llmstxt/seed-design_io_react_llms-full_txt", resolved_on: "2026-10-21", note: "the official React llms-full.txt of seed-design.io" }
+  official: { kind: repo, ref: "https://github.com/daangn/seed-design", note: "the docs sources under docs/content/react on the dev branch, Apache 2.0" }
+  written_from: "the official React llms-full.txt index, through Context7, on checked_at"
 license:
   summary: The SEED repository is Apache 2.0, which permits copying, modifying, and distributing it but grants no trademark rights.
 links:

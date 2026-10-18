@@ -205,20 +205,30 @@ session/context identifier consistently (set `LAPIS_CONTEXT` to enforce context 
 
 ### 1. Brief and claims - `brief`, `claims`
 
-`product_frame` is the surface's task, not the company's category. `one_job` is the single job this
-screen must do. Keep `claims` apart: known (evidence), declared (the user said), proposed (you
+`product_frame` is the surface's task, not the company's category, except `public-service`: a service run for a government
+body or public agency, set only when the owner says so (the brief asks it in plain words); never from the subject's words.
+`one_job` is the single job this screen must do. Keep `claims` apart: known (evidence), declared (the user said), proposed (you
 suggest), unresolved (open).
 
 `brief.guidelines` lists the design guidelines the work follows (`shared/guidelines/`; how to choose and read them:
 `references/platforms.md`, "Guidelines"). `plan check` suggests the defaults: ios apple-hig, android material-3, web wcag-2.2
-(always), desktop on Windows fluent-2 (ask when the desktop system is not named), a Korean public service krds. A guideline the
-owner names in the brief is `basis: declared`, with the `row` where they said it. Its behavior items become requirement rows
-the critic judges, whatever else is chosen; `visual` (follow, consult, none) is the owner's choice about its look, asked as one
-item per guideline in the direction conversation, and the plan carries their answer. Record for each the route its documents
-were read by, the guideline file's `route.used`, a Context7 library id, an official docs URL, a repository, or the owner's saved
-notes; when that route is not available, take the file's `route.alternative`. Apple's HIG is read through the index the file
-names or by the owner in a browser, who then saves their own notes: never fetch Apple's pages by program and never give saved
-pages to a model. Toss TDS and Daangn SEED are consult-only: links, no rows.
+(always), desktop on Windows fluent-2 (ask when the desktop system is not named), and krds for `product_frame: public-service`
+with a Korean locale. A guideline the owner names in the brief is `basis: declared`, with the `row` where they said it. Its
+behavior items become requirement rows the critic judges, whatever else is chosen; `visual` (follow, consult, none) is the
+owner's choice about its look, asked as one item per guideline in the direction conversation, and the plan carries their answer.
+Record for each the route its documents are read by, in this order: Context7 first, the official source second. When the
+guideline's file records a Context7 library id (`route.context7.library_id`), `route` is `kind: context7` with that id, and
+`plan check` offers it so; read the documents with the Context7 MCP when the harness has it, querying with that id. Fall back to
+the file's `route.official` (a docs URL, a repository, or the owner's saved notes) when the harness has no Context7 or the index
+lacks the topic, and when the file records no id (Toss TDS). Never fetch Apple's pages by program and never give saved pages to
+a model: the HIG is read through Context7 or by the owner in a browser, who then saves their own notes. Query Context7 by topic
+and section name ("menu items", "tab bars"), never by OS version or "what's new": the HIG's text carries no version labels, so
+such a query finds nothing. A miss is "not found by this query", not absence: try another topic word before saying a section
+is missing or the index is old. Only when the file marks the index as lagging (`route.context7.lags`; the HIG's newest Live
+Activities section) and the topic still does not turn up, tell the owner in plain words that the index may be out of date and
+that a refresh can be requested from the library's page on Context7 while signed in. A Context7 route marked
+`origin: third-party` (KRDS) is someone else's copy: check any claim that matters against the official source, and say which
+one you used. Toss TDS and Daangn SEED are consult-only: links, no rows.
 
 ### 2. World materials - `world_materials`
 
@@ -258,6 +268,7 @@ Starting points, which the brief and existing designs override:
 | internal-tools | operate | 2/2/8 |
 | portfolio-personal | experience | 8/7/3 |
 | games-entertainment | experience | 8/8/5 |
+| public-service | operate + read | 2/2/5 |
 
 "Premium" in a brief is not a style. Never turn it silently into low density, cream, and serif.
 

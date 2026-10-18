@@ -383,7 +383,7 @@ items:
   - id: guideline-apple-hig
     kind: data
     path: guidelines/apple-hig.yaml
-    note: v0; Apple HIG behavior checklist (iOS) from the Context7 index, which lags the 2026 changes the file lists as not covered
+    note: v0; Apple HIG behavior checklist (iOS) from the Context7 index, which holds the 2026 sections found by topic query except possibly the newest change (Live Activities limited-width layouts)
     consumers:
       lapis: full
       ultramarine: full

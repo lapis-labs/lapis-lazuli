@@ -71,15 +71,15 @@ properties:
         type: array
         minItems: 1
         items: { type: string, pattern: "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$" }   # BCP 47
-      product_frame:                                 # the surface's task, not the company category
+      product_frame:                                 # the surface's task, not the company category; `public-service`: the owner said it is one
         enum: [marketing-landing, saas-dashboard-admin, consumer-mobile-app, e-commerce,
                content-editorial-docs, forms-onboarding-checkout, developer-tools,
                data-visualization, fintech-regulated, internal-tools, portfolio-personal,
-               games-entertainment, other]
+               games-entertainment, public-service, other]
       constraints: { type: array, items: { type: string } }   # context-of-use constraints
       # The design guidelines this work follows, with the owner's choice for each (src/shared/guidelines/). `plan check` suggests the
-      # defaults from `platform` (ios apple-hig, android material-3, web wcag-2.2 always, desktop on Windows fluent-2) and the
-      # words of the brief (a Korean public service krds). The behavior layer of a guideline is always followed: its checklist
+      # defaults from `platform` (ios apple-hig, android material-3, web wcag-2.2 always, desktop on Windows fluent-2) and from
+      # the owner's `product_frame: public-service` with a Korean locale (krds); no word of the brief is guessed at. The behavior layer of a guideline is always followed: its checklist
       # items become requirement rows the critic judges. `visual` is the owner's choice about its look, asked in the direction
       # conversation, one item per guideline.
       guidelines:
@@ -483,7 +483,7 @@ $defs:
       visual:                                          # the owner's choice about the guideline's look; the behavior layer is followed whatever it says
         enum: [follow, consult, none]                  # follow: build in its visual language; consult: read it, depart where the design has a reason; none: leave its look aside
         default: consult                               # absent reads as consult; a guideline with no visual language (wcag-2.2) is none
-      route:                                           # how its documents are read
+      route:                                           # how its documents are read: context7 with the guideline file's library id when the file records one, else its official source
         type: object
         additionalProperties: false
         required: [kind, ref]

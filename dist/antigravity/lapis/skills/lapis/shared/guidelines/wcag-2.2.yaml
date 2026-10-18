@@ -11,8 +11,9 @@ visual_layer: false
 platforms: [web]
 checked_at: "2026-10-18"
 route:
-  used: { kind: official-docs, ref: "https://www.w3.org/TR/2024/REC-WCAG22-20241212/" }
-  alternative: { kind: owner-saved, ref: "pages the owner saved from the W3C Recommendation and its Understanding documents" }
+  context7: { library_id: "/websites/w3_tr_wcag22", snippets: 215, resolved_on: "2026-10-21", note: "not /websites/w3_wai_wcag22, which holds 1 snippet" }
+  official: { kind: official-docs, ref: "https://www.w3.org/TR/2024/REC-WCAG22-20241212/", note: "the Recommendation and its linked Understanding documents; the owner may also save pages from them" }
+  written_from: "the W3C Recommendation and its Understanding documents, read on checked_at"
 license:
   summary: The W3C Document License lets a copy or derivative carry the document with a link to the original, its copyright notice, and its status; this file restates criteria in new words, links each one, and presents itself as no W3C document.
   attribution: "Criteria after WCAG 2.2, W3C Recommendation 12 December 2024, https://www.w3.org/TR/2024/REC-WCAG22-20241212/, Copyright © 2024 World Wide Web Consortium (W3C). The wording here is ours and is not the specification."

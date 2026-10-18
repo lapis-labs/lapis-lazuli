@@ -179,7 +179,7 @@ brief:
   audience: <the person and the moment, from the record>
   platform: [web]
   locales: [en]
-  product_frame: <marketing-landing | saas-dashboard-admin | ... | other>
+  product_frame: <marketing-landing | saas-dashboard-admin | ... | public-service | other>   # public-service only when the owner said so
   constraints: [<each fixed limit from the record>]
 claims:
   known: [<fact, with its source>]
@@ -190,6 +190,9 @@ world_materials: [<concrete things of the subject, four to six>]
 defaults: []
 ```
 
+- `product_frame: public-service` comes from a `[declared]` item only: the owner said it in the request or answered the
+  question (`questions.md`, "The product frame"). With a Korean locale it makes `plan check` offer KRDS. Never set it from
+  the subject's words; a skipped question leaves the frame to the page's task.
 - Leave `context.design` as the task found it: `null` when no `DESIGN.md` existed. A `DESIGN.md` this task
   writes is the next task's contract.
 - `world_materials` are things, never adjectives. Take them from the lookups and the project; with none

@@ -47,7 +47,9 @@ reply says so (`references/record.md`, Requirements and owner decisions).
 1. **Read the request** sentence by sentence. Every named thing, number, constraint, delivery rule, and look
    word is `[declared]`, kept as written. A look word such as "modern" is a named style to unpack with the owner
    in `lapis`'s direction conversation after the references, not a taste decision to settle by guessing. Copy as written any line that forbids network use, lookups, or downloads;
-   declining a lookup cites it (`references/research.md`, "What stops a lookup").
+   declining a lookup cites it (`references/research.md`, "What stops a lookup"). A request that calls the service a public
+   service sets `product_frame: public-service` as `[declared]`; when it might be one and nothing says, ask it in plain words
+   (`references/questions.md`, "The product frame"), never guess it from words such as ministry or city hall.
 2. **Read the project**, then **look up the subject's world** (`references/research.md`). Record what each
    source says and where; a lookup that cannot run, or that the request forbids, is recorded with its reason,
    never skipped silently.

@@ -55,24 +55,40 @@ licence line where the source asks for one:
 | WCAG 2.2 | `wcag-2.2` | web | [wcag-2.2.yaml](../shared/guidelines/wcag-2.2.yaml) |
 | Material 3 | `material-3` | Android, web | [material-3.yaml](../shared/guidelines/material-3.yaml) |
 | Fluent 2 and Windows apps | `fluent-2` | Windows desktop, web | [fluent-2.yaml](../shared/guidelines/fluent-2.yaml) |
-| KRDS | `krds` | Korean government web and mobile web | [krds.yaml](../shared/guidelines/krds.yaml) |
-| Apple HIG | `apple-hig` | iOS | [apple-hig.yaml](../shared/guidelines/apple-hig.yaml); it names the 2026 sections its index does not hold, so it is not the HIG's current state |
+| KRDS | `krds` | Korean public services, web and mobile web (`product_frame: public-service`) | [krds.yaml](../shared/guidelines/krds.yaml); its Context7 route is a third-party copy |
+| Apple HIG | `apple-hig` | iOS | [apple-hig.yaml](../shared/guidelines/apple-hig.yaml); it names the 2026 sections no item restates yet, so it is not the HIG's current state |
 | Toss TDS, Daangn SEED | `toss-tds`, `daangn-seed` | consult only | [toss-tds.yaml](../shared/guidelines/toss-tds.yaml), [daangn-seed.yaml](../shared/guidelines/daangn-seed.yaml): links, no checklist, because their documents are one product's and the TDS kit license limits reuse |
 
 The shape of a file is [guideline.schema.yaml](../shared/guidelines/guideline.schema.yaml); an `other` guideline needs a name and a
 URL and has no checklist.
 
 **Choosing.** `plan check` suggests from the brief: ios apple-hig, android material-3, web wcag-2.2 always, desktop on Windows
-fluent-2 (it asks which system when the brief does not say), a Korean public service krds. Add what the owner names, as
+fluent-2 (it asks which system when the brief does not say), and krds when the owner's `product_frame` is `public-service` and a
+locale is Korean. KRDS is the Korean government's system, so a public service with no Korean locale does not get it, and no word
+of the brief (a ministry, a city hall, 민원) ever does: the owner says "this is a public service", and the brief questions ask
+it in plain words. Add what the owner names, as
 `basis: declared` with their row; never drop a default silently, say why it does not apply. Cover only the platforms the entry
 is for: an Android item never becomes a row of a web-only plan.
 
-**Routes.** Record how each guideline's documents were read in `route` (`context7` with its library id, `official-docs` with a URL,
-`repo`, or `owner-saved`). The file's `route.used` is the route it was written from and `route.alternative` the second route for
-when the first is not available: the official pages for WCAG, Material 3, KRDS, and Fluent 2. Apple's HIG is read through the
-index the file names, or by the owner in an ordinary browser, who writes their own checklist and section links; no program fetches
-Apple's pages, and no saved Apple page goes to a model. A section that a file lists under `not_covered` has not been read, so
-say so rather than guess it.
+**Routes.** Context7 first, the official source second. Each file's `route` holds `context7` (the library id the Context7 MCP is
+queried with, when Context7 has an index of the documents), `official` (the second route: an official docs URL, a repository, or
+what the owner saved) and `written_from` (what the items were read from on `checked_at`). The plan entry's `route` defaults to
+`kind: context7` with that id when the file records one, and to the `official` route when it does not (Toss TDS). So:
+
+- Read through the Context7 MCP when the harness has it, querying with the recorded library id by topic and section name.
+  Never query by OS version or "what's new": the text carries no version labels. A miss is "not found by this query", not
+  absence; try another topic word before concluding the index lacks it.
+- When Context7 is absent or the index lacks the topic, use the `official` route.
+- Never fetch Apple's pages by program, and give no saved Apple page to a model; the HIG is read through Context7 or by the owner in
+  an ordinary browser, who writes their own checklist and section links.
+- When a file marks its index as lagging (`context7.lags`: the HIG's Live Activities limited-width section) and the topic does
+  not turn up, tell the owner in plain words that the index may be out of date, and that a refresh can be requested from the
+  library's page on Context7 while signed in.
+- A `context7.origin: third-party` route (KRDS: a markdown conversion made by someone else) may lag or alter the official guide.
+  KRDS is KOGL Type 1, so a copy is allowed with attribution, but check any claim that matters against the official site or the
+  PDF guide and say which you used.
+
+A section that a file lists under `not_covered` has not been read, so say so rather than guess it.
 
 **Units.** A threshold stays in the guideline's own unit: Apple points, Android dp, Windows epx, CSS px. For a web prototype the
 checks map each one 1:1 to CSS px (`../shared/guidelines/units.yaml` gives the basis; a typographic point is not an Apple

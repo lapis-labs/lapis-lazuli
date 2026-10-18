@@ -69,6 +69,7 @@ properties:
         - internal-tools
         - portfolio-personal
         - games-entertainment
+        - public-service
         - other
       constraints:
         type: array

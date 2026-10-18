@@ -1,8 +1,9 @@
 # Apple Human Interface Guidelines behavior checklist — see guideline.schema.yaml
-# Written from the Context7 index of the HIG (route.used) on `checked_at`: each item restates in our words what one section asks
-# a screen or a flow to do, and links that section. No Apple text is copied. The index lags the 2026 changes of the HIG, so
-# `not_covered` lists them; until a person compares them with the live sections, a plan must not read this file as the HIG's
-# current state. Only the behavior layer is here; how closely the look follows Apple's visual language is the owner's `visual` choice.
+# Written from the Context7 index of the HIG (`route.written_from`) on `checked_at`: each item restates in our words what one section asks
+# a screen or a flow to do, and links that section. No Apple text is copied. The index is current except possibly for the newest
+# change (Live Activities limited-width layouts, 2026-10-13, not found by topic query); `not_covered` lists the 2026 sections no
+# item restates yet, and a plan must not read this file as the HIG's current state until a person compares them with the live
+# sections. Only the behavior layer is here; how closely the look follows Apple's visual language is the owner's `visual` choice.
 version: 0
 guideline: apple-hig
 name: Apple Human Interface Guidelines (iOS and iPadOS behavior)
@@ -12,8 +13,13 @@ visual_layer: true
 platforms: [ios]
 checked_at: "2026-10-18"
 route:
-  used: { kind: context7, ref: "/websites/developer_apple_design_human-interface-guidelines", note: "queried by section topic on checked_at; the index shows `Update: 1 week ago` and holds the sections linked in the items" }
-  alternative: { kind: owner-saved, ref: "the owner reads the live HIG in an ordinary browser and writes their own checklist and section links; no fetcher reads Apple's pages and no saved page goes to an AI model" }
+  context7:
+    library_id: "/websites/developer_apple_design_human-interface-guidelines"
+    snippets: 2550
+    resolved_on: "2026-10-21"
+    lags: "The newest HIG change, Live Activities limited-width layouts (2026-10-13), was not found in the index and may not be indexed yet."
+  official: { kind: owner-saved, ref: "the owner reads the live HIG in an ordinary browser and writes their own checklist and section links; no fetcher reads Apple's pages and no saved page goes to an AI model" }
+  written_from: "the Context7 index, queried by section topic on checked_at; the index shows `Update: 1 week ago` and holds the sections linked in the items"
 license:
   summary: The HIG carries no separate reuse license; Apple's website terms restrict copying and automated access, and the Apple Design Resources license limits kit components to mock-ups. This file restates functional requirements in new words and links the official sections.
   forbids:
@@ -21,11 +27,11 @@ license:
     - uploading saved HIG pages to an AI model
     - putting Apple Design Resources kit components or templates into documents or deliverables
 not_covered:
-  - "Menus: menu-item icons (HIG changelog 2026-06-08), not found in the index"
-  - "Tab bars and Search fields: revised terms and artwork and the iOS Search tab (2026-06-08); the index returned a Search as a tab passage, and whether it is the revised text is not established"
-  - "Generative AI: refinement, generation feedback, and model selection (2026-06-08), not found in the index"
+  - "Menus: menu-item icons (HIG changelog 2026-06-08); the index holds it (found by topic query on 2026-10-21), and no item restates it yet"
+  - "Tab bars and Search fields: revised terms and artwork and the iOS Search tab (2026-06-08); the index holds Search as a tab (found by topic query on 2026-10-21), and no item restates it yet"
+  - "Generative AI: refinement, generation feedback, and model selection (2026-06-08); the index holds refine and revert (found by topic query on 2026-10-21), and no item restates it yet"
   - "Toolbars and tab bars: vertical axis placement for iPhone Duo (2026-09-09); the Designing for iPhone Duo section is indexed and not read here"
-  - "Live Activities: limited-width layouts (2026-10-13), not found in the index"
+  - "Live Activities: limited-width layouts (2026-10-13), the newest change; not found in the index by topic query on 2026-10-21, so it may not be indexed yet"
   - "Typography Specifications: the Dynamic Type size tables and recommended minimum font sizes, not read"
   - "Every section no item names, among them Menus, Gestures, Onboarding, Loading, Lists and tables, Pickers, and Notifications"
 items:

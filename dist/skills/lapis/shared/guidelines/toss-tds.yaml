@@ -13,8 +13,8 @@ visual_layer: true
 platforms: [web, ios, android]
 checked_at: "2026-10-18"
 route:
-  used: { kind: official-docs, ref: "https://developers-apps-in-toss.toss.im/llms.txt", note: "the official docs publish .md pages and an llms.txt index, and their robots.txt allows AI input; Context7 holds no official TDS index" }
-  alternative: { kind: owner-saved, ref: "pages the owner saved from developers-apps-in-toss.toss.im" }
+  official: { kind: official-docs, ref: "https://developers-apps-in-toss.toss.im/llms.txt", note: "the official docs publish .md pages and an llms.txt index, and their robots.txt allows AI input; Context7 holds no official TDS index, so there is no Context7 route; the owner may also save pages from developers-apps-in-toss.toss.im" }
+  written_from: "the official llms.txt index and the .md pages it lists, read on checked_at"
 license:
   summary: The TDS UI kit license limits the kit to development, design, and prototypes inside Apps in Toss; no separate open license was found for the TDS documentation text.
   forbids:

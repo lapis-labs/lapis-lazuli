@@ -72,15 +72,78 @@ def test_a_desktop_whose_system_is_not_named_is_a_question_and_gets_no_guideline
     assert guidelines.suggest({**BRIEF, "platform": ["desktop"], "constraints": ["Windows"]})[1] == []
 
 
-@pytest.mark.parametrize(("locales", "subject", "expected"), [
-    (["ko-KR"], "주민센터 민원 신청 서비스", True),
-    (["ko"], "A city hall portal for permit applications", True),
-    (["ko"], "A pottery studio's shop", False),
-    (["en"], "A municipal government portal", False),          # a Korean public service: the locale has to be Korean
+@pytest.mark.parametrize(("frame", "locales", "expected"), [
+    ("public-service", ["ko-KR"], True),
+    ("public-service", ["ko"], True),
+    ("public-service", ["en", "ko"], True),
+    ("public-service", ["en"], False),                         # KRDS is the Korean government's: the locale has to include Korean
+    ("forms-onboarding-checkout", ["ko"], False),
+    ("other", ["ko-KR"], False),
 ])
-def test_a_korean_public_service_gets_krds(locales, subject, expected):
-    found, _ = guidelines.suggest({**BRIEF, "platform": ["web"], "locales": locales, "subject": subject})
-    assert ("krds" in [f["id"] for f in found]) is expected
+def test_the_owners_public_service_frame_with_a_korean_locale_gets_krds(frame, locales, expected):
+    found, _ = guidelines.suggest({**BRIEF, "platform": ["web"], "locales": locales, "product_frame": frame})
+    assert [f["id"] for f in found if f["id"] == "krds"] == (["krds"] if expected else [])
+    if expected:
+        krds = next(f for f in found if f["id"] == "krds")
+        assert krds["platforms"] == ["web"] and "public-service" in krds["why"]
+
+
+@pytest.mark.parametrize("words", [
+    "주민센터 민원 신청 서비스", "A city hall portal for permit applications", "정부 공공 행정 서비스 for the Ministry of the Interior",
+    "Applications on a .go.kr site for a municipal government",
+])
+def test_korean_government_words_alone_no_longer_suggest_krds(words):
+    brief = {**BRIEF, "platform": ["web"], "locales": ["ko-KR"], "subject": words, "one_job": words, "audience": words, "constraints": [words]}
+    assert "krds" not in [f["id"] for f in guidelines.suggest(brief)[0]]
+
+
+def test_plan_check_suggests_krds_for_the_public_service_frame_and_the_words_alone_do_not(root):
+    named = plan_with(product_frame="public-service", locales=["ko-KR"], subject="주민센터 민원 신청 서비스")
+    assert any("KRDS" in o for o in suggested(named, root))
+    words_only = plan_with(product_frame="forms-onboarding-checkout", locales=["ko-KR"], subject="주민센터 민원 신청 서비스")
+    assert not any("KRDS" in o for o in suggested(words_only, root))
+
+
+def test_the_schema_takes_the_public_service_frame():
+    assert schema_problems(plan_with(product_frame="public-service")) == []
+    assert any("public-sector" in p for p in schema_problems(plan_with(product_frame="public-sector")))
+
+
+# ---------------------------------------------------------------- the route
+
+@pytest.mark.parametrize(("gid", "library_id"), [
+    ("apple-hig", "/websites/developer_apple_design_human-interface-guidelines"),
+    ("material-3", "/websites/m3_material_io"),
+    ("fluent-2", "/websites/fluent2_microsoft_design"),
+    ("wcag-2.2", "/websites/w3_tr_wcag22"),
+    ("daangn-seed", "/llmstxt/seed-design_io_react_llms-full_txt"),
+    ("krds", "/im6705/krds-markdown"),
+])
+def test_the_default_route_is_context7_with_the_recorded_library_id(gid, library_id):
+    default = guidelines.default_entry(gid, ["web"])
+    assert default["route"] == {"kind": "context7", "ref": library_id}
+
+
+def test_a_guideline_with_no_context7_id_falls_back_to_its_official_source():
+    assert guidelines.default_entry("toss-tds", ["web"])["route"] == {"kind": "official-docs", "ref": "https://developers-apps-in-toss.toss.im/llms.txt"}
+
+
+def test_a_file_whose_id_is_removed_falls_back_to_its_official_source(monkeypatch):
+    doc = copy.deepcopy(guidelines.load("material-3"))
+    del doc["route"]["context7"]
+    monkeypatch.setattr(guidelines, "load", lambda gid: doc if gid == "material-3" else None)
+    assert guidelines.route("material-3") == {"kind": "official-docs", "ref": "https://m3.material.io/get-started"}
+
+
+def test_a_default_the_plan_check_suggests_carries_that_route_and_the_schema_takes_it(root):
+    plan = plan_with(platform=["web"], product_frame="public-service", locales=["ko-KR"])
+    out = findings(plan, root, "guideline.suggested-missing")
+    krds = next(f for f in out if "KRDS" in f["observed"])
+    assert "kind: context7" in krds["fix"] and "ref: /im6705/krds-markdown" in krds["fix"]
+    wcag = next(f for f in out if "WCAG" in f["observed"])
+    assert "ref: /websites/w3_tr_wcag22" in wcag["fix"]
+    route = guidelines.default_entry("krds", ["web"])["route"]
+    assert schema_problems(plan_with(guidelines=[entry("krds", ["web"], route=route)])) == []
 
 
 def test_plan_check_suggests_what_the_brief_calls_for_and_never_blocks(root):

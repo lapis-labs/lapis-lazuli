@@ -33,6 +33,24 @@ one that changes what it may say or which refusals it must honor (5, 6, and tast
 (7), then what is judged or sourced (8 and 10). Do not ask twice for a refusal or a fixed element already given.
 Two questions that cannot be answered independently are not asked in one round.
 
+### The product frame, and "a public service"
+
+`brief.product_frame` is read from the request and the project, never asked as a menu word; it names the surface's task (the
+plan's schema lists the values). One value is the owner's to state: `public-service`, a service run for a government body or a
+public agency. It decides whether the Korean government design system (KRDS) is offered, so it is never guessed from the
+subject's words (a ministry, a city hall, 민원 in the request are not an answer).
+
+- The request or the owner's brief file says it plainly ("a public service", "공공서비스"): record it `[declared]` and set the
+  frame; no question.
+- The subject could be a public service (an agency, residents' applications, certificates, benefits) and nothing says so: ask
+  it as one of the six, in plain words, and record the answer `[declared]`.
+
+```text
+3. Is this a public service, run by a government body or a public agency?
+   Why: a public service follows the Korean government design system's rules for forms, modals, text size, and Back; other sites do not.
+   If you skip it, I assume: no, an ordinary site; I would pick the frame from what the page does.
+```
+
 ## Shape of a question
 
 One decision, at most two clauses. Concrete enough to answer in a sentence. Never an adjective menu.

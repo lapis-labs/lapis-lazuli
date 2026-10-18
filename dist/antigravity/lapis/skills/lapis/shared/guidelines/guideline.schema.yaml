@@ -34,13 +34,26 @@ properties:
     uniqueItems: true
     items: { enum: [web, ios, android, desktop, email, embedded] }
   checked_at: { type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$" }   # the day the items were written or last compared with the source
-  route:                                           # how the items were read, and the second route when the first is not available
+  route:                                           # how a maker reads the guideline's documents: Context7 first, the official source second
     type: object
     additionalProperties: false
-    required: [used, alternative]
+    required: [official, written_from]
     properties:
-      used: { $ref: "#/$defs/route" }
-      alternative: { $ref: "#/$defs/route" }
+      context7:                                    # absent when Context7 has no index of the guideline's documents
+        type: object
+        additionalProperties: false
+        required: [library_id, resolved_on]
+        properties:
+          library_id: { type: string, pattern: "^/[A-Za-z0-9._-]+(/[A-Za-z0-9._-]+)+$" }   # what the Context7 MCP is queried with
+          snippets: { type: integer, minimum: 1 }  # how much the index held on `resolved_on`
+          resolved_on: { type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$" }
+          origin: { enum: [official, third-party], default: official }   # third-party: a copy someone else made, which may lag or alter the source
+          lags: { type: string, minLength: 8 }     # present when the index is known to trail the source: what it has not taken (the owner is told)
+          note: { type: string, minLength: 3 }
+        if: { required: [origin], properties: { origin: { const: third-party } } }
+        then: { required: [note] }                 # a third-party route says what to check against the official source
+      official: { $ref: "#/$defs/route" }          # the second route: used when Context7 is absent or its index lacks the topic
+      written_from: { type: string, minLength: 8 } # what the items were read from on `checked_at`
   license:
     type: object
     additionalProperties: false
@@ -80,8 +93,8 @@ $defs:
     additionalProperties: false
     required: [kind, ref]
     properties:
-      kind: { enum: [context7, official-docs, repo, owner-saved] }
-      ref: { type: string, minLength: 3 }          # a Context7 library id, an official docs URL, a repository URL, or what the owner saved
+      kind: { enum: [official-docs, repo, owner-saved] }
+      ref: { type: string, minLength: 3 }          # an official docs URL, a repository URL, or what the owner saved
       note: { type: string }
   item:
     type: object

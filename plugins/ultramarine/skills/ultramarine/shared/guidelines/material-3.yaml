@@ -12,8 +12,9 @@ visual_layer: true
 platforms: [android, web]
 checked_at: "2026-10-18"
 route:
-  used: { kind: context7, ref: "/websites/m3_material_io", note: "queried by section topic on checked_at" }
-  alternative: { kind: official-docs, ref: "https://m3.material.io/get-started" }
+  context7: { library_id: "/websites/m3_material_io", snippets: 4154, resolved_on: "2026-10-21" }
+  official: { kind: official-docs, ref: "https://m3.material.io/get-started" }
+  written_from: "the Context7 index, queried by section topic on checked_at"
 license:
   summary: m3.material.io states that its content, guidelines, imagery, and resources are available under Apache 2.0 or CC BY 4.0, so these paraphrases need an attribution line; the token and component repositories are Apache 2.0.
   attribution: "Based on Material Design 3 guidelines, Copyright © Google LLC, https://m3.material.io, licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/) or Apache 2.0 as m3.material.io states. The items here are our paraphrases, not Google's text."

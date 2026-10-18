@@ -12,8 +12,8 @@ Checks, in order:
                 from a channel that may ship them, and a recorded grant for each planned use
   5. references reference profiles must exist; study-mode references are flagged for the release gate
   6. flows      flow ids are unique; an exit flow's pair names an existing flow of a joining kind
-  7. guidelines the defaults the brief calls for (ios apple-hig, android material-3, web wcag-2.2, desktop on Windows fluent-2, a
-                Korean public service krds), a guideline the owner named in the brief marked `declared`, and each entry's
+  7. guidelines the defaults the brief calls for (ios apple-hig, android material-3, web wcag-2.2, desktop on Windows fluent-2, the
+                `public-service` product frame with a Korean locale krds), a guideline the owner named in the brief marked `declared`, and each entry's
                 `visual` equal to the owner's answer in the direction conversation
 
 Output follows src/shared/slop/finding.schema.yaml. Exit code 1 when any finding is blocking. The printed
@@ -965,7 +965,7 @@ def check_guidelines(plan: dict, root: Path, plan_file: str) -> list[dict]:
                            blocking=False, create="warn" if warn else "info", review="P2" if warn else None,
                            path="brief.guidelines", file=plan_file,
                            fix=f"Add {_entry_yaml(guidelines.default_entry(item['id'], item['platforms']))} to brief.guidelines "
-                               "(its route is how its documents were read; `visual` is the owner's answer), or say to the owner "
+                               "(its route is how its documents are read, Context7 first; `visual` is the owner's answer), or say to the owner "
                                "why it does not apply."))
     for question in questions:
         out.append(finding("guideline.desktop-os-unknown", "quality", question, blocking=False, create="info",
