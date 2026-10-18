@@ -290,9 +290,12 @@ def _motion(root: Path, task: str, name: str | None, extracts: list[Path]) -> tu
     manifest = _inside(root, name) if name else None
     if manifest is None:
         if moves or name:
+            untied = not any(isinstance(_map(doc.get("source")).get("document_sha256"), str) for doc in documents)
+            first = ("the extracts carry no `source.document_sha256`, so a motion record could not be tied to them: run "
+                     "`lapis-design render check` again first, then ") if untied else ""
             raise PacketError(f"the page moves (a CSS animation, a box that moves at rest, or one hidden until scroll) and the "
                               f"packet has no motion evidence ({name or motion.manifest_path(root, task).relative_to(root).as_posix()}): "
-                              f"record it with `{command}`, once for each locale the owner is shown")
+                              f"{first}record it with `{command}`, once for each locale the owner is shown")
         return {}, []
     document = _json(manifest, "the motion evidence")
     if problem := _first_error(_validator("render/motion.schema.yaml"), document):

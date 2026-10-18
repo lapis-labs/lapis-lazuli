@@ -469,6 +469,15 @@ def test_a_page_that_moves_needs_the_motion_evidence_and_a_still_page_does_not(p
     assert sum(1 for i in got["inputs"] if i["kind"] == "motion") == 7                    # the manifest and six files
 
 
+def test_missing_motion_evidence_on_an_extract_that_names_no_build_says_to_render_first(project):
+    moving(project)
+    assert "render check` again first" not in refused(project)                    # the extract names its build: record the motion
+    update(project, f"renders/{TASK}.json", lambda d: d["source"].pop("document_sha256"))
+    said = refused(project)
+    assert "the extracts carry no `source.document_sha256`" in said
+    assert said.index("render check` again first") < said.index(f"lapis-design render motion <url> --task {TASK}")
+
+
 @pytest.mark.parametrize("skip, said", [
     ({("en", 390, "reduced")}, "lacks en reduced at 390"),
     ({("en", 1440, "playback")}, "lacks en playback at 1440"),
