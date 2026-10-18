@@ -1695,3 +1695,21 @@ The first release. This entry sums up what 0.1.0 can do.
   claims were checked only in Chromium.
 - On Windows and Linux, Adobe Fonts activations are absent from `lazuli local fonts`. On macOS their
   localized names follow the system's preferred language.
+### Fixed
+
+- `slop lint -o` reused its report only when nothing touched the lazuli database; the `-shm` index of a WAL database changes
+  its mtime on every read, so the key changed on every run and a second run never was a cache hit. The key now holds the
+  database file and its write-ahead log only.
+- `critic packet` with no motion evidence on extracts that name no build (`source.document_sha256` missing) now says to run
+  `render check` again first; recording the motion first could not be tied to them and cost a second recording.
+- The direction questions check names every line that opens with an item id, shows a family name outside parentheses, or shows a
+  roughs distance number, in one refusal (the first in full, the others by their opening words), not one line per run.
+- The direction owner summary now carries the `Rough first views` section the pick question tells the run to paste (per rough
+  the faces it renders in and the style items claimed and shown or not), in the owner's language, and the questions must paste
+  it unchanged. The full block keeps the English lines.
+- The `budget` ask says that only the owner's answer lifts it: an `[assumed]` line does not restart the clock, and an
+  unattended run has no budget.
+- `extract add --lines 5-2` says the range runs backwards; `extract check` prints no read cost when every extract is stale.
+- `render check` opens its own full-page screenshot past Pillow's decompression-bomb limit: a tall scroll-driven page at
+  1440 px printed a warning on stderr and would have failed past twice the limit.
+
