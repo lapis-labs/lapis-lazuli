@@ -9,9 +9,10 @@ vote on adjectives: every option is a job, a representation, or a carried meanin
 - When the turns happen: turn one after the references, turn two after `diverge`; more only while an answer opens something.
 - The three questions: what a named style does, how each core object is represented, what a signature element carries.
 - The fonts question: one per type role, whether the owner has fonts they own but have not installed.
+- The reference digest: the table of what each reference gives and leaves, shown at turn one; the owner flips an item by its id.
 - The proposal: `.lapis/direction/<task>.yaml`, written before you ask.
-- Asking: one message per turn, in the owner's language and plain words, naming every open item by its id in parentheses.
 - The guideline question: one per design guideline the plan will name, how closely the look follows it (the behavior is followed whatever they say).
+- Asking: one message per turn, in the owner's language and plain words, naming every open item by its id in parentheses.
 - Recording answers: `## Direction <n>` in the brief record, one line per item.
 - Unattended: nobody to ask: `[assumed]` with a basis, nothing waits.
 - What it is not: limits, so a turn never becomes a progress check-in.
@@ -19,7 +20,8 @@ vote on adjectives: every option is a job, a representation, or a carried meanin
 ## When the turns happen
 
 - **Turn one** comes after the references record passes. Ask about every open style, kit, object, and brief-named signature
-  item in one message, with the reference sheet (`lapis-design references sheet --task <task>`) attached.
+  item in one message, with the reference sheet (`lapis-design references sheet --task <task>`) attached. The owner summary
+  you paste carries the reference digest (what each reference gives the page and leaves out); it is shown, not asked.
 - **Turn two** comes after `diverge` is sealed (`diverge.md`). Show the contact sheet and ask for the pick and
   for the picked rough's signature items. It may also ask about color role and area for the pick; what you do not ask goes
   to the gap list the owner sees at the slice.
@@ -96,6 +98,25 @@ When the owner answers `b` and names fonts, write the names, one per line, into 
 `lazuli owned add --from <file> --source adobe`. The names are all that is kept; `lazuli search "<name>"` then lists each as a
 candidate that needs activation. Installing or activating is the owner's act, or one you propose and they accept in words you can
 quote (`lzl-fonts`); until a font is installed it has no measurement, so it can be proposed but never ranked.
+
+## The reference digest
+
+At turn one the owner also sees what each reference gives the page and what it leaves out: the references record's `take` and
+`leave` items (the `lzl-research` exploration guide, section "The digest"), as a compact table per direction in the owner summary
+that `next` writes (`## References: what we take and leave`, in their language). It is **show-only**: no item is open, no answer
+is owed, and the conversation does not wait on it; the summary carries it because the owner reads the summary, and the questions
+file has to paste the summary unchanged. Read the table yourself before you paste it: an item that is not in the owner's words
+(element, place, reason) is one to fix in the record, not in the summary.
+
+The owner flips an item by naming its id in a reply. Record each flip as its own line under `## Direction <n>`:
+`- [declared] take M4: <where on the page> — "<owner words>"` moves a leave item to what we take and needs a place (a section or
+object id, or a region such as the hero or the footer: the owner's words are enough when they say it), and
+`- [declared] leave M2: — "<owner words>"` moves a take item to what we leave. The latest line for an id wins. A flip that names an id the
+digest does not hold, or a move to `take` with no place, keeps `owner-direction` open until the line is corrected or the owner is
+asked where it goes. Like every `[declared]` line a flip is a requirement row: the critic judges that what the owner took is on
+the page. The plan's `references`, a rough's card, and the critic packet all read the digest as it stands with the flips applied
+(`lapis-design references digest --task <task>` prints it). An owner who says nothing about the table has accepted it as written;
+it is not an approval and nothing is recorded for it.
 
 ## The proposal
 

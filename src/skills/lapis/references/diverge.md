@@ -26,7 +26,9 @@ record, so there are at least as many directions as roughs. The owner may take p
 impact of another): the pick names the base rough and quotes their words, and the slice builds what they said.
 
 Make each rough in a fresh context where the harness has one (a subagent): it sees only the brief record, the direction
-answers, its own draws, and the captures of its reference direction, never the other roughs. That keeps the roughs from
+answers, its own draws, the captures of its reference direction, and the reference digest of that direction
+(`lapis-design references digest --task <task> --direction <letter>`: what each of those references gives the page and where,
+and what it leaves out, with the owner's replies applied), never the other roughs. That keeps the roughs from
 settling on one idea. A harness without subagents makes them in sequence, and the card says `made_in: main`. Aim for about
 ten minutes a rough.
 
@@ -121,7 +123,7 @@ distances. Each of these writes one line to `.lapis/telemetry/checks.jsonl`, loc
 ## The rough and its card
 
 Write each rough as `.lapis/diverge/<task>/C<n>/index.html` and its card `.lapis/diverge/<task>/C<n>/card.yaml`
-(`../shared/diverge/card.schema.yaml`). The card names the shared brief it was made from (`brief_sha256`, the digest `diverge contract` printed), the direction it draws on, the draws it spends, the representation of each
+(`../shared/diverge/card.schema.yaml`). The card names the shared brief it was made from (`brief_sha256`, the digest `diverge contract` printed), the direction it draws on, the draws it spends, the take items of the reference digest it puts on its page (`takes: [M1, M3]`, as `references digest` lists them: take it from the references of the rough's own direction; `check` reads only that each id is a take item that stands, so the choice is yours and the critic's to judge, and an item the digest or the owner left out is never used), the representation of each
 open core object (the family drawn, the medium, the share of the first view it owns, which may be 0, what the visitor sees and can do, and its role in a later scene), the hierarchy drawn, the
 color roles of the plan's shape with the area each owns (a `field` and an `identity` role need one), the faces of its headline and
 body (`type`), the element that carries each style item the owner answered and kit item they kept (`style`), and the signature
@@ -133,15 +135,15 @@ lapis-design render check .lapis/diverge/<task>/C<n>/index.html --task <task>-C<
 lapis-design render motion .lapis/diverge/<task>/C<n>/index.html --task <task>-C<n>
 ```
 
-`check` refuses a card whose direction, draws, or object families disagree with the draws, one made from another brief, an object
+`check` refuses a card whose direction, draws, or object families disagree with the draws, one made from another brief, a take id the reference digest does not hold as a take item (a made-up id, or one the digest or the owner left out) or a card with no take while the digest has some, an object
 the owner decided that the card shows another way, a missing or stale render, a rough beyond its bound (see What differs: a render
 at another device width, a full capture run, a second page), a headline or body that renders in a system default or in another
 family than its card names, a family that is neither installed nor locked, a missing `type.answers` where the owner named type,
 an answered style item the card leaves out or a selector that matches nothing in the markup, a rough with no motion capture that
 shows change when the brief requires motion, and a pair that differs in order or finish only.
 
-A card or brief written before `type`, `style`, and `motion` existed fails its schema with that field named: add the field (and the
-`render motion` capture, when the brief now requires one), run `diverge contract` on the brief again, then `diverge check`.
+A card or brief written before `type`, `style`, `takes`, and `motion` existed fails its schema with that field named: add the field (and the
+`render motion` capture, when the brief now requires one), run `diverge contract` on the brief again, then `diverge check`. A card with no `takes` needs the ids of the digest's take items it uses; a run whose references record has no digest first adds one (the `references` step comes back).
 
 A card claims more than its captures show unless you make them match. The captures are what the owner and the critic see, so
 each rough's capture has to show its own representation in the state that decides it (the annotated diff with a change

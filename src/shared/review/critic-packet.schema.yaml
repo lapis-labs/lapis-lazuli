@@ -223,6 +223,43 @@ properties:
           card: { type: object }                   # the picked rough's card.yaml (diverge/card.schema.yaml)
           captures: { type: array, items: { type: string } }   # project-relative screenshots of the picked rough
       contact: { type: [string, "null"] }          # the contact sheet of the sealed roughs
+  reference_digest:                                # the references record's digest as it stands: what each reference gives the page and what it leaves out (absent when the run has none)
+    type: object
+    additionalProperties: false
+    required: [references]
+    properties:
+      references:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [id, direction, take, leave]
+          properties:
+            id: { type: string }                   # the reference's id in the references record
+            direction: { type: string }            # its lettered direction, or none
+            take:                                  # what the page takes from it, and where
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required: [id, element, at, why, by]
+                properties:
+                  id: { type: string, pattern: "^M[1-9][0-9]*$" }
+                  element: { type: string }        # the specific element of the reference
+                  at: { type: string }             # where it goes on our page
+                  why: { type: string }
+                  by: { enum: [agent, owner] }     # `owner`: the owner moved or placed it in a reply
+            leave:                                 # what is attractive and excluded: brand colors, copy, illustrations, marks, a trend kit
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required: [id, what, why, by]
+                properties:
+                  id: { type: string, pattern: "^M[1-9][0-9]*$" }
+                  what: { type: string }
+                  why: { type: string }
+                  by: { enum: [agent, owner] }
   motion:                                          # a page with motion: what was recorded of the shown build, never a flattened screenshot alone
     type: object
     additionalProperties: false

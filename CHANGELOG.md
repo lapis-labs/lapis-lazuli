@@ -10,6 +10,44 @@ contract formats are v0.
 
 ### Added
 
+- **Breaking:** the reference digest. Each reference of the references record carries `take` items (`id` `M<n>`, `element`, `at`,
+  `why`) and `leave` items (`id`, `what`, `why`), written with the record (`reference_digest.py`; the record's other fields are
+  unchanged): what the page takes from it, from which element, where on the page, and what is attractive and left out. It is one
+  source of truth: the plan's `references[].take/leave` derive from it, a rough's card names the take ids it uses, the owner sees
+  it, and the critic packet carries it. It came from a session in which the references step put a feature the owner's brief
+  asked for (a wipe slider) into `leave`, and it vanished from the plan unseen.
+  - **Checks** (`references.problems`, so `next` sends the run back to the `references` step): every reference has at least one
+    take and one leave item; a take's `at` names a page location (a section id of the plan, an object id of the direction
+    proposal, the heading of a section of the owner's brief, or a named region: hero, header, footer, first view, form, button,
+    and the like, in English and Korean); and a leave item that matches an owner requirement row (a `[declared]` line of the brief
+    record, or a row of their own brief file) is refused with the row quoted, unless the owner's own reply dropped that row.
+    The match is lexical (the content words of the item's `what` against each row: one word for an item of one content word, two
+    within four words of each other, or a quoted row id); its limits are stated in `reference_digest.py`, the guide, and
+    `GATE.md`: it reads words, not meaning, so a leave that agrees with a prohibiting row also matches, a leave reworded away
+    from the row's words passes, and a place in another language than English or Korean needs an id or an English region word.
+  - **The owner sees it at the first direction turn**: the owner summary carries a compact table per direction (`## References:
+    what we take and leave`, in the owner's language, `owner_text.py`), show-only, and the delivery check requires its lines in
+    the questions like the rest of the summary. The owner flips an item by replying; the run records `- [declared] take M4:
+    <where> — "<words>"` or `- [declared] leave M2: — "<words>"` under `## Direction <n>`; the latest per id wins. A reply that names
+    an id the digest does not hold, or moves an item to `take` with no place, keeps `owner-direction` open. An owner's reply is
+    not matched against the rows.
+  - **Downstream**: `lapis-design references digest --task T [--direction A] [--plan]` prints the digest as it stands, or the
+    plan's `references` entries it gives. The plan schema's `reference` gains `record_id`, and the plan check refuses drift
+    (`reference.digest-drift`, blocking in create mode): an entry whose `take` and `leave` strings do not start with exactly the
+    ids that stand, or a reference with a take item and no entry. The diverge card schema gains `takes` (required); `diverge
+    check` refuses an id the digest does not hold as a take item, an item the digest leaves out, and a card with none while the
+    digest has take items. The critic packet gains the optional `reference_digest` section (a delta packet counts it among its
+    unchanged sections), and the critic guide asks whether the take items are visible and whether leave items (brand colors, copy,
+    illustrations, marks) were copied (`reference.brand-asset-reuse`, `reference.clone-risk`). Guides: `lzl-research`
+    (`exploration.md`, "The digest"), `lapis` (`direction-conversation.md`, "The reference digest"; `diverge.md`), and the critic.
+    Contracts: `src/shared/plan/schema.yaml`, `diverge/card.schema.yaml`, `review/critic-packet.schema.yaml`,
+    `review/critic-delta-packet.schema.yaml`, `release/GATE.md`.
+
+  Migration: a references record in progress needs `take` and `leave` on each reference (no new capture): `next` names the
+  `references` step again and says what is missing. The plan's `references` then take their entries from `lapis-design references
+  digest --task T --plan` (the entries gain `record_id`, and `take`/`leave` strings that start with their ids). Roughs in
+  progress need `takes: [M1, ...]` in each card, then `diverge check` again. A finished run whose plan has no entry with
+  `record_id` fails its next `release check` on `reference.digest-drift` until it does.
 - `lapis-design extract add|show|check|drop`: a run records short, sourced excerpts of a document once, and workers read them
   instead of the whole brief, README, install notes, license text, or references record. `add` cuts the excerpt out of the
   source file itself (`--lines A-B`, or `--heading` for a Markdown section) and records it in `.lapis/extracts/<task>.json`

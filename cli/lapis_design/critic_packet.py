@@ -2,7 +2,8 @@
 
 `lapis-design critic packet --task T` writes `.lapis/critic/T.packet.json`: the owner's requirement rows, the plan's
 design fields without the maker's reasons, a digest of every file the critic may read, the lint findings, the change
-rows that were reactive or touched an open finding, and the maker's disputes without their reasons. The bytes are
+rows that were reactive or touched an open finding, the maker's disputes without their reasons, and the reference digest (what
+each reference gives the page and what it leaves out, with the owner's replies applied; `reference_digest.py`). The bytes are
 deterministic (sorted keys, no timestamps), so an unchanged input set reproduces the same digest.
 
 A critic report counts only for the packet whose file bytes hash to its `target.packet.sha256`. `check` rebuilds the
@@ -36,7 +37,7 @@ from pathlib import Path, PurePosixPath
 import yaml
 from jsonschema import Draft202012Validator
 
-from lapis_design import asks, direction, draft, gaps, motion, shared_dir, telemetry, workers
+from lapis_design import asks, direction, draft, gaps, motion, reference_digest, shared_dir, telemetry, workers
 from lapis_design import extracts as source_extracts
 
 TASK = re.compile(r"[a-z0-9][a-z0-9-]{1,63}")
@@ -504,6 +505,8 @@ def build(root: Path, task: str, inputs: dict) -> bytes:
         "findings": _findings(root, lint), "changes": _changes(root, task), "disputes": _disputes(root, task)}
     if shown:
         document["motion"] = shown
+    if digest_section := reference_digest.packet(root, task):
+        document["reference_digest"] = digest_section
     if support:
         document["supporting"] = [entry for _, entry in support]
     if problem := _first_error(_validator("review/critic-packet.schema.yaml"), document):
@@ -879,7 +882,7 @@ def delta(root: Path, task: str, prior_report: object) -> Delta:
         "unchanged": {"inputs": {"count": len(held_new["inputs"]),
                                  "sha256": digest(_canonical(held_new["inputs"]).encode("utf-8"))},
                       "sections": {key: digest(_canonical(new[key]).encode("utf-8"))
-                                   for key in ("plan", "direction", "findings", "motion") if key in new}},
+                                   for key in ("plan", "direction", "reference_digest", "findings", "motion") if key in new}},
         "requirements": {"sha256": new["requirements"]["sha256"], "ids": ids, "sources": [
                              i for i in new["inputs"] if i["kind"] == "requirement-source"],
                          "removed": sorted(set(rows_before) - set(ids)), "changed": changed,

@@ -54,7 +54,7 @@ from urllib.parse import unquote, urlsplit
 import yaml
 
 from lapis_design import (attempts, brief, checks, critic_packet, direction, diverge, draft, font_license, gaps, gate, integrity,
-                          owner_text, requirements, slice_step, workers)
+                          owner_text, reference_digest, requirements, slice_step, workers)
 
 MARKER = "lapis-owner-block"
 LIST_MAX = 15
@@ -791,10 +791,14 @@ def _build(root: Path, task: str, result: Mapping[str, Any] | None) -> Delivery:
     shown = _shown_lines(root, task, lang)
     roughs = (need("rough first view", diverge.summary_lines(root, task, lang))
               if result.get("kind") == direction.KIND and not done else [])       # the pick is made on what the roughs carry and show
+    turn_one = result.get("kind") == direction.KIND and not done and diverge.sealed(root, task) is None
+    digest = reference_digest.summary_lines(root, task, lang) if turn_one else []       # shown to read: no approval waits on it
+    need("reference digest", [line for line in digest if line])
     unattended = done and gate.is_unattended()
     summary = [
         [f"# {say(lang, 'title')}: {task}"],
         [f"{say(lang, 'decision.label')}: {_decision(result.get('kind'), done, len(found), len(core), lang)}"],
+        [f"## {say(lang, 'heading.digest')}", *digest] if digest else [],
         [f"## {say(lang, 'heading.changed')}", *changed] if changed else [],
         [f"## {say(lang, 'heading.roughs')}", *roughs] if roughs else [],
         [f"## {say(lang, 'heading.gaps.unattended' if unattended else 'heading.gaps')}", *attention] if attention else [],

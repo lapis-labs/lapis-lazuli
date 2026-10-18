@@ -22,6 +22,9 @@ images: at least two per axis, every beyond-web one outside `web-ui`; at least o
 a registry source tagged `axes: [expression]` that lazuli may read; a motion file when the recorded hints offer
 includes an expression mode that needs one; and at least one agent-found reference per axis beyond the whole hints
 list. The record has at least three lettered directions, each holding at least two references from at least two axes.
+Each reference also carries its digest (`reference_digest.py`): `take` items, each naming an element of it, where it goes on
+our page (`at`), and why, and `leave` items, each naming what is attractive and excluded, and why. Every reference has at least
+one of each; a take names a page location; a leave item that takes away a requirement row of the owner is refused.
 Hints do not replace searching or change access policies.
 
 A run with no network records that with `lapis-design next --unavailable references` (attempts.py), which
@@ -50,7 +53,7 @@ from urllib.parse import urlsplit
 
 import yaml
 
-from lapis_design import attempts, hints, shared_dir, waiting
+from lapis_design import attempts, hints, reference_digest, shared_dir, waiting
 
 STEP = "references"
 KINDS = {
@@ -364,6 +367,7 @@ def problems(root: Path, task: str) -> list[str]:
                          "needs a `motion` file (`lazuli ref capture <url> --motion --task <task>`, or your own "
                          f"recording of at least {MIN_MOTION_BYTES // 1024} KB under {folder(root, task).relative_to(root).as_posix()}/)")
     found += _direction_problems(data, visual)
+    found += reference_digest.problems(data, root, task)
     return found
 
 
@@ -509,6 +513,13 @@ def why(task: str, found: list[str], planned: bool) -> str:
         f"offer has a moving mode, and each direction holding {MIN_PER_DIRECTION} references from 2 axes; every capture an",
         f"existing file of its own; at most {MAX_TEXT_ONLY} text-only. `lapis-design references sheet --task {task}` makes",
         "the sheet for the owner.",
+        "(5) The digest, in the same record: each reference also has `take` (one or more items `id: M1`, `element` (a specific",
+        "element of it), `at` (where it goes on our page: a section or object id of the brief or plan, or a region such as",
+        "hero, header, footer, first view, price table, form, button), `why`) and `leave` (one or more items `id`, `what` (what is",
+        "attractive and excluded), `why`: its brand's own identity, a trend kit, the owner's words, the wrong genre). Ids are M1,",
+        "M2, ... across the record. Write the element, place and reason in the owner's language: the owner reads them at the",
+        "first direction turn and can flip an item. A leave item that takes away something the owner asked for (a row of the",
+        "requirement record or a `[declared]` line of the brief) is refused with the row quoted: it is not yours to leave.",
         "Take relations (order, ratio, rhythm, density, a label's job), never assets, text, or a layout wholesale.",
         "The captures are for study only: never ship them or copy them into the page.",
         "Follow the user's words. If the request or the brief forbids network use, lookups, or downloads during the work",
@@ -521,5 +532,6 @@ def why(task: str, found: list[str], planned: bool) -> str:
         f"`lapis-design next --task {task} --unavailable references --reason \"<the error you got>\"`; it sends one",
         "plain GET first and refuses the record when that works. Neither record is a pass: the finished run reports",
         "that no references were looked at.",
-        "Then cite the record from the plan's `context.other` and carry what you took into `references`,",
-        "`explorations`, and `sources`."])
+        "Then cite the record from the plan's `context.other`, and carry the digest into the plan's `references`:",
+        f"`lapis-design references digest --task {task} --plan` prints the entries (each with `record_id`, and `take` and",
+        "`leave` strings that start with their ids). Put the same references in `explorations` and `sources`."])

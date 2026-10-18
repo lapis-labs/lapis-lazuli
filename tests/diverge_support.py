@@ -166,7 +166,8 @@ def card_for(root: Path, task: str, candidate: str, **changes) -> dict:
              "draws": sorted((r["id"] for r in standing.values()), key=lambda d: int(d[1:])),
              "hierarchy": standing["hierarchy"]["item"], "objects": objects,
              "color": color, "type": {role: {"family": family} for role, family in FACES.items()},
-             "style": style_rows(root, task), "signature": [], "made_in": "subagent"}
+             "style": style_rows(root, task), "takes": takes_for(root, task, standing["direction"]["item"]),
+             "signature": [], "made_in": "subagent"}
     return {**found, **changes}
 
 
@@ -176,6 +177,16 @@ def style_rows(root: Path, task: str) -> list[dict]:
 
     return [{"id": item["id"], "selector": "h1", "does": f"the heading carries {item['label']}", "shown": [1440, 390]}
             for item in rough_carries.style_items(root, task, {"LAPIS_UNATTENDED": "1"})]
+
+
+def takes_for(root: Path, task: str, letter: str) -> list[str]:
+    """The take ids a rough of direction `letter` puts on its page: the digest's takes of that direction's references."""
+    from lapis_design import reference_digest
+
+    digest = reference_digest.effective(root, task)
+    if digest is None:
+        return []
+    return [i["id"] for r in digest["references"] if r["direction"] == letter for i in r["take"]]
 
 
 def signature(candidate: str) -> list[dict]:

@@ -38,6 +38,7 @@ CHECKS = {
     ("requirements", "seal"): "lapis_design.requirements",
     ("requirements", "show"): "lapis_design.requirements",
     ("references", "sheet"): "lapis_design.references_sheet",
+    ("references", "digest"): "lapis_design.reference_digest",
     ("extract", "add"): "lapis_design.extracts",
     ("extract", "show"): "lapis_design.extracts",
     ("extract", "check"): "lapis_design.extracts",

@@ -27,6 +27,10 @@ The packet holds:
   spacing, size, or radius is judged against), the voice and `key_copy`,
   `flows`, `references` with what each `take`s and `leave`s, `explorations` with their candidates and the chosen one,
   and `defaults` as `{id, decision, keep_when, case_when}`
+- `reference_digest` (when the run has references): per reference of the references record, its `direction`, its `take` items `{id,
+  element, at, why, by}` (what the page takes, and where it goes) and its `leave` items `{id, what, why, by}` (what is attractive and
+  excluded), as the owner saw them and with their replies applied (`by: owner`). The plan's `references` carry the same ids
+  (`M3: ...`), so a take the plan names and the digest does not hold is the maker's drift, not the owner's
 - `direction`: what the owner decided in the direction conversation, with the ids resolved: `items`, each `{id, label,
   state, by, choice, options}` (`S` a named style's job, `K` a trend-kit element to keep or drop, `O` how a core object is
   represented, `G` what a signature element carries; `choice` is the option ids, `keep`, `drop`, `all`, or `other` that
@@ -208,6 +212,19 @@ not borrowed finish. Record each in `comparisons`; a consequential shortfall is 
 (class `default`, severity `{create: warn, review: P3}`, `blocking: false`) for the maker, not a new gate.
 Name the study capture and our capture or boxes behind the judgement. If fewer references or widths are
 available, say which comparison could not be made; do not invent one or request new outside pages.
+
+Then open the packet's `reference_digest` (when it has one): per reference, the `take` items with where each goes on our page
+(`at`) and why, and the `leave` items, each marked `by: agent` or `by: owner` (the owner moved or placed it in a reply; an
+owner item binds the page like a requirement row). Judge two things and write each as a `comparisons` entry (the study capture
+beside ours) or, when the shortfall is consequential, a `review.reference-comparison` finding:
+
+- **Are the take items visible?** For each take item, find the element in our capture at the place its `at` names, at 390 and
+  1440. A take item that is not on the page, is somewhere else, or is only named in the plan is a shortfall; the picked rough's
+  card says which `takes` it claims, and a claim no capture shows is `not-observable`, never `met`.
+- **Were the leave items copied?** For each leave item, look for it in our capture: the reference's brand colors (its palette
+  values, its signature accent), its copy (headline, labels, or sentences), its illustrations and marks, its trend-kit
+  elements. A leave item that appears is `reference.brand-asset-reuse` when it is an asset, its identity, or its copy, and
+  counts toward `reference.clone-risk` with the layout, palette, type, and copy of the same reference. Say which leave id it is.
 
 
 ## What to judge

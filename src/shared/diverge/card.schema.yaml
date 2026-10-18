@@ -11,13 +11,16 @@
 # families or type classes) and `style` (for each style item the owner answered, `S<n>`, and each kit item they kept, `K<n>`,
 # the element that carries it). `diverge check` reads `type` against the render's rendered fonts and `style` against the
 # rough's markup; see `diverge/pools.yaml` `rough_carry` for the system-face list and the term lists.
-# Breaking: `type` and `style` are required; a card made before them needs both and a new `diverge check`.
+# `takes` names the take items of the references record's digest the rough puts on its page, by id; `diverge check` refuses an id
+# the digest does not hold as a take item (one that does not exist, or one the digest leaves out), and a card with none when the
+# digest has take items.
+# Breaking: `type`, `style`, and `takes` are required; a card made before them needs each and a new `diverge check`.
 $schema: https://json-schema.org/draft/2020-12/schema
 $id: https://github.com/lapis-labs/lapis-lazuli/schemas/diverge-card.v0.json
 title: LapisLazuli diverge card
 type: object
 additionalProperties: false
-required: [version, id, brief_sha256, direction, draws, hierarchy, objects, color, type, style, signature, made_in]
+required: [version, id, brief_sha256, direction, draws, hierarchy, objects, color, type, style, takes, signature, made_in]
 properties:
   version: {const: 0}
   id: {type: string, pattern: "^C[1-9][0-9]?$"}
@@ -82,6 +85,10 @@ properties:
           type: array
           uniqueItems: true
           items: {enum: [1440, 390]}
+  takes:                                                # the reference digest's take items this rough uses (`M<n>`, `lapis-design references digest`); [] only when the run has no digest
+    type: array
+    uniqueItems: true
+    items: {type: string, pattern: "^M[1-9][0-9]*$"}
   signature:                                            # elements this rough adds; the owner decides each at D2
     type: array
     items:

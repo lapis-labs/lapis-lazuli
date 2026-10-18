@@ -8,9 +8,9 @@ Read the step you are on, by heading; the rest are later steps.
 - 1. Find candidates: searches per axis (genre, expression, beyond-web), and where to look
 - 2. Capture: capturing each reference with `lazuli ref capture` (and `--motion`), one at a time, at a human pace
 - 3. Look: opening each capture and reading its order, scale, density, HTML, and CSS
-- 4. Write the record: the shape of `.lapis/references/<task>.md`, its axes and directions
+- 4. Write the record: the shape of `.lapis/references/<task>.md`, its axes and directions, and the digest of what each reference gives and leaves
 - 5. No network, or no lookups: the two honest records for a step that cannot run
-- 6. Carry it into the plan: citing the record and naming the source of each candidate
+- 6. Carry it into the plan: citing the record and carrying its digest into `references`
 
 The `references` step of `lapis-design next` comes after the brief and before the plan of a create run. A
 run that picks its own references from memory, or reads about them, brings back a list of encyclopedia
@@ -199,6 +199,58 @@ Take relations, not surfaces: order, ratio, rhythm, density, a label's job, how 
 assets, text, brand colors, marks, the exact type pairing, and any signature composition. A result close to
 one reference in layout, palette, type, and copy at once is a clone.
 
+### The digest
+
+The same record says, for each reference, what the page takes from it and what it leaves out. Write it right after you
+looked at the captures: the owner sees it at the first direction turn, in their own language, and can change an item.
+
+```yaml
+  - id: bradshaw-plate
+    # ...the fields above, then:
+    take:
+      - id: M1
+        element: the heavy time column against the light ruled body
+        at: the run history table (section history)
+        why: a row has to read left to right at a glance
+    leave:
+      - id: M2
+        what: the plate's serif faces and ornaments
+        why: its own identity; our type is chosen by the owner's words
+  - id: docs-site
+    take:
+      - id: M3
+        element: one narrow reading column beside a wide table
+        at: the first view, under the headline
+        why: the explanation stays readable next to the data
+    leave:
+      - id: M4
+        what: its blue brand palette
+        why: the brand's own identity
+      - id: M5
+        what: its animated gradient hero
+        why: a trend kit item the owner did not ask for
+```
+
+| Field | Content |
+|---|---|
+| `take[].id`, `leave[].id` | `M1`, `M2`, ... unique across the whole record (the owner's replies and the plan name them) |
+| `take[].element` | a specific element of the reference (its time column, its ruled table), not a mood or "the layout" |
+| `take[].at` | where it goes on our page: a section id of the brief or plan (`history`), an object id of the direction proposal (`O1`), or a named region (hero, header, footer, first view, price table, form, button; their Korean words work too). A take with no location is refused |
+| `take[].why`, `leave[].why` | the reason, in a line |
+| `leave[].what` | what is attractive in the reference and excluded: its brand's own identity (colors, marks, copy, illustrations), a trend kit, something the owner's words rule out, the wrong genre |
+
+Every reference has at least one `take` and at least one `leave`: a reference you cannot leave anything from is one you have
+not looked at hard enough. Write the element, the place, and the reason in the owner's language; they read them as they are.
+
+**What the owner asked for is never yours to leave.** A `leave` item whose `what` matches a requirement row (a line of the
+owner's own brief file, or a `[declared]` line of the brief record) is refused with the row quoted. The match is lexical:
+the content words of the item (plural endings and Korean particles taken off) against each row, a row id quoted in the item
+counts, and an item with one content word matches a row that holds it; with more it matches a row that holds two of them
+within four words of each other. It cannot read meaning: an item that merely agrees with a row that forbids the thing matches
+it too (word it by what differs), and one reworded away from the row's words gets through. When the owner asked for a thing
+the reference also has (a wipe slider, a ticker), it goes into `take` with the place it belongs. A row leaves the match only
+when the owner dropped it in their own reply (`[declared] R3f2a1c: drop — "<their words>"`).
+
 ## 5. No network, or no lookups
 
 Two honest records stand for a references step that does not run. Neither is a pass: `next` goes on to the plan,
@@ -228,8 +280,10 @@ references you did not look at.
 ## 6. Carry it into the plan
 
 Cite the record from the plan's `context.other` (a declined step has none: cite the brief record). Put each
-reference you took something from in the plan's
-`references` (the profile at `.lapis/refs/<slug>.json`, `rights: reference-only`, `mode: analyze` or
-`borrow`, what to `take` and `leave`), name it as the `source` of the candidate in the `explorations` entry of
-the decision it informed, and list it in `sources`. The captures stay where they are: git-ignored, for study
-only, never shipped or copied into the page, and deleted by nothing automatically.
+reference you took something from in the plan's `references`: `lapis-design references digest --task <task> --plan` prints the
+entries from the record's digest (`record_id`, `source`, and `take` and `leave` strings that start with their ids; add the
+profile at `.lapis/refs/<slug>.json` and check `rights: reference-only`, `mode: analyze` or `borrow`). The plan check refuses
+an entry whose ids differ from the digest as it stands (the owner's replies included), and a reference with a take item
+that has no entry. Name the reference as the `source` of the candidate in the `explorations` entry of the decision it
+informed, and list it in `sources`. The captures stay where they are: git-ignored, for study only, never shipped or copied
+into the page, and deleted by nothing automatically.

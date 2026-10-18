@@ -257,9 +257,13 @@ def make_project(root: Path) -> Path:
                                   "assets.ledger.json", f"lint/{TASK}.json")):
         touch(root, name, 100 + index)
     record(root, "answers", BRIEF_RECORD, 50)                    # the brief record, older than the plan and any questions
+    from lapis_design import reference_digest
+
     seal_requirements(root)                                      # the owner's words from it, copied by the CLI
-    seal_slice(root)                                             # the owner has approved a rendered slice
     write_references(root)                                       # the references record, as old
+    update(root, f"plans/{TASK}.yaml", lambda d: d.update(references=reference_digest.plan_entries(root, TASK)))   # its digest in the plan
+    touch(root, f"plans/{TASK}.yaml", 100)
+    seal_slice(root)                                             # the owner has approved a rendered slice
     refresh_critic(root, 105)                                    # the packet of all of it, and a critic report that judges it
     return root
 
@@ -357,9 +361,17 @@ def reference_entries(root: Path, task: str = TASK) -> list[dict]:
                         "kind": kind, "axis": axis, "direction": direction, "decision": "the order of the page",
                         "capture": capture_file(root, f"ref-{index}.png", index, task),
                         "relation": "take the ruled rhythm and the label's job; leave the type and the marks",
+                        **digest_items(index),
                         **({"source_facts": FACTS} if kind == "web-ui" else {}),
                         **({"found_at": "https://www.hoverstat.es/"} if index == 3 else {})})
     return entries
+
+
+def digest_items(index: int) -> dict:
+    """The digest of reference `index`: one take that names a place on the page and one leave, ids M<2n-1> and M<2n>."""
+    return {"take": [{"id": f"M{2 * index - 1}", "element": "the ruled rhythm of its listing table",
+                      "at": "the hero, under the headline", "why": "rows scan left to right"}],
+            "leave": [{"id": f"M{2 * index}", "what": "its type and marks", "why": "the brand's own identity"}]}
 
 
 def spare_entries(root: Path, task: str = TASK) -> list[dict]:
@@ -367,7 +379,7 @@ def spare_entries(root: Path, task: str = TASK) -> list[dict]:
     return [{"id": f"ref-{index}", "url": f"https://museum.example/spare/{index}", "maker": f"Maker {index}",
              "kind": "print", "axis": axis, "direction": direction, "decision": "the order of the page",
              "capture": capture_file(root, f"ref-{index}.png", index, task),
-             "relation": "take the ruled rhythm and the label's job; leave the type and the marks"}
+             "relation": "take the ruled rhythm and the label's job; leave the type and the marks", **digest_items(index)}
             for index, axis, direction in ((7, "expression", "B"), (8, "beyond-web", "B"))]
 
 

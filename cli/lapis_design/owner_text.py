@@ -96,6 +96,15 @@ EN: dict[str, str] = {
     "rough.style.missing": "not on the card: {items}",
     "rough.drift": "- Rough {line}",
     "rough.no-text": "no text read",
+    "heading.digest": "References: what we take and leave",
+    "digest.note": "Shown for you to read; nothing here waits for your approval. To change an item, reply with its id: "
+                   "`take <id>: where it goes` moves it to what we take, `leave <id>: why` moves it to what we leave.",
+    "digest.group": "{letter} — {name}",
+    "digest.group.none": "Not tied to one direction",
+    "digest.columns": "| id | reference | take or leave | item | where it goes, and why |",
+    "digest.take": "take",
+    "digest.leave": "leave",
+    "digest.owner": " (your word)",
 }
 
 KO: dict[str, str] = {
@@ -178,6 +187,15 @@ KO: dict[str, str] = {
     "rough.style.missing": "카드에 없는 것: {items}",
     "rough.drift": "- 러프 {line}",
     "rough.no-text": "읽은 글자 없음",
+    "heading.digest": "참고 자료에서 가져올 것과 두고 갈 것",
+    "digest.note": "읽어 보시라고 보여 드리는 거예요. 따로 승인하실 필요는 없어요. 바꾸고 싶은 항목은 번호와 함께 답해 주세요. "
+                   "`take <번호>: 둘 곳`은 가져올 것으로, `leave <번호>: 이유`는 두고 갈 것으로 옮겨요.",
+    "digest.group": "{letter} — {name}",
+    "digest.group.none": "한 방향에 묶이지 않은 것",
+    "digest.columns": "| 번호 | 참고 자료 | 구분 | 항목 | 둘 곳과 이유 |",
+    "digest.take": "가져올 것",
+    "digest.leave": "두고 갈 것",
+    "digest.owner": " (말씀하신 대로)",
 }
 
 CATALOGS: dict[str, dict[str, str]] = {"en": EN, "ko": KO}

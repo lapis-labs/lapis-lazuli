@@ -672,9 +672,13 @@ $defs:
       kind: { enum: [site, image, system] }
       rights: { enum: [own, licensed, reference-only] }
       mode: { enum: [analyze, borrow, study, reuse] }
-      take: { type: array, minItems: 1, items: { type: string } }   # relations to take
+      # relations to take. A reference of the references record (`record_id`) carries the digest's ids: each string starts with
+      # the id of the digest item it stands for (`M3: the ruled rows — at pricing`), exactly the take items that stand; `leave`
+      # holds exactly the leave items, and `lapis-design references digest --task <task> --plan` prints the entries.
+      take: { type: array, minItems: 1, items: { type: string } }
       leave: { type: array, items: { type: string } }               # what to leave behind
       profile: { type: string }                                     # .lapis/refs/<slug>.json
+      record_id: { type: string }                                   # the `id` of the entry of .lapis/references/<task>.md this stands for; checked against its digest (`reference.digest-drift`)
     # Allowed modes depend on rights: reference-only cannot be reused wholesale
     if: { properties: { rights: { const: reference-only } } }
     then: { properties: { mode: { enum: [analyze, borrow, study] } } }

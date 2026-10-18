@@ -54,7 +54,7 @@ from typing import Any, Iterable, NamedTuple
 import yaml
 from jsonschema import Draft202012Validator
 
-from lapis_design import __version__, font_license, shared_dir, system_fonts, taste
+from lapis_design import __version__, font_license, reference_digest, shared_dir, system_fonts, taste
 from lapis_design.summary import DISPUTE_FOOTER, finding_lines, floor_lines, rest_lines, skipped_note
 
 _YAML_LOADER = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
@@ -829,6 +829,14 @@ def check_references(plan: dict, root: Path, plan_file: str) -> list[dict]:
             out.append(finding("reference.study-artifact", "requirement",
                                f"{ref.get('source')!r} is used in study mode; the release gate will block this output",
                                blocking=False, create="info", path=where, file=plan_file))
+    if plan.get("mode") == "create" and isinstance(plan.get("task"), dict) and isinstance(plan["task"].get("id"), str):
+        for index, said in reference_digest.plan_problems(root, plan["task"]["id"], plan.get("references") or []):
+            out.append(finding("reference.digest-drift", "requirement",
+                               f"{'references[' + str(index) + ']: ' if index is not None else ''}{said}",
+                               blocking=True, create="gate", review="P2", path=f"references[{index}]" if index is not None else "references",
+                               file=plan_file,
+                               fix="Take the entries from `lapis-design references digest --task <task> --plan`; the owner's "
+                                   "replies and the references record are the one source of what is taken and left."))
     return out
 
 

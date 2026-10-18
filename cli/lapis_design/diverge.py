@@ -55,7 +55,7 @@ from typing import Any, Mapping
 
 import yaml
 
-from lapis_design import references, requirements, shared_dir, workers
+from lapis_design import reference_digest, references, requirements, shared_dir, workers
 
 STEP = "diverge"
 MIN_K, MAX_K = 2, 4                    # roughs a `start` makes
@@ -448,7 +448,32 @@ def variant(root: Path, task: str, words: str, env: Mapping[str, str] = os.envir
 
 _MIGRATION = {"'type'": ": a card made before `type` and `style` needs both (diverge.md, \"The rough and its card\"), then `diverge check` again",
               "'style'": ": a card made before `type` and `style` needs both (diverge.md, \"The rough and its card\"), then `diverge check` again",
+              "'takes'": ": a card made before `takes` needs it, the digest's take ids it uses (diverge.md, \"The rough and its card\"; `lapis-design references digest --task <task>` lists them), then `diverge check` again",
               "'motion'": ": a brief made before `motion` needs it (diverge.md, \"The shared brief\"), then `diverge contract` again"}
+
+
+def _take_problems(root: Path, task: str, candidate: str, named: list[str]) -> list[str]:
+    """The card's `takes` against the reference digest as it stands (the record's, with the owner's replies): each id has to
+    be a take item, and a digest with take items needs at least one named. Without a digest (the references step was declined)
+    a card names none."""
+    digest = reference_digest.effective(root, task)
+    if digest is None:
+        return [f"{candidate}'s card names the takes {', '.join(named)}, and the run has no reference digest"] if named else []
+    takes = {i["id"] for ref in digest["references"] for i in ref["take"]}
+    leaves = {i["id"] for ref in digest["references"] for i in ref["leave"]}
+    problems = []
+    for ident in named:
+        if ident in leaves:
+            problems.append(f"{candidate}'s card uses {ident}, which the digest leaves out (an item the run or the owner left): "
+                            "a rough does not use it")
+        elif ident not in takes:
+            problems.append(f"{candidate}'s card names the take {ident}, which is no item of the reference digest "
+                            f"({', '.join(sorted(takes, key=lambda i: int(i[1:]))) or 'it holds no take item'}; "
+                            f"`lapis-design references digest --task {task}` lists them)")
+    if takes and not named:
+        problems.append(f"{candidate}'s card names no take: say which items of the reference digest the rough puts on its page "
+                        f"(`takes: [M1, ...]`; `lapis-design references digest --task {task}` lists them)")
+    return problems
 
 
 def _card_problems(root: Path, task: str, candidate: str, slots: Mapping[str, Mapping[str, Any]],
@@ -511,6 +536,7 @@ def _card_problems(root: Path, task: str, candidate: str, slots: Mapping[str, Ma
     if not (folder(root, task) / candidate / "index.html").is_file():
         problems.append(f"{where}/index.html is missing")
     problems += _bound_problems(root, task, candidate)
+    problems += _take_problems(root, task, candidate, found["takes"])
     problems += carry.card_problems(candidate, found)
     return problems
 

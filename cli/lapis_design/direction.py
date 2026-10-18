@@ -15,6 +15,9 @@ the owner has fonts they own but have not installed (`lazuli owned add` takes th
     - [declared] Pick: C2 — "<owner words>"                         (the second turn, after `diverge`)
     - [declared] C2.G1 crystal stone: a — "<owner words>"           (the second turn: the picked rough's signature)
     - Defaults accepted (direction 2): "<owner words>"              (untagged: every open item takes its default)
+    - [declared] take M4: the pricing section — "<owner words>"   (a reply to the reference digest shown at turn one: the item
+                                                                    moves to what the page takes, and says where; `leave M2: — "..."`
+                                                                    moves one the other way; `reference_digest.py`)
 
 `items` reads the proposal and the answers and gives each item a state (`open`, `narrowed`, `decided`, `delegated`) and
 who gave it (`owner`, or `assumed` in an unattended run, which never waits and records `[assumed] ... Basis: ...`). The
@@ -36,7 +39,7 @@ from typing import Any, Mapping
 
 import yaml
 
-from lapis_design import brief, diverge, gate, references, shared_dir, waiting
+from lapis_design import brief, diverge, gate, reference_digest, references, shared_dir, waiting
 
 STEP = "owner-direction"
 KIND = "direction"

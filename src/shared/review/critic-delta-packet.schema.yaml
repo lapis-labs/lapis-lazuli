@@ -56,7 +56,7 @@ properties:
         properties:
           count: { type: integer, minimum: 0 }     # files the critic may read, as the prior packet lists them
           sha256: { $ref: "#/$defs/digest" }       # of that list with each file's digest
-      sections:                                    # plan, direction, findings (the lint report's), motion, supporting
+      sections:                                    # plan, direction, reference_digest, findings (the lint report's), motion, supporting
         type: object
         additionalProperties: { $ref: "#/$defs/digest" }
   requirements:
