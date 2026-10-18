@@ -133,7 +133,7 @@ properties:
       additionalProperties: false
       required: [id, state, refs]
       properties:
-        id: { type: string, pattern: "^R[0-9a-f]{6,8}$" }   # a row id of the packet
+        id: { type: string, pattern: "^(R[0-9a-f]{6,8}|G:[a-z0-9.-]+/[a-z0-9-]+)$" }   # a row id of the packet: an owner's row, or a guideline row (`G:<guideline>/<item>`)
         state: { enum: [met, partly, missing, not-in-slice, not-observable] }   # not-in-slice: the shown part is not where the row belongs; not-observable: no capture or session can show it
         refs: { type: array, items: { type: string } }  # capture files, box ids, or session steps the state rests on
         note: { type: string }
@@ -178,7 +178,7 @@ $defs:
     additionalProperties: false
     required: [rule_id, class, severity, layer, observed, blocking, evidence, status]
     properties:
-      rule_id: { type: string }                      # a rules.yaml id, a built-in check id (schema.*, contract.*, font.*, reference.*, flow.*,
+      rule_id: { type: string }                      # a rules.yaml id, a built-in check id (schema.*, contract.*, font.*, reference.*, flow.*, guideline.*,
                                                     # release.* from release/GATE.md), or a critic judgement no rule covers
                                                     # (review.counterfactual, review.world-materials, review.package-drift, review.task-walkthrough, review.making-of, review.wording)
       class: { enum: [requirement, quality, default, contract] }
@@ -210,6 +210,9 @@ $defs:
       blocking: { type: boolean }
       approval_impact: {enum: [core-product-explanation, ordinary]} # critic's pre-show scope, not release severity
       package: { type: string }                      # package that was hit, if any
+      guideline_items:                               # the guideline checklist items (`<guideline>/<item>`, src/shared/guidelines/) this finding is evidence for: a rule that measures an item of a guideline the plan names, or `guideline.target-size`
+        type: array
+        items: { type: string, pattern: "^[a-z0-9.-]+/[a-z0-9-]+$" }
       distance: { type: number, minimum: 0 }         # typicality or reference distance, if used
       evidence:
         type: object

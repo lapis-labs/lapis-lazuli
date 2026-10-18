@@ -1,0 +1,26 @@
+# Daangn SEED Design — consult-only reference, see guideline.schema.yaml
+# No checklist: SEED's documents describe one design system's components and its React package, which a plan that adopts SEED
+# reads for that system's own conventions. The repository is Apache 2.0 (which grants no trademark rights), so a maker may read
+# and use what it needs there; nothing from it enters the requirement record, and the web accessibility floor still comes from WCAG 2.2.
+version: 0
+guideline: daangn-seed
+name: Daangn SEED Design documents
+short_name: "Daangn's SEED design system"
+kind: consult-only
+visual_layer: true
+platforms: [web, ios, android]
+checked_at: "2026-10-18"
+route:
+  used: { kind: context7, ref: "/llmstxt/seed-design_io_react_llms-full_txt", note: "the official React llms-full.txt index" }
+  alternative: { kind: repo, ref: "https://github.com/daangn/seed-design", note: "the docs sources under docs/content/react on the dev branch, Apache 2.0" }
+license:
+  summary: The SEED repository is Apache 2.0, which permits copying, modifying, and distributing it but grants no trademark rights.
+links:
+  - { name: Side navigation, url: "https://github.com/daangn/seed-design/blob/dev/docs/content/react/blocks/side-navigation.mdx" }
+  - { name: Interaction states and keyboard focus, url: "https://github.com/daangn/seed-design/blob/dev/docs/content/react/components/concepts/interaction-states.mdx" }
+  - { name: Responsive design, url: "https://github.com/daangn/seed-design/blob/dev/docs/content/react/components/concepts/responsive-design.mdx" }
+  - { name: Safe area, url: "https://github.com/daangn/seed-design/blob/dev/docs/content/react/components/concepts/safe-area.mdx", note: "uses viewport-fit=cover and env(safe-area-inset-*)" }
+  - { name: Dialog, url: "https://github.com/daangn/seed-design/blob/dev/docs/content/react/components/dialog.mdx" }
+  - { name: Alert dialog, url: "https://github.com/daangn/seed-design/blob/dev/docs/content/react/components/alert-dialog.mdx" }
+  - { name: Bottom sheet, url: "https://github.com/daangn/seed-design/blob/dev/docs/content/react/components/bottom-sheet.mdx" }
+items: []

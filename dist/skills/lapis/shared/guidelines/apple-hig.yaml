@@ -1,0 +1,143 @@
+# Apple Human Interface Guidelines behavior checklist — see guideline.schema.yaml
+# Written from the Context7 index of the HIG (route.used) on `checked_at`: each item restates in our words what one section asks
+# a screen or a flow to do, and links that section. No Apple text is copied. The index lags the 2026 changes of the HIG, so
+# `not_covered` lists them; until a person compares them with the live sections, a plan must not read this file as the HIG's
+# current state. Only the behavior layer is here; how closely the look follows Apple's visual language is the owner's `visual` choice.
+version: 0
+guideline: apple-hig
+name: Apple Human Interface Guidelines (iOS and iPadOS behavior)
+short_name: "Apple's Human Interface Guidelines"
+kind: checklist
+visual_layer: true
+platforms: [ios]
+checked_at: "2026-10-18"
+route:
+  used: { kind: context7, ref: "/websites/developer_apple_design_human-interface-guidelines", note: "queried by section topic on checked_at; the index shows `Update: 1 week ago` and holds the sections linked in the items" }
+  alternative: { kind: owner-saved, ref: "the owner reads the live HIG in an ordinary browser and writes their own checklist and section links; no fetcher reads Apple's pages and no saved page goes to an AI model" }
+license:
+  summary: The HIG carries no separate reuse license; Apple's website terms restrict copying and automated access, and the Apple Design Resources license limits kit components to mock-ups. This file restates functional requirements in new words and links the official sections.
+  forbids:
+    - automated fetching or scraping of developer.apple.com pages
+    - uploading saved HIG pages to an AI model
+    - putting Apple Design Resources kit components or templates into documents or deliverables
+not_covered:
+  - "Menus: menu-item icons (HIG changelog 2026-06-08), not found in the index"
+  - "Tab bars and Search fields: revised terms and artwork and the iOS Search tab (2026-06-08); the index returned a Search as a tab passage, and whether it is the revised text is not established"
+  - "Generative AI: refinement, generation feedback, and model selection (2026-06-08), not found in the index"
+  - "Toolbars and tab bars: vertical axis placement for iPhone Duo (2026-09-09); the Designing for iPhone Duo section is indexed and not read here"
+  - "Live Activities: limited-width layouts (2026-10-13), not found in the index"
+  - "Typography Specifications: the Dynamic Type size tables and recommended minimum font sizes, not read"
+  - "Every section no item names, among them Menus, Gestures, Onboarding, Loading, Lists and tables, Pickers, and Notifications"
+items:
+  - id: target-size
+    requirement: A button or other tappable control has a hit region of at least 44 by 44 pt, even when the drawn icon or label is smaller.
+    source: { section: "Buttons > Best practices", url: "https://developer.apple.com/design/human-interface-guidelines/buttons" }
+    platforms: [ios]
+    measure: render
+    check: target-size
+    threshold: { value: 44, unit: pt, quantity: target-size, note: "pt is Apple's layout point; units.yaml maps it to CSS px for a web prototype" }
+    viewports: [390]
+    limits: The render extract holds each element's box; a hit region enlarged by padding outside the box is not seen, so a small box can still be a 44 pt target.
+  - id: press-state
+    requirement: A custom button shows a pressed state, so a tap never feels ignored.
+    source: { section: "Buttons > Best practices", url: "https://developer.apple.com/design/human-interface-guidelines/buttons" }
+    platforms: [ios]
+    measure: render
+  - id: safe-area
+    requirement: Content and controls stay inside the safe area, clear of the status bar, the Dynamic Island, the home indicator, and any bar the system or the app draws.
+    source: { section: "Layout > Guides and safe areas", url: "https://developer.apple.com/design/human-interface-guidelines/layout" }
+    platforms: [ios]
+    measure: static
+    limits: A default capture has no cutout or inset, so passing cannot be inferred from it; the page must opt in to the full viewport and pad by the safe-area insets, which source can show and a host with insets can measure.
+  - id: larger-text
+    requirement: People can enlarge text to at least twice its default size, by adopting the system text sizes or by custom controls, without losing content or function.
+    source: { section: "Accessibility > Vision > Support larger text sizes", url: "https://developer.apple.com/design/human-interface-guidelines/accessibility" }
+    platforms: [ios]
+    measure: render
+    threshold: { value: 200, unit: percent, quantity: text-scale, note: "no render at 200% text is captured today, so no tool measures this item" }
+    limits: The render matrix has no enlarged-text capture and a browser does not apply the iOS text-size setting; a reviewer needs a capture at that scale.
+  - id: text-reflow
+    requirement: Layout adapts to every text size, with side-by-side items stacking, rows growing taller, and columns reducing, so text is never cropped or overlapped.
+    source: { section: "Typography > Supporting Dynamic Type", url: "https://developer.apple.com/design/human-interface-guidelines/typography" }
+    platforms: [ios]
+    measure: render
+    rules: [layout.compact-overflow]
+  - id: truncation-minimal
+    requirement: At the largest text size the screen still shows as much useful text as at the largest standard size; truncation in a scrolling region is avoided unless a separate view opens the rest.
+    source: { section: "Typography > Supporting Dynamic Type", url: "https://developer.apple.com/design/human-interface-guidelines/typography" }
+    platforms: [ios]
+    measure: judge
+  - id: hierarchy-kept-at-large-text
+    requirement: The information hierarchy holds at any text size, with the primary elements staying toward the top of the view.
+    source: { section: "Typography > Supporting Dynamic Type", url: "https://developer.apple.com/design/human-interface-guidelines/typography" }
+    platforms: [ios]
+    measure: judge
+  - id: modality-purpose
+    requirement: A modal presentation is for critical information, a confirmation, or a distinct narrow task, and needs an explicit action to leave; routine navigation does not use one.
+    source: { section: "Modality", url: "https://developer.apple.com/design/human-interface-guidelines/modality" }
+    platforms: [ios]
+    measure: judge
+    rules: [ux.routine-modal]
+  - id: sheet-buttons
+    requirement: A sheet leaves through Cancel or Close without saving, or Done after the task is complete; Back moves within a multi-step sheet and never dismisses it.
+    source: { section: "Sheets > Anatomy", url: "https://developer.apple.com/design/human-interface-guidelines/sheets" }
+    platforms: [ios]
+    measure: behavior
+    rules: [ux.dialog-focus]
+  - id: alert-cancel
+    requirement: An alert about a destructive action offers a Cancel button titled as such, and Cancel is never the default button.
+    source: { section: "Alerts > Buttons", url: "https://developer.apple.com/design/human-interface-guidelines/alerts" }
+    platforms: [ios]
+    measure: behavior
+    rules: [ux.dialog-focus]
+  - id: alert-when
+    requirement: An alert is kept for uncommon destructive actions that cannot be undone; a common, undoable action goes ahead without one.
+    source: { section: "Alerts > Best practices", url: "https://developer.apple.com/design/human-interface-guidelines/alerts" }
+    platforms: [ios]
+    measure: judge
+    rules: [ux.destructive-without-undo]
+  - id: alert-dismiss-alternative
+    requirement: An alert can also be cancelled without reaching the Cancel button, with Escape or Command-Period on an attached keyboard.
+    source: { section: "Alerts > Buttons", url: "https://developer.apple.com/design/human-interface-guidelines/alerts" }
+    platforms: [ios]
+    measure: behavior
+  - id: standard-back-close
+    requirement: Going back and closing use the familiar Back and Close controls, behave as people expect, and are the same everywhere in the app.
+    source: { section: "Toolbars > Navigation", url: "https://developer.apple.com/design/human-interface-guidelines/toolbars" }
+    platforms: [ios]
+    measure: behavior
+    rules: [ux.back-trap]
+  - id: tab-bar-purpose
+    requirement: A tab bar moves between top-level sections and carries no actions on the current content; actions live in a toolbar.
+    source: { section: "Tab bars > Best practices", url: "https://developer.apple.com/design/human-interface-guidelines/tab-bars" }
+    platforms: [ios]
+    measure: judge
+  - id: tab-state-kept
+    requirement: Switching tabs and coming back keeps each section's own navigation state.
+    source: { section: "Tab bars", url: "https://developer.apple.com/design/human-interface-guidelines/tab-bars" }
+    platforms: [ios]
+    measure: behavior
+    rules: [ux.lost-context-on-return]
+  - id: keyboard-alone
+    requirement: The whole screen can be used from an attached keyboard alone, without overriding the system's own shortcuts.
+    source: { section: "Accessibility > Speech", url: "https://developer.apple.com/design/human-interface-guidelines/accessibility" }
+    platforms: [ios]
+    measure: behavior
+    rules: [ux.keyboard-inoperable]
+  - id: accessible-labels
+    requirement: Every key control, and every custom element, has a label that tells a screen reader what it does, kept current as the interface changes.
+    source: { section: "VoiceOver > Descriptions", url: "https://developer.apple.com/design/human-interface-guidelines/voiceover" }
+    platforms: [ios]
+    measure: render
+    rules: [component.unnamed-icon-button]
+  - id: keyboard-type
+    requirement: A text field asks for the keyboard that suits what it takes, such as numbers, an email address, or a URL.
+    source: { section: "Text fields > Best practices", url: "https://developer.apple.com/design/human-interface-guidelines/text-fields" }
+    platforms: [ios]
+    measure: static
+  - id: field-clear-of-keyboard
+    requirement: When the on-screen keyboard opens, the field being edited and the controls that finish the task stay visible above it.
+    source: { section: "Virtual keyboards", url: "https://developer.apple.com/design/human-interface-guidelines/virtual-keyboards" }
+    platforms: [ios]
+    measure: behavior
+    limits: A desktop browser has no on-screen keyboard overlay, so the behavior session cannot show it; a host that resizes the viewport can.

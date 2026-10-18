@@ -96,6 +96,42 @@ items:
   view: full
   path: extracts/schema.yaml
   summary: LapisLazuli extract record schema — v0
+- id: guideline-schema
+  view: full
+  path: guidelines/guideline.schema.yaml
+  summary: LapisLazuli guideline file schema — v0
+- id: guideline-units
+  view: full
+  path: guidelines/units.yaml
+  summary: Units of guideline thresholds and how a web prototype measures them — v0
+- id: guideline-wcag-2-2
+  view: full
+  path: guidelines/wcag-2.2.yaml
+  summary: WCAG 2.2 behavior checklist — see guideline.schema.yaml
+- id: guideline-material-3
+  view: full
+  path: guidelines/material-3.yaml
+  summary: Material 3 behavior checklist — see guideline.schema.yaml
+- id: guideline-fluent-2
+  view: full
+  path: guidelines/fluent-2.yaml
+  summary: Fluent 2 and Windows apps behavior checklist — see guideline.schema.yaml
+- id: guideline-krds
+  view: full
+  path: guidelines/krds.yaml
+  summary: KRDS (Korea Design System) behavior checklist — see guideline.schema.yaml
+- id: guideline-apple-hig
+  view: full
+  path: guidelines/apple-hig.yaml
+  summary: Apple Human Interface Guidelines behavior checklist — see guideline.schema.yaml
+- id: guideline-toss-tds
+  view: full
+  path: guidelines/toss-tds.yaml
+  summary: Toss Design System (TDS) and Apps in Toss — consult-only reference, see guideline.schema.yaml
+- id: guideline-daangn-seed
+  view: full
+  path: guidelines/daangn-seed.yaml
+  summary: Daangn SEED Design — consult-only reference, see guideline.schema.yaml
 - id: direction-proposal
   view: full
   path: direction/schema.yaml

@@ -1,0 +1,137 @@
+# LapisLazuli guideline file schema — v0
+# Location: src/shared/guidelines/<id>.yaml, one file per guideline a plan can name in `brief.guidelines`.
+# Two kinds of file:
+#   checklist      the BEHAVIOR layer of a guideline in our own words: what the guideline asks a screen or a flow to do
+#                  (target size, focus, text scale and reflow, safe areas, dialogs, navigation, input), each item with the
+#                  section and URL it comes from, never the source's text. The visual layer (color, type, shape, motion
+#                  style) is not listed here; the owner's `visual` choice decides how closely the look follows it.
+#   consult-only   a guideline whose documents are product-specific or whose kit license forbids reuse. It lists links and
+#                  says why there is no checklist; nothing from it enters the requirement record.
+# The CLI loads these through `lapis_design.guidelines`; a checklist item becomes a requirement row of a plan that names
+# the guideline (`requirements.guideline_rows`, `plan check`, `critic packet`), judged by the critic. An item's `rules`
+# and `check` say what already measures it; an item with neither and `measure: render|behavior|static` is measurable in
+# principle and has no tool yet, so the critic judges it from the captures.
+#
+# Units are never converted silently: a threshold keeps the unit its source gives and `units.yaml` states how a web
+# prototype's CSS px stands for it. Licenses: a file records the source's attribution line in `attribution`; no source text is quoted.
+
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/lapis-labs/lapis-lazuli/schemas/guideline.v0.json
+title: LapisLazuli guideline file
+type: object
+additionalProperties: false
+required: [version, guideline, name, short_name, kind, visual_layer, platforms, checked_at, route, license, items]
+properties:
+  version: { const: 0 }
+  guideline: { enum: [apple-hig, material-3, fluent-2, krds, wcag-2.2, toss-tds, daangn-seed] }
+  name: { type: string, minLength: 3 }
+  short_name: { type: string, minLength: 3 }     # how a question to the owner names it, in plain words (`visual` is asked per guideline)
+  kind: { enum: [checklist, consult-only] }
+  visual_layer: { type: boolean }                  # whether the guideline has a visual language the owner can follow, consult, or leave; false for a pure accessibility standard (its `visual` stays `none` and is never asked)
+  platforms:                                       # surfaces the guideline's behavior items can cover, the plan's `brief.platform` values
+    type: array
+    minItems: 1
+    uniqueItems: true
+    items: { enum: [web, ios, android, desktop, email, embedded] }
+  checked_at: { type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$" }   # the day the items were written or last compared with the source
+  route:                                           # how the items were read, and the second route when the first is not available
+    type: object
+    additionalProperties: false
+    required: [used, alternative]
+    properties:
+      used: { $ref: "#/$defs/route" }
+      alternative: { $ref: "#/$defs/route" }
+  license:
+    type: object
+    additionalProperties: false
+    required: [summary]
+    properties:
+      summary: { type: string, minLength: 8 }      # what the source's license or terms let this file do, in one or two sentences
+      attribution: { type: string, minLength: 8 }  # the line a license asks for (KOGL type 1, CC BY, Apache 2.0, the W3C notice); required where the source asks
+      forbids: { type: array, items: { type: string, minLength: 3 } }   # uses the source's terms rule out (kit reuse, automated fetching)
+  not_covered:                                     # sections the source has that this file does not cover yet (a stale index, a section not read), by name
+    type: array
+    items: { type: string, minLength: 3 }
+  links:                                           # consult-only files: the documents a maker reads, name and URL
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [name, url]
+      properties:
+        name: { type: string, minLength: 2 }
+        url: { type: string, pattern: "^https://" }
+        note: { type: string }
+  items:
+    type: array
+    items: { $ref: "#/$defs/item" }
+allOf:
+  - if: { properties: { kind: { const: checklist } } }
+    then:
+      properties: { items: { minItems: 1 } }
+  - if: { properties: { kind: { const: consult-only } } }
+    then:
+      properties: { items: { maxItems: 0 } }
+      required: [links]
+
+$defs:
+  route:
+    type: object
+    additionalProperties: false
+    required: [kind, ref]
+    properties:
+      kind: { enum: [context7, official-docs, repo, owner-saved] }
+      ref: { type: string, minLength: 3 }          # a Context7 library id, an official docs URL, a repository URL, or what the owner saved
+      note: { type: string }
+  item:
+    type: object
+    additionalProperties: false
+    required: [id, requirement, source, platforms, measure]
+    properties:
+      id: { type: string, pattern: "^[a-z][a-z0-9]*(-[a-z0-9]+)*$" }   # unique in the file; the row id is `G:<guideline>/<id>`
+      requirement: { type: string, minLength: 12 }   # one line, our words: what the shown screen or flow has to do
+      source:
+        type: object
+        additionalProperties: false
+        required: [section, url]
+        properties:
+          section: { type: string, minLength: 3 }     # the source's own section name
+          url: { type: string, pattern: "^https://" }
+      platforms:                                     # the plan's `brief.platform` values the item applies to
+        type: array
+        minItems: 1
+        uniqueItems: true
+        items: { enum: [web, ios, android, desktop, email, embedded] }
+      measure:                                       # what could establish it: render (the render extract), behavior (the behavior
+        enum: [render, behavior, static, judge]      # session), static (markup, source, or plan fields), judge (a reviewer reading the page)
+      check: { enum: [target-size] }                 # the mechanical check `guideline.target-size` runs for this item
+      rules:                                         # existing rules whose findings are this item's evidence; the engine names the item in them
+        type: array
+        uniqueItems: true
+        items: { type: string, pattern: "^[a-z]+\\.[a-z0-9-]+$" }
+      threshold:
+        type: object
+        additionalProperties: false
+        required: [value, unit, quantity]
+        properties:
+          value: { type: number, exclusiveMinimum: 0 }
+          unit: { enum: [css-px, pt, dp, epx, percent, count] }
+          quantity: { enum: [target-size, text-scale, viewport-width, spacing, count] }
+          bound: { enum: [min, max], default: min }   # `min`: the measured value must reach it; `max`: stay at or under it
+          unless:                                     # a second way to pass a `target-size` minimum, in the same unit
+            type: object
+            additionalProperties: false
+            required: [width_min, height_min]
+            properties:
+              width_min: { type: number, exclusiveMinimum: 0 }
+              height_min: { type: number, exclusiveMinimum: 0 }
+          note: { type: string, minLength: 3 }
+      viewports:                                     # captured widths a mechanical check reads (render extract widths); absent: every layout capture
+        type: array
+        minItems: 1
+        items: { enum: [320, 390, 768, 1440] }
+      limits: { type: string, minLength: 8 }         # what a measurement cannot see (an enlarged hit area, an OS setting)
+      needs_review: { const: true }                  # written from a section list, not from the section's text; a person reads the source before relying on it
+    allOf:
+      - if: { required: [check] }
+        then: { required: [threshold] }

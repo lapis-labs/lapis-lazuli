@@ -1,0 +1,104 @@
+# Fluent 2 and Windows apps behavior checklist — see guideline.schema.yaml
+# Two sources share this file because a Windows app is designed with both: Fluent 2 (fluent2.microsoft.design) for the
+# accessibility, dialog, and layout behavior, and the Windows apps design documents on Microsoft Learn for hit targets and
+# navigation. Items restate them in our words. Only the behavior layer is here; Fluent's color, type, shape, and
+# motion language are the visual layer, which the owner's `visual` choice governs.
+version: 0
+guideline: fluent-2
+name: Fluent 2 and Windows apps (behavior of Windows desktop and web layouts)
+short_name: "Microsoft's Fluent 2 and Windows app design"
+kind: checklist
+visual_layer: true
+platforms: [desktop, web]
+checked_at: "2026-10-18"
+route:
+  used: { kind: context7, ref: "/websites/fluent2_microsoft_design", note: "queried by section topic on checked_at; the Windows Learn pages were read directly (robots.txt allows it) on the same day" }
+  alternative: { kind: official-docs, ref: "https://fluent2.microsoft.design and https://learn.microsoft.com/en-us/windows/apps/design/" }
+license:
+  summary: The Fluent 2 site states no content license and Microsoft's general terms restrict copying, so these items are paraphrases with links. The Windows apps documents on Microsoft Learn (MicrosoftDocs/windows-dev-docs) are CC BY 4.0 for text.
+  attribution: "Windows app design items paraphrase Microsoft Learn documents (https://learn.microsoft.com/en-us/windows/apps/design/), Copyright © Microsoft, text licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/); changes: summarized in our own words. Fluent 2 items paraphrase https://fluent2.microsoft.design."
+not_covered:
+  - "Fluent 2 What's new carries no dated 2026 changes and the Context7 index shows `Update: 3 months ago`; whether it holds every 2026 change is not established"
+  - "Fluent 2 components other than Dialog, Breadcrumb, and Popover, among them Nav, Tabs, and Menu"
+  - "Windows apps: layout overview and accessible text requirements pages were not read for this file"
+items:
+  - id: target-size-touchable
+    requirement: A touchable target is at least 40 by 40 epx even when the visual is smaller, or at least 32 epx tall when it is at least 120 epx wide.
+    source: { section: "Windows apps > Touch interactions > Hit Targets > Touchable", url: "https://learn.microsoft.com/en-us/windows/apps/develop/input/touch-interactions" }
+    platforms: [desktop]
+    measure: render
+    check: target-size
+    threshold:
+      value: 40
+      unit: epx
+      quantity: target-size
+      unless: { width_min: 120, height_min: 32 }
+      note: "epx is Windows' effective pixel; units.yaml maps it to CSS px for a web prototype"
+    viewports: [768, 1440]
+    limits: The render extract holds each element's box; a hit area enlarged by padding outside the box is not seen.
+  - id: touch-optimized-size
+    requirement: A touch-first surface raises targets to 44 by 44 epx with at least 4 epx of visible space between neighbouring targets.
+    source: { section: "Windows apps > Touch interactions > Hit Targets > Touch-optimized", url: "https://learn.microsoft.com/en-us/windows/apps/develop/input/touch-interactions" }
+    platforms: [desktop]
+    measure: judge
+    threshold: { value: 44, unit: epx, quantity: target-size, note: "a recommendation for touch-first apps, not the minimum; the minimum is target-size-touchable, and only that item is measured" }
+  - id: text-zoom-200
+    requirement: Text can be zoomed to 200% without clipping.
+    source: { section: "Fluent 2 > Accessibility > Responsive layouts", url: "https://fluent2.microsoft.design/accessibility" }
+    platforms: [desktop, web]
+    measure: render
+    threshold: { value: 200, unit: percent, quantity: text-scale, note: "no render at 200% text is captured today, so no tool measures this item" }
+    limits: The render matrix has no enlarged-text capture; a reviewer needs a capture at that scale or the running page.
+  - id: reflow-400
+    requirement: Content reflows without sideways scrolling when the page is zoomed to 400%, which is a viewport 320 CSS px wide on a 1280 px screen.
+    source: { section: "Fluent 2 > Accessibility > Responsive layouts", url: "https://fluent2.microsoft.design/accessibility" }
+    platforms: [desktop, web]
+    measure: render
+    rules: [layout.compact-overflow]
+    threshold: { value: 320, unit: css-px, quantity: viewport-width, note: "400% zoom of a 1280 px window; the Fluent page states the 400% figure and not the width" }
+    viewports: [320]
+  - id: focus-guided
+    requirement: Keyboard focus is guided visibly, and focus is never lost after an interaction changes the interface.
+    source: { section: "Fluent 2 > Accessibility > Keyboard navigation and assistive technologies", url: "https://fluent2.microsoft.design/accessibility" }
+    platforms: [desktop, web]
+    measure: behavior
+    rules: [code.focus-outline-removed, ux.focus-order]
+  - id: keyboard-reach
+    requirement: Every control can be reached and used with the keyboard in a logical order, with a visible focus indicator.
+    source: { section: "Windows apps > Keyboard accessibility", url: "https://learn.microsoft.com/en-us/windows/apps/design/accessibility/keyboard-accessibility" }
+    platforms: [desktop]
+    measure: behavior
+    rules: [ux.keyboard-inoperable, ux.focus-order]
+    needs_review: true
+  - id: dialog-focus
+    requirement: When a dialog opens, focus moves to its first interactive element; focus stays inside a modal or alert dialog; and when it closes, focus returns to the control that opened it.
+    source: { section: "Fluent 2 > Dialog > Accessibility", url: "https://fluent2.microsoft.design/components/web/react/core/dialog/usage" }
+    platforms: [desktop, web]
+    measure: behavior
+    rules: [ux.dialog-focus]
+  - id: dialog-dismissal
+    requirement: A modal dialog closes by Escape, by a click outside, or by a footer button; a non-modal dialog does not close by a click outside; an alert dialog closes only by its footer buttons.
+    source: { section: "Fluent 2 > Dialog > Behavior > Dismissal", url: "https://fluent2.microsoft.design/components/web/react/core/dialog/usage" }
+    platforms: [desktop, web]
+    measure: behavior
+  - id: dialog-scroll
+    requirement: In a dialog whose content is long, the header and the footer stay in place and only the body scrolls.
+    source: { section: "Fluent 2 > Dialog > Behavior > Scrolling", url: "https://fluent2.microsoft.design/components/web/react/core/dialog/usage" }
+    platforms: [desktop, web]
+    measure: behavior
+  - id: dialog-purpose
+    requirement: A dialog is kept for important actions; an update that needs no action goes in a toast, extra context that does not change the workflow in a popover, and dialogs are not nested.
+    source: { section: "Fluent 2 > Dialog", url: "https://fluent2.microsoft.design/components/web/react/core/dialog/usage" }
+    platforms: [desktop, web]
+    measure: judge
+    rules: [ux.routine-modal]
+  - id: breadcrumb-semantics
+    requirement: A breadcrumb trail sits in a labelled navigation landmark, marks the current page as current, and shortens to the last level in a small viewport or at 400% zoom.
+    source: { section: "Fluent 2 > Breadcrumb > Accessibility", url: "https://fluent2.microsoft.design/components/web/react/core/breadcrumb/usage" }
+    platforms: [desktop, web]
+    measure: static
+  - id: navigation-depth
+    requirement: Navigation does not go beyond two levels without a breadcrumb bar, and related content never forces the user up a level and down again.
+    source: { section: "Windows apps > Navigation basics > General recommendations", url: "https://learn.microsoft.com/en-us/windows/apps/design/basics/navigation-basics" }
+    platforms: [desktop]
+    measure: judge

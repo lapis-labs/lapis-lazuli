@@ -9,7 +9,9 @@ vote on adjectives: every option is a job, a representation, or a carried meanin
 - When the turns happen: turn one after the references, turn two after `diverge`; more only while an answer opens something.
 - The three questions: what a named style does, how each core object is represented, what a signature element carries.
 - The fonts question: one per type role, whether the owner has fonts they own but have not installed.
+- The reference digest: the table of what each reference gives and leaves, shown at turn one; the owner flips an item by its id.
 - The proposal: `.lapis/direction/<task>.yaml`, written before you ask.
+- The guideline question: one per design guideline the plan will name, how closely the look follows it (the behavior is followed whatever they say).
 - Asking: one message per turn, in the owner's language and plain words, naming every open item by its id in parentheses.
 - Recording answers: `## Direction <n>` in the brief record, one line per item.
 - Unattended: nobody to ask: `[assumed]` with a basis, nothing waits.
@@ -18,7 +20,8 @@ vote on adjectives: every option is a job, a representation, or a carried meanin
 ## When the turns happen
 
 - **Turn one** comes after the references record passes. Ask about every open style, kit, object, and brief-named signature
-  item in one message, with the reference sheet (`lapis-design references sheet --task <task>`) attached.
+  item in one message, with the reference sheet (`lapis-design references sheet --task <task>`) attached. The owner summary
+  you paste carries the reference digest (what each reference gives the page and leaves out); it is shown, not asked.
 - **Turn two** comes after `diverge` is sealed (`diverge.md`). Show the contact sheet and ask for the pick and
   for the picked rough's signature items. It may also ask about color role and area for the pick; what you do not ask goes
   to the gap list the owner sees at the slice.
@@ -96,6 +99,25 @@ When the owner answers `b` and names fonts, write the names, one per line, into 
 candidate that needs activation. Installing or activating is the owner's act, or one you propose and they accept in words you can
 quote (`lzl-fonts`); until a font is installed it has no measurement, so it can be proposed but never ranked.
 
+## The reference digest
+
+At turn one the owner also sees what each reference gives the page and what it leaves out: the references record's `take` and
+`leave` items (the `lzl-research` exploration guide, section "The digest"), as a compact table per direction in the owner summary
+that `next` writes (`## References: what we take and leave`, in their language). It is **show-only**: no item is open, no answer
+is owed, and the conversation does not wait on it; the summary carries it because the owner reads the summary, and the questions
+file has to paste the summary unchanged. Read the table yourself before you paste it: an item that is not in the owner's words
+(element, place, reason) is one to fix in the record, not in the summary.
+
+The owner flips an item by naming its id in a reply. Record each flip as its own line under `## Direction <n>`:
+`- [declared] take M4: <where on the page> — "<owner words>"` moves a leave item to what we take and needs a place (a section or
+object id, or a region such as the hero or the footer: the owner's words are enough when they say it), and
+`- [declared] leave M2: — "<owner words>"` moves a take item to what we leave. The latest line for an id wins. A flip that names an id the
+digest does not hold, or a move to `take` with no place, keeps `owner-direction` open until the line is corrected or the owner is
+asked where it goes. Like every `[declared]` line a flip is a requirement row: the critic judges that what the owner took is on
+the page. The plan's `references`, a rough's card, and the critic packet all read the digest as it stands with the flips applied
+(`lapis-design references digest --task <task>` prints it). An owner who says nothing about the table has accepted it as written;
+it is not an approval and nothing is recorded for it.
+
 ## The proposal
 
 Write `.lapis/direction/<task>.yaml` against `../shared/direction/schema.yaml` before you ask. The CLI checks form only: ids are
@@ -103,6 +125,19 @@ unique and well formed, each style has two or three options and at least one kit
 the references record, each object names a pool kind of `../shared/diverge/pools.yaml` and has two or three options (each with
 `does` and `source`), each default is an option id (`all` for an object), and no type role is asked twice. It never judges whether the options are good;
 the owner and the critic do.
+
+## The guideline question
+
+One more item for every design guideline the plan will name in `brief.guidelines` that has a look of its own (`V<n>`; not WCAG 2.2,
+which has none): **how closely should the look follow it?** The question is worded by the CLI in plain words and says that how
+things behave is followed whichever the owner picks. It has three fixed options: `a` follow its look, `b` use it as a reference and
+depart where this design has a reason (the default), `c` leave its look aside. Ask it in turn one with the others and put the
+guidelines into the proposal as `guidelines: [{id: V1, guideline: apple-hig}]` (an `other` guideline adds its `name`); the ids
+to list are the ones `plan check` will suggest for the brief, with the platforms in `platforms.md`, "Guidelines".
+
+The answer is the plan's `brief.guidelines[].visual` (`follow`, `consult`, `none`), and `plan check` refuses a plan that says
+otherwise. The owner's own reply is a requirement row like any `[declared]` item; the guideline's behavior items are rows too, but
+from our checklist, not from the owner.
 
 ## Asking
 
@@ -131,10 +166,13 @@ one line per item, keeping what the file holds. The fact cap of the brief (six q
 - [declared] K2 ticker band: drop — "<owner words>"
 - [declared] O1 the comparison: a,c — "<owner words>"           narrowed: diverge explores a and c
 - [declared] T2 body: b — "<owner words>"                        fonts owned and not installed: they name them; add them with `lazuli owned add`
+- [declared] V1 Apple's Human Interface Guidelines: b — "<owner words>"   how closely the look follows a guideline: a follow, b use it as a reference, c leave its look aside
 - [declared] S1 neo-brutalism: other — expose the record, but no borders on body text — "<owner words>"
 - [declared] Pick: C2 — "<owner words>"                          turn two only
 - [declared] C2.G1 crystal stone: a — "<owner words>"            turn two: the picked rough's signature item
 - Defaults accepted (direction 2): "<owner words>"               untagged; every open item takes its default
+- [declared] take M4: the pricing section, under the headline — "<owner words>"    a reference digest item moved to what we take, with where
+- [declared] leave M2: — "<owner words>"                          a digest item moved to what we leave
 ```
 
 The choice after the colon is an option id, a comma list of option ids, `keep`, `drop`, `default`, or `other`. A name may

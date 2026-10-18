@@ -1,0 +1,31 @@
+# Toss Design System (TDS) and Apps in Toss — consult-only reference, see guideline.schema.yaml
+# No checklist: TDS's documents describe one product's host and components (the Apps in Toss container, its navigation bar,
+# its safe-area API), and the TDS UI kit's license limits its use to development, design, and prototypes inside Apps in Toss
+# and forbids use, copying, modification, or redistribution elsewhere. A plan that names TDS records it as a consult-only
+# reference: the maker reads the linked documents for the product's own conventions, and no row enters the requirement record.
+# The web accessibility floor still comes from WCAG 2.2.
+version: 0
+guideline: toss-tds
+name: Toss Design System (TDS) and Apps in Toss documents
+short_name: "Toss's design system (TDS)"
+kind: consult-only
+visual_layer: true
+platforms: [web, ios, android]
+checked_at: "2026-10-18"
+route:
+  used: { kind: official-docs, ref: "https://developers-apps-in-toss.toss.im/llms.txt", note: "the official docs publish .md pages and an llms.txt index, and their robots.txt allows AI input; Context7 holds no official TDS index" }
+  alternative: { kind: owner-saved, ref: "pages the owner saved from developers-apps-in-toss.toss.im" }
+license:
+  summary: The TDS UI kit license limits the kit to development, design, and prototypes inside Apps in Toss; no separate open license was found for the TDS documentation text.
+  forbids:
+    - using, copying, modifying, or redistributing TDS UI kit components outside Apps in Toss
+    - copying TDS documentation text into a checklist
+links:
+  - { name: TDS components, url: "https://developers-apps-in-toss.toss.im/design/components.md" }
+  - { name: Consumer UX guide, url: "https://developers-apps-in-toss.toss.im/design/consumer-ux-guide.md" }
+  - { name: Navigation bar, url: "https://developers-apps-in-toss.toss.im/documentation/common/navigationbar.md" }
+  - { name: Safe area, url: "https://developers-apps-in-toss.toss.im/documentation/common/screen/safe-area.md", note: "the host provides the insets through an API; a page cannot assume them" }
+  - { name: Screen close and iOS swipe Back, url: "https://developers-apps-in-toss.toss.im/documentation/common/screen/close.md" }
+  - { name: React Native screen navigation, url: "https://developers-apps-in-toss.toss.im/documentation/react-native/screen-navigation/navigation.md" }
+  - { name: TDS Mobile UI Kit license, url: "https://developers-apps-in-toss.toss.im/design/prepare/figma-ui-license.md" }
+items: []

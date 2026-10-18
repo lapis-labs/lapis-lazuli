@@ -40,6 +40,7 @@ properties:
         claim: { type: string }                    # what the maker says the file shows; judge it against the file
         page: { type: string }                     # the shown page a ?query variant belongs to
   requirements:                                    # the owner's rows, as the CLI copied them (requirements/schema.yaml)
+                                                   # then the guideline rows (id `G:<guideline>/<item>`): checklist items of the guidelines the plan names, a lapis source and never the owner's words
     type: object
     additionalProperties: false
     required: [sha256, rows, owner_decisions]
@@ -52,9 +53,24 @@ properties:
           additionalProperties: false
           required: [id, text]
           properties:
-            id: { $ref: "#/$defs/row_id" }
+            id: { $ref: "#/$defs/requirement_id" }
             section: { type: string }
             text: { type: string, minLength: 1 }
+            guideline:                                 # a guideline row only: what the item is and what measures it
+              type: object
+              additionalProperties: false
+              required: [id, item, url, measure, platforms]
+              properties:
+                id: { enum: [apple-hig, material-3, fluent-2, krds, wcag-2.2] }
+                item: { type: string, pattern: "^[a-z][a-z0-9-]*$" }
+                url: { type: string, pattern: "^https://" }
+                measure: { enum: [render, behavior, static, judge] }   # what could establish it; `rules` and `check` say what does
+                platforms: { type: array, minItems: 1, items: { enum: [web, ios, android, desktop, email, embedded] } }
+                rules: { type: array, items: { type: string } }       # lint rules whose findings are evidence for it (their findings name the item)
+                check: { enum: [target-size] }                         # the mechanical check `guideline.target-size` runs
+                threshold: { type: object }                            # value, unit, quantity in the guideline's own unit (guidelines/units.yaml says how CSS px stands for it)
+                limits: { type: string }                               # what a measurement cannot see
+                needs_review: { const: true }                          # written from a section list, not read in full
       owner_decisions:                             # an owner's `drop` or `narrow` of a row, with the owner's words
         type: array
         items:
@@ -207,6 +223,43 @@ properties:
           card: { type: object }                   # the picked rough's card.yaml (diverge/card.schema.yaml)
           captures: { type: array, items: { type: string } }   # project-relative screenshots of the picked rough
       contact: { type: [string, "null"] }          # the contact sheet of the sealed roughs
+  reference_digest:                                # the references record's digest as it stands: what each reference gives the page and what it leaves out (absent when the run has none)
+    type: object
+    additionalProperties: false
+    required: [references]
+    properties:
+      references:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [id, direction, take, leave]
+          properties:
+            id: { type: string }                   # the reference's id in the references record
+            direction: { type: string }            # its lettered direction, or none
+            take:                                  # what the page takes from it, and where
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required: [id, element, at, why, by]
+                properties:
+                  id: { type: string, pattern: "^M[1-9][0-9]*$" }
+                  element: { type: string }        # the specific element of the reference
+                  at: { type: string }             # where it goes on our page
+                  why: { type: string }
+                  by: { enum: [agent, owner] }     # `owner`: the owner moved or placed it in a reply
+            leave:                                 # what is attractive and excluded: brand colors, copy, illustrations, marks, a trend kit
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required: [id, what, why, by]
+                properties:
+                  id: { type: string, pattern: "^M[1-9][0-9]*$" }
+                  what: { type: string }
+                  why: { type: string }
+                  by: { enum: [agent, owner] }
   motion:                                          # a page with motion: what was recorded of the shown build, never a flattened screenshot alone
     type: object
     additionalProperties: false
@@ -282,6 +335,7 @@ properties:
         observed: { type: string }
         location: { type: object }
         status: { type: string }
+        guideline_items: { type: array, items: { type: string } }   # the guideline rows (`<guideline>/<item>`) the finding is evidence for
   changes:                                         # change-log rows (integrity/schema.yaml) that were reactive, touched an open finding, or came after the slice
     type: array
     items:
@@ -312,3 +366,4 @@ properties:
 $defs:
   digest: { type: string, pattern: "^[0-9a-f]{64}$" }
   row_id: { type: string, pattern: "^R[0-9a-f]{6,8}$" }
+  requirement_id: { type: string, pattern: "^(R[0-9a-f]{6,8}|G:[a-z0-9.-]+/[a-z0-9-]+)$" }   # an owner's row, or a guideline row

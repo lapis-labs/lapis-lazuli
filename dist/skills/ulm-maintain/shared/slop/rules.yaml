@@ -3817,6 +3817,29 @@ rules:
   waiver:
     scope: none
   verify: static
+- id: guideline.target-size
+  class: quality
+  domain: guideline
+  layers:
+  - render
+  severity:
+    create: warn
+    review: P2
+  detect:
+    render:
+      detector: guideline-target-size
+      params:
+        roles:
+        - button
+        - link
+        - input
+  why: A pointer target is smaller than the size a design guideline the plan follows asks for, so it is
+    easy to miss, and the guideline's behavior row is at best partly met
+  better: Give the target the size the item asks for, by padding the control so its hit area reaches it,
+    or say in the plan why this surface departs from the guideline
+  waiver:
+    scope: none
+  verify: static
 - id: ux.routine-modal
   class: quality
   domain: ux

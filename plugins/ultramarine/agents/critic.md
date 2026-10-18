@@ -18,12 +18,19 @@ The packet holds:
 
 - `requirements`: the owner's rows, each `{id, section?, text}`, copied by the CLI from the owner's own brief files and
   answers; and `owner_decisions`, a row the owner dropped or narrowed, in the owner's words
+  A row whose `id` starts with `G:` is not the owner's: it is a behavior item of a design guideline the plan names, with a
+  `guideline` object (`id`, `item`, `url`, `measure`, `platforms`, and, when it has them, `rules`, `check`, `threshold`, `limits`,
+  `needs_review`); see "Guideline rows" below
 - `plan`: the design fields the maker chose, as the plan states them: `brief`, `world_materials`, the layout's
   `phone_task`, `sections`, `signature` and `procedure.priority`, the type `roles` and `scale`, the color `roles`, the
   `space` steps (`base_px`, `scale`) and the `shape` radius steps and media contours (the values a dispute about
   spacing, size, or radius is judged against), the voice and `key_copy`,
   `flows`, `references` with what each `take`s and `leave`s, `explorations` with their candidates and the chosen one,
   and `defaults` as `{id, decision, keep_when, case_when}`
+- `reference_digest` (when the run has references): per reference of the references record, its `direction`, its `take` items `{id,
+  element, at, why, by}` (what the page takes, and where it goes) and its `leave` items `{id, what, why, by}` (what is attractive and
+  excluded), as the owner saw them and with their replies applied (`by: owner`). The plan's `references` carry the same ids
+  (`M3: ...`), so a take the plan names and the digest does not hold is the maker's drift, not the owner's
 - `direction`: what the owner decided in the direction conversation, with the ids resolved: `items`, each `{id, label,
   state, by, choice, options}` (`S` a named style's job, `K` a trend-kit element to keep or drop, `O` how a core object is
   represented, `G` what a signature element carries; `choice` is the option ids, `keep`, `drop`, `all`, or `other` that
@@ -106,6 +113,33 @@ another edit the packet lists under `changes`, removes what a row asks, name its
 `/references[source=https://museum.example/]/leave`) beside the state you give. A row with an entry in `owner_decisions`
 still gets its entry: judge it as the packet words it and say in `note` what the owner decided.
 
+### Guideline rows
+
+A row `G:<guideline>/<item>` is one behavior requirement of a design guideline the plan names in `brief.guidelines` (Apple's
+HIG, Material 3, Fluent 2 with Windows apps, KRDS, WCAG 2.2). It comes from our own checklist, in our words, and is never the
+owner's: it has no `owner_decisions`, and you give it an entry like every other row, with the same states. Judge `text`, which
+is the whole requirement; `guideline.url` and `section` say which section of the guideline it restates, and you do not need to
+open it.
+
+- `guideline.measure` says what could establish it: `render` (the captures), `behavior` (the session), `static` (markup or
+  source), `judge` (a reader of the page). It does not say that a tool already did.
+- `guideline.rules` lists lint rules whose findings are evidence for the row: read those findings in the packet's `findings`
+  (each also carries `guideline_items`, the rows it is evidence for). An open finding of a listed rule means the row is at best
+  `partly`; no finding means only that the rule did not fire, so look at the captures before you say `met`. A skipped finding
+  means the check did not run: that is `not-observable`, never `met`.
+- `guideline.check: target-size` means `guideline.target-size` measured it against `guideline.threshold`. The threshold is in
+  the guideline's own unit (`pt`, `dp`, `epx`, or `css-px`); the finding says how the web prototype's CSS px stands for it
+  (`guidelines/units.yaml`). Never compare a number of one unit with another's yourself.
+- A row with `limits` names what a measurement cannot see (a hit area enlarged outside its box, an OS setting, a keyboard
+  overlay). When the limit applies to this page and nothing else shows the row, it is `not-observable`.
+- `needs_review: true` means the item was written from a section list and not read in full: judge it, and say in `note` that it
+  rests on an unreviewed item.
+- `plan.brief.guidelines[].visual` is the owner's choice about the look, never about behavior. `follow`: the page's look
+  should follow the guideline, so note in a finding (`review.guideline-visual`) where it plainly departs; `consult` or `none`:
+  never write a finding for departing from it. The behavior rows are judged whichever `visual` says.
+- A guideline the plan names whose rows do not fit the page (an Android-only item on a page the plan says is web) is `not-in-slice`
+  or `not-observable` with the reason in `note`, not `met`.
+
 ## Approval preview: core product explanation
 
 Mark a finding that the core product explanation is missing as
@@ -178,6 +212,19 @@ not borrowed finish. Record each in `comparisons`; a consequential shortfall is 
 (class `default`, severity `{create: warn, review: P3}`, `blocking: false`) for the maker, not a new gate.
 Name the study capture and our capture or boxes behind the judgement. If fewer references or widths are
 available, say which comparison could not be made; do not invent one or request new outside pages.
+
+Then open the packet's `reference_digest` (when it has one): per reference, the `take` items with where each goes on our page
+(`at`) and why, and the `leave` items, each marked `by: agent` or `by: owner` (the owner moved or placed it in a reply; an
+owner item binds the page like a requirement row). Judge two things and write each as a `comparisons` entry (the study capture
+beside ours) or, when the shortfall is consequential, a `review.reference-comparison` finding:
+
+- **Are the take items visible?** For each take item, find the element in our capture at the place its `at` names, at 390 and
+  1440. A take item that is not on the page, is somewhere else, or is only named in the plan is a shortfall; the picked rough's
+  card says which `takes` it claims, and a claim no capture shows is `not-observable`, never `met`.
+- **Were the leave items copied?** For each leave item, look for it in our capture: the reference's brand colors (its palette
+  values, its signature accent), its copy (headline, labels, or sentences), its illustrations and marks, its trend-kit
+  elements. A leave item that appears is `reference.brand-asset-reuse` when it is an asset, its identity, or its copy, and
+  counts toward `reference.clone-risk` with the layout, palette, type, and copy of the same reference. Say which leave id it is.
 
 
 ## What to judge

@@ -231,6 +231,13 @@ record, as one row with an id; `integrity.observe` reads the sources again on ev
 reworded unseen. An owner reply that quotes an id (`[declared] R3f2a1c: drop — <words>`) is copied to
 `owner_decisions`. Once a record exists, a critic report has to judge every row (`requirements[]`) before `done`, or the
 critic has to be recorded as unavailable, and the owner block says the requirements were not judged.
+Rows that are not the owner's words follow theirs: when the plan lists design guidelines (`brief.guidelines`), each behavior
+checklist item that applies to its platforms is a `guideline_rows` entry (`G:<guideline>/<item>`, `shared/guidelines/`), and
+the critic has to judge those too, with the same states. `plan check` suggests the guidelines a brief calls for
+(`guideline.suggested-missing`, a warning for web's WCAG 2.2) and blocks a plan that omits a guideline an owner row names
+(`guideline.declared-missing`) or states a `visual` other than the owner's answer (`guideline.visual-drift`); the lint reports
+`guideline.target-size` against each guideline's own minimum and names the guideline item in every finding of a rule that
+measures one (`guideline_items`).
 
 `references` comes next, the same way: a run with no plan file, or a plan in `mode: create`, whose
 `.lapis/references/<task>.md` is not a references record gets it after the brief, and a redesign or repair plan never
@@ -250,6 +257,23 @@ project, the brief's facts); when the procedure is `done` its reason says no ref
 check` lists a decline as `release.references-declined`. The captures are for study only, git-ignored, and never
 shipped or copied into the page.
 
+Each reference of the record also carries its digest, the one source of what the page takes from it and what it leaves
+out: `take` items (`id` `M<n>`, unique in the record; `element`, a specific element of the reference; `at`, where it goes on our
+page; `why`) and `leave` items (`id`, `what`, `why`), at least one of each per reference. The check refuses a take whose `at`
+names no page location (a section id of the plan, an object id of the direction proposal, the heading of a section of the
+owner's brief, or a named region such as hero, header, footer, first view, form, button; the list is English and Korean, and
+another language names an id or an English region), a reference with no leave, and a leave item that matches an owner's
+requirement row (a `[declared]` line of the brief record or a row of their own brief file), naming the row, unless an owner
+decision dropped that row. The match is lexical: an item matches when it has one content word and the row has it, or when two of
+its content words stand within four words of each other in the row, or when it quotes the row's id; it cannot read meaning (an
+item that agrees with a row that forbids it matches too, and one reworded away from the row's words passes). The owner's replies
+`[declared] take M3: <where> — "<words>"` and `[declared] leave M2: — "<words>"` under `## Direction <n>` move an item (the
+latest per id wins; a move to `take` needs a place) and are not matched against the rows. The plan's `references[]` entries
+with `record_id` carry the digest's ids and exactly the items that stand (`reference.digest-drift`, blocking in create mode,
+when an entry drifts or a reference with a take item has none; `lapis-design references digest --task <task> --plan` prints
+them), a rough's card names the take ids it uses (`diverge check` refuses an id the digest does not hold as a take item), and
+the critic packet carries the digest (`reference_digest`).
+
 `owner-direction` follows the references on the same terms (no plan file, or `mode: create`; a redesign or repair plan never
 gets it): the direction conversation in which the owner decides, item by item, what each named style does (`S`, with the
 trend-kit items `K` it decodes to), how each core object is represented (`O`), and what each signature element carries (`G`).
@@ -258,11 +282,14 @@ answers in the brief record under `## Direction <n>` headings as `[declared] K2 
 which become requirement rows, or as one untagged `- Defaults accepted (direction <n>): "<their words>"` line that takes
 every open item's default. The step is owed while the proposal is missing or fails its checks (ids, two or three options,
 every `seen_in` a reference of the record, each object's `kind` a key of `diverge/pools.yaml`, each default an option id)
-or a style, kit, or object item has no owner answer; once `diverge` is sealed it is owed again until the owner's
+or a style, kit, or object item has no owner answer, or an owner reply to the reference digest names an item it does not hold or
+moves one to `take` with no place; once `diverge` is sealed it is owed again until the owner's
 `[declared] Pick: C<n>` stands and the picked rough's signature items `C<n>.G<m>` have an answer (a `Pick:` line is the
 owner's decision and no row). In an attended run an `[assumed]` answer does not count; an unattended run never waits and
 records `[assumed] ... Basis: ...` items instead. Questions of kind `direction` wait only when at least one item is open and
-the file names every open item id, and they are not under the brief's cap on questions.
+the file names every open item id, and they are not under the brief's cap on questions. At the first turn the owner summary also
+carries the reference digest as a compact table per direction, in the owner's language, show-only: no approval waits on it, and
+the delivery check requires its lines in the questions like the other lines of the summary.
 
 `diverge` comes after the first turn of the direction conversation, on the same terms: the run makes two rough first
 views by default (two to four) that differ in how the open core objects are represented and how color is allocated, each on a
@@ -281,7 +308,8 @@ page (`rough_bound` in `diverge/pools.yaml`); the slice brings the picked rough 
 owner's declared words (`rough_carry` in `diverge/pools.yaml`): its card names the headline and body families (`type`), which the
 render's rendered fonts must bear out, in a family that is installed (lazuli's inventory) or locked and not a system default unless
 the card quotes the owner's `[declared]` line that asks for one; it maps each answered style item and kept kit item to an element
-of its markup (`style`); and when the brief says `motion: required`, its `render motion` capture shows change. `diverge check`
+of its markup (`style`); it names the take items of the reference digest it puts on its page (`takes`: an id the digest does not hold
+as a take item, or none while the digest has some, is refused); and when the brief says `motion: required`, its `render motion` capture shows change. `diverge check`
 reads each card against the brief, the draws, and the
 renders and writes `fingerprints.json`, `distances.json` (`0.55·struct + 0.20·mass + 0.25·repr`, weights calibrated in
 `diverge/pools.yaml`; reported, never gated, except that a pair with the same markup structure and a mass distance under

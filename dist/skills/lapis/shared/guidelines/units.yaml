@@ -1,0 +1,32 @@
+# Units of guideline thresholds and how a web prototype measures them — v0
+# A guideline gives sizes in its own platform's units (Apple points, Android dp, Windows epx, CSS px). A render extract
+# measures CSS px. The CLI never compares the numbers as if the units were the same: a check converts a threshold with
+# `css_px_per_unit` from this table, and its finding states the guideline's number, its unit, and the factor used.
+# The mapping below is for a WEB PROTOTYPE rendered in the captures lapis already takes (390 px wide stands for a phone
+# of 390 points or dp, 1440 px for a desktop window at 100% display scale). It says nothing about a native build: native
+# code gets the platform's own units and no render check. Change a factor here, not in code, and the checks follow.
+# `pt` is Apple's layout point, not the typographic point of 1/72 inch that CSS also calls `pt`.
+
+version: 0
+units:
+  css-px:
+    meaning: CSS pixel, the unit of the render extract
+    css_px_per_unit: 1
+  pt:
+    meaning: Apple layout point (iOS, iPadOS, macOS), a logical pixel the system scales to the display
+    css_px_per_unit: 1
+    basis: Safari reports a layout point as one CSS px, so an iPhone-sized viewport of 390 CSS px is 390 pt wide
+  dp:
+    meaning: Android density-independent pixel
+    css_px_per_unit: 1
+    basis: Chrome on Android reports one dp as one CSS px, so a 360 dp-wide phone is a 360 CSS px viewport
+  epx:
+    meaning: Windows effective pixel, a logical pixel the system scales with the display scale factor
+    css_px_per_unit: 1
+    basis: at the same display scale an app window and a page in Edge scale a logical pixel the same way, so 1 epx is 1 CSS px at 100% browser zoom
+  percent:
+    meaning: a scale factor of text or of the page (200 means twice the default size), not a length
+    css_px_per_unit: null
+  count:
+    meaning: a number of things (tabs, options), not a length
+    css_px_per_unit: null

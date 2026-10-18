@@ -1,0 +1,80 @@
+# Material 3 behavior checklist — see guideline.schema.yaml
+# Items restate in our words what the linked Material 3 sections ask of a screen or a flow, written from the Context7 index
+# of m3.material.io on `checked_at`. Material's layout guidance applies to Android and to the web; the items that need an
+# Android system behavior (the back gesture) say so in `limits`. Only the behavior layer is here: color roles, shape, type
+# scale, and motion style are the visual layer, which the owner's `visual` choice governs.
+version: 0
+guideline: material-3
+name: Material 3 (behavior of Android and web layouts)
+short_name: "Google's Material 3"
+kind: checklist
+visual_layer: true
+platforms: [android, web]
+checked_at: "2026-10-18"
+route:
+  used: { kind: context7, ref: "/websites/m3_material_io", note: "queried by section topic on checked_at" }
+  alternative: { kind: official-docs, ref: "https://m3.material.io/get-started" }
+license:
+  summary: m3.material.io states that its content, guidelines, imagery, and resources are available under Apache 2.0 or CC BY 4.0, so these paraphrases need an attribution line; the token and component repositories are Apache 2.0.
+  attribution: "Based on Material Design 3 guidelines, Copyright © Google LLC, https://m3.material.io, licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/) or Apache 2.0 as m3.material.io states. The items here are our paraphrases, not Google's text."
+not_covered:
+  - "Designing > Flow, whose page was not read for this file"
+  - "Text resizing: the page was not read; its item carries needs_review"
+  - "Component pages other than Dialogs, Navigation bar, and the gestures page, among them Bottom sheets, Search, and Text fields"
+items:
+  - id: target-size
+    requirement: A touch target is at least 48 by 48 dp, extending beyond the drawn icon or label with padding when the visual is smaller; a 24 dp icon sits in a 48 dp target.
+    source: { section: "Foundations > Designing > Structure > Target sizes", url: "https://m3.material.io/foundations/designing/structure" }
+    platforms: [android, web]
+    measure: render
+    check: target-size
+    threshold: { value: 48, unit: dp, quantity: target-size, note: "the page notes a 40 dp target for a 20 dp icon where a mouse and keyboard are the main input, so a desktop-first web surface may take 40 and say so" }
+    viewports: [390]
+    limits: The render extract holds each element's box; a hit area enlarged by padding outside the box is not seen.
+  - id: breakpoints-adapt
+    requirement: The layout changes at the Material breakpoints (compact under 600 dp, medium 600 to 839, expanded 840 to 1199, then large and extra-large), usually from one pane to two or three as the window grows, deciding what to reveal, divide, resize, reposition, or swap.
+    source: { section: "Foundations > Layout > Breakpoints", url: "https://m3.material.io/foundations/layout/breakpoints/overview" }
+    platforms: [android, web]
+    measure: render
+  - id: compact-no-overflow
+    requirement: At the compact width the layout fits the window without sideways page scrolling or clipped text.
+    source: { section: "Foundations > Layout > Breakpoints > Compact", url: "https://m3.material.io/foundations/layout/breakpoints/compact" }
+    platforms: [android, web]
+    measure: render
+    rules: [layout.compact-overflow]
+    viewports: [390]
+  - id: text-resizing
+    requirement: Text follows the user's font-size setting and the layout makes room for it without clipping or overlap.
+    source: { section: "Foundations > Writing > Text resizing", url: "https://m3.material.io/foundations/writing/text-resizing" }
+    platforms: [android, web]
+    measure: render
+    needs_review: true
+  - id: bidirectional
+    requirement: The layout works in both left-to-right and right-to-left reading directions.
+    source: { section: "Foundations > Layout > Layout overview", url: "https://m3.material.io/foundations/layout/layout-overview" }
+    platforms: [android, web]
+    measure: judge
+  - id: dialog-holds-focus
+    requirement: A dialog keeps focus until it is dismissed or an action is taken, and it is never hidden behind other elements or partly off screen, unless it is full screen.
+    source: { section: "Components > Dialogs > Guidelines > Behavior", url: "https://m3.material.io/components/dialogs/guidelines" }
+    platforms: [android, web]
+    measure: behavior
+    rules: [ux.dialog-focus]
+  - id: dialog-label
+    requirement: A dialog has an accessible label that matches its title, and on the web a basic dialog carries the alert-dialog role.
+    source: { section: "Components > Dialogs > Accessibility > Labeling elements", url: "https://m3.material.io/components/dialogs/accessibility" }
+    platforms: [android, web]
+    measure: static
+  - id: nav-item-labels
+    requirement: A navigation item's accessible label is its destination's name, and where the visible text is ambiguous the label says more.
+    source: { section: "Components > Navigation bar > Accessibility > Labeling elements", url: "https://m3.material.io/components/navigation-bar/accessibility" }
+    platforms: [android, web]
+    measure: render
+    rules: [component.unnamed-icon-button]
+  - id: predictive-back
+    requirement: On Android the back gesture dismisses a modal component or returns to the previous destination, and lets the person see where it leads before they commit.
+    source: { section: "Foundations > Interaction > Gestures > Predictive back", url: "https://m3.material.io/foundations/interaction/gestures" }
+    platforms: [android]
+    measure: behavior
+    rules: [ux.back-trap]
+    limits: The system back gesture exists only on an Android device or emulator; a web prototype can show only that its own Back and Escape routes leave a modal and never trap the person.

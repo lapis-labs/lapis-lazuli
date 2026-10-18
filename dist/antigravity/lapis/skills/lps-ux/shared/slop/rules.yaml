@@ -1146,6 +1146,11 @@ rules:
     when: a control whose function a full-size control on the same page also offers
   - id: size-carries-information
     when: targets whose size carries information, such as map pins at their true positions
+- id: guideline.target-size
+  why: A pointer target is smaller than the size a design guideline the plan follows asks for, so it is
+    easy to miss, and the guideline's behavior row is at best partly met
+  better: Give the target the size the item asks for, by padding the control so its hit area reaches it,
+    or say in the plan why this surface departs from the guideline
 - id: ux.routine-modal
   why: A modal handles routine navigation or a long task, interrupting context without a protected-focus
     need

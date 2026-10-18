@@ -42,6 +42,10 @@ items:
   view: summary
   path: extracts/schema.yaml
   summary: LapisLazuli extract record schema — v0
+- id: guideline-schema
+  view: summary
+  path: guidelines/guideline.schema.yaml
+  summary: LapisLazuli guideline file schema — v0
 - id: direction-proposal
   view: summary
   path: direction/schema.yaml

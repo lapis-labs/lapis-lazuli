@@ -202,6 +202,14 @@ detectors:
     output: "undersized targets; links inside running text and unstyled native controls are excluded, and a target whose name and function a full-size control on the page repeats is reported as a lead"
     reads: [box.rect, box.role, box.a11y, box.parent, text_run.box]
     status: implemented
+  - name: guideline-target-size
+    layers: [render]
+    input: "the plan's brief.guidelines, and the pointer targets of the layout captures each checklist item reads"
+    params: { roles: "box roles treated as targets, when focusable or given a pointer handler" }
+    output: "targets smaller than a guideline item's minimum, each hit naming the item (`<guideline>/<item>`) and giving the size found in CSS px beside what the item asks in its own unit (pt, dp, epx, CSS px) and the factor guidelines/units.yaml converts by; links inside running text and unstyled native controls are excluded; no spacing exception, which only WCAG's own item has"
+    reads: [box.rect, box.role, box.a11y, box.parent, text_run.box]
+    reads_plan: [brief.guidelines]
+    status: implemented
 
   # ---------------- copy (plan key copy, render text, or source strings) ----------------
   - { name: copy-family-rate, layers: [plan, render], input: "text by locale", params: { trigger: "once | density | co-occurrence", per: "1000-words | 1000-chars | page", slots: "at render, headline = display or heading runs of the first section, subhead = the first body run after it, cta = link and button runs of the first section", roles: list, through_metaphor_min_repeats: "density: also hit when one metaphor family recurs at least this many times", also: "extra check run with the family: duplicate-labels (one label on controls with different outcomes)" }, reads: [text_run.text, text_run.lang, text_run.type_role, text_run.box, box.role], status: implemented }
