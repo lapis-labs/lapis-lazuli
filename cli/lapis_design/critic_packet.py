@@ -176,10 +176,10 @@ def _requirements(record: dict | None) -> dict:
     if record is None:
         return {"sha256": None, "rows": [], "owner_decisions": []}
     rows = [_wrap(id=r["id"], section=r.get("section"), text=r["text"]) for r in record["rows"]]
-    decisions = [{"row": str(d.get("row")), "decision": str(d.get("decision")), "quote": str(d.get("quote", ""))}
     # the guideline rows follow the owner's, with what measures each (a lapis source, never the owner's words)
     rows += [_wrap(id=r["id"], section=r.get("section"), text=r["text"], guideline=r.get("guideline"))
              for r in _seq(record.get("guideline_rows"))]
+    decisions = [{"row": str(d.get("row")), "decision": str(d.get("decision")), "quote": str(d.get("quote", ""))}
                  for d in _seq(record.get("owner_decisions")) if isinstance(d, dict)]
     body = json.dumps({"owner_decisions": decisions, "rows": rows}, ensure_ascii=False, sort_keys=True,
                       separators=(",", ":")).encode("utf-8")
