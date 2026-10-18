@@ -12,7 +12,7 @@ import json
 import subprocess
 import sys
 
-COMMAND = ["lapis-design-hook", "--plugin-version", "0.3.0", "session-start"]
+COMMAND = ["lapis-design-hook", "--plugin-version", "0.4.0", "session-start"]
 TIMEOUT_S = 10   # the SessionStart hook's timeout in plugins/lazuli/hooks/hooks.json
 
 

@@ -3,7 +3,7 @@ version: 0
 task: kiln-shop-landing
 scope: reservation
 role: reviewer
-handoff_id: 5209efbe9a7f7f202a00aab3381cf802de942bb9ff233a4c8716a7031ec37110
+handoff_id: a6b8821e18e50996009fa5911b3b5bd3a776c03ac350aef8e21f973e27039d6b
 plan_sha256: 1b8e4c91bda3085a5c38bf5fc4e38792d9a9ec53ca0447d649992ea1b35f8358
 ```
 

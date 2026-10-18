@@ -8,7 +8,7 @@ Claude Code, Codex, Oh-My-Pi 같은 하네스로 웹 화면을 만드는 개발�
 
 ```console
 $ lapis-design plan check docs/examples/site-booking-ko.yaml
-plan_check 0.3.0: 3 blocking, 11 total, 3 skipped: not judged
+plan_check 0.4.0: 3 blocking, 11 total, 3 skipped: not judged
   [BLOCK] plan.uncompared-decision explorations — 7 open decisions with no comparison recorded in explorations: type roles body; palette; layout; motion; direction; copy slots headline, cta
       fix: Record each open decision in explorations - two or more candidates with their sources, what they were compared on, the chosen one, and why the runner-up lost; a palette render also records each candidate's artifact and roles or token_file,…
   [BLOCK] copy.vague-cta content.key_copy[?slot=cta].text — "계속하기" (vague_cta) in the cta key copy: "계속하기"

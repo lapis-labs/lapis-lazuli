@@ -4,7 +4,7 @@
 # through Invoke-Expression.
 Set-StrictMode -Version 2.0
 
-$script:Version = '0.3.0'
+$script:Version = '0.4.0'
 $script:Repo = 'lapis-labs/lapis-lazuli'
 $script:Ref = 'release'
 $script:Raw = 'https://raw.githubusercontent.com/lapis-labs/lapis-lazuli/release'

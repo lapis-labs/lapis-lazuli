@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "lapis-design-hook --plugin-version 0.3.0 session-start",
+            "command": "lapis-design-hook --plugin-version 0.4.0 session-start",
             "timeout": 10
           }
         ]

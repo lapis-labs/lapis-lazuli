@@ -6,9 +6,15 @@ All notable changes are recorded here. The format follows
 between minor versions; render extraction, draft review, and reference hints are v1, while the other
 contract formats are v0.
 
-## Unreleased
+## 0.4.0 (2026-10-18)
+
+Direction: references say what the page takes and leaves, and roughs carry the owner's type, motion,
+and style choices before the full build. Check progress, review changes, and font discovery stay
+visible without replacing the evidence or the owner's decisions.
 
 ### Added
+
+#### References and guidelines
 
 - **Breaking:** the reference digest. Each reference of the references record carries `take` items (`id` `M<n>`, `element`, `at`,
   `why`) and `leave` items (`id`, `what`, `why`), written with the record (`reference_digest.py`; the record's other fields are
@@ -48,6 +54,29 @@ contract formats are v0.
   digest --task T --plan` (the entries gain `record_id`, and `take`/`leave` strings that start with their ids). Roughs in
   progress need `takes: [M1, ...]` in each card, then `diverge check` again. A finished run whose plan has no entry with
   `record_id` fails its next `release check` on `reference.digest-drift` until it does.
+- Guideline-based development. The plan's `brief.guidelines` lists the design guidelines the work follows (apple-hig, material-3,
+  fluent-2, krds, wcag-2.2, toss-tds, daangn-seed, or `other` with a URL): the platforms each covers, `basis` (`declared` when an
+  owner row names it, else `suggested`), `visual` (`follow`, `consult`, `none`: the owner's choice about the look; the behavior is
+  always followed) and the `route` its documents were read by. `plan check` suggests the defaults (`guideline.suggested-missing`: ios
+  apple-hig, android material-3, web wcag-2.2 as a warning, desktop on Windows fluent-2 and `guideline.desktop-os-unknown` when the
+  system is not named, a Korean public service krds), blocks a plan that omits a guideline an owner row names
+  (`guideline.declared-missing`) or states a `visual` other than the owner's answer (`guideline.visual-drift`). The direction
+  conversation asks `visual` as one plain-words item per guideline, `V<n>` (proposal `guidelines`).
+  - **Checklists** in `src/shared/guidelines/<id>.yaml` (`guideline.schema.yaml`), in our own words with each item's source section
+    and URL, platforms, `measure` (render, behavior, static, judge), threshold in its own unit, the day and route it was read by, and
+    the license's attribution line: WCAG 2.2, Material 3, Fluent 2 with Windows apps, KRDS, Apple HIG. The HIG file lists the 2026
+    sections its Context7 index does not hold. TDS and SEED are consult-only files of links. `units.yaml` states how a web
+    prototype's CSS px stands for Apple points, Android dp, and Windows epx.
+  - **Rows**: each applicable item is a `guideline_rows` entry of the requirement record (`G:<guideline>/<item>`, a `guideline`
+    source, never the owner's words and unseen by what reads the owner's rows); the critic packet lists them after the owner's
+    rows and a report must judge each. Contracts: `plan/schema.yaml`, `requirements/schema.yaml`, `review/critic-packet.schema.yaml`,
+    `review/critic-delta-packet.schema.yaml`, `direction/schema.yaml`, `slop/finding.schema.yaml` (`guideline_items`, row ids).
+  - **Checks**: `guideline.target-size` measures the items with a `check` (HIG 44 pt, Material 3 48 dp, Windows 40 epx) against
+    their own captures and names the item; findings of the rules that already measure an item (WCAG target size, reflow at 320,
+    focus) carry `guideline_items`. Text at 200% is not measured.
+
+#### Records and check progress
+
 - `lapis-design extract add|show|check|drop`: a run records short, sourced excerpts of a document once, and workers read them
   instead of the whole brief, README, install notes, license text, or references record. `add` cuts the excerpt out of the
   source file itself (`--lines A-B`, or `--heading` for a Markdown section) and records it in `.lapis/extracts/<task>.json`
@@ -84,12 +113,38 @@ contract formats are v0.
   running checks and the checks with no result for the build shown. The same check asked again while it runs already joined
   the run; it now says so on stderr (`the identical run is still going ... waiting for it and sharing its result, not
   starting another`).
-- A checkpoint says what has not finished. The owner summary has a section `Checks not finished for the build shown` (and the
-  full block's `Not run, or stale` lists the same) with each render or behavior check that runs now (and when it started) and
-  each page shown, this CLI serves, whose build has no stored render result for its widths (or no stored behavior result when its
-  behavior changed): the summary never calls them done, the questions must carry the lines (`Delivery.problems`), the section
-  is left out when none is open or nothing is built, and `next --json` carries them as `checks_unfinished`. The summary changes
-  when a check starts or ends, not while it runs.
+- A checkpoint says what has not finished. The delivery contract (`src/shared/release/GATE.md`) requires the owner summary's
+  `Checks not finished for the build shown` section (and the full block's `Not run, or stale`) to list each render or behavior
+  check that runs now (and when it started) and each page shown, this CLI serves, whose build has no stored render result for its
+  widths (or no stored behavior result when its behavior changed). The summary never calls them done, the questions must carry
+  the lines unchanged (`Delivery.problems`), the section is left out when none is open or nothing is built, and `next --json`
+  carries them as `checks_unfinished`. The summary changes when a check starts or ends, not while it runs.
+
+#### Font discovery and catalogs
+
+- `lazuli catalog sync` for `anshim` also reads two tabs of the Gongu free-font board (`B0000018`; robots.txt and the terms
+  re-read 2026-10-16, 13 requests at 3 s): 민간 무료글꼴 정보 (its pager followed, at most 20 pages) and 인기글꼴TOP20. A board
+  entry's usage conditions are free text, so its family is license `custom-free` with the text kept verbatim as the license
+  label's raw value and the page it was read on in the new `catalog_family.details_json` (migration 0007); the text is never mapped
+  to the OFL or any named license, `--license open` leaves it out, and `lazuli search` prints it verbatim as the license
+  evidence. A chart position becomes a `chart` popularity signal (familiar; absence from the chart says nothing). A family named in
+  Hangul gets a `script:hang` label derived from the name, so `--script hang` reaches the 안심글꼴 families. Contract
+  (`src/shared/vocab/type.yaml`): license id `custom-free` is new; (`src/shared/sources/registry.yaml`): the `anshim` entry's
+  `good_for`, `checked_at` (2026-10-16), and `note` describe the board.
+- `lazuli catalog sync --source github-foundries`: a snapshot of the font repositories of ten GitHub accounts the registry lists
+  (`velvetyne`, `collletttivo`, `theleagueof`, `Omnibus-Type`, `jenskutilek`, `lxgw`, `atelier-anchor`, `yuru7`, `spoqa`,
+  `orioncactus`), through the unauthenticated GitHub API at the 3 s pace: one list per account, one license file for each
+  repository GitHub reports as NOASSERTION, and up to 12 latest-release lookups while the 60-an-hour quota leaves 5 spare. A
+  family's license is its SPDX id, else its license file's name (`OFL.md`, `OFL.txt`) or, for a `LICENSE`, its text when that is
+  the SIL Open Font License 1.1, else none; `details` records where it was read, the description, homepage, and a download
+  address (a release package or the repository archive), and the evidence of `lazuli search` shows the license source and the
+  download. MIT, CC0-1.0, and Unlicense map to `free-other` and any other SPDX id stays raw text, so only an SPDX id or license
+  file that says OFL makes a family open. A 403 or 429 that reports the quota used up (`x-ratelimit-remaining: 0`) is now
+  `net.RateLimited`, not a block: the sync waits for a reset within two minutes and otherwise stops with the previous rows kept.
+  `lazuli catalog remap` also re-maps this source from its kept responses. Contract (`src/shared/sources/registry.yaml`): ten
+  `github-<account>` entries with adapter `github-foundries`, and (`registry.schema.yaml`) the optional `scripts` and `releases`
+  fields, which only that adapter may carry; Fontsource's SPDX mapping moved to `labels.map_spdx`, unchanged.
+
 - `lazuli search` tells how familiar each candidate is and can list familiar and less-known ones side by side. The Google Fonts
   snapshot now stores the listing's `popularity` and `trending` ranks (a smaller number is more popular: Roboto is 2),
   `dateAdded`, `lastModified`, `isNoto`, and `isBrandFont` (`catalog_family.signals_json`, migration 0006); a database synced
@@ -140,57 +195,69 @@ contract formats are v0.
   a measurement (every face of kind symbol, the `ssty` math feature, an `opsz` axis that ends at 12 or below, a measured
   monospaced class), so PT Serif Caption and STIX Two Math no longer rank for a display request while a caption cut still
   suits `--role caption`. A note counts what a role left out.
-- `lazuli catalog sync` for `anshim` also reads two tabs of the Gongu free-font board (`B0000018`; robots.txt and the terms
-  re-read 2026-10-16, 13 requests at 3 s): 민간 무료글꼴 정보 (its pager followed, at most 20 pages) and 인기글꼴TOP20. A board
-  entry's usage conditions are free text, so its family is license `custom-free` with the text kept verbatim as the license
-  label's raw value and the page it was read on in the new `catalog_family.details_json` (migration 0007); the text is never mapped
-  to the OFL or any named license, `--license open` leaves it out, and `lazuli search` prints it verbatim as the license
-  evidence. A chart position becomes a `chart` popularity signal (familiar; absence from the chart says nothing). A family named in
-  Hangul gets a `script:hang` label derived from the name, so `--script hang` reaches the 안심글꼴 families. Contract
-  (`src/shared/vocab/type.yaml`): license id `custom-free` is new; (`src/shared/sources/registry.yaml`): the `anshim` entry's
-  `good_for`, `checked_at` (2026-10-16), and `note` describe the board.
-- `lazuli catalog sync --source github-foundries`: a snapshot of the font repositories of ten GitHub accounts the registry lists
-  (`velvetyne`, `collletttivo`, `theleagueof`, `Omnibus-Type`, `jenskutilek`, `lxgw`, `atelier-anchor`, `yuru7`, `spoqa`,
-  `orioncactus`), through the unauthenticated GitHub API at the 3 s pace: one list per account, one license file for each
-  repository GitHub reports as NOASSERTION, and up to 12 latest-release lookups while the 60-an-hour quota leaves 5 spare. A
-  family's license is its SPDX id, else its license file's name (`OFL.md`, `OFL.txt`) or, for a `LICENSE`, its text when that is
-  the SIL Open Font License 1.1, else none; `details` records where it was read, the description, homepage, and a download
-  address (a release package or the repository archive), and the evidence of `lazuli search` shows the license source and the
-  download. MIT, CC0-1.0, and Unlicense map to `free-other` and any other SPDX id stays raw text, so only an SPDX id or license
-  file that says OFL makes a family open. A 403 or 429 that reports the quota used up (`x-ratelimit-remaining: 0`) is now
-  `net.RateLimited`, not a block: the sync waits for a reset within two minutes and otherwise stops with the previous rows kept.
-  `lazuli catalog remap` also re-maps this source from its kept responses. Contract (`src/shared/sources/registry.yaml`): ten
-  `github-<account>` entries with adapter `github-foundries`, and (`registry.schema.yaml`) the optional `scripts` and `releases`
-  fields, which only that adapter may carry; Fontsource's SPDX mapping moved to `labels.map_spdx`, unchanged.
-
-- Guideline-based development. The plan's `brief.guidelines` lists the design guidelines the work follows (apple-hig, material-3,
-  fluent-2, krds, wcag-2.2, toss-tds, daangn-seed, or `other` with a URL): the platforms each covers, `basis` (`declared` when an
-  owner row names it, else `suggested`), `visual` (`follow`, `consult`, `none`: the owner's choice about the look; the behavior is
-  always followed) and the `route` its documents were read by. `plan check` suggests the defaults (`guideline.suggested-missing`: ios
-  apple-hig, android material-3, web wcag-2.2 as a warning, desktop on Windows fluent-2 and `guideline.desktop-os-unknown` when the
-  system is not named, a Korean public service krds), blocks a plan that omits a guideline an owner row names
-  (`guideline.declared-missing`) or states a `visual` other than the owner's answer (`guideline.visual-drift`). The direction
-  conversation asks `visual` as one plain-words item per guideline, `V<n>` (proposal `guidelines`).
-  - **Checklists** in `src/shared/guidelines/<id>.yaml` (`guideline.schema.yaml`), in our own words with each item's source section
-    and URL, platforms, `measure` (render, behavior, static, judge), threshold in its own unit, the day and route it was read by, and
-    the license's attribution line: WCAG 2.2, Material 3, Fluent 2 with Windows apps, KRDS, Apple HIG. The HIG file lists the 2026
-    sections its Context7 index does not hold. TDS and SEED are consult-only files of links. `units.yaml` states how a web
-    prototype's CSS px stands for Apple points, Android dp, and Windows epx.
-  - **Rows**: each applicable item is a `guideline_rows` entry of the requirement record (`G:<guideline>/<item>`, a `guideline`
-    source, never the owner's words and unseen by what reads the owner's rows); the critic packet lists them after the owner's
-    rows and a report must judge each. Contracts: `plan/schema.yaml`, `requirements/schema.yaml`, `review/critic-packet.schema.yaml`,
-    `review/critic-delta-packet.schema.yaml`, `direction/schema.yaml`, `slop/finding.schema.yaml` (`guideline_items`, row ids).
-  - **Checks**: `guideline.target-size` measures the items with a `check` (HIG 44 pt, Material 3 48 dp, Windows 40 epx) against
-    their own captures and names the item; findings of the rules that already measure an item (WCAG target size, reflow at 320,
-    focus) carry `guideline_items`. Text at 200% is not measured.
 
 ### Changed
 
-- `next` waits for a running render check (new step `render-wait`) as it did for a behavior check, from the locks as well as
-  the recorded process id, and both name `lapis-design checks wait --task T` instead of `sleep 60; tail -n 3 <log>`, so a long
-  check is waited for in one call per minute and a second run is not started. `job_running` moved from `next_step` to `checks`.
-- Contract (`src/shared/release/GATE.md`, the delivery contract): the owner summary lists every check that has not finished for
-  the build shown, and the questions must hold those lines unchanged.
+#### Direction and roughs
+
+- `lapis-design diverge start` draws two roughs by default (`--k` still takes 2 to 4); a third rough or a variant comes when
+  the owner asks (`variant`), and `resample` is unchanged. The owner can still take parts of two roughs in the pick.
+- The shared brief of the roughs is checked once before the roughs are made: `lapis-design diverge contract --task <task>`
+  refuses a brief whose opening does not carry identity and the primary action, that requires a process object in the first
+  view with no owner answer, whose headline and action copy opens a `copy.meta-text` finding, or that has no phone
+  composition (`brief.schema.yaml` gains `key_copy` and `phone`), and a rough set with no draw for an open core object. It
+  writes `.lapis/state/diverge/<task>/contract.json` and prints the `brief_sha256` that each card now names
+  (`card.schema.yaml`); `diverge check` and `seal` refuse a set whose contract has not passed on the brief as it is, or a card
+  made from another brief. The owner block shows the brief's digest, what the opening carries, and the phone composition,
+  and a change to the brief after the seal.
+- A rough has a bound (`rough_bound` in `diverge/pools.yaml`): the core composition at 390 and 1440, one representative
+  motion state, and one phone state, as the one page `index.html`. `diverge check` refuses a render of a rough at another
+  device width, a full capture run of a rough, and a second page in its folder; the slice brings the picked rough to every
+  device width. Distances stay a fact on the contact sheet, never a quality score.
+- `diverge start`, `contract`, `resample`, `variant`, `check`, and `seal` append a line to `.lapis/telemetry/checks.jsonl`
+  (local to the project, never uploaded).
+- **Breaking:** a rough carries the owner's declared words, and `diverge check` reads it (`rough_carries.py`; term lists and
+  thresholds in `rough_carry` of `diverge/pools.yaml`). A rough that passed every record could still ignore them: system-font
+  stacks where the owner asked for geometric sans and their installed trial faces, no animation where they asked for kinetic
+  type, none of the styles they answered at the first direction turn. Now:
+  - **Type.** The card names `type.headline.family` and `type.body.family` (the card schema gains `type` and `style`, both
+    required). The render extract's `font.rendered` of the `display` and `heading` runs (headline) and the `body` runs, at 1440
+    and 390, is read, not the CSS. `check` refuses a role that a system default paints (SF, `.SF NS`, Helvetica, Arial, Roboto,
+    Segoe UI, `system-ui` and the other generic keywords, the platform's Hangul and CJK system faces, Menlo and the like; more than
+    a quarter of the characters counts), a role whose rendered family is not the card's, and a family that is neither installed
+    (lazuli's inventory, `local_font`) nor in `.lapis/fonts.lock.json`. A card may choose a system face only by quoting, in
+    `system_asked_by`, an owner `[declared]` line that asks for it. When the owner named a typeface or a type class (the taste
+    file, a `[declared]` row, an answered style, an installed owner family), the card's `type.answers` says how its type answers
+    it; whether it fits stays the owner's.
+  - **Motion.** The shared brief gains `motion: none | required` (required), `motion_moves`, and `motion_still_by`.
+    `diverge contract` refuses `motion: none` while an owner `[declared]` row, the taste file's likes, feel, or fixed lines, an
+    answered style, a kept kit item, or a signature element they took matches the motion terms (ko, en, ja, zh), unless
+    `motion_still_by` quotes their `[declared]` line that asks for stillness. With `motion: required`, `check` refuses a rough
+    with no `lapis-design render motion` capture of its own, a capture older than its `index.html`, or one whose settled and
+    reduced-motion frames of a scroll position differ in under 0.1% of their pixels. The bound's "one representative motion
+    state" is now checkable. `CONTRACT` is 2, so a receipt from before does not hold.
+  - **Style answers.** For each style `S<n>` the owner answered and each kit item `K<n>` they kept, the card's `style` row names
+    a CSS `selector`, what the element `does`, and which captures `shown` it (1440, 390, or none). `check` refuses an answered item
+    the card leaves out, a dropped kit item it maps, a selector that matches nothing in the rough's markup (`rough_selectors.py`
+    reads the static markup; no script runs), and a capture it says shows an element whose text is not in that render. The owner
+    block's `Rough first views` section lists, per rough, the faces it renders in, the items its elements carry and show, and the
+    items the card claims and no capture shows; the turn-two pick question carries it.
+
+  Migration: roughs in progress need their cards updated (`type`, `style`) and their brief updated (`motion`, and
+  `motion_moves` when required), then `diverge contract` and `diverge check` again, and `render motion` per rough when the brief
+  requires motion. A card or brief without the new fields fails its schema with the field named.
+
+#### Owner communication and worker rules
+
+- The owner block is the record, not the chat. `next` and `draft check` write it as before to `.lapis/owner/<task>.md` and keep each
+  one as shown at `.lapis/owner/<task>.<sha8>.md`, and write an owner summary to `.lapis/owner/<task>.summary.md` (`next`
+  returns it as `owner_summary`; `owner_block` is now the full block's path, digest, and size). The summary is what an
+  approval or direction question and `done` carry: one `Decision:` line, what the owner's last reply changed, every decision
+  the owner has not made, every defect of the shown build (open core findings, what is not reviewed, requirement rows missing
+  or not judged), every font role with its source and license (a role whose license nobody confirmed says it needs the
+  owner's word), what was shown, and the full block's path and digest. A questions file that drops one of those lines, asks
+  twice, or does not name the full block goes back to `draft-review` (`owner-direction`) with what is missing; the rest of
+  the block is read by link. The full block gains a `Fonts and rights` section and lists the supporting evidence of a page.
 - The owner summary no longer holds defects of a build that does not exist. While nothing has been shown or built, as the
   CLI's own records say (the procedure is not `done`, no critic report, no page and no draft record, no slice budget fired),
   the summary has no `Defects of the build shown` section and no requirement row "not judged: no critic report yet" (direction
@@ -224,28 +291,27 @@ contract formats are v0.
   `import`, `getsource`), and the owner block line lists them. `lapis-design ...`, `lazuli ...`, `--help`, `python -m
   lapis_design...`, and reading the installed skill guides are not source reads. The scan also reads Antigravity's
   `run_command` (`CommandLine`) for a kill by pattern, including on a later line of the command.
+- The brief questions are asked in the owner's language. `lps-brief/references/questions.md` now says so and calls its English
+  template a shape to fill. When the CLI holds the request (the requirement record's rows or the brief record's `[declared]`
+  items) in Hangul, kana, or Han script, `next` sends back a `brief` or `direction` questions file that is mostly Latin text,
+  with the reason, instead of waiting. A request with no clear script, or none the CLI holds, is not checked.
+- Steps that have the run write a record print its format, in `next` (text and `--json` `step.format`) and in the gate's
+  continuation: `brief` gives the brief record's and the questions file's skeletons and guide sections, `owner-direction` the
+  proposal's schema and the shape of the answers lines, and `references` its guide section. `requirements seal -h` lists what
+  it reads and the decision lines. The `lapis` skill says the commands and the guides are the interface: do not import or read
+  `lapis_design` source to learn a format.
 - Antigravity's Stop hook reads the conversation's `transcriptPath` for the worker rules, in the person's session and in a
   subagent (the first row's `source` tells them apart), and records what it finds in `.lapis/state/<task>.workers.json` as
   `SubagentStop` does for Claude Code. It only records, never blocks or changes the gate's answer. A Stop that names no
   transcript, or one that cannot be read or holds no JSON row, is recorded as a limit in the same file, and the owner block says
   it was not checked. `worker-rules.md` and the install docs no longer list Antigravity as not checked; Codex and Hermes still
   are. The owner block's worker lines now start with `worker rules:` (they said `delegated work:`), since a session is read too.
-- `lapis-design diverge start` draws two roughs by default (`--k` still takes 2 to 4); a third rough or a variant comes when
-  the owner asks (`variant`), and `resample` is unchanged. The owner can still take parts of two roughs in the pick.
-- The shared brief of the roughs is checked once before the roughs are made: `lapis-design diverge contract --task <task>`
-  refuses a brief whose opening does not carry identity and the primary action, that requires a process object in the first
-  view with no owner answer, whose headline and action copy opens a `copy.meta-text` finding, or that has no phone
-  composition (`brief.schema.yaml` gains `key_copy` and `phone`), and a rough set with no draw for an open core object. It
-  writes `.lapis/state/diverge/<task>/contract.json` and prints the `brief_sha256` that each card now names
-  (`card.schema.yaml`); `diverge check` and `seal` refuse a set whose contract has not passed on the brief as it is, or a card
-  made from another brief. The owner block shows the brief's digest, what the opening carries, and the phone composition,
-  and a change to the brief after the seal.
-- A rough has a bound (`rough_bound` in `diverge/pools.yaml`): the core composition at 390 and 1440, one representative
-  motion state, and one phone state, as the one page `index.html`. `diverge check` refuses a render of a rough at another
-  device width, a full capture run of a rough, and a second page in its folder; the slice brings the picked rough to every
-  device width. Distances stay a fact on the contact sheet, never a quality score.
-- `diverge start`, `contract`, `resample`, `variant`, `check`, and `seal` append a line to `.lapis/telemetry/checks.jsonl`
-  (local to the project, never uploaded).
+
+#### Captures and review reuse
+
+- `next` waits for a running render check (new step `render-wait`) as it did for a behavior check, from the locks as well as
+  the recorded process id, and both name `lapis-design checks wait --task T` instead of `sleep 60; tail -n 3 <log>`, so a long
+  check is waited for in one call per minute and a second run is not started. `job_running` moved from `next_step` to `checks`.
 - `render check` and `behavior check` run the browser once per build and state. For a page the CLI serves (an HTML file, or a
   folder `preview start` serves) they hash every file the browser loads, with the request, the plan signature, the stub, and the
   tool, and keep the result in `.lapis/cache/checks/`: the same build and request again prints `cache hit` and copies the stored
@@ -280,15 +346,6 @@ contract formats are v0.
   full review. A delta never follows a delta, and the release's critic never takes one (`release.input-stale`). A stale
   report tells the maker when a delta would do. Full packets now record the digest of the worker rules, so a report made
   before this release needs a full review once.
-- The owner block is the record, not the chat. `next` and `draft check` write it as before to `.lapis/owner/<task>.md` and keep each
-  one as shown at `.lapis/owner/<task>.<sha8>.md`, and write an owner summary to `.lapis/owner/<task>.summary.md` (`next`
-  returns it as `owner_summary`; `owner_block` is now the full block's path, digest, and size). The summary is what an
-  approval or direction question and `done` carry: one `Decision:` line, what the owner's last reply changed, every decision
-  the owner has not made, every defect of the shown build (open core findings, what is not reviewed, requirement rows missing
-  or not judged), every font role with its source and license (a role whose license nobody confirmed says it needs the
-  owner's word), what was shown, and the full block's path and digest. A questions file that drops one of those lines, asks
-  twice, or does not name the full block goes back to `draft-review` (`owner-direction`) with what is missing; the rest of
-  the block is read by link. The full block gains a `Fonts and rights` section and lists the supporting evidence of a page.
 - A link in an approval question to a specimen, a reference capture, or a `?query` variant of the shown page no longer needs
   its own page review when the draft record declares it in `supporting` (`kind`, `link`, `path`, `claim`, and `page` for a
   variant). `draft check` records the file's hash, the critic packet lists the file and the claim to the critic, and the owner
@@ -296,45 +353,9 @@ contract formats are v0.
   still a problem, a link that is not declared is a shown page as before, and the review is stale once an evidence file changes.
 - `critic packet` and the slice seal append a line to `.lapis/telemetry/checks.jsonl` with the scope (`full` or `delta`) and
   the size of the packet.
-- The brief questions are asked in the owner's language. `lps-brief/references/questions.md` now says so and calls its English
-  template a shape to fill. When the CLI holds the request (the requirement record's rows or the brief record's `[declared]`
-  items) in Hangul, kana, or Han script, `next` sends back a `brief` or `direction` questions file that is mostly Latin text,
-  with the reason, instead of waiting. A request with no clear script, or none the CLI holds, is not checked.
-- Steps that have the run write a record print its format, in `next` (text and `--json` `step.format`) and in the gate's
-  continuation: `brief` gives the brief record's and the questions file's skeletons and guide sections, `owner-direction` the
-  proposal's schema and the shape of the answers lines, and `references` its guide section. `requirements seal -h` lists what
-  it reads and the decision lines. The `lapis` skill says the commands and the guides are the interface: do not import or read
-  `lapis_design` source to learn a format.
-- **Breaking:** a rough carries the owner's declared words, and `diverge check` reads it (`rough_carries.py`; term lists and
-  thresholds in `rough_carry` of `diverge/pools.yaml`). A rough that passed every record could still ignore them: system-font
-  stacks where the owner asked for geometric sans and their installed trial faces, no animation where they asked for kinetic
-  type, none of the styles they answered at the first direction turn. Now:
-  - **Type.** The card names `type.headline.family` and `type.body.family` (the card schema gains `type` and `style`, both
-    required). The render extract's `font.rendered` of the `display` and `heading` runs (headline) and the `body` runs, at 1440
-    and 390, is read, not the CSS. `check` refuses a role that a system default paints (SF, `.SF NS`, Helvetica, Arial, Roboto,
-    Segoe UI, `system-ui` and the other generic keywords, the platform's Hangul and CJK system faces, Menlo and the like; more than
-    a quarter of the characters counts), a role whose rendered family is not the card's, and a family that is neither installed
-    (lazuli's inventory, `local_font`) nor in `.lapis/fonts.lock.json`. A card may choose a system face only by quoting, in
-    `system_asked_by`, an owner `[declared]` line that asks for it. When the owner named a typeface or a type class (the taste
-    file, a `[declared]` row, an answered style, an installed owner family), the card's `type.answers` says how its type answers
-    it; whether it fits stays the owner's.
-  - **Motion.** The shared brief gains `motion: none | required` (required), `motion_moves`, and `motion_still_by`.
-    `diverge contract` refuses `motion: none` while an owner `[declared]` row, the taste file's likes, feel, or fixed lines, an
-    answered style, a kept kit item, or a signature element they took matches the motion terms (ko, en, ja, zh), unless
-    `motion_still_by` quotes their `[declared]` line that asks for stillness. With `motion: required`, `check` refuses a rough
-    with no `lapis-design render motion` capture of its own, a capture older than its `index.html`, or one whose settled and
-    reduced-motion frames of a scroll position differ in under 0.1% of their pixels. The bound's "one representative motion
-    state" is now checkable. `CONTRACT` is 2, so a receipt from before does not hold.
-  - **Style answers.** For each style `S<n>` the owner answered and each kit item `K<n>` they kept, the card's `style` row names
-    a CSS `selector`, what the element `does`, and which captures `shown` it (1440, 390, or none). `check` refuses an answered item
-    the card leaves out, a dropped kit item it maps, a selector that matches nothing in the rough's markup (`rough_selectors.py`
-    reads the static markup; no script runs), and a capture it says shows an element whose text is not in that render. The owner
-    block's `Rough first views` section lists, per rough, the faces it renders in, the items its elements carry and show, and the
-    items the card claims and no capture shows; the turn-two pick question carries it.
 
-  Migration: roughs in progress need their cards updated (`type`, `style`) and their brief updated (`motion`, and
-  `motion_moves` when required), then `diverge contract` and `diverge check` again, and `render motion` per rough when the brief
-  requires motion. A card or brief without the new fields fails its schema with the field named.
+#### Type, copy, and research guidance
+
 - Type guide and `lzl-fonts`: a specimen at the role's size judges fit for that role; a claim that two faces look alike, or
   that one can stand in for another, needs the same text at the same weight drawn at 96 px or more and viewed as a crop at
   native resolution, and names the size it was judged at (96 px is a working minimum, not a validated threshold). `lapis` and
