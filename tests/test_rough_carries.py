@@ -356,3 +356,39 @@ def test_the_pick_question_tells_the_run_to_carry_each_roughs_shown_and_claimed_
     owed = direction.owed(run, TASK, 2)
     assert "`Rough first views` section lists, per rough, the faces its headline and body render in" in owed
     assert "claimed, not shown" in owed and "paste it into the question unchanged" in owed
+
+
+def sealed_with_a_claimed_item(run: Path) -> None:
+    make(run)
+    card = card_for(run, TASK, "C1")
+    write_rough(run, TASK, "C1", style=[card["style"][0], {**card["style"][1], "selector": ".s0", "shown": []}],
+                type={"headline": {"family": FACES["headline"]}, "body": {"family": FACES["body"]}})
+    assert problems(run) == ""
+    diverge.seal(run, TASK)
+
+
+def test_the_summary_of_the_pick_question_carries_the_rough_views_and_the_questions_must_paste_them(run):
+    from lapis_design import owner
+
+    sealed_with_a_claimed_item(run)
+    shown = owner.delivery(run, TASK, {"kind": "direction"})
+    assert "## Rough first views" in shown.summary and "- Rough C1 style items" in shown.summary
+    assert "claimed, not shown: K1 `.s0`" in shown.summary and "- Rough C2 type, as rendered: headline" in shown.summary
+    assert shown.problems(shown.summary) == []
+    cut = shown.summary.replace(next(l for l in shown.summary.splitlines() if l.startswith("- Rough C1 style items")), "")
+    assert any("rough first view: - Rough C1 style items" in p for p in shown.problems(cut))
+    assert "Rough first views" not in owner.delivery(run, TASK, {"kind": "approval"}).summary      # only the pick reads them
+    assert "Rough first views" not in owner.delivery(run, TASK, {}).summary
+
+
+def test_the_rough_views_of_the_summary_are_in_the_owners_language(run, monkeypatch):
+    from lapis_design import owner, owner_text
+
+    sealed_with_a_claimed_item(run)
+    monkeypatch.setattr(owner_text, "language", lambda root, task: "ko")
+    shown = owner.delivery(run, TASK, {"kind": "direction"})
+    assert "## 러프 첫 화면" in shown.summary and "- 러프 C1 스타일 항목, 담고 보여 주는 것:" in shown.summary
+    assert "카드에는 있지만 캡처에 안 보이는 것: K1 `.s0`" in shown.summary
+    assert f"- 러프 C1 글자(화면에 그려진 대로): 제목 {FACES['headline']}, 본문 {FACES['body']}" in shown.summary
+    assert "Rough C1" not in shown.summary and shown.problems(shown.summary) == []
+    assert "- Rough C1 style items" in shown.block                                          # the full block stays English

@@ -81,6 +81,21 @@ EN: dict[str, str] = {
     "shown.captures": "; captures, which open without a server: {captures}",
     "shown.file": "; the page as a file: {file}",
     "shown.support": "- supporting evidence ({kind}) {path}, sha256 {sha}: {claim}",
+    "heading.roughs": "Rough first views",
+    "rough.role.headline": "headline",
+    "rough.role.body": "body",
+    "rough.face": "{role} {shown}",
+    "rough.face.card": "{role} {shown} (card: {named})",
+    "rough.type": "- Rough {candidate} type, as rendered: {faces}{says}",
+    "rough.type.says": "; answers the owner's type words: \"{words}\"",
+    "rough.style": "- Rough {candidate} style items, {parts}",
+    "rough.style.shown": "carried and shown: {items}",
+    "rough.style.none": "none",
+    "rough.style.claimed": "claimed, not shown: {items}",
+    "rough.style.dead": "claimed, matches no element: {items}",
+    "rough.style.missing": "not on the card: {items}",
+    "rough.drift": "- Rough {line}",
+    "rough.no-text": "no text read",
 }
 
 KO: dict[str, str] = {
@@ -148,6 +163,21 @@ KO: dict[str, str] = {
     "shown.captures": "; 서버 없이 열리는 캡처: {captures}",
     "shown.file": "; 파일로 바로 여는 화면: {file}",
     "shown.support": "- 뒷받침 자료({kind}) {path}, sha256 {sha}: {claim}",
+    "heading.roughs": "러프 첫 화면",
+    "rough.role.headline": "제목",
+    "rough.role.body": "본문",
+    "rough.face": "{role} {shown}",
+    "rough.face.card": "{role} {shown}(카드에는 {named})",
+    "rough.type": "- 러프 {candidate} 글자(화면에 그려진 대로): {faces}{says}",
+    "rough.type.says": "; 사용자의 글자 이야기에 대한 답: \"{words}\"",
+    "rough.style": "- 러프 {candidate} 스타일 항목, {parts}",
+    "rough.style.shown": "담고 보여 주는 것: {items}",
+    "rough.style.none": "없음",
+    "rough.style.claimed": "카드에는 있지만 캡처에 안 보이는 것: {items}",
+    "rough.style.dead": "카드에는 있지만 맞는 요소가 없는 것: {items}",
+    "rough.style.missing": "카드에 없는 것: {items}",
+    "rough.drift": "- 러프 {line}",
+    "rough.no-text": "읽은 글자 없음",
 }
 
 CATALOGS: dict[str, dict[str, str]] = {"en": EN, "ko": KO}

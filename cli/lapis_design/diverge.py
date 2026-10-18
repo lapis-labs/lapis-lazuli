@@ -1087,6 +1087,19 @@ def owner_lines(root: Path, task: str) -> list[str]:
     return lines
 
 
+def summary_lines(root: Path, task: str, lang: str = "en") -> list[str]:
+    """The lines of the owner summary's `Rough first views` section, in `lang`: what changed after the seal and, per
+    rough, the faces it renders in and the style items its card claims against what its captures show. What the block
+    also says (that a set was sealed, the shared brief) is by link. Empty when there is no seal."""
+    record = sealed(root, task)
+    if record is None:
+        return []
+    from lapis_design import owner_text, rough_carries
+
+    lines = [owner_text.say(lang, "rough.drift", line=line) for line in drift(root, task)]
+    return lines + rough_carries.owner_lines(root, task, sorted(record["candidates"], key=lambda c: int(c[1:])), os.environ, lang)
+
+
 # ---------------------------------------------------------------- what is owed
 
 def owed(root: Path, task: str, env: Mapping[str, str] = os.environ) -> str | None:

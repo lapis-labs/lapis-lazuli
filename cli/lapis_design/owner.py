@@ -10,9 +10,12 @@ The block is the record and is long. What the chat carries is the owner summary 
 one `Decision:` line, the decisions of the owner's last reply that changed something, every decision the owner has not made,
 every defect of the build shown (open core findings, what is not reviewed, requirement rows that are missing or not
 judged, a critic report that does not hold), every font role with its source and license, what was shown, and the path
-and digest of the full block. The delivery contract is what `Delivery.problems` checks in the questions file of an approval
-or direction wait: the summary carries the block's last line `lapis-owner-block <sha8>` and exactly one `Decision:` line,
-and every line of `Delivery.required` (a core gap, a core defect, a font fact) is in it unchanged. Everything else of the
+and digest of the full block. A direction wait whose roughs are sealed also carries their `Rough first views`: per rough
+the faces it renders in and the style items its card claims against what its captures show (`diverge.summary_lines`, in the
+owner's language; the full block keeps the English lines). The delivery contract is what `Delivery.problems` checks in the
+questions file of an approval or direction wait: the summary carries the block's last line `lapis-owner-block <sha8>` and
+exactly one `Decision:` line, and every line of `Delivery.required` (a core gap, a core defect, a font fact, a rough's
+line) is in it unchanged. Everything else of the
 block is by link: the requirement outcome beyond the defects, the facts with their sources, integrity, disputes, the
 documents of the shown pages. `done` tells the agent to paste the summary ahead of its own summary. The summary is never
 shorter than the contract: a line it drops from `required` is a problem, not a saving.
@@ -786,11 +789,14 @@ def _build(root: Path, task: str, result: Mapping[str, Any] | None) -> Delivery:
     unfinished = need("check not finished", _unfinished(root, task, lang)) if built else []
     changed = _changed(root, task, decisions, record, lang)
     shown = _shown_lines(root, task, lang)
+    roughs = (need("rough first view", diverge.summary_lines(root, task, lang))
+              if result.get("kind") == direction.KIND and not done else [])       # the pick is made on what the roughs carry and show
     unattended = done and gate.is_unattended()
     summary = [
         [f"# {say(lang, 'title')}: {task}"],
         [f"{say(lang, 'decision.label')}: {_decision(result.get('kind'), done, len(found), len(core), lang)}"],
         [f"## {say(lang, 'heading.changed')}", *changed] if changed else [],
+        [f"## {say(lang, 'heading.roughs')}", *roughs] if roughs else [],
         [f"## {say(lang, 'heading.gaps.unattended' if unattended else 'heading.gaps')}", *attention] if attention else [],
         [f"## {say(lang, 'heading.defects')}", *(defects or [say(lang, 'none.open')])] if built else [],
         [f"## {say(lang, 'heading.checks')}", *unfinished] if unfinished else [],

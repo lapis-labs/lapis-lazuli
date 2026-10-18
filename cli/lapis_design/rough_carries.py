@@ -33,7 +33,7 @@ from functools import cached_property, lru_cache
 from pathlib import Path
 from typing import Any, Mapping
 
-from lapis_design import diverge, direction, motion, requirements, rough_selectors, system_fonts, taste, waiting
+from lapis_design import diverge, direction, motion, owner_text, requirements, rough_selectors, system_fonts, taste, waiting
 
 HEADLINE_ROLES = ("display", "heading")
 BODY_ROLES = ("body",)
@@ -530,10 +530,12 @@ def _cut(text: str, limit: int = 160) -> str:
     return flat if len(flat) <= limit else flat[:limit - 1] + "…"
 
 
-def owner_lines(root: Path, task: str, candidates: list[str], env: Mapping[str, str]) -> list[str]:
+def owner_lines(root: Path, task: str, candidates: list[str], env: Mapping[str, str], lang: str = "en") -> list[str]:
     """Per rough, what its card says it carries and the render bears out, for the owner block and the pick question: the
     faces its headline and body render in and how they answer the owner's type words, and the style items its elements
-    carry and show, with the ones the card claims and no capture shows."""
+    carry and show, with the ones the card claims and no capture shows. The words around the facts are in `lang`
+    (`owner_text`); the facts (families, selectors, ids, the owner's quoted words) are as the records have them."""
+    say = owner_text.say
     carry = Carry(root, task, env)
     lines = []
     for candidate in candidates:
@@ -546,11 +548,13 @@ def owner_lines(root: Path, task: str, candidates: list[str], env: Mapping[str, 
             faces = []
             for role in ROLES:
                 counts = rendered_families(extract, role)
-                shown = counts.most_common(1)[0][0] if counts else "no text read"
+                shown = counts.most_common(1)[0][0] if counts else say(lang, "rough.no-text")
                 named = (spec.get(role) or {}).get("family", "none")
-                faces.append(f"{role} {shown}" if _norm(shown) == _norm(named) else f"{role} {shown} (card: {named})")
-            says = f"; answers the owner's type words: \"{_cut(spec['answers'])}\"" if spec.get("answers") else ""
-            lines.append(f"- Rough {candidate} type, as rendered: {', '.join(faces)}{says}")
+                word = say(lang, f"rough.role.{role}")
+                faces.append(say(lang, "rough.face", role=word, shown=shown) if _norm(shown) == _norm(named)
+                             else say(lang, "rough.face.card", role=word, shown=shown, named=named))
+            says = say(lang, "rough.type.says", words=_cut(spec["answers"])) if spec.get("answers") else ""
+            lines.append(say(lang, "rough.type", candidate=candidate, faces=", ".join(faces), says=says))
         if isinstance(card.get("style"), list) and carry.style:
             _, rows = carry.style_rows(candidate, card, extract)
             have = {r["id"] for r in rows}
@@ -559,12 +563,12 @@ def owner_lines(root: Path, task: str, candidates: list[str], env: Mapping[str, 
             claimed = [f"{r['id']} `{r['selector']}`" for r in rows if not r["shown"] and r["matched"]]
             dead = [f"{r['id']} `{r['selector']}`" for r in rows if r["matched"] == 0]
             missing = [i["id"] for i in carry.style if i["id"] not in have]
-            parts = [f"carried and shown: {'; '.join(shown) or 'none'}"]
+            parts = [say(lang, "rough.style.shown", items="; ".join(shown) or say(lang, "rough.style.none"))]
             if claimed:
-                parts.append(f"claimed, not shown: {'; '.join(claimed)}")
+                parts.append(say(lang, "rough.style.claimed", items="; ".join(claimed)))
             if dead:
-                parts.append(f"claimed, matches no element: {'; '.join(dead)}")
+                parts.append(say(lang, "rough.style.dead", items="; ".join(dead)))
             if missing:
-                parts.append(f"not on the card: {', '.join(missing)}")
-            lines.append(f"- Rough {candidate} style items, {'; '.join(parts)}")
+                parts.append(say(lang, "rough.style.missing", items=", ".join(missing)))
+            lines.append(say(lang, "rough.style", candidate=candidate, parts="; ".join(parts)))
     return lines
