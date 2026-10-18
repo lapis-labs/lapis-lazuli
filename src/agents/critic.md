@@ -18,6 +18,9 @@ The packet holds:
 
 - `requirements`: the owner's rows, each `{id, section?, text}`, copied by the CLI from the owner's own brief files and
   answers; and `owner_decisions`, a row the owner dropped or narrowed, in the owner's words
+  A row whose `id` starts with `G:` is not the owner's: it is a behavior item of a design guideline the plan names, with a
+  `guideline` object (`id`, `item`, `url`, `measure`, `platforms`, and, when it has them, `rules`, `check`, `threshold`, `limits`,
+  `needs_review`); see "Guideline rows" below
 - `plan`: the design fields the maker chose, as the plan states them: `brief`, `world_materials`, the layout's
   `phone_task`, `sections`, `signature` and `procedure.priority`, the type `roles` and `scale`, the color `roles`, the
   `space` steps (`base_px`, `scale`) and the `shape` radius steps and media contours (the values a dispute about
@@ -110,6 +113,33 @@ still gets its entry: judge it as the packet words it and say in `note` what the
 
 Mark a finding that the core product explanation is missing as
 `approval_impact: core-product-explanation`. It blocks this pre-show checkpoint even when its
+### Guideline rows
+
+A row `G:<guideline>/<item>` is one behavior requirement of a design guideline the plan names in `brief.guidelines` (Apple's
+HIG, Material 3, Fluent 2 with Windows apps, KRDS, WCAG 2.2). It comes from our own checklist, in our words, and is never the
+owner's: it has no `owner_decisions`, and you give it an entry like every other row, with the same states. Judge `text`, which
+is the whole requirement; `guideline.url` and `section` say which section of the guideline it restates, and you do not need to
+open it.
+
+- `guideline.measure` says what could establish it: `render` (the captures), `behavior` (the session), `static` (markup or
+  source), `judge` (a reader of the page). It does not say that a tool already did.
+- `guideline.rules` lists lint rules whose findings are evidence for the row: read those findings in the packet's `findings`
+  (each also carries `guideline_items`, the rows it is evidence for). An open finding of a listed rule means the row is at best
+  `partly`; no finding means only that the rule did not fire, so look at the captures before you say `met`. A skipped finding
+  means the check did not run: that is `not-observable`, never `met`.
+- `guideline.check: target-size` means `guideline.target-size` measured it against `guideline.threshold`. The threshold is in
+  the guideline's own unit (`pt`, `dp`, `epx`, or `css-px`); the finding says how the web prototype's CSS px stands for it
+  (`guidelines/units.yaml`). Never compare a number of one unit with another's yourself.
+- A row with `limits` names what a measurement cannot see (a hit area enlarged outside its box, an OS setting, a keyboard
+  overlay). When the limit applies to this page and nothing else shows the row, it is `not-observable`.
+- `needs_review: true` means the item was written from a section list and not read in full: judge it, and say in `note` that it
+  rests on an unreviewed item.
+- `plan.brief.guidelines[].visual` is the owner's choice about the look, never about behavior. `follow`: the page's look
+  should follow the guideline, so note in a finding (`review.guideline-visual`) where it plainly departs; `consult` or `none`:
+  never write a finding for departing from it. The behavior rows are judged whichever `visual` says.
+- A guideline the plan names whose rows do not fit the page (an Android-only item on a page the plan says is web) is `not-in-slice`
+  or `not-observable` with the reason in `note`, not `met`.
+
 ordinary review severity is P3/warn and `blocking` is false for release. `review.world-materials`
 defaults to that scope at pre-show; use `approval_impact: ordinary` only when the finding is a
 non-core visual/material detail, with its actual scope explained. Other ordinary lint warnings

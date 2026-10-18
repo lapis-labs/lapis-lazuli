@@ -87,6 +87,7 @@ properties:
             id: { $ref: "#/$defs/row_id" }
             section: { type: string }
             text: { type: string, minLength: 1 }
+            guideline: { type: object }                # a guideline row only, as the full packet lists it
             change: { enum: [new, changed] }
       owner_decisions:                             # the owner's `drop` or `narrow` of a changed row, and any new one
         type: array
@@ -198,7 +199,7 @@ properties:
         why: { type: array, items: { type: string } }
 $defs:
   digest: { type: string, pattern: "^[0-9a-f]{64}$" }
-  row_id: { type: string, pattern: "^R[0-9a-f]{6,8}$" }
+  row_id: { type: string, pattern: "^(R[0-9a-f]{6,8}|G:[a-z0-9.-]+/[a-z0-9-]+)$" }   # an owner's row, or a guideline row
   file:
     type: object
     additionalProperties: false

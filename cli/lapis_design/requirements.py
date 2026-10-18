@@ -14,6 +14,13 @@ moves its row to `removed`, and an owner reply that quotes a row's id (`[declare
 pick among slice candidates (`[declared] Slice: <url> — <words>`). A sealed source is never forgotten: sealing again
 adds files, it does not take them away.
 
+Rows the owner did not write come from a second source, the design guidelines the plan names (`brief.guidelines`,
+`guidelines.py`): each behavior checklist item that applies to the platforms of an entry is a `guideline_rows` entry
+(`G:<guideline>/<item>`, the item's requirement in our words, its source section, and what measures it), with a `sources`
+entry of kind `guideline` that holds the checklist file's SHA-256. They are rebuilt from the plan on every call and are
+never an owner's words: nothing that reads the owner's rows (`rows`, the owner block, the keep evidence, the Adobe consent)
+sees them, while the critic packet and `uncovered` do, so the critic judges every one.
+
 The record holds no times, so the same inputs give the same bytes (the critic packet and the owner block hash it).
 
 Stdlib only until `validate` is asked for: the stop hook imports `next_step`, which imports this.
@@ -37,7 +44,7 @@ STEP = "requirements"
 MAX_FILES = 5
 MAX_BYTES = 200 * 1024
 MAX_ROWS = 300
-KINDS = ("owner-file", "answers")
+KINDS = ("owner-file", "answers", "guideline")
 
 _FENCE = re.compile(r"^(\s*)(`{3,}|~{3,})(.*)$")
 _HEAD = re.compile(r"^\s{0,3}(#{1,6})(?:\s+(.*?))?\s*#*\s*$")
@@ -254,6 +261,9 @@ def _problem(doc: Any, task: str) -> str | None:
     if not isinstance(rows, list) or not all(isinstance(r, dict) and isinstance(r.get("id"), str)
                                              and isinstance(r.get("text"), str) for r in rows):
         return "its `rows` are not a list of {id, text, ...}"
+    if "guideline_rows" in doc and not (isinstance(doc["guideline_rows"], list) and all(
+            isinstance(r, dict) and isinstance(r.get("id"), str) and isinstance(r.get("text"), str) for r in doc["guideline_rows"])):
+        return "its `guideline_rows` are not a list of {id, text, ...}"
     if not all(isinstance(doc.get(k), list) for k in ("owner_decisions", "removed")):
         return "it has no `owner_decisions` and `removed` lists"
     return None
@@ -272,6 +282,18 @@ def rows(root: Path, task: str) -> list[dict] | None:
     """The rows of the record, or None when there is no record."""
     doc = record(root, task)
     return None if doc is None else doc["rows"]
+
+
+def guideline_rows(root: Path, task: str) -> list[dict]:
+    """The guideline rows of the record (none without a record, or while the plan names no guideline with checklist items)."""
+    doc = record(root, task)
+    return [] if doc is None else list(doc.get("guideline_rows") or ())
+
+
+def all_rows(root: Path, task: str) -> list[dict] | None:
+    """Every row a critic judges: the owner's rows, then the guideline rows; None when there is no record."""
+    doc = record(root, task)
+    return None if doc is None else [*doc["rows"], *(doc.get("guideline_rows") or ())]
 
 
 def sha256(root: Path, task: str) -> str | None:
@@ -325,6 +347,23 @@ def _read(root: Path, name: str, kind: str) -> tuple[str | None, str]:
         return None, _sha(b"")
 
 
+def _guideline_rows(root: Path, task: str) -> tuple[list[dict], list[dict]]:
+    """The guideline rows the task's plan gives now, and the `sources` entries (one per guideline file they come from). An absent
+    or unreadable plan gives none. Heavy imports stay inside: the stop hook imports this module."""
+    import yaml
+
+    from lapis_design import guidelines
+    from lapis_design.plan_check import read_plan
+
+    try:
+        plan = read_plan(root / ".lapis" / "plans" / f"{task}.yaml")
+    except (OSError, ValueError, yaml.YAMLError):
+        return [], []
+    found = guidelines.rows(plan)
+    wanted = sorted({row["guideline"]["id"] for row in found})
+    return found, [{"path": f"guideline:{gid}", "sha256": guidelines.sha256(gid), "kind": "guideline"} for gid in wanted]
+
+
 def _ids(merged: dict[str, dict]) -> None:
     """Give each row of `merged` (by normalized text) its id."""
     digests = {key: _sha(key.encode("utf-8")) for key in merged}
@@ -372,8 +411,13 @@ def _build(root: Path, task: str, owner_files: Sequence[str], previous: dict | N
     for old in (previous or {}).get("rows", []):
         if old["id"] not in present:
             history[old["id"]] = {"id": old["id"], "text": old["text"], "at": old["at"]}
-    return {"version": 0, "task": task, "sources": sources, "rows": current, "owner_decisions": decisions,
-            "removed": list(history.values())}
+    doc = {"version": 0, "task": task, "sources": sources, "rows": current, "owner_decisions": decisions,
+           "removed": list(history.values())}
+    extra, extra_sources = _guideline_rows(root, task)
+    if extra:
+        doc["sources"] = [*sources, *extra_sources]
+        doc["guideline_rows"] = extra
+    return doc
 
 
 def _changes(old: dict | None, new: dict) -> list[dict]:
@@ -461,10 +505,11 @@ def seal(root: Path, task: str, owner_files: Iterable[str] = ()) -> list[dict]:
 # ---------------------------------------------------------------- coverage and the command
 
 def uncovered(root: Path, task: str, report: Any) -> list[str]:
-    """The ids of the record's rows that the critic report's `requirements` list does not judge (none without a record)."""
+    """The ids of the record's rows, the guideline rows among them, that the critic report's `requirements` list does not judge
+    (none without a record)."""
     judged = {r.get("id") for r in (report.get("requirements") or ()) if isinstance(r, dict)} \
         if isinstance(report, dict) and isinstance(report.get("requirements") or [], list) else set()
-    return [r["id"] for r in rows(root, task) or () if r["id"] not in judged]
+    return [r["id"] for r in all_rows(root, task) or () if r["id"] not in judged]
 
 
 def validate(doc: Any) -> list[str]:
@@ -480,7 +525,7 @@ def validate(doc: Any) -> list[str]:
 
 def _show(doc: dict) -> str:
     decided = {d["row"]: d["decision"] for d in doc["owner_decisions"]}
-    lines = [f"{len(doc['rows'])} rows from {', '.join(s['path'] for s in doc['sources'])}"]
+    lines = [f"{len(doc['rows'])} rows from {', '.join(s['path'] for s in doc['sources'] if s['kind'] != 'guideline')}"]
     for row in doc["rows"]:
         text = " ".join(row["text"].split())
         text = text if len(text) <= 100 else text[:99] + "…"
@@ -490,6 +535,11 @@ def _show(doc: dict) -> str:
         lines.append(f"{entry['id']} [removed]  {' '.join(entry['text'].split())[:100]}")
     for d in doc["owner_decisions"]:
         lines.append(f"owner {d['decision']} {d['row']}: {' '.join(d['quote'].split())}")
+    if doc.get("guideline_rows"):
+        lines.append(f"{len(doc['guideline_rows'])} guideline rows from the plan's guidelines (not the owner's words):")
+        for row in doc["guideline_rows"]:
+            text = " ".join(row["text"].split())
+            lines.append(f"{row['id']}  [{row['guideline']['measure']}]  {text if len(text) <= 100 else text[:99] + '…'}")
     return "\n".join(lines)
 
 

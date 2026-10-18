@@ -314,7 +314,7 @@ items:
   - id: requirements-record
     kind: contract
     path: requirements/schema.yaml
-    note: v0; the owner's own words as rows with content-hash ids, copied by `lapis-design requirements seal`; the critic judges every row
+    note: v0; the owner's own words as rows with content-hash ids, copied by `lapis-design requirements seal`, and apart from them the behavior items of the guidelines the plan names (`guideline_rows`, from a lapis source); the critic judges every row
     consumers:
       lapis: full
       ultramarine: full

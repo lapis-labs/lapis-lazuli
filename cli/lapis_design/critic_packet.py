@@ -167,7 +167,7 @@ def _record(root: Path, task: str) -> dict | None:
     record = _json(path, "the requirement record")
     if (not isinstance(record, dict) or not isinstance(record.get("rows"), list)
             or not all(isinstance(r, dict) and isinstance(r.get("id"), str) and isinstance(r.get("text"), str)
-                       for r in record["rows"])):
+                       for r in [*record["rows"], *_seq(record.get("guideline_rows"))])):
         raise PacketError(f"the requirement record {path} has no rows with an id and a text")
     return record
 
@@ -177,6 +177,9 @@ def _requirements(record: dict | None) -> dict:
         return {"sha256": None, "rows": [], "owner_decisions": []}
     rows = [_wrap(id=r["id"], section=r.get("section"), text=r["text"]) for r in record["rows"]]
     decisions = [{"row": str(d.get("row")), "decision": str(d.get("decision")), "quote": str(d.get("quote", ""))}
+    # the guideline rows follow the owner's, with what measures each (a lapis source, never the owner's words)
+    rows += [_wrap(id=r["id"], section=r.get("section"), text=r["text"], guideline=r.get("guideline"))
+             for r in _seq(record.get("guideline_rows"))]
                  for d in _seq(record.get("owner_decisions")) if isinstance(d, dict)]
     body = json.dumps({"owner_decisions": decisions, "rows": rows}, ensure_ascii=False, sort_keys=True,
                       separators=(",", ":")).encode("utf-8")
@@ -410,7 +413,8 @@ def _findings(root: Path, lint: Path) -> list[dict]:
     if not isinstance(items, list) or not all(isinstance(item, dict) for item in items):
         raise PacketError(f"{_rel(root, lint)} has no findings list")
     return [_wrap(index=index, rule_id=item.get("rule_id"), layer=item.get("layer"), observed=item.get("observed"),
-                  location=item.get("location"), status=item.get("status")) for index, item in enumerate(items)]
+                  location=item.get("location"), status=item.get("status"), guideline_items=item.get("guideline_items"))
+            for index, item in enumerate(items)]
 
 
 def _changes(root: Path, task: str) -> list[dict]:
@@ -1036,7 +1040,10 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design critic packet"
                  "finding with `supersedes` for each prior finding it re-judges",
                  "  put these lines into its task verbatim (shared/review/worker-rules.md):"]
     else:
-        lines = [f"critic packet: {shown} (sha256 {digest(data)}): {len(packet['requirements']['rows'])} requirement rows, "
+        guideline = sum(row["id"].startswith("G:") for row in packet["requirements"]["rows"])
+        rows = f"{len(packet['requirements']['rows']) - guideline} requirement rows" + (
+            f" and {guideline} guideline rows" if guideline else "")
+        lines = [f"critic packet: {shown} (sha256 {digest(data)}): {rows}, "
                  f"{len(packet['changes'])} changes, {len(packet['disputes'])} disputes, {len(packet['inputs'])} input files",
                  "  give the critic this packet and the files it lists, nothing else, and put these lines into its task verbatim "
                  "(shared/review/worker-rules.md):"]

@@ -95,7 +95,7 @@ def test_a_new_owner_row_on_the_same_build_gets_a_delta_packet_of_that_row_alone
     assert doc["kind"] == "delta" and doc["task"] == TASK
     assert [r["id"] for r in doc["requirements"]["changed"]] == [row_id(NEW)]
     assert doc["requirements"]["changed"][0]["change"] == "new" and doc["requirements"]["removed"] == []
-    assert doc["requirements"]["ids"] == [row_id(t) for t in (*ROWS, NEW)]
+    assert [i for i in doc["requirements"]["ids"] if not i.startswith("G:")] == [row_id(t) for t in (*ROWS, NEW)]
     full = critic_packet.build(project, TASK, {"extracts": [f".lapis/renders/{TASK}.json"],
                                                "lint": f".lapis/lint/{TASK}.json", "session": None})
     assert doc["prior"]["report"]["sha256"] == critic_packet.digest((project / prior).read_bytes())
@@ -115,7 +115,7 @@ def test_a_changed_row_and_a_dropped_row_are_listed_with_what_the_critic_must_ju
     doc = delta_packet(project)
     assert doc["requirements"]["removed"] == [row_id(ROWS[1])]
     assert [r["id"] for r in doc["requirements"]["changed"]] == [row_id(NEW)]
-    assert doc["requirements"]["ids"] == [row_id(ROWS[0]), row_id(NEW)]
+    assert [i for i in doc["requirements"]["ids"] if not i.startswith("G:")] == [row_id(ROWS[0]), row_id(NEW)]
 
 
 def test_no_change_since_the_prior_review_gives_no_delta(project, capsys):
@@ -191,7 +191,8 @@ def test_the_report_on_a_delta_counts_with_the_prior_as_one_review_of_the_whole(
     delta_report(project)
     assert verdict(project, allow_delta=True).problems == []
     whole = critic_packet.effective(project, project / DELTA)
-    assert [r["id"] for r in whole["requirements"]] == [row_id(t) for t in (*ROWS, NEW)]
+    assert [r["id"] for r in whole["requirements"] if not r["id"].startswith("G:")] == [row_id(t) for t in (*ROWS, NEW)]
+    assert sum(r["id"].startswith("G:") for r in whole["requirements"]) == 20      # the prior report judged them, and they carry over
     assert [f["rule_id"] for f in whole["findings"]] == ["review.world-materials", "review.wording"]
     assert "supersedes" not in whole["findings"][0] and whole["target"]["packet"]["path"] == DELTA_PACKET
 

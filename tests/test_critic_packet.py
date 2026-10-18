@@ -109,8 +109,9 @@ def test_the_packet_carries_the_rows_the_inputs_and_the_changes_that_matter(proj
     log(project, change_row(1), change_row(2, reactive=True), change_row(3, related_open=["type.flat-hierarchy"]),
         change_row(4, after_slice=True))
     doc = packet(project)
-    assert [r["text"] for r in doc["requirements"]["rows"]] == list(ROWS)
-    assert [r["id"] for r in doc["requirements"]["rows"]] == [row_id(t) for t in ROWS]
+    owners = [r for r in doc["requirements"]["rows"] if not r["id"].startswith("G:")]     # the plan's guideline rows follow them
+    assert [r["text"] for r in owners] == list(ROWS)
+    assert [r["id"] for r in owners] == [row_id(t) for t in ROWS]
     assert [c["seq"] for c in doc["changes"]] == [2, 3, 4]             # a change that touched nothing open is not asked about
     assert {"at", "by", "prev"} & set(doc["changes"][0]) == set()       # nothing that differs between two observes
     kinds = {i["path"]: i["kind"] for i in doc["inputs"]}
@@ -236,7 +237,7 @@ FAULTS = [
     ("wrong-digest", lambda d: d["target"]["packet"].update(sha256="1" * 64), "was rebuilt after the critic named it", "stale"),
     ("missing-packet-file", lambda d: d["target"]["packet"].update(path=".lapis/critic/gone.packet.json"),
      "is not a file in the project", "stale"),
-    ("missing-row", lambda d: d["requirements"].pop(), "`requirements` has no entry for " + row_id(ROWS[1]), "gaps"),
+    ("missing-row", lambda d: d["requirements"].pop(1), "`requirements` has no entry for " + row_id(ROWS[1]), "gaps"),
     ("no-requirements-at-all", lambda d: d.pop("requirements"), "`requirements` has no entry for", "gaps"),
     ("unknown-row", lambda d: d["requirements"].append({"id": "R000000", "state": "met", "refs": []}),
      "`requirements` names R000000, which the packet does not list", "gaps"),
@@ -325,7 +326,9 @@ def test_the_command_observes_first_then_writes_the_packet_the_critic_report_nam
     out = capsys.readouterr().out
     file = project / f".lapis/critic/{TASK}.packet.json"
     sha = critic_packet.digest(file.read_bytes())
-    assert f".lapis/critic/{TASK}.packet.json (sha256 {sha}): 2 requirement rows, 0 changes, 0 disputes" in out
+    guideline_rows = sum(r["id"].startswith("G:") for r in json.loads(file.read_text())["requirements"]["rows"])
+    assert guideline_rows == 20          # the example plan names WCAG 2.2
+    assert f".lapis/critic/{TASK}.packet.json (sha256 {sha}): 2 requirement rows and {guideline_rows} guideline rows, 0 changes, 0 disputes" in out
     assert f"target.packet: {{path: .lapis/critic/{TASK}.packet.json, sha256: {sha}}}" in out
     assert "shared/review/worker-rules.md" in out and all(line in out for line in workers.rules().splitlines())
     assert file.read_bytes() == critic_packet.build(project, TASK, INPUTS)

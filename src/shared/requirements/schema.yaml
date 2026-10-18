@@ -8,6 +8,10 @@
 # text adds rows, vanished text moves a row to `removed`, and an owner reply that quotes a row's id
 # (`[declared] R3f2a1c: drop — <words>` or `narrow`) is copied to `owner_decisions`. A row is dropped from the
 # owner's block only by such a decision. The record holds no times, so its bytes are reproducible.
+# `guideline_rows` are the second source: the behavior checklist items (`guidelines/<id>.yaml`) of the guidelines the plan's
+# `brief.guidelines` names, for the platforms of each entry. They are not the owner's words and are rebuilt from the plan and the
+# checklist files on every call (a `sources` entry of kind `guideline`, path `guideline:<id>`, holds the file's SHA-256); an
+# owner decision never quotes one, and nothing that reads the owner's `rows` sees them. The critic judges them like the rest.
 # The critic judges every row (slop/finding.schema.yaml `requirements`), and `done` and approval waits show the result.
 
 $schema: https://json-schema.org/draft/2020-12/schema
@@ -28,7 +32,7 @@ properties:
       properties:
         path: {type: string, minLength: 1}      # project-relative, forward slashes
         sha256: {type: string, pattern: "^[0-9a-f]{64}$"}   # of the bytes read; of nothing when the file is gone
-        kind: {enum: [owner-file, answers]}
+        kind: {enum: [owner-file, answers, guideline]}
   rows:
     type: array
     items:
@@ -44,6 +48,31 @@ properties:
           type: array
           minItems: 1
           items: {$ref: "#/$defs/place"}
+  guideline_rows:                   # optional: present only while the plan names a guideline with checklist items
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [id, text, section, guideline]
+      properties:
+        id: {type: string, pattern: "^G:[a-z0-9.-]+/[a-z0-9-]+$"}   # G:<guideline>/<item>
+        text: {type: string, minLength: 1}      # the item's requirement, in our words
+        section: {type: string, minLength: 1}   # the source's section name
+        guideline:
+          type: object
+          additionalProperties: false
+          required: [id, item, url, measure, platforms]
+          properties:
+            id: {enum: [apple-hig, material-3, fluent-2, krds, wcag-2.2]}
+            item: {type: string, pattern: "^[a-z][a-z0-9-]*$"}
+            url: {type: string, pattern: "^https://"}
+            measure: {enum: [render, behavior, static, judge]}
+            platforms: {type: array, minItems: 1, items: {enum: [web, ios, android, desktop, email, embedded]}}
+            rules: {type: array, items: {type: string}}      # existing lint rules whose findings are evidence for it
+            check: {enum: [target-size]}                       # the mechanical check `guideline.target-size` runs
+            threshold: {type: object}                          # value, unit, quantity (guidelines/guideline.schema.yaml); the unit is the guideline's own
+            limits: {type: string}
+            needs_review: {const: true}
   owner_decisions:                  # one per owner reply that quotes a row's id
     type: array
     items:
