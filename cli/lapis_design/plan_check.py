@@ -12,6 +12,9 @@ Checks, in order:
                 from a channel that may ship them, and a recorded grant for each planned use
   5. references reference profiles must exist; study-mode references are flagged for the release gate
   6. flows      flow ids are unique; an exit flow's pair names an existing flow of a joining kind
+  7. guidelines the defaults the brief calls for (ios apple-hig, android material-3, web wcag-2.2, desktop on Windows fluent-2, a
+                Korean public service krds), a guideline the owner named in the brief marked `declared`, and each entry's
+                `visual` equal to the owner's answer in the direction conversation
 
 Output follows src/shared/slop/finding.schema.yaml. Exit code 1 when any finding is blocking. The printed
 result is a summary: the verdict line, every blocking finding with its fix, and the other findings by rule id
@@ -932,6 +935,121 @@ _FENCE = re.compile(r"^```yaml[^\n]*\n(.*?)^```", re.M | re.S)
 def extract_lapis_block(markdown: str) -> str | None:
     """Return the first ```yaml block whose info string or first line marks it as a lapis plan."""
     for m in _FENCE.finditer(markdown):
+# ---------------------------------------------------------------- guidelines
+
+def _entry_yaml(entry: dict) -> str:
+    return yaml.safe_dump(entry, default_flow_style=True, sort_keys=False, allow_unicode=True, width=10_000).strip()
+
+
+def check_guidelines(plan: dict, root: Path, plan_file: str) -> list[dict]:
+    """`guideline.*` findings for `brief.guidelines`. A default the brief calls for and the plan lacks is a suggestion (a warning
+    for web's WCAG 2.2, otherwise information), never a block. What the owner said blocks: a guideline named in an owner row of the
+    requirement record that the plan does not list as `declared`, and a `visual` that is not the owner's answer to the visual item
+    of the direction conversation."""
+    from lapis_design import guidelines
+
+    brief = plan.get("brief") or {}
+    task = (plan.get("task") or {}).get("id")
+    entries = [e for e in (brief.get("guidelines") or ()) if isinstance(e, dict)]
+    have: dict[str, tuple[int, dict]] = {}
+    for index, entry in enumerate(entries):
+        have.setdefault(entry["id"], (index, entry))
+    out: list[dict] = []
+    suggested, questions = guidelines.suggest(brief)
+    for item in suggested:
+        if item["id"] in have:
+            continue
+        name = guidelines.plain_name(item["id"])
+        warn = item["id"] == "wcag-2.2"
+        out.append(finding("guideline.suggested-missing", "quality", f"{item['why']}, and the plan lists no guideline for {name}",
+                           blocking=False, create="warn" if warn else "info", review="P2" if warn else None,
+                           path="brief.guidelines", file=plan_file,
+                           fix=f"Add {_entry_yaml(guidelines.default_entry(item['id'], item['platforms']))} to brief.guidelines "
+                               "(its route is how its documents were read; `visual` is the owner's answer), or say to the owner "
+                               "why it does not apply."))
+    for question in questions:
+        out.append(finding("guideline.desktop-os-unknown", "quality", question, blocking=False, create="info",
+                           path="brief.platform", file=plan_file,
+                           fix="Ask the owner, record the answer in brief.constraints (for example `desktop: Windows 11`), and list the "
+                               "guideline it gives in brief.guidelines."))
+    for index, entry in enumerate(entries):
+        doc = guidelines.load(entry["id"])
+        if doc and doc["kind"] == "checklist" and not guidelines.applicable(entry):
+            out.append(finding("guideline.platform-not-covered", "quality",
+                               f"{guidelines.plain_name(entry['id'])} has behavior items for {', '.join(doc['platforms'])}, and this entry covers "
+                               f"{', '.join(entry['platforms'])}, so none of its items becomes a requirement row",
+                               blocking=False, create="warn", review="P2", path=f"brief.guidelines[{index}].platforms", file=plan_file,
+                               fix=f"Cover a platform the guideline's file lists ({', '.join(doc['platforms'])}), or drop the entry."))
+    named: dict[str, str] = {}
+    row_ids: set[str] | None = None
+    if isinstance(task, str):
+        from lapis_design import requirements
+
+        rows = requirements.rows(root, task)
+        if rows is not None:
+            row_ids = {row["id"] for row in rows}
+            for row in rows:
+                for gid in guidelines.named(row["text"]):
+                    named.setdefault(gid, row["id"])
+    for gid, row_id in named.items():
+        found = have.get(gid)
+        if found is None or found[1].get("basis") != "declared":
+            state = "the plan lists no entry for it" if found is None else "the plan lists it as suggested, not declared"
+            out.append(finding("guideline.declared-missing", "requirement",
+                               f"the owner's row {row_id} names {guidelines.plain_name(gid)}, and {state}",
+                               blocking=True, create="gate", review="P2", path="brief.guidelines", file=plan_file,
+                               fix=f"List it with `basis: declared` and `row: {row_id}`: "
+                                   + _entry_yaml({**guidelines.default_entry(gid, found[1]["platforms"] if found else guidelines.load(gid)["platforms"], "declared"), "row": row_id})))
+    if row_ids is not None:
+        for index, entry in enumerate(entries):
+            if entry.get("basis") != "declared":
+                continue
+            row = entry.get("row")
+            if row is not None and row not in row_ids:
+                said = f"names the owner's row {row}, which the requirement record does not hold"
+            elif row is None and entry["id"] not in named:
+                said = "is declared, and no row of the owner's requirement record names it"
+            else:
+                continue
+            out.append(finding("guideline.declared-unsupported", "quality", f"the entry for {guidelines.plain_name(entry['id'], entry)} {said}",
+                               blocking=False, create="warn", review="P2", path=f"brief.guidelines[{index}]", file=plan_file,
+                               fix="`declared` means the owner said it: name the row that says so, or mark the entry `suggested`."))
+    if isinstance(task, str):
+        out += _visual_findings(plan, entries, root, task, plan_file)
+    return out
+
+
+def _visual_findings(plan: dict, entries: list[dict], root: Path, task: str, plan_file: str) -> list[dict]:
+    from lapis_design import direction, guidelines
+
+    if direction.proposal(root, task) is None:
+        return []
+    asked = {i["guideline"]: i for i in direction.items(root, task) if i["kind"] == "V"}
+    out: list[dict] = []
+    for index, entry in enumerate(entries):
+        if not guidelines.has_visual_layer(entry["id"]):
+            continue
+        key = entry["id"] if entry["id"] != "other" else f"other:{str(entry.get('name') or '').casefold()}"
+        item = asked.get(key)
+        name = guidelines.plain_name(entry["id"], entry)
+        if item is None:
+            out.append(finding("guideline.visual-unasked", "quality",
+                               f"the direction proposal asks the owner nothing about how closely the look follows {name}, so its `visual` is the default",
+                               blocking=False, create="info", path=f"brief.guidelines[{index}].visual", file=plan_file,
+                               fix="Add a `guidelines` item (`V<n>`) for it to the direction proposal and ask it with the other direction items."))
+            continue
+        if item["state"] not in ("decided", "delegated") or not item["choice"]:
+            continue
+        chosen = direction.VISUAL_BY_OPTION.get(item["choice"][0])
+        have = guidelines.visual_of(entry)
+        if chosen and chosen != have:
+            out.append(finding("guideline.visual-drift", "requirement",
+                               f"the owner chose option {item['choice'][0]} for {name} ({chosen}), and the plan says visual: {have}",
+                               blocking=True, create="gate", review="P2", path=f"brief.guidelines[{index}].visual", file=plan_file,
+                               fix=f"Set `visual: {chosen}`; the owner's answer decides it ({item['id']})."))
+    return out
+
+
         header = markdown[m.start():markdown.index("\n", m.start())]
         body = m.group(1)
         first = body.lstrip().splitlines()[0] if body.strip() else ""
@@ -1028,6 +1146,7 @@ def run(plan_path: Path | None, rules_path: Path | None, lock_path: Path | None,
         "summary": {"blocking": blocking, "total": len(findings),
                     "skipped": sum(1 for f in findings if f["status"] == "skipped")},
         "findings": findings,
+        findings += check_guidelines(plan, root, plan_file)
     }
 
 

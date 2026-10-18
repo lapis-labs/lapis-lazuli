@@ -77,6 +77,14 @@ properties:
                data-visualization, fintech-regulated, internal-tools, portfolio-personal,
                games-entertainment, other]
       constraints: { type: array, items: { type: string } }   # context-of-use constraints
+      # The design guidelines this work follows, with the owner's choice for each (src/shared/guidelines/). `plan check` suggests the
+      # defaults from `platform` (ios apple-hig, android material-3, web wcag-2.2 always, desktop on Windows fluent-2) and the
+      # words of the brief (a Korean public service krds). The behavior layer of a guideline is always followed: its checklist
+      # items become requirement rows the critic judges. `visual` is the owner's choice about its look, asked in the direction
+      # conversation, one item per guideline.
+      guidelines:
+        type: array
+        items: { $ref: "#/$defs/guideline" }
 
   # Keep known / declared / proposed / unresolved apart when moving a direction into implementation
   claims:
@@ -457,6 +465,34 @@ allOf:
 
 $defs:
   strings: { type: array, items: { type: string } }
+  guideline:
+    type: object
+    additionalProperties: false
+    required: [id, platforms, basis, route]
+    properties:
+      id: { enum: [apple-hig, material-3, fluent-2, krds, wcag-2.2, toss-tds, daangn-seed, other] }
+      name: { type: string, minLength: 3 }             # `other` only: what the guideline is called
+      url: { type: string, pattern: "^https://" }      # `other` only: where its documents are
+      platforms:                                       # the brief platforms this entry covers; only checklist items for these become rows
+        type: array
+        minItems: 1
+        uniqueItems: true
+        items: { enum: [web, ios, android, desktop, email, embedded] }
+      basis: { enum: [declared, suggested] }           # declared: the owner named it in the brief (a requirement row says so); suggested: a default `plan check` offered
+      row: { type: string, pattern: "^R[0-9a-f]{6}([0-9a-f]{2})?$" }   # declared: the requirement row where the owner named it
+      visual:                                          # the owner's choice about the guideline's look; the behavior layer is followed whatever it says
+        enum: [follow, consult, none]                  # follow: build in its visual language; consult: read it, depart where the design has a reason; none: leave its look aside
+        default: consult                               # absent reads as consult; a guideline with no visual language (wcag-2.2) is none
+      route:                                           # how its documents are read
+        type: object
+        additionalProperties: false
+        required: [kind, ref]
+        properties:
+          kind: { enum: [context7, official-docs, repo, owner-saved] }
+          ref: { type: string, minLength: 3 }          # a Context7 library id, an official docs URL, a repository URL, or what the owner saved
+    allOf:
+      - if: { properties: { id: { const: other } } }
+        then: { required: [name, url] }
   # Voice policy of one locale (content.voice.locales). The four languages below narrow the registers to
   # that language; any other locale takes the general enums.
   voice_speaker: { enum: [brand, product, editorial, user] }   # we, the product's own third person, a writer's voice, the user's own words

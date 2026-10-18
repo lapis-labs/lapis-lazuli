@@ -16,6 +16,8 @@ brief:
   locales: [ko-KR]
   product_frame: e-commerce
   constraints: [Most visits are on mobile, Photos show pieces straight out of the kiln, Feedback only without entrance animation]
+  guidelines:   # a web surface always lists WCAG 2.2; it has no visual layer, so `visual` is none
+    - { id: wcag-2.2, platforms: [web], basis: suggested, visual: none, route: { kind: official-docs, ref: "https://www.w3.org/TR/2024/REC-WCAG22-20241212/" } }
 claims:
   known: [The studio fires once a month]
   declared: [No brand color yet]

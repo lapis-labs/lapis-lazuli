@@ -12,6 +12,8 @@
 # only installed, open-licensed, and catalog fonts; b: yes, the owner names them, and `lazuli owned add` lists them as
 # candidates that need activation) and its question is `lapis_design.direction.OWNED_QUESTION`; `type_roles` is optional, so
 # a proposal without it stays valid.
+# A guideline item `V<n>` (optional `guidelines`) asks how closely the look follows one design guideline (`lapis_design.direction.VISUAL_QUESTION`,
+# options a follow, b consult, c none; default b); the plan's `brief.guidelines[].visual` must say what the owner chose.
 # `direction.proposal_problem` checks form, never quality: ids, option counts, that every `seen_in` names a reference
 # of the references record, that each object names a pool kind of `diverge/pools.yaml`, that each default is an
 # option id (or `all` for an object), and that no type role is asked twice.
@@ -94,6 +96,18 @@ properties:
       properties:
         id: {type: string, pattern: "^T[1-9][0-9]?$"}
         role: {type: string, pattern: "^[a-z][a-z0-9-]*$"}   # a role of the plan's type tokens, such as heading or body
+  guidelines:                                       # optional: one visual question per guideline the plan will name (`brief.guidelines`), `V<n>`
+    type: array                                     # options a follow its look, b use it as a reference (the default), c leave its look aside; the CLI words the question
+    items:
+      type: object
+      additionalProperties: false
+      required: [id, guideline]
+      properties:
+        id: {type: string, pattern: "^V[1-9][0-9]?$"}
+        guideline: {enum: [apple-hig, material-3, fluent-2, krds, toss-tds, daangn-seed, other]}   # not wcag-2.2: it has no visual layer
+        name: {type: string, minLength: 3}          # `other` only: what the guideline is called
+      if: {properties: {guideline: {const: other}}}
+      then: {required: [name]}
   signature:                                        # elements the brief names; the roughs add their own in their cards
     type: array
     items:

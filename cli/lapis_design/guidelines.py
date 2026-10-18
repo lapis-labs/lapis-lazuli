@@ -30,15 +30,17 @@ ROW_ID = re.compile(r"^G:[a-z0-9.-]+/[a-z0-9-]+$")
 
 # What names a guideline in the owner's words. Narrow on purpose: a bare "material" or "seed" is not a guideline.
 _ALIASES = {
-    "apple-hig": (r"\bhuman interface guidelines?\b", r"\bapple\s+hig\b", r"\bhig\b", r"휴먼\s*인터페이스\s*가이드라인"),
-    "material-3": (r"\bmaterial\s*(?:3|design|you)\b", r"머티리얼\s*디자인"),
-    "fluent-2": (r"\bfluent\s*(?:2|design|ui)\b", r"플루언트"),
-    "krds": (r"\bkrds\b", r"범정부\s*ui\s*/?\s*ux"),
-    "wcag-2.2": (r"\bk?wcag\b", r"웹\s*접근성\s*지침"),
-    "toss-tds": (r"\btds\b", r"\btoss\s+design\s+system\b", r"토스\s*(?:디자인\s*시스템|tds)"),
-    "daangn-seed": (r"\bseed\s+design\b", r"\bdaangn\s+seed\b", r"당근\s*seed"),
+    "apple-hig": (r"human interface guidelines?", r"apple\s+hig", r"hig", r"휴먼\s*인터페이스\s*가이드라인"),
+    "material-3": (r"material\s*(?:3|design|you)", r"머티리얼\s*디자인"),
+    "fluent-2": (r"fluent\s*(?:2|design|ui)", r"플루언트"),
+    "krds": (r"krds", r"범정부\s*ui\s*/?\s*ux"),
+    "wcag-2.2": (r"k?wcag", r"웹\s*접근성\s*지침"),
+    "toss-tds": (r"tds", r"toss\s+design\s+system", r"토스\s*(?:디자인\s*시스템|tds)"),
+    "daangn-seed": (r"seed\s+design", r"daangn\s+seed", r"당근\s*seed"),
 }
-_NAMED = {gid: re.compile("|".join(patterns), re.IGNORECASE) for gid, patterns in _ALIASES.items()}
+# A name ends at a letter or digit of the Latin alphabet, not at Hangul: "KRDS를" names KRDS where `\b` would not see it.
+_NAMED = {gid: re.compile(r"(?<![A-Za-z0-9])(?:" + "|".join(patterns) + r")(?![A-Za-z0-9])", re.IGNORECASE)
+          for gid, patterns in _ALIASES.items()}
 _PUBLIC_SERVICE = re.compile(
     r"정부|공공|행정|민원|지자체|시청|구청|군청|도청|부처|\bgovernment\b|\bgov\b|public[\s-]service|public[\s-]sector|\bmunicipal|\bministry\b"
     r"|city\s+hall|civil\s+service|\.go\.kr", re.IGNORECASE)
@@ -153,47 +155,57 @@ def applicable(entry: dict) -> list[dict]:
 
 def rows(plan: Any) -> list[dict]:
     """The requirement rows the plan's guidelines give, one per applicable checklist item (a guideline named twice gives each item
-    once, with the platforms of both entries). Each row: `id`, `guideline`, `item`, `text` (the requirement), `section`, `url`,
-    `measure`, `platforms`, and, when the item has them, `rules`, `check`, `threshold`, `limits`, and `needs_review`."""
+    once, with the platforms of both entries). A row is `{id, text, section, guideline}`: `text` is the item's requirement,
+    `section` the source's section name, and `guideline` holds `id`, `item`, `url`, `measure`, `platforms`, and, when the item
+    has them, `rules`, `check`, `threshold`, `limits`, and `needs_review`."""
     found: dict[str, dict] = {}
     for entry in entries(plan):
         for item in applicable(entry):
             row = row_for(entry, item)
             if row["id"] in found:
-                found[row["id"]]["platforms"] = sorted(set(found[row["id"]]["platforms"]) | set(row["platforms"]))
+                held = found[row["id"]]["guideline"]
+                held["platforms"] = sorted(set(held["platforms"]) | set(row["guideline"]["platforms"]))
             else:
                 found[row["id"]] = row
     return list(found.values())
+
+
+def row_for(entry: dict, item: dict) -> dict:
+    gid = entry["id"]
+    detail: dict[str, Any] = {"id": gid, "item": item["id"], "url": item["source"]["url"], "measure": item["measure"],
+                              "platforms": sorted(set(entry.get("platforms") or ()) & set(item["platforms"]))}
+    for key in ("rules", "check", "threshold", "limits", "needs_review"):
+        if key in item:
+            detail[key] = item[key]
+    return {"id": row_id(gid, item["id"]), "text": item["requirement"], "section": item["source"]["section"], "guideline": detail}
 
 
 def rule_items(plan: Any) -> dict[str, list[str]]:
     """Each lint rule id that measures a checklist item of the plan's guidelines, with the `<guideline>/<item>` names it measures."""
     found: dict[str, list[str]] = {}
     for row in rows(plan):
-        for rule in row.get("rules") or ():
-            found.setdefault(rule, []).append(item_ref(row["guideline"], row["item"]))
+        detail = row["guideline"]
+        for rule in detail.get("rules") or ():
+            found.setdefault(rule, []).append(item_ref(detail["id"], detail["item"]))
     return found
 
 
 def checks(plan: Any, check: str) -> list[dict]:
-    """The rows of the plan whose item runs the mechanical check `check`, with the items' own `viewports`."""
-    out = []
+    """The items of the plan's guidelines that run the mechanical check `check`, as `{ref, text, threshold, platforms, viewports}`
+    (`viewports` is None for every layout capture)."""
+    out: dict[str, dict] = {}
     for entry in entries(plan):
         for item in applicable(entry):
-            if item.get("check") == check:
-                out.append({**row_for(entry, item), "viewports": item.get("viewports")})
-    return out
-
-
-def row_for(entry: dict, item: dict) -> dict:
-    gid = entry["id"]
-    row = {"id": row_id(gid, item["id"]), "guideline": gid, "item": item["id"], "text": item["requirement"],
-           "section": item["source"]["section"], "url": item["source"]["url"], "measure": item["measure"],
-           "platforms": sorted(set(entry.get("platforms") or ()) & set(item["platforms"]))}
-    for key in ("rules", "check", "threshold", "limits", "needs_review"):
-        if key in item:
-            row[key] = item[key]
-    return row
+            if item.get("check") != check:
+                continue
+            ref = item_ref(entry["id"], item["id"])
+            platforms = sorted(set(entry.get("platforms") or ()) & set(item["platforms"]))
+            if ref in out:
+                out[ref]["platforms"] = sorted(set(out[ref]["platforms"]) | set(platforms))
+            else:
+                out[ref] = {"ref": ref, "text": item["requirement"], "threshold": item["threshold"], "platforms": platforms,
+                            "viewports": item.get("viewports"), "limits": item.get("limits")}
+    return list(out.values())
 
 
 # ---------------------------------------------------------------- what the brief calls for
