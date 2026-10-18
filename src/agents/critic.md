@@ -109,10 +109,6 @@ another edit the packet lists under `changes`, removes what a row asks, name its
 `/references[source=https://museum.example/]/leave`) beside the state you give. A row with an entry in `owner_decisions`
 still gets its entry: judge it as the packet words it and say in `note` what the owner decided.
 
-## Approval preview: core product explanation
-
-Mark a finding that the core product explanation is missing as
-`approval_impact: core-product-explanation`. It blocks this pre-show checkpoint even when its
 ### Guideline rows
 
 A row `G:<guideline>/<item>` is one behavior requirement of a design guideline the plan names in `brief.guidelines` (Apple's
@@ -140,6 +136,10 @@ open it.
 - A guideline the plan names whose rows do not fit the page (an Android-only item on a page the plan says is web) is `not-in-slice`
   or `not-observable` with the reason in `note`, not `met`.
 
+## Approval preview: core product explanation
+
+Mark a finding that the core product explanation is missing as
+`approval_impact: core-product-explanation`. It blocks this pre-show checkpoint even when its
 ordinary review severity is P3/warn and `blocking` is false for release. `review.world-materials`
 defaults to that scope at pre-show; use `approval_impact: ordinary` only when the finding is a
 non-core visual/material detail, with its actual scope explained. Other ordinary lint warnings

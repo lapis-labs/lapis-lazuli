@@ -45,9 +45,6 @@ OWNED_QUESTION = "Are there fonts you own but have not installed that I should c
 OWNED_OPTIONS = ({"id": "a", "text": "No: only the fonts installed here, open-licensed families, and what the catalogs list"},
                  {"id": "b", "text": "Yes: I will name them, and they go on the owned list (`lazuli owned add`) as candidates "
                                      "that need activation"})
-
-_HEAD = re.compile(r"^direction\s+(\d+)\b", re.IGNORECASE)
-_ANSWER_ID = re.compile(r"^(?:(?P<cand>C\d+)\.)?(?P<id>[SKOGTV]\d+)\b", re.IGNORECASE)
 # The visual question of a guideline, one item `V<n>` per guideline of the proposal's `guidelines`: how closely the look follows
 # it. How it behaves (target sizes, focus, dialogs, navigation) is followed whichever option the owner picks, so the question
 # says so. The answer becomes the plan's `brief.guidelines[].visual` (`plan check` refuses a plan that says otherwise).
@@ -56,6 +53,9 @@ VISUAL_OPTIONS = ({"id": "a", "text": "Follow its look: colors, type, shapes, an
                   {"id": "b", "text": "Use it as a reference: look at it, and depart where this design has a reason"},
                   {"id": "c", "text": "Leave its look aside; only its rules for how things behave apply"})
 VISUAL_BY_OPTION = {"a": "follow", "b": "consult", "c": "none"}      # the plan's `visual` for each option; `b`, consult, is the default
+
+_HEAD = re.compile(r"^direction\s+(\d+)\b", re.IGNORECASE)
+_ANSWER_ID = re.compile(r"^(?:(?P<cand>C\d+)\.)?(?P<id>[SKOGTV]\d+)\b", re.IGNORECASE)
 _CHOICE = re.compile(r"\s*(?P<choice>keep|drop|default|other|all|[a-e](?:\s*,\s*[a-e])*)\b", re.IGNORECASE)
 _CHOICE_END = re.compile(r"\s*(?:$|[—–\"“(]|-\s)")   # what follows a choice when the name may hold colons: the end, a dash, or a quote
 _PICK = re.compile(r"^pick\s*:\s*(?P<cand>C\d+)\b", re.IGNORECASE)
@@ -125,9 +125,6 @@ def _duplicates(ids: list[str]) -> list[str]:
     return sorted({i for i in ids if ids.count(i) > 1})
 
 
-def proposal_problem(root: Path, task: str) -> str | None:
-    """Why `.lapis/direction/<task>.yaml` is not a proposal, or None when it is. Form, never quality."""
-    from jsonschema import Draft202012Validator
 def guideline_key(ask: dict[str, Any]) -> str:
     """What a visual question is about: a guideline id, or `other:<name>` for one the plan names itself."""
     return ask["guideline"] if ask["guideline"] != "other" else f"other:{str(ask.get('name') or '').casefold()}"
@@ -141,6 +138,9 @@ def guideline_name(ask: dict[str, Any]) -> str:
 
 
 
+def proposal_problem(root: Path, task: str) -> str | None:
+    """Why `.lapis/direction/<task>.yaml` is not a proposal, or None when it is. Form, never quality."""
+    from jsonschema import Draft202012Validator
 
     where = path(root, task).relative_to(root).as_posix()
     try:
@@ -157,20 +157,20 @@ def guideline_name(ask: dict[str, Any]) -> str:
         return f"{where} is for task {found['task']!r}, not {task!r}"
     styles, objects, signature = found["styles"], found["objects"], found["signature"]
     type_roles = found.get("type_roles") or []
+    guideline_items = found.get("guidelines") or []
     kit = [k for s in styles for k in s["kit"]]
     for label, ids in (("style", [s["id"] for s in styles]), ("kit", [k["id"] for k in kit]),
                        ("object", [o["id"] for o in objects]), ("signature", [g["id"] for g in signature]),
-    guideline_items = found.get("guidelines") or []
                        ("type-role", [t["id"] for t in type_roles]), ("guideline", [v["id"] for v in guideline_items])):
         if dup := _duplicates(ids):
             return f"{where} repeats the {label} id {', '.join(dup)}"
     if dup := _duplicates([t["role"] for t in type_roles]):
         return f"{where} asks the fonts-owned question twice for the role {', '.join(dup)}"
+    if dup := _duplicates([guideline_key(v) for v in guideline_items]):
+        return f"{where} asks the visual question twice for the guideline {', '.join(dup)}"
     for item in (*styles, *objects, *signature):
         options = [o["id"] for o in item["options"]]
         if dup := _duplicates(options):
-    if dup := _duplicates([guideline_key(v) for v in guideline_items]):
-        return f"{where} asks the visual question twice for the guideline {', '.join(dup)}"
             return f"{where}: {item['id']} repeats the option id {', '.join(dup)}"
         allowed = [*options, "all"] if item["id"].startswith("O") else options
         if item["default"] not in allowed:
@@ -271,12 +271,12 @@ def _proposal_items(doc: dict[str, Any]) -> list[dict[str, Any]]:
     for role in doc.get("type_roles") or ():
         out.append({"id": role["id"], "kind": "T", "label": f"{role['role']}: {OWNED_QUESTION}", "candidate": None,
                     "role": role["role"], "options": [dict(o) for o in OWNED_OPTIONS], "default": "a"})
-    for sig in doc.get("signature") or ():
-        out.append({"id": sig["id"], "kind": "G", "label": sig["element"], "candidate": None,
-                    "options": [{"id": o["id"], "text": o["text"]} for o in sig["options"]], "default": sig["default"]})
     for ask in doc.get("guidelines") or ():
         out.append({"id": ask["id"], "kind": "V", "label": VISUAL_QUESTION.format(name=guideline_name(ask)), "candidate": None,
                     "guideline": guideline_key(ask), "options": [dict(o) for o in VISUAL_OPTIONS], "default": "b"})
+    for sig in doc.get("signature") or ():
+        out.append({"id": sig["id"], "kind": "G", "label": sig["element"], "candidate": None,
+                    "options": [{"id": o["id"], "text": o["text"]} for o in sig["options"]], "default": sig["default"]})
     return out
 
 

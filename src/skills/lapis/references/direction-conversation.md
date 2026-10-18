@@ -105,6 +105,19 @@ the references record, each object names a pool kind of `../shared/diverge/pools
 `does` and `source`), each default is an option id (`all` for an object), and no type role is asked twice. It never judges whether the options are good;
 the owner and the critic do.
 
+## The guideline question
+
+One more item for every design guideline the plan will name in `brief.guidelines` that has a look of its own (`V<n>`; not WCAG 2.2,
+which has none): **how closely should the look follow it?** The question is worded by the CLI in plain words and says that how
+things behave is followed whichever the owner picks. It has three fixed options: `a` follow its look, `b` use it as a reference and
+depart where this design has a reason (the default), `c` leave its look aside. Ask it in turn one with the others and put the
+guidelines into the proposal as `guidelines: [{id: V1, guideline: apple-hig}]` (an `other` guideline adds its `name`); the ids
+to list are the ones `plan check` will suggest for the brief, with the platforms in `platforms.md`, "Guidelines".
+
+The answer is the plan's `brief.guidelines[].visual` (`follow`, `consult`, `none`), and `plan check` refuses a plan that says
+otherwise. The owner's own reply is a requirement row like any `[declared]` item; the guideline's behavior items are rows too, but
+from our checklist, not from the owner.
+
 ## Asking
 
 - Write `.lapis/questions/<task>.md` with `lapis-questions: direction` on its first line, name every open item id in it (after the
@@ -126,29 +139,19 @@ the owner and the critic do.
 
 Put the owner's replies in the brief record `.lapis/answers/<task>.md`, under `## Direction 1`, `## Direction 2`, and so on,
 one line per item, keeping what the file holds. The fact cap of the brief (six questions a round, two rounds) counts only
-## The guideline question
-
-One more item for every design guideline the plan will name in `brief.guidelines` that has a look of its own (`V<n>`; not WCAG 2.2,
-which has none): **how closely should the look follow it?** The question is worded by the CLI in plain words and says that how
-things behave is followed whichever the owner picks. It has three fixed options: `a` follow its look, `b` use it as a reference and
-depart where this design has a reason (the default), `c` leave its look aside. Ask it in turn one with the others and put the
-guidelines into the proposal as `guidelines: [{id: V1, guideline: apple-hig}]` (an `other` guideline adds its `name`); the ids
-to list are the ones `plan check` will suggest for the brief, with the platforms in `platforms.md`, "Guidelines".
-
-The answer is the plan's `brief.guidelines[].visual` (`follow`, `consult`, `none`), and `plan check` refuses a plan that says
-otherwise. The owner's own reply is a requirement row like any `[declared]` item; the guideline's behavior items are rows too, but
-from our checklist, not from the owner.
-
 `## Answers` headings and does not apply here.
 
 ```text
 - [declared] K2 ticker band: drop — "<owner words>"
 - [declared] O1 the comparison: a,c — "<owner words>"           narrowed: diverge explores a and c
 - [declared] T2 body: b — "<owner words>"                        fonts owned and not installed: they name them; add them with `lazuli owned add`
+- [declared] V1 Apple's Human Interface Guidelines: b — "<owner words>"   how closely the look follows a guideline: a follow, b use it as a reference, c leave its look aside
 - [declared] S1 neo-brutalism: other — expose the record, but no borders on body text — "<owner words>"
 - [declared] Pick: C2 — "<owner words>"                          turn two only
 - [declared] C2.G1 crystal stone: a — "<owner words>"            turn two: the picked rough's signature item
 - Defaults accepted (direction 2): "<owner words>"               untagged; every open item takes its default
+- [declared] take M4: the pricing section, under the headline — "<owner words>"    a reference digest item moved to what we take, with where
+- [declared] leave M2: — "<owner words>"                          a digest item moved to what we leave
 ```
 
 The choice after the colon is an option id, a comma list of option ids, `keep`, `drop`, `default`, or `other`. A name may
@@ -166,7 +169,6 @@ choice, and their words only for what they answered, and a row left as printed c
 With nobody to ask (`LAPIS_UNATTENDED=1`), nothing waits. Answer each open item yourself under `## Direction <n>`:
 `- [assumed] K2 ticker band: drop — Basis: <why, from the brief and the references>`, and the pick as
 `- [assumed] Pick: C2 — Basis: <why>`. An `[assumed]` line with no `Basis:` does not count. The owner block at `done` lists
-- [declared] V1 Apple's Human Interface Guidelines: b — "<owner words>"   how closely the look follows a guideline: a follow, b use it as a reference, c leave its look aside
 every decision made without the owner.
 
 ## What it is not

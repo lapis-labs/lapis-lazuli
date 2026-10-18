@@ -927,14 +927,6 @@ def check_flows(plan: dict, plan_file: str) -> list[dict]:
     return out
 
 
-# ---------------------------------------------------------------- harness plan modes
-
-_FENCE = re.compile(r"^```yaml[^\n]*\n(.*?)^```", re.M | re.S)
-
-
-def extract_lapis_block(markdown: str) -> str | None:
-    """Return the first ```yaml block whose info string or first line marks it as a lapis plan."""
-    for m in _FENCE.finditer(markdown):
 # ---------------------------------------------------------------- guidelines
 
 def _entry_yaml(entry: dict) -> str:
@@ -1050,6 +1042,14 @@ def _visual_findings(plan: dict, entries: list[dict], root: Path, task: str, pla
     return out
 
 
+# ---------------------------------------------------------------- harness plan modes
+
+_FENCE = re.compile(r"^```yaml[^\n]*\n(.*?)^```", re.M | re.S)
+
+
+def extract_lapis_block(markdown: str) -> str | None:
+    """Return the first ```yaml block whose info string or first line marks it as a lapis plan."""
+    for m in _FENCE.finditer(markdown):
         header = markdown[m.start():markdown.index("\n", m.start())]
         body = m.group(1)
         first = body.lstrip().splitlines()[0] if body.strip() else ""
@@ -1138,6 +1138,7 @@ def run(plan_path: Path | None, rules_path: Path | None, lock_path: Path | None,
         findings += check_taste(plan, root, plan_file)
         findings += check_color_area(plan, plan_file)
         findings += check_flows(plan, plan_file)
+        findings += check_guidelines(plan, root, plan_file)
     blocking = sum(1 for f in findings if f["blocking"])
     return {
         "version": 0,
@@ -1146,7 +1147,6 @@ def run(plan_path: Path | None, rules_path: Path | None, lock_path: Path | None,
         "summary": {"blocking": blocking, "total": len(findings),
                     "skipped": sum(1 for f in findings if f["status"] == "skipped")},
         "findings": findings,
-        findings += check_guidelines(plan, root, plan_file)
     }
 
 

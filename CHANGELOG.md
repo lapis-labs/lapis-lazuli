@@ -125,6 +125,27 @@ contract formats are v0.
   `github-<account>` entries with adapter `github-foundries`, and (`registry.schema.yaml`) the optional `scripts` and `releases`
   fields, which only that adapter may carry; Fontsource's SPDX mapping moved to `labels.map_spdx`, unchanged.
 
+- Guideline-based development. The plan's `brief.guidelines` lists the design guidelines the work follows (apple-hig, material-3,
+  fluent-2, krds, wcag-2.2, toss-tds, daangn-seed, or `other` with a URL): the platforms each covers, `basis` (`declared` when an
+  owner row names it, else `suggested`), `visual` (`follow`, `consult`, `none`: the owner's choice about the look; the behavior is
+  always followed) and the `route` its documents were read by. `plan check` suggests the defaults (`guideline.suggested-missing`: ios
+  apple-hig, android material-3, web wcag-2.2 as a warning, desktop on Windows fluent-2 and `guideline.desktop-os-unknown` when the
+  system is not named, a Korean public service krds), blocks a plan that omits a guideline an owner row names
+  (`guideline.declared-missing`) or states a `visual` other than the owner's answer (`guideline.visual-drift`). The direction
+  conversation asks `visual` as one plain-words item per guideline, `V<n>` (proposal `guidelines`).
+  - **Checklists** in `src/shared/guidelines/<id>.yaml` (`guideline.schema.yaml`), in our own words with each item's source section
+    and URL, platforms, `measure` (render, behavior, static, judge), threshold in its own unit, the day and route it was read by, and
+    the license's attribution line: WCAG 2.2, Material 3, Fluent 2 with Windows apps, KRDS, Apple HIG. The HIG file lists the 2026
+    sections its Context7 index does not hold. TDS and SEED are consult-only files of links. `units.yaml` states how a web
+    prototype's CSS px stands for Apple points, Android dp, and Windows epx.
+  - **Rows**: each applicable item is a `guideline_rows` entry of the requirement record (`G:<guideline>/<item>`, a `guideline`
+    source, never the owner's words and unseen by what reads the owner's rows); the critic packet lists them after the owner's
+    rows and a report must judge each. Contracts: `plan/schema.yaml`, `requirements/schema.yaml`, `review/critic-packet.schema.yaml`,
+    `review/critic-delta-packet.schema.yaml`, `direction/schema.yaml`, `slop/finding.schema.yaml` (`guideline_items`, row ids).
+  - **Checks**: `guideline.target-size` measures the items with a `check` (HIG 44 pt, Material 3 48 dp, Windows 40 epx) against
+    their own captures and names the item; findings of the rules that already measure an item (WCAG target size, reflow at 320,
+    focus) carry `guideline_items`. Text at 200% is not measured.
+
 ### Changed
 
 - `next` waits for a running render check (new step `render-wait`) as it did for a behavior check, from the locks as well as
@@ -163,27 +184,6 @@ contract formats are v0.
   `lapis_design.<module>` or `importlib.import_module("lapis_design.<module>")` in a `python -c` or a script, and
   `inspect.getsource` (also `getfile`, `__file__`) of it. Each finding names the module and the way (`path`, `package-dir`,
   `import`, `getsource`), and the owner block line lists them. `lapis-design ...`, `lazuli ...`, `--help`, `python -m
-- Guideline-based development. The plan's `brief.guidelines` lists the design guidelines the work follows (apple-hig, material-3,
-  fluent-2, krds, wcag-2.2, toss-tds, daangn-seed, or `other` with a URL): the platforms each covers, `basis` (`declared` when an
-  owner row names it, else `suggested`), `visual` (`follow`, `consult`, `none`: the owner's choice about the look; the behavior is
-  always followed) and the `route` its documents were read by. `plan check` suggests the defaults (`guideline.suggested-missing`: ios
-  apple-hig, android material-3, web wcag-2.2 as a warning, desktop on Windows fluent-2 and `guideline.desktop-os-unknown` when the
-  system is not named, a Korean public service krds), blocks a plan that omits a guideline an owner row names
-  (`guideline.declared-missing`) or states a `visual` other than the owner's answer (`guideline.visual-drift`). The direction
-  conversation asks `visual` as one plain-words item per guideline, `V<n>` (proposal `guidelines`).
-  - **Checklists** in `src/shared/guidelines/<id>.yaml` (`guideline.schema.yaml`), in our own words with each item's source section
-    and URL, platforms, `measure` (render, behavior, static, judge), threshold in its own unit, the day and route it was read by, and
-    the license's attribution line: WCAG 2.2, Material 3, Fluent 2 with Windows apps, KRDS, Apple HIG. The HIG file lists the 2026
-    sections its Context7 index does not hold. TDS and SEED are consult-only files of links. `units.yaml` states how a web
-    prototype's CSS px stands for Apple points, Android dp, and Windows epx.
-  - **Rows**: each applicable item is a `guideline_rows` entry of the requirement record (`G:<guideline>/<item>`, a `guideline`
-    source, never the owner's words and unseen by what reads the owner's rows); the critic packet lists them after the owner's
-    rows and a report must judge each. Contracts: `plan/schema.yaml`, `requirements/schema.yaml`, `review/critic-packet.schema.yaml`,
-    `review/critic-delta-packet.schema.yaml`, `direction/schema.yaml`, `slop/finding.schema.yaml` (`guideline_items`, row ids).
-  - **Checks**: `guideline.target-size` measures the items with a `check` (HIG 44 pt, Material 3 48 dp, Windows 40 epx) against
-    their own captures and names the item; findings of the rules that already measure an item (WCAG target size, reflow at 320,
-    focus) carry `guideline_items`. Text at 200% is not measured.
-
   lapis_design...`, and reading the installed skill guides are not source reads. The scan also reads Antigravity's
   `run_command` (`CommandLine`) for a kill by pattern, including on a later line of the command.
 - Antigravity's Stop hook reads the conversation's `transcriptPath` for the worker rules, in the person's session and in a

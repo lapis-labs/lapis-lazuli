@@ -298,6 +298,7 @@ properties:
         observed: { type: string }
         location: { type: object }
         status: { type: string }
+        guideline_items: { type: array, items: { type: string } }   # the guideline rows (`<guideline>/<item>`) the finding is evidence for
   changes:                                         # change-log rows (integrity/schema.yaml) that were reactive, touched an open finding, or came after the slice
     type: array
     items:
@@ -328,5 +329,4 @@ properties:
 $defs:
   digest: { type: string, pattern: "^[0-9a-f]{64}$" }
   row_id: { type: string, pattern: "^R[0-9a-f]{6,8}$" }
-        guideline_items: { type: array, items: { type: string } }   # the guideline rows (`<guideline>/<item>`) the finding is evidence for
   requirement_id: { type: string, pattern: "^(R[0-9a-f]{6,8}|G:[a-z0-9.-]+/[a-z0-9-]+)$" }   # an owner's row, or a guideline row
