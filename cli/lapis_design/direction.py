@@ -491,28 +491,40 @@ def plain_problem(root: Path, task: str, text: str, env: Mapping[str, str] = os.
     things are found from the records and refused: a line that opens with an item id, a family name of an object option
     outside parentheses, and a number `diverge check` recorded as a distance between roughs next to a word for it or two
     rough ids (the numbers stay in the records and the critic packet). That an item with a single option is a statement and
-    not a question is not checked: the questions are free text, and a statement cannot be told from a question by form."""
+    not a question is not checked: the questions are free text, and a statement cannot be told from a question by form.
+    Every such line is found in one pass: the first is told in full and the others by their opening words, so one rewrite
+    covers the file and not one line per run."""
     found = items(root, task, env)
     ids = sorted({i["id"] for i in found if _ID.match(i["id"])}, key=len, reverse=True)
     families = sorted({o["family"] for i in found for o in i["options"] if "-" in str(o.get("family") or "")}, key=len, reverse=True)
     values = diverge.distance_numbers(root, task)
     lead = re.compile("^(?:" + "|".join(map(re.escape, ids)) + r")(?![\w])") if ids else None
+    problems: list[tuple[str, str]] = []                                   # the sentence for the line, and the line's opening words
     for line in text.splitlines():
         words = _OPENING.sub("", line)
         if lead and (opened := lead.match(words)):
-            return (f"the line `{_clean(line)[:60]}` opens with the item id {opened.group()}: say what the item asks in plain "
-                    f"words first and put the id after them, in parentheses (for example `What should neo-brutalism do here? "
-                    f"(S1)`)")
+            problems.append((f"the line `{_clean(line)[:60]}` opens with the item id {opened.group()}: say what the item asks in "
+                             f"plain words first and put the id after them, in parentheses (for example `What should "
+                             f"neo-brutalism do here? (S1)`)", _clean(line)[:40]))
+            continue
         bare = _PAREN.sub(" ", line)
-        for family in families:
-            if re.search(r"(?<![\w-])" + re.escape(family) + r"(?![\w-])", bare):
-                return (f"the line `{_clean(line)[:60]}` shows the family name {family} outside parentheses: describe the option "
-                        "in plain words and put the family name after them, in parentheses")
+        family = next((f for f in families if re.search(r"(?<![\w-])" + re.escape(f) + r"(?![\w-])", bare)), None)
+        if family:
+            problems.append((f"the line `{_clean(line)[:60]}` shows the family name {family} outside parentheses: describe the "
+                             "option in plain words and put the family name after them, in parentheses", _clean(line)[:40]))
+            continue
         if values and (numbers := [n for n in _DECIMAL.findall(line) if n.removeprefix("0") in values]) and (
                 _DISTANCE_WORD.search(line) or len(set(re.findall(r"\bC\d+\b", line))) >= 2):
-            return (f"the line `{_clean(line)[:60]}` shows the distance number {numbers[0]} between roughs: the numbers stay "
-                    "in the records and the critic packet; tell the owner how the roughs differ in words and show the contact sheet")
-    return None
+            problems.append((f"the line `{_clean(line)[:60]}` shows the distance number {numbers[0]} between roughs: the numbers "
+                             "stay in the records and the critic packet; tell the owner how the roughs differ in words and show "
+                             "the contact sheet", _clean(line)[:40]))
+    if not problems:
+        return None
+    first, *others = problems
+    if not others:
+        return first[0]
+    listed = ", ".join(f"`{opening}`" for _, opening in others[:5])
+    return f"{first[0]}. {len(others)} more line(s) need the same kind of change: {listed}{', and more' if len(others) > 5 else ''}"
 
 
 def questions_problem(root: Path, task: str, env: Mapping[str, str] = os.environ) -> str | None:

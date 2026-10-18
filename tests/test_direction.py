@@ -433,6 +433,15 @@ def test_a_line_that_opens_with_an_item_id_does_not_wait_and_names_the_line(run,
     assert "(for example `What should neo-brutalism do here? (S1)`)" in why
 
 
+def test_every_line_that_is_not_plain_is_named_in_one_refusal(run):
+    why = why_of(asked_with(run, f"{PLAIN}S1 neo-brutalism: what should it do here?\n1. K2 ticker band: keep or drop?\n"
+                                 "Option b is the fader-overlay version of the log.\n"))
+    assert why.count("the line `") == 1 and "S1 neo-brutalism" in why                # the first, in full
+    assert "2 more line(s) need the same kind of change" in why
+    assert "`1. K2 ticker band: keep or drop?`" in why and "`Option b is the fader-overlay version of`" in why
+    assert "more line(s)" not in why_of(asked_with(run, f"{PLAIN}S1 neo-brutalism: what should it do here?\n"))
+
+
 def test_a_family_name_outside_parentheses_does_not_wait_and_inside_parentheses_does(run):
     why = why_of(asked_with(run, f"{PLAIN}Option b is the fader-overlay version of the log.\n"))
     assert "shows the family name fader-overlay outside parentheses" in why
