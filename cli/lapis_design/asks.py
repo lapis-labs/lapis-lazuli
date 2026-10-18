@@ -264,5 +264,8 @@ def detected(root: Path, task: str, plan: Any, env: Any = os.environ, now: float
            "question, a `Default:` line, at most 150 words; it batches every row above), or put the changed values back. "
            "Record the answer under `## Asks` as `- [declared] Ask <trigger>: <their decision>`, or, with nobody to ask, as "
            "`- [assumed] Ask <trigger>: <the question> — took <default>. Basis: <why>`, and run `lapis-design next` again. "
-           "The owner sees every ask in the owner block.")
+           "The owner sees every ask in the owner block."
+           + (" The `budget` ask lifts only when the owner answers (the clock restarts at their answer): an `[assumed]` line or "
+              "putting values back does not move it, and a run nobody can answer is an unattended one (`LAPIS_UNATTENDED=1`), "
+              "which has no budget." if "budget" in pending else ""))
     return {"id": "ask", "why": why, "command": None, "triggers": list(pending)}

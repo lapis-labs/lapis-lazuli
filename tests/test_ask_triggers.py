@@ -117,6 +117,15 @@ def test_the_budget_asks_after_ninety_one_minutes_and_a_budget_line_moves_it(pro
     assert "agent-alone budget set by you: 180 min" in owner.block(project, TASK)[0]
 
 
+def test_an_assumed_budget_line_does_not_lift_the_budget_ask_and_the_step_says_what_does(project):
+    sealed_at = time.time()
+    found = asks.detected(project, TASK, plan_of(project), now=sealed_at + 91 * 60)
+    assert "lifts only when the owner answers" in found["why"] and "`LAPIS_UNATTENDED=1`" in found["why"]
+    answered(project, "[assumed] Ask budget: keep going? — took keep going. Basis: nobody to ask.")
+    again = asks.detected(project, TASK, plan_of(project), now=sealed_at + 91 * 60)
+    assert again and again["triggers"] == ["budget"] and "lifts only when the owner answers" in again["why"]
+
+
 def test_an_answered_ask_restarts_the_clock_and_an_unattended_run_has_no_budget(project, monkeypatch):
     start = time.time()
     path = project / f".lapis/state/{TASK}.asks.json"
