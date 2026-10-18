@@ -366,7 +366,9 @@ def _inputs_digest(args: argparse.Namespace) -> str | None:
         from lazuli import paths
 
         database = args.lazuli_db or paths.db_path()
-        parts["lazuli_db"] = [[suffix, stat.st_size, stat.st_mtime_ns] for suffix in ("", "-wal", "-shm")
+        # the main file and the write-ahead log say what the measurements are; the `-shm` index is touched by every
+        # reader, this run included, so its mtime would make every run a new key
+        parts["lazuli_db"] = [[suffix, stat.st_size, stat.st_mtime_ns] for suffix in ("", "-wal")
                               if (stat := _stat(Path(f"{database}{suffix}"))) is not None]
         from importlib import metadata
 

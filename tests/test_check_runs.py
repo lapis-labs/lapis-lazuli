@@ -465,6 +465,26 @@ def test_lint_without_an_output_path_has_nothing_to_reuse(project, plan, capsys)
     assert [row["cache"] for row in lines(project)] == ["off", "off"] and "no -o" in lines(project)[0]["cache_reason"]
 
 
+def test_a_reader_touching_the_lazuli_databases_shm_file_does_not_make_the_lint_a_new_one(project, plan, capsys):
+    import os
+
+    from lazuli import db as lazuli_db
+
+    db = project / "lazuli.db"
+    held = lazuli_db.connect(db)                                # a WAL database keeps `-shm` beside it while a connection is open
+    out = project / ".lapis/lint/t.json"
+    lint(project, capsys, "-o", str(out), "--lazuli-db", str(db))
+    shm = Path(f"{db}-shm")
+    assert shm.is_file()
+    held.execute("select count(*) from sqlite_master").fetchall()  # every reader moves the index's mtime, the lint run itself included
+    later = shm.stat().st_mtime_ns + 5_000_000_000
+    os.utime(shm, ns=(later, later))
+    _, again = lint(project, capsys, "-o", str(out), "--lazuli-db", str(db))
+    held.close()
+    assert "cache hit" in again and [row["cache"] for row in lines(project)] == ["miss", "hit"]
+
+
+
 def test_a_file_the_plan_names_is_an_input_of_the_lint(project, plan, capsys, monkeypatch):
     document = yaml.safe_load(plan.read_text())
     (project / "DESIGN.md").write_text("# design\n")
