@@ -63,7 +63,7 @@ contract formats are v0.
   family its name matches; with none it is `unknown`, never less-known. The type guide, `lapis` step 7, and `lzl-fonts`: the two
   or three candidates compared include at least one familiar and at least one less-known face unless the brief fixes the face.
 - `lazuli search` makes breadth reachable. `--script` now counts a family only for a script it is designed for: the Google Fonts
-  snapshot keeps the listing's `primaryScript` as `details.primary_script` (a lowercase ISO 15924 code, only where Google states
+  snapshot keeps the listing's `primaryScript` as `details.primary_scripts` (lowercase ISO 15924 codes, only where Google states
   one), and an installed family with no such statement counts as made for Hangul, kana, Han, or Thai when its faces cover the
   full set. So Baloo Bhai 2 (Gujarati), Bai Jamjuree and Srisakdi (Thai), and BIZ UDMincho (Japanese) no longer rank for a
   Latin display request, a note names how many were left out and for which scripts, and the new `--secondary-scripts` counts
@@ -79,6 +79,29 @@ contract formats are v0.
   not installed: ...`, and every license line says to confirm the original. On a copy of the owner's database the example
   `--script latn --role display --license open --by-familiarity --limit 12` went from twelve installed families that all scored
   0.58 to a list with five uninstalled catalog families (Google Fonts, Fontsource, Fontshare, and a GitHub foundry among them).
+- `lazuli search` fits the role and the script better. Contract change (`catalog_family.details_json`, no migration): the
+  Google Fonts key `primary_script` (a string) is now `primary_scripts` (a list of lowercase ISO 15924 codes) with `primary_basis`
+  naming how the source says so, and Fontsource, Fontshare, and GitHub foundries write it too: Fontsource from a `defSubset` that
+  is a script other than Latin or a family with no Latin subset (a Latin default says nothing, so Noto Sans KR and Pretendard stay
+  unknown there), Fontshare from its `script` field, GitHub foundries from the repository's topics and description (a
+  description word after `inspired by`, `derived from`, `based on`, `revival of`, `by`, `from`, `like`, or `after` names a model and is
+  skipped, so a Latin repository `inspired by korean writing` no longer covers Hangul) and else the registry's `scripts` hint;
+  an unknown family stays unknown and counts for every script it covers. `lazuli catalog remap` now also re-maps Fontsource and
+  Fontshare from their kept responses (no request); run it once after updating. A family made for Hangul, kana, or Han also counts
+  as made for Latin when its Latin is a designed part: a catalog states both (GitHub's `scripts: [hang, latn]`, or Fontshare's
+  Latin for the same name Google lists as Korean), it draws at least six upright weights with the whole Latin alphabet in every
+  installed face, or its name adds Hangul to a Latin family. Source Han and Noto CJK sets never count (their Latin is borrowed),
+  Indic and Thai families are not widened, and the evidence names the clause; so IBM Plex Sans KR, Pretendard, A2Z, and Spoqa Han
+  Sans reach a Latin request while one-weight Hangul display faces with a fallback Latin stay out. Limits: weights are a proxy,
+  so a CJK-first family with many weights and a borrowed Latin under another name gets in, and a designed Latin in two weights
+  stays out. `--role` leaves out the optical-size and purpose cuts it contradicts, each by a named rule, and `--include-cuts` keeps
+  them: caption, micro, text, and small-size `opsz` cuts for display and heading; mono for every role but code unless
+  `--category mono` asks for one; math, symbols, icons, emoji, barcodes, and other `/Special use/` faces for every role. A cut is
+  known from a Google Fonts `/Special use/` tag or Symbols classification, a Fontsource `icons` category, a catalog or user class
+  mono, a name word (`Caption`, `Micro`, `Text`, `Math`, `Mono` after the first word, `Symbols`, `Icons`, `Emoji`, `Barcode`), or
+  a measurement (every face of kind symbol, the `ssty` math feature, an `opsz` axis that ends at 12 or below, a measured
+  monospaced class), so PT Serif Caption and STIX Two Math no longer rank for a display request while a caption cut still
+  suits `--role caption`. A note counts what a role left out.
 - `lazuli catalog sync` for `anshim` also reads two tabs of the Gongu free-font board (`B0000018`; robots.txt and the terms
   re-read 2026-10-16, 13 requests at 3 s): 민간 무료글꼴 정보 (its pager followed, at most 20 pages) and 인기글꼴TOP20. A board
   entry's usage conditions are free text, so its family is license `custom-free` with the text kept verbatim as the license
@@ -277,6 +300,24 @@ contract formats are v0.
   evidence grade its source audit gave it (observed here, reported elsewhere, inferred, not reproduced) and its scope; a
   summary never raises a grade, takes the weakest grade of the findings behind a claim, and keeps the owner's statements as the
   owner's until reproduced. Guide only; no new tags.
+
+### Fixed
+
+- `slop lint -o` reused its report only when nothing touched the lazuli database; the `-shm` index of a WAL database changes
+  its mtime on every read, so the key changed on every run and a second run never was a cache hit. The key now holds the
+  database file and its write-ahead log only.
+- `critic packet` with no motion evidence on extracts that name no build (`source.document_sha256` missing) now says to run
+  `render check` again first; recording the motion first could not be tied to them and cost a second recording.
+- The direction questions check names every line that opens with an item id, shows a family name outside parentheses, or shows a
+  roughs distance number, in one refusal (the first in full, the others by their opening words), not one line per run.
+- The direction owner summary now carries the `Rough first views` section the pick question tells the run to paste (per rough
+  the faces it renders in and the style items claimed and shown or not), in the owner's language, and the questions must paste
+  it unchanged. The full block keeps the English lines.
+- The `budget` ask says that only the owner's answer lifts it: an `[assumed]` line does not restart the clock, and an
+  unattended run has no budget.
+- `extract add --lines 5-2` says the range runs backwards; `extract check` prints no read cost when every extract is stale.
+- `render check` opens its own full-page screenshot past Pillow's decompression-bomb limit: a tall scroll-driven page at
+  1440 px printed a warning on stderr and would have failed past twice the limit.
 
 ## 0.3.0 (2026-10-11)
 
@@ -1695,21 +1736,3 @@ The first release. This entry sums up what 0.1.0 can do.
   claims were checked only in Chromium.
 - On Windows and Linux, Adobe Fonts activations are absent from `lazuli local fonts`. On macOS their
   localized names follow the system's preferred language.
-### Fixed
-
-- `slop lint -o` reused its report only when nothing touched the lazuli database; the `-shm` index of a WAL database changes
-  its mtime on every read, so the key changed on every run and a second run never was a cache hit. The key now holds the
-  database file and its write-ahead log only.
-- `critic packet` with no motion evidence on extracts that name no build (`source.document_sha256` missing) now says to run
-  `render check` again first; recording the motion first could not be tied to them and cost a second recording.
-- The direction questions check names every line that opens with an item id, shows a family name outside parentheses, or shows a
-  roughs distance number, in one refusal (the first in full, the others by their opening words), not one line per run.
-- The direction owner summary now carries the `Rough first views` section the pick question tells the run to paste (per rough
-  the faces it renders in and the style items claimed and shown or not), in the owner's language, and the questions must paste
-  it unchanged. The full block keeps the English lines.
-- The `budget` ask says that only the owner's answer lifts it: an `[assumed]` line does not restart the clock, and an
-  unattended run has no budget.
-- `extract add --lines 5-2` says the range runs backwards; `extract check` prints no read cost when every extract is stale.
-- `render check` opens its own full-page screenshot past Pillow's decompression-bomb limit: a tall scroll-driven page at
-  1440 px printed a warning on stderr and would have failed past twice the limit.
-

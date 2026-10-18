@@ -19,15 +19,18 @@ Mapping: comma-separated categories Sans, Serif, Slab, Display, Script, Handwrit
 genres (Script and Handwritten are `hand`; Blackletter keeps only the raw text). `license_type`
 itf_ffl is the ITF Free Font License, `free-other`; sil_ofl is OFL-1.1. Tags ("Tags / Keywords" on the
 site) are usage labels, except adjectives of character (feel) and form words (subclass); none maps to
-the vocabulary. The script is a `script:<ISO 15924>` property label; the language list is one raw
-property label. A native name in Hangul or kana becomes the ko or ja name.
+the vocabulary. The script is a `script:<ISO 15924>` property label and, as `details.primary_scripts` with
+`primary_basis` "script field", the script the family is designed for: the `script` field names one (`latin` on all 100
+families on 2026-10-18), and a family whose entry has none, or one outside the subset-script list, states nothing. The
+language list is one raw property label. A native name in Hangul or kana becomes the ko or ja name. `remap` re-applies
+all of this from the kept pages with no request.
 """
 from __future__ import annotations
 
 import json
 import re
 
-from lazuli.catalog import labels
+from lazuli.catalog import labels, store
 from lazuli.catalog.google_fonts import SUBSET_SCRIPTS, axis_label, style_labels
 from lazuli.catalog.net import Fetcher
 from lazuli.catalog.store import CatalogFamily, CatalogLabel
@@ -85,6 +88,8 @@ def _family(entry: dict) -> CatalogFamily:
     if script := entry.get("script"):
         mapped = SUBSET_SCRIPTS.get(script.lower())
         family.labels.append(CatalogLabel("property", script, f"script:{mapped}" if mapped else None))
+        if mapped:
+            family.details["primary_scripts"], family.details["primary_basis"] = [mapped], "script field"
     if languages := (entry.get("languages") or "").strip():
         family.labels.append(CatalogLabel("property", languages))
     styles = entry.get("styles") or ()
@@ -119,3 +124,12 @@ def fetch(fetcher: Fetcher) -> list[CatalogFamily]:
         seen |= slugs
         offset += PAGE_SIZE
     return families_from(pages)
+
+
+def from_raw(conn) -> list[CatalogFamily] | None:
+    """The snapshot re-mapped from the kept pages (no request), or None when the first page was not kept."""
+    pages, offset = [], 0
+    while (body := store.load_raw(conn, NAME, f"v2/fonts?offset={offset}")) is not None:
+        pages.append(body.decode())
+        offset += PAGE_SIZE
+    return families_from(pages) if pages else None

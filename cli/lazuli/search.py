@@ -16,15 +16,43 @@ label (raw or mapped), a measured class, a foundry or designer. Filters:
                hant = hani, hrkt = kana (a family needs every part). Other codes are refused (exit 2).
                Installed families by coverage (`lazuli.lock.coverage_scripts`), catalog families by their
                `script:` labels, whose composites expand the same way.
-               A family counts only for a script it is designed for, its primary script: Google Fonts states one for
-               families whose own script is not Latin (`primaryScript`, kept as `details.primary_script`; a Thai, Gujarati,
-               or Korean-first family that merely has a Latin subset is no Latin candidate), and installed faces that
-               cover a full Hangul, kana, Han, or Thai set count as made for those scripts. A family with no such
-               statement counts for every script it covers. A note says how many families the rule left out.
-  --secondary-scripts  count a family for --script when it merely covers the script, though its primary script is another.
+               A family counts only for a script it is designed for, its primary script: a catalog states one
+               (`details.primary_scripts`: Google Fonts `primaryScript` for families whose own script is not Latin;
+               a Fontsource default subset that is no Latin or a family with no Latin subset; a Fontshare `script`
+               field; a GitHub foundry repository's topics and description, else its registry `scripts` hint), and
+               installed faces that cover a full Hangul, kana, Han, or Thai set count as made for those scripts. A
+               Thai, Gujarati, or Korean-first family that merely has a Latin subset is no Latin candidate. A family
+               with no such statement counts for every script it covers ("unknown stays unknown"). A note says how
+               many families the rule left out.
+               Dual-script rule: a family made for Hangul, kana, or Han also counts as made for Latin when its Latin
+               is a designed part, by any of: a catalog states both (GitHub's `scripts: [hang, latn]`, or Google
+               Fonts' Korean beside Fontshare's Latin for the same family); the family draws at least 6 upright
+               weights, installed or in the catalogs' labels, and every installed face has the whole Latin
+               alphabet; or its name adds Hangul to a Latin family (`Proxima Nova Hangeul`). Source Han and Noto CJK
+               sets (name with `Source Han` or `CJK`, or Google's `isNoto`) never count: their Latin is borrowed. The
+               rule is a proxy: a Latin drawn in many weights is taken as designed, so a CJK-first family with many
+               weights and a borrowed Latin outside those names gets in (Chiron Hei HK), and a designed Latin in
+               fewer weights stays out (Gowun Batang) until a catalog or the name says so; Indic and Thai families
+               are not widened. The evidence says which clause applied.
+  --secondary-scripts  count a family for --script when it merely covers the script, though its primary script is
+               another and its Latin is no designed part of it.
+  --include-cuts  keep the optical-size and purpose cuts a --role contradicts (see --role, Cuts).
   --role       code needs a monospaced family; body, ui, data, and caption leave out families whose catalog
                or user classes are only display or hand, or, without such classes, whose measured kind is
-               symbol (a `hand` kind from a name hint only warns); display and heading keep every family.
+               symbol (a `hand` kind from a name hint only warns); display and heading keep every family
+               except the cuts below.
+               Cuts: a family that is an optical-size or purpose cut does not rank for a role it contradicts, unless
+               --include-cuts keeps it (the evidence then says so). Purpose is found, first match kept, by
+                 catalog: Google Fonts `/Special use/` tags (Barcode, Symbols, Redaction), its Symbols
+                 classification, a Fontsource `icons` category, a catalog or user class mono;
+                 name: the words caption, micro, text, math, mono after the family's first word, and symbol(s),
+                 icon(s), emoji, barcode anywhere (a catalog or user class decides mono before the name does);
+                 measured: every face of kind symbol, an OpenType `ssty` feature (math), an `opsz` axis (installed
+                 or the catalogs' label) that ends at 12 or below, a measured monospaced class without a catalog class.
+               Contradictions: caption, micro, text, and small-size opsz cuts for display and heading; mono for every
+               role but code, unless --category mono asks for one; math, symbol, icon, emoji, barcode and other
+               special-use faces for every role. A caption cut suits caption (and body, ui, data), a text cut
+               suits body, ui, data, caption. A note counts what a role left out.
                The role also ranks, by the weights known from installed measured faces (OS/2 weight class,
                italic, and the PANOSE stroke weight measured on the regular face) and the catalogs' weight
                labels and wght axis ranges:
@@ -135,6 +163,24 @@ PRIMARY_PARTS = {**COMPOSITE_SCRIPTS, "hira": ("kana",)}     # Google Fonts' cod
 NATIVE_FIRST = ("hang", "kana", "hani", "thai")              # a full measured set marks a face made for the script
 TAG_QUALITY = ("/Quality/Drawing", "/Quality/Spacing", "/Quality/Wordspace")
 NO_POSITION = 10 ** 9                                        # popularity position of a family no catalog ranks
+CJK_SCRIPTS = frozenset({"hang", "kana", "hani"})            # a family made for one of these may be Latin-designed too
+
+# Dual-script families (see --script in the module doc)
+LATIN_FULL = 52                                              # a-z and A-Z: a face with the whole Latin alphabet
+HANGUL_EXTENSION = re.compile(r"hang(?:u|eu)l", re.I)        # `Proxima Nova Hangeul`: a script added to a Latin family
+DUAL_WEIGHTS = 6                                             # upright weights a family draws, Latin included
+BORROWED_LATIN = re.compile(r"\b(?:source han|cjk)\b", re.I)  # their Latin is Source Sans or Serif, borrowed
+
+# Purpose and optical-size cuts (see --role in the module doc): purpose -> the roles it contradicts
+ALL_ROLES = frozenset(ROLES)
+CUT_ROLES = {"caption": DISPLAY_ROLES, "text": DISPLAY_ROLES, "mono": ALL_ROLES - {"code"}, "math": ALL_ROLES,
+             "symbol": ALL_ROLES, "barcode": ALL_ROLES}
+# name word -> purpose; a word counts after the family's first word only (`Micro 5`, `Text Me One` are no cuts)
+CUT_WORDS = {"caption": "caption", "micro": "caption", "text": "text", "mono": "mono", "math": "math"}
+CUT_ANY_WORD = {"symbol": "symbol", "symbols": "symbol", "icon": "symbol", "icons": "symbol", "emoji": "symbol",
+                "barcode": "barcode"}
+SMALL_OPSZ = 12.0                                            # an optical-size axis that ends at or below this
+_OPSZ_AXIS = re.compile(r"opsz\s+(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)")
 
 
 # ---------------------------------------------------------------- dispatch
@@ -242,8 +288,18 @@ def _installed(conn: sqlite3.Connection) -> dict[str, dict]:
             "labels": found["labels"], "genres": _genres(found["labels"]), "license": _license(found["labels"]),
             "catalogs": [{"source": s["source"], "family": s["family"], "method": s["method"],
                           "confidence": s["confidence"], "url": s["url"]} for s in found["sources"]],
-            "measured": [f for f in fam["faces"] if f.get("kind")], "text_rows": []}
+            "measured": [f for f in fam["faces"] if f.get("kind")], "text_rows": [],
+            "latin_floor": _latin_floor(e["coverage"]),
+            "features": {t for f in fam["faces"] for t in f.get("features", ())},
+            "opsz": [(a["min"], a["max"]) for f in fam["faces"] for a in f.get("axes", ()) if a.get("tag") == "opsz"]}
     return out
+
+
+def _latin_floor(coverage: list[dict]) -> int | None:
+    """The Latin letters every face with a stored coverage has (the minimum over faces: a family counts for what each
+    face has), or None when no face has one."""
+    stored = [c for c in coverage if c]
+    return min(c.get("latin", 0) for c in stored) if stored else None
 
 
 def _catalog_rows(conn: sqlite3.Connection) -> dict[tuple[str, str], dict]:
@@ -290,7 +346,7 @@ def _catalog_only(conn: sqlite3.Connection, rows: list[dict], everything: bool) 
             "postscript": [], "makers": list(dict.fromkeys(makers)), "scripts": label_scripts(resolved),
             "classes": [], "labels": resolved, "genres": _genres(resolved), "license": _license(resolved),
             "catalogs": [{"source": r["source"], "family": r["family"], "url": r["url"]} for r in group],
-            "measured": [], "text_rows": group}
+            "measured": [], "text_rows": group, "latin_floor": None, "features": set(), "opsz": []}
     return out
 
 
@@ -382,15 +438,25 @@ def _filters(cand: dict, args) -> tuple[bool, list[str]]:
             if wanted in cand["genres"] or any(g.startswith(wanted + ".") for g in cand["genres"]) else "measured"
         why.append(f"category {wanted} ({how})")
     if args.role:
+        clash = role_clash(cand, args)
+        if clash and not args.include_cuts:
+            cand["cut_left"] = sorted(clash)
+            return False, why
+        why += [f"{p} cut ({how}), which role {args.role} contradicts; listed because of --include-cuts"
+                for p, how in clash.items()]
+        why += [f"{p} cut ({how}) suits role {args.role}" for p, how in cand.get("cuts", {}).items()
+                if p not in clash and p in ("caption", "text", "mono")]
         # catalog classes are curated and the user's label outranks them, so they decide when present; measured
         # serif/sans is coarse, and a measured `hand` kind comes only from a name hint, which never excludes a
         # family on its own
         top = {g.split(".", 1)[0] for g in cand["genres"]}
         basis, known = (labeled, top) if top else ("measured", (set(cand["classes"]) | kinds) - {"hand"})
         if args.role == "code":
-            if "mono" not in top | set(cand["classes"]):
+            named = "mono" in cand.get("cuts", {}) and not top        # a name word says mono, and no class says otherwise
+            if "mono" not in top | set(cand["classes"]) and not named:
                 return False, why
-            why.append("role code: monospaced (" + (labeled if "mono" in top else "measured") + ")")
+            why.append("role code: monospaced (" + (labeled if "mono" in top else "measured" if "mono" in cand["classes"]
+                                                    else cand["cuts"]["mono"]) + ")")
         elif args.role in TEXT_ROLES:
             text = known & TEXT_CLASSES
             if not text and known & NON_TEXT_CLASSES:
@@ -450,18 +516,52 @@ def _row_details(row: dict) -> dict:
 
 def _primary(cand: dict, rows: list[dict]) -> dict | None:
     """The script(s) the family is designed for, {"codes", "scripts" (with composites' parts), "basis"}, or None when
-    nothing says: a catalog's own statement first, else an installed face with a full Hangul, kana, Han, or Thai set."""
+    nothing says: a catalog's own statement first (`details.primary_scripts`, any source), else an installed face
+    with a full Hangul, kana, Han, or Thai set."""
     stated: dict[str, str] = {}
+    how: dict[tuple[str, str], None] = {}
     for row in rows:
-        if code := _row_details(row).get("primary_script"):
+        details = _row_details(row)
+        for code in details.get("primary_scripts") or ():
             stated.setdefault(code, row["source"])
+            how[(row["source"], details.get("primary_basis") or "primary script")] = None
     if stated:
         scripts = {part for code in stated for part in (code, *PRIMARY_PARTS.get(code, ()))}
-        return {"codes": list(stated), "scripts": scripts,
-                "basis": f"{', '.join(dict.fromkeys(stated.values()))} primaryScript"}
+        return {"codes": list(stated), "scripts": scripts, "basis": ", ".join(f"{s} {b}" for s, b in how)}
     if cand["installed"] and (native := [s for s in cand["scripts"] if s in NATIVE_FIRST]):
         return {"codes": native, "scripts": set(native), "basis": f"measured: full {', '.join(native)} coverage"}
     return None
+
+
+def _latin_by_design(cand: dict, rows: list[dict]) -> str | None:
+    """Why the Latin of a family made for another script is a designed part of it, or None (module doc, --script). The
+    family must cover Latin, with the whole alphabet in every installed face, and not be a Source Han or Noto CJK set
+    (their Latin is borrowed). Then it counts when it draws at least DUAL_WEIGHTS upright weights (installed or the
+    catalogs' labels), or when its name adds Hangul to a Latin family (`Proxima Nova Hangeul`)."""
+    if "latn" not in _expand_scripts(cand["scripts"]):
+        return None
+    names = [cand["family"], *(c["family"] for c in cand["catalogs"])]
+    if any(BORROWED_LATIN.search(n) for n in names) or any(_row_signals(r).get("is_noto") for r in rows):
+        return None
+    if (floor := cand.get("latin_floor")) is not None and floor < LATIN_FULL:
+        return None                                       # a face lacks the whole alphabet
+    weights = _known_weights(cand)[4]
+    if len(weights) >= DUAL_WEIGHTS:
+        return f"{len(weights)} upright weights ({_span(weights)}) with the Latin alphabet in each"
+    for name in names:
+        if any(HANGUL_EXTENSION.fullmatch(w) for w in re.findall(r"[A-Za-z]+", name)[1:]):
+            return f"the name {name!r} adds Hangul to a Latin family"
+    return None
+
+
+def _primary_with_latin(cand: dict, rows: list[dict]) -> dict | None:
+    """`_primary`, with Latin added when the family is made for Hangul, kana, or Han and its Latin is designed too."""
+    primary = _primary(cand, rows)
+    if primary and "latn" not in primary["scripts"] and primary["scripts"] & CJK_SCRIPTS \
+            and (why := _latin_by_design(cand, rows)):
+        primary = {"codes": [*primary["codes"], "latn"], "scripts": primary["scripts"] | {"latn"},
+                   "basis": f"{primary['basis']}; Latin is designed too: {why}"}
+    return primary
 
 
 def tag_weights(conn: sqlite3.Connection) -> dict[tuple[int, str], dict[str, float]]:
@@ -498,6 +598,70 @@ def role_fit_key(cand: dict, role: str, tags: dict) -> tuple[tuple, list[str]]:
              "heading": ("heaviest weight", "quality tags", "weights")}.get(role, ("quality tags", "weights"))
     shown = [named[name][1] for name in order if named[name][1]]
     return tuple(named[name][0] for name in order), ([f"tie-break keys: {', '.join(shown)}"] if shown else [])
+
+
+def cut_labels(conn: sqlite3.Connection) -> dict[tuple[int, str], list[str]]:
+    """{(source_id, source_key): raw labels that name a purpose}: Google Fonts' `/Special use/` tags and its Symbols
+    classification, Fontsource's `icons` category."""
+    out: dict[tuple[int, str], list[str]] = defaultdict(list)
+    for r in conn.execute("SELECT source_id, source_key, raw FROM catalog_label WHERE raw LIKE '/Special use/%' "
+                          "OR raw IN ('classification:Symbols', 'icons')"):
+        out[(r["source_id"], r["source_key"])].append(r["raw"])
+    return out
+
+
+def purpose_cuts(cand: dict, raw: dict) -> dict[str, str]:
+    """{purpose: how it is known} for the optical-size or purpose cut the family is (module doc, --role): a name word,
+    a catalog tag or class, or a measurement. Several bases for one purpose keep the first (the catalog's before the
+    name word's before the measurement's)."""
+    found: dict[str, str] = {}
+    for row in cand.get("rows", ()):
+        for label in raw.get((row["source_id"], row["source_key"]), ()):
+            if label.startswith("/Special use/"):
+                tag = label.split("/", 2)[2].split(" ", 1)[0].lower()
+                found.setdefault({"symbols": "symbol"}.get(tag, tag), f"{row['source']} tag {label}")
+            else:
+                found.setdefault("symbol", f"{row['source']} {'category icons' if label == 'icons' else label}")
+    names = [cand["family"], *(c["family"] for c in cand["catalogs"])]
+    mono_name = None
+    for name in dict.fromkeys(names):
+        for i, word in enumerate(w.casefold() for w in re.findall(r"[A-Za-z]+", name)):
+            if word in CUT_ANY_WORD:
+                found.setdefault(CUT_ANY_WORD[word], f"name word {word!r}")
+            elif i and word in CUT_WORDS:
+                if CUT_WORDS[word] == "mono":
+                    mono_name = f"name word {word!r}"
+                else:
+                    found.setdefault(CUT_WORDS[word], f"name word {word!r}")
+    top = {g.split(".", 1)[0] for g in cand["genres"]}
+    if top:                                      # a catalog or user class decides, and a user's outranks the name
+        if "mono" in top:
+            found["mono"] = ("user class" if _user_classed(cand) else "catalog class") + " mono"
+    elif "mono" in cand["classes"]:
+        found["mono"] = "measured monospace"
+    elif mono_name:
+        found["mono"] = mono_name
+    if "ssty" in cand.get("features", ()):
+        found.setdefault("math", "measured: OpenType math style alternates (ssty)")
+    if cand["measured"] and {f.get("kind") for f in cand["measured"]} == {"symbol"}:
+        found.setdefault("symbol", "measured: no text letters")
+    ranges = list(cand.get("opsz", ()))
+    for lb in cand["labels"]:
+        if lb.get("mapped") == "axis:opsz" and (hit := _OPSZ_AXIS.fullmatch(lb["raw"].strip())):
+            ranges.append((float(hit[1]), float(hit[2])))
+    if ranges and max(high for _, high in ranges) <= SMALL_OPSZ:
+        low, high = min(l for l, _ in ranges), max(h for _, h in ranges)
+        found.setdefault("caption", f"optical-size axis {low:g}-{high:g}, small sizes only")
+    return found
+
+
+def role_clash(cand: dict, args) -> dict[str, str]:
+    """The cuts the family is that the role contradicts: a small-size cut for display and heading; a mono for any role
+    but code, unless --category mono asks for one; math, symbols, icons, emoji, barcodes, and other special-use
+    faces for every role."""
+    asked_mono = (args.category or "").lower() == "mono"
+    return {p: how for p, how in cand.get("cuts", {}).items()
+            if args.role in CUT_ROLES.get(p, ALL_ROLES) and not (p == "mono" and asked_mono)}
 
 
 def role_fit(cand: dict, role: str) -> tuple[float, list[str]]:
@@ -779,14 +943,17 @@ def search_fonts(conn: sqlite3.Connection, args) -> tuple[list[dict], list[str]]
 
     out = []
     priority = {name: p for name, p in conn.execute("SELECT name, priority FROM source")}
-    loose = argparse.Namespace(**{**vars(args), "secondary_scripts": True})
+    loose = argparse.Namespace(**{**vars(args), "secondary_scripts": True, "include_cuts": True})
     off_primary: Counter = Counter()
+    left_cuts: Counter = Counter()
     tags = tag_weights(conn) if args.role else {}
+    cuts = cut_labels(conn) if args.role else {}
     for cand in candidates:
         cand["delivery"] = _delivery(cand)
         own = by_installed.get(cand["family"], []) if cand["installed"] else []
         cand["rows"] = own + cand["text_rows"]                 # the catalog rows that speak for the candidate
-        cand["primary"] = _primary(cand, cand["rows"])
+        cand["primary"] = _primary_with_latin(cand, cand["rows"])
+        cand["cuts"] = purpose_cuts(cand, cuts) if args.role else {}
         if cand["primary"]:
             cand["primary_scripts"] = cand["primary"]["codes"]
         evidence: list[str] = []
@@ -803,6 +970,9 @@ def search_fonts(conn: sqlite3.Connection, args) -> tuple[list[dict], list[str]]
         if not passes:
             if cand.pop("off_primary", False) and _filters(cand, loose)[0]:
                 off_primary["/".join(cand["primary"]["codes"])] += 1
+            elif clash := cand.pop("cut_left", None):
+                if _filters(cand, loose)[0]:
+                    left_cuts[clash[0]] += 1
             continue
         evidence += why
         cand["fit"] = ()
@@ -850,14 +1020,18 @@ def search_fonts(conn: sqlite3.Connection, args) -> tuple[list[dict], list[str]]
         out.append(cand)
     out.sort(key=_order)
     shown = _balanced(out, args.limit) if args.by_familiarity else _with_catalog(out, args.limit, args.limit // 4)
+    if left_cuts:
+        left = ", ".join(f"{purpose} {n}" for purpose, n in left_cuts.most_common(6))
+        notes.append(f"{sum(left_cuts.values())} purpose or optical-size cuts are left out because role {args.role} "
+                     f"contradicts them ({left}); --include-cuts lists them")
     if off_primary:
         left = ", ".join(f"{code} {n}" for code, n in off_primary.most_common(6))
         notes.append(f"{sum(off_primary.values())} families cover {args.script} but are left out: it is not their "
                      f"primary script (primary: {left}); --secondary-scripts lists them")
     google = [r for r in rows.values() if r["source"] == "google-fonts"]
-    if args.script and google and not any("primary_script" in _row_details(r) for r in google):
-        notes.append("the Google Fonts rows carry no primary script yet, so --script counts every family that covers "
-                     "it; `lazuli catalog remap --source google-fonts` adds it with no request")
+    if args.script and google and not any("primary_scripts" in _row_details(r) for r in google):
+        notes.append("the catalog rows carry no primary scripts yet, so --script counts every family that covers "
+                     "it; `lazuli catalog remap` adds them with no request")
     if args.by_familiarity:
         counts = ", ".join(f"{t} {sum(c['familiarity']['tier'] == t for c in out)}" for t in TIERS)
         notes.append(f"familiarity of all {len(out)} matches: {counts}")
@@ -922,7 +1096,11 @@ def _parser(prog: str) -> argparse.ArgumentParser:
     ap.add_argument("--installed", action="store_true", help="installed families only")
     ap.add_argument("--secondary-scripts", action="store_true",
                     help="count a family for --script when it merely covers the script, though its primary script "
-                         "(Google Fonts primaryScript, or a full measured CJK or Thai set) is another")
+                         "(a catalog's statement, or a full measured CJK or Thai set) is another and its Latin is no "
+                         "designed part of it")
+    ap.add_argument("--include-cuts", action="store_true",
+                    help="keep the optical-size and purpose cuts a --role contradicts (a caption or text cut for "
+                         "display, a mono for body, math, symbols, icons, emoji, barcodes), each marked in its evidence")
     ap.add_argument("--similar-to", metavar="FAMILY", help="rank installed families by measured-feature distance")
     ap.add_argument("--limit", type=int, default=DEFAULT_LIMIT, metavar="N",
                     help=f"candidates to list (default {DEFAULT_LIMIT}); a note says how many more match")
@@ -967,7 +1145,8 @@ def main(argv: list[str] | None = None, prog: str = "lazuli search") -> int:
         conn.close()
     if args.json:
         filters = {k: getattr(args, k) for k in ("script", "role", "category", "license", "delivery", "installed",
-                                                 "secondary_scripts", "similar_to", "by_familiarity", "limit")}
+                                                 "secondary_scripts", "include_cuts", "similar_to", "by_familiarity",
+                                                 "limit")}
         json.dump({"type": "font", "query": args.query, "filters": filters,
                    "candidates": [_public(c) for c in candidates], "notes": notes},
                   sys.stdout, ensure_ascii=False, indent=1)

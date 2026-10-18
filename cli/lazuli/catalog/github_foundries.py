@@ -32,9 +32,16 @@ stays raw text with no mapped license. Nothing is called open that its SPDX id o
 
 Details: the description, the homepage, a download address (the latest release's archive asset, else the
 repository's default-branch archive; `download_kind` says which), the repository name, and the latest release
-tag. Scripts come from the repository's description and topics (`latin`, `korean`, `japanese`, ...) and
-from the account's `scripts` hint; each `script:` label's raw text says which. Signals: `date_added` (repository
-creation) and `last_modified` (last push); the snapshot has no popularity, so familiarity is unknown.
+tag. Scripts come from the repository's topics and description (`latin`, `korean`, `japanese`, ... as plain words;
+a description word that an influence phrase leads into, as in `inspired by korean writing`, `derived from`, `based
+on`, `revival of a`, names a model and is skipped) and from the account's `scripts` hint; each `script:` label's raw
+text says which. They are also the family's primary scripts (`details.primary_scripts`, `primary_basis`): the ones
+the repository names itself, so `Korean Version of LXGW WenKai` is a Korean family in a Han account and `A Latin font`
+is a Latin one; when the repository names none, the account's hint, so `scripts: [hang, latn]` makes Pretendard
+and Spoqa Han Sans designed for both. The words are lexical, so a description that names no script says nothing, and
+one that mentions a script the family does not cover in other words than the influence phrases is read as covering it.
+Signals: `date_added` (repository creation) and `last_modified` (last push); the snapshot has no popularity, so
+familiarity is unknown.
 Responses are kept in `raw_payload`, so `from_raw` re-applies the mapping with no request.
 """
 from __future__ import annotations
@@ -81,6 +88,8 @@ _OFL_TEXT = re.compile(r"SIL OPEN FONT LICENSE,? Version 1\.1", re.I)
 _SCRIPT_WORDS = {"latin": "latn", "cyrillic": "cyrl", "greek": "grek", "korean": "hang", "hangul": "hang",
                  "japanese": "jpan", "kana": "kana", "kanji": "hani", "chinese": "hani", "hanzi": "hani",
                  "arabic": "arab", "hebrew": "hebr", "thai": "thai", "devanagari": "deva"}
+_INFLUENCE = re.compile(r"(?:inspired by|derived from|based on|reminiscent of|revival of|after|from|like|by)"
+                        r"(?:\s+[a-z'-]+){0,2}\s*$")       # a description names a model here, not what the family covers
 _ARCHIVE_ASSETS = (re.compile(r"\.zip$", re.I), re.compile(r"\.(?:tar\.gz|tgz|tar\.xz|7z)$", re.I),
                    re.compile(r"\.(?:otf|ttf|woff2?)$", re.I))
 _NEXT = re.compile(r'<([^>]+)>;\s*rel="next"')
@@ -148,15 +157,38 @@ def _license(repo: dict, lookup: dict | None) -> tuple[str | None, str | None, s
     return None, None, f"license file {name} was read and does not name a license lazuli knows ({note})"
 
 
-def _script_labels(account: Account, repo: dict) -> list[CatalogLabel]:
-    text = " ".join([repo.get("description") or "", *(repo.get("topics") or ())]).lower()
+def _stated_scripts(repo: dict) -> dict[str, str]:
+    """{ISO 15924 code: where it is said} for the scripts a repository's own topics and description name. A topic
+    names a script; a description word does too unless an influence phrase leads into it (`inspired by korean
+    writing`, `derived from`, `based on`, `revival of a`, `after`, `from`, `like`, `by`), which names a model,
+    not what the family covers."""
     found: dict[str, str] = {}
-    for word in re.findall(r"[a-z]+", text):
-        if word in _SCRIPT_WORDS:
-            found.setdefault(_SCRIPT_WORDS[word], f"{word} in the repository's description or topics")
+    where = "in the repository's description or topics"
+    for topic in repo.get("topics") or ():
+        for word in re.findall(r"[a-z]+", topic.lower()):
+            if word in _SCRIPT_WORDS:
+                found.setdefault(_SCRIPT_WORDS[word], f"{word} {where}")
+    text = (repo.get("description") or "").lower()
+    for hit in re.finditer(r"[a-z]+", text):
+        if hit[0] in _SCRIPT_WORDS and not _INFLUENCE.search(text[:hit.start()]):
+            found.setdefault(_SCRIPT_WORDS[hit[0]], f"{hit[0]} {where}")
+    return found
+
+
+def _scripts(account: Account, repo: dict) -> tuple[list[CatalogLabel], dict]:
+    """(script labels, primary-script details). Coverage: every script the repository names, plus the account's
+    `scripts` hint. Primary: the scripts the repository names itself, else the hint; a repository that says `Korean
+    Version` is a Korean family whatever its account's hint says, and one that says nothing takes the hint."""
+    stated = _stated_scripts(repo)
+    found = dict(stated)
     for code in account.scripts:
         found.setdefault(code, "account hint in the source registry")
-    return [CatalogLabel("property", raw, f"script:{code}") for code, raw in found.items()]
+    labels = [CatalogLabel("property", raw, f"script:{code}") for code, raw in found.items()]
+    if stated:
+        return labels, {"primary_scripts": list(stated), "primary_basis": "repository description or topics"}
+    if account.scripts:
+        return labels, {"primary_scripts": list(account.scripts), "primary_basis": "registry scripts hint"}
+    return labels, {}
 
 
 def _download(repo: dict, release: dict | None) -> tuple[str, str]:
@@ -171,9 +203,10 @@ def _download(repo: dict, release: dict | None) -> tuple[str, str]:
 def _family(account: Account, repo: dict, lookup: dict | None, release: dict | None) -> CatalogFamily:
     license_id, raw, license_source = _license(repo, lookup)
     download, kind = _download(repo, release)
+    script_labels, primary = _scripts(account, repo)
     homepage = (repo.get("homepage") or "").strip()
     details = {"repository": repo["full_name"], "license_source": license_source, "download_url": download,
-               "download_kind": kind}
+               "download_kind": kind, **primary}
     if repo.get("description"):
         details["description"] = repo["description"]
     if homepage.startswith(("http://", "https://")):
@@ -187,7 +220,7 @@ def _family(account: Account, repo: dict, lookup: dict | None, release: dict | N
     return CatalogFamily(
         source_key=repo["full_name"], family=family_name(repo["name"]), foundry=account.name, license=license_id or raw,
         url=repo.get("html_url") or f"https://github.com/{repo['full_name']}",
-        labels=[*([CatalogLabel("license", raw, license_id)] if raw else []), *_script_labels(account, repo)],
+        labels=[*([CatalogLabel("license", raw, license_id)] if raw else []), *script_labels],
         signals=signals, details=details)
 
 

@@ -35,11 +35,13 @@ Inter 5, Lobster 143, Gowun Batang 547), `dateAdded`, `lastModified`, `isNoto`, 
 and `size` are not kept. `from_raw` re-maps the kept responses, so a database synced before the signals were
 stored gets them from `lazuli catalog remap` without a request.
 
-Details (`CatalogFamily.details`): `primary_script`, the listing's `primaryScript` as a lowercase ISO 15924 code
-(`thai`, `gujr`, `kore`), only for a family that states one: Google leaves it empty for Latin-first families and
-sets it for Indic, Thai, Arabic, CJK, and other families whose own script is not Latin (checked 2026-10-16 on the
-kept response: Baloo Bhai 2 gujr, Bai Jamjuree thai, Black Han Sans kore, Noto Sans empty). `lazuli search --script`
-counts a family only when the script is its primary one.
+Details (`CatalogFamily.details`): `primary_scripts`, the listing's `primaryScript` as a one-item list of a lowercase
+ISO 15924 code (`["thai"]`, `["gujr"]`, `["kore"]`), with `primary_basis` `primaryScript`, only for a family that states
+one: Google leaves it empty for Latin-first families and sets it for Indic, Thai, Arabic, CJK, and other families whose
+own script is not Latin (checked 2026-10-16 on the kept response: Baloo Bhai 2 gujr, Bai Jamjuree thai, Black Han Sans
+kore, Noto Sans empty). It names one script, so a family designed for Latin and a CJK script together (IBM Plex Sans KR)
+shows only the CJK one here; `lazuli search` decides about its Latin from other evidence. `lazuli search --script`
+counts a family only when the script is one of its primary scripts.
 """
 from __future__ import annotations
 
@@ -243,7 +245,8 @@ def _family(entry: dict, tags, licenses: dict[str, str | None]) -> CatalogFamily
                            license=LICENSE_DIRS.get(directory), url=SPECIMEN_URL.format(name.replace(" ", "+")),
                            signals=_signals(entry))
     if isinstance(entry.get("primaryScript"), str) and entry["primaryScript"]:
-        family.details["primary_script"] = entry["primaryScript"].lower()
+        family.details["primary_scripts"] = [entry["primaryScript"].lower()]
+        family.details["primary_basis"] = "primaryScript"
     family.labels += _genre_labels(entry)
     family.labels += _tag_labels(tags)
     family.labels += subset_labels(entry.get("subsets") or ())

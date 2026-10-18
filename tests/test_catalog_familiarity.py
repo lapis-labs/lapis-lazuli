@@ -88,7 +88,7 @@ def test_remap_says_when_nothing_was_kept(tmp_path, monkeypatch, capsys):
     conn.close()
     assert catalog_cli.main(["remap"]) == 0
     assert "no kept responses to re-map; run `lazuli catalog sync --source google-fonts`" in capsys.readouterr().out
-    assert catalog_cli.main(["remap", "--source", "fontshare"]) == 2
+    assert catalog_cli.main(["remap", "--source", "sandoll"]) == 2
 
 
 # ---------------------------------------------------------------------------------------------- search

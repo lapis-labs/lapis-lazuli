@@ -39,6 +39,11 @@ def listed(name, *, scripts=("latn",), weights=(), signals=None, details=None, t
                   for tag, weight in tags]])
 
 
+def stated(*codes: str) -> dict:
+    """What Google Fonts' `primaryScript` becomes in a row's details."""
+    return {"primary_scripts": list(codes), "primary_basis": "primaryScript"}
+
+
 def run(capsys, *argv: str) -> dict:
     assert search.main([*argv, "--json"]) == 0
     return json.loads(capsys.readouterr().out)
@@ -57,9 +62,9 @@ def scripts_db(tmp_path, monkeypatch, capsys):
     conn = db.connect(tmp_path / "lazuli.db")
     store.replace_snapshot(conn, source("google-fonts", 10), [
         listed("Latin Display", weights=(700,)),
-        listed("Gujarati Display", scripts=("latn", "gujr"), weights=(700,), details={"primary_script": "gujr"}),
-        listed("Thai Display", scripts=("latn", "thai"), weights=(700,), details={"primary_script": "thai"}),
-        listed("Korean Display", scripts=("latn", "hang"), weights=(700,), details={"primary_script": "kore"})])
+        listed("Gujarati Display", scripts=("latn", "gujr"), weights=(700,), details=stated("gujr")),
+        listed("Thai Display", scripts=("latn", "thai"), weights=(700,), details=stated("thai")),
+        listed("Korean Display", scripts=("latn", "hang"), weights=(700,), details=stated("kore"))])
     store.replace_snapshot(conn, source("fontsource", 20), [listed("Noted Latin", weights=(700,))])
     conn.close()
     capsys.readouterr()
@@ -102,7 +107,7 @@ def test_google_fonts_keeps_primary_script_in_details_only_when_it_states_one():
     families = {f.family: f for f in google_fonts.families_from(
         (FIXTURES / "metadata-fonts.json").read_text(), (FIXTURES / "families.csv").read_text(),
         {d: json.loads((FIXTURES / f"tree-{d}.json").read_text()) for d in ("ofl", "apache", "ufl")})}
-    assert families["Nanum Myeongjo"].details == {"primary_script": "kore"}
+    assert families["Nanum Myeongjo"].details == {"primary_scripts": ["kore"], "primary_basis": "primaryScript"}
     assert families["ABeeZee"].details == {}                    # empty in the listing: nothing is stated, not "Latin"
 
 
@@ -112,7 +117,7 @@ def test_a_database_without_primary_scripts_says_how_to_add_them(tmp_path, monke
     store.replace_snapshot(conn, source("google-fonts", 10), [listed("Old Row", weights=(700,))])
     conn.close()
     notes = run(capsys, "--script", "latn")["notes"]
-    assert any("catalog remap --source google-fonts" in n for n in notes)
+    assert any("`lazuli catalog remap`" in n and "no primary scripts yet" in n for n in notes)
 
 
 # ------------------------------------------------------------------------------------------- role-fit keys

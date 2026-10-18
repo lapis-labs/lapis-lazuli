@@ -124,8 +124,9 @@ def test_filters_narrow_with_evidence(fonts_db, capsys):
     assert families(code) == ["Even Mono"] and "role code: monospaced (measured)" in code["candidates"][0]["evidence"]
     body = found(capsys, "--role", "body")
     names = families(body)
-    assert {"Test Sans", "Contrast Serif", "Even Mono", "Pen Notes", "Plain Serif"} <= set(names)
-    assert not {"Brush Hand", "Loud Display", "Only Icons"} & set(names)   # catalog hand, display; no letters
+    assert {"Test Sans", "Contrast Serif", "Pen Notes", "Plain Serif"} <= set(names)
+    assert not {"Brush Hand", "Loud Display", "Only Icons", "Even Mono"} & set(names)   # hand, display; no letters; a mono not asked for
+    assert "Even Mono" in families(found(capsys, "--role", "body", "--include-cuts"))
     pen = next(c for c in body["candidates"] if c["family"] == "Pen Notes")
     assert any(e.startswith("role body: text class") and e.endswith("the name suggests hand") for e in pen["evidence"])
     assert "role body: text class sans (catalog)" in next(

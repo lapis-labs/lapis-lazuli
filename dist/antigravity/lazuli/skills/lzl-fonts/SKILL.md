@@ -129,14 +129,22 @@ the less-known first), under a heading per tier. Keep the familiar candidates an
 place at least one less-known one beside them in the two or three you compare, unless the brief fixes the face; an
 `unknown` family may be a candidate but does not fill the less-known place.
 
-Breadth: `--script` counts a family only for the script it is designed for (Google Fonts `primaryScript`, or a full
-measured Hangul, kana, Han, or Thai set), so an Indic-, Thai-, or Korean-first family that merely has a Latin subset
-is not a Latin candidate; a note says how many were left out, and `--secondary-scripts` lists them. Equal scores are
-ordered by role-fit keys (display class, heaviest weight, Google's expressive and quality tag weights, number of
-weights), then popularity, and only last by name. Without `--installed`, uninstalled catalog families keep a share of
-the list (a quarter of `--limit`; with `--by-familiarity` at least one per tier, and the unknown slots go to catalog
-families one catalog at a time), and each row says `installed` or `catalog, not installed`. A database synced before
-primary scripts were kept needs `lazuli catalog remap --source google-fonts` once (no request).
+Breadth: `--script` counts a family only for the script it is designed for (a catalog's `primary_scripts`: Google
+Fonts `primaryScript`, a Fontsource non-Latin default subset, Fontshare's `script`, a GitHub foundry's description,
+topics, or registry hint; or a full measured Hangul, kana, Han, or Thai set), so an Indic-, Thai-, or Korean-first
+family that merely has a Latin subset is not a Latin candidate; a note says how many were left out, and
+`--secondary-scripts` lists them. A Hangul-, kana-, or Han-first family whose Latin is a designed part counts for Latin
+too (a catalog states both, at least six upright weights with the whole Latin alphabet in every installed face, or a
+name that adds Hangul to a Latin family; never Source Han or Noto CJK), and the evidence names the clause: a proxy, so
+judge a Latin that matters by a specimen. `--role` leaves out the optical-size and purpose cuts it contradicts
+(caption, micro, text, and small `opsz` cuts for display and heading; mono for every role but code unless
+`--category mono`; math, symbols, icons, emoji, barcodes for every role), by a name word, a catalog tag or class, or a
+measurement, and `--include-cuts` keeps them. Equal scores are ordered by role-fit keys (display class, heaviest
+weight, Google's expressive and quality tag weights, number of weights), then popularity, and only last by name.
+Without `--installed`, uninstalled catalog families keep a share of the list (a quarter of `--limit`; with
+`--by-familiarity` at least one per tier, and the unknown slots go to catalog families one catalog at a time), and each
+row says `installed` or `catalog, not installed`. A database synced before primary scripts were kept in this form
+needs `lazuli catalog remap` once (no request).
 
 Whether two faces look alike is not read from a role-size specimen or from `--similar-to`'s distance. Draw the same
 text at the same weight at 96 px or more, view a crop at native resolution (not a downscaled full page), and name
