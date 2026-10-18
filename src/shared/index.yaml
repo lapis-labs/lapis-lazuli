@@ -331,6 +331,77 @@ items:
       lzl-research: summary
       lps-brief: summary
 
+  - id: guideline-schema
+    kind: contract
+    path: guidelines/guideline.schema.yaml
+    note: v0; the shape of a guideline file, a behavior checklist in our own words (item, source section and URL, platforms, how it is measured, threshold in its own unit) or a consult-only list of links; read by `lapis-design` and by the lapis step that picks a plan's guidelines
+    consumers:
+      lapis: full
+      ultramarine: full
+      lps-brief: summary
+
+  - id: guideline-units
+    kind: data
+    path: guidelines/units.yaml
+    note: v0; how a web prototype's CSS px stands for Apple points, Android dp, and Windows epx in a guideline threshold (1:1, with the basis stated); a check converts by this table, never silently
+    consumers:
+      lapis: full
+      ultramarine: full
+
+  - id: guideline-wcag-2-2
+    kind: data
+    path: guidelines/wcag-2.2.yaml
+    note: v0; WCAG 2.2 behavior checklist (web), each item with the existing lint rules that measure it
+    consumers:
+      lapis: full
+      ultramarine: full
+
+  - id: guideline-material-3
+    kind: data
+    path: guidelines/material-3.yaml
+    note: v0; Material 3 behavior checklist (Android and web); attribution line for CC BY 4.0 or Apache 2.0 in the file
+    consumers:
+      lapis: full
+      ultramarine: full
+
+  - id: guideline-fluent-2
+    kind: data
+    path: guidelines/fluent-2.yaml
+    note: v0; Fluent 2 and Windows apps behavior checklist (desktop and web); attribution line for the CC BY 4.0 Windows documents in the file
+    consumers:
+      lapis: full
+      ultramarine: full
+
+  - id: guideline-krds
+    kind: data
+    path: guidelines/krds.yaml
+    note: v0; KRDS behavior checklist (web), read from the official pages, with the KOGL type 1 attribution line
+    consumers:
+      lapis: full
+      ultramarine: full
+
+  - id: guideline-apple-hig
+    kind: data
+    path: guidelines/apple-hig.yaml
+    note: v0; Apple HIG behavior checklist (iOS) from the Context7 index, which lags the 2026 changes the file lists as not covered
+    consumers:
+      lapis: full
+      ultramarine: full
+
+  - id: guideline-toss-tds
+    kind: data
+    path: guidelines/toss-tds.yaml
+    note: v0; Toss TDS as a consult-only reference with links; no checklist because the kit license limits use to Apps in Toss
+    consumers:
+      lapis: full
+
+  - id: guideline-daangn-seed
+    kind: data
+    path: guidelines/daangn-seed.yaml
+    note: v0; Daangn SEED as a consult-only reference with links
+    consumers:
+      lapis: full
+
   - id: direction-proposal
     kind: contract
     path: direction/schema.yaml

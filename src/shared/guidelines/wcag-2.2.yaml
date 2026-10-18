@@ -1,0 +1,145 @@
+# WCAG 2.2 behavior checklist — see guideline.schema.yaml
+# The success criteria that a render, a behavior session, or a reader of the captures can judge, restated in our own words
+# with a link to each criterion's Understanding page. The W3C text is not copied here; read the linked page for the
+# normative wording and the exceptions. Each item names the existing lint rules whose findings are its evidence.
+version: 0
+guideline: wcag-2.2
+name: Web Content Accessibility Guidelines 2.2 (level A and AA criteria that a page's behavior can show)
+short_name: "the WCAG 2.2 web accessibility guidelines"
+kind: checklist
+visual_layer: false
+platforms: [web]
+checked_at: "2026-10-18"
+route:
+  used: { kind: official-docs, ref: "https://www.w3.org/TR/2024/REC-WCAG22-20241212/" }
+  alternative: { kind: owner-saved, ref: "pages the owner saved from the W3C Recommendation and its Understanding documents" }
+license:
+  summary: The W3C Document License lets a copy or derivative carry the document with a link to the original, its copyright notice, and its status; this file restates criteria in new words, links each one, and presents itself as no W3C document.
+  attribution: "Criteria after WCAG 2.2, W3C Recommendation 12 December 2024, https://www.w3.org/TR/2024/REC-WCAG22-20241212/, Copyright © 2024 World Wide Web Consortium (W3C). The wording here is ours and is not the specification."
+items:
+  - id: keyboard
+    requirement: Every function the page offers can be done from the keyboard alone, without a path that needs a specific timing of keystrokes.
+    source: { section: "2.1.1 Keyboard", url: "https://www.w3.org/WAI/WCAG22/Understanding/keyboard.html" }
+    platforms: [web]
+    measure: behavior
+    rules: [ux.keyboard-inoperable]
+  - id: no-keyboard-trap
+    requirement: Keyboard focus that enters a part of the page can leave it with standard keys; only an open modal dialog contains focus, and it can be dismissed.
+    source: { section: "2.1.2 No Keyboard Trap", url: "https://www.w3.org/WAI/WCAG22/Understanding/no-keyboard-trap.html" }
+    platforms: [web]
+    measure: behavior
+    rules: [ux.keyboard-trap]
+  - id: focus-order
+    requirement: Tab order follows the meaning and reading order of the layout, so moving focus never makes the user lose their place.
+    source: { section: "2.4.3 Focus Order", url: "https://www.w3.org/WAI/WCAG22/Understanding/focus-order.html" }
+    platforms: [web]
+    measure: behavior
+    rules: [ux.focus-order]
+  - id: bypass-blocks
+    requirement: A block of content that repeats on every page can be skipped, by a skip link or by landmarks and headings that reach the main content.
+    source: { section: "2.4.1 Bypass Blocks", url: "https://www.w3.org/WAI/WCAG22/Understanding/bypass-blocks.html" }
+    platforms: [web]
+    measure: behavior
+    rules: [ux.no-bypass]
+  - id: focus-visible
+    requirement: The control that has keyboard focus shows it, with an indicator a person can see without hunting for it.
+    source: { section: "2.4.7 Focus Visible", url: "https://www.w3.org/WAI/WCAG22/Understanding/focus-visible.html" }
+    platforms: [web]
+    measure: behavior
+    rules: [code.focus-outline-removed]
+    limits: The behavior probe forces keyboard focus and compares pixels around the control; it cannot judge a focus style that appears only after an animation or a delay.
+  - id: focus-not-obscured
+    requirement: A focused control is not completely hidden by sticky headers, footers, banners, or other content the page itself adds.
+    source: { section: "2.4.11 Focus Not Obscured (Minimum)", url: "https://www.w3.org/WAI/WCAG22/Understanding/focus-not-obscured-minimum.html" }
+    platforms: [web]
+    measure: behavior
+    rules: [ux.focus-obscured]
+  - id: target-size-min
+    requirement: A pointer target is at least 24 by 24 CSS px, or smaller only when the space around it keeps it clear of neighbouring targets, or it sits in a sentence, or another control does the same job at full size.
+    source: { section: "2.5.8 Target Size (Minimum)", url: "https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html" }
+    platforms: [web]
+    measure: render
+    rules: [component.small-target]
+    threshold: { value: 24, unit: css-px, quantity: target-size, note: "a smaller target passes when a 24 CSS px circle centered on it meets no other target or circle" }
+    limits: The render extract holds each element's box; a hit area enlarged by padding outside the box, or by a pseudo-element, is not seen.
+  - id: pointer-gestures
+    requirement: An action that needs a path-based or multi-finger gesture can also be done with a single tap or click.
+    source: { section: "2.5.1 Pointer Gestures", url: "https://www.w3.org/WAI/WCAG22/Understanding/pointer-gestures.html" }
+    platforms: [web]
+    measure: behavior
+    rules: [ux.gesture-only]
+  - id: dragging-alternative
+    requirement: Anything done by dragging can also be done with a single pointer action that does not drag, such as buttons, a menu, or a typed value.
+    source: { section: "2.5.7 Dragging Movements", url: "https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html" }
+    platforms: [web]
+    measure: behavior
+    rules: [ux.gesture-only]
+  - id: resize-text
+    requirement: Text can be enlarged to twice its size without assistive technology and without losing content or function.
+    source: { section: "1.4.4 Resize Text", url: "https://www.w3.org/WAI/WCAG22/Understanding/resize-text.html" }
+    platforms: [web]
+    measure: render
+    threshold: { value: 200, unit: percent, quantity: text-scale, note: "no render at 200% text is captured today, so no tool measures this item" }
+    limits: The render matrix has no 200% text capture; a reviewer needs a capture at that scale or the running page.
+  - id: reflow
+    requirement: Content fits a viewport 320 CSS px wide in one scrolling direction, with no loss of content or function; tables, maps, and diagrams may scroll in their own region.
+    source: { section: "1.4.10 Reflow", url: "https://www.w3.org/WAI/WCAG22/Understanding/reflow.html" }
+    platforms: [web]
+    measure: render
+    rules: [layout.compact-overflow]
+    threshold: { value: 320, unit: css-px, quantity: viewport-width }
+    viewports: [320]
+  - id: contrast-min
+    requirement: Body text reaches a contrast ratio of 4.5 to 1 against its background, and large text 3 to 1.
+    source: { section: "1.4.3 Contrast (Minimum)", url: "https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html" }
+    platforms: [web]
+    measure: render
+    rules: [color.text-contrast]
+  - id: timing-adjustable
+    requirement: A time limit warns the user before it ends and lets them extend it, unless the limit is essential.
+    source: { section: "2.2.1 Timing Adjustable", url: "https://www.w3.org/WAI/WCAG22/Understanding/timing-adjustable.html" }
+    platforms: [web]
+    measure: behavior
+    rules: [ux.timeout-without-warning]
+  - id: on-focus
+    requirement: Moving focus to a control does not by itself change the page, open a window, or submit anything.
+    source: { section: "3.2.1 On Focus", url: "https://www.w3.org/WAI/WCAG22/Understanding/on-focus.html" }
+    platforms: [web]
+    measure: behavior
+    rules: [ux.unexpected-context-change]
+  - id: error-identification
+    requirement: When input is refused, the field in error is named and the problem is described in text.
+    source: { section: "3.3.1 Error Identification", url: "https://www.w3.org/WAI/WCAG22/Understanding/error-identification.html" }
+    platforms: [web]
+    measure: behavior
+    rules: [ux.input-error-unidentified]
+  - id: labels-or-instructions
+    requirement: Every input has a label or instruction that stays visible and tells what to enter.
+    source: { section: "3.3.2 Labels or Instructions", url: "https://www.w3.org/WAI/WCAG22/Understanding/labels-or-instructions.html" }
+    platforms: [web]
+    measure: render
+    rules: [component.unlabeled-input]
+  - id: redundant-entry
+    requirement: Information the user already gave in the same process is not asked for again, unless re-entry is essential or for security.
+    source: { section: "3.3.7 Redundant Entry", url: "https://www.w3.org/WAI/WCAG22/Understanding/redundant-entry.html" }
+    platforms: [web]
+    measure: behavior
+    rules: [ux.redundant-entry]
+  - id: accessible-authentication
+    requirement: Signing in does not depend on remembering, transcribing, or solving something, unless another way in is offered or the browser can fill it.
+    source: { section: "3.3.8 Accessible Authentication (Minimum)", url: "https://www.w3.org/WAI/WCAG22/Understanding/accessible-authentication-minimum.html" }
+    platforms: [web]
+    measure: behavior
+    rules: [ux.inaccessible-auth]
+  - id: name-role-value
+    requirement: Each control exposes a name, a role, and its current state to assistive technology; an icon-only control has an accessible name.
+    source: { section: "4.1.2 Name, Role, Value", url: "https://www.w3.org/WAI/WCAG22/Understanding/name-role-value.html" }
+    platforms: [web]
+    measure: render
+    rules: [component.unnamed-icon-button]
+  - id: status-messages
+    requirement: A status message that appears without moving focus, such as a result count or a saved notice, is announced to assistive technology.
+    source: { section: "4.1.3 Status Messages", url: "https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html" }
+    platforms: [web]
+    measure: behavior
+    rules: [ux.status-not-announced]

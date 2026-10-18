@@ -1,0 +1,174 @@
+# KRDS (Korea Design System) behavior checklist — see guideline.schema.yaml
+# Items restate in our words what the linked KRDS component and service-pattern pages ask of a screen or a flow, read from the
+# official pages on `checked_at`. KRDS covers web and mobile web or app screens but, as its own scope page says, not the
+# navigation models of native operating systems; so the platform here is the web, and a native app follows the OS's guidelines.
+# Only the behavior layer is here: KRDS's color, type, and component look are the visual layer, which the owner's `visual` choice governs.
+version: 0
+guideline: krds
+name: KRDS, the Korea Design System for government digital services (behavior of web and mobile-web screens)
+short_name: "KRDS, the Korean government design system"
+kind: checklist
+visual_layer: true
+platforms: [web]
+checked_at: "2026-10-18"
+route:
+  used: { kind: official-docs, ref: "https://www.krds.go.kr/html/site/index.html", note: "the component and service-pattern pages named in the items, read on checked_at; the Context7 index of the site holds 4 snippets and was not used for the items" }
+  alternative: { kind: owner-saved, ref: "the KRDS PDF guide (August 2025), the HTML Component Kit (https://github.com/KRDS-uiux/krds-uiux), or pages the owner saved" }
+license:
+  summary: All KRDS materials are provided under KOGL Type 1, which allows commercial and non-commercial use and modified or derivative works when the source is credited. These items are rewritten in our own words.
+  attribution: "This file uses the Government-wide UI/UX Design System (KRDS, Korea Design System) created by the Ministry of the Interior and Safety in 2024 and released under KOGL Type 1; the materials can be downloaded free of charge from https://www.krds.go.kr. The items here are our own wording and are not the KRDS text."
+not_covered:
+  - "Components and service patterns no item names, among them the main menu, the breadcrumb, the step indicator, consent, and identity entry"
+  - "KRDS digital-inclusion guidelines as a whole; only the accessibility notes on the pages named in the items are used"
+items:
+  - id: modal-user-initiated
+    requirement: A modal opens because of something the user did; it opens by itself only to warn that a session is about to expire or to give urgent information on the main screen.
+    source: { section: "Components > Layout and display > Modal > Usability guidelines", url: "https://www.krds.go.kr/html/site/component/component_04_05.html" }
+    platforms: [web]
+    measure: behavior
+    rules: [ux.routine-modal]
+  - id: modal-focus-flow
+    requirement: When a modal opens, keyboard focus moves to the modal or its first interactive element and stays inside it; when it closes, focus returns to the control that opened it.
+    source: { section: "Components > Layout and display > Modal > Accessibility guidelines", url: "https://www.krds.go.kr/html/site/component/component_04_05.html" }
+    platforms: [web]
+    measure: behavior
+    rules: [ux.dialog-focus]
+  - id: modal-close-last
+    requirement: The modal's close button comes last in the markup, so a keyboard user reads the content before reaching it and a screen reader finds the content.
+    source: { section: "Components > Layout and display > Modal > Accessibility guidelines", url: "https://www.krds.go.kr/html/site/component/component_04_05.html" }
+    platforms: [web]
+    measure: static
+  - id: modal-escape
+    requirement: Escape closes a modal that has a close button, and Enter or Space on a control runs its action.
+    source: { section: "Components > Layout and display > Modal > Interaction guidelines", url: "https://www.krds.go.kr/html/site/component/component_04_05.html" }
+    platforms: [web]
+    measure: behavior
+  - id: modal-footer-visible
+    requirement: When a modal's content scrolls, the scroll area is recognisable, for example with a fade at its foot, and the footer with the action buttons stays visible at the bottom of the modal.
+    source: { section: "Components > Layout and display > Modal > Usability guidelines", url: "https://www.krds.go.kr/html/site/component/component_04_05.html" }
+    platforms: [web]
+    measure: behavior
+  - id: modal-light
+    requirement: A modal holds a short message or one decision, with little inside it beyond the action buttons; tabs, accordions, input forms, and multi-step processes go to a screen of their own.
+    source: { section: "Components > Layout and display > Modal > Usage", url: "https://www.krds.go.kr/html/site/component/component_04_05.html" }
+    platforms: [web]
+    measure: judge
+  - id: modal-approval-no-close
+    requirement: A modal that must be answered before the process goes on offers no close icon, only the actions that accept or refuse.
+    source: { section: "Components > Layout and display > Modal > Types", url: "https://www.krds.go.kr/html/site/component/component_04_05.html" }
+    platforms: [web]
+    measure: judge
+  - id: resize-offered
+    requirement: The service offers its own way to enlarge or reduce what is shown, with at most five options and a descriptive label for each, reachable without hunting through settings.
+    source: { section: "Components > Settings > Screen size adjustment > Usability guidelines", url: "https://www.krds.go.kr/html/site/component/component_10_02.html" }
+    platforms: [web]
+    measure: judge
+    threshold: { value: 5, unit: count, quantity: count, bound: max, note: "the options KRDS lists run from 90% to 150%" }
+  - id: resize-no-loss
+    requirement: When the screen is enlarged, content and functions available at the default size stay reachable; they may be reached differently, as a main menu turns into a menu button, but their meaning does not change.
+    source: { section: "Components > Settings > Screen size adjustment > Accessibility guidelines", url: "https://www.krds.go.kr/html/site/component/component_10_02.html" }
+    platforms: [web]
+    measure: render
+    limits: The render matrix has no enlarged-text or zoomed capture beyond its 320 and 390 CSS px widths, which stand in for strong zoom.
+  - id: resize-one-direction
+    requirement: At a viewport as narrow as 480 CSS px, the page scrolls in one direction only; images, media, and tables may scroll the other way inside their own region.
+    source: { section: "Components > Settings > Screen size adjustment > Accessibility guidelines", url: "https://www.krds.go.kr/html/site/component/component_10_02.html" }
+    platforms: [web]
+    measure: render
+    rules: [layout.compact-overflow]
+    viewports: [320, 390]
+  - id: back-top-left
+    requirement: The Back button sits at the left of the top bar and always goes to the previous screen or the level above, while close and cancel are separate controls in their own place.
+    source: { section: "Components > Mobile > Back button", url: "https://www.krds.go.kr/html/site/component/component_12_02.html" }
+    platforms: [web]
+    measure: behavior
+    rules: [ux.back-trap]
+  - id: back-predictable
+    requirement: The person can tell where Back will take them before they press it.
+    source: { section: "Components > Mobile > Back button", url: "https://www.krds.go.kr/html/site/component/component_12_02.html" }
+    platforms: [web]
+    measure: judge
+  - id: back-warns-before-loss
+    requirement: Wherever going back could discard what the person has typed, a warning comes first and lets them decide whether to go on.
+    source: { section: "Components > Mobile > Back button", url: "https://www.krds.go.kr/html/site/component/component_12_02.html" }
+    platforms: [web]
+    measure: behavior
+    rules: [ux.lost-input]
+  - id: back-matches-system
+    requirement: The in-page Back button and the system's Back key or gesture lead to the same place, never one closing a popup while the other leaves the page.
+    source: { section: "Components > Mobile > Back button", url: "https://www.krds.go.kr/html/site/component/component_12_02.html" }
+    platforms: [web]
+    measure: behavior
+    rules: [ux.back-trap]
+  - id: sheet-has-close
+    requirement: A bottom sheet has a visible Close or X button as well as the handle that swipes or taps it away, because not everyone knows the handle closes it.
+    source: { section: "Components > Mobile > Bottom sheet > Usability guidelines", url: "https://www.krds.go.kr/html/site/component/component_12_03.html" }
+    platforms: [web]
+    measure: render
+  - id: sheet-single
+    requirement: Bottom sheets are not stacked; where more than one cannot be avoided, the current level is shown and closing says whether it closes this sheet or all of them.
+    source: { section: "Components > Mobile > Bottom sheet > Usability guidelines", url: "https://www.krds.go.kr/html/site/component/component_12_03.html" }
+    platforms: [web]
+    measure: judge
+  - id: sheet-short
+    requirement: A bottom sheet is for a short, passing interaction, not for information the person has to study or for a step of the journey.
+    source: { section: "Components > Mobile > Bottom sheet > Usage", url: "https://www.krds.go.kr/html/site/component/component_12_03.html" }
+    platforms: [web]
+    measure: judge
+  - id: tabbar-count
+    requirement: A tab bar holds at most five items; more destinations go behind an all-menu or more button at its right end.
+    source: { section: "Components > Mobile > Tab bar > Usability guidelines", url: "https://www.krds.go.kr/html/site/component/component_12_07.html" }
+    platforms: [web]
+    measure: judge
+    threshold: { value: 5, unit: count, quantity: count, bound: max }
+  - id: tabbar-labels
+    requirement: Each tab shows an icon and a one- or two-word label that is never cut or abbreviated at any screen size or language.
+    source: { section: "Components > Mobile > Tab bar > Usability guidelines", url: "https://www.krds.go.kr/html/site/component/component_12_07.html" }
+    platforms: [web]
+    measure: render
+    rules: [layout.compact-overflow]
+  - id: tabbar-fixed
+    requirement: The tab bar stays fixed at the bottom of the screen and does not hide or move while the page scrolls, except in deeper levels that have no tab bar.
+    source: { section: "Components > Mobile > Tab bar > Usability guidelines", url: "https://www.krds.go.kr/html/site/component/component_12_07.html" }
+    platforms: [web]
+    measure: behavior
+  - id: tabbar-semantics
+    requirement: The tab bar is a navigation landmark and the current item carries the current-page state for screen readers.
+    source: { section: "Components > Mobile > Tab bar > Accessibility guidelines", url: "https://www.krds.go.kr/html/site/component/component_12_07.html" }
+    platforms: [web]
+    measure: static
+  - id: form-no-tabs
+    requirement: Within a required step, the sections of an application form are not split into tabs or accordions, where a person can miss one and cause an input error.
+    source: { section: "Service patterns > Apply > Filling in the application > Usability guidelines", url: "https://www.krds.go.kr/html/site/service/service_04_05.html" }
+    platforms: [web]
+    measure: judge
+  - id: form-dependency-order
+    requirement: A field whose value changes an earlier field or step is placed before what it affects; where that is not possible, an inline message says that an earlier entry changed.
+    source: { section: "Service patterns > Apply > Filling in the application > Usability guidelines", url: "https://www.krds.go.kr/html/site/service/service_04_05.html" }
+    platforms: [web]
+    measure: judge
+  - id: form-save-draft
+    requirement: A long or multi-step application can be saved temporarily and resumed, because no one can be assumed to finish it in one sitting.
+    source: { section: "Service patterns > Apply > Filling in the application > Usability guidelines", url: "https://www.krds.go.kr/html/site/service/service_04_05.html" }
+    platforms: [web]
+    measure: behavior
+  - id: form-help-at-field
+    requirement: Help for a field sits on the field itself, with at least one way to get help, such as a contact, a help panel, an example, or frequent questions, and its text and links are accurate.
+    source: { section: "Service patterns > Apply > Filling in the application > Usability guidelines", url: "https://www.krds.go.kr/html/site/service/service_04_05.html" }
+    platforms: [web]
+    measure: judge
+  - id: form-reset-apart
+    requirement: A reset button is set apart from the other buttons, visually and in space, so no one wipes their entries by mistake.
+    source: { section: "Service patterns > Apply > Filling in the application > Usability guidelines", url: "https://www.krds.go.kr/html/site/service/service_04_05.html" }
+    platforms: [web]
+    measure: judge
+  - id: form-step-announced
+    requirement: The current step of a multi-step form reaches screen readers, by the current-state attribute or by text on the step label.
+    source: { section: "Service patterns > Apply > Filling in the application > Accessibility guidelines", url: "https://www.krds.go.kr/html/site/service/service_04_05.html" }
+    platforms: [web]
+    measure: static
+  - id: form-section-headings
+    requirement: Each section of the application form has a real heading, so a screen-reader user can see the structure and skip from section to section.
+    source: { section: "Service patterns > Apply > Filling in the application > Accessibility guidelines", url: "https://www.krds.go.kr/html/site/service/service_04_05.html" }
+    platforms: [web]
+    measure: static
