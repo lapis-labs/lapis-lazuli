@@ -9,6 +9,7 @@ matters (two to four; the default is two), and the owner picks one before the pl
 - Place and who: when the step runs and who makes each rough.
 - What differs and what may not: representation, color allocation, hierarchy, reference direction; never decoration.
 - The shared brief: written once and checked once by `diverge contract` before the fan-out; what the first view carries and what comes later.
+- What a rough opens as: the opening rules `check` runs on each rough's render, and what lifts them.
 - The commands: `start`, `contract`, `resample`, `variant`, `check`, `seal`, `show`.
 - The rough and its card: what to make, what the card says, and how much a rough may carry before the pick.
 - What a rough carries of the owner's words: its type, its motion, and its style answers, and why each is checked.
@@ -55,7 +56,13 @@ what (identity, the claim), one decisive object, and the primary action. A core 
 of it (`first_view_share: 0`) and plays its part later; the card says which part, in `later`, apart from its share of the
 first view. "Show the core at once" in an owner's answer means the core impression, not every comparison, procedure, and
 install step on one screen; read it that way unless the owner said they want the evidence in the first screen, and then name
-that answer in the brief (`demanded_by`).
+that answer in the brief (`demanded_by`). The brief therefore lists `identity`, `decisive-object`, and `primary-action`; the claim
+belongs to who and what. A brief that lists all four of `identity`, `claim`, `decisive-object`, and `primary-action` is refused
+by `diverge contract` unless `opening.carries_by` quotes the owner's `[declared]` line about the first view that asks for all
+four. A decisive object that is the product's own window or a screenshot of the app is a composition generated pages open
+with; name it the decisive object only when the owner's words about the first view ask for it. The brief has no field for the
+object's medium, so the contract cannot read this: it is your reading, and `diverge check` reads the renders instead (see
+"What a rough opens as").
 
 ## The shared brief
 
@@ -68,11 +75,19 @@ record, the direction answers, and your own instructions, with the way the brief
 each other first (comparisons "lead the page" and a hero that holds three actions do not mean all of it in one screen). The
 workers do not resolve contradictions; they would resolve them three different ways, or all the same wrong way.
 
+An owner's answer about the order of work or the build order ("the library window first, then the homepage") is a plan of
+work, never a decision about content or layout, and a `resolved` entry may not turn it into one. It does not become "the first
+view shows the window", and it does not make the window the decisive object: it governs what is built after the pick, while a
+rough stays a first view of the page. What the first view holds comes from the owner's words about the first view and from the
+direction conversation. No command can tell a work order from a layout request; that reading is yours and the critic's.
+
 Then run `lapis-design diverge contract --task <task>` once, before the fan-out. It is the one check of what every rough
 inherits, and it refuses while any of these is missing or wrong:
 
-- the hierarchy: the opening carries `identity` and `primary-action` (the hero), a process (`process-sequence`) object is not
-  required in the first view without an owner answer in `demanded_by`, and the brief does not require every core object there;
+- the hierarchy: the opening carries `identity` and `primary-action` (the hero), not all four of `identity`, `claim`,
+  `decisive-object`, and `primary-action` without the owner's quoted `[declared]` line about the opening (`opening.carries_by`),
+  a process (`process-sequence`) object is not required in the first view without an owner answer in `demanded_by`, and the
+  brief does not require every core object there;
 - no meta text: `key_copy` has a `headline` and a `cta`, and the meta-text rule (`copy.meta-text`) opens no finding on them
   (a demo notice, producer-facing words, a page that describes itself);
 - the phone as its own composition: `phone.composition` says what the 390 opening holds and what it moves after the content;
@@ -97,6 +112,33 @@ roughs, not after them. Whether the copy is good for the subject stays your judg
 `diverge check` also refuses a missing or invalid brief, one that requires every core object in the first view with no owner
 answer in `demanded_by`, and a card whose first view disagrees with it (an object it puts later that the card shows, one it
 requires that the card leaves out) or carries more objects than its drawn hierarchy allows.
+
+## What a rough opens as
+
+The rough stage checks openings. The distance of two roughs counts where text, media, and controls sit and how color is spread,
+so two roughs that open as one hero, a headline and a button on one side and an app window on the other, can still count as
+different. `diverge check` therefore runs the opening-composition rules of the lint of built pages on each rough's own render:
+`layout.split-hero`, `layout.crowded-hero`, and `component.fake-app-window` when the window starts in the first view
+(`rough_opening` in `../shared/diverge/pools.yaml`, the detectors the lint uses).
+
+- When every rough of the set trips the same rule, `check` refuses the set and names the rule and the roughs. Open at least one
+  rough on the relation between its claim and its object (where the object stands, what is drawn of it, or what the first view
+  holds instead), and render it again.
+- When only some do, the set passes, and the owner block and the pick question say which rough "opens as a split hero" (or
+  crowded, or on a drawn app window), so the owner picks knowing it. Say the same in your message at turn two.
+- Only the brief lifts a refusal: a row of `opening.keeps` with `rule` and `by`, the owner's `[declared]` line about the opening
+  that asks for what the rule flags (a two-column opening, a logo wall or metrics in the first view, an app window in it),
+  quoted. `diverge contract` reads each quote: it has to be in a `[declared]` line of the brief record, that line has to speak of
+  the opening (first view, first screen, hero, 첫 화면, 히어로, and the like in `rough_opening.opening_words`), and it has to ask
+  for something the rule flags (`rough_opening.asks`). An answer about the order of work is no such line. A keep condition the
+  rule lists for a built page (a won comparison, a labeled illustration, an evidentiary capture) does not lift it here: the
+  roughs are the comparison, and no owner has chosen yet.
+
+The matching of quotes is lexical, as for motion: a lead for the gate, never a judgment of fit, so read the owner's line
+yourself before you quote it.
+
+A set sealed before these checks existed comes back: `diverge contract` is a new version (3), so a brief and a seal made under
+the old one are checked again. Run `contract`, then `check` and `seal`, and let the owner pick on the new seal.
 
 ## The commands
 

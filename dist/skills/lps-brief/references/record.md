@@ -114,6 +114,12 @@ format is the `requirements-record` item in `../shared/index.yaml`. Only `lapis-
   not under an answers heading, so the cap on rounds does not count them. The owner's pick among the `diverge` roughs is
   `- [declared] Pick: C2 — <the owner's words>`; it is the owner's decision, not a row. Every other `[declared]` item
   there (`- [declared] K2 ticker band: drop — <their words>`) is a row (the direction-conversation guide of the `lapis` skill).
+- **An answer about the order of work is a plan of work.** "Build the library window first, then the homepage" says what is
+  made when. Record it as the owner's `[declared]` word, and read it as that: it is never a decision about what a page
+  shows, where the product appears in it, or how a first view is laid out. Nothing downstream may turn it into one, not the
+  brief of `diverge` (`resolved`), the plan, or a rough's card; what the first view holds comes from the owner's words about
+  the first view, and when they gave none, from the direction conversation. If you cannot tell which an answer is, ask in
+  the next turn.
 - **Approval is not a requirement.** Every other top-level `[declared]` item, under any heading, becomes a row that the
   critic must judge before `done`. Record an owner's plain approval ("looks right, go on") as an untagged item
   (`- Approved the slice: <the owner's words>`), and tag `[declared]` only a reply that says what the owner wants.

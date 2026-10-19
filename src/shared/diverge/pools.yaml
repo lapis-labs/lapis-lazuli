@@ -149,6 +149,32 @@ rough_carry:
     changed_share: 0.001
     pixel_delta: 16
 
+# `rough_opening`: the opening-composition rules `diverge check` runs on each rough's own render extract
+# (`cli/lapis_design/rough_opening.py`), with the detectors they have in the lint of built pages. `rules` are ids of rules
+# of `slop/rules.yaml` that read the first view; `component.fake-app-window` counts only when the window starts in the first
+# view. When every rough of a set trips the same rule, `check` refuses the set (every rough opens the same default and they
+# differ in finish only); when some do, the set passes and the owner block says which. Only the brief lifts it:
+# `opening.keeps` quotes the owner's `[declared]` line that asks for what the rule flags, and `opening.carries_by` quotes the
+# one that asks for all four carries of the opening (`diverge contract` reads both). A quote counts when it is in a
+# `[declared]` line of the brief record, that line speaks of the opening (`opening_words`), and, for a `keeps` row, it has a
+# term of `asks.<rule>`. The terms are lexical, as in `rough_carry`: a lead for the gate, never a judgment of fit. An owner's
+# answer about the order of work or building is a plan of work and asks for none of this.
+rough_opening:
+  rules: [layout.split-hero, layout.crowded-hero, component.fake-app-window]
+  opening_words: ["first view", "first screen", "opening", "hero", "above the fold", "landing view",
+                  "첫 화면", "첫화면", "첫 뷰", "첫뷰", "히어로", "오프닝",
+                  "ファーストビュー", "トップ画面", "首屏", "第一屏"]
+  asks:
+    layout.split-hero: ["two-column", "two column", "2-column", "split hero", "split opening", "side by side",
+                        "2단", "두 칼럼", "두 컬럼", "투컬럼", "좌우로", "나란히",
+                        "2カラム", "二列", "左右に", "两栏", "兩欄", "左右并排"]
+    layout.crowded-hero: ["logo wall", "logos", "metric", "stats", "proof", "testimonial",
+                          "로고", "지표", "수치", "후기", "실적",
+                          "ロゴ", "実績", "指标", "数据", "口碑"]
+    component.fake-app-window: ["app window", "product window", "window", "screenshot", "screen capture",
+                                "앱 창", "제품 창", "창을", "스크린샷", "화면 캡처",
+                                "ウィンドウ", "スクリーンショット", "窗口", "截图"]
+
 distance:
   calibrated: true
   weights: { struct: 0.55, mass: 0.20, repr: 0.25 }

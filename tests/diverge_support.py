@@ -68,7 +68,7 @@ def _view_boxes(number: int, width: int) -> list[dict]:
         else:
             boxes.append({"role": role, "rect": {"x": 20 + 40 * ((i + number) % 2), "y": 60 + 240 * i, "w": 300, "h": 200}})
     boxes.append({"role": "section", "rect": {"x": 0, "y": 0, "w": width, "h": h}})
-    return boxes
+    return [{"id": _bid(n), "parent": None, **box} for n, box in enumerate(boxes, 1)]
 
 
 def paint(path: Path, size: tuple[int, int], stance: str, number: int) -> None:
@@ -92,19 +92,50 @@ def _runs(number: int, fonts: dict[str, str]) -> list[dict]:
     return [run(1, f"Kiln {number}", "heading", fonts["headline"]), run(2, "Text 0", "body", fonts["body"])]
 
 
+def _bid(n: int) -> str:
+    return f"b{n:012x}"
+
+
+def _opening_view(kind: str, fonts: dict[str, str]) -> tuple[list[dict], list[dict]]:
+    """The boxes and text runs of a 1440 first view that opens as `kind`: `split` is the heading, a line, and a button beside
+    an image (what `layout.split-hero` reads); `stacked` is the same heading, line, and button over a wide image."""
+    def box(n: int, role: str, x: int, y: int, w: int, h: int, **extra) -> dict:
+        return {"id": _bid(n), "parent": None if n == 1 else _bid(1), "role": role, "role_confidence": 0.9,
+                "rect": {"x": x, "y": y, "w": w, "h": h}, **extra}
+
+    def run(n: int, box_n: int, text: str, role: str, size: int, family: str) -> dict:
+        return {"id": f"t{n}", "box": _bid(box_n), "text": text, "chars": len(text.replace(" ", "")), "script": "latn",
+                "type_role": role, "size_px": size,
+                "font": {"requested": family, "rendered": family, "fallback": False, "synthetic": "none"}}
+
+    media = {"kind": "img", "loaded": True}
+    split = kind == "split"
+    boxes = [box(1, "section", 0, 0, 1440, 900), box(2, "heading", 100, 180 if split else 80, 560, 160),
+             box(3, "text", 100, 360 if split else 260, 520, 60), box(4, "button", 100, 450 if split else 350, 180, 48)]
+    boxes.append(box(5, "media", 800, 150, 560, 450, media=media) if split else box(5, "media", 100, 430, 1240, 440, media=media))
+    runs = [run(1, 2, "Fire once a month", "display", 56, fonts["headline"]),
+            run(2, 3, "Wheel-thrown bowls, fired once a month.", "body", 16, fonts["body"]),
+            run(3, 4, "See the bowls", "ui", 14, fonts["body"])]
+    return boxes, runs
+
+
 def write_render(root: Path, task: str, candidate: str, stance: str, number: int, fresh: float | None = None,
-                 fonts: dict[str, str] | None = None) -> None:
+                 fonts: dict[str, str] | None = None, opening: str | None = None) -> None:
     """The narrow extract of a rough with its two screenshots, newer than the rough's markup. `fonts` is the family that
-    painted each role (`FACES` when left out)."""
+    painted each role (`FACES` when left out); `opening` (`split` or `stacked`) lays the 1440 first view out that way, with
+    the box ids and text runs the opening rules of the lint read."""
     stem = f"{task}-{candidate}.narrow"
     extract = root / ".lapis" / "renders" / f"{stem}.json"
     views = []
     for width, size in ((1440, (288, 180)), (390, (78, 169))):
         shot = root / ".lapis" / "renders" / f"{stem}.shots" / f"{width}-light.png"
         paint(shot, size, stance, number)
-        views.append({"width": width, "theme": "light", "reduced_motion": False, "browser_chrome": False,
-                      "screenshot": shot.relative_to(extract.parent).as_posix(), "boxes": _view_boxes(number, width),
-                      "text": _runs(number, fonts or FACES)})
+        boxes, text = _view_boxes(number, width), _runs(number, fonts or FACES)
+        if opening and width == 1440:
+            boxes, text = _opening_view(opening, fonts or FACES)
+        views.append({"width": width, "height": 900 if width == 1440 else 844, "theme": "light", "reduced_motion": False,
+                      "browser_chrome": False, "screenshot": shot.relative_to(extract.parent).as_posix(), "boxes": boxes,
+                      "text": text})
     extract.parent.mkdir(parents=True, exist_ok=True)
     extract.write_text(json.dumps({"version": 1, "source": {"kind": "render", "url": f"http://127.0.0.1/{candidate}/",
                                                             "task": f"{task}-{candidate}"}, "viewports": views}), encoding="utf-8")
@@ -220,8 +251,9 @@ def write_motion(root: Path, task: str, candidate: str, moving: bool = True) -> 
         os.utime(file, (later, later))
 
 
-def write_rough(root: Path, task: str, candidate: str, number: int | None = None, **changes) -> None:
-    """The rough, its card, and its render for `candidate`, as an agent leaves them."""
+def write_rough(root: Path, task: str, candidate: str, number: int | None = None, opening: str | None = None, **changes) -> None:
+    """The rough, its card, and its render for `candidate`, as an agent leaves them; `opening` is how its render lays out the
+    first view (`write_render`)."""
     number = int(candidate[1:]) if number is None else number
     folder = root / ".lapis" / "diverge" / task / candidate
     folder.mkdir(parents=True, exist_ok=True)
@@ -231,7 +263,7 @@ def write_rough(root: Path, task: str, candidate: str, number: int | None = None
     found = card_for(root, task, candidate, **changes)
     (folder / "card.yaml").write_text(yaml.safe_dump(found, sort_keys=False), encoding="utf-8")
     stance = diverge.effective(diverge.draw_records(root, task))[candidate]["color"]["item"]
-    write_render(root, task, candidate, stance, number)
+    write_render(root, task, candidate, stance, number, opening=opening)
     if (diverge.brief(root, task) or {}).get("motion") == "required":
         write_motion(root, task, candidate)
 

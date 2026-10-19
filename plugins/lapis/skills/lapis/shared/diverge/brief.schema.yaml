@@ -15,6 +15,14 @@
 # `motion_still_by` quotes the owner's `[declared]` line that asks for stillness. A `required` brief says what moves
 # (`motion_moves`), and `diverge check` then refuses a rough with no `lapis-design render motion` capture that shows change.
 # Breaking: `motion` is required; a brief written before it needs the field and a new `diverge contract`.
+# The opening is the hero: who and what (`identity`, `claim`), one decisive object, the primary action. `diverge contract`
+# refuses an opening that carries all four, unless `opening.carries_by` quotes the owner's `[declared]` line about the opening
+# that asks for all four. `diverge check` runs the opening-composition rules (`layout.split-hero`, `layout.crowded-hero`,
+# `component.fake-app-window`, `rough_opening` in `diverge/pools.yaml`) on each rough's render and refuses a set whose every
+# rough trips the same one; a row of `opening.keeps` names the rule and quotes the owner's `[declared]` line that asks for what
+# it flags (a two-column opening, a logo wall, a window in the first view), and lifts that rule for this set. An owner's answer
+# about the order of work ("build the library window first") is a plan of work, not a decision about the first view, and
+# `resolved` may not turn it into one.
 $schema: https://json-schema.org/draft/2020-12/schema
 $id: https://github.com/lapis-labs/lapis-lazuli/schemas/diverge-brief.v0.json
 title: LapisLazuli diverge brief
@@ -34,6 +42,16 @@ properties:
         minItems: 2
         uniqueItems: true
         items: {enum: [identity, claim, decisive-object, primary-action]}
+      carries_by: {type: string, minLength: 4}           # with all four carries: the owner's `[declared]` line about the opening, quoted
+      keeps:                                             # opening rules the owner asked for, each with the owner's `[declared]` line quoted
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [rule, by]
+          properties:
+            rule: {enum: [layout.split-hero, layout.crowded-hero, component.fake-app-window]}
+            by: {type: string, minLength: 4}
   objects:                                               # one row per core object of the direction conversation
     type: array
     minItems: 1

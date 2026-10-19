@@ -95,6 +95,10 @@ EN: dict[str, str] = {
     "rough.style.dead": "claimed, matches no element: {items}",
     "rough.style.missing": "not on the card: {items}",
     "rough.drift": "- Rough {line}",
+    "rough.opening": "- Rough {candidate} {says}",
+    "rough.opens.layout.split-hero": "opens as a split hero, the heading and the action on one side and an image or a window on the other",
+    "rough.opens.layout.crowded-hero": "opens crowded, with proof, metrics, or extra copy beside the proposition and the action",
+    "rough.opens.component.fake-app-window": "opens on a drawn app window",
     "rough.no-text": "no text read",
     "heading.digest": "References: what we take and leave",
     "digest.note": "Shown for you to read; nothing here waits for your approval. To change an item, reply with its id: "
@@ -186,6 +190,10 @@ KO: dict[str, str] = {
     "rough.style.dead": "카드에는 있지만 맞는 요소가 없는 것: {items}",
     "rough.style.missing": "카드에 없는 것: {items}",
     "rough.drift": "- 러프 {line}",
+    "rough.opening": "- 러프 {candidate}: {says}",
+    "rough.opens.layout.split-hero": "분할 히어로로 열려요(제목과 버튼은 한쪽, 이미지나 앱 창은 다른 쪽)",
+    "rough.opens.layout.crowded-hero": "첫 화면에 증거·지표·부가 문구가 주장과 버튼 옆에 빽빽하게 열려요",
+    "rough.opens.component.fake-app-window": "그려 넣은 앱 창으로 열려요",
     "rough.no-text": "읽은 글자 없음",
     "heading.digest": "참고 자료에서 가져올 것과 두고 갈 것",
     "digest.note": "읽어 보시라고 보여 드리는 거예요. 따로 승인하실 필요는 없어요. 바꾸고 싶은 항목은 번호와 함께 답해 주세요. "

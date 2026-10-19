@@ -153,7 +153,9 @@ from our checklist, not from the owner.
 - End the turn-one message with two short lines the CLI cannot read, so a wrong reading comes back before the roughs are made
   and not after: how you read their words about the opening (for example "show the core at once" is the core impression and
   one decisive object, not every step on one screen), and that the phone opening is composed on its own. The shared brief of
-  `diverge` (`diverge.md`) then carries the same reading, and `diverge contract` checks the parts it can.
+  `diverge` (`diverge.md`) then carries the same reading, and `diverge contract` checks the parts it can. A third reading to say
+  when the owner answered about the order of work ("the library window first, then the homepage"): it is a plan of work, not a
+  decision about what the first view shows, so a rough's first view is not the window because of it.
 - Do not write a line such as `Round 3 of 3.` in the message or the answers: the brief reads it as a third brief round.
 
 ## Recording answers

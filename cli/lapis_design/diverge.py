@@ -31,6 +31,11 @@ rendered fonts (a system default is refused, and the family has to be installed 
 (each answered style item and kept kit item names an element that exists), and, when the brief says `motion: required`,
 the rough's `render motion` capture for a change between its settled and its reduced-motion frames; `contract` refuses
 `motion: none` against the owner's motion words. This is what makes the one representative motion state checkable.
+A rough also has an opening (`rough_opening.py`): `check` runs the opening-composition rules (`layout.split-hero`,
+`layout.crowded-hero`, `component.fake-app-window`) on each rough's own render and refuses a set whose every rough trips the
+same one, unless the brief's `opening.keeps` quotes the owner's `[declared]` line that asks for it; a set where only some
+do passes and the owner block says which rough opens that way. `contract` refuses an opening that carries all four of identity,
+claim, decisive-object, and primary-action unless `opening.carries_by` quotes such a line.
 
 The distance between two roughs is `0.55·d_struct + 0.20·d_mass + 0.25·d_repr` (weights in the pools file, calibrated over the E1b
 roughs against the owner's verdicts). `d_struct` is the IoU distance of the first view's occupancy by text, media, and control boxes on a
@@ -60,7 +65,7 @@ from lapis_design import reference_digest, references, requirements, shared_dir,
 STEP = "diverge"
 MIN_K, MAX_K = 2, 4                    # roughs a `start` makes
 DEFAULT_K = 2                          # roughs a `start` makes without `--k`; more come when the owner asks (`variant`)
-CONTRACT = 2                           # what `contract` checks, versioned: a receipt of another version no longer holds
+CONTRACT = 3                           # what `contract` checks, versioned: a receipt of another version no longer holds
 OPENING = ("identity", "primary-action")        # what the opening's hero carries
 DOWNSTREAM = "process-sequence"        # the kind of core object that is a later scene, not the hero
 MAX_TOTAL = 6                          # roughs of a task, owner-requested variants included
@@ -683,8 +688,9 @@ def _shared_problems(root: Path, task: str, objects: list[dict[str, Any]], env: 
         if slot not in slots:
             problems.append(f"{where}: key_copy has no `{slot}`: the one copy every rough opens with holds the {what}")
     problems += _meta_text_problems(where, found["key_copy"])
-    from lapis_design import rough_carries
+    from lapis_design import rough_carries, rough_opening
 
+    problems += rough_opening.contract_problems(root, task, found)
     problems += rough_carries.contract_problems(root, task, found, env)
     standing = _candidate_set(root, task)
     for candidate in sorted(standing, key=lambda c: int(c[1:])):
@@ -1017,6 +1023,10 @@ def check(root: Path, task: str, env: Mapping[str, str] = os.environ) -> dict[st
         problems += [f"{p['a']} and {p['b']} keep the same structure and differ in color mass by {p['mass']:.2f}: they differ "
                      "in order or finish only, so change the representation or the color allocation of one"
                      for p in report["pairs"] if p["refused"]]
+    if len(prints) == len(ids):
+        from lapis_design import rough_opening
+
+        problems += rough_opening.set_problems(root, task, ids)
     if not problems and report is not None:
         state = state_dir(root, task)
         _write(state / "fingerprints.json", _dump({"version": 0, "candidates": prints}))
@@ -1059,7 +1069,7 @@ def seal(root: Path, task: str, env: Mapping[str, str] = os.environ) -> dict[str
                            + (f"; and {len(found['problems']) - 3} more" if len(found["problems"]) > 3 else ""))
     state = state_dir(root, task)
     before = sealed(root, task)
-    record = {"version": 0, "task": task,
+    record = {"version": 0, "task": task, "contract": CONTRACT,
               "d1_turns": before["d1_turns"] if before and isinstance(before.get("d1_turns"), int) else direction.turns(root, task),
               "brief_sha256": _digest(brief_path(root, task)),
               "draws_sha256": _digest(state / "draws.jsonl"), "fingerprints_sha256": _digest(state / "fingerprints.json"),
@@ -1101,9 +1111,11 @@ def owner_lines(root: Path, task: str) -> list[str]:
     lines = [f"- Rough first views sealed: {', '.join(sorted(record['candidates'], key=lambda c: int(c[1:])))} "
              f"(contact sheet {record['contact']['path']})"]
     lines += [f"- Rough {line}" for line in drift(root, task)]
-    from lapis_design import rough_carries
+    from lapis_design import rough_carries, rough_opening
 
-    lines += rough_carries.owner_lines(root, task, sorted(record["candidates"], key=lambda c: int(c[1:])), os.environ)
+    ids = sorted(record["candidates"], key=lambda c: int(c[1:]))
+    lines += rough_opening.owner_lines(root, task, ids)
+    lines += rough_carries.owner_lines(root, task, ids, os.environ)
     found = brief(root, task)
     if found is not None and contract_passed(root, task):
         lines.append(f"- Shared rough brief {brief_digest(root, task)}, checked before the roughs: the opening carries "
@@ -1119,10 +1131,11 @@ def summary_lines(root: Path, task: str, lang: str = "en") -> list[str]:
     record = sealed(root, task)
     if record is None:
         return []
-    from lapis_design import owner_text, rough_carries
+    from lapis_design import owner_text, rough_carries, rough_opening
 
+    ids = sorted(record["candidates"], key=lambda c: int(c[1:]))
     lines = [owner_text.say(lang, "rough.drift", line=line) for line in drift(root, task)]
-    return lines + rough_carries.owner_lines(root, task, sorted(record["candidates"], key=lambda c: int(c[1:])), os.environ, lang)
+    return lines + rough_opening.owner_lines(root, task, ids, lang) + rough_carries.owner_lines(root, task, ids, os.environ, lang)
 
 
 # ---------------------------------------------------------------- what is owed
@@ -1139,6 +1152,13 @@ def owed(root: Path, task: str, env: Mapping[str, str] = os.environ) -> str | No
                 f"them (`resample` replaces one, twice per rough at most, with its reason). {_how(task)}")
     record = sealed(root, task)
     ids = candidate_ids(root, task)
+    if record is not None and set(record["candidates"]) == set(ids) and record.get("contract") != CONTRACT:
+        return (f"The rough first views {', '.join(ids)} were sealed before the opening checks. Run `lapis-design diverge contract "
+                f"--task {task}` on the brief (an opening that carries all four of identity, claim, decisive-object, and "
+                "primary-action is refused unless `opening.carries_by` quotes the owner's `[declared]` line about the opening), then "
+                f"`lapis-design diverge check --task {task}` and `lapis-design diverge seal --task {task}` again: a set whose every "
+                "rough opens as the same default composition (a split hero, a drawn app window, a crowded hero) is refused, and "
+                "the owner picks on the new seal only.")
     if record is None or set(record["candidates"]) != set(ids) or record.get("draws_sha256") != _digest(state_dir(root, task) / "draws.jsonl"):
         if not contract_passed(root, task):
             return (f"The rough first views {', '.join(ids)} are drawn, and their shared contract has not passed. "
@@ -1155,8 +1175,10 @@ def owed(root: Path, task: str, env: Mapping[str, str] = os.environ) -> str | No
 
 def _brief_how(task: str) -> str:
     return (f"First write the shared brief once, `.lapis/diverge/{task}/brief.yaml` (shared/diverge/brief.schema.yaml): the "
-            "opening's job and what it carries (the hero is identity and the primary action; the process, the comparison, and "
-            "the steps come in later scenes), what each core object does in the first view and in a later scene, the one "
+            "opening's job and what it carries (the hero is identity, one decisive object, and the primary action; listing all "
+            "four carries, claim included, is refused without the owner's `[declared]` line about the opening; the process, the "
+            "comparison, and the steps come in later scenes; an answer about the order of work is a plan, not a decision about "
+            "the first view), what each core object does in the first view and in a later scene, the one "
             "headline and action every rough opens with (`key_copy`, free of meta text), how the phone opening is composed on "
             "its own, whether every rough has to move (`motion: required` with `motion_moves` when the owner's words ask for "
             "motion, else `none`), and the contradictions you found in the instructions and how it settles them. Then run "
@@ -1180,7 +1202,8 @@ def _rough_how(task: str, digest: str | None) -> str:
             f"the rough changed; with motion required, also `lapis-design render motion .lapis/diverge/{task}/C<n>/index.html "
             f"--task {task}-C<n>`. The roughs differ in how "
             "the core objects are represented, how color is allocated, and what the first view carries against the later "
-            "scenes, not in decoration, order, or finish. Put these lines into every worker's task verbatim "
+            "scenes, not in decoration, order, or finish; `check` refuses a set whose every rough opens as the same default "
+            "(a split hero, a drawn app window, a crowded hero). Put these lines into every worker's task verbatim "
             "(`shared/review/worker-rules.md`):\n" + workers.rules())
 
 
