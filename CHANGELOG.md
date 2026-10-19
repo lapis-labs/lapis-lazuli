@@ -35,6 +35,40 @@ contract formats are v0.
   where a file marks it as lagging. Only the HIG's newest section (Live Activities limited-width layouts, 2026-10-13) is marked;
   the other 2026 sections the HIG file lists are in the index and not yet written as items. Contract:
   `src/shared/guidelines/guideline.schema.yaml`.
+- **Breaking:** the rough stage checks openings. In an owner's session both roughs opened as a split hero (a headline and a
+  button beside an app-window screenshot) and every `diverge` gate passed: the shared brief carried all four of identity, claim,
+  decisive-object, and primary-action with the product window as the decisive object, its `resolved` entry had turned the owner's
+  build-order answer ("build the library window first, then the homepage") into "the hero shows the window", `layout.split-hero`
+  ran only in the lint of built pages, and the pair distance counted the two as different. Now `diverge check` runs the
+  opening-composition rules on each rough's own render extract through the lint engine (`rough_opening` in `diverge/pools.yaml`:
+  `layout.split-hero`, `layout.crowded-hero`, and `component.fake-app-window` when the window starts in the first view). When every
+  rough of the set trips the same rule the set is refused, naming the rule and the roughs; when only some do, the set passes and
+  the owner block and the pick question say per rough "opens as a split hero" (`owner_text` `rough.opening`, `rough.opens.<rule>`,
+  English and Korean). Only the brief lifts a refusal: `opening.keeps` rows (`rule`, `by`) that quote the owner's `[declared]` line
+  about the opening that asks for what the rule flags; the keep conditions the rules list for built pages do not apply to a rough.
+  `diverge contract` refuses an opening that carries all four carries unless `opening.carries_by` quotes the owner's `[declared]`
+  line about the opening (a refusal, not a `resolved` line, so the owner's words are what lift it). A quote counts when it is in a
+  `[declared]` line of the record, that line speaks of the opening, and a `keeps` quote has a term of `rough_opening.asks`: lexical,
+  a lead for the gate. A decisive object that is a product window or screenshot is checked at the rough's render, not at the brief,
+  which has no field for an object's medium. Guides: `lapis` (`diverge.md`: the first view's three jobs, "What a rough opens as",
+  the `resolved` rule; `direction-conversation.md`), `lps-brief` (`record.md`: an answer about the order of work is a plan of
+  work, never a content or layout decision, and no `resolved` entry may turn it into one). Contracts: `src/shared/diverge/brief.schema.yaml`
+  (`opening.carries_by`, `opening.keeps`), `pools.yaml` and its schema (`rough_opening`). Migration: `diverge contract` is version 3
+  and `seal.json` records it, so a diverge set in progress is checked again: `next` names `diverge` for a set sealed before this
+  release; run `lapis-design diverge contract`, then `check` and `seal`, and let the owner pick on the new seal. A brief that lists
+  all four carries needs `carries_by` or three carries (`identity`, `decisive-object`, `primary-action`).
+
+### Fixed
+
+- The references sheet (`lapis-design references sheet`) and the diverge contact sheet drew Korean, Japanese, and Chinese text as
+  boxes (tofu): Pillow's built-in font has no Hangul, kana, or Han. Each string is now drawn with the first face that covers all
+  of its characters (checked in the face's cmap): the built-in font for Latin, else a platform font (macOS
+  `/System/Library/Fonts`, Windows `%SystemRoot%\Fonts`, Linux `fc-match` for the language and the Noto/Nanum/WenQuanYi paths),
+  with the string's language first. Faces under Adobe's font folders are never listed or opened. When no face covers a string, it
+  is drawn with the face that covers most, and the command names the characters (`U+...`) and strings it could not draw on stderr
+  and on the sheet's last line, so tofu is never drawn silently. The choice is cached per process. Headings wrap by pixel width
+  (full-width glyphs are twice a Latin letter), and the heading separator is an ASCII hyphen, since the built-in font has no em
+  dash either. `diverge check` prints the same note. New module `cli/lapis_design/sheet_text.py`.
 
 ## 0.4.0 (2026-10-18)
 

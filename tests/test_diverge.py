@@ -266,6 +266,32 @@ def test_distances_are_measured_from_the_renders_and_written_with_the_contact_sh
         assert (prints[c]["mass"]["dark_share"] > 0.5) == (stance == "dark-field")
 
 
+def test_the_contact_sheet_labels_are_drawn_in_a_font_that_has_their_characters_and_a_missing_one_is_reported(run, monkeypatch):
+    from PIL import Image
+
+    from lapis_design import sheet_text
+
+    start(run)
+    make_all(run)
+    labels = {"C1": ["C1  direction A", "families: 한글 표본", "color: ひらがな", "中文标签"], "C2": ["C2", "", "", ""], "C3": ["C3", "", "", ""]}
+    out = run / "contact-cjk.png"
+    sheet_text._choose.cache_clear()
+    if limits := diverge.contact_sheet(run, TASK, labels, out):
+        pytest.skip(f"no system font on this runner covers Korean, Japanese, and Chinese: {limits}")
+    with Image.open(out) as image:
+        plain = image.size
+    monkeypatch.setattr(sheet_text, "_faces", lambda language: ())
+    sheet_text._choose.cache_clear()
+    try:
+        limits = diverge.contact_sheet(run, TASK, labels, run / "contact-boxes.png")
+    finally:
+        sheet_text._choose.cache_clear()
+    assert len(limits) == 1 and "no font on this machine has U+" in limits[0] and "families: 한글 표본" in limits[0]
+    with Image.open(run / "contact-boxes.png") as image:
+        assert image.width == plain[0] and image.height > plain[1]               # the limit line is under the sheet
+
+
+
 def test_two_roughs_with_the_same_structure_and_the_same_color_mass_differ_in_finish_only_and_are_refused(run):
     start(run)
     make_all(run)

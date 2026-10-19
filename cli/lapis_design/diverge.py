@@ -931,16 +931,12 @@ def distances(fingerprints: Mapping[str, Mapping[str, Any]], families: Mapping[s
             "close": [[p["a"], p["b"]] for p in pairs if weights["minimum_pair"] is not None and p["total"] < weights["minimum_pair"]]}
 
 
-def _font(size: int):
-    from PIL import ImageFont
-
-    return ImageFont.load_default(size=size)
-
-
-def contact_sheet(root: Path, task: str, labels: Mapping[str, list[str]], out: Path) -> None:
+def contact_sheet(root: Path, task: str, labels: Mapping[str, list[str]], out: Path) -> list[str]:
     """Each rough at 1440 (its first view) with its 390 first view as an inset, and its labels under it: the candidate,
-    its reference direction, its families, its color stance."""
+    its reference direction, its families, its color stance. Returns what no font on this machine could draw."""
     from PIL import Image, ImageDraw
+
+    from lapis_design import sheet_text
 
     cell_w, shot_w, inset_w, gap = 560, 540, 120, 16
     shot_h = round(shot_w * VIEWS[1440][1] / VIEWS[1440][0])
@@ -951,8 +947,8 @@ def contact_sheet(root: Path, task: str, labels: Mapping[str, list[str]], out: P
     per_row = 3 if len(ids) > 4 else min(len(ids), 4)
     rows = -(-len(ids) // per_row)
     sheet = Image.new("RGB", (cell_w * per_row + gap, cell_h * rows + gap), (236, 236, 238))
-    draw = ImageDraw.Draw(sheet)
-    font = _font(18)
+    pen = sheet_text.Pen(ImageDraw.Draw(sheet))
+    draw = pen.draw
     for n, candidate in enumerate(ids):
         x, y = gap + (n % per_row) * cell_w, gap + (n // per_row) * cell_h
         extract = _json(extract_path(root, task, candidate))
@@ -970,9 +966,10 @@ def contact_sheet(root: Path, task: str, labels: Mapping[str, list[str]], out: P
                 draw.rectangle((at[0] - 3, at[1] - 3, at[0] + size[0] + 2, at[1] + shown.height + 2), fill=(255, 255, 255))
             sheet.paste(shown, at)
         for index, text in enumerate(labels[candidate]):
-            draw.text((x, y + shot_h + gap + index * line_h), text, fill=(30, 30, 34), font=font)
+            pen.text((x, y + shot_h + gap + index * line_h), text, fill=(30, 30, 34), size=18)
     out.parent.mkdir(parents=True, exist_ok=True)
-    sheet.save(out)
+    sheet_text.with_limit_line(sheet, pen, (236, 236, 238), (90, 90, 96), gap).save(out)
+    return pen.report()
 
 
 # ---------------------------------------------------------------- check and seal
@@ -982,9 +979,11 @@ def _candidate_set(root: Path, task: str) -> dict[str, dict[str, dict[str, Any]]
 
 
 def check(root: Path, task: str, env: Mapping[str, str] = os.environ) -> dict[str, Any]:
-    """Read the cards against the draws and the renders. `{"problems", "candidates", "distances"}`; when there are no
-    problems, `fingerprints.json`, `distances.json`, and `contact.png` are written."""
+    """Read the cards against the draws and the renders. `{"problems", "candidates", "distances", "notes"}`; when there
+    are no problems, `fingerprints.json`, `distances.json`, and `contact.png` are written, and `notes` names what no font
+    on this machine could draw on the contact sheet."""
     problems: list[str] = []
+    notes: list[str] = []
     if (broken := chain_problem(root, task)) is not None:
         return {"problems": [broken, "run `lapis-design diverge start --task " + task + "` to draw"
                              if seed(root, task) is None else "the draws are the CLI's; do not edit them"],
@@ -1029,8 +1028,8 @@ def check(root: Path, task: str, env: Mapping[str, str] = os.environ) -> dict[st
                          f"families: {', '.join(families[c].values()) or 'none drawn'}", f"color: {stance}",
                          "owner variant" if any(r.get("variant") for r in draw_records(root, task) if r.get("candidate") == c)
                          else ""]
-        contact_sheet(root, task, labels, state / "contact.png")
-    return {"problems": problems, "candidates": ids, "distances": report}
+        notes = contact_sheet(root, task, labels, state / "contact.png")
+    return {"problems": problems, "candidates": ids, "distances": report, "notes": notes}
 
 
 def _row(root: Path, task: str, candidate: str) -> dict[str, Any]:
@@ -1291,6 +1290,8 @@ def main(argv: list[str] | None = None, prog: str = "lapis-design diverge start"
             found = check(root, args.task)
             for problem in found["problems"]:
                 print(f"diverge check: {problem}", file=sys.stderr)
+            for note in found.get("notes", []):
+                print(f"diverge check: {note}", file=sys.stderr)
             if found["problems"]:
                 code = 1
             else:
