@@ -9,14 +9,15 @@ li{padding:10px;border:1px solid #777;cursor:grab;touch-action:none}ul{max-width
 #fade{background:blue;color:white;width:180px;height:35px;animation:fade 1.4s alternate infinite}
 @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(100px)}}
 @keyframes fade{from{opacity:.2}to{opacity:1}}
-@media(prefers-reduced-motion:reduce){#fade{animation:none}}
+#blank-pulse{animation:fade 1.4s alternate infinite}
+@media(prefers-reduced-motion:reduce){#fade,#blank-pulse{animation:none}}
 #reveal{opacity:0;transition:opacity .3s}#reveal.readable{opacity:1}
 .scroll-section{height:1450px;border-top:2px solid black}#scroll-zone{scroll-snap-type:y mandatory}
 .gesture{touch-action:none;width:250px;height:95px;border:2px solid #444;user-select:none}
 .thumb{width:120px;height:80px;display:inline-block}#zoom:hover{transform:scale(1.2)}
 .media{width:120px;height:60px;display:inline-block;vertical-align:top}
 </style></head><body><main>
-<section><h2>Moving media</h2><video id="bg-video" class="media" autoplay muted loop playsinline></video><canvas id="particles" class="media" width="120" height="60" aria-hidden="true"></canvas><canvas id="live-chart" class="media" width="120" height="60" role="img" aria-label="Live sales chart"></canvas></section>
+<section><h2>Moving media</h2><video id="bg-video" class="media" autoplay muted loop playsinline></video><canvas id="particles" class="media" width="120" height="60" aria-hidden="true"></canvas><canvas id="live-chart" class="media" width="120" height="60" role="img" aria-label="Live sales chart"></canvas><canvas id="blank-pulse" class="media" width="120" height="60"></canvas></section>
 <section id="good"><h2>Sortable with buttons</h2><ul id="good-list"><li draggable="true" tabindex="0">Alpha</li><li draggable="true" tabindex="0">Beta</li></ul><button id="move-up">Move up</button><button id="move-down">Move down</button></section>
 <section id="bad"><h2>Sortable without alternatives</h2><ul id="bad-list"><li draggable="true">One</li><li draggable="true">Two</li></ul></section>
 <section><h2>Slider keyboard supported</h2><input id="slider" type="range" min="0" max="100" value="10" aria-label="Value"><output id="value">10</output></section>

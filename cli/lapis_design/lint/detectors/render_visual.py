@@ -1031,8 +1031,12 @@ def _image_check(name: str, box: dict, media: dict, params: dict, threshold: dic
             return None, None
         return f"an overlay covers {coverage:.0%} of the {noun} at up to {alpha:.0%} opacity", None
     if name == "load-failure":
+        if media["loaded"] is not False:
+            return None, None
+        if media.get("painted") is False:
+            return f"{noun} drew nothing: its region is one flat colour", None
         host = f" from {media['host']}" if media.get("host") else ""
-        return (f"{noun}{host} failed to load", None) if media["loaded"] is False else (None, None)
+        return f"{noun}{host} failed to load", None
     if name == "unresolved-placeholder":
         return (f"{noun} is an unresolved placeholder", None) if media.get("placeholder") else (None, None)
     # missing-alternative: content images (img, picture) without alt text or an accessible name

@@ -309,12 +309,19 @@ or menu) and its `confidence` are omitted until an icon set is chosen to compare
 **media.** A box has one `media` slot: the topmost `url()` layer of its CSS background when it has
 one, otherwise the element's own image (`img`, `picture`, `video`, `canvas`, or `svg`); gradient
 layers above that `url()` layer count as overlay. `loaded` is false for images that failed or are
-still empty after the scroll pass. `placeholder` is true for known placeholder services, lorem
-images, and unresolved template slots. `overlay` measures the layers painted above the image
-inside its rect: `alpha_max` is the highest overlay opacity and `coverage` the share of the image
-they cover. `phash` is the DCT perceptual hash of the box's region in the full-page screenshot, as
-displayed (after object-fit, clipping, and overlays), not of the source file, downsampled to
-32 × 32 grayscale, as 16 hex digits.
+still empty after the scroll pass. A canvas is a 300 × 150 drawing buffer even when nothing drew on
+it, so its paint is read from the full-page screenshot: `painted` is false when every device pixel
+wholly inside its content box (inside border and padding) lies within 2 levels of 255, per channel,
+of the region's median colour. `painted` is omitted when the content box is off the screenshot or an
+opaque layer is painted over part of the canvas (the screenshot would show that layer). A canvas that
+did not paint is not `loaded` unless it is `decorative` (`aria-hidden` on it or an ancestor, or role
+`presentation` or `none`), because decoration may legitimately be one flat colour; a canvas hidden
+with `display`, `visibility`, or `opacity` is not a box at all. `placeholder` is true for known
+placeholder services, lorem images, and unresolved template slots. `overlay` measures the layers
+painted above the image inside its rect: `alpha_max` is the highest overlay opacity and `coverage`
+the share of the image they cover. `phash` is the DCT perceptual hash of the box's region in the
+full-page screenshot, as displayed (after object-fit, clipping, and overlays), not of the source
+file, downsampled to 32 × 32 grayscale, as 16 hex digits.
 
 **scroll.** For boxes that scroll their own content (`x`, `y`, or `both`), and for list boxes
 taller than three viewport heights that scroll with the page (`page`): the number of direct

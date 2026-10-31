@@ -1,6 +1,7 @@
 """Icon identity and media pixels, provenance, intrinsic sizing, and overlays."""
 from __future__ import annotations
 
+import math
 import re
 import unicodedata
 from urllib.parse import parse_qsl, urlsplit
@@ -16,6 +17,8 @@ _PLACEHOLDER = re.compile(r"(?:^|[./-])(?:placehold(?:\.co|\.it)?|placeholder(?:
                           r"picsum\.photos|lorem(?:flickr|picsum|pixel)|dummyimage\.com)(?:[./-]|$)", re.I)
 _TEMPLATE = re.compile(r"(?:\{\{|\{%|\$\{|<%|\bimage[_-]?here\b)", re.I)
 _COS = np.cos(np.pi * (np.arange(8)[:, None] * (np.arange(32)[None, :] + .5)) / 32)
+# A canvas whose every pixel lies within this many levels (of 255, per channel) of the median shows one flat colour.
+_FLAT_LEVELS = 2
 
 
 def _phash(image: Image.Image, rect: dict, dpr: float) -> str | None:
@@ -33,6 +36,22 @@ def _phash(image: Image.Image, rect: dict, dpr: float) -> str | None:
     low = coefficients[:8, :8].ravel()
     median = np.median(low[1:])
     return f"{sum(int(v > median) << (63 - i) for i, v in enumerate(low)):016x}"
+
+
+def _painted(image: Image.Image, rect: dict, inset: list[float], dpr: float) -> bool | None:
+    """Whether the canvas's content box (inside border and padding) shows more than one flat colour in the
+    screenshot; None when none of it is on the screenshot. An undrawn canvas is transparent and shows what is
+    behind it; a drawing buffer that is not preserved cannot be read back in the page, so the screenshot decides.
+    Only device pixels wholly inside the box count, so neighbours blended into a fractional edge do not."""
+    top, right, bottom, left = inset
+    x0 = max(0, math.ceil((rect["x"] + left) * dpr))
+    y0 = max(0, math.ceil((rect["y"] + top) * dpr))
+    x1 = min(image.width, math.floor((rect["x"] + rect["w"] - right) * dpr))
+    y1 = min(image.height, math.floor((rect["y"] + rect["h"] - bottom) * dpr))
+    if x1 <= x0 or y1 <= y0:
+        return None
+    pixels = np.asarray(image.crop((x0, y0, x1, y1)).convert("RGB"), dtype=np.int16).reshape(-1, 3)
+    return bool(np.abs(pixels - np.median(pixels, axis=0)).max() > _FLAT_LEVELS)
 
 
 def _library(data: dict) -> str | None:
@@ -149,7 +168,7 @@ def apply(view, vp: dict, styles: dict, screenshot: Image.Image) -> None:
         const path = svg?.querySelector('path, line, circle, rect, polygon, polyline');
         const fiber = svg && svg[Object.keys(svg).find(k => /reactFiber|reactInternalInstance/.test(k))];
         const module = fiber?.elementType?.displayName || fiber?.elementType?.name || '';
-        const bg = getComputedStyle(el).backgroundImage;
+        const style = getComputedStyle(el), bg = style.backgroundImage;
         const url = /url\\(["']?([^"')]+)["']?\\)/.exec(bg)?.[1] || null;
         const source = image.currentSrc || image.getAttribute('src') ||
                        image.getAttribute('data-src') || image.getAttribute('data-placeholder-url') || null;
@@ -163,7 +182,10 @@ def apply(view, vp: dict, styles: dict, screenshot: Image.Image) -> None:
           grid:svg?.viewBox?.baseVal ? Math.max(svg.viewBox.baseVal.width, svg.viewBox.baseVal.height) || null : null,
           stroke:path && parseFloat(getComputedStyle(path).strokeWidth) || null,
           source, url, alt:image.hasAttribute('alt') ? image.getAttribute('alt') : null,
-          hidden:el.getAttribute('aria-hidden')==='true' || image.getAttribute('aria-hidden')==='true',
+          hidden:el.getAttribute('aria-hidden')==='true' || image.getAttribute('aria-hidden')==='true' ||
+            tag==='canvas' && (!!el.closest('[aria-hidden=true]') || ['presentation','none'].includes(el.getAttribute('role'))),
+          inset:tag==='canvas' ? ['Top','Right','Bottom','Left'].map(side =>
+            parseFloat(style['border'+side+'Width']) + parseFloat(style['padding'+side])) : null,
           natural_w:image.naturalWidth || image.videoWidth || (tag==='canvas' ? image.width : 0) || 0,
           natural_h:image.naturalHeight || image.videoHeight || (tag==='canvas' ? image.height : 0) || 0,
           intrinsic:image.hasAttribute('width') && image.hasAttribute('height') ||
@@ -221,12 +243,21 @@ def apply(view, vp: dict, styles: dict, screenshot: Image.Image) -> None:
                     hostname = inner_host
                     break
         placeholder = bool(source and (_PLACEHOLDER.search(source) or _TEMPLATE.search(source)))
+        decorative = data["alt"] == "" or data["hidden"]
+        overlay = _overlays(box, vp["boxes"], styles)
+        # An opaque layer over the canvas would be read as its paint, so a covered canvas is not measured.
+        painted = (_painted(screenshot, box["rect"], data["inset"], view.config["dpr"])
+                   if kind == "canvas" and not (overlay and overlay["alpha_max"] >= 1) else None)
+        # A canvas that drew nothing is not loaded unless it is decoration, which may legitimately be one flat colour.
         loaded = bool(data.get("cssLoaded")) if kind == "css-background" else (
             bool(data["complete"] and data["natural_w"] and data["natural_h"]) if kind in ("img", "picture", "video")
-            else bool(data["natural_w"] and data["natural_h"]) if kind == "canvas" else True)
+            else bool(data["natural_w"] and data["natural_h"] and (painted is not False or decorative))
+            if kind == "canvas" else True)
         media = {"kind": kind, "loaded": loaded, "host": hostname,
                  "intrinsic_size": bool(data["intrinsic"]), "placeholder": placeholder,
-                 "decorative": data["alt"] == "" or data["hidden"]}
+                 "decorative": decorative}
+        if painted is not None:
+            media["painted"] = painted
         if kind in ("img", "picture"):
             media["alt"] = data["alt"]
         if loaded:
@@ -236,6 +267,6 @@ def apply(view, vp: dict, styles: dict, screenshot: Image.Image) -> None:
                 media.update(natural_w=width, natural_h=height)
             if phash := _phash(screenshot, box["rect"], view.config["dpr"]):
                 media["phash"] = phash
-        if overlay := _overlays(box, vp["boxes"], styles):
+        if overlay:
             media["overlay"] = overlay
         box["media"] = media

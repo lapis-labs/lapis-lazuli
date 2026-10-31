@@ -5,12 +5,15 @@ from pathlib import Path
 
 import pytest
 
+import lapis_design.lint.detectors.render_visual  # noqa: F401  (registers the detectors)
 import lapis_design.render.fields as fields
+from lapis_design.lint.types import DETECTORS, Context
 from lapis_design.render import _configs
 from lapis_design.render.capture import capture
 from lapis_design.render.color import delta_e_ok, to_oklch
 from lapis_design.render.extract import assemble, validate
 from lapis_design.render.fields import visual
+from test_lint_render_visual import RULE, RULES
 
 
 @pytest.fixture
@@ -148,3 +151,17 @@ def test_css_paint_icon_media_and_hashes(visual_capture):
     assert overlay["overlay"]["coverage"] == pytest.approx(1, abs=.01)
     hashes = [item["phash"] for item in media if (item.get("alt") or "").startswith("Striped mountain")]
     assert len(hashes) == 2 and (int(hashes[0], 16) ^ int(hashes[1], 16)).bit_count() <= 8
+
+
+def test_canvas_is_loaded_only_when_it_painted(visual_capture, render_server):
+    vp = visual_capture("visual-canvas.html")
+    canvases = {b["rect"]["w"]: b for b in vp["boxes"] if b.get("media", {}).get("kind") == "canvas"}
+    blank, scene, backdrop = canvases[240], canvases[200], canvases[160]
+    assert blank["media"]["loaded"] is False and blank["media"]["painted"] is False
+    assert scene["media"]["loaded"] and scene["media"]["painted"]
+    assert backdrop["media"]["loaded"] and backdrop["media"]["decorative"] and backdrop["media"]["painted"] is False
+    doc = assemble(f"{render_server}/visual-canvas.html", None, [vp], bytes(range(32)), dark_theme=False)
+    rule = RULE["imagery.missing-content-image"]
+    result = DETECTORS["image-inventory"].fn(Context(rules=RULES, extract=doc), rule["detect"]["render"], rule, "render")
+    assert [(hit.location["box"], hit.observed) for hit in result.hits] == [
+        (blank["id"], "canvas drew nothing: its region is one flat colour (seen in 390 px light)")]

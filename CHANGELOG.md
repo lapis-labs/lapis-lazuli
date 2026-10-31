@@ -69,6 +69,14 @@ contract formats are v0.
   and on the sheet's last line, so tofu is never drawn silently. The choice is cached per process. Headings wrap by pixel width
   (full-width glyphs are twice a Latin letter), and the heading separator is an ASCII hyphen, since the built-in font has no em
   dash either. `diverge check` prints the same note. New module `cli/lapis_design/sheet_text.py`.
+- `render check` counted every canvas as loaded media: a canvas has a 300 × 150 drawing buffer whether or not anything drew on
+  it, so a WebGL scene that never rendered, a script error, or a missing library passed as content. The canvas's content box is
+  now read from the full-page screenshot (the drawing buffer of a WebGL canvas cannot be read back in the page): the new
+  `media.painted` is false when every pixel lies within 2 levels of the region's median colour, and such a canvas is not
+  `loaded` unless it is decorative (`aria-hidden` on it or an ancestor, or role `presentation`/`none`), so
+  `imagery.missing-content-image` reports "canvas drew nothing" with its box. A canvas under an opaque layer is not measured.
+  The motion probe also gives a canvas the kind `canvas` only when its own pixels changed (reading only thumbnail pixels inside
+  the box), so a blank canvas that fades is an `opacity` motion, which reduced motion allows.
 
 ## 0.4.0 (2026-10-18)
 

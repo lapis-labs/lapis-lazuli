@@ -309,12 +309,13 @@ $defs:
     properties:
       kind: { enum: [img, picture, video, canvas, svg, css-background] }
       host: { type: [string, "null"] }                # loaded URL's host; on-page proxy with an absolute http(s) URL query uses the inner host
-      loaded: { type: boolean }
+      loaded: { type: boolean }                       # a canvas also needs painted, unless decorative
+      painted: { type: boolean }                      # canvas: its content box in the screenshot is more than one flat colour; omitted when covered or off the screenshot
       natural_w: { type: number, minimum: 0 }
       natural_h: { type: number, minimum: 0 }
       intrinsic_size: { type: boolean }               # width/height attributes or aspect-ratio before load
       alt: { type: [string, "null"] }                 # null when the attribute is absent; not stored for reference-only captures
-      decorative: { type: boolean }                   # alt="" or aria-hidden
+      decorative: { type: boolean }                   # alt="" or aria-hidden; a canvas also by an aria-hidden ancestor or role presentation/none
       placeholder: { type: boolean }                  # placeholder service, lorem image, or unresolved slot
       overlay:                                        # layers painted over the image
         type: object

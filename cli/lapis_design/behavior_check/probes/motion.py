@@ -1,6 +1,7 @@
 """Five-second motion windows, automatic motion, and reveal observations.
 
-`kind` is decided per moving box: `video` and `canvas` by the element, `scroll-linked` by the timeline;
+`kind` is decided per moving box: `video` by the element, `canvas` by the element when its pixels changed (a
+blank canvas that only fades or slides is classified like any other box), `scroll-linked` by the timeline;
 otherwise `transform` when the box's transform changed, or its position changed under an animation that
 names a position property (`left`, `margin`, `inset`, ...), even while it also fades: a fade that slides
 is movement. `opacity` is a fade that stays in place, `other` anything else.
@@ -17,6 +18,7 @@ is movement. `opacity` is a fade that stays in place, `other` anything else.
 """
 from __future__ import annotations
 
+import math
 import re
 from time import monotonic, sleep
 
@@ -147,7 +149,9 @@ def _measure(driver, duration_ms=5000):
                 continue
             r = state
             dpr = driver.ctx.get("dpr", 2) / 8
-            x0,y0 = max(0,int(r["x"]*dpr)),max(0,int(r["y"]*dpr))
+            # The thumbnail keeps every 8th device pixel; start at the first one inside the box, so a
+            # neighbour that changes does not count as this box changing.
+            x0,y0 = max(0,math.ceil(r["x"]*dpr)),max(0,math.ceil(r["y"]*dpr))
             x1,y1 = min(image.shape[1],int((r["x"]+r["w"])*dpr)),min(image.shape[0],int((r["y"]+r["h"])*dpr))
             if x1>x0 and y1>y0 and image.shape==previous.shape and np.mean(
                     np.abs(image[y0:y1,x0:x1].astype(np.int16)-previous[y0:y1,x0:x1].astype(np.int16)))>4:
@@ -169,7 +173,7 @@ def _measure(driver, duration_ms=5000):
         transformed = any(state["transform"]!=initial["transform"] for state in states)
         travelled = any(abs(state["x"]-initial["x"])>.5 or abs(state["y"]-initial["y"])>.5 for state in states)
         if initial["tag"]=="video": kind="video"
-        elif initial["tag"]=="canvas": kind="canvas"
+        elif initial["tag"]=="canvas" and bid in pixel_changed: kind="canvas"
         elif any(state["scrollLinked"] for state in states): kind="scroll-linked"
         elif transformed or (travelled and POSITION.search(keys)): kind="transform"
         elif "opacity" in keys or any(abs(state["opacity"]-initial["opacity"])>.03 for state in states): kind="opacity"

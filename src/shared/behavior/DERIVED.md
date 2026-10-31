@@ -633,15 +633,17 @@ has neither typed there nor advanced the clock, and otherwise after a fresh load
 ## Motion and scrolling
 
 - **Motion window**: 5 s at rest, sampled with `document.getAnimations()` and 10 fps frame diffs.
-  `moving` lists boxes that moved; `kind` says how (`opacity` for fades); `travel_px` is the largest
-  displacement; `essential` when the motion conveys the content itself. A video is essential only
-  when it plays after a user action of the driver, so video moving in the window at rest (autoplay,
-  a background video) is not. A canvas is essential when it is presented as content and is not
-  decorative: not `aria-hidden` itself or through an ancestor, not covered at its center by another
-  element, and either inside a `figure`, or with role `img`, `figure`, or `application` and an
-  accessible name, or with an accessible name (`aria-label`, `aria-labelledby`, `title`) that names
-  a chart, graph, plot, map, visualization, or diagram (in English or Korean). Nothing else is
-  essential. With `compare_to`, the probe ran with reduced motion and the other context without.
+  `moving` lists boxes that moved; `kind` says how (`opacity` for fades; `canvas` only when the
+  canvas's own pixels changed, so a blank canvas that fades or slides gets the kind of that motion);
+  `travel_px` is the largest displacement; `essential` when the motion conveys the content itself.
+  A video is essential only when it plays after a user action of the driver, so video moving in the
+  window at rest (autoplay, a background video) is not. A canvas is essential when it is presented
+  as content and is not decorative: not `aria-hidden` itself or through an ancestor, not covered at
+  its center by another element, and either inside a `figure`, or with role `img`, `figure`, or
+  `application` and an accessible name, or with an accessible name (`aria-label`,
+  `aria-labelledby`, `title`) that names a chart, graph, plot, map, visualization, or diagram (in
+  English or Korean). Nothing else is essential. With `compare_to`, the probe ran with reduced
+  motion and the other context without.
 - **`auto_moving`**: content that moves by itself (marquees, auto-advancing carousels), observed for
   up to 60 s; `seconds` how long it kept moving without input, `pause_control` a reachable pause or
   stop.

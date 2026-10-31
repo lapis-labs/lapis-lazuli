@@ -92,7 +92,7 @@ def test_pointer_local_dev_skips_state_changing_gestures(browser,movement_server
 def _media_ids(open_driver,ctx_id):
     driver=open_driver(ctx_id)
     try:
-        return dict(driver.page.evaluate("""() => ['bg-video','particles','live-chart'].map(id =>
+        return dict(driver.page.evaluate("""() => ['bg-video','particles','live-chart','blank-pulse'].map(id =>
             [id, document.getElementById(id).getAttribute('data-lapis-box')])"""))
     finally:
         driver.close()
@@ -131,6 +131,8 @@ def test_motion_reduced_twin_and_controls(probe_session,base):
     assert by_box[ids["bg-video"]]["kind"]=="video" and not by_box[ids["bg-video"]]["essential"]
     assert by_box[ids["particles"]]["kind"]=="canvas" and not by_box[ids["particles"]]["essential"]
     assert by_box[ids["live-chart"]]["kind"]=="canvas" and by_box[ids["live-chart"]]["essential"]
+    # A canvas that never drew but fades is a fade, not canvas motion.
+    assert {item["box"]:item for item in rows[base]["moving"]}[ids["blank-pulse"]]["kind"]=="opacity"
     if base=="d":
         assert not any(item["essential"] for item in rows["d"]["moving"]
                        if item["kind"] not in ("canvas","video"))
